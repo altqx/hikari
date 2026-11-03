@@ -245,12 +245,16 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SORT_ALL_BY_ACTOR", 5203},
         {"GLOBAL_SORT_ALL_BY_EFFECT", 5204},
         {"GLOBAL_SORT_ALL_BY_LAYER", 5205},
+        {"GLOBAL_SORT_ALL_BY_TEXT", 5224},
+        {"GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS", 5225},
         {"GLOBAL_SORT_SELECTED_BY_START_TIMES", 5206},
         {"GLOBAL_SORT_SELECTED_BY_END_TIMES", 5207},
         {"GLOBAL_SORT_SELECTED_BY_STYLE", 5208},
         {"GLOBAL_SORT_SELECTED_BY_ACTOR", 5209},
         {"GLOBAL_SORT_SELECTED_BY_EFFECT", 5210},
         {"GLOBAL_SORT_SELECTED_BY_LAYER", 5211},
+        {"GLOBAL_SORT_SELECTED_BY_TEXT", 5226},
+        {"GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS", 5227},
         {"GLOBAL_SHIFT_TIMES", 5300},
         {"GLOBAL_ADD_PAGE", 5301},
         {"GLOBAL_CLOSE_PAGE", 5302},
@@ -291,6 +295,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
         {"GLOBAL_GETTING_STARTED", 5176},
+        {"GLOBAL_EXPORT_SUBS_AS", 5212},
+        {"GLOBAL_FIND_PREVIOUS", 5213},
         {"GLOBAL_SHOW_TIMING_POSTPROCESSOR", 5214},
         {"GLOBAL_TIMING_POSTPROCESSOR", 5215},
         {"GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION", 5216},
@@ -298,6 +304,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SHIFT_FRAMES_TO_VIDEO_END", 5218},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START", 5219},
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END", 5220},
+        {"GLOBAL_PLUGINS", 5231},
+        {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
+        {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
 };
 
 struct NameRow {
@@ -409,10 +418,10 @@ constexpr NameRow kNames[] = {
         {4529, "Join lines and keep first"},
         {4530, "Join lines and keep last"},
         {4553, "Paste columns"},
-        {4548, "Paste translation text"},
+        {4548, "Paste translation from a file…"},
         {4550, "Load subtitles from an MKV file"},
         {4526, "Swap lines"},
-        {4549, "Dialogue shifting window"},
+        {4549, "Translation matching…"},
         {4556, "Set new FPS"},
         {4534, "Show subtitles preview"},
         {4521, "Split line at video time"},
@@ -451,12 +460,16 @@ constexpr NameRow kNames[] = {
         {5203, "Sort all lines by actor"},
         {5204, "Sort all lines by effect"},
         {5205, "Sort all lines by layer"},
+        {5224, "Sort all lines by text"},
+        {5225, "Sort all lines by text without tags"},
         {5206, "Sort selected lines by start time"},
         {5207, "Sort selected lines by end time"},
         {5208, "Sort selected lines by styles"},
         {5209, "Sort selected lines by actor"},
         {5210, "Sort selected lines by effect"},
         {5211, "Sort selected lines by layer"},
+        {5226, "Sort selected lines by text"},
+        {5227, "Sort selected lines by text without tags"},
         {5300, "Shift times with the last values"},
         {5050, "Go to previous keyframe"},
         {5049, "Go to next keyframe"},
@@ -464,11 +477,10 @@ constexpr NameRow kNames[] = {
         {5006, "Undo"},
         {5007, "Undo to last save"},
         {5043, "Zoom video"},
-        {5044, "Turn off video zoom"},
+        {5044, "Reset zoom and pan"},
         {5301, "Open new tab"},
         {5302, "Close current tab"},
         {5168, "Clean styles of ASS file"},
-        {5012, "Fix minor errors (experimental)"},
         {5011, "Find next"},
         {5055, "Load last session"},
         {5042, "Next frame"},
@@ -560,6 +572,8 @@ constexpr NameRow kNames[] = {
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
         {5176, "Getting started"},
+        {5212, "Export as"},
+        {5213, "Find previous"},
         {5214, "Timing postprocessor panel"},
         {5215, "Timing postprocessor with the last values"},
         {5216, "Join with previous line using the audio selection"},
@@ -567,6 +581,9 @@ constexpr NameRow kNames[] = {
         {5218, "Shift selected lines by frames: end at video"},
         {5219, "Shift following lines by frames: start at video"},
         {5220, "Shift following lines by frames: end at video"},
+        {5231, "Plugins"},
+        {5229, "Centre times within frames"},
+        {5223, "Import legacy settings…"},
 };
 
 struct DefaultRow {
@@ -605,6 +622,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5150, GlobalHotkey, "Previous line", "Ctrl-Up"},
         {5151, GlobalHotkey, "Next line", "Ctrl-Down"},
         {5011, GlobalHotkey, "Find next", "F3"},
+        {5213, GlobalHotkey, "Find previous", "Shift-F3"},
         {5152, GlobalHotkey, "Merge with previous line", "F4"},
         {5153, GlobalHotkey, "Merge with next line", "F5"},
         {5158, GlobalHotkey, "Change start time to nearest keyframe", "Shift-Left"},
@@ -853,7 +871,8 @@ bool isRetiredHotkey(int id)
            || id == 5039
            || id == 5104
            || (id >= 5031 && id <= 5035)
-           || id == 5109;
+           || id == 5109
+           || id == 5012;
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)
@@ -1265,7 +1284,8 @@ bool shownByFilter(int mode, const HotkeyList::Row &r)
     case 4: return r.key.type == EditorHotkey;
     case 5: return r.key.type == VideoHotkey;
     case 6: return r.key.type == AudioHotkey;
-    case 7: return r.key.id >= kFirstScriptHotkey;
+    case 7: return r.key.id >= kFirstScriptHotkey && !isPluginCommand(r.name);
+    case 8: return r.key.id >= kFirstScriptHotkey && isPluginCommand(r.name);
     default: return true;
     }
 }

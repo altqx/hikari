@@ -5,6 +5,7 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/checked.h"
 #include "hikari/core/editor_font_colour.h"
+#include "hikari/core/extradata.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
@@ -195,7 +196,10 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
                                                               const core::LineRecord &line) const
 {
     const auto translation = core::toUtf16(line.translation);
-    auto draft = core::readTranslation(tags, translation);
+    const auto saved = core::extradataValue(line.extra, core::kRunOrderKey);
+    const auto savedOrder = saved ? core::savedRunOrder(*saved, line.translation) : std::nullopt;
+    auto draft = savedOrder ? core::readTranslationInOrder(tags, translation, *savedOrder)
+                            : core::readTranslation(tags, translation);
     const auto it = m_runOrders.find(runOrderKey(line.id));
     if (it == m_runOrders.end())
         return draft;
@@ -203,11 +207,8 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
     for (const auto &entry : it->second) {
         if (entry.translation != line.translation)
             continue;
-        if (sameRuns(*entry.tags, tags)) {
-            auto hinted = core::readTranslation(tags, translation, entry.order);
-            core::relabelRuns(tags, hinted, entry.order);
-            return hinted;
-        }
+        if (sameRuns(*entry.tags, tags))
+            return core::readTranslationInOrder(tags, translation, entry.order);
         if (!composed)
             composed = &entry;
     }
@@ -264,6 +265,26 @@ void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder
     }
     if (order)
         noteRunOrder(line, std::move(*order));
+}
+
+void LineEditorController::stageRunOrder(core::LineId line)
+{
+    auto *s = session();
+    const auto r = sessionRecord();
+    if (!s || !r || r->id != line || !m_editable)
+        return;
+    const auto c = carry(*r);
+    const auto order = runOrderOf(line);
+    std::optional<std::u8string> value;
+    if (c && order && order->translation == r->translation && sameRuns(*order->tags, c->tags))
+        value = core::runOrderValue(c->tags, r->translation, order->order);
+    else if (const auto saved = core::extradataValue(r->extra, core::kRunOrderKey);
+             saved && core::savedRunOrder(*saved, r->translation))
+        return;
+    auto extra = value ? core::withExtradata(r->extra, core::kRunOrderKey, std::move(*value))
+                       : core::withoutExtradata(r->extra, core::kRunOrderKey);
+    if (extra != r->extra)
+        s->editDraft(line, application::DraftChange{.extra = std::move(extra)});
 }
 
 void LineEditorController::countRunOrder(RunOrderKey key, const RunOrder &entry)
@@ -879,6 +900,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
             m_draftUndo.push_back({real->text, real->translation, translationTyped(), *orderBefore});
             m_draftRedo.clear();
             m_attempted.clear();
+            stageRunOrder(r->id);
             refresh();
         }
         return true;
@@ -913,6 +935,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
     m_draftUndo.push_back({real->text, real->translation, typed, std::move(order)});
     m_draftRedo.clear();
     m_attempted.clear();
+    stageRunOrder(r->id);
     refresh();
     return true;
 }
@@ -1323,6 +1346,7 @@ bool LineEditorController::undo()
                                                      .translation = previous.translation,
                                                      .translationCarried = !previous.translationTyped,
                                                      .restoresProvenance = true});
+        stageRunOrder(r->id);
         dropUnchangedDraft(*s, r->id);
         m_attempted.clear();
         refresh();
@@ -1362,6 +1386,7 @@ bool LineEditorController::redo()
                                                      .translation = next.translation,
                                                      .translationCarried = !next.translationTyped,
                                                      .restoresProvenance = true});
+        stageRunOrder(r->id);
         dropUnchangedDraft(*s, r->id);
         refresh();
         placeCaretAfterChange(before);
@@ -2573,7 +2598,7 @@ void LineEditorController::setShowFrames(bool on)
         change.endFrame.reset();
         s->discardDraft();
         if (change.text || change.translation || change.marginLeft || change.marginRight || change.marginVertical ||
-            change.comment || change.layer || change.style || change.actor || change.effect)
+            change.comment || change.layer || change.style || change.actor || change.effect || change.extra)
             s->editDraft(*line, change);
     }
     m_durationEdited = false;
@@ -2609,6 +2634,7 @@ std::optional<core::Document> LineEditorController::draftDocument() const
         line.effect = draft->effect;
         line.startFrame = draft->startFrame;
         line.endFrame = draft->endFrame;
+        line.extra = draft->extra;
     });
     return document;
 }

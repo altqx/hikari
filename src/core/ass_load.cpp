@@ -679,10 +679,14 @@ private:
     void resolveExtra()
     {
         const auto &table = m_result.document.extradata();
+        std::vector<LineRecord *> lines;
         for (auto &section : DocumentBuilder::sections(m_result.document))
             for (auto &record : section.records)
-                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty())
+                if (auto *line = std::get_if<LineRecord>(&record); line && !line->extradataIds.empty()) {
                     line->extra = resolveExtradata(table, line->extradataIds);
+                    lines.push_back(line);
+                }
+        linkGeneratedLines(lines);
     }
 
     void addDiagnostic(Diagnostic::Severity severity, Diagnostic::Kind kind, std::size_t offset, u8sv excerpt)

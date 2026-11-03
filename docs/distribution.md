@@ -4,6 +4,8 @@
 
 ## Packages
 
+The site and user guide are at https://hikarisub.org (DM1 #665, 2026-11-02). The old host, hikarisub.altqx.com, answers with a path-preserving 301 to it, so links in earlier releases keep working.
+
 Every release publishes these assets, where `<V>` is the version without its `v`:
 
 | Package kind | Asset | Installs to | Updates |
@@ -92,12 +94,12 @@ Everything a user may edit or keep is in one user folder, Aegisub's `?user` ([UD
 - **`hikari.ini` before them.** The first start without `settings.toml` converts `hikari.ini` into the three files once and renames it `hikari.ini.old`, which is never written again. Import legacy settings still reads legacy's `Config.txt` and `Hotkeys.txt`, and writes into these files.
 
 **List files (CF2, #489).** The lists you build up are TOML files too, each starting with `version = 1` and then one array of tables with named fields:
-- **`rules.toml`** holds the Fix minor errors rules: `[[rule]]` with `description`, `find`, `replace`, `enabled` and the options `matchCase`, `lowerCase`, `upperCase`, `keepCase`, `onlyInTags` and `onlyInText` (written when true). A file with no rules is an empty list; without the file the shipped rules are used.
 - **`shapes.toml`** holds the drawing tool's shapes: `[[shape]]` with `name`, `drawing`, `fromCursor` (`"widthAndHeight"`, `"keepAspectRatio"` or `"widthOnly"`) and `scaling` (`"points"` or `"scale"`).
 - **`tags.toml`** holds the all-tags tool's tags: `[[tag]]` with `name`, `tag`, `min`, `max`, `step`, `decimals`, `values` (1 to 4 numbers), `placing` (`"cursor"`, `"textStart"` or `"clipAnimation"`) and `change` (`"add"`, `"set"`, `"multiply"`, `"multiplyAdd"`, `"gradientCharsUp"`, `"gradientCharsDown"`, `"gradientLinesUp"` or `"gradientLinesDown"`).
 - **`catalogs/fonts.toml`** holds the font catalogs: `[[catalog]]` with `name` and `fonts`. The catalog window's safety copies are `catalogs/fonts.autosave-0.toml` to `-2`, and its Load reads a `fonts.toml` or legacy's `FontCatalogs.txt`.
-- **The legacy files before them.** Each start converts `Rules.txt`, `ShapesSettings.txt`, `AllTagsSettings.txt`, `catalogs/FontCatalogs.txt` and `catalogs/FontCatalogsAutosave0.txt` to `2.txt` into these files once, when the TOML file is missing, and renames the old file `<name>.old`, which is never written again. The Log says so. A legacy file that can't be read is left as it is, its list takes its defaults and isn't written, and the next start tries again. Import legacy settings still reads legacy's `Config/Rules.txt`, and writes `rules.toml`.
+- **The legacy files before them.** Each start converts `ShapesSettings.txt`, `AllTagsSettings.txt`, `catalogs/FontCatalogs.txt` and `catalogs/FontCatalogsAutosave0.txt` to `2.txt` into these files once, when the TOML file is missing, and renames the old file `<name>.old`, which is never written again. The Log says so. A legacy file that can't be read is left as it is, its list takes its defaults and isn't written, and the next start tries again. Import legacy settings skips legacy's `Config/Rules.txt`.
 - They're written as the settings files are: edit them while HikariSub is closed, keys HikariSub doesn't know are kept, and a file that doesn't read becomes `<name>.broken` while its list takes its defaults. Two HikariSubs on one folder take turns writing, and the last list written wins. The style catalogs (`catalogs/*.sty`) and `dictionaries/UserDic.udic` keep their own formats.
+- **`rules.toml`** held the rules of Fix minor errors, which was removed (#608). HikariSub leaves the file as it is, and the Log says at each start that it is unused.
 
 **Bundled files.** Each package ships `bundled-files.txt` beside the program: the SHA-256 of every file under `Automation/automation` and of the `Dictionary` folder's own `.dic` and `.aff` files (`cmake/HikariBundledManifest.cmake`). Each start copies them into the user folder (`automation/Autoload` and `Include` into `automation/autoload` and `include`, the dictionaries into `dictionaries`): a missing file is copied in; a file still as the bundled version it came from is replaced by the new one; a file changed since (by the user, or by a DependencyControl update) is kept, and the Log says so; a file a new version no longer brings is removed unless it was changed. `.bundled-files` in the user folder records which bundled version each file came from ([UD1-seeded-bundle](compatibility-decisions.md)). Autoload scripts load from the shipped `automation/Autoload`, then from the user folder's `automation/Autoload` and `automation/autoload`, where a script replaces a shipped one of the same name; scripts search the user folder's `automation/Include` and `include` before the shipped `Include`. `?user`, `?local` and `?temp` resolve into the user folder, `?data` into the shipped `Automation` folder.
 
@@ -113,7 +115,37 @@ A HikariSub release (0.1.0 and up) always names `"offer_to": ["qt"]`. Legacy use
 
 ## Payload and licences
 
-Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), QtKeychain 0.17.0 (BSD-3-Clause, static; on Linux it links libsecret-1), MeCab (BSD-3-Clause, static) and its UniDic 2.1.2 dictionary (BSD-3-Clause, `Dictionary/unidic-lite`, 248 MB), harper-ls 3.0.0 (Apache-2.0, a helper beside the application, GR1), the spelling dictionaries (`cmake/HikariDictionaries.cmake`: en_US LGPL and BSD, pl GPL-2.0/LGPL-2.1/MPL-1.1/Apache-2.0/CC-BY-4.0, th_TH LGPL, ko_KR GPL-3.0-or-later, ta_IN MPL-1.1, DK1), translations, helpers). Qt is linked dynamically and shipped with its licence notices; MeCab's, UniDic's and QtKeychain's BSD notices are in `licenses/mecab/LICENSE`, `licenses/unidic/LICENSE` and `licenses/qtkeychain/LICENSE` (UniDic's also beside the dictionary), Harper's licence and its crates' notices (MIT, Apache-2.0, MPL-2.0, Unicode-3.0, Zlib, CC0-1.0, WTFPL) in `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, each dictionary's notice in `licenses/dictionaries/<name>/`, Aegisub's BSD-3-Clause notice for the extradata format and `line.extra` behaviour HikariSub follows (FA3) in `licenses/aegisub/LICENSE`, and the AUR package copies them to `/usr/share/licenses/<package>/` and declares `BSD-3-Clause`, `Apache-2.0`, `MPL-1.1` and `LGPL-2.0-or-later` beside `GPL-3.0-or-later`, as the rpm's License tag does; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs, libsecret included: it only talks to the desktop's secret service over D-Bus, so the bundled copy works with any host keyring. deb, rpm and Arch declare their host dependencies, libsecret among them. Saving an AI provider's key needs a running secret service (GNOME Keyring, KWallet or another Secret Service provider) on Linux; without one the provider isn't saved and the user is told why, and keys never fall back to a file.
+Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), QtKeychain 0.17.0 (BSD-3-Clause, static; on Linux it links libsecret-1), dav1d 1.5.4 (BSD-2-Clause, static, inside FFmpeg), MeCab (BSD-3-Clause, static) and its UniDic 2.1.2 dictionary (BSD-3-Clause, `Dictionary/unidic-lite`, 248 MB), harper-ls 3.0.0 (Apache-2.0, a helper beside the application, GR1), the spelling dictionaries (`cmake/HikariDictionaries.cmake`: en_US LGPL and BSD, pl GPL-2.0/LGPL-2.1/MPL-1.1/Apache-2.0/CC-BY-4.0, th_TH LGPL, ko_KR GPL-3.0-or-later, ta_IN MPL-1.1, DK1), translations, helpers). Qt is linked dynamically and shipped with its licence notices; MeCab's, UniDic's and QtKeychain's BSD notices are in `licenses/mecab/LICENSE`, `licenses/unidic/LICENSE` and `licenses/qtkeychain/LICENSE` (UniDic's also beside the dictionary), dav1d's (BSD-2-Clause, statically linked into FFmpeg for AV1) in `licenses/dav1d/LICENSE`, Harper's licence and its crates' notices (MIT, Apache-2.0, MPL-2.0, Unicode-3.0, Zlib, CC0-1.0, WTFPL) in `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, each dictionary's notice in `licenses/dictionaries/<name>/`, Aegisub's BSD-3-Clause notice for the extradata format and the Lua API HikariSub follows (FA3, FA4; it also covers arch1t3cht's fork), with the ISC notice of libaegisub's `vfr.cpp` that `AegisubFrameTimes` is ported from, in `licenses/aegisub/LICENSE`, and the AUR package copies them to `/usr/share/licenses/<package>/` and declares `BSD-3-Clause`, `BSD-2-Clause`, `Apache-2.0`, `MPL-1.1` and `LGPL-2.0-or-later` beside `GPL-3.0-or-later`, as the rpm's License tag does; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs, libsecret included: it only talks to the desktop's secret service over D-Bus, so the bundled copy works with any host keyring. deb, rpm and Arch declare their host dependencies, libsecret among them. Saving an AI provider's key needs a running secret service (GNOME Keyring, KWallet or another Secret Service provider) on Linux; without one the provider isn't saved and the user is told why, and keys never fall back to a file.
+
+## The AI sidecar
+
+Hikari AI's sidecar ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)) isn't in any package: not the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives.
+
+- **The assets.** Each release carries `hikari-ai-<version>-linux-x64.gz` and `hikari-ai-<version>-windows-x64.gz`. Each is one gzip-compressed executable, about 49 MiB and 52 MiB, built by the `AI sidecar` workflow (`tools/release/build-ai-sidecar.sh`).
+  - The workflow builds each platform twice and fails unless both builds are byte-identical.
+  - It fails if any bundled file comes from `@anthropic-ai/claude-agent-sdk`.
+  - `bun audit` runs as a report, not a gate.
+- **The notices.** The executable carries `src/ai-sidecar/NOTICES.txt`, which `hikari-ai --licenses` prints:
+  - Bun (MIT);
+  - JavaScriptCore and WebCore (LGPL-2.0) and tinycc (LGPL-2.1), which Bun links statically;
+  - every npm package in the bundle.
+
+  `bun tools/notices.ts` regenerates it from the bundle's inputs. The build fails when it is stale. The sidecar's source and build are in this repository, and Bun publishes its patched WebKit, so the sidecar can be rebuilt and relinked.
+- **The manifest member.** `hikarisub-update.json` gains `ai_sidecar`, which adds only, so the manifest stays at schema 1:
+
+  ```json
+  "ai_sidecar": {
+    "linux-x64": {"name": "hikari-ai-0.1.0-linux-x64.gz", "size": 51677387, "sha256": "…"},
+    "windows-x64": {"name": "hikari-ai-0.1.0-windows-x64.gz", "size": 54572333, "sha256": "…"}
+  }
+  ```
+
+  `tools/release/make-update-manifest.py` writes it from the files and checks each against its asset's GitHub digest, as it does for packages. Nothing is signed (ADR 0019).
+- **The download.** It happens when the user first adds a provider or agent, and never with "Turn off all AI features" on.
+  - The app reads its own release's manifest over HTTPS. It downloads the asset from the release, following redirects only to GitHub's download hosts.
+  - It checks the size and SHA-256, unpacks the file into `<user folder>/ai/sidecar/<version>/`, then removes the other versions' folders.
+  - A file that fails is deleted and never run. An app never runs a sidecar from another version.
+- **Developer and test builds.** Configure with `-DHIKARI_AI_LOCAL_SIDECAR=ON` to run the sidecar the build makes instead (see [build](build.md#ai-sidecar-sc1-2026-11-02)).
 
 ## Testing an update
 

@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace hikari::application {
@@ -19,6 +21,22 @@ core::DocumentTime ms(std::int64_t value)
 std::int64_t msOf(core::DocumentTime t)
 {
     return t.microseconds() / kUsPerMs;
+}
+
+std::u8string withoutBlocks(std::u8string_view text)
+{
+    std::u8string out;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == u8'{') {
+            const auto close = text.find_first_of(u8"{}", i + 1);
+            if (close != std::u8string_view::npos && text[close] == u8'}') {
+                i = close;
+                continue;
+            }
+        }
+        out.push_back(text[i]);
+    }
+    return out;
 }
 
 std::int64_t zeroIt(std::int64_t value)
@@ -439,6 +457,10 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
     auto text = [&](std::u8string_view a, std::u8string_view b) {
         return compare ? compare(a, b) : a.compare(b);
     };
+    std::map<core::LineId, std::u8string> stripped;
+    if (key == SortKey::TextWithoutTags)
+        for (const auto row : rows)
+            stripped.emplace(lines[row]->id, withoutBlocks(lines[row]->text));
     auto less = [&](const core::LineRecord *i, const core::LineRecord *j) {
         const auto si = msOf(i->start.value), sj = msOf(j->start.value);
         const auto ei = msOf(i->end.value), ej = msOf(j->end.value);
@@ -455,6 +477,10 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
             return i->effect != j->effect ? text(i->effect, j->effect) < 0 : si < sj;
         case SortKey::Layer:
             return i->layer.value != j->layer.value ? i->layer.value < j->layer.value : si < sj;
+        case SortKey::Text:
+            return text(i->text, j->text) < 0;
+        case SortKey::TextWithoutTags:
+            return text(stripped.at(i->id), stripped.at(j->id)) < 0;
         }
         return false;
     };

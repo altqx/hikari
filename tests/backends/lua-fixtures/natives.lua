@@ -61,6 +61,19 @@ aegisub.register_macro("Lfs", "", function(subs)
     table.sort(names)
     show(table.concat(names, " "))
     show(lfs.attributes(dir .. "/missing", "mode"))
+    local moved, why = lfs.chdir(dir .. "/missing")
+    show(select('#', lfs.chdir(dir .. "/missing")), moved, type(why))
+    local ok, err = pcall(lfs.dir, dir .. "/missing")
+    show(ok, type(err))
     os.remove(dir .. "/a.txt")
     show(lfs.rmdir(dir))
+end)
+
+aegisub.register_macro("Util", "", function()
+    local util = require 'aegisub.util'
+    local t = { a = { 1 } }
+    t.self = t
+    t.a.back = t
+    local c = util.deep_copy(t)
+    show(c ~= t, c.self == c, c.a.back == c, c.a ~= t.a, c.a[1])
 end)

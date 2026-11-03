@@ -35,10 +35,10 @@ public:
         int flushIntervalMs = 5 * 60 * 1000;
         int firstFlushMs = 60 * 1000;
     };
-    static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://eu.i.posthog.com/batch/")); }
+    static QUrl defaultEndpoint() { return QUrl(QStringLiteral("https://i.hikarisub.org/batch/")); }
     static QUrl whatIsSentUrl()
     {
-        return QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/help/what-is-sent"));
+        return QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent"));
     }
     // Empty when built without HIKARI_POSTHOG_KEY.
     static QString compiledKey();
@@ -112,7 +112,7 @@ public:
     static int frameBucket(double milliseconds);
     static QString osId();
     static QString archId();
-    // "FixMinorErrors" => "fix_minor_errors"; "" for an unknown dock.
+    // "Spellchecker" => "spellchecker"; "" for an unknown dock.
     static QString panelId(const QString &dock);
 
 signals:

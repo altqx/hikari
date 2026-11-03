@@ -1,0 +1,25 @@
+WEBVTT
+
+STYLE
+::cue(.Default) { color: #FFFFFF; font-family: "Arial"; background-color: transparent; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000; }
+::cue(.Thoughts) { color: #FFFFFF; font-family: "Arial"; font-style: italic; background-color: transparent; text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000; }
+::cue(.cffff00) { color: #FFFF00; }
+
+00:00:01.000 --> 00:00:03.500
+<c.Default>Good morning.</c>
+
+00:00:04.000 --> 00:00:06.200
+<c.Default>You're late <i>again</i>.</c>
+<c.Default>We start at eight.</c>
+
+00:00:07.000 --> 00:00:09.000
+<c.Thoughts>Why does he always say that?</c>
+
+00:00:08.500 --> 00:00:10.000
+<c.Default><b>Hurry</b> &amp; bring the &lt;notes&gt;!</c>
+
+00:00:11.000 --> 00:00:13.000
+<c.Default><u>Chapter one</u></c>
+
+00:00:15.000 --> 00:00:17.250
+<c.Default>Wrong Right, see you <c.cffff00>tomorrow</c>.</c>

@@ -414,8 +414,8 @@ icon("editor", "Line editor", ["editor.png"], ["video-context-menu", "settings-d
      rect(1.5, 2.5, 13, 11, 1) + stroke("M4 6.5h5M4 9.5h7") + accent(stroke("M11.5 5v3")), mirror=True)
 icon("script-properties", "ASS file properties", ["Assprops.png"], [SUBS, "script-properties", "settings-dialog"],
      page() + stroke("M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"), mirror=True)
-icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-tool", "select-lines", "misspell-replacer",
-                                                "grid-menu", "tab-menu"],
+icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-tool", "select-lines", "grid-menu",
+                                                "tab-menu"],
      stroke("M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z")
      + accent(dot(4.75, 7.5, 1), dot(6.75, 4.5, 1), dot(10, 4.5, 1)))
 CONVERT = stroke("M2.5 3.5h9M9.5 1.5l2 2-2 2")
@@ -631,7 +631,7 @@ icon("duplicate", "Copy", [], [LISTS],
 icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
      stroke("M2.5 4h11M6 4V2.5h4V4") + stroke("M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9")
      + stroke("M6.75 7v5M9.25 7v5"))
-icon("import", "Load", [], [LISTS, FILE],
+icon("import", "Load", [], [LISTS, "settings-dialog"],
      stroke("M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3")
      + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
 icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU, AUTOPANEL],
@@ -661,10 +661,6 @@ icon("reference", "Show subtitles preview", [], [GRIDMENU],
      page(True) + accent(rect(9.5, 11, 5, 3.5, 0.5), stroke("M10.75 11V9.75a1.25 1.25 0 0 1 2.5 0V11")))
 icon("extract-subtitles", "Load subtitles from an MKV file", [], [GRIDMENU],
      film(1.5, 1.5, 9, 7) + stroke("M2.5 11.5h5M2.5 14h3.5") + accent(stroke("M9.5 12.5h5M12.5 10.5l2 2-2 2")))
-icon("multireplace", "Fix minor errors", [], [SUBS, "misspell-replacer"],
-     stroke("M1.5 2.5h11M1.5 6h8M1.5 9.5h5")
-     + accent(stroke("M8.5 9h6M12.75 7.25L14.5 9l-1.75 1.75"), stroke("M14.5 13h-6M10.25 11.25L8.5 13l1.75 1.75")),
-     mirror=True)
 
 # Qt's antialiased 1-px lines draw sharp half a unit across, a whole unit down: the x crosses there.
 icon("close-video", "Unload video", [], [VIDEO], video_film() + accent(stroke("M10.5 11l4 4M14.5 11l-4 4")))
@@ -856,10 +852,10 @@ icon("split-wraps", "Split lines by wraps", [], [GRIDMENU],
 icon("select-visible", "Select all lines visible on video", [], [GRIDMENU],
      rect(1.5, 1.5, 13, 8, 1) + triangle(6.5, 3.5, 3, 4) + stroke("M5.5 12h9M5.5 14.5h6")
      + accent(frect(1.5, 11.25, 2.5, 1.5), frect(1.5, 13.75, 2.5, 1.5)), mirror=True)
-icon("paste-translation", "Paste translation text", [], [GRIDMENU, "original-panel"],
+icon("paste-translation", "Paste translation from a file…", [], [GRIDMENU, "original-panel"],
      stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h5M10.5 2.5h2a1 1 0 0 1 1 1v5") + rect(5.5, 1.5, 5, 2, 0.5)
      + stroke("M5.5 7.5h5M5.5 10h2.5") + accent(stroke("M10 10.5h4.5M12.25 10.5v4")))
-icon("translation-shift", "Dialogue shifting window", [], [GRIDMENU],
+icon("translation-shift", "Translation matching…", [], [GRIDMENU],
      ROWS3 + accent(stroke("M11.5 3v10M10 4.5l1.5-1.5L13 4.5M10 11.5l1.5 1.5 1.5-1.5")), mirror=True)
 icon("filter-off", "Turn off filtering", [], [GRIDMENU],
      stroke("M9.5 8.5l5-6h-13l5 6v5l1.5-.75") + cross_badge())
@@ -984,7 +980,7 @@ icon("preview-text", "Preview text", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + accent(letters("T", 4, 6)) + stroke("M9.5 6.5h2.5M9.5 9.5h2.5"), mirror=True)
 icon("resolution-from-video", "Use video resolution", [], ["script-properties", "script-resolution"],
      video_film() + accent(stroke("M14.5 10v4.5H10M14.5 14.5l-4-4")))
-icon("select-all", "Select all", [], ["choose-styles", "columns", SEARCH, "fix-minor-errors", "settings-import"],
+icon("select-all", "Select all", [], ["choose-styles", "columns", SEARCH, "settings-import"],
      stroke("M7.5 3.5h7M7.5 8h7M7.5 12.5h7") + accent(stroke("M1.5 3.5l1 1 2-2M1.5 8l1 1 2-2M1.5 12.5l1 1 2-2")),
      mirror=True)
 
@@ -1026,13 +1022,11 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "EX1 #448": ["export"],
     "PL4 #416": ["plugins", "plugin-install"],
     "PL6 #418": ["plugin-unverified"],
     "NE2 #424": ["node-editor"],
     "AI7 #435": ["ai-assistant", "ai-send"],
     "AI2 #430": ["review-keep", "checkpoint"],
-    "CX4 #580": ["paste-special"],
     "CX6 #582": ["tab-switch", "tab-close-others", "tab-close-right"],
 }.items():
     for role in roles:

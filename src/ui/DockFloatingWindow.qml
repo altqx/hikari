@@ -108,19 +108,19 @@ Item {
                        ? Qt.SizeFDiagCursor : Qt.SizeBDiagCursor
             return horizontal ? Qt.SizeHorCursor : Qt.SizeVerCursor
         }
-        onPressed: root.Window.window.startSystemResize(edges)
+        onPressed: mouse => Docking.startResize(root.Window.window, edges, mapToGlobal(mouse.x, mouse.y))
     }
     readonly property int corner: grip + 6
     ResizeEdge { objectName: "resizeLeft"; edges: Qt.LeftEdge; x: 0; y: root.corner; width: root.grip; height: root.height - 2 * root.corner }
     ResizeEdge { objectName: "resizeRight"; edges: Qt.RightEdge; x: root.width - root.grip; y: root.corner; width: root.grip; height: root.height - 2 * root.corner }
     ResizeEdge { objectName: "resizeTop"; edges: Qt.TopEdge; x: root.corner; y: 0; width: root.width - 2 * root.corner; height: root.grip }
     ResizeEdge { objectName: "resizeBottom"; edges: Qt.BottomEdge; x: root.corner; y: root.height - root.grip; width: root.width - 2 * root.corner; height: root.grip }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.corner; height: root.grip }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.grip; height: root.corner }
-    ResizeEdge { edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.corner; y: 0; width: root.corner; height: root.grip }
-    ResizeEdge { edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.grip; y: 0; width: root.grip; height: root.corner }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.grip; width: root.corner; height: root.grip }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.corner; width: root.grip; height: root.corner }
-    ResizeEdge { edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.corner; y: root.height - root.grip; width: root.corner; height: root.grip }
-    ResizeEdge { edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.grip; y: root.height - root.corner; width: root.grip; height: root.corner }
+    ResizeEdge { objectName: "resizeTopLeft"; edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.corner; height: root.grip }
+    ResizeEdge { objectName: "resizeTopLeft"; edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.grip; height: root.corner }
+    ResizeEdge { objectName: "resizeTopRight"; edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.corner; y: 0; width: root.corner; height: root.grip }
+    ResizeEdge { objectName: "resizeTopRight"; edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.grip; y: 0; width: root.grip; height: root.corner }
+    ResizeEdge { objectName: "resizeBottomLeft"; edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.grip; width: root.corner; height: root.grip }
+    ResizeEdge { objectName: "resizeBottomLeft"; edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.corner; width: root.grip; height: root.corner }
+    ResizeEdge { objectName: "resizeBottomRight"; edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.corner; y: root.height - root.grip; width: root.corner; height: root.grip }
+    ResizeEdge { objectName: "resizeBottomRight"; edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.grip; y: root.height - root.corner; width: root.grip; height: root.corner }
 }

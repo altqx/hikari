@@ -1,0 +1,2 @@
+hikari_add_gtest(hikari_minisign_tests SOURCES minisign_tests.cpp LIBRARIES hikari_minisign LABELS minisign)
+target_compile_definitions(hikari_minisign_tests PRIVATE HIKARI_MINISIGN_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")

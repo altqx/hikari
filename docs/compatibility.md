@@ -47,3 +47,9 @@ The [approved-departure ledger](compatibility-decisions.md) records the subseque
 In particular, the current `set_undo_point` and `register_filter` stubs, mutable validation behavior, late command rejection and truncated dialog button-ID arguments await their own named decisions. Do not silently substitute upstream Aegisub behavior. The unchanged-script commitment and explicit-departure review apply even when an upstream behavior appears preferable.
 
 Source evidence remains the [core inventory](https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md), [corrected data inventory](https://github.com/altqx/hikari/blob/1eea34cd5db8db276f2e71cdff3f43f345cefd5b/docs/research/data-inventory.md), [UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md) and [Lua-host research](https://github.com/altqx/hikari/blob/a99a2470e958437290de73dd2451ee57cc763336/docs/research/lua-automation-host.md). Their static findings guide fixture work; this accepted policy records no executed parity result.
+
+## Departures from legacy
+
+Legacy features the owner removed. Each entry names its card, the decision and what happens to the user's existing data.
+
+- **Fix minor errors** ([#608](https://github.com/altqx/hikari/issues/608), owner 2026-11-02). The panel, its Edit and View › Panels items and the `GLOBAL_MISSPELLS_REPLACER` command are gone; its hotkey id 5012 is retired and never reused. A saved layout, session or `[Hikari]` section that places the panel restores without it. A stored binding is dropped with a Log line. A `rules.toml` stays on disk untouched and unused, and the Log says so at each start; legacy's `Rules.txt` is no longer converted. Import legacy settings marks legacy's rules and the binding Retired.

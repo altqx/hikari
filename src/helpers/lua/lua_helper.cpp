@@ -4,6 +4,7 @@
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/core/text_projection.h"
+#include "hikari/regex/regex.h"
 #include "lua_native.h"
 
 extern "C" {
@@ -21,9 +22,9 @@ extern "C" {
 #include <filesystem>
 #include <limits>
 #include <map>
-#include <regex>
 #include <system_error>
 #include <type_traits>
+#include <utility>
 #include <chrono>
 #include <unordered_map>
 #include <variant>
@@ -193,8 +194,9 @@ int addStackTrace(lua_State *L)
     std::string message = err;
     if (lua_gettop(L))
         lua_pop(L, 1);
-    static const std::regex location("^\\[string (.*)\\]:[0-9]+: ");
-    message = std::regex_replace(message, location, "", std::regex_constants::format_first_only);
+    static const hikari::regex::Pattern location =
+        *hikari::regex::Pattern::compile("^\\[string (.*)\\]:[0-9]+: ", hikari::regex::Syntax::EcmaScript);
+    message = location.replaceFirst(message, "");
 
     std::string frames;
     lua_Debug ar;
@@ -335,13 +337,14 @@ int include(lua_State *L)
         return lua_error(L);
     }
     noteLoaded(filepath);
-    if (!loadFile(L, filepath)) {
-        // MUST KILL: the message ends with the include's name, not the load error
-        lua_pushfstring(L, "Error loading Lua include \"%s\":\n%s", toUtf8(filepath).c_str(), filename.c_str());
-        return lua_error(L);
-    }
+    if (!loadFile(L, filepath))
+        return luaL_error(L, "Error loading Lua include \"%s\":\n%s", filename.c_str(), luaL_checkstring(L, -1));
     const int before = lua_gettop(L) - 1;
-    lua_call(L, 0, LUA_MULTRET);
+    if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
+        if (lua_type(L, -1) != LUA_TSTRING)
+            return lua_error(L);
+        return luaL_error(L, "Error running Lua include \"%s\":\n%s", filename.c_str(), lua_tostring(L, -1));
+    }
     return lua_gettop(L) - before;
 }
 
@@ -720,6 +723,18 @@ void removeSink(lua_State *L)
 void installHostServices(lua_State *L);
 void installHikari(lua_State *L);
 
+// The TypesettingTools Aegisub release whose Lua API the host matches; build is that release's own.
+void pushAegisubVersion(lua_State *L)
+{
+    lua_createtable(L, 0, 5);
+    lua_pushstring(L, "3.5.1");
+    lua_setfield(L, -2, "string");
+    for (const auto &[key, value] : {std::pair{"major", 3}, {"minor", 5}, {"patch", 1}, {"build", 9914}}) {
+        lua_pushinteger(L, value);
+        lua_setfield(L, -2, key);
+    }
+}
+
 void installAegisub(lua_State *L)
 {
     lua_createtable(L, 0, 24);
@@ -733,6 +748,8 @@ void installAegisub(lua_State *L)
     lua_setfield(L, -2, "gettext");
     lua_pushinteger(L, 4);
     lua_setfield(L, -2, "lua_automation_version");
+    pushAegisubVersion(L);
+    lua_setfield(L, -2, "version");
     installHostServices(L);
     installHikari(L);
     lua_setglobal(L, "aegisub");
@@ -780,7 +797,7 @@ int moduleLoader(lua_State *L)
             continue;
         noteLoaded(fromUtf8(filename));
         if (!loadFile(L, fromUtf8(filename)))
-            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename.c_str(), checkString(L, 1).c_str());
+            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename.c_str(), luaL_checkstring(L, -1));
         break;
     }
     return lua_gettop(L) - pretop;
@@ -1941,8 +1958,10 @@ int frameGetPixel(lua_State *L)
     const unsigned char *p = framePixel(L, checkFrame(L));
     if (!p)
         return pushNil(L);
-    lua_pushnumber(L, p[2] * 65536 + p[1] * 256 + p[0]);
-    return 1;
+    lua_pushinteger(L, p[2]);
+    lua_pushinteger(L, p[1]);
+    lua_pushinteger(L, p[0]);
+    return 3;
 }
 
 int frameGetPixelFormatted(lua_State *L)
@@ -1954,6 +1973,15 @@ int frameGetPixelFormatted(lua_State *L)
     std::snprintf(text, sizeof text, "&H%02X%02X%02X&", p[0], p[1], p[2]);
     lua_pushstring(L, text);
     return 1;
+}
+
+int frameData(lua_State *L)
+{
+    auto *frame = checkFrame(L);
+    lua_pushlightuserdata(L, frame->data.data());
+    lua_pushinteger(L, static_cast<lua_Integer>(frame->width * 4));
+    lua_pushboolean(L, false);
+    return 3;
 }
 
 int frameCollect(lua_State *L)
@@ -1973,6 +2001,7 @@ int getFrame(lua_State *L)
                                            {"height", frameHeight},
                                            {"getPixel", frameGetPixel},
                                            {"getPixelFormatted", frameGetPixelFormatted},
+                                           {"data", frameData},
                                            {"__gc", frameCollect},
                                            {nullptr, nullptr}};
         luaL_register(L, nullptr, methods);
@@ -2067,7 +2096,7 @@ int projectProperties(lua_State *L)
     lua_createtable(L, 0, 14);
     for (const char *key : {"automation_scripts", "export_filters", "export_encoding", "style_storage"})
         setString(L, key, scriptInfoValue(key));
-    setNumber(L, "video_zoom", 1);
+    setNumber(L, "video_zoom", reply->numbers.empty() ? 1.0 : reply->numbers[0]);
     for (const char *key : {"ar_value", "scroll_position", "active_row", "ar_mode"})
         setString(L, key, scriptInfoValue(key));
     setNumber(L, "video_position", static_cast<double>(integerAt(*reply, 0)));

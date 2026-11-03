@@ -43,7 +43,7 @@ QQuickItem *itemNamed(QQuickItem *item, const QString &name)
     return nullptr;
 }
 
-const QUrl kHome(QStringLiteral("https://hikarisub.altqx.com/en/docs"));
+const QUrl kHome(QStringLiteral("https://hikarisub.org/en/docs"));
 
 }
 
@@ -135,7 +135,7 @@ private slots:
         }
         QCOMPARE(guide(GuideSurface::Window, QStringLiteral("about")), kHome);
         QCOMPARE(guide(GuideSurface::Panel, QStringLiteral("Grid")),
-                 QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/basics/grid")));
+                 QUrl(QStringLiteral("https://hikarisub.org/en/docs/basics/grid")));
     }
 
     void homeOpensTheGuidesHome()
@@ -196,7 +196,7 @@ private slots:
         qsizetype before = recorded::opened().size();
         QTest::keyClick(shown, Qt::Key_F1);
         QTRY_COMPARE(openedAfter(before),
-                     QUrl(QStringLiteral("https://hikarisub.altqx.com/en/docs/checking/grammar")));
+                     QUrl(QStringLiteral("https://hikarisub.org/en/docs/checking/grammar")));
         QVERIFY(QMetaObject::invokeMethod(tool, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
         before = recorded::opened().size();
         QTest::keyClick(shown, Qt::Key_F1);

@@ -27,6 +27,7 @@ class ShellController : public QObject {
     Q_PROPERTY(QString activeLineStyle READ activeLineStyle NOTIFY activeLineChanged)
     Q_PROPERTY(int activeLineNumber READ activeLineNumber NOTIFY activeLineChanged)
     Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
+    Q_PROPERTY(int selectedCount READ selectedCount NOTIFY activeLineChanged)
     // MUST KILL: hiddenColumns is a bitmask of legacy GRID_HIDE_* column bits
     Q_PROPERTY(int hiddenColumns READ hiddenColumns WRITE setHiddenColumns NOTIFY hiddenColumnsChanged)
     Q_PROPERTY(bool autoHideColumns READ autoHideColumns WRITE setAutoHideColumns NOTIFY autoHideColumnsChanged)
@@ -72,6 +73,7 @@ public:
     QString activeLineStyle() const { return m_activeStyle; }
     int activeLineNumber() const { return m_activeNumber; }
     QString selectionStatus() const { return m_selectionStatus; }
+    int selectedCount() const { return static_cast<int>(m_selectedCount); }
     QString statusText() const { return m_statusText; }
     void setStatusText(const QString &text)
     {

@@ -1,4 +1,5 @@
 #include "hikari/api/schema.h"
+#include "hikari/regex/regex.h"
 
 #include <algorithm>
 #include <array>
@@ -39,6 +40,17 @@ bool hasType(std::string_view type, const Json &value)
 std::size_t codePoints(const std::string &s)
 {
     return std::size_t(std::count_if(s.begin(), s.end(), [](char c) { return (static_cast<unsigned char>(c) & 0xC0) != 0x80; }));
+}
+
+std::expected<regex::Pattern, regex::CompileError> ecmaPattern(const std::string &pattern)
+{
+    return regex::Pattern::compile(pattern, regex::Syntax::EcmaScript);
+}
+
+bool matches(const std::string &pattern, const std::string &value)
+{
+    const auto p = ecmaPattern(pattern);
+    return p && p->search(value);
 }
 
 std::string escapePointer(std::string_view key)
@@ -101,6 +113,8 @@ public:
                 return SchemaFailure{path, "shorter than " + m->dump() + " characters"};
             if (const Json *m = schema.find("maxLength"); m && length > std::size_t(m->asInt()))
                 return SchemaFailure{path, "longer than " + m->dump() + " characters"};
+            if (const Json *p = schema.find("pattern"); p && !matches(p->asString(), value.asString()))
+                return SchemaFailure{path, "does not match " + p->dump()};
         }
         if (value.isArray()) {
             const auto &items = value.asArray();
@@ -226,6 +240,9 @@ std::optional<std::string> checkNode(const Json &schema, const Json &defs, const
         } else if (m.key == "minLength" || m.key == "maxLength" || m.key == "minItems" || m.key == "maxItems") {
             if (!isCount(v))
                 return at + ": not a count";
+        } else if (m.key == "pattern") {
+            if (!v.isString() || !ecmaPattern(v.asString()))
+                return at + ": not a regular expression";
         } else if (m.key == "required") {
             if (!v.isArray() || !std::all_of(v.asArray().begin(), v.asArray().end(), [](const Json &k) { return k.isString(); }))
                 return at + ": not an array of names";

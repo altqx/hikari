@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QQuickWindow>
+#include <QRect>
 #include <QSize>
 #include <QtQml/qqmlregistration.h>
 
@@ -31,6 +32,9 @@ namespace dockchrome {
 inline constexpr int kHeaderHeight = 35;
 inline constexpr int kTabGap = 12;
 inline constexpr int kResizeGrip = 4;
+QRect resizedFrom(const QRect &from, Qt::Edges edges, QPoint delta, QSize minimum);
+// false refuses every window system resize, so the engine resizes.
+void overrideSystemResize(std::optional<bool> allowed);
 // 0 on X11 without a compositing manager, where the transparent margin would come out black.
 int floatingShadow();
 bool windowSystemComposites();
@@ -47,7 +51,6 @@ class Docking : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    Q_PROPERTY(bool systemMove READ systemMove NOTIFY systemMoveChanged FINAL)
     Q_PROPERTY(int floatingShadow READ floatingShadow CONSTANT FINAL)
     Q_PROPERTY(int resizeGrip READ resizeGrip CONSTANT FINAL)
     Q_PROPERTY(int headerRevision READ headerRevision NOTIFY headersChanged FINAL)
@@ -56,10 +59,6 @@ class Docking : public QObject {
 public:
     explicit Docking(QObject *parent = nullptr);
 
-    static bool platformUsesSystemMove(QStringView platformName);
-    static bool platformUsesSystemMove();
-    bool systemMove() const { return m_systemMove; }
-    void setSystemMove(bool on);
     static int floatingShadow() { return dockchrome::floatingShadow(); }
     static int resizeGrip() { return dockchrome::kResizeGrip; }
     int headerRevision() const { return m_revision; }
@@ -94,13 +93,14 @@ public:
     Q_INVOKABLE int tabCount(const QString &uniqueName) const;
     Q_INVOKABLE bool moveTab(const QString &uniqueName, int step);
     Q_INVOKABLE bool startSystemMove(QQuickItem *from);
+    // The window system's resize, else the engine's until the button is released.
+    Q_INVOKABLE void startResize(QWindow *window, int edges, QPointF globalPressPosition);
     // KDDW's main window closes every panel on QEvent::Close before the window's own handler runs.
     Q_INVOKABLE void guardClose(QQuickWindow *window, const QJSValue &admit);
     Q_INVOKABLE void requestKeyboardContextMenu();
 
 signals:
     void headersChanged();
-    void systemMoveChanged();
     void systemMoveRequested(QWindow *window);
     void menuRequested(const QString &uniqueName, QQuickItem *anchor);
     void openMenuChanged();
@@ -113,7 +113,6 @@ private:
     };
     QHash<QString, Header> m_headers;
     int m_revision = 0;
-    bool m_systemMove = platformUsesSystemMove();
     QString m_openMenu;
     int m_windowTitleRevision = 0;
 };

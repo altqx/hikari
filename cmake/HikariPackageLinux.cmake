@@ -28,6 +28,6 @@ add_custom_target(hikari_linux_packages
         --build-dir "${CMAKE_BINARY_DIR}" --version "${HIKARI_PACKAGE_VERSION}"
         --out "${CMAKE_BINARY_DIR}/dist" --tools "${HIKARI_PACKAGE_TOOLS_DIR}"
         --formats "${HIKARI_PACKAGE_FORMATS}" ${_hikari_package_extra}
-    DEPENDS hikarisub hikari_media_helper hikari_lua_helper hikari_automation_stage
+    DEPENDS hikarisub hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage
     USES_TERMINAL VERBATIM
     COMMENT "Building the Linux packages of HikariSub ${HIKARI_PACKAGE_VERSION}")

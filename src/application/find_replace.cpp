@@ -18,7 +18,7 @@ namespace {
 
 using Settings = FindReplaceSettings;
 using Field = FindReplaceSettings::Field;
-using Tab = FindReplaceSettings::Tab;
+using Scope = FindReplaceSettings::Scope;
 
 // FIND_REPLACE_OPTIONS bits, as HikariSub legacy stores them.
 enum : int {
@@ -319,6 +319,11 @@ std::optional<std::size_t> assEventsStart(std::u16string_view text)
     return result;
 }
 
+FindReplaceSettings::Lines linesOf(const FindReplaceSettings &w)
+{
+    return w.scope == Scope::Document ? w.lines : FindReplaceSettings::Lines::All;
+}
+
 // LF to CR LF; a CR LF already there keeps its one CR.
 std::u16string crlf(std::u16string_view text)
 {
@@ -333,14 +338,15 @@ std::u16string crlf(std::u16string_view text)
 
 }
 
-namespace {
-
-void readOptions(Settings &s, int options)
+FindReplaceSettings findReplaceFromOptions(int options)
 {
+    Settings s;
     s.matchCase = options & kCaseSensitive;
     s.regex = options & kRegEx;
-    s.startOfText = options & kStartOfText;
-    s.endOfText = options & kEndOfText;
+    if (options & kStartOfText)
+        s.matchAt = Settings::MatchAt::Start;
+    if (options & kEndOfText)
+        s.matchAt = Settings::MatchAt::End;
     if (options & kInFieldText)
         s.field = Field::Text;
     if (options & kInFieldStyle)
@@ -356,69 +362,49 @@ void readOptions(Settings &s, int options)
     if (options & kInLinesFromSelection)
         s.lines = Settings::Lines::FromSelection;
     s.includeComments = options & kSeekInComments;
-    s.skipTags = options & kSeekOnlyInText;
-    s.skipText = options & kSeekOnlyInTags;
-}
-
-}
-
-FindReplaceSettings findReplaceFromOptions(int options)
-{
-    Settings s;
-    s.field = Field::Text;
-    s.lines = Settings::Lines::All;
-    readOptions(s, options);
-    s.subfolders = options & kSearchHiddenFolders;
-    s.hiddenFolders = false;
+    if (options & kSeekOnlyInTags)
+        s.inText = Settings::InText::InsideTags;
+    if (options & kSeekOnlyInText)
+        s.inText = Settings::InText::OutsideTags;
+    s.subfolders = options & kSearchSubfolders;
+    s.hiddenFolders = options & kSearchHiddenFolders;
     return s;
 }
 
-FindReplaceSettings findReplaceSetValues(int options, const FindReplaceSettings &current)
+int findReplaceOptions(const FindReplaceSettings &s)
 {
-    Settings s = current;
-    s.field = Field::Text;
-    s.lines = Settings::Lines::None;
-    readOptions(s, options);
-    return s;
-}
-
-int findReplaceOptions(const FindReplaceSettings &s, int previous)
-{
-    const bool files = s.tab == Tab::FindInFiles;
-    int options = files ? (previous >> 9) << 9 : 0;
+    int options = 0;
     if (s.matchCase)
         options |= kCaseSensitive;
     if (s.regex)
         options |= kRegEx;
-    if (s.startOfText)
-        options |= kStartOfText;
-    if (s.endOfText)
-        options |= kEndOfText;
+    switch (s.matchAt) {
+    case Settings::MatchAt::Start: options |= kStartOfText; break;
+    case Settings::MatchAt::End: options |= kEndOfText; break;
+    case Settings::MatchAt::Anywhere: break;
+    }
     switch (s.field) {
     case Field::Text: options |= kInFieldText; break;
     case Field::Style: options |= kInFieldStyle; break;
     case Field::Actor: options |= kInFieldActor; break;
     case Field::Effect: options |= kInFieldEffect; break;
     }
-    if (!files) {
-        switch (s.lines) {
-        case Settings::Lines::All: options |= kInLinesAll; break;
-        case Settings::Lines::Selected: options |= kInLinesSelected; break;
-        case Settings::Lines::FromSelection: options |= kInLinesFromSelection; break;
-        case Settings::Lines::None: break;
-        }
-    } else {
-        if (s.subfolders)
-            options |= kSearchSubfolders;
-        if (s.hiddenFolders)
-            options |= kSearchHiddenFolders;
+    switch (s.lines) {
+    case Settings::Lines::All: options |= kInLinesAll; break;
+    case Settings::Lines::Selected: options |= kInLinesSelected; break;
+    case Settings::Lines::FromSelection: options |= kInLinesFromSelection; break;
     }
+    if (s.subfolders)
+        options |= kSearchSubfolders;
+    if (s.hiddenFolders)
+        options |= kSearchHiddenFolders;
     if (s.includeComments)
         options |= kSeekInComments;
-    if (s.skipTags)
-        options |= kSeekOnlyInText;
-    if (s.skipText)
-        options |= kSeekOnlyInTags;
+    switch (s.inText) {
+    case Settings::InText::OutsideTags: options |= kSeekOnlyInText; break;
+    case Settings::InText::InsideTags: options |= kSeekOnlyInTags; break;
+    case Settings::InText::All: break;
+    }
     return options;
 }
 
@@ -499,12 +485,15 @@ bool FindReplace::compile(std::u16string_view pattern)
     if (!m_matchCase)
         flags |= core::LegacyRegex::IgnoreCase;
     m_regex.emplace();
+    m_patternError.clear();
     if (m_regex->compile(pattern, flags))
         return true;
-    m_host.logLine({FindLog::Kind::InvalidRegex,
-                    replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(pattern)), u8"%2",
-                             u8(m_regex->errorMessage())),
-                    u8(pattern), u8(m_regex->errorMessage())});
+    m_patternError = m_regex->errorMessage();
+    if (!m_quiet)
+        m_host.logLine({FindLog::Kind::InvalidRegex,
+                        replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(pattern)), u8"%2",
+                                 u8(m_patternError)),
+                        u8(pattern), u8(m_patternError)});
     m_regex.reset();
     return false;
 }
@@ -514,7 +503,7 @@ bool FindReplace::search(std::u16string_view text, int &start, int &length) cons
     if (!m_regex)
         return false;
     if (!m_regex->matches(text)) {
-        if (const auto error = m_regex->matchError(); !error.empty())
+        if (const auto error = m_regex->matchError(); !error.empty() && !m_quiet)
             m_host.logLine({FindLog::Kind::MatchError, u8"Failed to find match for regular expression: " + u8(error), u8(error), {}});
         return false;
     }
@@ -538,18 +527,19 @@ int FindReplace::regexReplace(std::u16string &text, std::u16string_view replacem
 
 bool FindReplace::updateValues(const FindReplaceSettings &w)
 {
+    const Settings::Lines lines = linesOf(w);
     m_field = w.field;
     m_matchCase = w.matchCase;
     m_regEx = w.regex;
-    m_startLine = w.startOfText;
-    m_endLine = w.endOfText;
+    m_startLine = w.matchAt == Settings::MatchAt::Start;
+    m_endLine = w.matchAt == Settings::MatchAt::End;
     m_skipComments = !w.includeComments;
-    m_onlyText = w.skipTags;
-    m_onlyOption = w.skipTags || w.skipText;
-    m_allLines = w.tab != Tab::FindInFiles && w.lines == Settings::Lines::All;
-    m_selectedLines = w.tab != Tab::FindInFiles && w.lines == Settings::Lines::Selected;
+    m_onlyText = w.inText == Settings::InText::OutsideTags;
+    m_onlyOption = w.inText != Settings::InText::All;
+    m_allLines = lines == Settings::Lines::All;
+    m_selectedLines = lines == Settings::Lines::Selected;
     m_findString = u16(w.find);
-    m_replaceString = w.tab == Tab::Find ? std::u16string() : u16(w.replace);
+    m_replaceString = w.replaceShown ? u16(w.replace) : std::u16string();
     if (m_startLine && m_regEx)
         m_findString = u"^" + m_findString;
     if (m_endLine && m_regEx) {
@@ -657,13 +647,13 @@ bool FindReplace::keepFinding(std::u16string_view text, int textPos) const
 void FindReplace::addRecent(const FindReplaceSettings &window)
 {
     m_recent.finds = addRecentSelection(std::move(m_recent.finds), window.find);
-    if (window.tab != Tab::Find)
+    if (window.replaceShown)
         m_recent.replacements = addRecentSelection(std::move(m_recent.replacements), window.replace);
-    if (window.tab == Tab::FindInFiles) {
+    if (window.scope == Scope::Folder) {
         m_recent.filters = addRecentSelection(std::move(m_recent.filters), window.filters);
         m_recent.paths = addRecentSelection(std::move(m_recent.paths), window.folder);
     }
-    m_host.recentAdded(window.tab);
+    m_host.recentAdded(window);
 }
 
 void FindReplace::reset()
@@ -694,7 +684,8 @@ void FindReplace::findNext()
 
 void FindReplace::runFind(bool withWindow, Found done)
 {
-    if (withWindow && m_window.tab == Tab::FindInFiles)
+    m_wasResetToStart = false;
+    if (withWindow && m_window.scope == Scope::Folder)
         return done(false);
     const auto tab = m_host.current();
     if (!tab || !tab->session)
@@ -730,6 +721,123 @@ void FindReplace::seekFromStart(DocumentId document, bool withWindow, Found done
     });
 }
 
+std::optional<FindReplace::Span> FindReplace::nextIn(std::u16string_view text, int from) const
+{
+    if (!(m_startLine || m_endLine) && (m_findString.empty() || text.empty())) {
+        if (text.empty() && m_findString.empty())
+            return Span{0, 0};
+        return std::nullopt;
+    }
+    if (m_regEx) {
+        int start = 0, length = 0;
+        if (!search(mid(text, static_cast<std::size_t>(from)), start, length))
+            return std::nullopt;
+        return Span{start + from, length};
+    }
+    const std::u16string ltext = m_matchCase ? std::u16string(text) : lower(text);
+    const std::u16string lfind = m_matchCase ? m_findString : lower(m_findString);
+    int position = -1;
+    if (m_startLine && (ltext.starts_with(lfind) || lfind.empty()))
+        from = 0;
+    // MUST KILL: with Beginning of text the plain search below runs too
+    if (m_endLine) {
+        if (ltext.ends_with(lfind) || lfind.empty())
+            position = static_cast<int>(text.size()) - static_cast<int>(lfind.size());
+    } else {
+        const auto at = ltext.find(lfind, static_cast<std::size_t>(from));
+        position = at == npos ? -1 : static_cast<int>(at);
+    }
+    if (position == -1)
+        return std::nullopt;
+    return Span{position, static_cast<int>(lfind.size())};
+}
+
+bool FindReplace::eligible(const EditSession &session, const core::LineRecord &line) const
+{
+    if (line.visibility == core::LineVisibility::Hidden || (m_skipComments && line.comment))
+        return false;
+    const bool styles = !m_stylesAsText.empty();
+    return (!styles && !m_selectedLines) || (styles && m_stylesAsText.find(u"," + u16(line.style) + u",") != npos) ||
+           (m_selectedLines && session.selection().selected.contains(line.id));
+}
+
+std::vector<FindReplace::Place> FindReplace::places(const EditSession &session) const
+{
+    std::vector<Place> out;
+    const bool tl = translationMode(session);
+    const auto lines = session.document().lines();
+    const int first = firstSelection(session);
+    for (int row = !m_allLines && first != -1 ? first : 0; row < static_cast<int>(lines.size()); ++row) {
+        const core::LineRecord &line = *lines[static_cast<std::size_t>(row)];
+        if (!eligible(session, line))
+            continue;
+        const std::u16string text = element(line, tl);
+        for (int from = 0;;) {
+            const auto span = nextIn(text, from);
+            if (!span || (m_onlyOption && !keepFinding(text, span->position)))
+                break;
+            out.push_back({row, *span});
+            const int end = span->position + std::max(span->length, 1);
+            if (end > static_cast<int>(text.size()) || (span->length > 0 && end == static_cast<int>(text.size())) ||
+                m_startLine)
+                break;
+            from = end;
+        }
+    }
+    return out;
+}
+
+std::optional<FindReplace::Place> FindReplace::currentPlace(DocumentId document, const EditSession &session) const
+{
+    if (m_matchDocument != document || !m_matchLine || m_findstart < 0 || m_findString != m_oldfind)
+        return std::nullopt;
+    const auto lines = session.document().lines();
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        if (lines[i]->id == *m_matchLine)
+            return Place{static_cast<int>(i), {m_findstart, m_findend - m_findstart}};
+    return std::nullopt;
+}
+
+void FindReplace::select(DocumentId document, const EditSession &session, int row, const std::u16string &text, Span span)
+{
+    const core::LineRecord &line = *session.document().lines()[static_cast<std::size_t>(row)];
+    const bool tl = translationMode(session);
+    m_linePosition = row;
+    m_textPosition = span.position + span.length;
+    m_findstart = span.position;
+    m_findend = m_textPosition;
+    m_lastActive = m_reprow = row;
+    m_matchValid = true;
+    m_matchDocument = document;
+    m_matchLine = line.id;
+    m_matchText = text;
+    int role = -1, start = m_findstart, end = m_findend;
+    if (m_field == Field::Text) {
+        const auto newline = text.find(u'\n');
+        if (tl && newline != npos) {
+            const int n = static_cast<int>(newline);
+            if (span.position > n) {
+                role = 1;
+                start = span.position - n - 1;
+                end = m_findend - n - 1;
+            } else {
+                role = 0;
+            }
+        } else {
+            role = 1;
+        }
+    } else if (m_field == Field::Actor) {
+        role = 2;
+    } else if (m_field == Field::Effect) {
+        role = 3;
+    }
+    if (m_textPosition >= static_cast<int>(text.size()) || m_startLine) {
+        ++m_linePosition;
+        m_textPosition = 0;
+    }
+    m_host.showLine(document, line.id, m_selectedLines, role, start, end);
+}
+
 void FindReplace::seekLines(DocumentId document, bool withWindow, Found done)
 {
     // The editing target may have changed while a question was open.
@@ -737,102 +845,18 @@ void FindReplace::seekLines(DocumentId document, bool withWindow, Found done)
     if (!tab || tab->id != document || !tab->session)
         return done(false);
     EditSession &session = *tab->session;
-    const bool styles = !m_stylesAsText.empty();
     const bool tl = translationMode(session);
     const auto lines = session.document().lines();
     const int count = static_cast<int>(lines.size());
     while (m_linePosition < count) {
         const core::LineRecord &line = *lines[static_cast<std::size_t>(m_linePosition)];
-        if (line.visibility == core::LineVisibility::Hidden || (m_skipComments && line.comment)) {
-            ++m_linePosition;
-            m_textPosition = 0;
-            continue;
-        }
-        const bool eligible = (!styles && !m_selectedLines) ||
-                              (styles && m_stylesAsText.find(u"," + u16(line.style) + u",") != npos) ||
-                              (m_selectedLines && session.selection().selected.contains(line.id));
-        if (!eligible) {
-            m_textPosition = 0;
-            ++m_linePosition;
-            continue;
-        }
-        const std::u16string txt = element(line, tl);
-        int foundPosition = -1;
-        int foundLength = 0;
-        if (!(m_startLine || m_endLine) && (m_findString.empty() || txt.empty())) {
-            if (txt.empty() && m_findString.empty()) {
-                foundPosition = 0;
-                foundLength = 0;
-            } else {
-                m_textPosition = 0;
-                ++m_linePosition;
-                continue;
+        if (eligible(session, line)) {
+            const std::u16string txt = element(line, tl);
+            const auto span = nextIn(txt, m_textPosition);
+            if (span && (!m_onlyOption || keepFinding(txt, span->position))) {
+                select(document, session, m_linePosition, txt, *span);
+                return endFind(withWindow, true, done);
             }
-        } else if (m_regEx) {
-            int start = 0, length = 0;
-            if (search(mid(txt, static_cast<std::size_t>(m_textPosition)), start, length)) {
-                foundPosition = start + m_textPosition;
-                foundLength = length;
-            } else {
-                m_textPosition = 0;
-                ++m_linePosition;
-                continue;
-            }
-        } else {
-            const std::u16string ltext = m_matchCase ? txt : lower(txt);
-            const std::u16string lfind = m_matchCase ? m_findString : lower(m_findString);
-            if (m_startLine && (ltext.starts_with(lfind) || lfind.empty())) {
-                foundPosition = 0;
-                m_textPosition = 0;
-            }
-            // MUST KILL: with Beginning of text the plain search below runs too
-            if (m_endLine) {
-                if (ltext.ends_with(lfind) || lfind.empty()) {
-                    foundPosition = static_cast<int>(txt.size()) - static_cast<int>(lfind.size());
-                    m_textPosition = 0;
-                }
-            } else {
-                const auto at = ltext.find(lfind, static_cast<std::size_t>(m_textPosition));
-                foundPosition = at == npos ? -1 : static_cast<int>(at);
-            }
-            foundLength = static_cast<int>(lfind.size());
-        }
-        if (foundPosition != -1 && (!m_onlyOption || keepFinding(txt, foundPosition))) {
-            m_textPosition = foundPosition + foundLength;
-            m_findstart = foundPosition;
-            m_findend = m_textPosition;
-            m_lastActive = m_reprow = m_linePosition;
-            m_matchValid = true;
-            m_matchDocument = document;
-            m_matchLine = line.id;
-            m_matchText = txt;
-            int role = -1, start = m_findstart, end = m_findend;
-            if (m_field == Field::Text) {
-                const auto newline = txt.find(u'\n');
-                if (tl && newline != npos) {
-                    const int n = static_cast<int>(newline);
-                    if (foundPosition > n) {
-                        role = 1;
-                        start = foundPosition - n - 1;
-                        end = m_findend - n - 1;
-                    } else {
-                        role = 0;
-                    }
-                } else {
-                    role = 1;
-                }
-            } else if (m_field == Field::Actor) {
-                role = 2;
-            } else if (m_field == Field::Effect) {
-                role = 3;
-            }
-            const core::LineId id = line.id;
-            if (m_textPosition >= static_cast<int>(txt.size()) || m_startLine) {
-                ++m_linePosition;
-                m_textPosition = 0;
-            }
-            m_host.showLine(document, id, m_selectedLines, role, start, end);
-            return endFind(withWindow, true, done);
         }
         m_textPosition = 0;
         ++m_linePosition;
@@ -840,21 +864,102 @@ void FindReplace::seekLines(DocumentId document, bool withWindow, Found done)
     m_linePosition = 0;
     m_fromstart = true;
     if (!m_wasResetToStart) {
-        ask({FindQuestion::Kind::Wrap, u8"Reached end. Search from the beginning?", {}, u8"Confirmation"},
-            [this, document, withWindow, done](FindAnswer answer) {
-                if (answer == FindAnswer::Yes) {
-                    m_wasResetToStart = true;
-                    return seekFromStart(document, withWindow, done);
-                }
-                endFind(withWindow, false, done);
-            });
-        return;
+        m_wasResetToStart = true;
+        return seekFromStart(document, withWindow, std::move(done));
     }
+    notFound();
+    endFind(withWindow, false, done);
+}
+
+void FindReplace::notFound()
+{
     const std::u8string phrase = u8(m_findString);
     tell({FindQuestion::Kind::Message, u8"Could not find the specified phrase \"" + phrase + u8"\".", phrase,
           u8"Confirmation", FindQuestion::Info::NotFound});
-    m_wasResetToStart = false;
-    endFind(withWindow, false, done);
+}
+
+void FindReplace::findPrevious(const FindReplaceSettings &window)
+{
+    if (!begin(&window))
+        return;
+    if (m_window.scope == Scope::Folder)
+        return finish();
+    const auto tab = m_host.current();
+    if (!tab || !tab->session || updateValues(m_window))
+        return finish();
+    checkStyles(tab->id, [this, id = tab->id](bool cancelled) {
+        if (cancelled)
+            return finish();
+        seekBack(id, [this](bool found) { endFind(true, found, [this](bool) { finish(); }); });
+    });
+}
+
+void FindReplace::findPrevious()
+{
+    if (!begin(nullptr))
+        return;
+    const auto tab = m_host.current();
+    if (m_findString.empty() || !tab || !tab->session)
+        return finish();
+    seekBack(tab->id, [this](bool found) { endFind(false, found, [this](bool) { finish(); }); });
+}
+
+void FindReplace::seekBack(DocumentId document, Found done)
+{
+    const auto tab = tabById(document);
+    if (!tab)
+        return done(false);
+    const EditSession &session = *tab->session;
+    const auto all = places(session);
+    if (all.empty()) {
+        notFound();
+        return done(false);
+    }
+    const auto here = currentPlace(document, session);
+    const Place anchor = here ? *here : Place{rowOf(session, session.selection().active), {}};
+    auto before = std::find_if(all.rbegin(), all.rend(), [&](const Place &p) {
+        return p.row < anchor.row || (p.row == anchor.row && p.span.position < anchor.span.position);
+    });
+    const Place &chosen = before != all.rend() ? *before : all.back();
+    const bool tl = translationMode(session);
+    const std::u16string text = element(*session.document().lines()[static_cast<std::size_t>(chosen.row)], tl);
+    m_oldfind = m_findString;
+    select(document, session, chosen.row, text, chosen.span);
+    done(true);
+}
+
+FindReplace::Count FindReplace::count(const FindReplaceSettings &window)
+{
+    Count out;
+    const auto tab = m_host.current();
+    if (!tab || !tab->session || window.scope == Scope::Folder)
+        return out;
+    FindReplace probe(m_host, m_fold);
+    probe.m_quiet = true;
+    if (probe.updateValues(window))
+        return out;
+    if (!window.styles.empty())
+        probe.m_stylesAsText = u"," + u16(window.styles) + u",";
+    const auto all = probe.places(*tab->session);
+    out.total = static_cast<int>(all.size());
+    if (probe.m_findString != m_oldfind)
+        return out;
+    if (const auto here = currentPlace(tab->id, *tab->session)) {
+        const auto at = std::ranges::find_if(all, [&](const Place &p) {
+            return p.row == here->row && p.span.position == here->span.position;
+        });
+        if (at != all.end())
+            out.current = static_cast<int>(at - all.begin()) + 1;
+    }
+    return out;
+}
+
+std::u16string FindReplace::patternError(const FindReplaceSettings &window) const
+{
+    FindReplace probe(m_host, m_fold);
+    probe.m_quiet = true;
+    probe.updateValues(window);
+    return probe.m_patternError;
 }
 
 void FindReplace::endFind(bool withWindow, bool found, const Found &done)
@@ -993,7 +1098,7 @@ void FindReplace::findAllInCurrent(const FindReplaceSettings &window)
         const auto tab = tabById(id);
         if (cancelled || !tab || updateValues(m_window))
             return finish();
-        findAllInTab(*tab, m_window.lines == Settings::Lines::All, m_window.lines == Settings::Lines::Selected);
+        findAllInTab(*tab, linesOf(m_window) == Settings::Lines::All, linesOf(m_window) == Settings::Lines::Selected);
         m_resultsRegEx = m_regEx;
         m_resultsMatchCase = m_matchCase;
         m_resultsNeedPrefix = m_endLine && m_regEx && m_findString.empty();
@@ -1017,7 +1122,7 @@ void FindReplace::findInAllOpened(const FindReplaceSettings &window)
             return finish();
         for (const auto &tab : m_host.tabs())
             if (tab.session)
-                findAllInTab(tab, m_window.lines == Settings::Lines::All, m_window.lines == Settings::Lines::Selected);
+                findAllInTab(tab, linesOf(m_window) == Settings::Lines::All, linesOf(m_window) == Settings::Lines::Selected);
         m_resultsNeedPrefix = m_endLine && m_regEx && m_findString.empty();
         m_resultsRegEx = m_regEx;
         m_resultsMatchCase = m_matchCase;
@@ -1174,8 +1279,8 @@ void FindReplace::replace(const FindReplaceSettings &window)
 {
     if (!begin(&window))
         return;
-    if (window.tab != Tab::Replace) {
-        m_host.logLine({FindLog::Kind::OutsideReplaceTab, u8"Replace called outside the replace tab", {}, {}});
+    if (!window.replaceShown) {
+        m_host.logLine({FindLog::Kind::ReplaceHidden, u8"Replace called while the replace row is hidden", {}, {}});
         return finish();
     }
     const auto tab = m_host.current();
@@ -1247,7 +1352,7 @@ void FindReplace::replaceAll(const FindReplaceSettings &window)
 {
     if (!begin(&window))
         return;
-    if (window.tab != Tab::Replace)
+    if (!window.replaceShown)
         return finish();
     const auto tab = m_host.current();
     if (!tab || !tab->session || updateValues(m_window))
@@ -1257,7 +1362,7 @@ void FindReplace::replaceAll(const FindReplaceSettings &window)
         if (cancelled || !tab)
             return finish();
         const int all =
-            replaceAllInTab(*tab, m_window.lines == Settings::Lines::All, m_window.lines == Settings::Lines::Selected);
+            replaceAllInTab(*tab, linesOf(m_window) == Settings::Lines::All, linesOf(m_window) == Settings::Lines::Selected);
         const auto text = u8(number(all));
         tell({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace",
               FindQuestion::Info::Replaced});
@@ -1270,7 +1375,7 @@ void FindReplace::replaceInAllOpened(const FindReplaceSettings &window)
 {
     if (!begin(&window))
         return;
-    if (window.tab != Tab::Replace)
+    if (!window.replaceShown)
         return finish();
     const auto current = m_host.current();
     if (!current || !current->session)
@@ -1285,8 +1390,8 @@ void FindReplace::replaceInAllOpened(const FindReplaceSettings &window)
                 continue;
             if (updateValues(m_window))
                 return finish();
-            all += replaceAllInTab(tab, m_window.lines == Settings::Lines::All,
-                                   m_window.lines == Settings::Lines::Selected);
+            all += replaceAllInTab(tab, linesOf(m_window) == Settings::Lines::All,
+                                   linesOf(m_window) == Settings::Lines::Selected);
         }
         const auto text = u8(number(all));
         tell({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace",
@@ -1308,6 +1413,8 @@ void FindReplace::replaceInFiles(const FindReplaceSettings &window)
 {
     if (!begin(&window))
         return;
+    if (!window.replaceShown)
+        return finish();
     ask({FindQuestion::Kind::ConfirmFiles,
          u8"Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the "
          u8"'ReplaceBackup' folder.",

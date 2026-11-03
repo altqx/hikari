@@ -92,7 +92,7 @@ QStringList textStyleProblems(const QString &source)
             rules << QStringLiteral("spelling");
             break;
         }
-    if ((text.startsWith(QLatin1String("The ")) || text.startsWith(QLatin1String("the "))) && isLabel(text))
+    if (text.startsWith(QLatin1String("The ")) && isLabel(text))
         rules << QStringLiteral("leading-the");
     if (text.size() < 60 && text.trimmed().endsWith(u':'))
         rules << QStringLiteral("colon");
@@ -104,7 +104,7 @@ QStringList textStyleProblems(const QString &source)
     if (text.contains(please))
         rules << QStringLiteral("please");
     static const QRegularExpression word(QStringLiteral("[A-Za-z][\\w’'+.-]*"));
-    static const QRegularExpression startsAnew(QStringLiteral("([:.?!“\"(›>/-]|·)\\s*$"));
+    static const QRegularExpression startsAnew(QStringLiteral("([:.?!“\"(›>/-]|·)\\s*$|\n\\s*$"));
     QList<QRegularExpressionMatch> words;
     for (auto it = word.globalMatch(text); it.hasNext();)
         words.append(it.next());
@@ -114,7 +114,8 @@ QStringList textStyleProblems(const QString &source)
             QString bare = w;
             while (bare.endsWith(u'.'))
                 bare.chop(1);
-            if (w[0].isUpper() && w != w.toUpper() && !properNames().contains(bare) &&
+            const bool identifier = std::any_of(w.begin() + 1, w.end(), [](QChar c) { return c.isUpper(); });
+            if (w[0].isUpper() && w != w.toUpper() && !identifier && !properNames().contains(bare) &&
                 !text.left(words[i].capturedStart()).contains(startsAnew)) {
                 rules << QStringLiteral("title-case");
                 break;
@@ -172,6 +173,7 @@ TEST(TextStyle, FindsEachRule)
     EXPECT_FALSE(has("HikariSub is free software under the GNU General Public License, version 3.", "spelling"));
     EXPECT_TRUE(has("The starting time", "leading-the"));
     EXPECT_FALSE(has("The list keeps at least one tag.", "leading-the"));
+    EXPECT_FALSE(has("the file could not be read", "leading-the"));
     EXPECT_TRUE(has("Filtering mode:", "colon"));
     EXPECT_FALSE(has("Line %1: no end time", "colon"));
     EXPECT_TRUE(has("Video: ", "whitespace"));
@@ -183,6 +185,10 @@ TEST(TextStyle, FindsEachRule)
     EXPECT_FALSE(has("Saves %1 · Discards %2", "title-case"));
     EXPECT_FALSE(has("Show VSFilterMod tags", "title-case"));
     EXPECT_FALSE(has("Shift &times…", "title-case"));
+    EXPECT_FALSE(has("Styles used:\n%1\nStyles deleted:\n%2", "title-case"));
+    EXPECT_FALSE(has("Cannot change YCbCr matrix", "title-case"));
+    EXPECT_FALSE(has("Scale on X and Y axes", "title-case"));
+    EXPECT_TRUE(has("Completed Successfully, %1 %2.", "title-case"));
 }
 
 TEST(TextStyle, AllowListRowsNeedAReason)

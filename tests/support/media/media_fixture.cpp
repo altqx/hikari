@@ -187,7 +187,7 @@ int writeTimedSubtitles(const std::string &out, const std::string &kind)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|longaudio|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
     const std::string out = argv[1], kind = argv[2];
     av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
@@ -248,11 +248,12 @@ int main(int argc, char **argv)
         kHeight = 720;
     }
     const bool longVideo = kind == "long";
-    if (longVideo) {
+    const bool longAudio = kind == "longaudio";
+    if (longVideo || longAudio) {
         kWidth = 64;
         kHeight = 48;
     }
-    const int frames = longVideo ? 24000 : kind == "longgop" ? 300 : color ? 12 : 48;
+    const int frames = longVideo ? 24000 : longAudio ? 480 : kind == "longgop" ? 300 : color ? 12 : 48;
 
     AVFormatContext *fmt = nullptr;
     if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
@@ -272,7 +273,7 @@ int main(int argc, char **argv)
     if (codecId == AV_CODEC_ID_MPEG1VIDEO) // MPEG-1 has no 24000/1001 timebase in a stream
         enc->time_base = AVRational{1001, 24000};
     enc->max_b_frames = kind == "bframes" ? 2 : 0;
-    enc->bit_rate = longVideo ? 32'000 : 2'000'000;
+    enc->bit_rate = longVideo || longAudio ? 32'000 : 2'000'000;
     if (kind == "sar")
         enc->sample_aspect_ratio = AVRational{32, 27};
     if (untagged) {
@@ -297,7 +298,7 @@ int main(int argc, char **argv)
 
     AVCodecContext *aenc = nullptr;
     AVStream *as = nullptr, *as2 = nullptr, *ss = nullptr;
-    if (kind == "audio" || tracks || delayed) {
+    if (kind == "audio" || longAudio || tracks || delayed) {
         const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
         aenc = avcodec_alloc_context3(acodec);
         aenc->sample_rate = 48000;
@@ -409,7 +410,8 @@ int main(int argc, char **argv)
         a->sample_rate = 48000;
         a->nb_samples = 1024;
         av_frame_get_buffer(a, 0);
-        for (std::int64_t s = 0; s < 96000; s += 1024) {
+        const std::int64_t samplesTotal = longAudio ? std::int64_t{frames} * 2002 : 96000;
+        for (std::int64_t s = 0; s < samplesTotal; s += 1024) {
             av_frame_make_writable(a);
             auto *samples = reinterpret_cast<std::int16_t *>(a->data[0]);
             for (int k = 0; k < 1024; ++k) {

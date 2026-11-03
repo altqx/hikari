@@ -5,9 +5,11 @@ File > Recently opened subtitles > None
 File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
 File > Close [GLOBAL_CLOSE_PAGE]
 File > Open video… [GLOBAL_OPEN_VIDEO]
+File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Save [GLOBAL_SAVE_SUBS]
 File > Save all [GLOBAL_SAVE_ALL_SUBS]
 File > Save as… [GLOBAL_SAVE_SUBS_AS]
+File > Export as… [GLOBAL_EXPORT_SUBS_AS]
 File > Save translation [GLOBAL_SAVE_TRANSLATION]
 File > Save subtitles using the video name [GLOBAL_SAVE_WITH_VIDEO_NAME]
 File > Open auto save [GLOBAL_OPEN_AUTO_SAVE]
@@ -19,7 +21,6 @@ File > Last session > Save session to file [GLOBAL_SAVE_EXTERNAL_SESSION]
 File > Last session > Ask whether to load the last session at program startup
 File > Last session > Load last session after program start
 File > Settings [GLOBAL_SETTINGS]
-File > Import legacy settings...
 File > Exit
 Edit
 Edit > Undo [GLOBAL_UNDO]
@@ -31,6 +32,8 @@ Edit > Sort all lines > Styles [GLOBAL_SORT_ALL_BY_STYLE]
 Edit > Sort all lines > Actor [GLOBAL_SORT_ALL_BY_ACTOR]
 Edit > Sort all lines > Effect [GLOBAL_SORT_ALL_BY_EFFECT]
 Edit > Sort all lines > Layer [GLOBAL_SORT_ALL_BY_LAYER]
+Edit > Sort all lines > Text [GLOBAL_SORT_ALL_BY_TEXT]
+Edit > Sort all lines > Text without tags [GLOBAL_SORT_ALL_BY_TEXT_WITHOUT_TAGS]
 Edit > Sort selected lines >
 Edit > Sort selected lines > The starting time [GLOBAL_SORT_SELECTED_BY_START_TIMES]
 Edit > Sort selected lines > End time [GLOBAL_SORT_SELECTED_BY_END_TIMES]
@@ -38,13 +41,15 @@ Edit > Sort selected lines > Styles [GLOBAL_SORT_SELECTED_BY_STYLE]
 Edit > Sort selected lines > Actor [GLOBAL_SORT_SELECTED_BY_ACTOR]
 Edit > Sort selected lines > Effect [GLOBAL_SORT_SELECTED_BY_EFFECT]
 Edit > Sort selected lines > Layer [GLOBAL_SORT_SELECTED_BY_LAYER]
+Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
+Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
-Edit > Fix minor errors (experimental) [GLOBAL_MISSPELLS_REPLACER]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
-Edit > Find and replace [GLOBAL_FIND_REPLACE]
-Edit > Find [GLOBAL_SEARCH]
+Edit > Find… [GLOBAL_SEARCH]
+Edit > Replace… [GLOBAL_FIND_REPLACE]
 Edit > Find next [GLOBAL_FIND_NEXT]
+Edit > Find previous [GLOBAL_FIND_PREVIOUS]
 Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
@@ -58,6 +63,9 @@ Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
 Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
 Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
+Subtitles > Set FPS >
+Subtitles > Set FPS > Set new FPS… [GRID_SET_NEW_FPS]
+Subtitles > Set FPS > Set FPS from video [GRID_SET_FPS_FROM_VIDEO]
 Subtitles > Check spelling [GLOBAL_OPEN_SPELLCHECKER]
 Subtitles > Check karaoke [GLOBAL_CHECK_KARAOKE]
 Subtitles > Kanji timer… [GLOBAL_KANJI_TIMER]
@@ -71,6 +79,7 @@ Video > Open keyframes [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
 Video > Open dummy video [GLOBAL_OPEN_DUMMY_VIDEO]
+Video > Centre times within frames [GLOBAL_CENTER_TIMES_IN_FRAMES]
 Video > Insert start time from video [GLOBAL_SET_START_TIME]
 Video > Insert end time from video [GLOBAL_SET_END_TIME]
 Video > Shift by frames to video >
@@ -90,7 +99,7 @@ Video > Unload video
 Video > Streams >
 Video > Chapters >
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
-Video > Turn off video zoom [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
 Audio
 Audio > Open audio [GLOBAL_OPEN_AUDIO]
@@ -110,6 +119,7 @@ Automation > Rerun last macro
 Automation > Repeat last run [GLOBAL_AUTOMATION_REPEAT_LAST_RUN]
 Automation > Cancel macro
 Automation > Show panel
+Automation > Plugins… [GLOBAL_PLUGINS]
 Automation > -
 View
 View > Layout >
@@ -133,12 +143,11 @@ View > Panels > Grid >
 View > Panels > Reference >
 View > Panels > Shift times >
 View > Panels > Timing postprocessor >
-View > Panels > Search >
+View > Panels > Find >
 View > Panels > Automation >
 View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
-View > Panels > Fix minor errors >
 View > Panels > Template editor >
 View > Move panel…
 View > Restore the previous layout
