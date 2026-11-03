@@ -1,0 +1,44 @@
+diff --git a/include/bitlib/bit-containers/bit_vector.hpp b/include/bitlib/bit-containers/bit_vector.hpp
+index f971c49..03119a9 100644
+--- a/include/bitlib/bit-containers/bit_vector.hpp
++++ b/include/bitlib/bit-containers/bit_vector.hpp
+@@ -82,10 +82,10 @@ class bit_vector {
+         using size_type = std::size_t;
+         using difference_type = std::ptrdiff_t;
+         using reference = bit_reference<WordType>;
+-        using const_reference = const reference;
++        using const_reference = bit_reference<const WordType>;
+         using pointer = bit_pointer<WordType>;
+         using iterator = bit_iterator<typename std::vector<WordType>::iterator>;
+-        using const_iterator = bit_iterator<const typename std::vector<WordType>::const_iterator>;
++        using const_iterator = bit_iterator<typename std::vector<WordType>::const_iterator>;
+ 
+ 
+         /*
+@@ -137,7 +137,7 @@ class bit_vector {
+          * Element Access
+          */
+         constexpr reference operator[](size_type pos);
+-        constexpr reference operator[](size_type pos) const;
++        constexpr const_reference operator[](size_type pos) const;
+         constexpr reference at(size_type pos);
+         constexpr const_reference at(size_type pos) const;
+         constexpr reference front();
+@@ -252,7 +252,7 @@ constexpr bit_vector<WordType, Allocator>::bit_vector(const bit_vector<WordType,
+ template<class WordType, class Allocator>
+ constexpr bit_vector<WordType, Allocator>::bit_vector(std::initializer_list<bit_value> init, const Allocator& alloc)
+     : word_vector(alloc), length_(0) {
+-    for (const_reference b : init) {
++    for (const bit_value b : init) {
+         this->push_back(b);
+     }
+ }
+@@ -358,7 +358,7 @@ constexpr typename bit_vector<WordType, Allocator>::reference
+ bit_vector<WordType, Allocator>::operator[](size_type pos) {return begin()[pos];}
+ 
+ template<class WordType, class Allocator>
+-constexpr typename bit_vector<WordType, Allocator>::reference
++constexpr typename bit_vector<WordType, Allocator>::const_reference
+ bit_vector<WordType, Allocator>::operator[](size_type pos) const {return begin()[pos];}
+ 
+ template<class WordType, class Allocator>

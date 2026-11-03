@@ -78,7 +78,7 @@ void keepBlocks(const std::vector<const core::LineRecord *> &lines, std::map<std
 {
     std::optional<std::size_t> last;
     for (std::size_t i = 0; i < lines.size(); ++i) {
-        if (hideNow.begin()[i]) {
+        if (hideNow[i]) {
             if (hiddenAreLast)
                 last = i;
             continue;
