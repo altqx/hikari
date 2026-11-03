@@ -14737,10 +14737,6 @@ after the end time in milliseconds</source>
         <translation>렌더링 비용</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>영상 확대 해제</translation>
-    </message>
-    <message>
         <source>Exit full screen</source>
         <translation>전체 화면 종료</translation>
     </message>
@@ -14767,6 +14763,10 @@ after the end time in milliseconds</source>
     <message>
         <source>Change aspect ratio</source>
         <translation>가로 세로 비율 변경</translation>
+    </message>
+    <message>
+        <source>Reset zoom and pan</source>
+        <translation>확대/축소 및 이동 초기화</translation>
     </message>
     <message>
         <source>Unload video</source>

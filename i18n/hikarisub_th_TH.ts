@@ -14737,10 +14737,6 @@ after the end time in milliseconds</source>
         <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
-    </message>
-    <message>
         <source>Exit full screen</source>
         <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
@@ -14767,6 +14763,10 @@ after the end time in milliseconds</source>
     <message>
         <source>Change aspect ratio</source>
         <translation>เปลี่ยนอัตราส่วนภาพ</translation>
+    </message>
+    <message>
+        <source>Reset zoom and pan</source>
+        <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
     </message>
     <message>
         <source>Unload video</source>

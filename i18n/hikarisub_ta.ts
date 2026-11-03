@@ -14828,10 +14828,6 @@ after the end time in milliseconds</source>
         <translation>ரெண்டர் செலவு</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>வீடியோ பெரிதாக்கத்தை முடக்கு</translation>
-    </message>
-    <message>
         <source>Exit full screen</source>
         <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
     </message>
@@ -14858,6 +14854,10 @@ after the end time in milliseconds</source>
     <message>
         <source>Change aspect ratio</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்</translation>
+    </message>
+    <message>
+        <source>Reset zoom and pan</source>
+        <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
     </message>
     <message>
         <source>Unload video</source>

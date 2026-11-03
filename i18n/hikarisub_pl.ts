@@ -14919,10 +14919,6 @@ po czasie końcowym w milisekundach</translation>
         <translation>Koszt renderowania</translation>
     </message>
     <message>
-        <source>Turn off video zoom</source>
-        <translation>Wyłącz powiększenie wideo</translation>
-    </message>
-    <message>
         <source>Exit full screen</source>
         <translation>Wyłącz pełny ekran</translation>
     </message>
@@ -14949,6 +14945,10 @@ po czasie końcowym w milisekundach</translation>
     <message>
         <source>Change aspect ratio</source>
         <translation>Zmień proporcje obrazu</translation>
+    </message>
+    <message>
+        <source>Reset zoom and pan</source>
+        <translation>Resetuj powiększenie i przesunięcie</translation>
     </message>
     <message>
         <source>Unload video</source>
