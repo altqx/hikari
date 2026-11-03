@@ -1245,12 +1245,17 @@ DialogWindow {
                 enabled: tools.selected.length > 0
                 onTriggered: manager.moveSelected(tools.store, 3)
             }
-            MenuSeparator {}
-            Component.onCompleted: if (tools.store) removeItem(cleanItem)
             ShellMenuItem {
                 iconRole: "sort"
                 text: qsTr("Sort by name")
                 onTriggered: manager.sortList(tools.store)
+            }
+            Component.onCompleted: if (tools.store) {
+                removeItem(cleanItem)
+                removeItem(cleanSeparator)
+            }
+            MenuSeparator {
+                id: cleanSeparator
             }
             ShellMenuItem {
                 id: cleanItem

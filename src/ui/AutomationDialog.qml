@@ -243,7 +243,7 @@ DialogWindow {
             id: presetsMenu
             objectName: "dialogPresetsMenu"
             title: qsTr("Presets")
-            iconRole: "save-as"
+            iconRole: "dialog-memory"
             Instantiator {
                 model: window.controller.presets
                 delegate: ShellMenuItem {
@@ -265,6 +265,7 @@ DialogWindow {
                 text: qsTr("Save as preset…")
                 onTriggered: savePopover.openFor()
             }
+            MenuSeparator {}
             ShellMenu {
                 id: deleteMenu
                 objectName: "dialogDeletePresetMenu"
@@ -287,7 +288,7 @@ DialogWindow {
         MenuSeparator {}
         ShellMenuItem {
             objectName: "dialogReset"
-            iconRole: "refresh"
+            iconRole: "restore-default"
             text: qsTr("Reset to the script’s values")
             onTriggered: window.fill(window.controller.scriptValues())
         }
