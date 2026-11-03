@@ -163,10 +163,10 @@ void AlignToVideoController::found()
     auto *target = m_hooks.target();
     if (!video || !target)
         return stop(!video ? QStringLiteral("noVideo") : QStringLiteral("noLine"));
-    const auto aligned = application::alignActiveLine(*target, video->legacyTimebase(), first, last);
-    if (!aligned) {
-        const bool locked = aligned.error() == application::CommandRefusal::ReadOnly ||
-                            aligned.error() == application::CommandRefusal::Protected;
+    const auto done = application::alignActiveLine(*target, video->legacyTimebase(), first, last);
+    if (!done) {
+        const bool locked = done.error() == application::CommandRefusal::ReadOnly ||
+                            done.error() == application::CommandRefusal::Protected;
         return stop(locked ? QStringLiteral("readOnly") : QStringLiteral("noLine"));
     }
     m_hooks.refresh();
