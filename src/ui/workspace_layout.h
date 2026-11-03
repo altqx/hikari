@@ -31,6 +31,16 @@ struct WorkspaceArrangement {
     bool operator==(const WorkspaceArrangement &) const = default;
 };
 
+// Each shell window docks under names of its own in the engine; arrangements are stored with the first window's.
+struct ShellWindowNames {
+    int window = 0;
+
+    QString affinity() const;
+    QString engineName(const QString &name) const;
+    QByteArray toEngine(const QByteArray &payload) const;
+    QByteArray toStored(const QByteArray &payload) const;
+};
+
 class WorkspaceLayoutController : public QObject {
     Q_OBJECT
     QML_ELEMENT
@@ -60,6 +70,9 @@ public:
 
     explicit WorkspaceLayoutController(QString layoutFile = {}, QString savedLayoutsFile = {}, QObject *parent = nullptr);
 
+    void setShellWindow(int window) { m_names.window = window; }
+    const ShellWindowNames &names() const { return m_names; }
+
     Q_INVOKABLE void captureDefault();
     Q_INVOKABLE void buildsArrangement(const QString &name);
     Q_INVOKABLE bool restoreSaved();
@@ -72,6 +85,8 @@ public:
     Q_INVOKABLE void resumeMode(const QString &mode);
     void retranslate() { emit changed(); }
     void reservePresetNames(const QStringList &names);
+    void reloadSavedLayouts();
+    const QStringList &reservedPresetNames() const { return m_reservedNames; }
     Q_INVOKABLE bool resetCurrentLayout();
     Q_INVOKABLE bool saveLayoutAs(const QString &name);
     Q_INVOKABLE bool applySavedLayout(const QString &name);
@@ -120,6 +135,7 @@ signals:
     void menuHasFocusChanged();
     void modalOpenChanged();
     void savedLayoutsChanged();
+    void savedLayoutsWritten();
     void arrangementSwapped();
     void presetModeChosen(const QString &mode);
     void presetModeLeft(const QString &mode);
@@ -130,6 +146,8 @@ private:
     bool applySavedArrangement(const QString &name);
     void choseMode();
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
+    QByteArray serialiseWindow() const;
+    bool restoreWindow(const QByteArray &payload, int options) const;
     bool restoreSavedFile();
     bool buildPreset(const QString &name, bool inPlace);
     bool showArrangement(const WorkspaceArrangement &arrangement);
@@ -175,6 +193,7 @@ private:
     SavedLayoutsState savedLayoutsState() const;
     bool commitSavedLayouts(SavedLayoutsState before);
 
+    ShellWindowNames m_names;
     QString m_file;
     QByteArray m_default;
     QStringList m_builtPresets;

@@ -78,6 +78,8 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QObject>
+#include <QPointer>
+#include <QQuickWindow>
 #include <QUrl>
 #include <QFileInfo>
 #include <QVariantMap>
@@ -726,7 +728,16 @@ public:
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
     PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
-    QVariantMap qmlProperties();
+    QVariantMap qmlProperties(int shellWindow = 0);
+    // A further shell window on the engine of the first (ADR 0025); MW2 gives it the user-facing moves.
+    QQuickWindow *openShellWindow(QQmlEngine &engine);
+    Q_INVOKABLE void shellWindowClosed(int shellWindow);
+    // The window's current tab becomes the editing target.
+    Q_INVOKABLE void activateShellWindow(int shellWindow);
+    // tabs, currentTab and home of one shell window; the properties are the active window's.
+    Q_INVOKABLE QVariantList windowTabs(int shellWindow) const;
+    Q_INVOKABLE int windowCurrentTab(int shellWindow) const;
+    Q_INVOKABLE bool windowHome(int shellWindow) const;
     // Waits for running writes and delivers their results.
     void waitForWrites();
 
@@ -739,9 +750,9 @@ public:
     Q_PROPERTY(int sessionRestore READ sessionRestore WRITE setSessionRestore NOTIFY sessionRestoreChanged)
     // {row, tab, title, kind ("subtitles", "video", "audio", "keyframes"), path}.
     Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
-    QVariantList tabs() const;
-    bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
-    int currentTab() const;
+    QVariantList tabs() const { return windowTabs(m_workspace.activeWindow()); }
+    bool home() const { return windowHome(m_workspace.activeWindow()); }
+    int currentTab() const { return windowCurrentTab(m_workspace.activeWindow()); }
     // A tab row's id; 0 without one.
     Q_INVOKABLE qulonglong editingDocument() const;
     int sessionRestore() const;
@@ -990,6 +1001,19 @@ private:
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
+    struct ShellWindow {
+        std::unique_ptr<ui::WorkspaceLayoutController> layout;
+        QPointer<QQuickWindow> window;
+    };
+    std::map<int, ShellWindow> m_shellWindows;
+    int m_nextShellWindow = 1;
+    bool eventFilter(QObject *watched, QEvent *event) override;
+    static std::optional<int> shellWindowOf(const QWindow *window);
+    // MUST KILL: closes a window's tabs without the close review until MW5 #629.
+    void closeShellWindowDocuments(int shellWindow);
+    ui::WorkspaceLayoutController &layoutOf(int shellWindow);
+    ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
+    std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
     struct ConversionPlan {
@@ -1318,7 +1342,7 @@ private:
     bool keepTabAudio(const QString &videoPath);
     void trackTabMedia();
     int targetVideoPosition() const;
-    std::optional<application::DocumentId> m_layoutDocument;
+    std::map<int, application::DocumentId> m_layoutDocuments;
     void showTabArrangement();
     void registerTabArrangements();
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
