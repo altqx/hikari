@@ -41,11 +41,11 @@ ShellMenu {
 
     component FullscreenItem: ShellMenuItem {
         visible: videoMenu.fullscreen
-        height: visible ? implicitHeight : 0
+        height: videoMenu.fullscreen ? implicitHeight : 0
     }
     component FullscreenSeparator: MenuSeparator {
         visible: videoMenu.fullscreen
-        height: visible ? implicitHeight : 0
+        height: videoMenu.fullscreen ? implicitHeight : 0
     }
     component SnapshotItem: ShellMenuItem {
         enabled: videoMenu.shell.videoView.canSnapshot
@@ -56,7 +56,7 @@ ShellMenu {
         iconRole: "copy-position"
         objectName: videoMenu.itemPrefix + "CopyCoords"
         visible: !videoMenu.fullscreen
-        height: visible ? implicitHeight : 0
+        height: videoMenu.fullscreen ? 0 : implicitHeight
         command: "VIDEO_COPY_COORDS"
         text: qsTr("Copy video position")
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_COORDS")) videoMenu.shell.visualTools.copyCoordinates(videoMenu.at.x, videoMenu.at.y)

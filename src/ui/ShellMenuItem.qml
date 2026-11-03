@@ -17,10 +17,7 @@ MenuItem {
     }
     onMenuChanged: holdsMenu = false
     visible: !subMenu || subMenu.shown !== false
-    Binding on height {
-        when: control.subMenu !== null && control.subMenu.shown === false
-        value: 0
-    }
+    height: subMenu && subMenu.shown === false ? 0 : implicitHeight
     onHighlightedChanged: if (highlighted) holdMenu()
     onPressed: holdMenu()
     property string iconRole

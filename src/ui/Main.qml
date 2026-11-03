@@ -3998,7 +3998,7 @@ ApplicationWindow {
                         ShellMenuItem {
                             objectName: tapMenu.names + "TapStart"
                             visible: tapMenu.tapRow
-                            height: visible ? implicitHeight : 0
+                            height: tapMenu.tapRow ? implicitHeight : 0
                             iconRole: "karaoke-tap"
                             text: qsTranslate("HikariSub.Audio", "Tap to time")
                             command: "AUDIO_TAP"
@@ -4012,7 +4012,7 @@ ApplicationWindow {
                         }
                         MenuSeparator {
                             visible: tapMenu.tapRow
-                            height: visible ? implicitHeight : 0
+                            height: tapMenu.tapRow ? implicitHeight : 0
                         }
                         MenuHeading {
                             text: qsTranslate("HikariSub.Audio", "Each syllable")
@@ -4468,7 +4468,7 @@ ApplicationWindow {
                                 }
                                 component FoldedRadio: MenuRadioItem {
                                     visible: audioButtons.folded
-                                    height: visible ? implicitHeight : 0
+                                    height: audioButtons.folded ? implicitHeight : 0
                                 }
                                 component FoldedSeparator: MenuSeparator {
                                     visible: audioButtons.folded

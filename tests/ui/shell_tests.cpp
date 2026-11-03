@@ -30936,11 +30936,16 @@ private slots:
             return QStringList{prefix + QStringLiteral("Stream0,") + prefix + QStringLiteral("Stream1"),
                                prefix + QStringLiteral("Chapter0,") + prefix + QStringLiteral("Chapter1")};
         };
-        const auto openSubmenu = [&](const char *name) {
+        const auto openSubmenu = [&](const char *name, QQuickItem *row) {
             QObject *submenu = named(name);
             QVERIFY(submenu->property("shown").toBool());
             QVERIFY(QMetaObject::invokeMethod(submenu, "open"));
             QTRY_VERIFY(submenu->property("opened").toBool());
+            QPointF was(-1, -1);
+            QTRY_VERIFY([&] {
+                const QPointF now = row->mapToScene(QPointF());
+                return std::exchange(was, now) == now && row->isVisible() && row->width() > 0;
+            }());
         };
         QVERIFY(video.showFrameAt(0));
         QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
@@ -30963,7 +30968,7 @@ private slots:
             return entry && entry->isVisible() && entry->width() > 0;
         };
         auto *chapterItem = qobject_cast<QQuickItem *>(named("videoMenuChapter1"));
-        openSubmenu("videoMenuChapters");
+        openSubmenu("videoMenuChapters", chapterItem);
         QTRY_VERIFY(placed("videoMenuChapter1"));
         clickWith(chapterItem, Qt::NoModifier);
         QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(24));
@@ -30975,7 +30980,7 @@ private slots:
         QTRY_VERIFY(context->property("opened").toBool());
         QTRY_VERIFY(named("videoMenuChapter1")->property("checked").toBool());
         auto *streamItem = qobject_cast<QQuickItem *>(named("videoMenuStream1"));
-        openSubmenu("videoMenuAudioTrack");
+        openSubmenu("videoMenuAudioTrack", streamItem);
         QTRY_VERIFY(placed("videoMenuStream1"));
         clickWith(streamItem, Qt::NoModifier);
         QVERIFY(video.streams()[1].toMap().value(QStringLiteral("checked")).toBool());
@@ -31009,7 +31014,7 @@ private slots:
         QVERIFY(named("fullscreenMenuChapter1")->property("checked").toBool());
         QVERIFY(named("fullscreenMenuStream1")->property("checked").toBool());
         auto *fsChapter = qobject_cast<QQuickItem *>(named("fullscreenMenuChapter0"));
-        openSubmenu("fullscreenMenuChapters");
+        openSubmenu("fullscreenMenuChapters", fsChapter);
         QTRY_VERIFY(placed("fullscreenMenuChapter0"));
         clickWith(fsChapter, Qt::NoModifier);
         QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
