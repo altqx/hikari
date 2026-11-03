@@ -6096,6 +6096,42 @@ Failed to copy %2 fonts.</source>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>คลิปเวกเตอร์: ย้ายจุด</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นตรง</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นโค้ง Bézier</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นโค้ง B-spline</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>คลิปเวกเตอร์: เพิ่มจุดแยกใหม่</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>คลิปเวกเตอร์: ลบจุด</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>คลิปเวกเตอร์: กลับด้าน</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>คัดลอกคำบรรยายไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>บันทึกคำบรรยายเป็น PNG</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>ตรวจคาราโอเกะ</translation>
     </message>
@@ -6138,6 +6174,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugins</source>
         <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>โหลดเสียงใหม่</translation>
     </message>
     <message>
         <source>Centre times within frames</source>
@@ -7248,12 +7292,116 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>โหลดเสียงใหม่</translation>
+    </message>
+    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>ให้บรรทัดปัจจุบันใช้ส่วนที่เลือกของเสียง และให้บรรทัดก่อนหน้าสิ้นสุดตรงจุดเริ่มของส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>วิดีโอไม่มีแท็ก</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>วิดีโอไม่ได้ระบุว่าใช้เมทริกซ์สีใด</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub คาดว่าเป็น %1 แต่เครื่องเล่นอื่นอาจคาดต่างออกไป สีของวิดีโอและสีคำบรรยายที่ปรับให้ตรงกับสีนั้นจึงอาจต่างกันในแต่ละเครื่องเล่น ให้ระบุเมทริกซ์สีในวิดีโอ เพื่อให้ทุกเครื่องเล่นแสดงผลเหมือนกัน</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>วิดีโอ HDR หรือขอบเขตสีกว้าง</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>วิดีโอมีสี HDR หรือขอบเขตสีกว้าง</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>คำบรรยายทั่วไปใช้กับวิดีโอนี้ได้ แต่สีของคำบรรยายจะไม่ตรงกับสีของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>ตั้งเมทริกซ์ YCbCr หรือไม่?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>หากคำบรรยายทำสำหรับวิดีโอนี้ ให้ตั้งเป็นค่าของวิดีโอ (%1) หากทำสำหรับวิดีโออื่น ให้ปล่อยว่างไว้จนกว่าจะเปิดวิดีโอนั้น</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>ไม่ตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>ตั้งเป็น %1</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>เมทริกซ์ YCbCr ไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>เมทริกซ์ YCbCr ของวิดีโอ (%1) ต่างจากของคำบรรยาย (%2)</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>ตั้งความละเอียดเค้าโครงหรือไม่?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>คำบรรยายไม่มีความละเอียดเค้าโครง</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>หากคำบรรยายทำสำหรับวิดีโอนี้ ให้ตั้งเป็นค่าของวิดีโอ (%1) หากเป็นไฟล์เก่า ให้ตั้งเป็นความละเอียดของวิดีโอที่ใช้ทำคำบรรยายนั้น ซึ่งมักเป็นความละเอียดสคริปต์ (%2)</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>ตั้งเป็นค่าของวิดีโอ (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>ตั้งเป็นความละเอียดสคริปต์ (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>ความละเอียดเค้าโครงไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>วิดีโอมีขนาด %1 และความละเอียดเค้าโครงของคำบรรยายคือ %2</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>อัตราส่วนภาพต่างกัน ตั้งความละเอียดเค้าโครงเป็นค่าของวิดีโอหรือไม่?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>โดยปกติไม่เป็นปัญหา หากคำบรรยายยังไม่มีการจัดรูปแบบที่สำคัญ และคุณจะจัดรูปแบบบนวิดีโอนี้ ให้ตั้งความละเอียดเค้าโครงเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames</source>
@@ -9004,6 +9152,18 @@ removing audio cache files.</source>
         <translation>การซูมเริ่มต้น</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>ขนาดจุดจับ</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>ขนาดจุดจับของเครื่องมือภาพสามารถกำหนดค่าได้ตั้งแต่ 50 ถึง 400</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>ความละเอียดสคริปต์</translation>
     </message>
@@ -9014,6 +9174,66 @@ removing audio cache files.</source>
     <message>
         <source>Don&apos;t warn about a resolution mismatch</source>
         <translation>ไม่ต้องเตือนเมื่อความละเอียดไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>ไม่ต้องตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>ถาม</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>ตั้งเป็นค่าของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>เมทริกซ์ YCbCr ต่างจากของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>คงค่าของคำบรรยายไว้</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>คำบรรยายไม่มีความละเอียดเค้าโครง</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>ตั้งเป็นความละเอียดสคริปต์</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>ความละเอียดเค้าโครงต่างจากของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>ไม่ต้องถาม</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>ถามเมื่ออัตราส่วนภาพต่างกัน</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>ถามทุกครั้ง</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>ตรวจสอบเมื่อเปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>เตือนเมื่อวิดีโอไม่มีแท็กเมทริกซ์สี</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>เตือนเมื่อวิดีโอมีสี HDR หรือขอบเขตสีกว้าง</translation>
     </message>
     <message>
         <source>Output</source>
@@ -14844,6 +15064,14 @@ after the end time in milliseconds</source>
     <message>
         <source>Copy frame with subtitles to clipboard</source>
         <translation>คัดลอกเฟรมพร้อมคำบรรยายไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>บันทึกคำบรรยายเป็น PNG</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>คัดลอกคำบรรยายไปยังคลิปบอร์ด</translation>
     </message>
     <message>
         <source>Save frame as PNG</source>

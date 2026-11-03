@@ -329,6 +329,42 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
     EXPECT_FALSE(session.dummy());
 }
 
+TEST(DummyVideo, SidesOver8192AreDrawnScaledButReportedAsAsked)
+{
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 8192, 4320, 0, 0, 0, false}), (DummyVideoSize{8192, 4320}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 16384, 9216, 0, 0, 0, false}), (DummyVideoSize{8192, 4608}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 300, 100000, 0, 0, 0, false}), (DummyVideoSize{25, 8192}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 100000, 1, 0, 0, 0, false}), (DummyVideoSize{8192, 1}));
+    struct Media : IndexedSourcePort {
+        std::uint64_t open(const std::string &, Progress, Opened) override { return 1; }
+        void cancelOpen() override {}
+        void frame(int, FrameReady) override {}
+        void openAudio(int, AudioOpened) override {}
+        void audio(std::int64_t, std::int64_t, AudioReady) override {}
+        void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
+        void nextPcm(std::int64_t, PcmReady) override {}
+        void cancelReads() override {}
+        std::uint64_t generation() const override { return 1; }
+    } media;
+    struct Renderer : SubtitleRendererPort {
+        std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+        std::expected<OverlayFrame, RenderError> render(core::DocumentTime, int, int) override
+        {
+            return std::unexpected(RenderError::NoSnapshot);
+        }
+    } renderer;
+    DummyVideoSource source(media);
+    VideoSession session(source, renderer);
+    session.open("?dummy:25.000000:2:16384:9216:1:2:3:");
+    ASSERT_EQ(session.state(), VideoSession::State::Ready);
+    ASSERT_TRUE(session.lastFrame());
+    EXPECT_EQ(session.lastFrame()->width, 8192);
+    EXPECT_EQ(session.lastFrame()->height, 4608);
+    EXPECT_EQ(session.lastFrame()->bgra.size(), 8192u * 4608u * 4u);
+    EXPECT_EQ(session.sourceGeometry().width, 16384);
+    EXPECT_EQ(session.sourceGeometry().height, 9216);
+}
+
 TEST(DummyVideo, ARefusedTextDoesNotReportTheLastFilesFailure)
 {
     struct Media : IndexedSourcePort {

@@ -3813,6 +3813,50 @@
    ]
   },
   {
+   "role": "subtitles-snapshot",
+   "file": "subtitles-snapshot.svg",
+   "label": "Save subtitles as PNG",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "subtitles-copy",
+   "file": "subtitles-copy.svg",
+   "label": "Copy subtitles to clipboard",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "reload-video",
+   "file": "reload-video.svg",
+   "label": "Reload video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "reload-audio",
+   "file": "reload-audio.svg",
+   "label": "Reload audio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:audio"
+   ]
+  },
+  {
    "role": "screenshot",
    "file": "screenshot.svg",
    "label": "Add the screenshot",

@@ -63,7 +63,7 @@ set_source_files_properties(visual_drawing.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_sources.cpp)
 set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
-target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp subtitle_render.cpp)
+target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp video_properties.cpp subtitle_render.cpp)
 set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE video_fullscreen.cpp)

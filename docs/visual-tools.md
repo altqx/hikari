@@ -72,11 +72,15 @@ The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPane
 | Text moving | the start one script pixel; Alt+arrows the end | a tenth | A/D/W/S, J/L/I/K (L never reached it: VIDEO_5_SECONDS_FORWARD) |
 | Text scaling | Left/Right the X arrow, Up/Down the Y arrow, one percent | a tenth | W/A/S/D |
 | Rectangle clipping | the second corner one unit | a tenth | A/D/W/S |
-| Vector clipping | the selected points one unit | one unit (the clip is written in whole units) | W/A/S/D |
+| Vector clipping | the selected points one unit | one unit | W/A/S/D |
 | Vector drawing | the selected points one unit | a tenth | W/A/S/D |
 | Perspective (VT3) | the corner grabbed last one unit, the whole quad before one is | a tenth | none (arch1t3cht's fork) |
 
 The legacy probes' presses replay as HikariSub's (`tests/application/legacy_visual_keys.h`): a press legacy nudged with becomes the arrow for the same nudge.
+
+**The vector clip modes** (FA9, [#566](https://github.com/altqx/hikari/issues/566)). Each button on the vector clip's row has a Video command with no default key: VIDEO_VECTOR_CLIP_DRAG, _LINE, _BEZIER, _BSPLINE, _POINT and _DELETE (2034-2039) choose a mode, and VIDEO_VECTOR_CLIP_INVERT (2040) toggles Invert clip. `vectorClipOptionOfHotkey` maps them to the row's options. When another tool is on, the command switches to the vector clip first.
+
+**Handle size** (FA9). Settings › Video › Handle size (`video.handleSize`, 50-400 %, default 100) scales every tool's handles, and the distances they can be grabbed and snapped from, through `VisualHost::handleScale` and `unitOf`. This is arch1t3cht's shape-handle size setting.
 
 ## What T2 added for the families
 

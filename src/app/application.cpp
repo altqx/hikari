@@ -25,6 +25,8 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
 #include "hikari/application/video_matrix.h"
+#include "hikari/application/script_resolution.h"
+#include "hikari/application/video_properties.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "hikari/core/conversion.h"
@@ -696,6 +698,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     if (firstStart && options.gettingStarted)
         m_settings->set("workspace.gettingStarted", QStringLiteral("due"));
+    m_askVideoProperties = options.askVideoProperties;
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
@@ -1152,13 +1155,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
+        if (video.state() == application::VideoSession::State::Opening)
+            m_resolutionCheckedVideo.clear();
         if (video.state() != application::VideoSession::State::Ready || !video.lastFrame())
             return;
         const QString path = QString::fromStdString(video.path());
         if (path == m_resolutionCheckedVideo)
             return;
         m_resolutionCheckedVideo = path;
+        checkVideoMatrix();
         checkResolution();
+        checkLayoutResolution();
     });
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         if (m_pendingKeyframes.isEmpty() || m_video->session().state() != application::VideoSession::State::Ready)
@@ -4957,7 +4964,8 @@ void Application::checkResolution()
         video.state() != application::VideoSession::State::Ready || !video.lastFrame())
         return;
     const auto subs = application::scriptResolution(session->document());
-    const int width = video.lastFrame()->width, height = video.lastFrame()->height;
+    const auto geometry = video.sourceGeometry();
+    const int width = geometry.width, height = geometry.height;
     if (subs.width == width && subs.height == height)
         return;
     emit resolutionMismatch({{QStringLiteral("subsWidth"), subs.width},
@@ -4976,7 +4984,7 @@ QVariantMap Application::resampleValues() const
     application::Resolution video = subs;
     const bool hasVideo = m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame();
     if (hasVideo)
-        video = {m_video->session().lastFrame()->width, m_video->session().lastFrame()->height};
+        video = {m_video->session().sourceGeometry().width, m_video->session().sourceGeometry().height};
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
@@ -5018,6 +5026,140 @@ bool Application::matchVideoResolution(int option)
     m_editor->reloadFromSession();
     refreshViews();
     return done;
+}
+
+namespace {
+
+QVariantMap sizeOf(application::Resolution r)
+{
+    return {{QStringLiteral("width"), r.width}, {QStringLiteral("height"), r.height}};
+}
+
+application::Resolution resolutionOf(const QVariant &size)
+{
+    const auto map = size.toMap();
+    return {map.value(QStringLiteral("width")).toInt(), map.value(QStringLiteral("height")).toInt()};
+}
+
+const char *questionSetting(const QString &kind)
+{
+    if (kind == QLatin1String("missingMatrix"))
+        return "video.missingMatrix";
+    if (kind == QLatin1String("matrixMismatch"))
+        return "video.matrixMismatch";
+    if (kind == QLatin1String("missingLayoutRes"))
+        return "video.missingLayoutRes";
+    if (kind == QLatin1String("layoutResMismatch"))
+        return "video.layoutResMismatch";
+    if (kind == QLatin1String("untaggedMatrix"))
+        return "video.untaggedMatrixWarning";
+    if (kind == QLatin1String("hdr"))
+        return "video.hdrWarning";
+    return nullptr;
+}
+
+}
+
+void Application::checkVideoMatrix()
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!m_askVideoProperties || video.dummy() || !session || session->document().format() != core::SubtitleFormat::Ass)
+        return;
+    const auto geometry = video.sourceGeometry();
+    const auto &colour = video.colour();
+    const QString recommended = QString::fromStdString(application::recommendedMatrix(colour, geometry.width, geometry.height));
+    const QString path = QString::fromStdString(video.path());
+    if (application::untaggedMatrix(colour) && m_settings->boolean("video.untaggedMatrixWarning"))
+        emit videoPropertyQuestion({{QStringLiteral("kind"), QStringLiteral("untaggedMatrix")},
+                                    {QStringLiteral("video"), path},
+                                    {QStringLiteral("recommended"), recommended}});
+    if (application::hdrOrWideGamut(colour) && m_settings->boolean("video.hdrWarning"))
+        emit videoPropertyQuestion({{QStringLiteral("kind"), QStringLiteral("hdr")}, {QStringLiteral("video"), path}});
+    const auto check = application::checkMatrix(session->document(), recommended.toStdString());
+    if (check.question == application::MatrixQuestion::None)
+        return;
+    const QString kind = check.question == application::MatrixQuestion::Missing ? QStringLiteral("missingMatrix")
+                                                                                 : QStringLiteral("matrixMismatch");
+    const auto action = static_cast<application::VideoPropertyAction>(m_settings->integer(questionSetting(kind)));
+    const QVariantMap question{{QStringLiteral("kind"), kind},
+                               {QStringLiteral("video"), path},
+                               {QStringLiteral("script"), QString::fromStdString(check.script)},
+                               {QStringLiteral("recommended"), recommended}};
+    if (action == application::VideoPropertyAction::Set)
+        answerVideoProperty(question, 1);
+    else if (action == application::VideoPropertyAction::Ask)
+        emit videoPropertyQuestion(question);
+}
+
+void Application::checkLayoutResolution()
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!m_askVideoProperties || video.dummy() || !session || session->document().format() != core::SubtitleFormat::Ass)
+        return;
+    const auto geometry = video.sourceGeometry();
+    const application::Resolution size{geometry.width, geometry.height};
+    const auto check = application::checkLayoutResolution(
+        session->document(), size,
+        static_cast<application::LayoutResMismatch>(m_settings->integer("video.layoutResMismatch")));
+    if (check.question == application::LayoutQuestion::None)
+        return;
+    const bool missing = check.question == application::LayoutQuestion::Missing;
+    const QVariantMap question{{QStringLiteral("kind"), missing ? QStringLiteral("missingLayoutRes") : QStringLiteral("layoutResMismatch")},
+                               {QStringLiteral("video"), QString::fromStdString(video.path())},
+                               {QStringLiteral("videoSize"), sizeOf(size)},
+                               {QStringLiteral("layoutSize"), sizeOf(check.layout)},
+                               {QStringLiteral("playSize"), sizeOf(check.play)},
+                               {QStringLiteral("aspectChanged"), check.aspectChanged}};
+    if (!missing) {
+        emit videoPropertyQuestion(question);
+        return;
+    }
+    switch (static_cast<application::VideoPropertyAction>(m_settings->integer("video.missingLayoutRes"))) {
+    case application::VideoPropertyAction::Ask: emit videoPropertyQuestion(question); break;
+    case application::VideoPropertyAction::Set: answerVideoProperty(question, 1); break;
+    case application::VideoPropertyAction::SetToPlayRes: answerVideoProperty(question, 2); break;
+    case application::VideoPropertyAction::Ignore: break;
+    }
+}
+
+bool Application::answerVideoProperty(const QVariantMap &question, int choice)
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!session || choice < 1 || video.state() != application::VideoSession::State::Ready ||
+        QString::fromStdString(video.path()) != question.value(QStringLiteral("video")).toString())
+        return false;
+    const QString kind = question.value(QStringLiteral("kind")).toString();
+    bool done = false;
+    if (kind == QLatin1String("missingMatrix") || kind == QLatin1String("matrixMismatch")) {
+        done = application::setMatrix(*session, question.value(QStringLiteral("recommended")).toString().toStdString())
+                   .has_value();
+    } else if (kind == QLatin1String("missingLayoutRes") || kind == QLatin1String("layoutResMismatch")) {
+        const auto layout = choice == 2 ? application::writtenScriptResolution(session->document())
+                                        : resolutionOf(question.value(QStringLiteral("videoSize")));
+        done = application::setLayoutResolution(*session, layout).has_value();
+    }
+    if (done)
+        refreshViews();
+    return done;
+}
+
+void Application::stopAskingVideoProperty(const QString &kind, int choice)
+{
+    using application::VideoPropertyAction;
+    const char *setting = questionSetting(kind);
+    if (!setting)
+        return;
+    if (kind == QLatin1String("untaggedMatrix") || kind == QLatin1String("hdr"))
+        m_settings->set(setting, false);
+    else if (kind == QLatin1String("layoutResMismatch"))
+        m_settings->set(setting, static_cast<int>(application::LayoutResMismatch::Never));
+    else
+        m_settings->set(setting, static_cast<int>(choice == 2   ? VideoPropertyAction::SetToPlayRes
+                                                  : choice == 1 ? VideoPropertyAction::Set
+                                                                : VideoPropertyAction::Ignore));
 }
 
 void Application::setAskForBadResolution(bool on)
@@ -5255,9 +5397,10 @@ QVariantMap Application::scriptProperties()
     for (const auto &m : application::matrixNames())
         matrices << q(m);
     int videoWidth = 0, videoHeight = 0;
-    if (const auto frame = m_video->session().lastFrame(); frame && m_video->session().state() == application::VideoSession::State::Ready) {
-        videoWidth = frame->width;
-        videoHeight = frame->height;
+    if (m_video->session().lastFrame()) {
+        const auto geometry = m_video->session().sourceGeometry();
+        videoWidth = geometry.width;
+        videoHeight = geometry.height;
     }
     const bool link = m_settings->boolean("scriptProperties.linkResolutions");
     return {{QStringLiteral("title"), q(p.title)},

@@ -143,6 +143,7 @@ public:
     void cancelGesture() override { (void)escape(); }
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
+    float handleScale() const override;
     std::int64_t videoTimeMs() const override;
     application::LegacyTimebase timebase() const override;
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }

@@ -133,6 +133,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_indexHandoff = opened->handoffIndexFile;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
+        m_videoColour = {opened->colorSpace, opened->colorRange, opened->colorPrimaries, opened->transfer};
         m_state = State::Ready;
         m_inputMatrix.reset();
         if (const auto input = m_colour.open(opened->colorSpace, opened->colorRange, opened->width, opened->height,

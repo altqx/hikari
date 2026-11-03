@@ -193,6 +193,22 @@ ShellMenu {
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
     }
     ShellMenuItem {
+        objectName: videoMenu.itemPrefix + "SaveSubtitles"
+        iconRole: "subtitles-snapshot"
+        command: "VIDEO_SAVE_SUBTITLES_TO_PNG"
+        text: qsTr("Save subtitles as PNG")
+        enabled: videoMenu.shell.videoView.canSnapshot
+        onTriggered: if (!videoMenu.gesture("VIDEO_SAVE_SUBTITLES_TO_PNG")) videoMenu.shell.videoView.snapshot("VIDEO_SAVE_SUBTITLES_TO_PNG")
+    }
+    ShellMenuItem {
+        objectName: videoMenu.itemPrefix + "CopySubtitles"
+        iconRole: "subtitles-copy"
+        command: "VIDEO_COPY_SUBTITLES_TO_CLIPBOARD"
+        text: qsTr("Copy subtitles to clipboard")
+        enabled: videoMenu.shell.videoView.canSnapshot
+        onTriggered: if (!videoMenu.gesture("VIDEO_COPY_SUBTITLES_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_SUBTITLES_TO_CLIPBOARD")
+    }
+    ShellMenuItem {
         objectName: videoMenu.itemPrefix + "SaveFrame"
         iconRole: "frame-snapshot"
         command: "VIDEO_SAVE_FRAME_TO_PNG"

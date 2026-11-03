@@ -75,6 +75,8 @@ public:
     void openFromVideo(const std::string &path, int track, bool videoNewIndex,
                        const std::string &handoffIndexFile = {});
     void close();
+    // Opens the same file and track again, without the track chooser. False for dummy audio or none.
+    bool reopen();
 
     State state() const { return m_state; }
     bool isOpen() const { return m_state != State::Closed; }

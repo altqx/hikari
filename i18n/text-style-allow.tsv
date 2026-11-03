@@ -155,6 +155,7 @@ HikariSub.Video	On moving to another line play:	colon	pending #596 Panels
 HikariSub.Video	%1 event(s), %2 bitmap(s), %3 Mpx	title-case	pending #596 Panels
 HikariSub.VisualTools	How each line's number changes the value	quotes	pending #596 Menus
 HikariSub.VisualTools	Add B-spline	title-case	pending #596 Menus
+HikariSub.Hotkeys	Vector clip: add B-spline	title-case	pending #596 Menus
 HikariSub.VisualTools	After-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Before-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Bottom-center	spelling	pending #596 Menus

@@ -194,6 +194,15 @@ void AudioController::openAudio(const QString &path)
     m_box.open(QDir::toNativeSeparators(path).toStdString());
 }
 
+bool AudioController::reloadAudio()
+{
+    const auto sample = m_view.positionSample();
+    if (!m_box.reopen())
+        return false;
+    m_reloadSample = sample;
+    return true;
+}
+
 void AudioController::closeAudio()
 {
     m_box.close();
@@ -227,7 +236,10 @@ void AudioController::boxChanged()
                 application::playbackVolumeFromSlider(m_store ? m_store->integer("audio.volume") : m_volume));
         emit opened(path(), std::exchange(m_fresh, false));
         reselect();
+        if (const auto sample = std::exchange(m_reloadSample, std::nullopt))
+            m_view.updatePosition(*sample, true, m_scrollbarThickness);
     } else if (!loaded && m_box.error()) {
+        m_reloadSample.reset();
         newView();
         if (m_trackForBox && (!m_trackChoices.isEmpty() || m_trackAnswer)) {
             m_trackAnswer = nullptr;

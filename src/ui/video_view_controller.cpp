@@ -336,19 +336,44 @@ bool VideoViewController::toggleRenderCost()
     return true;
 }
 
+namespace {
+
+QImage subtitlesPicture(const application::IndexedFrame &frame, const application::OverlayFrame *overlay)
+{
+    if (!overlay || overlay->width < 1 || overlay->height < 1) {
+        QImage clear(frame.width, frame.height, QImage::Format_RGBA8888);
+        clear.fill(Qt::transparent);
+        return clear;
+    }
+    const application::SubtitlesImage image = application::subtitlesImage(*overlay);
+    QImage picture =
+        QImage(image.rgba.data(), image.width, image.height, image.width * 4, QImage::Format_RGBA8888).copy();
+    if (picture.width() != frame.width || picture.height() != frame.height)
+        picture = picture.scaled(frame.width, frame.height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    return picture;
+}
+
+}
+
 bool VideoViewController::snapshot(const QString &action)
 {
-    const bool save = action == QLatin1String("VIDEO_SAVE_FRAME_TO_PNG")
-                      || action == QLatin1String("VIDEO_SAVE_SUBBED_FRAME_TO_PNG");
-    const bool subbed = action == QLatin1String("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
+    const bool save = action.startsWith(QLatin1String("VIDEO_SAVE_"));
+    const bool subtitlesAlone = action.endsWith(QLatin1String("_SUBTITLES_TO_CLIPBOARD"))
+                                || action.endsWith(QLatin1String("_SUBTITLES_TO_PNG"));
+    const bool subbed = subtitlesAlone || action == QLatin1String("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
                         || action == QLatin1String("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD");
     if (!canSnapshot())
         return false;
     const auto &session = m_video.session();
     const auto frame = session.lastFrame();
     const auto overlay = subbed ? session.lastOverlay() : nullptr;
-    const application::SnapshotImage image = application::snapshotImage(*frame, overlay.get());
-    const QImage picture = QImage(image.rgb.data(), image.width, image.height, image.width * 3, QImage::Format_RGB888).copy();
+    QImage picture;
+    if (subtitlesAlone) {
+        picture = subtitlesPicture(*frame, overlay.get());
+    } else {
+        const application::SnapshotImage image = application::snapshotImage(*frame, overlay.get());
+        picture = QImage(image.rgb.data(), image.width, image.height, image.width * 3, QImage::Format_RGB888).copy();
+    }
     if (!save) {
         if (auto *clipboard = QGuiApplication::clipboard())
             clipboard->setImage(picture);

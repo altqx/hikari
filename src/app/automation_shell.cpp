@@ -82,8 +82,9 @@ public:
         const auto frame = m_video.session().lastFrame();
         if (m_video.session().state() != application::VideoSession::State::Ready || !frame)
             return std::nullopt;
-        const int g = std::gcd(frame->width, frame->height);
-        return VideoSize{frame->width, frame->height, frame->width / g, frame->height / g};
+        const auto geometry = m_video.session().sourceGeometry();
+        const int g = std::gcd(geometry.width, geometry.height);
+        return VideoSize{geometry.width, geometry.height, geometry.width / g, geometry.height / g};
     }
     std::optional<std::vector<std::int64_t>> keyframes() const override
     {

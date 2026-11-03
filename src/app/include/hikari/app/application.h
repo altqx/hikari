@@ -105,6 +105,8 @@ signals:
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
     void resolutionMismatch(const QVariantMap &sizes);
+    // kind: missingMatrix, matrixMismatch, missingLayoutRes, layoutResMismatch, untaggedMatrix or hdr.
+    void videoPropertyQuestion(const QVariantMap &question);
     void recentChanged();
     // description: the group the command would break (0: it would make a new
     // malformed group).
@@ -146,6 +148,8 @@ public:
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
+        // Aegisub 3.5's questions and warnings about the YCbCr Matrix and LayoutRes when a video opens.
+        bool askVideoProperties = false;
         // Empty: in memory only.
         QString settingsFile;
         // Most preferred first; on the first start a leading Polish one picks Polish for
@@ -410,6 +414,10 @@ public:
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
     // option: 0 only the resolution, 1 resample, 2 resample with stretch.
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
+    Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
+    // The question's setting then does what `choice` did: 0 leaves things as they are.
+    Q_INVOKABLE void stopAskingVideoProperty(const QString &kind, int choice);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
@@ -1003,7 +1011,10 @@ private:
     std::unique_ptr<ConversionPlan> m_conversionPlan;
     std::set<std::uint64_t> m_formatChanged;
     QString m_resolutionCheckedVideo;
+    bool m_askVideoProperties = false;
     void checkResolution();
+    void checkVideoMatrix();
+    void checkLayoutResolution();
     QStringList m_selectRecent;
     std::optional<std::vector<application::ReplacerRule>> m_misspellRules;
     std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;

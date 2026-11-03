@@ -35,6 +35,10 @@
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/video_controls.h"
 #include "hikari/application/video_fullscreen.h"
+#include "hikari/application/video_matrix.h"
+#include "hikari/application/video_properties.h"
+#include "hikari/application/video_snapshot.h"
+#include "hikari/application/visual_vector.h"
 #include "icon_theme.h"
 #include "all_tags_editor.h"
 #include "shape_editor.h"
@@ -15559,9 +15563,16 @@ private slots:
               {"video.gpuConversion", "Convert video colours on the GPU"},
               {"video.acceptedAudioStream", nullptr},
               {"video.zoomPercent", nullptr},
+              {"video.handleSize", nullptr},
               {"video.visualWarningsOff", "Turn off the visual tools warning"},
               {"video.dontAskForBadResolution", "Don't warn about a resolution mismatch"},
-              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
+              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
+              {"video.missingMatrix", nullptr},
+              {"video.matrixMismatch", nullptr},
+              {"video.missingLayoutRes", nullptr},
+              {"video.layoutResMismatch", nullptr},
+              {"video.untaggedMatrixWarning", "Warn when the video has no colour matrix tag"},
+              {"video.hdrWarning", "Warn when the video has HDR or wide-gamut colours"}}},
             {"settingsPageAudio",
              {{"audio.outputDevice", nullptr},
 #ifdef _WIN32
@@ -18414,7 +18425,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Subtitle properties", "Automation", "Hotkeys",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 267);
+        QCOMPARE(hotkeyRows().size(), 278);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -23769,6 +23780,65 @@ private slots:
         QCOMPARE(session->historySize(), sameSteps);
     }
 
+    void vectorClipCommandsChooseTheRowsButtons()
+    {
+        const QString path = dir.filePath(QStringLiteral("vclipkeys.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\clip(m 10 10 l 100 10 100 100)}clipped\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        closeMismatchQuestion();
+        keysNeverRepeat();
+        auto *root = engine->rootObjects().first();
+        const int vectorClip = static_cast<int>(application::visual::Family::VectorClip);
+        auto checked = [&](const QString &name) {
+            for (const QVariant &v : tools.options())
+                if (v.toMap().value(QStringLiteral("name")).toString() == name)
+                    return v.toMap().value(QStringLiteral("checked")).toBool();
+            return false;
+        };
+        auto run = [&](const char *symbol) {
+            QVariant handled;
+            return QMetaObject::invokeMethod(root, "runVideoHotkey", Q_RETURN_ARG(QVariant, handled),
+                                             Q_ARG(QVariant, QString::fromLatin1(symbol)))
+                   && handled.toBool();
+        };
+        QCOMPARE(QString::fromStdString(application::hotkeyName(application::hotkeyIdOf("VIDEO_VECTOR_CLIP_BEZIER"))),
+                 QStringLiteral("Vector clip: add B\u00e9zier curve"));
+        QVERIFY(tools.activeFamily() != vectorClip);
+        const std::initializer_list<std::pair<const char *, const char *>> modes = {
+            {"VIDEO_VECTOR_CLIP_BEZIER", "mode2"}, {"VIDEO_VECTOR_CLIP_DRAG", "mode0"},
+            {"VIDEO_VECTOR_CLIP_LINE", "mode1"},   {"VIDEO_VECTOR_CLIP_BSPLINE", "mode3"},
+            {"VIDEO_VECTOR_CLIP_POINT", "mode4"},  {"VIDEO_VECTOR_CLIP_DELETE", "mode5"}};
+        for (const auto &[symbol, option] : modes) {
+            QVERIFY2(run(symbol), symbol);
+            QCOMPARE(tools.activeFamily(), vectorClip);
+            QTRY_VERIFY2(checked(QLatin1String(option)), symbol);
+            QTRY_VERIFY(visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(option))));
+            QVERIFY(visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(option)))->property("checked").toBool());
+        }
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const std::size_t steps = session->historySize();
+        QVERIFY(run("VIDEO_VECTOR_CLIP_INVERT"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(tools.activeFamily(), vectorClip);
+        QVERIFY2(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\iclip(m 10 10 l 100 10 100 100)}")),
+                 qPrintable(text(session->document().lines()[0])));
+        QVERIFY(run("VIDEO_VECTOR_CLIP_INVERT"));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QVERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\clip(m ")));
+        tools.selectFamily(vectorClip);
+        application->video().unloadVideo();
+        application->editor().discard();
+    }
+
     void visualToolOptionIconsFollowTheModel()
     {
         QVERIFY(application->openFile(visualDocument("t2icons.ass")));
@@ -24692,7 +24762,9 @@ private slots:
         };
         const auto written = [&](QPoint scene) {
             const auto s = view.viewToScript(device(scene));
-            return QString::asprintf("%.0f %.0f", double(s.x), double(s.y));
+            using application::visual::kClipPointFormat;
+            using application::visual::legacy::getfloat;
+            return QString::fromStdU16String(getfloat(s.x, kClipPointFormat) + u" " + getfloat(s.y, kClipPointFormat));
         };
         const auto corner = view.scriptToView({160, 120});
         QVERIFY(std::abs(corner.x - device(at(160, 120)).x) < 1 && std::abs(corner.y - device(at(160, 120)).y) < 1);
@@ -30024,6 +30096,157 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(openfiles::nothingHolds(clip), 10000);
     }
 
+    void openingAVideoOffersToSetTheMatrixAndLayoutResolution()
+    {
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.askVideoProperties = true;
+        restartWith(options);
+        auto restart = qScopeGuard([&] { restartWithoutSound(); });
+        const QString path = dir.filePath(QStringLiteral("properties.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,line\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const std::size_t steps = session->historySize();
+        auto info = [&](const char8_t *key) {
+            const auto value = session->document().scriptInfo(key);
+            return value ? QString::fromUtf8(reinterpret_cast<const char *>(value->data()), qsizetype(value->size())) : QString();
+        };
+        QQuickWindow *box = nullptr;
+        auto asked = [&](const char *title) {
+            return QTest::qWaitFor([&] {
+                box = messageBox("messages");
+                return box && box->isVisible() && box->title() == QLatin1String(title);
+            }, 20000);
+        };
+        auto answer = [&](const char *id, bool dontAsk = false) {
+            if (dontAsk)
+                messageBoxItem("messageBoxDontAsk")->setProperty("checked", true);
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QString::fromLatin1(id))));
+        };
+
+        application->video().openVideo(nativeFixture("colorhd.mkv"));
+        QVERIFY(asked("Untagged video"));
+        QVERIFY(messageBoxItem("messageBoxDontAsk")->isVisible());
+        answer("ok", true);
+        QVERIFY(!application->settingsStore()->boolean("video.untaggedMatrixWarning"));
+        QVERIFY(asked("Set the YCbCr matrix?"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("The subtitles have no YCbCr matrix."));
+        answer("set");
+        QTRY_COMPARE(info(u8"YCbCr Matrix"), QStringLiteral("TV.709"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string(application::kMatrixStep));
+        QVERIFY(asked("Set the layout resolution?"));
+        answer("play", true);
+        QTRY_COMPARE(info(u8"LayoutResX"), QStringLiteral("1280"));
+        QCOMPARE(info(u8"LayoutResY"), QStringLiteral("720"));
+        QCOMPARE(session->historySize(), steps + 2);
+        QCOMPARE(session->history().back().name, std::string(application::kLayoutResolutionStep));
+        QCOMPARE(application->settingsStore()->integer("video.missingLayoutRes"),
+                 int(application::VideoPropertyAction::SetToPlayRes));
+        QTRY_VERIFY(!box->isVisible());
+
+        QVERIFY(session->undo());
+        QVERIFY(session->undo());
+        QVERIFY(info(u8"YCbCr Matrix").isEmpty());
+        QVERIFY(info(u8"LayoutResX").isEmpty());
+        application->settingsStore()->set("video.missingMatrix", int(application::VideoPropertyAction::Ignore));
+        QVERIFY(application->video().reloadVideo());
+        QTRY_VERIFY_WITH_TIMEOUT(info(u8"LayoutResX") == QStringLiteral("1280"), 20000);
+        QCOMPARE(session->historySize(), steps + 1);
+        QVERIFY(!QTest::qWaitFor([&] {
+            box = messageBox("messages");
+            return box && box->isVisible();
+        }, 500));
+        QVERIFY(info(u8"YCbCr Matrix").isEmpty());
+        QCOMPARE(application::sessionVideoMatrix(*session), "TV.601");
+        application->editor().discard();
+    }
+
+    void reloadVideoAndAudioKeepThePosition()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *reloadVideo = named("reloadVideoMenuItem")->property("action").value<QObject *>();
+        auto *reloadAudio = named("reloadAudioMenuItem")->property("action").value<QObject *>();
+        QVERIFY(reloadVideo && reloadAudio);
+        QCOMPARE(reloadVideo->property("text").toString(), QStringLiteral("Reload video"));
+        QCOMPARE(reloadAudio->property("text").toString(), QStringLiteral("Reload audio"));
+        QVERIFY(!reloadVideo->property("enabled").toBool());
+        QVERIFY(!reloadAudio->property("enabled").toBool());
+        auto &video = application->video();
+        auto &audio = application->audio();
+        auto *root = engine->rootObjects().first();
+
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo() && video.session().lastFrame(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(reloadVideo->property("enabled").toBool());
+        QVERIFY(video.showFrameAt(30));
+        QTRY_COMPARE(video.session().lastFrame()->index, 30);
+        const auto generation = video.session().lastFrame()->generation;
+        const auto opens = video.opening();
+        QVERIFY(QMetaObject::invokeMethod(reloadVideo, "trigger"));
+        QCOMPARE(video.opening(), opens + 1);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo() && video.session().lastFrame()
+                                     && video.session().lastFrame()->generation != generation, 20000);
+        QCOMPARE(video.session().lastFrame()->index, 30);
+        QCOMPARE(QString::fromStdString(video.session().path()),
+                 QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv")));
+
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready() && !audio.box().fromVideo(), 20000);
+        QVERIFY(reloadAudio->property("enabled").toBool());
+        audio.setHorizontalZoom(0);
+        audio.setScrollPosition(2);
+        const auto &view = audio.view();
+        const std::int64_t position = view.position();
+        QVERIFY(position > 0);
+        const auto serial = audio.box().serial();
+        QVERIFY(QMetaObject::invokeMethod(root, "runGlobalHotkey", Q_ARG(QVariant, QStringLiteral("GLOBAL_RELOAD_AUDIO"))));
+        QVERIFY(audio.box().serial() != serial);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QCOMPARE(audio.path(), QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv")));
+        QCOMPARE(view.position(), position);
+
+        video.unloadVideo();
+        audio.openDummy();
+        QTRY_VERIFY(audio.ready());
+        QVERIFY(!reloadVideo->property("enabled").toBool());
+        QVERIFY(!reloadAudio->property("enabled").toBool());
+        QVERIFY(!audio.reloadAudio());
+        video.openVideo(QStringLiteral("?dummy:25.000000:50:640:480:47:163:254:"));
+        QTRY_VERIFY(video.hasVideo());
+        QVERIFY(!reloadVideo->property("enabled").toBool());
+        QVERIFY(!video.reloadVideo());
+        video.unloadVideo();
+        audio.closeAudio();
+        application->editor().discard();
+    }
+
+    void aDummyOver8192IsDrawnSmallerButReportedAsAsked()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(QStringLiteral("?dummy:25.000000:5:16384:9216:47:163:254:"));
+        QTRY_VERIFY(video.hasVideo() && video.session().lastFrame());
+        QCOMPARE(video.session().lastFrame()->width, 8192);
+        QCOMPARE(video.session().lastFrame()->height, 4608);
+        const QVariantMap resample = application->resampleValues();
+        QCOMPARE(resample.value(QStringLiteral("videoWidth")).toInt(), 16384);
+        QCOMPARE(resample.value(QStringLiteral("videoHeight")).toInt(), 9216);
+        const QVariantMap properties = application->scriptProperties();
+        QCOMPARE(properties.value(QStringLiteral("videoWidth")).toInt(), 16384);
+        QCOMPARE(properties.value(QStringLiteral("videoHeight")).toInt(), 9216);
+        video.unloadVideo();
+        application->editor().discard();
+    }
+
     void dummyVideoFromItsDialog()
     {
         QVERIFY(application->openFile(episode));
@@ -30080,6 +30303,20 @@ private slots:
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("displayText").toString(), QStringLiteral("Custom"));
         dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 640);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("currentIndex").toInt(), 0);
+        resolution->setProperty("currentIndex", 10);
+        QVERIFY(QMetaObject::invokeMethod(resolution, "activated", Q_ARG(int, 10)));
+        QCOMPARE(resolution->property("displayText").toString(), QStringLiteral("1080x1920 (HD 1080p vertical)"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 1080);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 1920);
+        for (const char *side : {"dummyWidth", "dummyHeight"}) {
+            dialogItem("dummyVideoDialog", side)->setProperty("value", 100000);
+            QCOMPARE(dialogItem("dummyVideoDialog", side)->property("value").toInt(), 100000);
+            dialogItem("dummyVideoDialog", side)->setProperty("value", 100001);
+            QCOMPARE(dialogItem("dummyVideoDialog", side)->property("value").toInt(), 100000);
+        }
+        resolution->setProperty("currentIndex", 0);
+        QVERIFY(QMetaObject::invokeMethod(resolution, "activated", Q_ARG(int, 0)));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 640);
         dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("25"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
                  QStringLiteral("This gives 37500 frames"));
@@ -31380,7 +31617,8 @@ private slots:
         QVERIFY(!enabled("videoMenuStop"));
         QVERIFY(!enabled("videoMenuProgressBar"));
         QVERIFY(enabled("videoMenuAspectRatio"));
-        for (const char *name : {"videoMenuSaveSubbedFrame", "videoMenuCopySubbedFrame", "videoMenuSaveFrame", "videoMenuCopyFrame"})
+        for (const char *name : {"videoMenuSaveSubbedFrame", "videoMenuCopySubbedFrame", "videoMenuSaveSubtitles",
+                                 "videoMenuCopySubtitles", "videoMenuSaveFrame", "videoMenuCopyFrame"})
             QVERIFY2(enabled(name), name);
 
         const auto &session = application->video().session();
@@ -31419,6 +31657,42 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_SAVE_SUBBED_FRAME_TO_PNG"))));
         QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()),
                  folder.filePath(QStringLiteral("clip_3_00;00;01,001.png")));
+
+        application->video().showFrameAt(0);
+        QTRY_COMPARE(session.lastFrame() ? session.lastFrame()->index : -1, 0);
+        QTRY_VERIFY(session.lastOverlay() && !session.lastOverlay()->empty);
+        const auto straight = application::subtitlesImage(*session.lastOverlay());
+        const QImage alone =
+            QImage(straight.rgba.data(), straight.width, straight.height, straight.width * 4, QImage::Format_RGBA8888).copy();
+        QCOMPARE(alone.size(), QSize(session.lastFrame()->width, session.lastFrame()->height));
+        QCOMPARE(qAlpha(alone.pixel(0, 0)), 0);
+        bool inked = false;
+        for (std::size_t i = 3; i < straight.rgba.size(); i += 4)
+            inked = inked || straight.rgba[i] > 0;
+        QVERIFY(inked);
+        auto sameSubtitles = [&](QImage image) {
+            image = image.convertToFormat(QImage::Format_RGBA8888);
+            if (image.size() != alone.size())
+                return false;
+            for (int y = 0; y < image.height(); ++y)
+                for (int x = 0; x < image.width(); ++x) {
+                    const QRgb got = image.pixel(x, y), want = alone.pixel(x, y);
+                    if (qAlpha(got) != qAlpha(want))
+                        return false;
+                    if (qAlpha(want) >= 128 && (std::abs(qRed(got) - qRed(want)) > 2 || std::abs(qGreen(got) - qGreen(want)) > 2 ||
+                                                std::abs(qBlue(got) - qBlue(want)) > 2))
+                        return false;
+                }
+            return true;
+        };
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(named("videoMenuCopySubtitles"), "triggered"));
+        QTRY_VERIFY(!QGuiApplication::clipboard()->image().isNull());
+        QVERIFY(sameSubtitles(QGuiApplication::clipboard()->image()));
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_SAVE_SUBTITLES_TO_PNG"))));
+        const QString subtitlesFile = folder.filePath(QStringLiteral("clip_4_00;00;00,000.png"));
+        QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()), subtitlesFile);
+        QCOMPARE(QImage(subtitlesFile).convertToFormat(QImage::Format_RGBA8888), alone);
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());
 

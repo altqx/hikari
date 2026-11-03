@@ -7,6 +7,7 @@
 #include "hikari/application/presenter.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/application/video_matrix.h"
+#include "hikari/application/video_properties.h"
 #include "hikari/application/visual_view.h"
 #include "hikari/core/frame_timeline.h"
 
@@ -53,6 +54,7 @@ public:
     void setMatrix(std::string matrix);
     const std::string &matrix() const { return m_docMatrix; }
     const LegacyColourMatrix &colourMatrix() const { return m_colour; }
+    const VideoColour &colour() const { return m_videoColour; }
     void setLog(std::function<void(const std::string &)> log) { m_log = std::move(log); }
     // setSubtitles shows them again.
     void closeSubtitles();
@@ -232,6 +234,7 @@ private:
     std::string m_indexHandoff;
     double m_fps = 0;
     visual::SourceGeometry m_geometry; // the source's, from its timeline
+    VideoColour m_videoColour;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_progress;
     std::optional<OpenFailure> m_openFailure;
     std::vector<int> m_audioTracks;

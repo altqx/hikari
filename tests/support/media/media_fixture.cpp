@@ -187,7 +187,7 @@ int writeTimedSubtitles(const std::string &out, const std::string &kind)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|longaudio|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|longaudio|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|colorhdr|yuv10|subs-mp4|subs-mov|subs-ts>");
     const std::string out = argv[1], kind = argv[2];
     av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
@@ -278,6 +278,11 @@ int main(int argc, char **argv)
         enc->sample_aspect_ratio = AVRational{32, 27};
     if (untagged) {
         enc->bit_rate = 8'000'000; // flat patches survive quantization
+    } else if (kind == "colorhdr") {
+        enc->colorspace = AVCOL_SPC_BT2020_NCL;
+        enc->color_primaries = AVCOL_PRI_BT2020;
+        enc->color_trc = AVCOL_TRC_SMPTE2084;
+        enc->color_range = AVCOL_RANGE_MPEG;
     } else if (color) {
         enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
         enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;

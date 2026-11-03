@@ -216,6 +216,7 @@ void open(Source &source, Reader &in, Responder &r)
         return failDisplay(r, Outcome::Failed, Stage::Source, errorText(err));
     // Read before FFMS_SetOutputFormatV2, which resets the frame's colour fields.
     const int firstColorSpace = first->ColorSpace, firstColorRange = first->ColorRange;
+    const int firstPrimaries = first->ColorPrimaries, firstTransfer = first->TransferCharateristics;
     const int formats[] = {AV_PIX_FMT_BGRA, -1};
     if (FFMS_SetOutputFormatV2(video.get(), formats, first->EncodedWidth, first->EncodedHeight,
                                FFMS_RESIZER_BICUBIC, &err) != 0)
@@ -244,7 +245,7 @@ void open(Source &source, Reader &in, Responder &r)
         out.i32(k);
     out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
     out.i32(first->EncodedWidth).i32(first->EncodedHeight).i32(props->SARNum).i32(props->SARDen);
-    out.i32(firstColorSpace).i32(firstColorRange);
+    out.i32(firstColorSpace).i32(firstColorRange).i32(firstPrimaries).i32(firstTransfer);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);

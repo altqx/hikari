@@ -102,6 +102,19 @@ std::optional<Family> familyOfHotkey(std::string_view symbol)
     return std::nullopt;
 }
 
+std::optional<std::string> vectorClipOptionOfHotkey(std::string_view symbol)
+{
+    static constexpr std::string_view kModes[] = {"VIDEO_VECTOR_CLIP_DRAG",    "VIDEO_VECTOR_CLIP_LINE",
+                                                  "VIDEO_VECTOR_CLIP_BEZIER",  "VIDEO_VECTOR_CLIP_BSPLINE",
+                                                  "VIDEO_VECTOR_CLIP_POINT",   "VIDEO_VECTOR_CLIP_DELETE"};
+    for (std::size_t i = 0; i < std::size(kModes); ++i)
+        if (kModes[i] == symbol)
+            return "mode" + std::to_string(i);
+    if (symbol == "VIDEO_VECTOR_CLIP_INVERT")
+        return "invert";
+    return std::nullopt;
+}
+
 bool isArrowKey(int key)
 {
     return key == keys::Left || key == keys::Right || key == keys::Up || key == keys::Down;

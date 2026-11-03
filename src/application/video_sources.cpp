@@ -357,10 +357,23 @@ std::optional<DummyVideo> parseDummyVideo(std::string_view text)
     return video;
 }
 
-std::vector<std::byte> dummyVideoFrame(const DummyVideo &video)
+DummyVideoSize dummyVideoDrawnSize(const DummyVideo &video)
 {
-    if (video.width <= 0 || video.height <= 0)
+    const double scale = std::min(1.0, double(kDummyVideoDrawnLimit) / std::max(video.width, video.height));
+    if (scale >= 1.0)
+        return {video.width, video.height};
+    return {std::max(1, static_cast<int>(std::lround(video.width * scale))),
+            std::max(1, static_cast<int>(std::lround(video.height * scale)))};
+}
+
+std::vector<std::byte> dummyVideoFrame(const DummyVideo &nominal)
+{
+    if (nominal.width <= 0 || nominal.height <= 0)
         return {};
+    DummyVideo video = nominal;
+    const auto drawn = dummyVideoDrawnSize(nominal);
+    video.width = drawn.width;
+    video.height = drawn.height;
     const std::uint8_t r = video.red, g = video.green, b = video.blue;
     std::vector<std::byte> buffer(static_cast<std::size_t>(video.width) * static_cast<std::size_t>(video.height) * 4);
     auto *buff = reinterpret_cast<std::uint8_t *>(buffer.data());
@@ -477,9 +490,10 @@ void DummyVideoSource::frame(int index, FrameReady done)
     f.index = index;
     // MUST KILL: duplicates dummyVideoTimecodes' formula
     f.pts = saturate(index * static_cast<double>(m_dummy->fps > 0.f ? 1000.f / m_dummy->fps : 0.f));
-    f.width = m_dummy->width;
-    f.height = m_dummy->height;
-    f.stride = m_dummy->width * 4;
+    const auto drawn = dummyVideoDrawnSize(*m_dummy);
+    f.width = drawn.width;
+    f.height = drawn.height;
+    f.stride = drawn.width * 4;
     f.bgra = m_frame;
     done(std::move(f));
 }

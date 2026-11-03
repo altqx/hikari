@@ -1050,10 +1050,46 @@ DialogWindow {
                         }
                     }
                     SettingsSection {
+                        title: qsTr("Visual tools")
+                        SettingsRow {
+                            iconRole: "vector-point"
+                            text: qsTr("Handle size")
+                            SettingNumber {
+                                setting: "video.handleSize"; from: 50; to: 400; unit: "%"
+                                name: qsTr("Handle size"); tip: qsTr("Size of the visual tools’ handles. Range from 50 to 400")
+                            }
+                        }
+                    }
+                    SettingsSection {
                         title: qsTr("Script resolution")
                         SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off the visual tools warning") }
                         SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don't warn about a resolution mismatch") }
                         SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                        Repeater {
+                            model: [
+                                { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
+                                  choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
+                                  choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
+                                { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),
+                                  choices: [qsTr("Never ask"), qsTr("Ask when the aspect ratio differs"), qsTr("Always ask")] }
+                            ]
+                            SettingsRow {
+                                required property var modelData
+                                iconRole: "script-properties"
+                                text: modelData.text
+                                SettingChoice {
+                                    setting: modelData.setting
+                                    model: modelData.choices
+                                    Accessible.name: modelData.text
+                                }
+                            }
+                        }
+                        SettingNote { text: qsTr("Checked when a video opens.") }
+                        SettingCheck { setting: "video.untaggedMatrixWarning"; text: qsTr("Warn when the video has no colour matrix tag") }
+                        SettingCheck { setting: "video.hdrWarning"; text: qsTr("Warn when the video has HDR or wide-gamut colours") }
                     }
                 }
 
