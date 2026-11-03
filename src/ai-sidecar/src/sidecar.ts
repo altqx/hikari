@@ -1,5 +1,8 @@
 import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult } from "./protocol";
+import { ProviderError } from "./providers/errors";
+import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
+import type { UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
 
 export interface Build {
@@ -17,17 +20,36 @@ export class HikariApi {
     }
 }
 
+/** A provider's failure as its JSON-RPC error. */
+async function wire<T>(work: () => T | Promise<T>): Promise<T> {
+    try {
+        return await work();
+    } catch (error) {
+        if (error instanceof InvalidParams)
+            throw new RpcError(ErrorCode.invalidParams, error.message);
+        if (error instanceof ProviderError)
+            throw new RpcError(ErrorCode.providerFailed, error.detail || error.kind, error.data);
+        throw error;
+    }
+}
+
 export class Sidecar {
     readonly api: HikariApi;
+    readonly providers: ProviderService;
     private initialized = false;
 
-    constructor(readonly peer: Peer, private readonly build: Build) {
+    constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}) {
         this.api = new HikariApi(peer);
+        this.providers = new ProviderService(providers);
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         for (const method of kDeclaredMethods)
             this.handle(method, () => {
                 throw new RpcError(ErrorCode.methodNotFound, `${method} isn't implemented in this build`);
             });
+        this.handle(Method.providersSet, (params) => wire(() => this.providers.set(params)));
+        this.handle(Method.modelsList, (params, signal) => wire(() => this.providers.models(params, signal)));
+        this.handle(Method.complete, (params, signal) => wire(() => this.providers.complete(params, signal,
+            (stream, update) => peer.notify(Method.sessionUpdate, { stream, update } satisfies UpdateParams))));
     }
 
     /** Registers a Qt request that only runs after `initialize`. */

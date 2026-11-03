@@ -14307,6 +14307,14 @@ Styles deleted:
         <source>Save</source>
         <translation>บันทึก</translation>
     </message>
+    <message>
+        <source>Centre times within frames</source>
+        <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
+    </message>
+    <message>
+        <source>Times were not centred within frames: no video is open</source>
+        <translation>ไม่ได้จัดเวลาให้อยู่กลางเฟรม: ไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>

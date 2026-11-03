@@ -1,7 +1,7 @@
 #include "hikari/app/ai_features.h"
 
 #include "hikari/backends/ai_keychain.h"
-#include "hikari/backends/ai_network.h"
+#include "hikari/backends/ai_config_store.h"
 #include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "settings_store.h"

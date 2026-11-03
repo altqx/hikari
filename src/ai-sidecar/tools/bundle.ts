@@ -41,11 +41,21 @@ export function forbiddenInputs(meta: Metafile): string[] {
     return Object.keys(meta.inputs).filter((input) => packageOf(input) === kNeverShipped);
 }
 
-function licenceText(dir: string): string {
+interface Manifest {
+    version?: string;
+    license?: string;
+    author?: string | { name?: string };
+}
+
+/** The package's licence file, or for an MIT package that ships none, the MIT text credited to its author. */
+function licenceText(dir: string, manifest: Manifest): string {
     const file = readdirSync(dir).find((name) => /^(licen[cs]e|copying|notice)(\.|$)/i.test(name));
-    if (!file)
+    if (file)
+        return readFileSync(join(dir, file), "utf8").trimEnd();
+    const author = typeof manifest.author === "string" ? manifest.author : manifest.author?.name;
+    if (manifest.license !== "MIT" || !author)
         throw new Error(`${dir} has no licence file`);
-    return readFileSync(join(dir, file), "utf8").trimEnd();
+    return `Copyright (c) ${author}\n\n${readFileSync(join(kRoot, "licenses", "mit.txt"), "utf8").trimEnd()}`;
 }
 
 function section(title: string, body: string): string {
@@ -64,11 +74,10 @@ export function notices(packages: string[]): string {
         const dir = join(kRoot, "node_modules", name);
         if (!existsSync(dir))
             throw new Error(`${name} is bundled but not installed`);
-        const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as
-            { version?: string; license?: string };
-        text += section(`${name} ${manifest.version ?? ""} (${manifest.license ?? "see below"})`, licenceText(dir));
+        const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as Manifest;
+        text += section(`${name} ${manifest.version ?? ""} (${manifest.license ?? "see below"})`, licenceText(dir, manifest));
     }
     if (packages.length === 0)
         text += "No npm packages are bundled.\n";
-    return text;
+    return text.replace(/\r\n?/g, "\n");
 }

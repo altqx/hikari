@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { bundledPackages, forbiddenInputs, kRoot } from "../tools/bundle";
+import { bundledPackages, forbiddenInputs, kRoot, notices } from "../tools/bundle";
 
 describe("the release checks", () => {
     test("an input from the Claude Agent SDK is caught, wherever it is nested", () => {
@@ -17,6 +17,12 @@ describe("the release checks", () => {
             "node_modules\\@anthropic-ai\\claude-agent-sdk\\win.js",
         ]);
         expect(bundledPackages(meta)).toEqual(["@anthropic-ai/claude-agent-sdk", "@anthropic-ai/sdk"]);
+    });
+
+    test("the notices end lines with LF even where a package's licence uses CRLF", () => {
+        const text = notices(["@protobufjs/base64"]);
+        expect(text).toContain("@protobufjs/base64");
+        expect(text).not.toContain("\r");
     });
 
     test("NOTICES.txt matches what the bundle holds", () => {
