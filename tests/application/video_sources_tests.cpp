@@ -393,10 +393,10 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
 
 TEST(DummyVideo, SidesOver8192AreDrawnScaledButReportedAsAsked)
 {
-    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 8192, 4320, 0, 0, 0, false}), (DummyVideoSize{8192, 4320}));
-    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 16384, 9216, 0, 0, 0, false}), (DummyVideoSize{8192, 4608}));
-    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 300, 100000, 0, 0, 0, false}), (DummyVideoSize{25, 8192}));
-    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{25.f, 1, 100000, 1, 0, 0, 0, false}), (DummyVideoSize{8192, 1}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 8192, 4320, 0, 0, 0, false}), (DummyVideoSize{8192, 4320}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 16384, 9216, 0, 0, 0, false}), (DummyVideoSize{8192, 4608}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 300, 100000, 0, 0, 0, false}), (DummyVideoSize{25, 8192}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 100000, 1, 0, 0, 0, false}), (DummyVideoSize{8192, 1}));
     struct Media : IndexedSourcePort {
         std::uint64_t open(const std::string &, Progress, Opened) override { return 1; }
         void cancelOpen() override {}
