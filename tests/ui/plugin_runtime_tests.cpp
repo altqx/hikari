@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -676,6 +677,49 @@ private slots:
         QFile secret(m_dir.filePath(QStringLiteral("secret/key.txt")));
         QVERIFY(secret.open(QIODevice::ReadOnly));
         QCOMPARE(secret.readAll(), QByteArray("secret"));
+    }
+
+    void aJunctionOutOfItsFolderIsRefused()
+    {
+#ifdef Q_OS_WIN
+        write(m_dir.filePath(QStringLiteral("secret/key.txt")), "secret");
+        const QString data = folders().data + QStringLiteral("/com.example.tidy");
+        QDir().mkpath(data);
+        QProcess mklink;
+        mklink.setProcessChannelMode(QProcess::MergedChannels);
+        mklink.start(QStringLiteral("cmd"), {QStringLiteral("/c"), QStringLiteral("mklink"), QStringLiteral("/J"),
+                                             QDir::toNativeSeparators(data + QStringLiteral("/door")),
+                                             QDir::toNativeSeparators(m_dir.filePath(QStringLiteral("secret")))});
+        QVERIFY(mklink.waitForFinished());
+        QVERIFY2(mklink.exitCode() == 0, mklink.readAll().constData());
+        QVERIFY(QFile::exists(data + QStringLiteral("/door/key.txt")));
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.commands.register('greet', function()
+                for _, path in ipairs({'door/key.txt', 'door/new.txt'}) do
+                    local _, err = hikari.files.open('data', path)
+                    hikari.notify('open ' .. path .. ' ' .. (err and err.code or 'granted'))
+                end
+                local _, listed = hikari.files.entries('data', 'door')
+                hikari.notify('entries door ' .. (listed and listed.code or 'granted'))
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        QVERIFY(runtime.run(kTidyGreet));
+        const QStringList wanted{QStringLiteral("Tidy: open door/key.txt not_granted"), QStringLiteral("Tidy: open door/new.txt not_granted"),
+                                 QStringLiteral("Tidy: entries door not_granted")};
+        QTRY_COMPARE(texts(noticed).size(), wanted.size());
+        QCOMPARE(texts(noticed), wanted);
+        QVERIFY(!QFile::exists(m_dir.filePath(QStringLiteral("secret/new.txt"))));
+        QFile secret(m_dir.filePath(QStringLiteral("secret/key.txt")));
+        QVERIFY(secret.open(QIODevice::ReadOnly));
+        QCOMPARE(secret.readAll(), QByteArray("secret"));
+#else
+        QSKIP("Directory junctions exist only on Windows");
+#endif
     }
 
     void aFolderIsAskedForOnceAndRememberedWhenTheUserSaysSo()
