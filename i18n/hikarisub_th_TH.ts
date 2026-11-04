@@ -807,6 +807,58 @@ Output device: %2</source>
         <translation>การโหลดสคริปต์จะเรียกใช้โค้ดของสคริปต์นั้น</translation>
     </message>
     <message>
+        <source>Not installed by DependencyControl. Remove the file from your autoload folder.</source>
+        <translation>ไม่ได้ติดตั้งผ่าน DependencyControl ลบไฟล์ออกจากโฟลเดอร์โหลดอัตโนมัติของคุณ</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>installing</source>
+        <translation>กำลังติดตั้ง</translation>
+    </message>
+    <message>
+        <source>uninstalling</source>
+        <translation>กำลังถอนการติดตั้ง</translation>
+    </message>
+    <message>
+        <source>waiting to install</source>
+        <translation>รอติดตั้ง</translation>
+    </message>
+    <message>
+        <source>couldn’t install</source>
+        <translation>ติดตั้งไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Uninstall script</source>
+        <translation>ถอนการติดตั้งสคริปต์</translation>
+    </message>
+    <message>
+        <source>Uninstall %1?</source>
+        <translation>ถอนการติดตั้ง %1 หรือไม่</translation>
+    </message>
+    <message>
+        <source>DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</source>
+        <translation>DependencyControl จะลบไฟล์ของสคริปต์นี้ออกจากโฟลเดอร์ผู้ใช้ของคุณ ส่วนโมดูลที่ติดตั้งมาด้วยจะยังคงอยู่เพื่อให้สคริปต์อื่นใช้</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>ถอนการติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Its macros are in Automation › %1.</source>
+        <translation>แมโครของสคริปต์นี้อยู่ใน สคริปต์อัตโนมัติ › %1</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>สคริปต์</translation>
     </message>
@@ -819,6 +871,18 @@ Output device: %2</source>
         <translation>การเรียกใช้</translation>
     </message>
     <message>
+        <source>Recommended</source>
+        <translation>แนะนำ</translation>
+    </message>
+    <message>
+        <source>Filter scripts</source>
+        <translation>กรองสคริปต์</translation>
+    </message>
+    <message>
+        <source>Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</source>
+        <translation>ติดตั้งจากฟีดของผู้เขียนแต่ละคนผ่าน DependencyControl สคริปต์จะเรียกใช้โค้ดของตัวเองเมื่อโหลด</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>โหลด</translation>
     </message>
@@ -827,12 +891,24 @@ Output device: %2</source>
         <translation>โหลดสคริปต์ที่ไฟล์นี้ระบุ</translation>
     </message>
     <message>
+        <source>Browse recommended scripts</source>
+        <translation>เรียกดูสคริปต์ที่แนะนำ</translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation>ไม่มีแมโครที่ตรงกัน</translation>
     </message>
     <message>
         <source>Macros</source>
         <translation>แมโคร</translation>
+    </message>
+    <message>
+        <source>No scripts match</source>
+        <translation>ไม่มีสคริปต์ที่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>Recommended scripts</source>
+        <translation>สคริปต์ที่แนะนำ</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
@@ -1015,6 +1091,54 @@ Output device: %2</source>
     <message>
         <source>Remove shortcut</source>
         <translation>นำปุ่มลัดออก</translation>
+    </message>
+    <message>
+        <source>%1 (version %2)</source>
+        <translation>%1 (เวอร์ชัน %2)</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation>กำลังติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Uninstalling…</source>
+        <translation>กำลังถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation>กำลังรอ…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>Show in Scripts</source>
+        <translation>แสดงในมุมมองสคริปต์</translation>
+    </message>
+    <message>
+        <source>Open project page</source>
+        <translation>เปิดหน้าโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>ถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Installed by hand</source>
+        <translation>ติดตั้งด้วยตนเอง</translation>
     </message>
     <message>
         <source>Shortcut</source>
@@ -1354,6 +1478,138 @@ Output device: %2</source>
     <message>
         <source>not ticked</source>
         <translation>ไม่ได้ทำเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>DependencyControl’s updater is turned off.</source>
+        <translation>ตัวอัปเดตของ DependencyControl ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>DependencyControl is busy with another update. Try again later.</source>
+        <translation>DependencyControl กำลังทำการอัปเดตอื่นอยู่ ลองอีกครั้งในภายหลัง</translation>
+    </message>
+    <message>
+        <source>Its feed has no release that fits this system.</source>
+        <translation>ฟีดของสคริปต์นี้ไม่มีรุ่นที่เหมาะกับระบบนี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the feed: no network connection.</source>
+        <translation>อ่านฟีดไม่ได้: ไม่มีการเชื่อมต่อเครือข่าย</translation>
+    </message>
+    <message>
+        <source>A module it needs couldn’t be installed.</source>
+        <translation>ติดตั้งโมดูลที่สคริปต์นี้ต้องใช้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>DependencyControl doesn’t trust its feed.</source>
+        <translation>DependencyControl ไม่เชื่อถือฟีดของสคริปต์นี้</translation>
+    </message>
+    <message>
+        <source>The install was cancelled.</source>
+        <translation>ยกเลิกการติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>DependencyControl blocks its feed.</source>
+        <translation>DependencyControl บล็อกฟีดของสคริปต์นี้</translation>
+    </message>
+    <message>
+        <source>A downloaded file didn’t match its feed.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ตรงกับฟีด</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be written. Close what uses it and try again.</source>
+        <translation>เขียนไฟล์ไม่ได้ ปิดสิ่งที่ใช้ไฟล์นั้นอยู่แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be downloaded.</source>
+        <translation>ดาวน์โหลดไฟล์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>DependencyControl couldn’t install it (status %1).</source>
+        <translation>DependencyControl ติดตั้งไม่ได้ (สถานะ %1)</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
+        <source>Makes a power-pin track from the lines’ perspective, for Perspective-Motion.</source>
+        <translation>สร้างแทร็ก power-pin จากเพอร์สเปกทีฟของบรรทัด สำหรับ Perspective-Motion</translation>
+    </message>
+    <message>
+        <source>Draws moving focus lines, frame by frame.</source>
+        <translation>วาดเส้นโฟกัสที่เคลื่อนไหวทีละเฟรม</translation>
+    </message>
+    <message>
+        <source>Splits a line at its tags, one line per section.</source>
+        <translation>แยกบรรทัดตรงแท็ก เป็นหนึ่งบรรทัดต่อหนึ่งส่วน</translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Keeps earlier rewrites of a line and switches between them.</source>
+        <translation>เก็บข้อความที่เขียนใหม่ก่อนหน้าของบรรทัดและสลับไปมาระหว่างกัน</translation>
+    </message>
+    <message>
+        <source>QC</source>
+        <translation>QC</translation>
+    </message>
+    <message>
+        <source>Marks the lines changed since a git commit.</source>
+        <translation>ทำเครื่องหมายบรรทัดที่เปลี่ยนไปตั้งแต่ git commit</translation>
+    </message>
+    <message>
+        <source>Needs Git</source>
+        <translation>ต้องใช้ Git</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Fixes old KFX templates so Aegisub 3.5 runs them too.</source>
+        <translation>แก้เทมเพลต KFX รุ่นเก่าให้ Aegisub 3.5 เรียกใช้ได้ด้วย</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>Uninstall %1</source>
+        <translation>ถอนการติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>The user folder can’t be written.</source>
+        <translation>เขียนลงโฟลเดอร์ผู้ใช้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The uninstall was cancelled.</source>
+        <translation>ยกเลิกการถอนการติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 is uninstalled.</source>
+        <translation>ถอนการติดตั้ง %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>%1 is installed.</source>
+        <translation>ติดตั้ง %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>The run ended before it finished.</source>
+        <translation>การเรียกใช้สิ้นสุดก่อนทำงานเสร็จ</translation>
+    </message>
+    <message>
+        <source>DependencyControl has no record of it.</source>
+        <translation>DependencyControl ไม่มีบันทึกของสคริปต์นี้</translation>
+    </message>
+    <message>
+        <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
+        <translation>ลบไฟล์บางไฟล์ไม่ได้ ปิดสิ่งที่ใช้ไฟล์เหล่านั้นอยู่แล้วลองอีกครั้ง</translation>
     </message>
 </context>
 <context>

@@ -6192,6 +6192,7 @@ private slots:
             {QStringLiteral("Document tab"), named("documentTabMenu")},
             {QStringLiteral("Styles row"), named("stylesRowMenu")},
             {QStringLiteral("Automation macro"), named("automationMacroMenu")},
+            {QStringLiteral("Automation recommended script"), named("recommendedMenu")},
             {QStringLiteral("Home row"), named("homeRowMenu")},
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
@@ -20346,6 +20347,44 @@ private slots:
         keyTo(recorder, Qt::Key_Escape);
         QTRY_COMPARE(tool->property("recording").toString(), QString());
         QVERIFY(!macros.committedKeys().contains(legacyName.toStdString()));
+    }
+
+    void automationPanelRecommendsScripts()
+    {
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = named("automationTool");
+        const auto restore = qScopeGuard([&] { tool->setProperty("view", QStringLiteral("scripts")); });
+        QVERIFY(QMetaObject::invokeMethod(named("scriptsEmptyRecommended"), "clicked"));
+        QCOMPARE(tool->property("view").toString(), QStringLiteral("recommended"));
+        auto *list = visualItem("recommendedScripts");
+        QTRY_VERIFY(list && list->isVisible());
+        QVERIFY(visualItem("recommendedTrust")->isVisible());
+        QVERIFY(!visualItem("automationFilter")->isVisible());
+        QCOMPARE(tool->property("recommendedRows").toList().size(),
+                 static_cast<qsizetype>(app::recommendedScripts().size() + app::recommendedScriptGroups().size()));
+        QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(tool->property("chosen").toString(), QString::fromStdString(app::recommendedScripts().front().nameSpace));
+        QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(tool->property("chosen").toString(), QString::fromStdString(app::recommendedScripts().at(1).nameSpace));
+
+        auto *filter = visualItem("recommendedFilter");
+        filter->setProperty("text", QStringLiteral("git"));
+        QTRY_COMPARE(tool->property("recommendedRows").toList().size(), 2);
+        QTRY_VERIFY(!visualItem("recommended_arch.FocusLines"));
+        QQuickItem *gitSigns = nullptr;
+        QTRY_VERIFY(gitSigns = visualItem("recommended_arch.GitSigns"));
+        QCOMPARE(gitSigns->property("entryState").toString(), QStringLiteral("install"));
+        QVERIFY(visualItem("install_arch.GitSigns")->isVisible());
+        QVERIFY(!visualItem("entryMenu_arch.GitSigns")->isVisible());
+        QCOMPARE(gitSigns->property("entry").toMap().value(QStringLiteral("credit")).toString(),
+                 QStringLiteral("arch1t3cht · MIT · Needs Git"));
+        filter->setProperty("text", QStringLiteral("no such script"));
+        QTRY_VERIFY(visualItem("recommendedNoMatch")->isVisible());
+        QVERIFY(!list->isVisible());
+        filter->setProperty("text", QString());
+        QTRY_VERIFY(list->isVisible());
     }
 
     void automationRecorderKeepsTheKeysFromTheRouter()
