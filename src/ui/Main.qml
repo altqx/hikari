@@ -48,6 +48,7 @@ ApplicationWindow {
     required property var analytics
     required property var starPrompt
     required property var crashReports
+    required property var aiSettings
     required property var styleManager
     required property var kanjiTimer
     required property var fontCollector
@@ -7136,6 +7137,7 @@ ApplicationWindow {
                 hotkeys: root.hotkeys
                 updates: root.updates
                 crashReports: root.crashReports
+                ai: root.aiSettings
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport

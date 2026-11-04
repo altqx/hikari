@@ -1,5 +1,5 @@
 import { anthropicClient } from "./anthropic";
-import { prefixTexts, sortedTools } from "./cache";
+import { prefixTexts, sortedTools, withCaching } from "./cache";
 import type { Client, ClientOptions } from "./client";
 import { Collector } from "./collector";
 import { egressFetch, kSystemNetwork, type Network } from "./egress";
@@ -116,7 +116,8 @@ export class ProviderService {
     }
 
     complete(params: unknown, signal: AbortSignal, emit: (stream: number, update: Update) => void): Promise<Finished> {
-        const p = checked<CompleteParams>(kSchemas.completeParams, params);
+        const checkedParams = checked<CompleteParams>(kSchemas.completeParams, params);
+        const p = { ...checkedParams, request: withCaching(checkedParams.request) };
         if (!p.request.model)
             return Promise.reject(new ProviderError("noModel"));
         return this.run(p.providerId, p.key ?? "", signal, async (client, s, touch) => {

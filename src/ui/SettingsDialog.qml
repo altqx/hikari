@@ -13,6 +13,7 @@ DialogWindow {
     property var hotkeys: null
     property var updates: null
     property var crashReports: null
+    property var ai: null
     property TagButtonsController tagButtons: null
     property var importer: null
     property string legacyNotFound: ""
@@ -53,6 +54,7 @@ DialogWindow {
         {id: "subtitleProperties", name: qsTr("Script properties"), iconRole: "script-properties"},
         {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
         {id: "hotkeys", name: qsTr("Shortcuts"), iconRole: "hotkeys"},
+        {id: "ai", name: qsTr("AI"), iconRole: "ai-assistant"},
         {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"}
     ]
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
@@ -132,6 +134,7 @@ DialogWindow {
         }, { title: name, alpha: false, focus: anchor })
     }
     function apply() {
+        aiPage.commit()
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
@@ -228,11 +231,15 @@ DialogWindow {
     }
 
     onAccepted: {
+        aiPage.commit()
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
     }
-    onVisibleChanged: if (!visible) Theme.endPreview()
+    onVisibleChanged: if (!visible) {
+        Theme.endPreview()
+        aiPage.closeForm()
+    }
 
     leadingActions: [
         RowLayout {
@@ -1592,6 +1599,8 @@ DialogWindow {
                         }
                     }
                 }
+
+                SettingsAiPage { id: aiPage; dialog: dialog }
 
                 SettingsPage {
                     objectName: "settingsPageUpdates"

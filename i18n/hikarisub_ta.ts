@@ -9145,6 +9145,10 @@ Failed to copy %2 fonts.</source>
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
         <source>Legacy</source>
         <translation>பழையது</translation>
     </message>
@@ -9421,6 +9425,360 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>பிற மொழிச் சொற்கள், அவற்றின் எழுத்துமுறைக்கான பிற நிறுவப்பட்ட அகராதிகளுடன் சரிபார்க்கப்படும். அகராதி இல்லாத எழுத்துமுறையில் உள்ள சொற்கள் குறிக்கப்படாது.</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>அரட்டை</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation>மொழிபெயர்ப்பாளர்</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation>மதிப்பாய்வாளர்</translation>
+    </message>
+    <message>
+        <source>Vision</source>
+        <translation>பார்வை</translation>
+    </message>
+    <message>
+        <source>Judge</source>
+        <translation>நடுவர்</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>தனிப்பயன் இறுதிப்புள்ளி…</translation>
+    </message>
+    <message>
+        <source>Delete provider</source>
+        <translation>வழங்குநரை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Delete the provider “%1”?</source>
+        <translation>“%1” வழங்குநரை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>Its key is removed from the keychain. Roles that use its models go back to the chat model.</source>
+        <translation>அதன் விசை விசைக்கொத்திலிருந்து நீக்கப்படும். அதன் மாதிரிகளைப் பயன்படுத்தும் பங்குகள் அரட்டை மாதிரிக்குத் திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>Roles that use its models go back to the chat model.</source>
+        <translation>அதன் மாதிரிகளைப் பயன்படுத்தும் பங்குகள் அரட்டை மாதிரிக்குத் திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>Chat Completions</source>
+        <translation>Chat Completions</translation>
+    </message>
+    <message>
+        <source>Responses</source>
+        <translation>Responses</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation>Messages</translation>
+    </message>
+    <message>
+        <source>Gemini API</source>
+        <translation>Gemini API</translation>
+    </message>
+    <message>
+        <source>Key rejected (%1)</source>
+        <translation>விசை நிராகரிக்கப்பட்டது (%1)</translation>
+    </message>
+    <message>
+        <source>Too many requests (%1)</source>
+        <translation>அதிகமான கோரிக்கைகள் (%1)</translation>
+    </message>
+    <message>
+        <source>Request refused (%1)</source>
+        <translation>கோரிக்கை மறுக்கப்பட்டது (%1)</translation>
+    </message>
+    <message>
+        <source>Provider error (%1)</source>
+        <translation>வழங்குநர் பிழை (%1)</translation>
+    </message>
+    <message>
+        <source>Can’t reach the provider</source>
+        <translation>வழங்குநரை அணுக முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>No answer from the provider</source>
+        <translation>வழங்குநரிடமிருந்து பதில் இல்லை</translation>
+    </message>
+    <message>
+        <source>Unexpected answer</source>
+        <translation>எதிர்பாராத பதில்</translation>
+    </message>
+    <message>
+        <source>A key goes only over HTTPS, to this computer or to a Tailscale peer</source>
+        <translation>விசை HTTPS வழியாக, இந்தக் கணினிக்கு அல்லது Tailscale இணைக்கு மட்டுமே அனுப்பப்படும்</translation>
+    </message>
+    <message>
+        <source>Enter a key</source>
+        <translation>ஒரு விசையை உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>No system keychain is available</source>
+        <translation>கணினி விசைக்கொத்து எதுவும் கிடைக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Access to the keychain was refused</source>
+        <translation>விசைக்கொத்து அணுகலை மறுத்தது</translation>
+    </message>
+    <message>
+        <source>Can’t save the provider list</source>
+        <translation>வழங்குநர் பட்டியலைச் சேமிக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Fill in the name and a valid address</source>
+        <translation>பெயரையும் சரியான முகவரியையும் நிரப்பவும்</translation>
+    </message>
+    <message>
+        <source>Can’t download the AI component</source>
+        <translation>AI கூறைப் பதிவிறக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component is damaged</source>
+        <translation>பதிவிறக்கிய AI கூறு சேதமடைந்துள்ளது</translation>
+    </message>
+    <message>
+        <source>Can’t save the AI component</source>
+        <translation>AI கூறைச் சேமிக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Test failed</source>
+        <translation>சோதனை தோல்வியடைந்தது</translation>
+    </message>
+    <message>
+        <source>Edit “%1”</source>
+        <translation>“%1” ஐத் திருத்து</translation>
+    </message>
+    <message>
+        <source>Add a custom endpoint</source>
+        <translation>தனிப்பயன் இறுதிப்புள்ளியைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Add %1</source>
+        <translation>%1 ஐச் சேர்</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>பெயர்</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>அடிப்படை URL</translation>
+    </message>
+    <message>
+        <source>Gemini API key</source>
+        <translation>Gemini API விசை</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API விசை (விருப்பத்தேர்வு)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API விசை</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. Type a new key to replace it</source>
+        <translation>விசைக்கொத்தில் சேமிக்கப்பட்டுள்ளது. மாற்ற புதிய விசையைத் தட்டச்சு செய்யவும்</translation>
+    </message>
+    <message>
+        <source>Hide key</source>
+        <translation>விசையை மறை</translation>
+    </message>
+    <message>
+        <source>Show key</source>
+        <translation>விசையைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Get a key in Google AI Studio</source>
+        <translation>Google AI Studio இல் விசையைப் பெறு</translation>
+    </message>
+    <message>
+        <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
+        <translation>Google AI Studio இலிருந்து பெற்ற விசை. Vertex AI மற்றும் Google Cloud உள்நுழைவு ஆதரிக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
+        <translation>Ollama அல்லது LM Studio போன்ற உள்ளூர் சேவையகத்திற்கு விசை தேவையில்லை. விசை HTTPS வழியாக, இந்தக் கணினிக்கு அல்லது Tailscale இணைக்கு மட்டுமே அனுப்பப்படும்.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once: %1 MB.</source>
+        <translation>உங்கள் முதல் வழங்குநர் AI கூறை ஒருமுறை பதிவிறக்குகிறது: %1 MB.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once.</source>
+        <translation>உங்கள் முதல் வழங்குநர் AI கூறை ஒருமுறை பதிவிறக்குகிறது.</translation>
+    </message>
+    <message>
+        <source>Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.</source>
+        <translation>இணைப்பைச் சோதி மற்றும் சேர் அதைப் பதிவிறக்கும். நீங்கள் AI அம்சத்தைப் பயன்படுத்தும்போது மட்டுமே இயங்கும், AI அணைக்கப்பட்டிருக்கும்போது ஒருபோதும் இயங்காது.</translation>
+    </message>
+    <message>
+        <source>%1 of %2 MB</source>
+        <translation>%2 MB இல் %1</translation>
+    </message>
+    <message>
+        <source>Tests when the download finishes</source>
+        <translation>பதிவிறக்கம் முடிந்ததும் சோதிக்கும்</translation>
+    </message>
+    <message>
+        <source>Testing…</source>
+        <translation>சோதிக்கிறது…</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>சேமிக்கிறது…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>இணைக்கப்பட்டது · %n மாதிரி</numerusform>
+            <numerusform>இணைக்கப்பட்டது · %n மாதிரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>இணைப்பைச் சோதி</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>சேமி</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>சேர்</translation>
+    </message>
+    <message>
+        <source>AI features</source>
+        <translation>AI அம்சங்கள்</translation>
+    </message>
+    <message>
+        <source>Turn off all AI features</source>
+        <translation>அனைத்து AI அம்சங்களையும் அணை</translation>
+    </message>
+    <message>
+        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>AI தொடர்பான எதுவும் காட்டப்படாது, பதிவிறக்கப்படாது, தொடங்காது, உங்கள் விசைக்கொத்தைப் படிக்காது. வழங்குநர்கள், விசைகள், இழைகள் வைக்கப்படும்; AI ஐ மீண்டும் இயக்கினால் மறுதொடக்கம் இல்லாமல் அவை திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>Kept while AI is off</source>
+        <translation>AI அணைந்திருக்கும்போது வைக்கப்படுபவை</translation>
+    </message>
+    <message>
+        <source>Your providers, and their keys in the keychain</source>
+        <translation>உங்கள் வழங்குநர்களும் விசைக்கொத்தில் உள்ள அவற்றின் விசைகளும்</translation>
+    </message>
+    <message>
+        <source>Your agent threads</source>
+        <translation>உங்கள் முகவர் இழைகள்</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component</source>
+        <translation>பதிவிறக்கிய AI கூறு</translation>
+    </message>
+    <message>
+        <source>Hidden while AI is off</source>
+        <translation>AI அணைந்திருக்கும்போது மறைக்கப்படுபவை</translation>
+    </message>
+    <message>
+        <source>The agent panel, inline AI actions and AI rows in every menu</source>
+        <translation>முகவர் பலகம், உள்வரி AI செயல்கள், ஒவ்வொரு மெனுவிலும் உள்ள AI வரிசைகள்</translation>
+    </message>
+    <message>
+        <source>AI commands in command search, their shortcuts and toolbar buttons</source>
+        <translation>கட்டளைத் தேடலில் உள்ள AI கட்டளைகள், அவற்றின் குறுக்குவிசைகள், கருவிப்பட்டி பொத்தான்கள்</translation>
+    </message>
+    <message>
+        <source>AI in Getting started and What’s new</source>
+        <translation>தொடங்குதல், புதிதாக என்ன ஆகியவற்றில் உள்ள AI</translation>
+    </message>
+    <message>
+        <source>MCP server, which stops listening</source>
+        <translation>MCP சேவையகம், அது கேட்பதை நிறுத்தும்</translation>
+    </message>
+    <message>
+        <source>Press OK or Apply to turn AI back on.</source>
+        <translation>AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>வழங்குநர்கள்</translation>
+    </message>
+    <message>
+        <source>No providers yet. AI sends nothing until you add one.</source>
+        <translation>இன்னும் வழங்குநர்கள் இல்லை. நீங்கள் ஒன்றைச் சேர்க்கும் வரை AI எதையும் அனுப்பாது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>சோதிக்கப்படவில்லை · %n மாதிரி</numerusform>
+            <numerusform>சோதிக்கப்படவில்லை · %n மாதிரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the key with Edit</source>
+        <translation>திருத்து மூலம் விசையை மாற்றவும்</translation>
+    </message>
+    <message>
+        <source>Key in keychain</source>
+        <translation>விசைக்கொத்தில் விசை உள்ளது</translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation>விசை இல்லை</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>திருத்து</translation>
+    </message>
+    <message>
+        <source>Add provider</source>
+        <translation>வழங்குநரைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Changes to providers and keys apply at once.</source>
+        <translation>வழங்குநர்கள், விசைகளில் செய்யும் மாற்றங்கள் உடனே பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>மாதிரிகள்</translation>
+    </message>
+    <message>
+        <source>Refresh models</source>
+        <translation>மாதிரிகளைப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Same as chat</source>
+        <translation>அரட்டையைப் போலவே</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>முதலில் ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
+        <translation>சொந்த மாதிரி இல்லாத பங்கு அரட்டை மாதிரியைப் பயன்படுத்தும். பார்வை படங்களைப் படிக்கும் மாதிரிகளை மட்டுமே பட்டியலிடும்.</translation>
+    </message>
+    <message>
+        <source>Use prompt caching</source>
+        <translation>ப்ராம்ப்ட் தற்காலிகச் சேமிப்பைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</source>
+        <translation>வழங்குநர் உரையாடலின் தொடக்கத்தைச் சில நிமிடங்கள் வைத்திருக்கும், எனவே அடுத்த சுற்று குறைவாகச் செலவாகும். இந்தக் கணினியில் எதுவும் சேமிக்கப்படாது.</translation>
+    </message>
+    <message>
+        <source>What is sent to providers</source>
+        <translation>வழங்குநர்களுக்கு என்ன அனுப்பப்படுகிறது</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
     </message>
 </context>
 <context>
