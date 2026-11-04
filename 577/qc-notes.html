@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QC notes mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD;
+  --line:#414B57; --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warn:#F2C879;
+  --label:#2F3136; --qc:#F2C879;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170;
+  --line:#AAB5BE; --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warn:#7A5200;
+  --label:#E9ECEF; --qc:#8A5A00;
+}
+[data-theme="hc"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE;
+  --line:#FFFFFF; --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#00FFFF; --danger:#FFADAD; --warn:#FFFF00;
+  --label:#000000; --qc:#FFFF00;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#F0F0F0; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A;
+  --line:#000000; --accent:#00008B; --onaccent:#FFFFFF; --select:#C6E2FF; --focus:#8B0000; --danger:#8B0000; --warn:#5C3A00;
+  --label:#FFFFFF; --qc:#00008B;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+.sheet { padding:20px 24px 28px; display:grid; grid-template-columns: 900px 340px; gap:22px 24px; align-items:start; width:1312px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.cap b { color:var(--text); font-weight:600; }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+
+.dock { background:var(--panel); border:1px solid var(--line); }
+.tabs { display:flex; align-items:stretch; height:28px; background:var(--raised); border-bottom:1px solid var(--line); }
+.tab { padding:0 12px; display:flex; align-items:center; font-weight:600; background:var(--panel); border-right:1px solid var(--line); }
+.tab.off { font-weight:400; background:var(--raised); }
+.tabs .sp { flex:1; }
+.more { width:28px; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; color:var(--text); flex:none; }
+.ib.dis { color:var(--muted); opacity:.55; }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); }
+.ring { outline:1px solid var(--focus); outline-offset:1px; }
+.box { width:14px; height:14px; border:1px solid var(--line); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.box.on { background:var(--accent); border-color:var(--accent); color:var(--onaccent); }
+.box svg { width:12px; height:12px; }
+.check { display:inline-flex; align-items:center; gap:6px; font-size:12px; white-space:nowrap; }
+
+/* QC notes panel */
+.qh { display:flex; align-items:center; gap:4px; padding:4px 4px 4px 8px; border-bottom:1px solid var(--line); }
+.qh .src { flex:1; min-width:0; display:flex; align-items:center; gap:6px; font-size:12px; }
+.qh .src b { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.qh .src .n { color:var(--muted); white-space:nowrap; }
+.chips { display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding:6px 8px; border-bottom:1px solid var(--line); }
+.chips .sp { flex:1; }
+.chip { border:1px solid var(--line); border-radius:10px; padding:0 8px; height:20px; display:inline-flex; align-items:center; gap:4px; font-size:12px; background:var(--raised); white-space:nowrap; }
+.chip .c { color:var(--muted); }
+.chip.on { background:var(--select); border-color:var(--accent); font-weight:600; }
+.chip.on .c { color:var(--text); font-weight:400; }
+.notes { overflow:hidden; }
+.qn { display:grid; grid-template-columns: 18px 62px 1fr auto; gap:0 8px; align-items:start; padding:5px 8px; border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+.qn .box { margin-top:2px; }
+.qn .t { font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; font-size:12px; padding-top:1px; }
+.qn .tx { min-width:0; }
+.qn .tx .sec { font-size:11px; color:var(--muted); font-weight:600; margin-right:6px; }
+.qn .tx .more-l { display:block; color:var(--muted); }
+.qn .ln { font-size:12px; color:var(--muted); white-space:nowrap; padding-top:1px; }
+.qn .ln.none { color:var(--warn); display:inline-flex; gap:4px; align-items:center; }
+.qn .ln.none svg { width:13px; height:13px; }
+.qn.cur { background:var(--select); box-shadow: inset 2px 0 0 var(--accent); }
+.qn.done .t, .qn.done .tx { color:var(--muted); }
+.qn.done .tx span:not(.sec) { text-decoration:line-through; }
+.qf { display:flex; align-items:center; gap:6px; padding:6px 8px; border-top:1px solid var(--line); }
+.qf .sp { flex:1; }
+.qf .pos { font-size:12px; color:var(--muted); white-space:nowrap; }
+.msg { margin:0; padding:6px 8px; font-size:12px; display:flex; gap:6px; align-items:flex-start; border-bottom:1px solid var(--line); }
+.msg svg { flex:none; margin-top:1px; width:14px; height:14px; }
+.msg.warn { color:var(--warn); }
+.msg.info { color:var(--muted); }
+.msg a, .empty a { color:var(--accent); text-decoration:underline; }
+
+/* Grid excerpt */
+.grid { background:var(--panel); border:1px solid var(--line); font-size:12px; }
+.gh, .gr { display:grid; grid-template-columns: 46px 82px 82px 66px 1fr; align-items:center; }
+.gh { height:24px; background:var(--raised); border-bottom:1px solid var(--line); color:var(--muted); font-weight:600; font-size:11px; }
+.gh span, .gr span { padding:0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gr { height:23px; border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent); }
+.gr .no { background:var(--label); height:100%; display:flex; align-items:center; justify-content:flex-end; gap:3px; color:var(--muted); position:relative; }
+.gr .tm { font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; font-size:11.5px; }
+.gr.sel { background:var(--select); }
+.gr.sel .no { box-shadow: inset 2px 0 0 var(--accent); }
+.qcmark { position:absolute; left:4px; top:50%; transform:translateY(-50%); color:var(--qc); display:inline-flex; }
+.qcmark svg { width:13px; height:13px; stroke-width:1.7; }
+.qcmark.filled svg path.f { fill:currentColor; }
+.qcmark .k { font-size:9px; font-weight:700; margin-left:-1px; margin-top:-7px; }
+.tip { position:absolute; background:var(--raised); border:1px solid var(--line); color:var(--text); padding:5px 8px; font-size:12px; border-radius:2px; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.35); width:330px; }
+.tip .h { font-weight:600; margin-bottom:2px; }
+.tip .r { display:grid; grid-template-columns: 44px 1fr; gap:0 6px; }
+.tip .r .t { font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; font-size:11.5px; color:var(--muted); }
+
+.file { background:var(--field); border:1px solid var(--line); border-radius:2px; padding:8px 10px; font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; font-size:11.5px; line-height:1.45; white-space:pre; color:var(--text); }
+.file .dim { color:var(--muted); }
+.empty { padding:22px 16px; text-align:center; font-size:12px; color:var(--muted); }
+.empty .drop { border:1px dashed var(--line); border-radius:3px; padding:18px 12px; margin-bottom:10px; }
+.empty .drop svg { width:22px; height:22px; color:var(--muted); }
+.empty .row { display:flex; gap:6px; justify-content:center; margin:10px 0 6px; }
+.empty .btn { color:var(--text); }
+.side { font-size:12px; color:var(--muted); }
+.side p.cap { margin-top:12px; }
+.side p.cap:first-child { margin-top:0; }
+.kbd { border:1px solid var(--line); border-bottom-width:2px; border-radius:3px; padding:0 4px; font-size:11px; color:var(--text); background:var(--raised); }
+.menu { position:absolute; background:var(--raised); border:1px solid var(--line); border-radius:2px; box-shadow:0 6px 20px rgba(0,0,0,.4); padding:3px 0; font-size:12px; width:210px; z-index:3; }
+.menu div { padding:3px 12px; display:flex; justify-content:space-between; }
+.menu div.hr { border-top:1px solid var(--line); margin:3px 0; padding:0; }
+.menu div.hot { background:var(--select); }
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="up" viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4"/></symbol>
+  <symbol id="down" viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4"/></symbol>
+  <symbol id="more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r=".9"/><circle cx="8" cy="8" r=".9"/><circle cx="12.5" cy="8" r=".9"/></symbol>
+  <symbol id="folder" viewBox="0 0 16 16"><path d="M2 4.5h4l1.5 1.5H14v6.5H2z"/></symbol>
+  <symbol id="paste" viewBox="0 0 16 16"><path d="M5.5 3H4v11h8V3h-1.5M6 2h4v2.5H6z"/></symbol>
+  <symbol id="tick" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></symbol>
+  <symbol id="warn" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.2"/></symbol>
+  <symbol id="info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 7.5v4M8 5v.2"/></symbol>
+  <symbol id="file" viewBox="0 0 16 16"><path d="M4 2h5.5L12 4.5V14H4z M9.5 2v2.5H12"/></symbol>
+  <symbol id="qc" viewBox="0 0 16 16"><path d="M4 14V2.5"/><path class="f" d="M4 3h8l-1.8 2.75L12 8.5H4z"/></symbol>
+</svg>
+
+<div class="sheet">
+
+  <!-- 1. Docked beside the Grid -->
+  <div>
+    <p class="cap"><b>1 · QC notes docked beside the Grid.</b> Clicking a note, or Next note, selects its line in the Grid and moves the video to the note. Lines with notes carry a flag in the number column. The flag is a mark in the Grid only: nothing is written into the file.</p>
+    <div style="display:grid; grid-template-columns: 520px 1fr; gap:0; border:1px solid var(--line);">
+      <div class="grid" style="border:0; border-right:1px solid var(--line); position:relative;">
+        <div class="tabs"><div class="tab">Grid</div><div class="sp"></div></div>
+        <div class="gh"><span style="text-align:right">#</span><span>Start</span><span>End</span><span>Style</span><span>Text</span></div>
+        <div class="gr"><span class="no">53</span><span class="tm">0:03:09.12</span><span class="tm">0:03:11.40</span><span>Default</span><span>Over here!</span></div>
+        <div class="gr"><span class="no">54</span><span class="tm">0:03:12.02</span><span class="tm">0:03:14.88</span><span>Default</span><span>Is it gone?</span></div>
+        <div class="gr"><span class="no">55</span><span class="tm">0:03:15.20</span><span class="tm">0:03:17.80</span><span>Default</span><span>Did you see that?</span></div>
+        <div class="gr"><span class="no">56</span><span class="tm">0:03:18.10</span><span class="tm">0:03:21.36</span><span>Default</span><span>It came out of nowhere.</span></div>
+        <div class="gr sel"><span class="no"><span class="qcmark filled"><svg><use href="#qc"/></svg></span>57</span><span class="tm">0:03:23.62</span><span class="tm">0:03:25.90</span><span>Default</span><span>This is yabai…</span></div>
+        <div class="gr"><span class="no">58</span><span class="tm">0:03:26.00</span><span class="tm">0:03:27.48</span><span>Default</span><span>Run!</span></div>
+        <div class="gr"><span class="no">59</span><span class="tm">0:03:27.40</span><span class="tm">0:03:31.02</span><span>Sign</span><span>{\an8\pos(640,120)}EXIT</span></div>
+        <div class="gr"><span class="no"><span class="qcmark"><svg><use href="#qc"/></svg></span>60</span><span class="tm">0:03:31.50</span><span class="tm">0:03:34.12</span><span>Default</span><span>Wait for me!</span></div>
+        <div class="gr"><span class="no">61</span><span class="tm">0:03:34.40</span><span class="tm">0:03:36.90</span><span>Default</span><span>Hurry, the door’s closing!</span></div>
+        <div class="gr"><span class="no">62</span><span class="tm">0:03:37.05</span><span class="tm">0:03:39.70</span><span>Default</span><span>I’m trying!</span></div>
+        <div class="gr"><span class="no">63</span><span class="tm">0:03:40.22</span><span class="tm">0:03:42.10</span><span>Default</span><span>…Made it.</span></div>
+        <div class="gr"><span class="no">64</span><span class="tm">0:03:42.60</span><span class="tm">0:03:45.98</span><span>Default</span><span>Where are we, anyway?</span></div>
+        <div class="gr" style="border-bottom:0"><span class="no">65</span><span class="tm">0:03:46.30</span><span class="tm">0:03:48.02</span><span>Default</span><span>No idea.</span></div>
+        <div class="tip" style="left:150px; top:212px;">
+          <div class="h">2 QC notes</div>
+          <div class="r"><span class="t">3:24</span><span><b>TLC</b> · yabai should be translated as “terrible” instead.</span></div>
+          <div class="r"><span class="t">3:24</span><span><b>Timing</b> · Flashing subs between these two lines.</span></div>
+        </div>
+      </div>
+      <div class="dock" style="border:0; display:flex; flex-direction:column;">
+        <div class="tabs"><div class="tab">QC notes</div><div class="tab off">Find</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+        <div class="qh">
+          <span class="src"><svg style="flex:none; color:var(--muted)"><use href="#file"/></svg><b>ep01_qc.txt</b><span class="n">23 notes</span></span>
+          <span class="ib"><svg><use href="#folder"/></svg></span><span class="ib"><svg><use href="#paste"/></svg></span><span class="ib"><svg><use href="#more"/></svg></span>
+        </div>
+        <div class="chips"><span class="chip on">All <span class="c">23</span></span><span class="chip">General <span class="c">5</span></span><span class="chip">TLC <span class="c">9</span></span><span class="chip">Timing <span class="c">6</span></span><span class="chip">TS <span class="c">3</span></span></div>
+        <div class="notes">
+          <div class="qn done"><span class="box on"><svg><use href="#tick"/></svg></span><span class="t">0:00:41</span><span class="tx"><span class="sec">General</span><span>OP karaoke is missing \be on the romaji.</span></span><span class="ln">#3</span></div>
+          <div class="qn"><span class="box"></span><span class="t">0:02:11</span><span class="tx"><span class="sec">TLC</span>“Is anyone there?” → “Hello? Anyone?” reads more naturally.</span><span class="ln">#42</span></div>
+          <div class="qn"><span class="box"></span><span class="t">0:02:16</span><span class="tx"><span class="sec">Timing</span>Scene bleed on the cut. End two frames earlier.</span><span class="ln">#44</span></div>
+          <div class="qn cur ring"><span class="box"></span><span class="t">0:03:24</span><span class="tx"><span class="sec">TLC</span>yabai should be translated as “terrible” instead.</span><span class="ln">#57</span></div>
+          <div class="qn"><span class="box"></span><span class="t">0:03:24</span><span class="tx"><span class="sec">Timing</span>Flashing subs between these two lines.</span><span class="ln">#57</span></div>
+          <div class="qn"><span class="box"></span><span class="t">0:03:32</span><span class="tx"><span class="sec">TS</span>EXIT sign: wrong font, and it should be masked behind the door.</span><span class="ln">#60</span></div>
+          <div class="qn"><span class="box"></span><span class="t">0:07:58</span><span class="tx"><span class="sec">TLC</span>Honorific dropped here.<span class="more-l">Keep -senpai; it’s a running joke.</span></span><span class="ln">#112</span></div>
+          <div class="qn"><span class="box"></span><span class="t">0:12:03</span><span class="tx"><span class="sec">Timing</span>Line starts before the speaker.</span><span class="ln">#140</span></div>
+          <div class="qn" style="border-bottom:0"><span class="box"></span><span class="t">0:21:47</span><span class="tx"><span class="sec">General</span>ED credits overlap the last line.</span><span class="ln none"><svg><use href="#warn"/></svg>No line</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="qf"><span class="btn"><svg><use href="#up"/></svg>Previous</span><span class="btn"><svg><use href="#down"/></svg>Next</span><span class="sp"></span><span class="check"><span class="box"></span>Hide done</span><span class="pos">4 of 23</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Narrow, one section, hide done -->
+  <div>
+    <p class="cap"><b>2 · Narrow (340 px), TLC only, done notes hidden.</b> Next and Previous follow the chosen section. That replaces Note Browser’s “by author” commands.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">QC notes</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="qh">
+        <span class="src"><b>ep01_qc.txt</b><span class="n">23</span></span>
+        <span class="ib"><svg><use href="#folder"/></svg></span><span class="ib"><svg><use href="#paste"/></svg></span><span class="ib"><svg><use href="#more"/></svg></span>
+      </div>
+      <div class="chips"><span class="chip">All <span class="c">23</span></span><span class="chip">General <span class="c">5</span></span><span class="chip on">TLC <span class="c">7 of 9</span></span><span class="chip">Timing <span class="c">6</span></span><span class="chip">TS <span class="c">3</span></span></div>
+      <div class="notes">
+        <div class="qn" style="grid-template-columns:18px 56px 1fr auto;"><span class="box"></span><span class="t">0:02:11</span><span class="tx">“Is anyone there?” → “Hello? Anyone?” reads more naturally.</span><span class="ln">#42</span></div>
+        <div class="qn cur" style="grid-template-columns:18px 56px 1fr auto;"><span class="box"></span><span class="t">0:03:24</span><span class="tx">yabai should be translated as “terrible” instead.</span><span class="ln">#57</span></div>
+        <div class="qn" style="grid-template-columns:18px 56px 1fr auto;"><span class="box"></span><span class="t">0:07:58</span><span class="tx">Honorific dropped here.<span class="more-l">Keep -senpai; it’s a running joke.</span></span><span class="ln">#112</span></div>
+        <div class="qn" style="grid-template-columns:18px 56px 1fr auto;"><span class="box"></span><span class="t">0:09:30</span><span class="tx">Tense changes mid-sentence.</span><span class="ln">#131</span></div>
+        <div class="qn" style="grid-template-columns:18px 56px 1fr auto; border-bottom:0"><span class="box"></span><span class="t">0:15:02</span><span class="tx">“Kouhai” is spelled two ways in this scene.</span><span class="ln">#188</span></div>
+      </div>
+      <div class="qf"><span class="ib"><svg><use href="#up"/></svg></span><span class="ib"><svg><use href="#down"/></svg></span><span class="sp"></span><span class="check"><span class="box on"><svg><use href="#tick"/></svg></span>Hide done</span><span class="pos">2 of 7</span></div>
+    </div>
+    <div style="position:relative; height:150px;">
+      <p class="cap" style="margin-top:10px"><b>The ⋯ menu</b></p>
+      <div class="menu" style="left:0; top:22px; position:absolute;">
+        <div>Open notes file…</div>
+        <div>Paste notes</div>
+        <div class="hot">Reload from file</div>
+        <div class="hr"></div>
+        <div>Mark all as not done</div>
+        <div>Clear notes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. The file and what loading says -->
+  <div>
+    <p class="cap"><b>3 · What a notes file looks like, and what loading says.</b> The formats are Note Browser’s. Notes before the first [Section] go into “General”. mpvQC files are read too; their category becomes the section.</p>
+    <div style="display:grid; grid-template-columns: 410px 1fr; gap:16px; align-items:start;">
+      <div>
+        <div class="file"><span class="dim">ep01_qc.txt</span>
+0:41 - OP karaoke is missing \be on the romaji.
+21:47 - ED credits overlap the last line.
+
+[TLC]
+2:11 - "Is anyone there?" → "Hello? Anyone?"
+       reads more naturally.
+3:24 - yabai should be translated as "terrible" instead.
+0:07:58.40 - Honorific dropped here.
+    Keep -senpai; it's a running joke.
+
+[Timing]
+3:24 - Flashing subs between these two lines.
+<span class="dim">…</span></div>
+        <p class="cap" style="margin-top:8px">mpvQC: <span class="mono">[00:03:24] [Translation] yabai should be …</span></p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="dock">
+          <div class="msg info"><svg><use href="#info"/></svg><span>Loaded 23 notes in 4 sections from ep01_qc.txt.</span></div>
+          <div class="msg warn" style="border-bottom:0"><svg><use href="#warn"/></svg><span>1 note has no line within 15 seconds of its time. It stays in the list; Next moves the video to it.</span></div>
+        </div>
+        <div class="dock">
+          <div class="msg warn" style="border-bottom:0"><svg><use href="#warn"/></svg><span>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24. <a>Open notes file…</a></span></div>
+        </div>
+        <div class="dock">
+          <div class="msg warn" style="border-bottom:0"><svg><use href="#warn"/></svg><span>ep01_qc.txt changed since it was loaded. <a>Reload</a></span></div>
+        </div>
+        <div class="side">
+          <p class="cap"><b>Which line a note marks</b></p>
+          <div>The line on screen at the note’s time. If several are, the one that starts closest to it. If none is, the line that starts closest, up to 15 seconds away, as in Note Browser. Comment lines are skipped. The match is worked out again when times change, so a note stays with the moment it describes.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Empty state -->
+  <div>
+    <p class="cap"><b>4 · No notes loaded.</b> Drop a file on the panel, open one, or paste. The Paste button is disabled when the clipboard has no times.</p>
+    <div class="dock">
+      <div class="tabs"><div class="tab">QC notes</div><div class="sp"></div><div class="more"><svg><use href="#more"/></svg></div></div>
+      <div class="empty">
+        <div class="drop"><svg><use href="#file"/></svg><div style="margin-top:6px">Drop a notes file here</div></div>
+        <div class="row"><span class="btn"><svg><use href="#folder"/></svg>Open notes file…</span><span class="btn"><svg><use href="#paste"/></svg>Paste notes</span></div>
+        <div style="margin-top:8px">Notes start with a time: <span class="mono">3:24 - …</span><br>[Section] lines group them.</div>
+      </div>
+    </div>
+    <div class="side" style="margin-top:14px;">
+      <p class="cap"><b>Where it opens</b></p>
+      <div>Subtitles › QC notes…, placed by DK2’s rule. Also View › Panels › QC notes. No built-in layout holds it.</div>
+      <p class="cap"><b>Keyboard</b></p>
+      <div>Next QC note and Previous QC note work from anywhere and have no default keys. In the list: <span class="kbd">↑</span> <span class="kbd">↓</span> move, <span class="kbd">Enter</span> goes to the note, <span class="kbd">Space</span> marks it done, <span class="kbd">Esc</span> goes back to the Grid.</div>
+      <p class="cap"><b>Screen readers</b></p>
+      <div>A note reads “3:24, TLC, line 57, yabai should be…, not done”. A Grid row with notes adds “2 QC notes”, as it adds “bookmarked”.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const t = new URLSearchParams(location.search).get('theme');
+if (t) document.documentElement.dataset.theme = t;
+</script>
+</body>
+</html>
