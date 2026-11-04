@@ -336,6 +336,8 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
+        {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},

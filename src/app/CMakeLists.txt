@@ -21,7 +21,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
-    ai_features.cpp include/hikari/app/ai_features.h
+    ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
     ai_settings.cpp include/hikari/app/ai_settings.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h)
