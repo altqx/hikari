@@ -303,6 +303,8 @@ target_compile_definitions(hikari_ui_saved_layouts_tests PRIVATE
 add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
+target_include_directories(hikari_ui_update_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_link_libraries(hikari_ui_update_checker_tests PRIVATE Hikari::sodium)
 hikari_add_qttest(hikari_ui_whats_new_tests SOURCES whats_new_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_whats_new_tests PRIVATE
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json")

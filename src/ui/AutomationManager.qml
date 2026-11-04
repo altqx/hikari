@@ -797,6 +797,10 @@ Pane {
             spacing: 0
             Accessible.role: Accessible.Grouping
             Accessible.name: root.scriptTitle(script)
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                onTapped: eventPoint => scriptMenu.openAt(scriptItem.script, scriptItem, eventPoint.position.x, eventPoint.position.y)
+            }
             RowLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: scriptItem.script.inDocument ? 28 : 20
@@ -849,6 +853,7 @@ Pane {
                     iconRole: "panel-menu"
                     text: qsTr("%1 options").arg(root.scriptTitle(scriptItem.script))
                     onClicked: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
+                    MenuKey.onRequested: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
                 }
             }
             Label {
@@ -1154,8 +1159,11 @@ Pane {
         objectName: "automationScriptMenu"
         property var script: null
         function openFor(script, anchor) {
+            openAt(script, anchor, 0, anchor.height)
+        }
+        function openAt(script, anchor, x, y) {
             scriptMenu.script = script
-            popup(anchor, 0, anchor.height)
+            popup(anchor, x, y)
         }
         ShellMenuItem {
             objectName: "scriptMenuReload"
@@ -1192,18 +1200,23 @@ Pane {
             popup(anchor, 40, anchor.height)
         }
         ShellMenuItem {
-            iconRole: "media-play"
+            objectName: "macroMenuRun"
+            iconRole: "run-script"
             text: qsTr("Run")
+            shortcutText: macroMenu.row !== null ? root.keysOf(macroMenu.row.legacyName) : ""
             enabled: macroMenu.row !== null && macroMenu.row.script.state === "ready" && !root.controller.busy
             onTriggered: root.controller.run(macroMenu.row.script.path, macroMenu.row.macro.ordinal)
         }
+        MenuSeparator {}
         ShellMenuItem {
+            objectName: "macroMenuSetShortcut"
             iconRole: "hotkeys"
             text: qsTr("Set shortcut…")
             enabled: root.hotkeys !== null
             onTriggered: root.record(macroMenu.row.legacyName)
         }
         ShellMenuItem {
+            objectName: "macroMenuClearShortcut"
             iconRole: "clear"
             text: qsTr("Clear shortcut")
             enabled: macroMenu.row !== null && root.keysOf(macroMenu.row.legacyName).length > 0

@@ -17,6 +17,8 @@ export const ErrorCode = {
     notInitialized: -32002,
     busy: -32003,
     requestCancelled: -32800,
+    /** HA1 refused an `_hikari/api.call`; `data.code` is HA1's error code and `data.data` its details. */
+    hikariApi: -32000,
     /** A provider failed; `data` is the ErrorData with its kind, HTTP status and message. */
     providerFailed: -32010,
 } as const;
@@ -35,6 +37,8 @@ export const Method = {
     complete: "_hikari/complete",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",
+    toolsList: "_hikari/tools.list",
+    toolsCall: "_hikari/tools.call",
     secretStore: "_hikari/secret.store",
 } as const;
 
@@ -57,6 +61,16 @@ export interface InitializeResult extends InitializeParams {
 export interface ApiCallParams {
     operation: string;
     params?: unknown;
+}
+
+export interface ToolsListParams {
+    /** Every tool, the searchable groups' too; otherwise only those offered now. */
+    all?: boolean;
+}
+
+export interface ToolsCallParams {
+    name: string;
+    arguments?: unknown;
 }
 
 export interface CancelRequestParams {

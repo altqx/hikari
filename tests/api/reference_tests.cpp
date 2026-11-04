@@ -185,6 +185,19 @@ TEST(ApiReference, ReleasedVersionOneOnlyGrows)
         ADD_FAILURE() << problem;
 }
 
+TEST(ApiReference, TheSidecarsCopyIsCurrent)
+{
+    Json now = apiReference();
+    std::erase_if(now.asObject(), [](const Json::Member &m) { return m.key == "nodes"; });
+    if (const char *out = std::getenv("HIKARI_API_WRITE_SIDECAR_REFERENCE")) {
+        std::ofstream(out, std::ios::binary) << now.dump(2) << '\n';
+        GTEST_SKIP() << "wrote " << out;
+    }
+    EXPECT_TRUE(readJson(HIKARI_AI_SIDECAR_API_REFERENCE) == now)
+        << "src/ai-sidecar/src/tools/api.json is stale: rerun this test with HIKARI_API_WRITE_SIDECAR_REFERENCE set to "
+           "that path, then run `bun tools/gen-api.ts` in src/ai-sidecar";
+}
+
 TEST(ApiReference, TheGuardCatchesABreak)
 {
     const Json then = *Json::parse(R"({"type": "object", "properties": {"a": {"type": "integer"}, "b": {"type": "string"}},

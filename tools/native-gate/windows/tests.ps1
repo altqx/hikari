@@ -11,7 +11,7 @@ $runs = @(
             'placementWindowMovesTabsAndResizes', 'floatF6AndShowActivateTheFloatingPanelsWindow',
             'placementWindowShowsItsDefaultsAndKeyboardChanges', 'fileDropAreaLeavesPanelDragsToTheDockingEngine',
             'dockingControlsAndTheGridAreAccessible', 'floatingPanelsOffEveryScreenComeBack',
-            'menuArrowsOpenAndCloseSubmenus', 'panelMenuHoldsMoveUndockAndClose',
+            'menuArrowsOpenAndCloseSubmenus', 'panelMenuHoldsMoveFloatAndClose',
             'keyboardReachesThePanelHeaderAndItsMenu', 'doubleClickOnAHeaderFloatsAndDocks',
             'bottomPanelsKeepATabAndTheTrayToolbar', 'panelsKeepTheirMinimumSizes') },
     @{ exe = 'hikari_ui_line_grid_a11y_tests'; fns = @() },

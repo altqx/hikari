@@ -1782,6 +1782,14 @@ Output device: %2</source>
         <translation>가로 세로 비율이 %1에서 %2(으)로 바뀝니다.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>3D 회전 조정</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>회전된 줄은 화면에서 모양을 유지합니다.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>늘리기</translation>
     </message>
@@ -1793,6 +1801,16 @@ Output device: %2</source>
         <source>%n value(s) could not be scaled.</source>
         <translation>
             <numerusform>값 %n개를 조정할 수 없습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>%1번 줄은 크기만 조정되었습니다: 이동하거나, 시간에 따라 모양이 바뀌거나, 측정할 수 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>회전된 줄 %n개가 모양을 유지하지 못했습니다.</numerusform>
         </translation>
     </message>
     <message>
@@ -7000,10 +7018,6 @@ Failed to copy %2 fonts.</source>
         <translation>표시</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>숨기기</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>띄우기</translation>
     </message>
@@ -9977,8 +9991,24 @@ Failed to copy %2 fonts.</source>
         <translation>참조 줄(보호됨, 읽기 전용)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>다른 위치</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>다른 곳에 없음</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>참조 문서는 보호되어 있습니다(읽기 전용).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, %2번 줄</translation>
     </message>
 </context>
 <context>
@@ -12856,8 +12886,12 @@ Styles deleted:
         <translation>선택한 줄에 적용: 해당 줄의 스타일을 설정합니다(Enter 또는 스타일 두 번 클릭)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>편집…</translation>
+        <source>New style…</source>
+        <translation>새 스타일…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>스타일 편집…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12866,10 +12900,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>목록에 복사…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>스타일 관리에서 열기</translation>
     </message>
 </context>
 <context>
@@ -12899,6 +12929,26 @@ Styles deleted:
         <translation>새 탭 열기</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>자막</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>영상</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>소리</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>키프레임</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>새 탭</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>저장</translation>
     </message>
@@ -12907,24 +12957,32 @@ Styles deleted:
         <translation>모두 저장</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>폴더에서 보기</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>경로 복사</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>전환</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>다른 탭 닫기</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>오른쪽 탭 닫기</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>모든 탭 닫기</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>폴더에서 자막 보기</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>폴더에서 영상 보기</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>폴더에서 소리 보기</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>폴더에서 키 프레임 보기</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15235,8 +15293,12 @@ Styles deleted:
         <translation>필터</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>영상 이동 시점</translation>
+        <source>Move video to the selected line</source>
+        <translation>선택한 줄로 영상 이동</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>이동한 뒤 재생</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15261,10 +15323,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>편집 시</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>이어서 재생</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16548,14 +16606,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>탭을 오른쪽으로 이동</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>도킹 해제</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>참조 닫기</translation>
     </message>
     <message>
         <source>Move panel</source>

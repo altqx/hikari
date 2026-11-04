@@ -1,0 +1,2275 @@
+{
+  "schema": 1,
+  "version": 1,
+  "$defs": {
+    "DocumentId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "An open Document, as documents.list gives it."
+    },
+    "LineId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "A Line's stable id: it survives edits, moves and undo, unlike its row."
+    },
+    "Revision": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Counts the Document's committed changes; a write names the revision it was prepared against."
+    },
+    "LineField": {
+      "enum": [
+        "comment",
+        "layer",
+        "start",
+        "end",
+        "style",
+        "actor",
+        "marginL",
+        "marginR",
+        "marginV",
+        "effect",
+        "text",
+        "translation",
+        "unconfirmed",
+        "generatedFrom"
+      ]
+    },
+    "Line": {
+      "type": "object",
+      "description": "Times are milliseconds. In translation mode text is the original and translation the translated text.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/LineId"
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based position among the Document's Lines."
+        },
+        "comment": {
+          "type": "boolean"
+        },
+        "layer": {
+          "type": "integer"
+        },
+        "start": {
+          "type": "integer"
+        },
+        "end": {
+          "type": "integer"
+        },
+        "style": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "marginL": {
+          "type": "integer"
+        },
+        "marginR": {
+          "type": "integer"
+        },
+        "marginV": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "translation": {
+          "type": "string"
+        },
+        "unconfirmed": {
+          "type": "boolean"
+        },
+        "generatedFrom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The karaoke Line a templater run generated this one from."
+        }
+      },
+      "required": [
+        "id",
+        "row"
+      ],
+      "additionalProperties": false
+    },
+    "Style": {
+      "type": "object",
+      "description": "An ASS v4+ Style. Text fields hold the field's ASS text; colours are &HAABBGGRR.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "fontname": {
+          "type": "string"
+        },
+        "fontsize": {
+          "type": "string"
+        },
+        "primaryColour": {
+          "type": "string"
+        },
+        "secondaryColour": {
+          "type": "string"
+        },
+        "outlineColour": {
+          "type": "string"
+        },
+        "backColour": {
+          "type": "string"
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "strikeOut": {
+          "type": "boolean"
+        },
+        "scaleX": {
+          "type": "string"
+        },
+        "scaleY": {
+          "type": "string"
+        },
+        "spacing": {
+          "type": "string"
+        },
+        "angle": {
+          "type": "string"
+        },
+        "borderStyle": {
+          "enum": [
+            1,
+            3,
+            4
+          ]
+        },
+        "outline": {
+          "type": "string"
+        },
+        "shadow": {
+          "type": "string"
+        },
+        "alignment": {
+          "type": "string"
+        },
+        "marginL": {
+          "type": "string"
+        },
+        "marginR": {
+          "type": "string"
+        },
+        "marginV": {
+          "type": "string"
+        },
+        "encoding": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "LineFields": {
+      "type": "object",
+      "description": "Line fields to set; the others keep their values.",
+      "properties": {
+        "comment": {
+          "type": "boolean"
+        },
+        "layer": {
+          "type": "integer"
+        },
+        "start": {
+          "type": "integer"
+        },
+        "end": {
+          "type": "integer"
+        },
+        "style": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "marginL": {
+          "type": "integer"
+        },
+        "marginR": {
+          "type": "integer"
+        },
+        "marginV": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "translation": {
+          "type": "string"
+        },
+        "unconfirmed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "StyleFields": {
+      "type": "object",
+      "description": "Style fields to set; name renames it. A new Style starts from Arial 48.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "fontname": {
+          "type": "string"
+        },
+        "fontsize": {
+          "type": "string"
+        },
+        "primaryColour": {
+          "type": "string"
+        },
+        "secondaryColour": {
+          "type": "string"
+        },
+        "outlineColour": {
+          "type": "string"
+        },
+        "backColour": {
+          "type": "string"
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "strikeOut": {
+          "type": "boolean"
+        },
+        "scaleX": {
+          "type": "string"
+        },
+        "scaleY": {
+          "type": "string"
+        },
+        "spacing": {
+          "type": "string"
+        },
+        "angle": {
+          "type": "string"
+        },
+        "borderStyle": {
+          "enum": [
+            1,
+            3,
+            4
+          ]
+        },
+        "outline": {
+          "type": "string"
+        },
+        "shadow": {
+          "type": "string"
+        },
+        "alignment": {
+          "type": "string"
+        },
+        "marginL": {
+          "type": "string"
+        },
+        "marginR": {
+          "type": "string"
+        },
+        "marginV": {
+          "type": "string"
+        },
+        "encoding": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Edit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "set_line"
+            },
+            "line": {
+              "$ref": "#/$defs/LineId"
+            },
+            "fields": {
+              "$ref": "#/$defs/LineFields"
+            }
+          },
+          "required": [
+            "op",
+            "line",
+            "fields"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "After or before a Line; at the end without either.",
+          "properties": {
+            "op": {
+              "const": "insert_line"
+            },
+            "after": {
+              "$ref": "#/$defs/LineId"
+            },
+            "before": {
+              "$ref": "#/$defs/LineId"
+            },
+            "fields": {
+              "$ref": "#/$defs/LineFields"
+            }
+          },
+          "required": [
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "delete_line"
+            },
+            "line": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "required": [
+            "op",
+            "line"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Before a Line, or to the end with before null.",
+          "properties": {
+            "op": {
+              "const": "move_line"
+            },
+            "line": {
+              "$ref": "#/$defs/LineId"
+            },
+            "before": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LineId"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "line",
+            "before"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Changes the Style with that name, or adds it.",
+          "properties": {
+            "op": {
+              "const": "set_style"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "fields": {
+              "$ref": "#/$defs/StyleFields"
+            }
+          },
+          "required": [
+            "op",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "delete_style"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "op",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "A null value removes the property.",
+          "properties": {
+            "op": {
+              "const": "set_info"
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "value": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SettingValue": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "NodePort": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "GrantedFile": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "The handle files.read and files.write take."
+        },
+        "name": {
+          "type": "string"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        }
+      },
+      "required": [
+        "file",
+        "name",
+        "access"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "name": "documents.list",
+      "access": "read",
+      "summary": "The open Documents, in tab order, with the protected reference last.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "document": {
+                  "$ref": "#/$defs/DocumentId"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "format": {
+                  "enum": [
+                    "ass",
+                    "srt",
+                    "tmplayer",
+                    "microdvd",
+                    "mpl2",
+                    "text"
+                  ]
+                },
+                "revision": {
+                  "$ref": "#/$defs/Revision"
+                },
+                "editingTarget": {
+                  "type": "boolean"
+                },
+                "reference": {
+                  "type": "boolean",
+                  "description": "The protected comparison reference."
+                },
+                "dirty": {
+                  "type": "boolean"
+                },
+                "readOnly": {
+                  "type": "boolean",
+                  "description": "A macro holds it, or it is the protected reference."
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "documents"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "documents.get",
+      "access": "read",
+      "summary": "One Document's summary, Line and Style counts and its pending Line editor draft.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "title": {
+            "type": "string"
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "format": {
+            "enum": [
+              "ass",
+              "srt",
+              "tmplayer",
+              "microdvd",
+              "mpl2",
+              "text"
+            ]
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "editingTarget": {
+            "type": "boolean"
+          },
+          "reference": {
+            "type": "boolean",
+            "description": "The protected comparison reference."
+          },
+          "dirty": {
+            "type": "boolean"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "A macro holds it, or it is the protected reference."
+          },
+          "lineCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "styleCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "draftLine": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Line with uncommitted Line editor changes; a write commits them first."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "lines.list",
+      "access": "read",
+      "summary": "Lines in Document order, a page at a time.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "description": "1000 when omitted."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineField"
+            },
+            "description": "Only these fields besides id and row; all of them when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Line"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "lines.get",
+      "access": "read",
+      "summary": "Lines by id, in the order asked.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "minItems": 1,
+            "maxItems": 5000
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineField"
+            },
+            "description": "Only these fields besides id and row; all of them when omitted."
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Line"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "lines.find",
+      "access": "read",
+      "summary": "Lines matching every criterion given: text or regex in one field, exact Style, Actor or Effect, Comment, and a time window.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A case-sensitive substring."
+          },
+          "regex": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A regular expression, as Find and replace takes it."
+          },
+          "ignoreCase": {
+            "type": "boolean",
+            "description": "For regex."
+          },
+          "in": {
+            "enum": [
+              "text",
+              "translation",
+              "actor",
+              "effect",
+              "style"
+            ],
+            "description": "Where text and regex look; text when omitted."
+          },
+          "style": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "effect": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "boolean"
+          },
+          "from": {
+            "type": "integer",
+            "description": "Lines ending after this time, in milliseconds."
+          },
+          "to": {
+            "type": "integer",
+            "description": "Lines starting before this time, in milliseconds."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "description": "500 when omitted; total still counts every match."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineField"
+            },
+            "description": "Only these fields besides id and row; all of them when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Line"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "styles.list",
+      "access": "read",
+      "summary": "The Document's Styles, in order.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Style"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "styles"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "info.list",
+      "access": "read",
+      "summary": "The Document's Script Info properties, in order.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "info": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "info"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "selection.get",
+      "access": "read",
+      "summary": "The selected Lines, in Document order, and the active Line.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "selected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "active",
+          "selected"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "api.version",
+      "access": "read",
+      "summary": "The API version: it grows by one with each release that adds to the API.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "commands.list",
+      "access": "read",
+      "summary": "The commands of menus, toolbars and shortcuts, with their enabled state and keys.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "window": {
+            "enum": [
+              "global",
+              "subtitles",
+              "editor",
+              "video",
+              "audio"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "description": "A case-insensitive part of the command id or its name."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "description": "The stable command id, e.g. GLOBAL_SAVE_SUBS."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The English name the shortcut editor shows."
+                },
+                "window": {
+                  "enum": [
+                    "global",
+                    "subtitles",
+                    "editor",
+                    "video",
+                    "audio"
+                  ]
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "disabledReason": {
+                  "type": "string"
+                },
+                "keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "command",
+                "name",
+                "window",
+                "enabled",
+                "keys"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "commands"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "panels.list",
+      "access": "read",
+      "summary": "The workspace panels and whether each is open, floating or focused.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "panels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "panel": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "open": {
+                  "type": "boolean"
+                },
+                "floating": {
+                  "type": "boolean"
+                },
+                "focused": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "panel",
+                "title",
+                "open",
+                "floating",
+                "focused"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "panels"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "settings.list",
+      "access": "read",
+      "summary": "Settings with their type, scope, default and current value.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "description": "Only ids starting with it, e.g. grid."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "setting": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "boolean",
+                    "integer",
+                    "string",
+                    "stringList"
+                  ]
+                },
+                "scope": {
+                  "enum": [
+                    "profile",
+                    "collections",
+                    "workspace"
+                  ]
+                },
+                "default": {
+                  "$ref": "#/$defs/SettingValue"
+                },
+                "value": {
+                  "$ref": "#/$defs/SettingValue"
+                }
+              },
+              "required": [
+                "setting",
+                "type",
+                "scope",
+                "default",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "settings.get",
+      "access": "read",
+      "summary": "The current values of the settings named.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/SettingValue"
+            }
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "commands.run",
+      "access": "write",
+      "summary": "Runs an enabled command as its menu item, toolbar button or shortcut would.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A command id from commands.list."
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "ran": {
+            "const": true
+          }
+        },
+        "required": [
+          "command",
+          "ran"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "panels.open",
+      "access": "write",
+      "summary": "Opens a panel where the layout keeps it.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string",
+            "description": "A panel id from panels.list."
+          }
+        },
+        "required": [
+          "panel"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "floating": {
+            "type": "boolean"
+          },
+          "focused": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "panel",
+          "title",
+          "open",
+          "floating",
+          "focused"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "panels.close",
+      "access": "write",
+      "summary": "Closes a panel.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string",
+            "description": "A panel id from panels.list."
+          }
+        },
+        "required": [
+          "panel"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "floating": {
+            "type": "boolean"
+          },
+          "focused": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "panel",
+          "title",
+          "open",
+          "floating",
+          "focused"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "panels.focus",
+      "access": "write",
+      "summary": "Opens a panel if needed and gives it the keyboard focus.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string",
+            "description": "A panel id from panels.list."
+          }
+        },
+        "required": [
+          "panel"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "floating": {
+            "type": "boolean"
+          },
+          "focused": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "panel",
+          "title",
+          "open",
+          "floating",
+          "focused"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "settings.set",
+      "access": "write",
+      "summary": "Changes a setting; the value must have the setting's type.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/$defs/SettingValue"
+          }
+        },
+        "required": [
+          "setting",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/$defs/SettingValue"
+          }
+        },
+        "required": [
+          "setting",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "document.apply",
+      "access": "write",
+      "summary": "Applies edits prepared against a revision as one undo step; a stale revision changes nothing.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision",
+            "description": "The revision the edits were prepared against."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Names the undo step, after the caller's name."
+          },
+          "edits": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/Edit"
+            },
+            "description": "Applied in order; any refusal leaves the Document as it was."
+          }
+        },
+        "required": [
+          "revision",
+          "name",
+          "edits"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "inserted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "New Lines, in edit order."
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "False when the edits changed nothing: no undo step was added."
+          }
+        },
+        "required": [
+          "revision",
+          "inserted",
+          "changed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "selection.set",
+      "access": "write",
+      "summary": "Selects Lines and makes one active, as a click in the Grid would; never an undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "selected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "active": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineId"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The first selected Line when omitted."
+          }
+        },
+        "required": [
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "selected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "active",
+          "selected"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.info",
+      "access": "read",
+      "summary": "Whether a video is open, its size and aspect ratio, the frame shown and the keyframes.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "open": {
+            "type": "boolean"
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "aspect": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "frameShown": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "keyframes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "open"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.frame_at_time",
+      "access": "read",
+      "summary": "The video frame shown at a time.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Milliseconds."
+          }
+        },
+        "required": [
+          "time"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "frame"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.time_of_frame",
+      "access": "read",
+      "summary": "The time a video frame starts, in milliseconds.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "frame"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "time"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.frame",
+      "access": "read",
+      "summary": "One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown."
+          },
+          "subtitles": {
+            "type": "boolean",
+            "description": "Render the subtitles on it. Default true."
+          },
+          "crop": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "y": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          },
+          "maxEdge": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 4096,
+            "description": "Default 1024."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "format": {
+            "const": "bgra"
+          },
+          "data": {
+            "type": "string",
+            "description": "width * 4 bytes per row, top row first, base64."
+          }
+        },
+        "required": [
+          "frame",
+          "width",
+          "height",
+          "format",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audio.info",
+      "access": "read",
+      "summary": "Whether audio is open and loaded, its duration and sample rate.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "open": {
+            "type": "boolean"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sampleRate": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "channels": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "open"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audio.peaks",
+      "access": "read",
+      "summary": "The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "buckets": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096,
+            "description": "Default 256."
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer"
+          },
+          "end": {
+            "type": "integer"
+          },
+          "min": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          },
+          "max": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -32768,
+              "maximum": 32767
+            }
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "min",
+          "max"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "files.list",
+      "access": "read",
+      "summary": "The files the user granted this caller, with read or write access.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/GrantedFile"
+            }
+          }
+        },
+        "required": [
+          "files"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "files.read",
+      "access": "read",
+      "summary": "A granted file's content, as UTF-8 text or base64; at most 16 MiB.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "A handle from files.list."
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Default utf8."
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "size",
+          "encoding",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "files.write",
+      "access": "write",
+      "summary": "Replaces a file granted for writing with new content.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "A handle from files.list."
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Default utf8."
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "file",
+          "size"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "nodes.catalogue",
+      "access": "read",
+      "summary": "The node types the node-effect editor offers, with their ports and parameters.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "inputs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/NodePort"
+                  }
+                },
+                "outputs": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/NodePort"
+                  }
+                },
+                "params": {
+                  "type": "object"
+                },
+                "since": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "id",
+                "category",
+                "summary",
+                "inputs",
+                "outputs",
+                "params",
+                "since"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "nodes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "document.changed",
+      "summary": "A Document's content changed: a commit, Undo or Redo.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "step": {
+            "type": "string",
+            "description": "The History step now current."
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "step"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "selection.changed",
+      "summary": "The selected or the active Line changed.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "selected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "active",
+          "selected"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "documents.changed",
+      "summary": "A Document opened or closed, or another became active.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DocumentId"
+            }
+          },
+          "editingTarget": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/DocumentId"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "documents",
+          "editingTarget"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "panel.changed",
+      "summary": "A panel opened, closed, floated, docked or took the focus.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "panel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "floating": {
+            "type": "boolean"
+          },
+          "focused": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "panel",
+          "title",
+          "open",
+          "floating",
+          "focused"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "command.ran",
+      "summary": "A command ran, from a menu, a key, the API or anywhere else.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "False when it was refused or failed."
+          }
+        },
+        "required": [
+          "command",
+          "ok"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
