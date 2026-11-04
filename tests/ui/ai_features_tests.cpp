@@ -180,6 +180,17 @@ TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsO
     EXPECT_EQ(counts.agentLists, 2);
 }
 
+TEST_F(AiFeaturesTest, ASidecarStartedForMcpServesAiActionsWithItsRelayAndAgents)
+{
+    app::AiFeatures features(settings, ports(false));
+    auto *host = features.sidecarForMcp();
+    ASSERT_NE(host, nullptr);
+    EXPECT_EQ(counts.agentLists, 1);
+    EXPECT_EQ(features.sidecarForAction(), host);
+    EXPECT_EQ(counts.sidecarHosts, 1);
+    EXPECT_EQ(counts.agentLists, 1);
+}
+
 TEST_F(AiFeaturesTest, NoMcpListenerUnlessTheUserTurnsItOnAndNeverWithAiOff)
 {
     const QString file = backends::ai::mcpEndpointFile(dir.path());
