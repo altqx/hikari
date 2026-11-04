@@ -7468,7 +7468,7 @@ ApplicationWindow {
     Loader {
         id: exportLoader
         active: false
-        sourceComponent: ExportDialog { app: root.app }
+        sourceComponent: ExportDialog { app: root.app; colourPicker: root.colourPicker }
     }
     function openExportDialog() {
         exportLoader.active = true

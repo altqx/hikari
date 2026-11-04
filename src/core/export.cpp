@@ -63,9 +63,12 @@ std::uint32_t lossesFor(ExportFormat format, const ExportOptions &o, const Flat 
         lose(f.formattingTag, ExportLoss::Formatting);
         lose(f.colourTag, ExportLoss::Colour);
         lose(positioned(f), ExportLoss::Position);
-        break;    case ExportFormat::Ttml:
+        break;
+    case ExportFormat::Ttml:
     case ExportFormat::Dfxp:
         return ttmlLosses(o, f);
+    case ExportFormat::Srv3:
+        break;
     }
     return l;
 }
@@ -463,6 +466,8 @@ bool merges(ExportFormat format, const ExportOptions &o)
 
 ExportResult exportDocument(const Document &document, ExportFormat format, const ExportOptions &options)
 {
+    if (format == ExportFormat::Srv3)
+        return exportSrv3(document, options);
     ExportResult result;
     std::map<std::u8string, StyleValues, std::less<>> styles;
     for (auto &style : decodeStyles(document))
@@ -520,9 +525,12 @@ ExportResult exportDocument(const Document &document, ExportFormat format, const
         break;
     case ExportFormat::TMPlayer:
         writeTmPlayer(out, flats);
-        break;    case ExportFormat::Ttml:
+        break;
+    case ExportFormat::Ttml:
     case ExportFormat::Dfxp:
         writeTtml(out, flats, options, playRes(document), format == ExportFormat::Ttml, losses);
+        break;
+    case ExportFormat::Srv3:
         break;
     }
     result.bytes.resize(out.size());
