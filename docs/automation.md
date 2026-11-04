@@ -91,7 +91,7 @@ Scripts get Aegisub 3.5.1's Lua API with the additions of arch1t3cht's fork ([FA
 
 - `aegisub.version` is `{string = "3.5.1", major = 3, minor = 5, patch = 1, build = 9914}`, the TypesettingTools release the host matches.
 - `frame:getPixel(x, y)` returns r, g, b. `frame:data()` returns the BGRA pixels as a light userdata for FFI, the pitch in bytes (width × 4) and `false` for "flipped". The pixels stay valid while the frame object is alive.
-- `project_properties()` gives the open audio file, the editing tab's keyframes file and `video_zoom`, the video panel's logical pixels per video pixel (1 without video). `timecodes_file` is `""`.
+- `project_properties()` gives the open audio file, the editing tab's keyframes file and `video_zoom`, the video panel's logical pixels per video pixel (1 without video). `timecodes_file` is the editing tab's loaded timecodes file, or `""`. With a timecodes file loaded, `frame_from_ms` and `ms_from_frame` use its frame times.
 - `frame_from_ms` and `ms_from_frame` round as Aegisub does (`AegisubFrameTimes`, ported from libaegisub's `vfr.cpp`). Only the automation services use it.
 - `aegisub.lfs`, `aegisub.util.deep_copy`, `include()` and `require()` errors behave as in Aegisub 3.5. Argument checking stays as lenient as it was.
 

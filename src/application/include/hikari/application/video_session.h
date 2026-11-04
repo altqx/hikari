@@ -2,6 +2,7 @@
 
 #include "hikari/application/general_player.h"
 #include "hikari/application/indexed_source.h"
+#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/legacy_timebase.h"
 #include "hikari/application/playback_pipeline.h"
 #include "hikari/application/presenter.h"
@@ -136,7 +137,15 @@ public:
     const std::vector<int> &keyframes() const { return m_keyframes; }
     // Replaces the video's own until the next video opens.
     void setKeyframes(std::vector<int> frames);
-    // Empty without video.
+    // Frame times that replace the video's own for everything but decoding, kept with or without
+    // a video until replaced; nullopt goes back to the video's.
+    void setFrameTimes(std::optional<AegisubFrameTimes> times);
+    const std::optional<AegisubFrameTimes> &replacedFrameTimes() const { return m_frameTimes; }
+    // Changes with each setFrameTimes.
+    std::uint64_t frameTimesSerial() const { return m_frameTimesSerial; }
+    // The replaced frame times, else the video's; nullopt without either.
+    std::optional<AegisubFrameTimes> aegisubFrameTimes() const;
+    // Empty without video or replaced frame times.
     LegacyTimebase legacyTimebase() const;
     // The shown frame's time in whole ms, the last delivered frame's while
     // playing; 0 without video.
@@ -160,7 +169,10 @@ public:
     std::optional<SourceError> error() const { return m_error; }
     int frameCount() const { return static_cast<int>(m_starts.size()); }
     // Float numerator / float denominator; 0 without video.
-    float legacyFps() const { return m_state == State::Ready ? m_legacyFps : 0.f; }
+    float legacyFps() const
+    {
+        return m_state != State::Ready ? 0.f : m_frameTimes ? static_cast<float>(m_frameTimes->fps()) : m_legacyFps;
+    }
     // The source's, else the first shown frame's; invalid without video. Kept
     // when a frame fails to decode.
     visual::SourceGeometry sourceGeometry() const;
@@ -200,8 +212,17 @@ private:
     State m_state = State::Closed;
     std::string m_path;
     std::optional<SourceError> m_error;
-    std::vector<core::DocumentTime> m_starts;
+    std::vector<core::DocumentTime> m_starts; // subtitle times: the replaced frame times, else m_streamStarts
     std::optional<core::FrameTimeline> m_timeline;
+    std::vector<core::DocumentTime> m_streamStarts; // the player's and decoder's
+    std::optional<core::FrameTimeline> m_streamTimeline;
+    std::optional<AegisubFrameTimes> m_frameTimes;
+    std::uint64_t m_frameTimesSerial = 0;
+    double m_streamFps = 0;
+    void applyFrameTimes();
+    std::int64_t streamUs(int frame) const;
+    std::int64_t subtitleUsAt(std::int64_t streamUs) const;
+    PlaybackPipeline::TimeMap timeMap() const;
     std::optional<int> m_requested;
     std::optional<core::DocumentTime> m_pendingSeek;
     std::uint64_t m_request = 0; // the newest frame request; older answers are dropped

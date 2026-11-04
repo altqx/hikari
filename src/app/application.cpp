@@ -815,7 +815,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 if (const std::string *title = m_workspace.title(id))
                     names << QString::fromStdString(*title);
             for (const auto &[id, media] : m_tabMedia)
-                names << media.video << media.audio << media.keyframes;
+                names << media.video << media.audio << media.keyframes << media.timecodes;
             names.removeAll(QString());
             return names;
         },
@@ -1097,12 +1097,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         const bool ready = video.state() == application::VideoSession::State::Ready;
-        const QString path = ready ? QString::fromStdString(video.path()) : QString();
-        if (path == m_editorTimebaseVideo)
+        const auto timedBy = ready || video.replacedFrameTimes()
+                                 ? std::optional(std::pair(ready ? video.path() : std::string(), video.frameTimesSerial()))
+                                 : std::nullopt;
+        if (timedBy == m_editorTimebaseFor)
             return;
-        m_editorTimebaseVideo = path;
+        m_editorTimebaseFor = timedBy;
         for (auto *views : allViews())
-            views->editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
+            views->editor->setVideoTimebase(timedBy ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logPlaybackFailure);
@@ -1134,6 +1136,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             const auto media = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
             return media == m_tabMedia.end() ? std::string() : media->second.keyframes.toStdString();
         },
+        [this] { return timecodesFile().toStdString(); },
         [this] { return activeViews().visualTools ? visualTools().videoView().displayScale() : 1.0; });
     {
         const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
@@ -1308,7 +1311,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (home())
             newDocument();
     };
-    m_video->setBeforeOpen(documentForMedia);
+    m_video->setBeforeOpen([this, documentForMedia] {
+        documentForMedia();
+        if (!m_enteringTabMedia)
+            closeTimecodes();
+    });
     m_audio->setBeforeOpen(documentForMedia);
     trackTabMedia();
     trackVideoSources();
@@ -1488,8 +1495,10 @@ void Application::followVideoInAudio()
         syncAudioWithVideo();
         return;
     }
-    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioKeyframes != video.keyframes()) {
+    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioTimebaseSerial != video.frameTimesSerial()
+        || m_audioKeyframes != video.keyframes()) {
         m_audioTimebasePath = video.path();
+        m_audioTimebaseSerial = video.frameTimesSerial();
         m_audioKeyframes = video.keyframes();
         m_audioTimebase = video.legacyTimebase();
         std::vector<int> ms;
@@ -1651,7 +1660,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         v.shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
     });
     const auto &video = m_video->session();
-    if (video.state() == application::VideoSession::State::Ready)
+    if (video.state() == application::VideoSession::State::Ready || video.replacedFrameTimes())
         v.editor->setVideoTimebase(video.legacyTimebase());
     v.editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
         const auto &session = m_video->session();
@@ -1785,6 +1794,11 @@ void Application::makeViews(WindowViews &v, int shellWindow)
                                                                 auto *session = windowSession(shellWindow);
                                                                 return session ? &session->document() : nullptr;
                                                             });
+    const auto showTimecodes = [this, &v, shellWindow] {
+        v.statusBar->setTimecodesFile(tabTimecodes(m_workspace.currentTab(shellWindow)));
+    };
+    showTimecodes();
+    connect(this, &Application::timecodesChanged, v.statusBar.get(), showTimecodes);
 }
 
 Application::WindowViews &Application::views(int shellWindow)
@@ -2136,6 +2150,7 @@ void Application::refreshWindowViews(int shellWindow)
         v.editor->reloadFromSession();
     }
     v.visualTools->refresh();
+    v.statusBar->setTimecodesFile(tabTimecodes(tab));
     v.statusBar->refresh();
 }
 
@@ -3515,6 +3530,8 @@ bool Application::autosave(application::DocumentId document)
     core::Document saved = application::withActiveLine(session->document(), activeLine);
     if (layout)
         saved.setHikariProperty(application::kLayoutKey, *layout);
+    m_files->applyProjectGarbage(document, m_files->destination(document).value_or(application::DestinationKey{}),
+                                 saved);
     content.bytes = core::encodeSubtitle(saved, m_files->saveOptions());
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
@@ -3931,17 +3948,21 @@ QString Application::openKeyframes(const QUrl &file)
 
 bool Application::exactTimebase() const
 {
-    return m_video->session().state() == application::VideoSession::State::Ready &&
-           m_video->session().legacyTimebase().exact();
+    const auto &video = m_video->session();
+    return (video.state() == application::VideoSession::State::Ready || video.replacedFrameTimes()) &&
+           video.legacyTimebase().exact();
 }
 
 application::ShiftContext Application::shiftContext(application::LegacyTimebase &timebase) const
 {
     const auto &video = m_video->session();
     application::ShiftContext context;
-    if (video.state() == application::VideoSession::State::Ready) {
+    const bool hasVideo = video.state() == application::VideoSession::State::Ready;
+    if (hasVideo || video.replacedFrameTimes()) {
         timebase = video.legacyTimebase();
         context.timebase = &timebase;
+    }
+    if (hasVideo) {
         context.keyframes = video.keyframes();
         if (const auto frame = video.reportedFrame()) {
             context.videoFrame = *frame;

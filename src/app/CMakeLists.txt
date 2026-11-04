@@ -3,6 +3,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     session_json.cpp include/hikari/app/session_json.h
     application_comparison.cpp
     application_video.cpp
+    application_timecodes.cpp
     application_reference.cpp
     application_tab_menu.cpp
     application_karaoke.cpp

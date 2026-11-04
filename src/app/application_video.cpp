@@ -38,6 +38,7 @@ void Application::trackVideoSources()
 {
     m_recentVideo.set(m_settings->settings().list("recent.video"));
     m_recentKeyframes.set(m_settings->settings().list("recent.keyframes"));
+    m_recentTimecodes.set(m_settings->settings().list("recent.timecodes"));
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         if (video.state() != application::VideoSession::State::Ready) {

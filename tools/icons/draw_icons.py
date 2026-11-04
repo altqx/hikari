@@ -147,6 +147,12 @@ def clock_badge():
     return accent(circle(12, 12, 3), stroke("M12 10.5V12l1 1"))
 
 
+def timecodes_ruler():
+    """A time ruler whose uneven ticks stand for variable frame times, open at its lower right for a badge."""
+    return (stroke("M1.5 8.5h12") + stroke("M1.5 2.5v6M5.5 2.5v6M11.5 2.5v6")
+            + stroke("M3.5 5.5v3M7 5.5v3M9 5.5v3M13.5 5.5v3"))
+
+
 def waveform(x=1.5, top=4.5, bottom=11.5):
     mid = (top + bottom) / 2
     heights = [1, 3, 2, 3.5, 1.5, 2.5, 1]
@@ -278,6 +284,10 @@ icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "vid
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO], diamond(6, 6.5, 4.5) + plus_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
+icon("open-timecodes", "Open timecodes", [], [VIDEO], timecodes_ruler() + plus_badge())
+icon("recent-timecodes", "Recently opened timecodes", [], [VIDEO], timecodes_ruler() + clock_badge())
+icon("save-timecodes", "Save timecodes", [], [VIDEO], timecodes_ruler() + accent(stroke("M12 9.5v4.5M10 12l2 2 2-2")))
+icon("close-timecodes", "Close timecodes", [], [VIDEO], timecodes_ruler() + cross_badge())
 icon("set-start-time", "Insert start time from video", ["SetStartTime.png"], [VIDEO],
      time_insert(start=True))
 icon("set-end-time", "Insert end time from video", ["SetEndTime.png"], [VIDEO],

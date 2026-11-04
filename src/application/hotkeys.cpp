@@ -311,6 +311,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_ALIGN_TO_VIDEO", 5238},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
+        {"GLOBAL_OPEN_TIMECODES", 5234},
+        {"GLOBAL_SAVE_TIMECODES", 5235},
+        {"GLOBAL_CLOSE_TIMECODES", 5236},
         {"GLOBAL_CONVERT_FOLDS_TO_GROUPS", 5239},
 };
 
@@ -588,6 +591,9 @@ constexpr NameRow kNames[] = {
         {5229, "Centre times within frames"},
         {5238, "Align to video…"},
         {5223, "Import legacy settings…"},
+        {5234, "Open timecodes"},
+        {5235, "Save timecodes"},
+        {5236, "Close timecodes"},
         {5239, "Convert Aegisub folds to line groups"},
 };
 

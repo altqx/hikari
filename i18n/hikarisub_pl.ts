@@ -2060,6 +2060,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Klatki kluczowe: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>Kody czasowe: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>Skojarzone pliki:</translation>
     </message>
@@ -6186,6 +6190,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
     </message>
     <message>
+        <source>Open timecodes</source>
+        <translation>Otwórz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>Zapisz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>Zamknij kody czasowe</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7250,6 +7266,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Set FPS from video</source>
         <translation>Ustaw FPS z wideo</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>Otwórz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>Ostatnio otwarte kody czasowe</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>Zapisuje plik kodów czasowych VFR v2</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>Zapisz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>Zamyka otwarty plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>Zamknij kody czasowe</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -11152,6 +11196,10 @@ ponieważ została zmieniona.</translation>
         <translation>klatki kluczowe</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>kody czasowe</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>Nie znaleziono pliku napisów tej zakładki: %1.</translation>
     </message>
@@ -11166,6 +11214,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>Nie znaleziono pliku klatek kluczowych tej zakładki: %1.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>Nie znaleziono pliku kodów czasowych tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11186,6 +11238,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>Plik klatek kluczowych (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>Plik kodów czasowych (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -12071,6 +12127,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Frames per second</source>
         <translation>Klatki na sekundę</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>Klatki na sekundę, średnia z pliku kodów czasowych %1</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -15140,6 +15200,14 @@ Usunięte style:
         <translation>Wybierz plik klatek kluczowych</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>Plik kodów czasowych (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>Zapisz plik kodów czasowych</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
     </message>
@@ -15578,6 +15646,90 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Align</source>
         <translation>Dopasuj</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>Otwórz plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>Nieznany format kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>Nieprawidłowy wiersz kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>Potrzebne są co najmniej dwa kody czasowe</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>Plik kodów czasowych przekracza limit 10000000 wpisów</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>Kody czasowe nie są uporządkowane</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>Wszystkie kody czasowe są identyczne</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>Nie można podać liczby klatek na sekundę dla ujemnych klatek</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>Klatka końcowa musi być większa od początkowej lub jej równa</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>Zakres kodów czasowych v1 przekracza limit 10000000 klatek</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS musi być większe od zera</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS nie może być większe niż 1000</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>Zakresy nadpisań nie mogą się nakładać</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>Kod czasowy wykracza poza obsługiwany zakres czasu</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Wiersz %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>Nie udało się odczytać pliku kodów czasowych: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>Nie można otworzyć pliku kodów czasowych %1</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>Plik kodów czasowych kończy się przed końcem wideo (klatka %1 z %2). Dalsze klatki mają jego średnią liczbę klatek na sekundę.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>Brak czasów klatek do zapisania</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>Nie można zapisać pliku kodów czasowych %1</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>Nie znaleziono pliku kodów czasowych: %1</translation>
     </message>
 </context>
 <context>
