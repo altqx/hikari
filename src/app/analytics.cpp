@@ -78,6 +78,7 @@ const QStringList kDialogs{
     QStringLiteral("fontsFromSubtitles"), QStringLiteral("gettingStarted"), QStringLiteral("history"),
     QStringLiteral("hotkeyCapture"),  QStringLiteral("kanjiTimer"),     QStringLiteral("karaokeCheck"),
     QStringLiteral("listChooser"),    QStringLiteral("manageLayouts"),  QStringLiteral("movePanel"),
+    QStringLiteral("perspectiveTracking"),
     QStringLiteral("reportIssue"),    QStringLiteral("resample"),       QStringLiteral("saveLayout"),     QStringLiteral("scriptProperties"),
     QStringLiteral("selectLines"),    QStringLiteral("setNewFps"),      QStringLiteral("settings"),
     QStringLiteral("settingsImport"), QStringLiteral("shapesEdition"),  QStringLiteral("spellAddedWords"),

@@ -37,6 +37,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/application/video_timing.h"
+#include "hikari/application/visual_perspective.h"
 #include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
@@ -424,6 +425,14 @@ public:
                               bool adjustRotations = true);
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
+    // lines, fitFlat}; empty without an exact video timebase or selected lines.
+    Q_INVOKABLE QVariantMap perspectiveTrackingValues() const;
+    // {state: "idle" | "ok" | "warning" | "error", text, canApply}.
+    Q_INVOKABLE QVariantMap checkPerspectiveTracking(const QString &data, int relativeFrame) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyPerspectiveTracking(const QString &data, int relativeFrame, int orgMode, bool fitFlat,
+                                                 bool moveClips, bool scaleBorders);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
@@ -901,6 +910,7 @@ private:
     void refreshVideo();
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
                           bool adjustRotations);
+    application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();

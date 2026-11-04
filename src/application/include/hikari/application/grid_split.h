@@ -4,6 +4,7 @@
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/legacy_timebase.h"
+#include "hikari/application/resample.h"
 
 #include <expected>
 #include <functional>
@@ -25,6 +26,9 @@ std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const
 enum class FrameAnimations { Keep, Bake };
 std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const LegacyTimebase &timebase,
                                                     FrameAnimations animations, const LineVisible &visible = {});
+// One Line's frames as splitIntoFrames makes them; `styles` empty: Keep.
+std::vector<core::LineRecord> lineFrames(const core::LineRecord &line, const LegacyTimebase &timebase,
+                                         const std::vector<core::StyleValues> &styles, Resolution resolution);
 
 // Each shown selected Line becomes one positioned Line per character, word or
 // wrap (\N), measured with its Style and tags from its \pos or \move, else

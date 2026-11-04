@@ -33,6 +33,7 @@ HikariSub.TagList	The ASS override tag list and its popup
 HikariSub.TemplateEditor	The Template editor panel: template and code Lines, their preview on a karaoke Line, Apply
 HikariSub.TextMenu	The menu of every text field: undo, redo, the clipboard and selection
 HikariSub.TimeShift	The Shift times panel
+HikariSub.Tracking	Perspective tracking: the Power-Pin dialog and its status
 HikariSub.Translation	Translation mode: its switch and toggles, translation files and matching
 HikariSub.Video	The video panel and full screen: playback, menus, streams, chapters, keyframes, dummy video, indexing, player errors
 HikariSub.VisualTools	The visual tools: rail, options, values, and the tag and shape editing dialogs

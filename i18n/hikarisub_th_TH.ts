@@ -6122,6 +6122,10 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
+        <source>Perspective tracking…</source>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -7260,6 +7264,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>ใช้ข้อมูลการติดตาม Power-Pin กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -14470,6 +14486,123 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>ไม่ได้จัดเวลาให้อยู่กลางเฟรม: ไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>บรรทัด %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>วางข้อมูล Power-Pin ที่ส่งออกจาก After Effects หรือ Blender ปุ่มนำไปใช้จะอ่านมุมทั้งสี่ของ CC Power Pin</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>นี่ไม่ใช่ข้อมูล Power-Pin: ไม่พบมุมของ CC Power Pin</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>เลือกบรรทัดที่จะติดตาม</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>ข้อมูลมี %n เฟรม แต่บรรทัดที่เลือกครอบคลุม %1 เฟรม (%2–%3) เลือกบรรทัดที่ครอบคลุมเฟรมที่ติดตาม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>ไม่มีบรรทัดที่เลือกแสดงที่เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>บรรทัดซ้อนทับกัน แต่บรรทัด %1 ไม่แสดงที่เฟรม %2 เลือกเฟรมที่ทุกบรรทัดแสดง หรือนำไปใช้ทีละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>ติดตามที่ขนาด %1 × %2 แต่วิดีโอมีขนาด %3 × %4 มุมจะถูกปรับขนาดให้เข้ากับวิดีโอ</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n เฟรมที่ %1 fps ติดตามที่ขนาด %2 × %3 ครอบคลุมเฟรม %4–%5 ของส่วนที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n เฟรม ครอบคลุมเฟรม %1–%2 ของส่วนที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>ติดตามบางบรรทัดไม่ได้: วัดขนาดข้อความไม่ได้ หรือระนาบพับบรรทัดนั้น</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>การติดตามเพอร์สเปกทีฟ</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>ข้อมูล Power-Pin</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>อ้างอิงเฟรม</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>จาก %1 · เฟรมวิดีโอ %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>จุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>กลาง</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>ไม่มี %1</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>คงไว้</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>ปรับบรรทัดที่แบนให้เข้ากับระนาบก่อน</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>ย้ายคลิปไปพร้อมกับระนาบ</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>ปรับขนาดเส้นขอบและเงา</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>ระนาบจะถูกบันทึกไว้กับแต่ละบรรทัด สำหรับเครื่องมือเพอร์สเปกทีฟและ Derive Perspective Track</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · เฟรม %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
     </message>
 </context>
 <context>

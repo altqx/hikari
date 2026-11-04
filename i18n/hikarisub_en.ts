@@ -789,6 +789,30 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Tracking</name>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>The data has %n frame, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</numerusform>
+            <numerusform>The data has %n frames, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n frame at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</numerusform>
+            <numerusform>%n frames at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n frame. Covers the selection’s frames %1–%2.</numerusform>
+            <numerusform>%n frames. Covers the selection’s frames %1–%2.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.VisualTools</name>
     <message numerus="yes">
         <source>Changes %n lines</source>

@@ -282,6 +282,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Plugins"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Centre times within frames"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import legacy settings…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Perspective tracking…"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

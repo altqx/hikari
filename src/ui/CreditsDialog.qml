@@ -49,7 +49,8 @@ DialogWindow {
     }
     readonly property var sources: [
         ["Aegisub", "Aegisub contributors", "BSD 3-Clause and ISC"],
-        ["Aegisub, arch1t3cht's fork", "arch1t3cht and Aegisub contributors", "BSD 3-Clause"]
+        ["Aegisub, arch1t3cht's fork", "arch1t3cht and Aegisub contributors", "BSD 3-Clause and ISC"],
+        ["arch1t3cht's Aegisub scripts", "arch1t3cht", "MIT"]
     ]
 
     component CreditRow: Item {

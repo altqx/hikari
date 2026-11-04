@@ -2148,6 +2148,19 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_PERSPECTIVE_TRACKING"
+                help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
+                                          : qsTr("Open a video first: tracking data is per frame.")
+                iconRole: "tool-perspective"
+                objectName: "perspectiveTrackingMenuItem"
+                action: Action {
+                    id: perspectiveTrackingAction
+                    text: qsTr("Perspective tracking…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_PREVIOUS_FRAME"
                 help: qsTr("Go to previous frame")
                 iconRole: "frame-previous"
@@ -7029,6 +7042,18 @@ ApplicationWindow {
             video: root.video
         }
     }
+    function openPerspectiveTracking() {
+        perspectiveTrackingLoader.active = true
+        perspectiveTrackingLoader.item.openDialog()
+    }
+    Loader {
+        id: perspectiveTrackingLoader
+        active: false
+        sourceComponent: PerspectiveTrackingWindow {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
     function openScriptProperties() {
         scriptPropertiesLoader.active = true
         return scriptPropertiesLoader.item.openFor()
@@ -7477,6 +7502,7 @@ ApplicationWindow {
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
+        GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
