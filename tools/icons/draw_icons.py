@@ -463,7 +463,7 @@ icon("calendar", "Choose a date", [], ["date-picker"],
      + accent(stroke("M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1")))
 icon("chevron-left", "Previous", [], ["date-picker"], stroke("M9.5 4.5L6 8l3.5 3.5"), mirror=True)
 icon("chevron-right", "Next", [], ["date-picker", "dialogs"], stroke("M6.5 4.5L10 8l-3.5 3.5"), mirror=True)
-icon("chevron-down", "Expanded", [], ["dialogs"], stroke("M4.5 6.5L8 10l3.5-3.5"))
+icon("chevron-down", "Expanded", [], ["dialogs", "status-bar"],stroke("M4.5 6.5L8 10l3.5-3.5"))
 
 icon("run-busy", "Running", [], ["automation", "notices"],
      stroke("M8 1.5a6.5 6.5 0 1 0 6.5 6.5") + accent(stroke("M8 1.5a6.5 6.5 0 0 1 6.5 6.5")))
@@ -615,7 +615,8 @@ icon("copy-to-ass", "Copy style from storage to ASS", [], [STYLEDLG],
 icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [STYLEDLG],
      rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 12.5, 10, 2, 1) + stroke("M3.5 10.5h9a1 1 0 0 1 1 1v1")
      + accent(stroke("M7.5 6v3M5 6.5L7.5 9 10 6.5")))
-icon("menu-more", "Layouts", [], ["status-bar"], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
+icon("menu-more", "More", [],
+     ["audio-box", "line-editor", "visual-tools", "title-bar", "styles-panel", "original-panel"], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
 icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + dot(8, 8, 1.25) + dot(12.5, 8, 1.25))
 
 icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog", GRIDMENU], stroke("M7.5 2.5v10M2.5 7.5h10"))
@@ -1024,7 +1025,6 @@ for card, roles in {
     "NE2 #424": ["node-editor"],
     "AI7 #435": ["ai-assistant", "ai-send"],
     "AI2 #430": ["review-keep", "checkpoint"],
-    "CX6 #582": ["tab-switch", "tab-close-others", "tab-close-right"],
 }.items():
     for role in roles:
         PENDING[role] = card
