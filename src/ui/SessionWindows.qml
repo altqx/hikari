@@ -38,11 +38,15 @@ Item {
         dialog.open()
     }
 
+    property bool startsTheSession: true
+
     readonly property StartupOffer offer: StartupOffer {
         app: windows.app
         onRestoreRequested: windows.restoreStart()
     }
     Component.onCompleted: {
+        if (!windows.startsTheSession)
+            return
         const kind = windows.app.startupSession()
         if (kind === "load")
             Qt.callLater(() => {

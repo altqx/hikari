@@ -1119,22 +1119,26 @@ bool WorkspaceLayoutController::restoreSavedFile()
 
 bool WorkspaceLayoutController::save()
 {
+    return write({m_preset, serialiseWindow(), m_layout});
+}
+
+bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
+{
     if (m_file.isEmpty() || m_fileLocked || m_restoring || !m_loaded || m_quitting)
         return false;
-    const QByteArray current = serialiseWindow();
-    if (current == m_lastSaved)
+    if (arrangement.payload == m_lastSaved)
         return false;
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
         writeAtomically(backupFile(), *old);
     const QString failure = QCoreApplication::translate("HikariSub.Workspace", "The panel layout could not be written to %1.")
                                 .arg(QDir::toNativeSeparators(m_file));
-    if (!writeAtomically(m_file, envelope(current, m_preset, m_layout))) {
+    if (!writeAtomically(m_file, envelope(arrangement.payload, arrangement.preset, arrangement.layout))) {
         addPanelNotice(failure);
         emit changed();
         return false;
     }
     m_panelNotices.removeAll(failure);
-    m_lastSaved = current;
+    m_lastSaved = arrangement.payload;
     emit changed();
     return true;
 }
@@ -1142,6 +1146,15 @@ bool WorkspaceLayoutController::save()
 bool WorkspaceLayoutController::saveForQuit()
 {
     const bool saved = save();
+    if (m_loaded)
+        m_quitArrangement = shownArrangement();
+    m_quitting = true;
+    return saved;
+}
+
+bool WorkspaceLayoutController::saveForQuit(const WorkspaceArrangement &active)
+{
+    const bool saved = write(active);
     if (m_loaded)
         m_quitArrangement = shownArrangement();
     m_quitting = true;

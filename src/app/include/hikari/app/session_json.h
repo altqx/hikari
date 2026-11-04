@@ -6,17 +6,23 @@
 //     "version": 1,
 //     "program": "HikariSub 0.1.0",
 //     "closed": true,              <- last-session.json only
+//     "windows": [                 <- ADR 0025; absent: one window
+//       { "x": <dip>, "y": <dip>, "width": <dip>, "height": <dip>, "maximized": false }, ...
+//     ],
 //     "tabs": [
 //       { "subtitles": "<path>", "video": "<path>", "position": <ms>,
 //         "audio": "<path>", "keyframes": "<path>",
 //         "activeLine": <row>, "scroll": <row>,
 //         "layout": { <the tab's arrangement> } },
+//       { "window": 1, "current": true, ... },  <- its window's current tab
 //       { "active": true, ... }    <- the active Document tab
 //     ]
 //   }
 //
 // "audio" and "keyframes" are left out when empty, "audio" also when it is the video, and
 // "layout" when the tab has none. A file not starting with "{" is read as a legacy .kls.
+// Tabs are listed window by window; "window" indexes "windows" and is left out for the first.
+// The version stays 1: a reader that skips "windows", "window" and "current" opens one window.
 
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"

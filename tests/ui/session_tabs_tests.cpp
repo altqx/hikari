@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QFile>
 #include <QLockFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalSpy>
@@ -636,6 +637,80 @@ private slots:
         QCOMPARE(hash(home.filePath(QStringLiteral("typed.hksession"))), typed);
         QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(kls), true), QString());
         QCOMPARE(readSession(home.filePath(QStringLiteral("typed.hksession"))).tabs.size(), std::size_t(3));
+    }
+
+    void eachWindowKeepsItsTabsGeometryAndCurrentTab()
+    {
+        const QByteArray bytes = readAll(QStringLiteral(HIKARI_SESSION_FIXTURES "/two-windows.json"));
+        const auto session = app::readSession(std::string_view(bytes.constData(), bytes.size()));
+        QVERIFY(session);
+        QCOMPARE(session->windows.size(), std::size_t(2));
+        QCOMPARE(session->windows[0].geometry, std::optional(application::SessionGeometry{40, 60, 1200, 800}));
+        QVERIFY(!session->windows[0].maximized);
+        QCOMPARE(session->windows[0].currentTab, std::optional<std::size_t>(0));
+        QCOMPARE(session->windows[1].geometry, std::optional(application::SessionGeometry{3000, 100, 900, 700}));
+        QVERIFY(session->windows[1].maximized);
+        QCOMPARE(session->windows[1].currentTab, std::optional<std::size_t>(3));
+        QCOMPARE(session->activeTab, std::optional<std::size_t>(3));
+        std::vector<std::size_t> windows;
+        for (const auto &tab : session->tabs)
+            windows.push_back(tab.window);
+        QCOMPARE(windows, (std::vector<std::size_t>{0, 0, 1, 1}));
+
+        const QByteArray written = app::writeSessionJson(*session, true);
+        const auto again = app::readSession(std::string_view(written.constData(), written.size()));
+        QVERIFY(again);
+        QCOMPARE(again->windows, session->windows);
+        QCOMPARE(again->tabs, session->tabs);
+        QCOMPARE(again->activeTab, session->activeTab);
+    }
+
+    void aReaderBeforeWindowsOpensOneWindowOnTheActiveTab()
+    {
+        QJsonObject o = QJsonDocument::fromJson(readAll(QStringLiteral(HIKARI_SESSION_FIXTURES "/two-windows.json"))).object();
+        o.remove(QStringLiteral("windows"));
+        QJsonArray tabs;
+        for (const QJsonValue &tab : o.value(QStringLiteral("tabs")).toArray()) {
+            QJsonObject t = tab.toObject();
+            t.remove(QStringLiteral("window"));
+            t.remove(QStringLiteral("current"));
+            tabs.append(t);
+        }
+        o.insert(QStringLiteral("tabs"), tabs);
+        const QByteArray bytes = QJsonDocument(o).toJson();
+        const auto session = app::readSession(std::string_view(bytes.constData(), bytes.size()));
+        QVERIFY(session);
+        QVERIFY(session->windows.empty());
+        QCOMPARE(session->tabs.size(), std::size_t(4));
+        for (const auto &tab : session->tabs)
+            QCOMPARE(tab.window, std::size_t(0));
+        QCOMPARE(session->activeTab, std::optional<std::size_t>(3));
+        QCOMPARE(session->tabs[3].subtitles, std::string("d.ass"));
+        QCOMPARE(session->tabs[3].active, 2);
+    }
+
+    void brokenWindowsAreNamed()
+    {
+        const std::pair<const char *, const char *> cases[] = {
+            {R"({"version": 1, "windows": {}, "tabs": []})", "“windows” is not a list."},
+            {R"({"version": 1, "windows": [3], "tabs": []})", "Window 1 is not an object."},
+            {R"({"version": 1, "windows": [{}, {"x": "left"}], "tabs": []})", "Window 2: “x” has the wrong type."},
+            {R"({"version": 1, "windows": [{"maximized": 1}], "tabs": []})", "Window 1: “maximized” has the wrong type."},
+            {R"({"version": 1, "windows": [{}], "tabs": [{"window": -1}]})", "Tab 1: “window” has the wrong type."},
+            {R"({"version": 1, "windows": [{}], "tabs": [{"current": "yes"}]})", "Tab 1: “current” has the wrong type."},
+        };
+        for (const auto &[text, problem] : cases) {
+            application::ParseFailure failure;
+            QVERIFY2(!app::readSession(text, &failure), text);
+            QCOMPARE(QString::fromStdString(failure.message), QString::fromUtf8(problem));
+        }
+        const auto partial = app::readSession(
+            R"({"version": 1, "windows": [{"x": 5, "width": 300}], "tabs": [{"window": 4, "current": true}]})");
+        QVERIFY(partial);
+        QCOMPARE(partial->windows.size(), std::size_t(1));
+        QVERIFY(!partial->windows[0].geometry);
+        QVERIFY(!partial->windows[0].currentTab);
+        QCOMPARE(partial->tabs[0].window, std::size_t(0));
     }
 
     void filesOnOtherComputersWaitForTheUser()

@@ -527,49 +527,48 @@ int keepFloatingPanelsOnScreen()
     if (screens.isEmpty())
         return 0;
     const int kStrip = dockchrome::floatingShadow() + dockchrome::kHeaderHeight;
-    constexpr int kMinimumWidth = 80;
+    QList<QRect> available;
+    for (QScreen *s : screens)
+        available << s->availableGeometry();
     int moved = 0;
     for (auto *floating : KDDockWidgets::DockRegistry::self()->floatingWindows()) {
         QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(floating->view());
         QWindow *window = item ? item->window() : nullptr;
         if (!window || !window->isVisible())
             continue;
-        const QRect frame = window->frameGeometry();
-        const QRect strip(frame.topLeft(), QSize(frame.width(), std::min(frame.height(), kStrip)));
-        const bool reachable = std::any_of(screens.begin(), screens.end(), [&](QScreen *s) {
-            const QRect on = s->availableGeometry().intersected(strip);
-            return on.width() >= std::min(kMinimumWidth, strip.width()) && on.height() > 0;
-        });
-        qCDebug(lcDocking) << "floating window" << window->title() << frame << "reachable" << reachable << "screens"
-                           << [&] {
-                                  QStringList out;
-                                  for (QScreen *s : screens)
-                                      out << QStringLiteral("%1 %2,%3 %4x%5").arg(s->name()).arg(s->availableGeometry().x())
-                                                 .arg(s->availableGeometry().y()).arg(s->availableGeometry().width())
-                                                 .arg(s->availableGeometry().height());
-                                  return out;
-                              }();
-        if (reachable)
-            continue;
         QWindow *main = window->transientParent();
         QScreen *target = main && screens.contains(main->screen()) ? main->screen() : QGuiApplication::primaryScreen();
         if (!target)
             target = screens.first();
-        const QRect available = target->availableGeometry();
-        const QMargins frameMargins = window->frameMargins();
-        QSize size = window->size();
-        size.setWidth(std::min(size.width(), available.width() - frameMargins.left() - frameMargins.right()));
-        size.setHeight(std::min(size.height(), available.height() - frameMargins.top() - frameMargins.bottom()));
+        const QRect frame = window->frameGeometry();
+        const QRect fitted = fitOnScreens(frame, kStrip, available, target->availableGeometry());
+        qCDebug(lcDocking) << "floating window" << window->title() << frame << "fitted" << fitted << "screens" << available;
+        if (fitted == frame)
+            continue;
+        const QSize size = fitted.size().shrunkBy(window->frameMargins());
         if (size != window->size())
             window->resize(size);
-        const QSize outer = size.grownBy(frameMargins);
-        const int x = std::clamp(frame.x(), available.left(), std::max(available.left(), available.right() + 1 - outer.width()));
-        const int y = std::clamp(frame.y(), available.top(), std::max(available.top(), available.bottom() + 1 - outer.height()));
-        window->setFramePosition(QPoint(x, y));
-        qCDebug(lcDocking) << "moved onto" << target->name() << "at" << QPoint(x, y);
+        window->setFramePosition(fitted.topLeft());
+        qCDebug(lcDocking) << "moved onto" << target->name() << "at" << fitted.topLeft();
         ++moved;
     }
     return moved;
+}
+
+QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, const QRect &fallback)
+{
+    constexpr int kMinimumWidth = 80;
+    const QRect top(frame.topLeft(), QSize(frame.width(), std::min(frame.height(), strip)));
+    const bool reachable = std::ranges::any_of(screens, [&](const QRect &screen) {
+        const QRect on = screen.intersected(top);
+        return on.width() >= std::min(kMinimumWidth, top.width()) && on.height() > 0;
+    });
+    if (reachable)
+        return frame;
+    const QSize outer(std::min(frame.width(), fallback.width()), std::min(frame.height(), fallback.height()));
+    const int x = std::clamp(frame.x(), fallback.left(), std::max(fallback.left(), fallback.right() + 1 - outer.width()));
+    const int y = std::clamp(frame.y(), fallback.top(), std::max(fallback.top(), fallback.bottom() + 1 - outer.height()));
+    return {QPoint(x, y), outer};
 }
 
 Docking::Docking(QObject *parent)

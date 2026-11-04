@@ -24,6 +24,10 @@ bool attachDocking(QQmlEngine &engine);
 // Not on Wayland, where the compositor places windows.
 int keepFloatingPanelsOnScreen();
 
+// `frame` as it is when the strip at its top reaches one of `screens`; otherwise moved whole onto
+// `fallback`, shrunk to fit it.
+QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, const QRect &fallback);
+
 int fitFloatingLayouts();
 
 void refreshDockConstraints();

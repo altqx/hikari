@@ -11711,6 +11711,18 @@ because it was edited.</source>
         <translation>“closed” என்பது true அல்லது false அல்ல.</translation>
     </message>
     <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” ஒரு பட்டியல் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>சாளரம் %1 ஒரு பொருள் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>சாளரம் %1: “%2” தவறான வகையில் உள்ளது.</translation>
+    </message>
+    <message>
         <source>Tab %1 is not an object.</source>
         <translation>தாவல் %1 ஒரு பொருள் அல்ல.</translation>
     </message>

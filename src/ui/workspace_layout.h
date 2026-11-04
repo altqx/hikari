@@ -86,6 +86,8 @@ public:
     Q_INVOKABLE bool restoreSaved();
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool saveForQuit();
+    // The file keeps `active`, another window's arrangement (ADR 0025); this window keeps its own.
+    bool saveForQuit(const WorkspaceArrangement &active);
     Q_INVOKABLE bool resetLayout();
     Q_INVOKABLE bool applyPreset(const QString &name);
     Q_INVOKABLE static QString presetLabel(const QString &name);
@@ -160,6 +162,7 @@ private:
     QByteArray serialiseWindow() const;
     bool restoreWindow(const QByteArray &payload, int options) const;
     bool restoreSavedFile();
+    bool write(const WorkspaceArrangement &arrangement);
     bool buildPreset(const QString &name, bool inPlace);
     bool showArrangement(const WorkspaceArrangement &arrangement);
     WorkspaceArrangement shownArrangement() const;

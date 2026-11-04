@@ -21,7 +21,26 @@ struct SessionTab {
     std::string audio;     // "Audio: "; written only when not "" and not the video
     std::string keyframes; // "Keyframes: "
     std::string layout;    // "Layout: ", the arrangement's compact JSON
+    std::size_t window = 0; // an index into Session::windows
     bool operator==(const SessionTab &) const = default;
+};
+
+// In device-independent pixels.
+struct SessionGeometry {
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    bool operator==(const SessionGeometry &) const = default;
+};
+
+struct SessionWindow {
+    // The window's normal geometry, kept while it is maximised.
+    std::optional<SessionGeometry> geometry;
+    bool maximized = false;
+    // An index into Session::tabs.
+    std::optional<std::size_t> currentTab;
+    bool operator==(const SessionWindow &) const = default;
 };
 
 struct Session {
@@ -30,6 +49,8 @@ struct Session {
     std::vector<SessionTab> tabs;
     // Only the JSON session file marks it; nullopt: the last tab.
     std::optional<std::size_t> activeTab;
+    // Empty for one window, as legacy sessions and those from before ADR 0025 are read.
+    std::vector<SessionWindow> windows;
 };
 
 // A UTF-8, UTF-16 or UTF-32 BOM decides (and is dropped); otherwise CRLF becomes

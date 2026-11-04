@@ -170,7 +170,7 @@ ApplicationWindow {
                 return false
             }
         }
-        root.workspaceLayout.saveForQuit()
+        root.app.saveLayoutForQuit()
         return true
     }
     onClosing: close => {
@@ -1372,6 +1372,7 @@ ApplicationWindow {
     SessionWindows {
         id: sessionWindows
         app: root.app
+        startsTheSession: root.shellWindow === 0
         review: rows => closeReview.review(rows)
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
@@ -7412,6 +7413,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        root.app.shellWindowLoaded(root)
         root.applyMenuShortcuts()
         if (root.shellWindow === 0)
             root.connectApi()
