@@ -193,6 +193,7 @@ Grid panel options > Float
 Grid panel options > -
 Grid panel options > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 Grid panel options > -
+Grid panel options > -
 Grid panel options > Close
 Document tab
 Document tab > New tab
