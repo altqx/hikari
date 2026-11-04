@@ -100,7 +100,7 @@
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 12;
+inline constexpr std::uint32_t kProtocolVersion = 13;
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
