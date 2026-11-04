@@ -53,8 +53,9 @@ class LineGrid : public QQuickPaintedItem {
     Q_PROPERTY(qreal headerHeight READ headerHeight NOTIFY rowHeightChanged)
     Q_PROPERTY(int lastPaintedRowCount READ lastPaintedRowCount NOTIFY painted)
     Q_PROPERTY(QString accessibleName MEMBER m_accessibleName NOTIFY accessibleNameChanged)
-    Q_PROPERTY(QString headerToolTip READ headerToolTip NOTIFY headerToolTipChanged)
-    Q_PROPERTY(QRectF headerToolTipCell READ headerToolTipCell NOTIFY headerToolTipChanged)
+    // A column title's explanation over the header, or a Line's QC notes over its number.
+    Q_PROPERTY(QString hoverToolTip READ hoverToolTip NOTIFY hoverToolTipChanged)
+    Q_PROPERTY(QRectF hoverToolTipCell READ hoverToolTipCell NOTIFY hoverToolTipChanged)
 
 public:
     explicit LineGrid(QQuickItem *parent = nullptr);
@@ -112,8 +113,8 @@ public:
 
     double markWidth() const { return m_markWidth; }
     QString accessibleName() const { return m_accessibleName; }
-    QString headerToolTip() const { return m_headerToolTip; }
-    QRectF headerToolTipCell() const { return m_headerToolTipCell; }
+    QString hoverToolTip() const { return m_hoverToolTip; }
+    QRectF hoverToolTipCell() const { return m_hoverToolTipCell; }
     int columnAt(qreal x) const;
 
 signals:
@@ -139,7 +140,7 @@ signals:
     void rowHeightChanged();
     void painted();
     void accessibleNameChanged();
-    void headerToolTipChanged();
+    void hoverToolTipChanged();
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
@@ -168,6 +169,7 @@ private:
     // MUST KILL: mark is a magic int (0 none, 1 hidden block '+', else revealed '-')
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
     void drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const;
+    void drawQcFlag(QPainter *painter, const QRectF &cell, const QColor &ink, bool current) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
                              const QColor &outline) const;
@@ -198,9 +200,13 @@ private:
     std::vector<int> m_columns;
     double m_markWidth = 0;
     QString m_accessibleName;
-    QString m_headerToolTip;
-    QRectF m_headerToolTipCell;
-    void setHeaderToolTip(int column);
+    QString m_hoverToolTip;
+    QRectF m_hoverToolTipCell;
+    void setHoverToolTip(std::optional<QPointF> at);
+    void setHoverToolTip(const QString &tip, const QRectF &cell);
+    double numberIndent() const { return m_qcMarked ? kQcFlagWidth : 0; }
+    static constexpr double kQcFlagWidth = 12;
+    bool m_qcMarked = false;
     void updateColumns();
     std::optional<core::LineId> m_dragLine;
     std::optional<core::LineId> m_announcedActive;

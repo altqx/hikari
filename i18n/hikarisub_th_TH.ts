@@ -1822,6 +1822,12 @@ Output device: %2</source>
         <translation>คุณสมบัติสคริปต์และสไตล์จะถูกลบ</translation>
     </message>
     <message numerus="yes">
+        <source>%n QC note(s) removed.</source>
+        <translation>
+            <numerusform>ลบโน้ต QC %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>ลบบรรทัดความคิดเห็น %n บรรทัด</numerusform>
@@ -4655,6 +4661,12 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation>มีที่คั่นหน้า</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>โน้ต QC %n รายการ</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>ยังไม่ได้นำไปใช้</translation>
@@ -6122,6 +6134,22 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
+        <source>QC notes panel</source>
+        <translation>แผงโน้ต QC</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>โน้ต QC ถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>โน้ต QC ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>เพิ่มโน้ต QC</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -7208,6 +7236,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
+    </message>
+    <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>โน้ตจากการตรวจ QC ที่เก็บไว้ในไฟล์ พร้อมบรรทัดที่โน้ตนั้นชี้</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>โน้ต &amp;QC…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -9780,6 +9816,295 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>รายละเอียด</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>โน้ต QC</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>ไม่มีโน้ตเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>นำเข้าไฟล์โน้ต…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>ส่งออกโน้ต…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>ลบโน้ตทั้งหมด…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 ไม่มีโน้ต โน้ตคือบรรทัดที่ขึ้นต้นด้วยเวลา เช่น 3:24 หรือ 0:03:24</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>คลิปบอร์ดไม่มีโน้ต โน้ตคือบรรทัดที่ขึ้นต้นด้วยเวลา เช่น 3:24 หรือ 0:03:24</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>นำเข้าโน้ต %n รายการแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n รายการมีอยู่ในไฟล์แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>โน้ต %n รายการไม่มีบรรทัดภายใน 15 วินาทีจากเวลาของโน้ต</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>คลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>นำเข้าโน้ต QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 มีโน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>ใน %n หมวด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>ไฟล์นี้มีโน้ตอยู่แล้ว %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>การเพิ่มจะข้ามโน้ตที่มีอยู่แล้ว %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>เพิ่มโน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>แทนที่โน้ตในไฟล์นี้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>อ่าน %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>ลบโน้ตทั้งหมด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>เลิกทำเพื่อนำกลับมาได้</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>ลบทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>นำเข้าไฟล์โน้ต</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>โน้ต QC (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ทุกไฟล์ (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>ส่งออกโน้ต QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>ส่งออกโน้ต %n รายการแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>เขียนโน้ตไม่ได้</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>ในไฟล์นี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>โน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>เพิ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>รวมโน้ตที่เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>เฉพาะหมวดที่เลือก (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>เฉพาะหมวดที่เลือก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>ส่งออกโน้ต %n รายการ…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>ไม่มีบรรทัด</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>ยังไม่เสร็จ</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>ไม่มีบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>วางไฟล์โน้ตที่นี่</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>เปิดไฟล์คำบรรยายเพื่อเก็บโน้ต QC ไว้ในไฟล์</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>วางโน้ต</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>โน้ตขึ้นต้นด้วยเวลา: 3:24 - …
+บรรทัด [หมวด] ใช้จัดกลุ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>ถัดไป</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>ซ่อนที่เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>เวลา</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>เวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>จุดเริ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>หมวด</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>โน้ต</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>สิ่งที่ต้องแก้</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter บันทึก · Esc ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
     </message>
 </context>
 <context>

@@ -933,6 +933,27 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
     }
     {
+        QcNotesController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.editable = [this] {
+            const auto target = m_workspace.editingTarget();
+            return target && m_workspace.checkContentCommand(*target).has_value();
+        };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.selectLine = [this](core::LineId line) { selectLine(line.value); };
+        hooks.seek = [this](int ms) { return m_video->hasVideo() && m_video->session().seekToMs(ms); };
+        hooks.videoTime = [this]() -> std::optional<int> {
+            return m_video->hasVideo() ? std::optional(m_video->session().tellMs()) : std::nullopt;
+        };
+        hooks.marks = [this](QcNotesController::Marks marks, std::optional<core::LineId> current) {
+            shell().setQcMarks(std::move(marks), current);
+        };
+        m_qcNotes = std::make_unique<QcNotesController>(*m_settings, std::move(hooks));
+    }
+    {
         FontCollectorController::Hooks hooks;
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
@@ -2074,6 +2095,8 @@ void Application::refreshViews()
         m_styleManager->documentEdited();
     if (m_kanjiTimer)
         m_kanjiTimer->documentEdited();
+    if (m_qcNotes)
+        m_qcNotes->documentEdited();
     refreshVideo();
     refreshAudio();
     if (activeViews().statusBar)
@@ -5271,6 +5294,10 @@ QVariantMap Application::previewConversion(const QString &targetName)
     };
     if (r.headerDropped)
         add(QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed."), true);
+    if (const auto lost = std::ptrdiff_t(application::documentQcNotes(session->document()).size()) -
+                          std::ptrdiff_t(application::documentQcNotes(result->document).size());
+        lost > 0)
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n QC note(s) removed.", nullptr, int(lost)), true);
     if (r.commentsRemoved)
         add(QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved), true);
     if (r.drawingsCleared)
@@ -5756,6 +5783,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
+            {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},

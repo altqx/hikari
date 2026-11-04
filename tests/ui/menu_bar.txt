@@ -55,6 +55,7 @@ Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
+Subtitles > QC notes… [GLOBAL_SHOW_QC_NOTES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Conversion >
@@ -151,6 +152,7 @@ View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
 View > Panels > Template editor >
+View > Panels > QC notes >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout

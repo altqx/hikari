@@ -50,6 +50,7 @@ ApplicationWindow {
     required property var crashReports
     required property var styleManager
     required property var kanjiTimer
+    required property var qcNotes
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
@@ -391,10 +392,10 @@ ApplicationWindow {
 
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel]
+                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
-                                         templateDock]
+                                         templateDock, qcNotesDock]
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -688,6 +689,16 @@ ApplicationWindow {
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
+    function stepQcNote(forward) {
+        if (!qcNotesTool.step(forward) && !qcNotesDock.isOpen)
+            root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
+    }
+    function addQcNote(ms) {
+        if (!root.qcNotes.editable)
+            return
+        root.showPanel(qcNotesDock)
+        qcNotesTool.startAdding(ms)
+    }
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
@@ -796,6 +807,19 @@ ApplicationWindow {
                     { name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
                       checked: () => root.shell.foldGenerated,
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
+        if (dock === qcNotesDock)
+            return [{ name: "qcNotesImport", text: qsTranslate("HikariSub.QcNotes", "Import notes file…"), iconRole: "import",
+                      enabled: () => root.qcNotes.editable, run: () => qcNotesTool.openImport() },
+                    { name: "qcNotesImportClipboard", text: qsTranslate("HikariSub.QcNotes", "Import notes from the clipboard"),
+                      iconRole: "edit-paste", enabled: () => root.qcNotes.editable && root.qcNotes.clipboardHasNotes,
+                      run: () => qcNotesTool.importClipboard() },
+                    { name: "qcNotesExport", text: qsTranslate("HikariSub.QcNotes", "Export notes…"), iconRole: "export",
+                      enabled: () => root.qcNotes.total > 0, run: () => qcNotesTool.openExport() },
+                    { name: "qcNotesMarkAllNotDone", text: qsTranslate("HikariSub.QcNotes", "Mark all as not done"),
+                      enabled: () => root.qcNotes.editable && root.qcNotes.sections.some(s => s.open < s.count),
+                      run: () => root.qcNotes.markAllNotDone() },
+                    { name: "qcNotesRemoveAll", text: qsTranslate("HikariSub.QcNotes", "Remove all notes…"), iconRole: "delete",
+                      enabled: () => root.qcNotes.editable && root.qcNotes.total > 0, run: () => qcNotesTool.removeAll() }]
         if (root.isPluginDock(dock))
             return root.pluginPanelItems(dock)
         return []
@@ -1865,6 +1889,15 @@ ApplicationWindow {
                 objectName: "showTimingPostprocessor"
                 text: qsTr("Timing &postprocessor…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SHOW_QC_NOTES"
+                help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
+                id: showQcNotesItem
+                iconRole: "notices"
+                objectName: "showQcNotes"
+                text: qsTr("&QC notes…")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_QC_NOTES")) root.showPanel(qcNotesDock)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
@@ -5511,7 +5544,7 @@ ApplicationWindow {
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
                     onHeaderMenuRequested: (x, y) => gridHeaderMenu.popup(grid, x, y)
                     MenuKey.onRequested: grid.requestMenu()
-                    GridHeaderToolTip { grid: grid }
+                    GridToolTip { grid: grid }
                     GridScrollBars { grid: grid }
                     onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
@@ -5754,6 +5787,15 @@ ApplicationWindow {
                             readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Delete line")
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines()
                         }
+                        MenuSeparator {}
+                        ShellMenuItem {
+                            command: "GLOBAL_ADD_QC_NOTE"
+                            iconRole: "notices"
+                            objectName: "addQcNote"
+                            text: qsTranslate("HikariSub.QcNotes", "Add QC note…")
+                            enabled: root.qcNotes.editable
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_ADD_QC_NOTE")) root.addQcNote(root.qcNotes.lineStart())
+                        }
                     }
                     GridColumnsMenu {
                         id: gridHeaderMenu
@@ -5866,6 +5908,30 @@ ApplicationWindow {
                 Connections {
                     target: root.audio
                     function onMarkChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+            }
+        }
+
+        PanelDock {
+            id: qcNotesDock
+            objectName: "qcNotesDock"
+            uniqueName: root.engineName("QcNotes")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.QcNotes", "QC notes")
+            Panel {
+                id: qcNotesPanel
+                objectName: "qcNotesPanel"
+                dockName: root.engineName("QcNotes")
+                minimumBodySize: qcNotesTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.QcNotes", "QC notes")
+                QcNotesPanel {
+                    id: qcNotesTool
+                    anchors.fill: parent
+                    focus: true
+                    qcNotes: root.qcNotes
+                    messages: root.messages
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
                 }
             }
         }
@@ -7501,6 +7567,7 @@ ApplicationWindow {
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
+        GLOBAL_SHOW_QC_NOTES: showQcNotesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7654,6 +7721,9 @@ ApplicationWindow {
             return true
         case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
         case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
+        case "GLOBAL_NEXT_QC_NOTE": if (editing) root.stepQcNote(true); return true
+        case "GLOBAL_PREVIOUS_QC_NOTE": if (editing) root.stepQcNote(false); return true
+        case "GLOBAL_ADD_QC_NOTE": if (editing) root.addQcNote(-1); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true

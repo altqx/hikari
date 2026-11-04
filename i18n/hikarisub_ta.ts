@@ -1834,6 +1834,13 @@ Output device: %2</source>
         <translation>ச்கிரிப்ட் பண்புகளும் பாணிகளும் நீக்கப்படும்.</translation>
     </message>
     <message numerus="yes">
+        <source>%n QC note(s) removed.</source>
+        <translation>
+            <numerusform>%n QC குறிப்பு நீக்கப்பட்டது.</numerusform>
+            <numerusform>%n QC குறிப்புகள் நீக்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>%n கருத்து வரி நீக்கப்பட்டது.</numerusform>
@@ -4695,6 +4702,13 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation>புத்தகக்குறியிடப்பட்டது</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n QC குறிப்பு</numerusform>
+            <numerusform>%n QC குறிப்புகள்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>கமிட் செய்யப்படவில்லை</translation>
@@ -6166,6 +6180,22 @@ Failed to copy %2 fonts.</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>QC notes panel</source>
+        <translation>QC குறிப்புகள் பலகம்</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>அடுத்த QC குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>முந்தைய QC குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>QC குறிப்பைச் சேர்</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7255,6 +7285,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>QC சரிபார்ப்புக் குறிப்புகள், கோப்பில் வைக்கப்பட்டு, அவை குறிக்கும் வரிகளுடன்</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>QC குறிப்புகள்(&amp;Q)…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -9838,6 +9876,307 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>விவரங்கள்</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC குறிப்புகள்</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>மேலும் குறிப்புகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>குறிப்புக் கோப்பை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>இடைநிலைப்பலகையிலிருந்து குறிப்புகளை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>குறிப்புகளை ஏற்றுமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>அனைத்தையும் முடியாதவை எனக் குறி</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>QC குறிப்பைச் சேர்…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 இல் குறிப்புகள் இல்லை. குறிப்பு என்பது 3:24 அல்லது 0:03:24 போன்ற நேரத்துடன் தொடங்கும் வரி.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>இடைநிலைப்பலகையில் குறிப்புகள் இல்லை. குறிப்பு என்பது 3:24 அல்லது 0:03:24 போன்ற நேரத்துடன் தொடங்கும் வரி.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>%n குறிப்பு இறக்குமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n குறிப்புகள் இறக்குமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n ஏற்கெனவே கோப்பில் இருந்தது.</numerusform>
+            <numerusform>%n ஏற்கெனவே கோப்பில் இருந்தன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n குறிப்புக்கு அதன் நேரத்திலிருந்து 15 விநாடிகளுக்குள் வரி இல்லை.</numerusform>
+            <numerusform>%n குறிப்புகளுக்கு அவற்றின் நேரத்திலிருந்து 15 விநாடிகளுக்குள் வரி இல்லை.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>இடைநிலைப்பலகை</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>QC குறிப்புகளை இறக்குமதி செய்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 இல் %n குறிப்பு உள்ளது</numerusform>
+            <numerusform>%1 இல் %n குறிப்புகள் உள்ளன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>%n பிரிவில்.</numerusform>
+            <numerusform>%n பிரிவுகளில்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>இந்தக் கோப்பில் ஏற்கெனவே %n குறிப்பு உள்ளது.</numerusform>
+            <numerusform>இந்தக் கோப்பில் ஏற்கெனவே %n குறிப்புகள் உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>சேர்க்கும்போது ஏற்கெனவே உள்ள %n குறிப்பு தவிர்க்கப்படும்.</numerusform>
+            <numerusform>சேர்க்கும்போது ஏற்கெனவே உள்ள %n குறிப்புகள் தவிர்க்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>%n குறிப்பைச் சேர்</numerusform>
+            <numerusform>%n குறிப்புகளைச் சேர்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>இந்தக் கோப்பின் குறிப்புகளை மாற்றிவை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>எல்லாக் குறிப்புகளையும் நீக்கு</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>இந்தக் கோப்பிலிருந்து %n QC குறிப்பை நீக்கவா?</numerusform>
+            <numerusform>இந்தக் கோப்பிலிருந்து எல்லா %n QC குறிப்புகளையும் நீக்கவா?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>செயல்தவிர்த்தால் அவை திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>அனைத்தையும் நீக்கு</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>குறிப்புக் கோப்பை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>QC குறிப்புகள் (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>அனைத்துக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>QC குறிப்புகளை ஏற்றுமதி செய்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>%n குறிப்பு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n குறிப்புகள் ஏற்றுமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>குறிப்புகளை எழுத முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>இந்தக் கோப்பில்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n குறிப்பு</numerusform>
+            <numerusform>%n குறிப்புகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>குறிப்பைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>முடிந்த குறிப்புகளையும் சேர்</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>தேர்ந்தெடுத்த பிரிவு மட்டும் (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>தேர்ந்தெடுத்த பிரிவு மட்டும்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>%n குறிப்பை ஏற்றுமதி செய்…</numerusform>
+            <numerusform>%n குறிப்புகளை ஏற்றுமதி செய்…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>அனைத்தும்</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%2 இல் %1</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>வரி %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>குறிப்புக் கோப்பை இங்கே விடவும்</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>QC குறிப்புகளை வைக்க ஒரு வசனக் கோப்பைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>குறிப்புகளை ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>குறிப்புகள் நேரத்துடன் தொடங்கும்: 3:24 - …
+[பிரிவு] வரிகள் அவற்றைக் குழுவாக்கும்.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>முந்தையது</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>அடுத்தது</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>முடிந்தவற்றை மறை</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>நேரம்</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>வீடியோ நேரம்</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>வரியின் தொடக்கம்</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>பிரிவு</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>குறிப்பு</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>சரிசெய்ய வேண்டியது</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter சேமிக்கும் · Esc ரத்துசெய்யும்</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>சேமி</translation>
     </message>
 </context>
 <context>

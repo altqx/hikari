@@ -84,7 +84,7 @@ FocusScope {
             model: tray.shell.referenceLines
             columnWidths: tray.shell.gridColumnWidths
             onColumnWidthsEdited: tray.shell.gridColumnWidths = columnWidths
-            GridHeaderToolTip { grid: referenceGrid }
+            GridToolTip { grid: referenceGrid }
             GridScrollBars { grid: referenceGrid }
             onActiveLineRequested: id => tray.app.selectReferenceLine(id)
             onExtendRequested: rows => tray.app.extendReferenceSelection(rows)

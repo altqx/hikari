@@ -94,6 +94,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n QC note(s) removed.</source>
+        <translation>
+            <numerusform>%n QC note removed.</numerusform>
+            <numerusform>%n QC notes removed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>%n comment line removed.</numerusform>
@@ -281,6 +288,13 @@
 <context>
     <name>HikariSub.Grid</name>
     <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n QC note</numerusform>
+            <numerusform>%n QC notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation>
             <numerusform>%n selected, %1 hidden</numerusform>
@@ -440,6 +454,93 @@
         <translation>
             <numerusform>The plugin ran for more than %n second, so HikariSub stopped it. Its next command starts it again.</numerusform>
             <numerusform>The plugin ran for more than %n seconds, so HikariSub stopped it. Its next command starts it again.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>Imported %n note.</numerusform>
+            <numerusform>Imported %n notes.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n was already in the file.</numerusform>
+            <numerusform>%n were already in the file.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n note has no line within 15 seconds of its time.</numerusform>
+            <numerusform>%n notes have no line within 15 seconds of their time.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 has %n note</numerusform>
+            <numerusform>%1 has %n notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>in %n section.</numerusform>
+            <numerusform>in %n sections.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>This file already has %n note.</numerusform>
+            <numerusform>This file already has %n notes.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>Adding skips %n note that is already here.</numerusform>
+            <numerusform>Adding skips %n notes that are already here.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>Add %n note</numerusform>
+            <numerusform>Add %n notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>Remove the %n QC note from this file?</numerusform>
+            <numerusform>Remove all %n QC notes from this file?</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>Exported %n note.</numerusform>
+            <numerusform>Exported %n notes.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n note</numerusform>
+            <numerusform>%n notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>Export %n note…</numerusform>
+            <numerusform>Export %n notes…</numerusform>
         </translation>
     </message>
 </context>

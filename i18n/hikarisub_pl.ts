@@ -1846,6 +1846,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Właściwości skryptu i style zostaną usunięte.</translation>
     </message>
     <message numerus="yes">
+        <source>%n QC note(s) removed.</source>
+        <translation>
+            <numerusform>Zostanie usunięta %n notatka QC.</numerusform>
+            <numerusform>Zostaną usunięte %n notatki QC.</numerusform>
+            <numerusform>Zostanie usuniętych %n notatek QC.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>Zostanie usunięta %n zakomentowana linijka.</numerusform>
@@ -4735,6 +4743,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>bookmarked</source>
         <translation>z zakładką</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n notatka QC</numerusform>
+            <numerusform>%n notatki QC</numerusform>
+            <numerusform>%n notatek QC</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>niezatwierdzona</translation>
@@ -6210,6 +6226,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Importuj ustawienia starej wersji…</translation>
     </message>
     <message>
+        <source>QC notes panel</source>
+        <translation>Panel notatek QC</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>Następna notatka QC</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>Poprzednia notatka QC</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>Dodaj notatkę QC</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7302,6 +7334,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Selects lines by expressions</source>
         <translation>Zaznacza linijki według wyrażeń</translation>
+    </message>
+    <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>Notatki z kontroli jakości, zapisane w pliku, z linijkami, które oznaczają</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>Notatki &amp;QC…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -9896,6 +9936,319 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Details</source>
         <translation>Szczegóły</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>Notatki QC</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>Nie ma więcej notatek</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>Importuj plik notatek…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>Importuj notatki ze schowka</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>Eksportuj notatki…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>Oznacz wszystkie jako niegotowe</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>Usuń wszystkie notatki…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>Dodaj notatkę QC…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 nie zawiera notatek. Notatka to linijka zaczynająca się od czasu, np. 3:24 lub 0:03:24.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>Schowek nie zawiera notatek. Notatka to linijka zaczynająca się od czasu, np. 3:24 lub 0:03:24.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>Zaimportowano %n notatkę.</numerusform>
+            <numerusform>Zaimportowano %n notatki.</numerusform>
+            <numerusform>Zaimportowano %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n była już w pliku.</numerusform>
+            <numerusform>%n były już w pliku.</numerusform>
+            <numerusform>%n było już w pliku.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n notatka nie ma linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+            <numerusform>%n notatki nie mają linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+            <numerusform>%n notatek nie ma linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>Schowek</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>Importuj notatki QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 zawiera %n notatkę</numerusform>
+            <numerusform>%1 zawiera %n notatki</numerusform>
+            <numerusform>%1 zawiera %n notatek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>w %n sekcji.</numerusform>
+            <numerusform>w %n sekcjach.</numerusform>
+            <numerusform>w %n sekcjach.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>Ten plik ma już %n notatkę.</numerusform>
+            <numerusform>Ten plik ma już %n notatki.</numerusform>
+            <numerusform>Ten plik ma już %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>Dodawanie pominie %n notatkę, która już tu jest.</numerusform>
+            <numerusform>Dodawanie pominie %n notatki, które już tu są.</numerusform>
+            <numerusform>Dodawanie pominie %n notatek, które już tu są.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>Dodaj %n notatkę</numerusform>
+            <numerusform>Dodaj %n notatki</numerusform>
+            <numerusform>Dodaj %n notatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>Zastąp notatki w tym pliku</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>Nie można odczytać %1: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>Usuń wszystkie notatki</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
+            <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
+            <numerusform>Usunąć wszystkie %n notatek QC z tego pliku?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>Cofnięcie je przywróci.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>Usuń wszystkie</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>Importuj plik notatek</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>Notatki QC (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>Eksportuj notatki QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>Wyeksportowano %n notatkę.</numerusform>
+            <numerusform>Wyeksportowano %n notatki.</numerusform>
+            <numerusform>Wyeksportowano %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>Nie można zapisać notatek.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>W tym pliku</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n notatka</numerusform>
+            <numerusform>%n notatki</numerusform>
+            <numerusform>%n notatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>Dodaj notatkę</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>Uwzględnij gotowe notatki</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>Tylko wybrana sekcja (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>Tylko wybrana sekcja</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>Eksportuj %n notatkę…</numerusform>
+            <numerusform>Eksportuj %n notatki…</numerusform>
+            <numerusform>Eksportuj %n notatek…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Wszystkie</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 z %2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>linijka %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>brak linijki</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>gotowe</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>niegotowe</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>Brak linijki</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>Upuść tutaj plik notatek</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>Otwórz plik napisów, aby przechowywać w nim notatki QC.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>Wklej notatki</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>Notatki zaczynają się od czasu: 3:24 - …
+Linijki [Sekcja] je grupują.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>Poprzednia</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Następna</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>Ukryj gotowe</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>Czas wideo</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>Początek linijki</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Sekcja</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>Notatka</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>Co trzeba poprawić</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter zapisuje · Esc anuluje</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
     </message>
 </context>
 <context>

@@ -18,6 +18,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     user_folder.cpp include/hikari/app/user_folder.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
+    qc_notes_controller.cpp include/hikari/app/qc_notes_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_features.cpp include/hikari/app/ai_features.h

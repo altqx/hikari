@@ -310,6 +310,10 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_PLUGINS", 5231},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
+        {"GLOBAL_SHOW_QC_NOTES", 5241},
+        {"GLOBAL_NEXT_QC_NOTE", 5242},
+        {"GLOBAL_PREVIOUS_QC_NOTE", 5243},
+        {"GLOBAL_ADD_QC_NOTE", 5254},
 };
 
 struct NameRow {
@@ -590,6 +594,10 @@ constexpr NameRow kNames[] = {
         {5231, "Plugins"},
         {5229, "Centre times within frames"},
         {5223, "Import legacy settings…"},
+        {5241, "QC notes panel"},
+        {5242, "Next QC note"},
+        {5243, "Previous QC note"},
+        {5254, "Add QC note"},
 };
 
 struct DefaultRow {
