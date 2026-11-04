@@ -492,6 +492,8 @@ icon("layout-reset", "Reset this layout", [], [VIEW, "status-bar"],
      LAYOUT_CUT + accent(stroke("M14.5 12a2.5 2.5 0 1 1-.75-1.75"), stroke("M14 9v1.5h-1.5")))
 icon("layout-manage", "Manage layouts", [], [VIEW, "status-bar", "manage-layouts"],
      LAYOUT_CUT + accent(stroke("M10 10.5h4.5M10 12.5h4.5M10 14.5h4.5")))
+icon("layout-lock", "Lock layout", [], [VIEW, "status-bar", "dock-headers"],
+     rect(3.5, 7.5, 9, 7) + stroke("M5.5 7.5V5a2.5 2.5 0 0 1 5 0v2.5") + accent(stroke("M8 10.5v1.5")))
 
 icon("window-minimize", "Minimise", [], ["title-bar"], stroke("M3.5 8.5h9"))
 icon("window-maximize", "Maximise", [], ["title-bar"], rect(3.5, 3.5, 9, 9, 0.5))

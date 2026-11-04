@@ -23,6 +23,7 @@ struct WorkspaceArrangement {
     QString preset = QStringLiteral("Editing");
     QByteArray payload;
     QString layout;
+    bool locked = false;
 
     QByteArray serialise() const;
     static std::optional<WorkspaceArrangement> parse(const QByteArray &bytes, QString *problem = nullptr);
@@ -52,6 +53,7 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QStringList presets READ presets CONSTANT)
     Q_PROPERTY(QString layout READ layout NOTIFY changed)
     Q_PROPERTY(QString layoutLabel READ layoutLabel NOTIFY changed)
+    Q_PROPERTY(bool locked READ locked NOTIFY changed)
     Q_PROPERTY(QVariantList savedLayouts READ savedLayouts NOTIFY savedLayoutsChanged)
     // QWindow::isActive is also true for the parent of an active floating panel.
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
@@ -107,6 +109,8 @@ public:
     Q_INVOKABLE QSize panelSize(QObject *dock) const;
     Q_INVOKABLE bool resizePanel(QObject *dock, int width, int height);
     Q_INVOKABLE int keepFloatingPanelsOnScreen();
+    // False while a panel floats: a locked arrangement has none.
+    Q_INVOKABLE bool setLocked(bool locked);
 
     void showTab(std::uint64_t tab, TabStart start = TabStart::Copy);
     void addTab(std::uint64_t tab, TabStart start = TabStart::Copy);
@@ -124,6 +128,7 @@ public:
     static const QStringList &presets();
     QString layout() const;
     QString layoutLabel() const;
+    bool locked() const { return m_locked; }
     QVariantList savedLayouts() const;
     QString savedLayoutsFile() const { return m_savedFile; }
     QObject *focusWindow() const;
@@ -132,9 +137,9 @@ public:
     bool hasBackup() const;
 
     static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"),
-                               const QString &layout = {});
+                               const QString &layout = {}, bool locked = false);
     static std::optional<QByteArray> payloadOf(const QByteArray &file, QString *problem, QString *preset = nullptr,
-                                               QString *layout = nullptr);
+                                               QString *layout = nullptr, bool *locked = nullptr);
 
 signals:
     void changed();
@@ -218,6 +223,8 @@ private:
     QString m_chosenMode;
     QString m_preset = QStringLiteral("Editing");
     QString m_layout;
+    bool m_locked = false;
+    void takeLock(bool locked);
     bool m_restoring = false;
     bool m_loaded = false;
     bool m_quitting = false;

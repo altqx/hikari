@@ -289,6 +289,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Centre times within frames"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Align to video…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import legacy settings…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Lock layout"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open timecodes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save timecodes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close timecodes"),

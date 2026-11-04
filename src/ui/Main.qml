@@ -545,17 +545,53 @@ ApplicationWindow {
         }
     }
 
+    readonly property bool layoutLocked: root.workspaceLayout.locked
+    readonly property bool panelFloats: root.dockList.some(dock => dock.isOpen && dock.isFloating)
+    readonly property string lockReason: !root.layoutLocked && root.panelFloats
+        ? qsTranslate("HikariSub.Workspace", "Dock floating panels to lock the layout") : ""
+    property bool lockRefusalShown: false
+    Action {
+        id: lockLayoutAction
+        text: qsTranslate("HikariSub.Workspace", "Lock layout")
+        checkable: true
+        checked: root.layoutLocked
+        enabled: root.layoutLocked || !root.panelFloats
+        onTriggered: {
+            if (!root.hotkeyGesture("GLOBAL_TOGGLE_LOCK_LAYOUT"))
+                root.workspaceLayout.setLocked(!root.layoutLocked)
+            checked = Qt.binding(() => root.layoutLocked)
+        }
+    }
+    Connections {
+        target: Docking
+        function onLayoutChangeRefused() {
+            if (root.lockRefusalShown)
+                return
+            root.lockRefusalShown = true
+            root.notify("info", qsTranslate("HikariSub.Workspace", "The layout is locked"),
+                        qsTranslate("HikariSub.Workspace", "Unlock it to move panels. Resizing still works."),
+                        { actions: [{ text: qsTranslate("HikariSub.Workspace", "Unlock"),
+                                      run: () => root.workspaceLayout.setLocked(false) }] })
+        }
+    }
+
     function applyPreset(name) {
+        if (root.layoutLocked)
+            return
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applyPreset(name))
         root.analytics.layoutChanged(name)
     }
     function applySavedLayout(name) {
+        if (root.layoutLocked)
+            return
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applySavedLayout(name))
         root.analytics.layoutChanged("saved")
     }
     function resetLayout() {
+        if (root.layoutLocked)
+            return
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.resetCurrentLayout())
     }
@@ -711,6 +747,8 @@ ApplicationWindow {
             root.addRightOfGrid(dock)
         else
             dock.open()
+        if (root.layoutLocked && dock.isFloating)
+            dock.isFloating = false
     }
 
     function panelOf(item) {
@@ -946,7 +984,7 @@ ApplicationWindow {
             iconRole: "panel-move"
             objectName: "panelOptionsMove"
             text: qsTranslate("HikariSub.Workspace", "Move panel…")
-            enabled: panelOptionsMenu.dockable
+            enabled: panelOptionsMenu.dockable && !root.layoutLocked
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
         }
         ShellMenuItem {
@@ -956,7 +994,7 @@ ApplicationWindow {
             text: qsTranslate("HikariSub.Workspace", "Move tab left")
             visible: panelOptionsMenu.tabCount > 1
             height: visible ? implicitHeight : 0
-            enabled: panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep >= 0
+            enabled: !root.layoutLocked && panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep >= 0
                      && panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep < panelOptionsMenu.tabCount
             onTriggered: root.moveTab(panelOptionsMenu.dock, panelOptionsMenu.leftStep)
         }
@@ -966,7 +1004,7 @@ ApplicationWindow {
             text: qsTranslate("HikariSub.Workspace", "Move tab right")
             visible: panelOptionsTabLeft.visible
             height: visible ? implicitHeight : 0
-            enabled: panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep >= 0
+            enabled: !root.layoutLocked && panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep >= 0
                      && panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep < panelOptionsMenu.tabCount
             onTriggered: root.moveTab(panelOptionsMenu.dock, -panelOptionsMenu.leftStep)
         }
@@ -974,10 +1012,22 @@ ApplicationWindow {
             iconRole: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? "panel-dock" : "panel-float"
             objectName: "panelOptionsFloat"
             text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Float")
-            enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
+            enabled: panelOptionsMenu.dock !== null && !root.layoutLocked
+                     && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "panelOptionsLock"
+            command: "GLOBAL_TOGGLE_LOCK_LAYOUT"
+            iconRole: "layout-lock"
+            action: lockLayoutAction
+            keepsMenuOpen: false
+            reason: root.lockReason
+        }
+        MenuSeparator {}
         Instantiator {
+            id: panelOptionsAbout
             readonly property var panelState: root.isPluginDock(panelOptionsMenu.dock) ? (panelOptionsMenu.dock.body?.panelState ?? null) : null
             model: panelState !== null && panelState.status !== "missing" ? [panelState] : []
             delegate: ShellMenuItem {
@@ -990,12 +1040,15 @@ ApplicationWindow {
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 2, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
-        MenuSeparator {}
+        MenuSeparator {
+            visible: panelOptionsAbout.count > 0
+            height: panelOptionsAbout.count > 0 ? implicitHeight : 0
+        }
         ShellMenuItem {
             iconRole: "tab-close"
             objectName: "panelOptionsClose"
             text: qsTranslate("HikariSub.Workspace", "Close")
-            enabled: panelOptionsMenu.closable
+            enabled: panelOptionsMenu.closable && !root.layoutLocked
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
     }
@@ -1266,6 +1319,8 @@ ApplicationWindow {
 
     // Deferred: KDDW reparents the panel into its new window first.
     function setPanelFloating(dock, floating) {
+        if (root.layoutLocked && floating)
+            return
         const panel = panels[dockList.indexOf(dock)]
         dock.isFloating = floating
         Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
@@ -1412,6 +1467,8 @@ ApplicationWindow {
         menus: appMenus
         switcher: LayoutSwitcher {
             layouts: root.workspaceLayout
+            lockAction: lockLayoutAction
+            lockReason: root.lockReason
             Layout.leftMargin: titleBar.switcherGap
             onPresetChosen: name => root.applyPreset(name)
             onSavedLayoutChosen: name => root.applySavedLayout(name)
@@ -2596,6 +2653,8 @@ ApplicationWindow {
                 title: qsTr("&Layout")
                 prefix: "viewLayout"
                 layouts: root.workspaceLayout
+                lockAction: lockLayoutAction
+                lockReason: root.lockReason
                 onPresetChosen: name => root.applyPreset(name)
                 onSavedLayoutChosen: name => root.applySavedLayout(name)
                 onSaveRequested: saveLayoutDialog.show()
@@ -2618,14 +2677,14 @@ ApplicationWindow {
                             iconRole: "show"
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
-                            enabled: root.panelAvailable(modelData)
+                            enabled: root.panelAvailable(modelData) && !root.layoutLocked
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
                             iconRole: modelData.isFloating ? "panel-dock" : "panel-float"
                             objectName: "panelFloat" + modelData.uniqueName
                             text: modelData.isFloating ? qsTr("Dock") : qsTr("Float")
-                            enabled: modelData.isOpen
+                            enabled: modelData.isOpen && !root.layoutLocked
                             onTriggered: root.setPanelFloating(modelData, !modelData.isFloating)
                         }
                         MenuSeparator {}
@@ -2633,7 +2692,7 @@ ApplicationWindow {
                             iconRole: "tab-close"
                             objectName: "panelClose" + modelData.uniqueName
                             text: qsTr("Close")
-                            enabled: modelData.isOpen
+                            enabled: modelData.isOpen && !root.layoutLocked
                             onTriggered: root.closePanel(modelData)
                         }
                     }
@@ -2659,14 +2718,14 @@ ApplicationWindow {
                             iconRole: "show"
                             objectName: "panelShow" + pluginPanelMenu.modelData.dock
                             text: qsTr("Show")
-                            enabled: !pluginPanelMenu.kept
+                            enabled: !pluginPanelMenu.kept && !root.layoutLocked
                             onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
                         }
                         ShellMenuItem {
                             iconRole: pluginPanelMenu.dock?.isFloating ? "panel-dock" : "panel-float"
                             objectName: "panelFloat" + pluginPanelMenu.modelData.dock
                             text: pluginPanelMenu.dock?.isFloating ? qsTr("Dock") : qsTr("Float")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
                             onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !pluginPanelMenu.dock.isFloating)
                         }
                         MenuSeparator {}
@@ -2674,7 +2733,7 @@ ApplicationWindow {
                             iconRole: "tab-close"
                             objectName: "panelClose" + pluginPanelMenu.modelData.dock
                             text: qsTr("Close")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
                             onTriggered: root.closePanel(pluginPanelMenu.dock)
                         }
                         ShellMenuItem {
@@ -2683,6 +2742,7 @@ ApplicationWindow {
                             text: qsTr("Remove from the layout")
                             visible: pluginPanelMenu.kept
                             height: pluginPanelMenu.kept ? implicitHeight : 0
+                            enabled: !root.layoutLocked
                             onTriggered: root.forgetPluginDock(pluginPanelMenu.dock)
                         }
                     }
@@ -2694,13 +2754,14 @@ ApplicationWindow {
                 iconRole: "panel-move"
                 objectName: "movePanel"
                 text: qsTr("&Move panel…")
+                enabled: !root.layoutLocked
                 onTriggered: placementWindow.openFor(root.focusedDock())
             }
             ShellMenuItem {
                 iconRole: "layout-restore"
                 objectName: "restoreLayoutBackup"
                 text: qsTr("Restore the previous layout")
-                enabled: root.workspaceLayout.hasBackup
+                enabled: root.workspaceLayout.hasBackup && !root.layoutLocked
                 onTriggered: root.workspaceLayout.restoreBackup()
             }
             MenuSeparator {}
@@ -2709,6 +2770,7 @@ ApplicationWindow {
                 objectName: "logMenuItem"
                 action: Action {
                     text: qsTr("Log")
+                    enabled: !root.layoutLocked
                     onTriggered: {
                         if (logDock.isOpen)
                             logDock.close()
@@ -6208,6 +6270,7 @@ ApplicationWindow {
                     iconRole: "layout-restore"
                     text: qsTranslate("HikariSub.Workspace", "Restore the previous layout")
                     visible: root.workspaceLayout.hasBackup
+                    enabled: !root.layoutLocked
                     onClicked: root.workspaceLayout.restoreBackup()
                 }
                 Button {
@@ -6875,6 +6938,8 @@ ApplicationWindow {
         initialFocus: placementPanel
         defaultButton: placementClose
         function openFor(dock) {
+            if (root.layoutLocked)
+                return
             placementPanel.currentIndex = Math.max(0, root.dockList.indexOf(dock))
             refreshSize()
             open()
@@ -7749,7 +7814,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
-        GLOBAL_PLUGINS: pluginsAction,
+        GLOBAL_PLUGINS: pluginsAction, GLOBAL_TOGGLE_LOCK_LAYOUT: lockLayoutAction,
         GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
