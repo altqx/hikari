@@ -2684,6 +2684,10 @@ Output device: %2</source>
         <translation>위치 또는 정렬 제거됨</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>가장 가까운 영역으로 위치 근사됨</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>노래방 시간 제거됨</translation>
     </message>
@@ -2706,6 +2710,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1”은(는) 폴더입니다.</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>en 또는 pt-BR 같은 언어 코드를 입력하거나 비워 두세요.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2812,6 +2820,18 @@ Output device: %2</source>
         <translation>배우 이름</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Netflix 타임드 텍스트 스타일</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>프레임 단위 시간</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>언어</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>겹치는 줄을 자막 하나로 병합</translation>
     </message>
@@ -2826,6 +2846,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>비디오 프레임 속도 사용</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>글자는 흰색으로 위나 아래 가운데에 놓이고, 기울임꼴만 유지되며, 시간은 프레임 단위입니다.</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
