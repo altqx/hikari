@@ -1435,6 +1435,10 @@ Output device: %2</source>
         <translation>0은 불투명, 255는 완전 투명</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>색 없음</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>접기</translation>
     </message>
@@ -2754,8 +2758,16 @@ Output device: %2</source>
         <translation>글꼴, 크기, 비율 또는 자간 태그 제거됨</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>크기 비율 또는 자간 태그 제거됨</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>테두리, 그림자, 흐림, 투명도 또는 다른 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>테두리, 그림자 또는 흐림 태그 제거됨</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -2766,8 +2778,16 @@ Output device: %2</source>
         <translation>일부 굵게, 기울임, 밑줄 또는 취소선 제거됨</translation>
     </message>
     <message>
+        <source>Strikeout removed</source>
+        <translation>취소선 제거됨</translation>
+    </message>
+    <message>
         <source>Position or alignment removed</source>
         <translation>위치 또는 정렬 제거됨</translation>
+    </message>
+    <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>가장 가까운 영역으로 위치 근사됨</translation>
     </message>
     <message>
         <source>Karaoke timing removed</source>
@@ -2794,8 +2814,20 @@ Output device: %2</source>
         <translation>“%1”은(는) 폴더입니다.</translation>
     </message>
     <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>en 또는 pt-BR 같은 언어 코드를 입력하거나 비워 두세요.</translation>
+    </message>
+    <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>이 파일에는 스타일 옵션을 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>이 파일로 YouTube 시간 지정 텍스트를 만들 수 없습니다: %1</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -2808,6 +2840,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>일반 텍스트</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>글로우</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>%1의 글로우 그림자</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>부드럽게</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>%1의 부드러운 그림자</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>선명하게</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>%1의 선명한 그림자</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>베벨</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>%1의 베벨 그림자</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>현재 단어 글자</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>%1의 현재 단어 글자 색</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>현재 단어 외곽선</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>%1의 현재 단어 외곽선 색</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>현재 단어 그림자</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>%1의 현재 단어 그림자 색</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -2870,6 +2962,46 @@ Output device: %2</source>
         <translation>옵션</translation>
     </message>
     <message>
+        <source>srv3 style options</source>
+        <translation>srv3 스타일 옵션</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>가라오케</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1에는 그림자가 없으므로(그림자 0) 그림자 종류가 적용되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>%1의 가라오케</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>색 없음</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>%1 초기화</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>그림자는 YouTube가 스타일의 그림자를 그리는 방식입니다. 외곽선은 항상 글로우로 그려집니다. 현재 단어 색은 가라오케 줄에 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>모든 스타일 보기(%1)</translation>
+    </message>
+    <message>
         <source>Alignment as %1 tags</source>
         <translation>%1 태그로 정렬 유지</translation>
     </message>
@@ -2898,6 +3030,18 @@ Output device: %2</source>
         <translation>배우 이름</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Netflix 타임드 텍스트 스타일</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>프레임 단위 시간</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>언어</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>겹치는 줄을 자막 하나로 병합</translation>
     </message>
@@ -2914,8 +3058,20 @@ Output device: %2</source>
         <translation>비디오 프레임 속도 사용</translation>
     </message>
     <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>글자는 흰색으로 위나 아래 가운데에 놓이고, 기울임꼴만 유지되며, 시간은 프레임 단위입니다.</translation>
+    </message>
+    <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
         <translation>TMPlayer에는 종료 시간이 없으므로 겹치는 줄은 병합되고, 빈 자막이 화면을 지웁니다.</translation>
+    </message>
+    <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>YTSubConverter 1.6.5와 똑같이 변환합니다. 파일에 첨부된 글꼴과 그래픽은 내보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>변경한 옵션은 내보낼 때 자막 파일에 저장됩니다.</translation>
     </message>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
@@ -2937,6 +3093,12 @@ Output device: %2</source>
         <source>%n line(s) with nothing to show skipped.</source>
         <translation>
             <numerusform>표시할 내용이 없는 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>스타일 %n개의 옵션을 자막 파일에 저장했습니다.</numerusform>
         </translation>
     </message>
     <message>

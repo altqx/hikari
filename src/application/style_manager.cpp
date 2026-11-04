@@ -1,5 +1,8 @@
 #include "hikari/application/style_manager.h"
 
+#include "hikari/core/srv3.h"
+#include "hikari/core/text_projection.h"
+
 #include <algorithm>
 #include <fstream>
 #include <map>
@@ -308,9 +311,42 @@ std::optional<StyleList> documentStyles(const EditSession &session)
     return core::decodeStyles(d);
 }
 
+namespace {
+
+std::vector<core::Srv3StyleOptions> followedSrv3Options(const std::vector<core::Srv3StyleOptions> &options,
+                                                        const StyleList &before, const StyleList &after,
+                                                        const std::vector<std::optional<std::size_t>> &origin,
+                                                        const std::optional<std::pair<u8, u8>> &copy)
+{
+    const auto entryFor = [&](std::u8string_view style) -> const core::Srv3StyleOptions * {
+        const std::u16string name = core::toUtf16(style);
+        const auto it = std::ranges::find(options, name, &core::Srv3StyleOptions::style);
+        return it == options.end() ? nullptr : &*it;
+    };
+    std::vector<core::Srv3StyleOptions> out;
+    for (std::size_t i = 0; i < after.size(); ++i) {
+        const core::Srv3StyleOptions *from = nullptr;
+        if (origin[i] && *origin[i] < before.size() && firstNamed(before, before[*origin[i]].name) == origin[i])
+            from = entryFor(before[*origin[i]].name);
+        else if (!origin[i] && copy && copy->second == after[i].name)
+            from = entryFor(copy->first);
+        if (from) {
+            out.push_back(*from);
+            out.back().style = core::toUtf16(after[i].name);
+        }
+    }
+    for (const auto &o : options)
+        if (!firstNamed(before, core::toUtf8(o.style)))
+            out.push_back(o);
+    return out;
+}
+
+}
+
 std::expected<void, CommandRefusal>
 setDocumentStyles(EditSession &session, const StyleList &styles, const std::vector<std::optional<std::size_t>> &origin,
-                  std::optional<std::pair<std::u8string, std::u8string>> rename)
+                  std::optional<std::pair<std::u8string, std::u8string>> rename,
+                  std::optional<std::pair<std::u8string, std::u8string>> copy)
 {
     const auto current = documentStyles(session);
     if (!current || origin.size() != styles.size())
@@ -333,8 +369,12 @@ setDocumentStyles(EditSession &session, const StyleList &styles, const std::vect
                 touches.insert(line->id);
     if (!changed && touches.empty())
         return {};
+    const auto srv3Before = core::srv3StyleOptions(session.document());
+    const auto srv3After = followedSrv3Options(srv3Before, *current, styles, origin, copy);
     return session.run(Command{"Style editing", session.revision(), touches, [&](core::Document &d) {
         if (!d.rearrangeStyles(slots))
+            return false;
+        if (srv3After != srv3Before && !core::setSrv3StyleOptions(d, srv3After))
             return false;
         for (const auto id : touches)
             if (!d.editLine(id, [&](core::LineRecord &l) { l.style = rename->second; }))

@@ -1435,6 +1435,10 @@ Output device: %2</source>
         <translation>0 คือทึบแสง 255 คือโปร่งใสทั้งหมด</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>ไม่มีสี</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>น้อยลง</translation>
     </message>
@@ -2754,8 +2758,16 @@ Output device: %2</source>
         <translation>ลบแท็กฟอนต์ ขนาด สเกล หรือระยะห่างแล้ว</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>นำแท็กมาตราส่วนหรือระยะห่างออกแล้ว</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>ลบขอบ เงา ความเบลอ ความโปร่งใส หรือสีอื่นแล้ว</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>นำแท็กขอบ เงา หรือเบลอออกแล้ว</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -2766,8 +2778,16 @@ Output device: %2</source>
         <translation>ลบตัวหนา ตัวเอียง ขีดเส้นใต้ หรือขีดฆ่าบางส่วนแล้ว</translation>
     </message>
     <message>
+        <source>Strikeout removed</source>
+        <translation>นำขีดฆ่าออกแล้ว</translation>
+    </message>
+    <message>
         <source>Position or alignment removed</source>
         <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
+    </message>
+    <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>ประมาณตำแหน่งเป็นพื้นที่ที่ใกล้ที่สุดแล้ว</translation>
     </message>
     <message>
         <source>Karaoke timing removed</source>
@@ -2794,8 +2814,20 @@ Output device: %2</source>
         <translation>“%1” เป็นโฟลเดอร์</translation>
     </message>
     <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>ป้อนรหัสภาษา เช่น en หรือ pt-BR หรือเว้นว่างไว้</translation>
+    </message>
+    <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
+    </message>
+    <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>บันทึกตัวเลือกสไตล์ในไฟล์นี้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>สร้างข้อความกำหนดเวลาของ YouTube จากไฟล์นี้ไม่ได้: %1</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -2808,6 +2840,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>ข้อความธรรมดา</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>ข้อความกำหนดเวลาของ YouTube (srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>เรืองแสง</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>เงาเรืองแสงของ %1</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>นุ่ม</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>เงานุ่มของ %1</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>คม</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>เงาคมของ %1</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>นูน</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>เงานูนของ %1</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>ข้อความของคำปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>สีข้อความของคำปัจจุบันของ %1</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>เส้นขอบของคำปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>สีเส้นขอบของคำปัจจุบันของ %1</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>เงาของคำปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>สีเงาของคำปัจจุบันของ %1</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -2870,6 +2962,46 @@ Output device: %2</source>
         <translation>ตัวเลือก</translation>
     </message>
     <message>
+        <source>srv3 style options</source>
+        <translation>ตัวเลือกสไตล์ srv3</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>สไตล์</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1 ไม่มีเงา (เงาเป็น 0) จึงไม่มีชนิดเงาที่ใช้ได้</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>คาราโอเกะของ %1</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>ไม่มีสี</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>รีเซ็ต %1</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>เงาคือวิธีที่ YouTube วาดเงาของสไตล์ เส้นขอบจะถูกวาดเป็นเรืองแสงเสมอ สีของคำปัจจุบันใช้กับบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>แสดงสไตล์ทั้งหมด (%1)</translation>
+    </message>
+    <message>
         <source>Alignment as %1 tags</source>
         <translation>การจัดตำแหน่งเป็นแท็ก %1</translation>
     </message>
@@ -2898,6 +3030,18 @@ Output device: %2</source>
         <translation>ชื่อผู้พูด</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>สไตล์ข้อความตามเวลาของ Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>เวลาเป็นเฟรม</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
     </message>
@@ -2914,8 +3058,20 @@ Output device: %2</source>
         <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
     </message>
     <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>ข้อความเป็นสีขาวและอยู่กึ่งกลางด้านบนหรือด้านล่าง คงไว้เฉพาะตัวเอียง และเวลาเป็นเฟรม</translation>
+    </message>
+    <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
         <translation>TMPlayer ไม่มีเวลาสิ้นสุด: บรรทัดที่ซ้อนกันจะถูกรวม และคำบรรยายว่างจะล้างหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>แปลงแบบเดียวกับ YTSubConverter 1.6.5 แบบอักษรและกราฟิกที่แนบในไฟล์จะไม่ถูกส่งออก</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>ตัวเลือกที่เปลี่ยนจะถูกบันทึกในไฟล์คำบรรยายเมื่อส่งออก</translation>
     </message>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
@@ -2937,6 +3093,12 @@ Output device: %2</source>
         <source>%n line(s) with nothing to show skipped.</source>
         <translation>
             <numerusform>ข้าม %n บรรทัดที่ไม่มีอะไรให้แสดง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>บันทึกตัวเลือกของ %n สไตล์ในไฟล์คำบรรยายแล้ว</numerusform>
         </translation>
     </message>
     <message>

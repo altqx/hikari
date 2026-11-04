@@ -1445,6 +1445,10 @@ Output device: %2</source>
         <translation>0 ஒளிபுகாதது, 255 முழுமையாக ஒளிபுகும்</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>நிறம் இல்லை</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>குறைவு</translation>
     </message>
@@ -2778,8 +2782,16 @@ Output device: %2</source>
         <translation>எழுத்துரு, அளவு, அளவீடு அல்லது இடைவெளிக் குறிகள் நீக்கப்பட்டன</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>அளவு அல்லது இடைவெளி குறிகள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>கரை, நிழல், மங்கலாக்கம், ஒளிபுகுதன்மை அல்லது பிற நிறங்கள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>எல்லை, நிழல் அல்லது மங்கல் குறிகள் நீக்கப்பட்டன</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -2790,8 +2802,16 @@ Output device: %2</source>
         <translation>சில தடிப்பு, சாய்வு, அடிக்கோடு அல்லது அடித்தல் நீக்கப்பட்டன</translation>
     </message>
     <message>
+        <source>Strikeout removed</source>
+        <translation>அடித்தல் நீக்கப்பட்டது</translation>
+    </message>
+    <message>
         <source>Position or alignment removed</source>
         <translation>நிலை அல்லது சீரமைப்பு நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>நிலை அருகிலுள்ள பகுதிக்குத் தோராயமாக்கப்பட்டது</translation>
     </message>
     <message>
         <source>Karaoke timing removed</source>
@@ -2818,8 +2838,20 @@ Output device: %2</source>
         <translation>“%1” ஒரு கோப்புறை.</translation>
     </message>
     <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>en அல்லது pt-BR போன்ற மொழிக் குறியீட்டை உள்ளிடு, அல்லது காலியாக விடு.</translation>
+    </message>
+    <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடு.</translation>
+    </message>
+    <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>இந்தக் கோப்பில் பாணி விருப்பங்களைச் சேமிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>இந்தக் கோப்பிலிருந்து YouTube நேரக் குறியிட்ட உரையை உருவாக்க முடியவில்லை: %1</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -2832,6 +2864,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>சாதாரண உரை</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>YouTube நேரக் குறியிட்ட உரை (srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>ஒளிர்வு</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>%1 க்கான ஒளிர்வு நிழல்</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>மென்மை</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>%1 க்கான மென் நிழல்</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>கூர்மை</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>%1 க்கான கூர் நிழல்</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>%1 க்கான சாய்வு நிழல்</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>தற்போதைய சொல்லின் உரை</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>%1 க்கான தற்போதைய சொல் உரை நிறம்</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>தற்போதைய சொல்லின் வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>%1 க்கான தற்போதைய சொல் வெளிக்கோட்டு நிறம்</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>தற்போதைய சொல்லின் நிழல்</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>%1 க்கான தற்போதைய சொல் நிழல் நிறம்</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -2894,6 +2986,46 @@ Output device: %2</source>
         <translation>விருப்பங்கள்</translation>
     </message>
     <message>
+        <source>srv3 style options</source>
+        <translation>srv3 பாணி விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>கரோக்கே</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1 க்கு நிழல் இல்லை (நிழல் 0), எனவே நிழல் வகை பொருந்தாது.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>%1 க்கான கரோக்கே</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>நிறம் இல்லை</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>%1 ஐ மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>நிழல் என்பது பாணியின் நிழலை YouTube வரையும் முறை; வெளிக்கோடு எப்போதும் ஒளிர்வாக வரையப்படும். தற்போதைய சொல் நிறங்கள் கரோக்கே வரிகளுக்குப் பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>எல்லா பாணிகளையும் காட்டு (%1)</translation>
+    </message>
+    <message>
         <source>Alignment as %1 tags</source>
         <translation>%1 குறிகளாக சீரமைப்பு</translation>
     </message>
@@ -2922,6 +3054,18 @@ Output device: %2</source>
         <translation>நடிகர் பெயர்கள்</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Netflix நேரக்குறி உரை பாணி</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>நேரங்கள் சட்டகங்களில்</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>மொழி</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகளை ஒரே வசனமாக ஒன்றிணை</translation>
     </message>
@@ -2938,8 +3082,20 @@ Output device: %2</source>
         <translation>காணொளியின் சட்டக வீதத்தைப் பயன்படுத்து</translation>
     </message>
     <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>உரை வெள்ளையாக, மேலே அல்லது கீழே நடுவில் இருக்கும்; சாய்வு மட்டும் வைக்கப்படும்; நேரங்கள் சட்டகங்களில் இருக்கும்.</translation>
+    </message>
+    <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
         <translation>TMPlayer இல் முடிவு நேரங்கள் இல்லை: ஒன்றின்மேல் ஒன்று வரும் வரிகள் ஒன்றிணைக்கப்படும், வெற்று வசனம் திரையை அழிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>YTSubConverter 1.6.5 மாற்றுவது போலவே மாற்றப்படுகிறது. கோப்பில் இணைக்கப்பட்ட எழுத்துருக்களும் படங்களும் ஏற்றுமதி செய்யப்படாது.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>மாற்றிய விருப்பங்கள் ஏற்றுமதி செய்யும்போது வசனக் கோப்பில் சேமிக்கப்படும்.</translation>
     </message>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
@@ -2964,6 +3120,13 @@ Output device: %2</source>
         <translation>
             <numerusform>காட்ட எதுவும் இல்லாத %n வரி தவிர்க்கப்பட்டது.</numerusform>
             <numerusform>காட்ட எதுவும் இல்லாத %n வரிகள் தவிர்க்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>%n பாணிக்கான விருப்பங்கள் வசனக் கோப்பில் சேமிக்கப்பட்டன.</numerusform>
+            <numerusform>%n பாணிகளுக்கான விருப்பங்கள் வசனக் கோப்பில் சேமிக்கப்பட்டன.</numerusform>
         </translation>
     </message>
     <message>

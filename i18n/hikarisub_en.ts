@@ -204,6 +204,13 @@
             <numerusform>%n lines with nothing to show skipped.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>Style options for %n style saved in the subtitle file.</numerusform>
+            <numerusform>Style options for %n styles saved in the subtitle file.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Fonts</name>
