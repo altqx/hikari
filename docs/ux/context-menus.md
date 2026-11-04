@@ -1453,6 +1453,21 @@ Approved:
 
 - **28.1** Approve the menu bar rows as drawn.
 
+### 29. Automation panel: recommended script (right-click and ⋯) (FA6 #563)
+
+The ⋯ on an installed row of the Recommended view, a right-click on it, the Menu key and Shift+F10. Rows not installed have no menu.
+
+- Show in Scripts (automation)
+- Open project page (open-link)
+- ──
+- Uninstall… (delete; {Del})
+
+Changes:
+
+- New with the Recommended view. A script installed by hand shows Uninstall… disabled, with “Installed by hand” in place of the key.
+
+Approved on [#563](https://github.com/altqx/hikari/issues/563#issuecomment-6616051376) (2026-11-04).
+
 ### Where moved rows go
 
 | Row | From | Now reachable by |

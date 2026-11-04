@@ -18,6 +18,7 @@
 #include "automation_services_qt.h"
 #include "karaoke_report.h"
 #include "line_editor_controller.h"
+#include "hikari/app/script_packages.h"
 #include "script_dialog_memory.h"
 #include "script_resolution_prompt.h"
 #include "settings_store.h"
@@ -67,6 +68,7 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     Q_PROPERTY(bool progressKnown READ progressKnown NOTIFY progressChanged)
     // Template Lines with problems in the last run's karaoke report.
     Q_PROPERTY(int problems READ problems NOTIFY progressChanged)
+    Q_PROPERTY(QObject *packages READ packages CONSTANT)
 public:
     struct Paths {
         QString helper;
@@ -152,16 +154,25 @@ public:
     Q_INVOKABLE void dismissCard();
     Q_INVOKABLE bool forceStopRun();
 
-    bool running() const { return m_run.has_value(); }
+    // A run of `script`'s first macro that touches no document, such as an install. `done` gets the
+    // outcome and the run's message, and returns the line that ends the run's log.
+    using TaskDone = std::function<QString(backends::LuaScriptHost::RunOutcome, const QString &)>;
+    bool runTask(const QString &title, const QString &script, TaskDone done);
+    bool busy() const { return running() || m_manager.busy(); }
+    // What ?user decodes to.
+    QString userAutomationRoot() const;
+    ScriptPackages *packages() const { return m_packages.get(); }
+
+    bool running() const { return m_run.has_value() || m_task.has_value(); }
     QString runTitle() const { return m_title; }
-    QString task() const { return m_task; }
+    QString task() const { return m_taskText; }
     double progress() const { return m_progress; }
     QString log() const { return m_log; }
     QString lastMessage() const { return m_lastMessage; }
     QString lastOutcome() const { return m_lastOutcome; }
     bool forceStopOffered() const;
-    bool canRerun() const { return m_last.has_value() && !m_run; }
-    bool canRepeat() const { return m_repeat.has_value() && !m_run; }
+    bool canRerun() const { return m_last.has_value() && !running(); }
+    bool canRepeat() const { return m_repeat.has_value() && !running(); }
     QString repeatText() const;
     bool keepLog() const { return m_keepLog; }
     QString cardState() const { return m_cardState; }
@@ -229,6 +240,14 @@ private:
         int ordinal = 0;
         std::vector<AnsweredDialog> dialogs;
     };
+    struct Task {
+        std::unique_ptr<backends::LuaScriptHost> host;
+        TaskDone done;
+    };
+    void endTask(backends::LuaScriptHost::RunOutcome outcome, const QString &message);
+    void runLogged(const QString &text, int level);
+    void runProgress(double percent);
+    void runTaskText(const QString &text);
     void presentDialog(const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply);
     bool startStep(Run &run);
     void resolveScriptResolution(const application::ScriptResolutionRequest &request,
@@ -278,6 +297,8 @@ private:
     std::function<void()> m_documentChanged;
     std::function<void()> m_beforeRun;
     std::optional<Run> m_run;
+    std::optional<Task> m_task;
+    std::unique_ptr<ScriptPackages> m_packages;
     std::optional<std::pair<std::string, int>> m_last;
     std::optional<RepeatRecord> m_repeat;
     application::DocumentScripts m_documentScripts;
@@ -288,7 +309,7 @@ private:
     std::map<std::string, bool> m_trustDecisions;
     std::function<void(const QString &, LogLine)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;
-    QString m_title, m_task, m_log, m_lastMessage, m_lastOutcome;
+    QString m_title, m_taskText, m_log, m_lastMessage, m_lastOutcome;
     double m_progress = 0;
     bool m_keepLog = false;
     std::uint64_t m_statusSerial = 0;
