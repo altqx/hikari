@@ -206,7 +206,7 @@ std::vector<sock_filter> filterFor(Network network)
     if (network == Network::None)
         f.deny(SYS_socket, EACCES);
     else
-        f.socketFamilies({AF_UNIX, AF_INET, AF_INET6, AF_NETLINK});
+        f.socketFamilies({AF_INET, AF_INET6, AF_NETLINK});
     f.denyFlags(SYS_clone, CLONE_NEWUSER | CLONE_NEWNS | CLONE_NEWNET | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS |
                                CLONE_NEWCGROUP,
                 EPERM);
@@ -304,9 +304,6 @@ Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
         missing << QStringLiteral("Landlock isn't available in this kernel, so files aren't confined");
     if (!c.network)
         missing << QStringLiteral("seccomp isn't available, so the network isn't confined");
-    if (p.network == Network::Any && m->abi < 9)
-        missing << QStringLiteral("connections to UNIX sockets outside the sandbox aren't limited (Landlock ABI %1)")
-                       .arg(m->abi);
     c.missing = missing.join(QStringLiteral("; "));
 }
 
