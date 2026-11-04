@@ -1,4 +1,5 @@
 #include "hikari/backends/ffms_indexed_source.h"
+#include "hikari/application/video_matrix.h"
 #include "open_files.h"
 
 #include <QCoreApplication>
@@ -475,6 +476,18 @@ TEST_F(Fixture, OpenReportsTheFramesMatrixAndRange)
     ASSERT_TRUE(t);
     EXPECT_EQ(t->colorSpace, 2); // FFMS_CS_UNSPECIFIED
     EXPECT_EQ(t->width, 1280);
+}
+
+TEST_F(Fixture, OpenReportsTheFramesPrimariesAndTransfer)
+{
+    auto t = open("color709");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->colorPrimaries, application::ffms_colour::kPrimariesBt709);
+    EXPECT_EQ(t->transfer, application::ffms_colour::kTransferBt709);
+    t = open("colorhdr");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->colorPrimaries, application::ffms_colour::kPrimariesBt2020);
+    EXPECT_EQ(t->transfer, application::ffms_colour::kTransferPq);
 }
 
 TEST_F(Fixture, InputMatrixConvertsTheFollowingFrames)

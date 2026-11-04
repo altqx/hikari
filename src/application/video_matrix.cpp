@@ -47,6 +47,7 @@ std::optional<LegacyColourMatrix::Input> LegacyColourMatrix::open(int colorSpace
     m_colorSpace = colorSpace;
     m_colorRange = colorRange;
     const bool untagged = m_colorSpace == kUnspecified;
+    m_tagged = !untagged;
     if (untagged)
         m_colorSpace = width > 1024 || height >= 600 ? kBt709 : kBt470bg;
     m_applied = m_source = colourMatrixName(m_colorSpace, m_colorRange);

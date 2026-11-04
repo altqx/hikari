@@ -20,8 +20,14 @@ hikari_add_gtest(hikari_core_hikari_section_tests SOURCES hikari_section_tests.c
 target_compile_definitions(hikari_core_hikari_section_tests PRIVATE
     HIKARI_SECTION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/hikari-section")
 
+hikari_add_gtest(hikari_core_project_garbage_tests SOURCES project_garbage_tests.cpp LIBRARIES hikari_core LABELS core)
+
 hikari_add_gtest(hikari_core_extradata_tests SOURCES extradata_tests.cpp LIBRARIES hikari_core LABELS core)
 target_compile_definitions(hikari_core_extradata_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
+
+hikari_add_gtest(hikari_core_aegisub_folds_tests SOURCES aegisub_folds_tests.cpp LIBRARIES hikari_core LABELS core)
+target_compile_definitions(hikari_core_aegisub_folds_tests PRIVATE
     HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 
 hikari_add_gtest(hikari_core_srt_tests SOURCES srt_tests.cpp LIBRARIES hikari_core Qt6::Core LABELS core)
@@ -72,3 +78,12 @@ target_compile_definitions(hikari_core_ass_attachments_tests PRIVATE
 hikari_add_gtest(hikari_core_export_tests SOURCES export_tests.cpp LIBRARIES hikari_core LABELS core)
 target_compile_definitions(hikari_core_export_tests PRIVATE
     HIKARI_EXPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/export")
+if(NOT WIN32)
+    find_program(HIKARI_XMLLINT xmllint)
+    add_test(NAME Export.TtmlGoldensMatchTheImsc1Schema
+        COMMAND "${CMAKE_COMMAND}" "-DXMLLINT=${HIKARI_XMLLINT}"
+            "-DSCHEMA=${PROJECT_SOURCE_DIR}/tests/fixtures/export/ttml-schemas/validate.xsd"
+            "-DGOLDENS=${PROJECT_SOURCE_DIR}/tests/fixtures/export/golden"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/check_ttml_schema.cmake")
+    set_tests_properties(Export.TtmlGoldensMatchTheImsc1Schema PROPERTIES LABELS "core" TIMEOUT 60)
+endif()

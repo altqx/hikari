@@ -146,6 +146,7 @@ Item {
         case "video": return qsTr("video")
         case "audio": return qsTr("audio")
         case "keyframes": return qsTr("keyframes")
+        case "timecodes": return qsTr("timecodes")
         }
         return kind
     }
@@ -156,6 +157,7 @@ Item {
         case "video": return qsTr("%1, this tab’s video, was not found.").arg(name)
         case "audio": return qsTr("%1, this tab’s audio, was not found.").arg(name)
         case "keyframes": return qsTr("%1, this tab’s keyframes, was not found.").arg(name)
+        case "timecodes": return qsTr("%1, this tab’s timecodes file, was not found.").arg(name)
         }
         return qsTr("%1 was not found.").arg(name)
     }
@@ -169,7 +171,8 @@ Item {
             subtitles: qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
             video: qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"),
             audio: qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.opus *.mp3 *.mp4 *.m4a *.mka *.mkv *.webm *.avi)",
-            keyframes: qsTr("Keyframes file (*.txt *.pass *.stats *.log)")
+            keyframes: qsTr("Keyframes file (*.txt *.pass *.stats *.log)"),
+            timecodes: qsTr("Timecodes file (*.txt)")
         })[entry.kind] || qsTr("All files (*)"), qsTr("All files (*)")]
         const missing = windows.app.folderOf(windows.app.fileUrl(entry.path))
         const kept = windows.pickerFolder(entry.kind)

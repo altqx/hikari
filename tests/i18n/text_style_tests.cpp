@@ -41,7 +41,7 @@ const QSet<QString> &properNames()
         QSet<QString> set;
         for (const QString &w : QStringLiteral(
                  "HikariSub Aegisub Kainote ASS SSA SRT VTT MicroDVD MPL2 TMPlayer TTML Lua MoonScript Windows Linux macOS "
-                 "Matroska MKV FFmpeg DirectShow Harper Hunspell Discord PostHog Unicode VSFilter VSFilterMod libass Qt GitHub "
+                 "Matroska MKV FFmpeg DirectShow Harper Hunspell Discord PostHog Unicode VSFilter VSFilterMod libass Qt Git GitHub "
                  "Automattic AUR AppImage Ctrl Shift Alt Enter Esc Tab Del Backspace OK CPS FPS ID URL JSON TOML XML GUI UI RGB "
                  "TV PC AI DPI DependencyControl English Japanese Korean Polish Tamil Thai Romaji Kanji MeCab Wayland X11 GNU "
                  "GPL Apache Script Info Events Fonts Graphics Grid Line Log Home Automation Settings Reference Spellchecker "
