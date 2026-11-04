@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QStringList>
 #include <QUrl>
@@ -31,7 +32,8 @@ constexpr ExportFormatRow kExportFormats[] = {
     {"srt", ExportFormat::Srt, "srt"},      {"vtt", ExportFormat::WebVtt, "vtt"},
     {"sbv", ExportFormat::Sbv, "sbv"},      {"txt", ExportFormat::PlainText, "txt"},
     {"mdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
-    {"tmp", ExportFormat::TMPlayer, "txt"},
+    {"tmp", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
+    {"dfxp", ExportFormat::Dfxp, "dfxp"},
 };
 
 constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = {
@@ -43,6 +45,7 @@ constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = 
     {"vttKaraoke", &core::ExportOptions::vttKaraoke},
     {"textTimes", &core::ExportOptions::textTimes},
     {"textActors", &core::ExportOptions::textActors},
+    {"ttmlFrames", &core::ExportOptions::ttmlFrames},
 };
 
 constexpr int kRememberedExports = 100;
@@ -80,6 +83,23 @@ QStringList rememberedWith(const QStringList &rows, const QString &key, const QJ
     return out;
 }
 
+bool isTtml(ExportFormat format)
+{
+    return format == ExportFormat::Ttml || format == ExportFormat::Dfxp;
+}
+
+bool framesIn(ExportFormat format, const core::ExportOptions &options)
+{
+    return format == ExportFormat::MicroDvd ||
+           (isTtml(format) && (options.ttmlFrames || options.ttmlProfile == core::TtmlProfile::Netflix));
+}
+
+bool languageTag(const QString &tag)
+{
+    static const QRegularExpression pattern(QStringLiteral("^([A-Za-z]{1,8}(-[A-Za-z0-9]{1,8})*)?$"));
+    return pattern.match(tag).hasMatch();
+}
+
 QString lossText(ExportLoss loss, ExportFormat format)
 {
     switch (loss) {
@@ -104,7 +124,7 @@ QString lossText(ExportLoss loss, ExportFormat format)
     case ExportLoss::Formatting:
         return QCoreApplication::translate("HikariSub.Export", "Some bold, italic, underline or strikeout removed");
     case ExportLoss::Position:
-        return QCoreApplication::translate("HikariSub.Export", "Position or alignment removed");
+        return isTtml(format) ? QCoreApplication::translate("HikariSub.Export", "Position approximated by the nearest region") : QCoreApplication::translate("HikariSub.Export", "Position or alignment removed");
     case ExportLoss::Karaoke:
         return QCoreApplication::translate("HikariSub.Export", "Karaoke timing removed");
     case ExportLoss::Effect:
@@ -152,6 +172,8 @@ QVariantMap Application::exportSetup() const
         const QJsonValue v = saved.value(QLatin1String(name));
         options.insert(QLatin1String(name), v.isBool() ? v.toBool() : defaults.*flag);
     }
+    options.insert(QStringLiteral("ttmlNetflix"), saved.value(QStringLiteral("ttmlNetflix")).toBool());
+    options.insert(QStringLiteral("language"), saved.value(QStringLiteral("language")).toString());
     const QString lines = saved.value(QStringLiteral("lines")).toString();
     options.insert(QStringLiteral("lines"), lines == QLatin1String("selected") || lines == QLatin1String("shown")
                                                 ? lines
@@ -164,7 +186,7 @@ QVariantMap Application::exportSetup() const
     options.insert(QStringLiteral("fps"), savedFps >= 1 ? savedFps : videoFps >= 1 ? videoFps : defaults.fps);
 
     int all = 0, selected = 0, shown = 0;
-    const auto shownIds = m_shell->actionLines();
+    const auto shownIds = shell().actionLines();
     const std::set<core::LineId> shownSet(shownIds.begin(), shownIds.end());
     for (const auto *line : session->document().lines()) {
         if (line->comment || line->unparsed)
@@ -215,8 +237,15 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     for (const auto &[name, flag] : kExportFlags)
         if (const auto v = values.constFind(QLatin1String(name)); v != values.cend())
             options.*flag = v->toBool();
+    if (values.value(QStringLiteral("ttmlNetflix")).toBool())
+        options.ttmlProfile = core::TtmlProfile::Netflix;
+    const QString language = values.value(QStringLiteral("language")).toString().trimmed();
+    if (isTtml(format->format) && !languageTag(language))
+        return problem(QCoreApplication::translate("HikariSub.Export", "Enter a language code such as en or pt-BR, or leave it empty."));
+    const QByteArray languageUtf8 = language.toUtf8();
+    options.language.assign(reinterpret_cast<const char8_t *>(languageUtf8.constData()), languageUtf8.size());
     const double fps = values.value(QStringLiteral("fps")).toDouble();
-    if (format->format == ExportFormat::MicroDvd && (!std::isfinite(fps) || fps < 1 || fps > 1000))
+    if (framesIn(format->format, options) && (!std::isfinite(fps) || fps < 1 || fps > 1000))
         return problem(QCoreApplication::translate("HikariSub.Export", "Enter a frame rate between 1 and 1000."));
     if (fps >= 1)
         options.fps = fps;
@@ -224,11 +253,11 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     if (lines == QLatin1String("selected")) {
         options.lines = session->selection().selected;
     } else if (lines == QLatin1String("shown")) {
-        const auto shown = m_shell->actionLines();
+        const auto shown = shell().actionLines();
         options.lines = std::set<core::LineId>(shown.begin(), shown.end());
     }
 
-    const auto draft = m_editorDocument == target ? m_editor->draftDocument() : std::nullopt;
+    const auto draft = activeViews().editorDocument == target ? editor().draftDocument() : std::nullopt;
     const core::Document &document = draft ? *draft : session->document();
     const core::ExportResult result = core::exportDocument(document, format->format, options);
 
@@ -243,12 +272,13 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
                        {QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines}};
     for (const auto &[name, flag] : kExportFlags)
         choice.insert(QLatin1String(name), options.*flag);
-    if (format->format == ExportFormat::MicroDvd)
+    choice.insert(QStringLiteral("ttmlNetflix"), options.ttmlProfile == core::TtmlProfile::Netflix);
+    const QJsonObject before = rememberedExport(m_settings->list("export.choices"), exportKey(*target));
+    choice.insert(QStringLiteral("language"),
+                  isTtml(format->format) ? language : before.value(QStringLiteral("language")).toString());
+    if (framesIn(format->format, options))
         choice.insert(QStringLiteral("fps"), options.fps);
-    else if (const double kept = rememberedExport(m_settings->list("export.choices"), exportKey(*target))
-                                     .value(QStringLiteral("fps"))
-                                     .toDouble();
-             kept >= 1)
+    else if (const double kept = before.value(QStringLiteral("fps")).toDouble(); kept >= 1)
         choice.insert(QStringLiteral("fps"), kept);
     m_settings->setValue(QStringLiteral("export.choices"),
                          rememberedWith(m_settings->list("export.choices"), exportKey(*target), choice));

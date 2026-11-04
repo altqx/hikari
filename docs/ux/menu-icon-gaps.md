@@ -53,8 +53,8 @@
 | Compare with reference (the reference tray's own item) | compare |
 | Move panel… | panel-move |
 | Move tab left / Move tab right | tab-move-left / tab-move-right (new) |
-| Undock / Dock | panel-float / panel-dock, by the panel's state |
-| Close / Close reference | tab-close (the close's ×) |
+| Float / Dock | panel-float / panel-dock, by the panel's state |
+| Close | tab-close (the close's ×) |
 | Floating panel's menu: Dock, Close | panel-dock, tab-close |
 
 ### Document tab menu

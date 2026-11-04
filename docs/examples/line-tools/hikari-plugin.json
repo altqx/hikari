@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schemas/hikari-plugin.schema.json",
+  "id": "com.example.line-tools",
+  "name": "Line tools",
+  "version": "1.2.0",
+  "api": 1,
+  "main": "main.lua",
+  "authors": ["HikariSub"],
+  "description": "Checks reading speed and line length, and shows them on a chart.",
+  "license": "MIT",
+  "contributes": {
+    "commands": [{"id": "rename", "title": "Rename the active line’s actor…"}],
+    "panels": [{"id": "timing-check", "title": "Timing check", "area": "right"}],
+    "settings": [
+      {"id": "cps", "title": "Characters per second", "type": "integer", "default": 17, "minimum": 5, "maximum": 40},
+      {"id": "skip-comments", "title": "Skip comments", "type": "boolean", "default": true}
+    ]
+  }
+}

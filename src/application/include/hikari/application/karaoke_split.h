@@ -7,7 +7,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <vector>
 
 namespace hikari::application {
@@ -24,7 +24,7 @@ public:
     std::vector<std::size_t> breaks(std::u16string_view word) const;
 
 private:
-    std::unordered_map<std::u16string, std::vector<std::uint8_t>> m_patterns;
+    absl::flat_hash_map<std::u16string, std::vector<std::uint8_t>> m_patterns;
     std::size_t m_longest = 0;
 };
 

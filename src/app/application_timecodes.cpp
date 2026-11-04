@@ -174,11 +174,15 @@ std::vector<application::ProjectGarbageEdit> Application::timecodesGarbage(appli
              std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()))}};
 }
 
+QString Application::tabTimecodes(std::optional<application::DocumentId> document) const
+{
+    const auto it = document ? m_tabMedia.find(document->value) : m_tabMedia.end();
+    return it == m_tabMedia.end() ? QString() : it->second.timecodes;
+}
+
 QString Application::timecodesFile() const
 {
-    const auto target = m_workspace.editingTarget();
-    const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
-    return it == m_tabMedia.end() ? QString() : it->second.timecodes;
+    return tabTimecodes(m_workspace.editingTarget());
 }
 
 void Application::rememberRecentTimecodes(const QString &path)

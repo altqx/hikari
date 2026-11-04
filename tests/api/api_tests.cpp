@@ -2,11 +2,11 @@
 #include "script_client.h"
 
 #include "hikari/api/schema.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <regex>
 #include <set>
 
 using namespace hikari::api;
@@ -22,10 +22,10 @@ TEST(ApiRegistry, EveryOperationIsWellFormed)
     ASSERT_FALSE(registry.operations().empty());
     for (const Json::Member &def : registry.defs().asObject())
         EXPECT_FALSE(checkSchema(def.value, registry.defs())) << def.key << ": " << *checkSchema(def.value, registry.defs());
-    const std::regex name("[a-z]+(\\.[a-z_]+)+");
+    const auto name = *hikari::regex::Pattern::compile("[a-z]+(\\.[a-z_]+)+");
     std::set<std::string> seen;
     for (const Operation &op : registry.operations()) {
-        EXPECT_TRUE(std::regex_match(op.name, name)) << op.name;
+        EXPECT_TRUE(name.match(op.name)) << op.name;
         EXPECT_TRUE(seen.insert(op.name).second) << op.name;
         EXPECT_FALSE(op.summary.empty()) << op.name;
         EXPECT_TRUE(op.handler) << op.name;
@@ -321,6 +321,31 @@ TEST_F(ApiScripts, AListenerMayUnsubscribeWhileHearing)
     api.commandRan("GLOBAL_SAVE_SUBS", true);
     api.commandRan("GLOBAL_SAVE_SUBS", true);
     EXPECT_EQ(heard, 1);
+}
+
+TEST_F(ApiScripts, AttachedDocumentsAreVisibleBesidesTheEditingTarget)
+{
+    Caller attaching = pluginCaller();
+    attaching.attached = {hikari::application::DocumentId{2}};
+    const Result before = client.call(pluginCaller(), "lines.list", params(R"({"document": 2})"));
+    ASSERT_FALSE(before);
+    EXPECT_EQ(before.error().code, errors::kNotGranted);
+    const Result lines = client.call(attaching, "lines.list", params(R"({"document": 2, "fields": ["text"]})"));
+    ASSERT_TRUE(lines) << lines.error().message;
+    EXPECT_EQ(lines->find("lines")->asArray()[0].find("text")->asString(), "other");
+    const Result listed = client.call(attaching, "documents.list", Json());
+    ASSERT_TRUE(listed);
+    EXPECT_EQ(listed->find("documents")->asArray().size(), 2u);
+
+    std::vector<std::string> heard;
+    const auto s = api.subscribe(attaching, {"document.changed", "documents.changed"},
+                                 [&](const Event &e) { heard.push_back(e.name + " " + e.data.dump()); });
+    api.documentChanged(hikari::application::DocumentId{2});
+    api.documentsChanged();
+    ASSERT_EQ(heard.size(), 2u);
+    EXPECT_TRUE(heard[0].starts_with(R"(document.changed {"document":2,)")) << heard[0];
+    EXPECT_EQ(heard[1], R"(documents.changed {"documents":[1,2],"editingTarget":1})");
+    api.unsubscribe(s);
 }
 
 TEST_F(ApiScripts, DocumentsChangedIsNarrowedWithoutTheGrant)

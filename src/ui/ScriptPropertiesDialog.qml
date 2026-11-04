@@ -9,7 +9,7 @@ DialogWindow {
     id: dialog
     objectName: "scriptPropertiesDialog"
     required property var app
-    title: qsTr("ASS file properties")
+    title: qsTr("Script properties")
     dialogId: "scriptProperties"
     modal: true
     defaultButton: saveButton

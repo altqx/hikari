@@ -8,14 +8,19 @@ Item {
     id: bar
     objectName: "documentTabBar"
     required property var app
+    property int shellWindow: 0
     signal closeRequested(int index)
+    signal closeTabsRequested(int index, bool toTheRight)
     signal saveRequested(var id)
     signal saveAllRequested()
     signal closeAllRequested()
 
     readonly property int inset: 4
     implicitHeight: row.implicitHeight + inset
-    readonly property bool shown: !bar.app.home
+    readonly property bool shown: {
+        bar.app.home
+        return !bar.app.windowHome(bar.shellWindow)
+    }
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
     Accessible.ignored: !shown
@@ -38,6 +43,8 @@ Item {
         app: bar.app
         onSaveRequested: id => bar.saveRequested(id)
         onSaveAllRequested: bar.saveAllRequested()
+        onCloseRequested: index => bar.closeRequested(index)
+        onCloseOthersRequested: (index, toTheRight) => bar.closeTabsRequested(index, toTheRight)
         onCloseAllRequested: bar.closeAllRequested()
     }
 
@@ -50,7 +57,7 @@ Item {
                  tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference }
     }
     function syncTabs() {
-        const rows = bar.app.tabs
+        const rows = bar.app.windowTabs(bar.shellWindow)
         let same = rows.length === tabModel.count
         for (let i = 0; same && i < rows.length; ++i) {
             let found = false
@@ -170,7 +177,8 @@ Item {
                     objectName: "documentTab" + index
                     checkable: false
                     checked: tabCurrent
-                    focusPolicy: Qt.NoFocus
+                    focusPolicy: Qt.TabFocus
+                    activeFocusOnTab: tabCurrent
                     text: tabLabel
                     Accessible.role: Accessible.PageTab
                     Accessible.name: tabTitle
@@ -188,7 +196,8 @@ Item {
                                   ? tabTip + "\n" + qsTr("Modified (history step %1)").arg(stepText) : tabTip
                     background: Rectangle {
                         color: tab.checked ? palette.base : (tab.hovered ? palette.midlight : palette.button)
-                        border.color: tab.checked ? palette.highlight : palette.mid
+                        border.color: tab.checked || tab.visualFocus ? palette.highlight : palette.mid
+                        border.width: tab.visualFocus ? 2 : 1
                         radius: 2
                     }
                     contentItem: RowLayout {
@@ -222,6 +231,16 @@ Item {
                         }
                     }
                     onClicked: bar.app.selectTab(index)
+                    function focusTab(step) {
+                        const next = tabRepeater.itemAt(index + step)
+                        if (next)
+                            next.forceActiveFocus(Qt.TabFocusReason)
+                    }
+                    Keys.onShortcutOverride: event => event.accepted = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
+                                                                 && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Space, Qt.Key_Menu].includes(event.key)
+                    Keys.onLeftPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1)
+                    Keys.onRightPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? -1 : 1)
+                    MenuKey.onRequested: bar.openTabMenu(tab.index, tab, 0, tab.height)
                     TapHandler {
                         acceptedButtons: Qt.MiddleButton
                         onTapped: bar.closeRequested(tab.index)

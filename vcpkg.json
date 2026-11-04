@@ -38,6 +38,7 @@
         "icu"
       ]
     },
+    "boost-dynamic-bitset",
     "icu",
     "curl",
     "pcre2",
@@ -45,6 +46,7 @@
     "uchardet",
     "tomlplusplus",
     "libsodium",
+    "abseil",
     {
       "name": "pkgconf",
       "host": true,

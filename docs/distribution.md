@@ -18,7 +18,7 @@ Every release publishes these assets, where `<V>` is the version without its `v`
 | Linux portable | `hikarisub-<V>-linux-x86_64.tar.gz` | Where it is extracted | Notice and release page |
 | Arch Linux | AUR package `hikarisub-stable-bin` (stable releases) or `hikarisub-beta-bin` (every release), built from the tar.gz | `/opt/hikarisub`, `/usr/bin/hikarisub` | Notice: update with the package manager |
 
-The release also carries `SHA256SUMS`, the AppImage's `.zsync` for external AppImage updaters, and `hikarisub-update.json`, the update manifest. Nothing is code-signed.
+The release also carries `SHA256SUMS`, the AppImage's `.zsync` for external AppImage updaters, and `hikarisub-update.json`, the update manifest. The manifest and `SHA256SUMS` are signed with minisign (`.minisig` beside each; see [Integrity](#integrity)). Nothing is code-signed.
 
 Each installed copy has `package-kind.txt` beside the executable: `nsis-user`, `nsis-machine`, `appimage`, `deb`, `rpm` or `arch`. No marker means a portable copy. About and `hikarisub --version` name the kind, so bug reports carry it.
 
@@ -41,8 +41,8 @@ HikariSub keeps its settings in the platform's user folders (`QStandardPaths`), 
 
 The check reads GitHub's release list, 50 releases to a page and four pages at most. It keeps the releases that are not drafts, have a `v` + SemVer tag, are newer than the running version and fit the channel ("Stable versions only" skips GitHub prereleases and SemVer prerelease tags on a stable build; a prerelease build always takes prereleases, as legacy does). It walks at most five of them, highest version first:
 
-- A release with `hikarisub-update.json` has its manifest read (64 KiB at most). A manifest that does not arrive or breaks its rules skips the release. One with an unknown schema counts as no manifest.
-- A release without a manifest (every release before this policy) takes its packages from the assets' GitHub digests, and is offered to the codebase its version names.
+- A release with `hikarisub-update.json` has its manifest read (64 KiB at most), then its signature `hikarisub-update.json.minisig` (64 KiB at most, the same URL rules). A manifest that does not arrive or breaks its rules skips the release. So does a missing or bad signature ([Integrity](#integrity)), and the `hikari.updates` log says why; there is no toast. A signed manifest with an unknown schema counts as no manifest.
+- A release without a manifest is offered to the codebase its version names, but only named: the notice and the release page, never a download ([ADR 0027](adr/0027-the-update-manifest-is-signed-with-minisign.md)). Its packages come from the assets' GitHub digests only to tell which kinds it has.
 - A release whose manifest's `offer_to` does not name `qt` is skipped.
 
 URLs are built from the tag and the asset name (`https://github.com/altqx/hikari/releases/download/v<V>/<asset>`), never taken from a reply. Downloads may be redirected only to `github.com`, `objects.githubusercontent.com` and `release-assets.githubusercontent.com` over https. The automatic check keeps legacy's schedule (a day after each check, "Remind me in a week").
@@ -54,6 +54,34 @@ What the first passing release offers depends on the package kind:
 - **NSIS, AppImage, deb, rpm** with a package for the kind: the download. A package that needs a newer Windows (`min_os`) or glibc (`min_glibc`) than the system has is only named, with the requirement.
 - **AUR:** "HikariSub `<V>` is available; you have `<old>`. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu." `aur-channel.txt` beside the executable names the package's channel: `hikarisub-beta-bin` ("beta") is told about prereleases and `hikarisub-stable-bin` ("stable") only about stable releases, whatever "Stable versions only" says, and the option is hidden for them. A prerelease that the install's package does not carry points at the AppImage instead, as that package carries stable versions only. Nothing is downloaded.
 - **Portable**, or "Install updates automatically" off: the notice and the release page.
+
+## Integrity
+
+[ADR 0027](adr/0027-the-update-manifest-is-signed-with-minisign.md) has the rules. The release job signs `hikarisub-update.json` and `SHA256SUMS` with the owner's minisign key. Each trusted comment is `hikarisub <tag> <file>`. HikariSub trusts the keys in `kReleaseKeys` (`src/application/include/hikari/application/update_signature.h`) and checks the manifest's signature before it reads anything from it, both in the update check and in the AI sidecar download.
+
+The release key (key id A97C7A20EFD98999):
+
+```
+RWSZidnvIHp8qW7ynpUV8iDc/FH3riGpLuA+tz6zSeqwE3Q9Y+jmY5TH
+```
+
+To check a download by hand, check `SHA256SUMS` first, then the file against it:
+
+```sh
+minisign -Vm SHA256SUMS -P RWSZidnvIHp8qW7ynpUV8iDc/FH3riGpLuA+tz6zSeqwE3Q9Y+jmY5TH
+sha256sum --ignore-missing -c SHA256SUMS
+```
+
+minisign prints the trusted comment, which must name the release you downloaded.
+
+**Release keys:**
+- **Secrets:** the release job's `sign` job reads the repository secrets `MINISIGN_SECRET_KEY` (the whole `.key` file that `minisign -G` writes) and `MINISIGN_PASSWORD`. A release fails without them. The owner keeps the key offline and puts it there only through `request_secret`.
+- **Rotation:**
+  1. A release adds the next public key to `kReleaseKeys` and here, while it is still signed with the current key.
+  2. Once that release has reached users, the owner replaces both secrets with the next key.
+  3. A later release drops the old key.
+
+  The `sign` job checks the manifest with the app's own check against `kReleaseKeys`, so it refuses to sign with a key that copies would not trust.
 
 ## Seamless update
 
@@ -115,10 +143,40 @@ A HikariSub release (0.1.0 and up) always names `"offer_to": ["qt"]`. Legacy use
 
 ## Payload and licences
 
-Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), QtKeychain 0.17.0 (BSD-3-Clause, static; on Linux it links libsecret-1), dav1d 1.5.4 (BSD-2-Clause, static, inside FFmpeg), MeCab (BSD-3-Clause, static) and its UniDic 2.1.2 dictionary (BSD-3-Clause, `Dictionary/unidic-lite`, 248 MB), harper-ls 3.0.0 (Apache-2.0, a helper beside the application, GR1), the spelling dictionaries (`cmake/HikariDictionaries.cmake`: en_US LGPL and BSD, pl GPL-2.0/LGPL-2.1/MPL-1.1/Apache-2.0/CC-BY-4.0, th_TH LGPL, ko_KR GPL-3.0-or-later, ta_IN MPL-1.1, DK1), translations, helpers). Qt is linked dynamically and shipped with its licence notices; MeCab's, UniDic's and QtKeychain's BSD notices are in `licenses/mecab/LICENSE`, `licenses/unidic/LICENSE` and `licenses/qtkeychain/LICENSE` (UniDic's also beside the dictionary), dav1d's (BSD-2-Clause, statically linked into FFmpeg for AV1) in `licenses/dav1d/LICENSE`, Harper's licence and its crates' notices (MIT, Apache-2.0, MPL-2.0, Unicode-3.0, Zlib, CC0-1.0, WTFPL) in `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, each dictionary's notice in `licenses/dictionaries/<name>/`, Aegisub's BSD-3-Clause notice for the extradata format and the Lua API HikariSub follows (FA3, FA4; it also covers arch1t3cht's fork), with the ISC notice of libaegisub's `vfr.cpp` that `AegisubFrameTimes` is ported from, in `licenses/aegisub/LICENSE`, and the AUR package copies them to `/usr/share/licenses/<package>/` and declares `BSD-3-Clause`, `BSD-2-Clause`, `Apache-2.0`, `MPL-1.1` and `LGPL-2.0-or-later` beside `GPL-3.0-or-later`, as the rpm's License tag does; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs, libsecret included: it only talks to the desktop's secret service over D-Bus, so the bundled copy works with any host keyring. deb, rpm and Arch declare their host dependencies, libsecret among them. Saving an AI provider's key needs a running secret service (GNOME Keyring, KWallet or another Secret Service provider) on Linux; without one the provider isn't saved and the user is told why, and keys never fall back to a file.
+Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), QtKeychain 0.17.0 (BSD-3-Clause, static; on Linux it links libsecret-1), dav1d 1.5.4 (BSD-2-Clause, static, inside FFmpeg), Abseil 20260107.1 (Apache-2.0, static, AB1), MeCab (BSD-3-Clause, static) and its UniDic 2.1.2 dictionary (BSD-3-Clause, `Dictionary/unidic-lite`, 248 MB), harper-ls 3.0.0 (Apache-2.0, a helper beside the application, GR1), the spelling dictionaries (`cmake/HikariDictionaries.cmake`: en_US LGPL and BSD, pl GPL-2.0/LGPL-2.1/MPL-1.1/Apache-2.0/CC-BY-4.0, th_TH LGPL, ko_KR GPL-3.0-or-later, ta_IN MPL-1.1, DK1), translations, helpers). Qt is linked dynamically and shipped with its licence notices; MeCab's, UniDic's and QtKeychain's BSD notices are in `licenses/mecab/LICENSE`, `licenses/unidic/LICENSE` and `licenses/qtkeychain/LICENSE` (UniDic's also beside the dictionary), dav1d's (BSD-2-Clause, statically linked into FFmpeg for AV1) in `licenses/dav1d/LICENSE`, Abseil's Apache-2.0 licence in `licenses/abseil/LICENSE`, Harper's licence and its crates' notices (MIT, Apache-2.0, MPL-2.0, Unicode-3.0, Zlib, CC0-1.0, WTFPL) in `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, each dictionary's notice in `licenses/dictionaries/<name>/`, Aegisub's BSD-3-Clause notice for the extradata format and the Lua API HikariSub follows (FA3, FA4; it also covers arch1t3cht's fork), with the ISC notice of libaegisub's `vfr.cpp` that `AegisubFrameTimes` is ported from, in `licenses/aegisub/LICENSE`, and the AUR package copies them to `/usr/share/licenses/<package>/` and declares `BSD-3-Clause`, `BSD-2-Clause`, `Apache-2.0`, `MPL-1.1` and `LGPL-2.0-or-later` beside `GPL-3.0-or-later`, as the rpm's License tag does; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs, libsecret included: it only talks to the desktop's secret service over D-Bus, so the bundled copy works with any host keyring. deb, rpm and Arch declare their host dependencies, libsecret among them. Saving an AI provider's key needs a running secret service (GNOME Keyring, KWallet or another Secret Service provider) on Linux; without one the provider isn't saved and the user is told why, and keys never fall back to a file.
+
+## The AI sidecar
+
+Hikari AI's sidecar ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)) isn't in any package: not the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives.
+
+- **The assets.** Each release carries `hikari-ai-<version>-linux-x64.gz` and `hikari-ai-<version>-windows-x64.gz`. Each is one gzip-compressed executable, about 49 MiB and 52 MiB, built by the `AI sidecar` workflow (`tools/release/build-ai-sidecar.sh`).
+  - The workflow builds each platform twice and fails unless both builds are byte-identical.
+  - It fails if any bundled file comes from `@anthropic-ai/claude-agent-sdk`.
+  - `bun audit` runs as a report, not a gate.
+- **The notices.** The executable carries `src/ai-sidecar/NOTICES.txt`, which `hikari-ai --licenses` prints:
+  - Bun (MIT);
+  - JavaScriptCore and WebCore (LGPL-2.0) and tinycc (LGPL-2.1), which Bun links statically;
+  - every npm package in the bundle.
+
+  `bun tools/notices.ts` regenerates it from the bundle's inputs. The build fails when it is stale. The sidecar's source and build are in this repository, and Bun publishes its patched WebKit, so the sidecar can be rebuilt and relinked.
+- **The manifest member.** `hikarisub-update.json` gains `ai_sidecar`, which adds only, so the manifest stays at schema 1:
+
+  ```json
+  "ai_sidecar": {
+    "linux-x64": {"name": "hikari-ai-0.1.0-linux-x64.gz", "size": 51677387, "sha256": "…"},
+    "windows-x64": {"name": "hikari-ai-0.1.0-windows-x64.gz", "size": 54572333, "sha256": "…"}
+  }
+  ```
+
+  `tools/release/make-update-manifest.py` writes it from the files and checks each against its asset's GitHub digest, as it does for packages. The manifest is signed ([Integrity](#integrity)).
+- **The download.** It happens when the user first adds a provider or agent, and never with "Turn off all AI features" on.
+  - The app reads its own release's manifest over HTTPS and checks its signature as the update check does; a missing or bad signature fails with the manifest error. It downloads the asset from the release, following redirects only to GitHub's download hosts.
+  - It checks the size and SHA-256, unpacks the file into `<user folder>/ai/sidecar/<version>/`, then removes the other versions' folders.
+  - A file that fails is deleted and never run. An app never runs a sidecar from another version.
+- **Developer and test builds.** Configure with `-DHIKARI_AI_LOCAL_SIDECAR=ON` to run the sidecar the build makes instead (see [build](build.md#ai-sidecar-sc1-2026-11-02)).
 
 ## Testing an update
 
-A test build (`-DHIKARI_UPDATE_TEST_FEED=ON`; off in releases, whose CI fails if the binary names `HIKARISUB_UPDATE_FEED`) reads `HIKARISUB_UPDATE_FEED=<base URL>`: `<base>releases.json` for the list, `<base>download/v<V>/<asset>` for the files and `<base>releases/tag/v<V>` for the pages. It also reads `HIKARISUB_PACKAGE_KIND=<token>` in place of the marker (and `HIKARISUB_AUR_CHANNEL` in place of `aur-channel.txt`), so the AUR notice and the other flows can be tried without installing a package. `tools/update-feed/make-feed.py` builds such a feed from a folder of packages.
+A test build (`-DHIKARI_UPDATE_TEST_FEED=ON`; off in releases, whose CI fails if the binary names `HIKARISUB_UPDATE_FEED`) reads `HIKARISUB_UPDATE_FEED=<base URL>`: `<base>releases.json` for the list, `<base>download/v<V>/<asset>` for the files and `<base>releases/tag/v<V>` for the pages. It also reads `HIKARISUB_PACKAGE_KIND=<token>` in place of the marker (and `HIKARISUB_AUR_CHANNEL` in place of `aur-channel.txt`), so the AUR notice and the other flows can be tried without installing a package. `tools/update-feed/make-feed.py` builds such a feed from a folder of packages. Its manifests are signed with a throwaway key, and it prints the `HIKARISUB_UPDATE_KEY=<public key line>` the test build must be started with to trust that key.
 
 **Verification status:** the update logic and its hand-offs have unit tests; installers, packages and the update flows still need their release tests on every claimed platform.

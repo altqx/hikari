@@ -1,0 +1,64 @@
+name: AI sidecar
+
+# Builds hikari-ai for linux-x64 and windows-x64 on Linux (ADR 0026): twice each, byte-identical, with the notices,
+# never with the Claude Agent SDK inside. The release calls it; bun audit reports advisories without failing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/ai-sidecar/**
+      - src/api/include/hikari/api/api.h
+      - cmake/HikariBun.cmake
+      - tools/release/build-ai-sidecar.sh
+      - .github/workflows/ai-sidecar.yml
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version the assets are named for'
+        type: string
+        default: '0.0.0-dev'
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the sidecar
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Build both platforms twice and compare
+        env:
+          VERSION: ${{ inputs.version || '0.0.0-dev' }}
+        run: tools/release/build-ai-sidecar.sh "$VERSION" out/ai-sidecar "$GITHUB_SHA"
+
+      - name: Run the sidecar's tests
+        working-directory: src/ai-sidecar
+        run: |
+          bun=$(ls "$GITHUB_WORKSPACE"/out/ai-sidecar/bun-downloads/bun-*-linux-x64/*/bun)
+          "$bun" test
+
+      - name: Report advisories (bun audit)
+        continue-on-error: true
+        working-directory: src/ai-sidecar
+        run: |
+          bun=$(ls "$GITHUB_WORKSPACE"/out/ai-sidecar/bun-downloads/bun-*-linux-x64/*/bun)
+          "$bun" audit | tee "$GITHUB_WORKSPACE/out/ai-sidecar/bun-audit.txt"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikari-ai
+          path: |
+            out/ai-sidecar/hikari-ai-*.gz
+            out/ai-sidecar/hikari-ai-notices.txt
+            out/ai-sidecar/bun-audit.txt
+          if-no-files-found: error

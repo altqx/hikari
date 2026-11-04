@@ -5,7 +5,7 @@
 #include <map>
 #include <set>
 #include <sstream>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 namespace hikari::application {
 
@@ -141,14 +141,14 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices)
 {
     std::vector<std::size_t> rows;
-    std::unordered_map<u8, std::size_t> first;
+    absl::flat_hash_map<u8, std::size_t> first;
     for (std::size_t i = into.size(); i-- > 0;)
         first[into[i].name] = i;
     StyleNames taken = namesOf(into);
     for (const auto &style : styles)
         taken.insert(style.name);
-    std::unordered_map<u8, int> next;
-    std::unordered_map<u8, int> seen;
+    absl::flat_hash_map<u8, int> next;
+    absl::flat_hash_map<u8, int> seen;
     const auto add = [&](core::StyleValues style) {
         first.try_emplace(style.name, into.size());
         taken.insert(style.name);

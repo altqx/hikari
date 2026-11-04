@@ -465,7 +465,8 @@
     "videoonstime.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "audio-box"
    ]
   },
   {
@@ -478,7 +479,8 @@
     "videoonetime.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "audio-box"
    ]
   },
   {
@@ -1596,7 +1598,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "dialogs"
+    "dialogs",
+    "status-bar"
    ]
   },
   {
@@ -2362,12 +2365,15 @@
   {
    "role": "menu-more",
    "file": "menu-more.svg",
-   "label": "Layouts",
+   "label": "More",
    "accent": false,
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "status-bar"
+    "audio-box",
+    "line-editor",
+    "visual-tools",
+    "title-bar"
    ]
   },
   {
@@ -2650,7 +2656,7 @@
   {
    "role": "zoom-reset",
    "file": "zoom-reset.svg",
-   "label": "Turn off video zoom",
+   "label": "Reset zoom and pan",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3067,7 +3073,7 @@
   {
    "role": "progress-bar",
    "file": "progress-bar.svg",
-   "label": "Show / hide progress bar",
+   "label": "Progress bar",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3079,7 +3085,7 @@
   {
    "role": "render-cost",
    "file": "render-cost.svg",
-   "label": "Show / hide render cost",
+   "label": "Render cost",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -3237,8 +3243,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "tab-close-others",
@@ -3249,8 +3254,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "tab-close-right",
@@ -3261,8 +3265,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "fonts-from-subtitles",
@@ -3474,6 +3477,17 @@
    "legacy": [],
    "surfaces": [
     "grid-menu"
+   ]
+  },
+  {
+   "role": "hard-space",
+   "file": "hard-space.svg",
+   "label": "Insert hard space",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:edit"
    ]
   },
   {

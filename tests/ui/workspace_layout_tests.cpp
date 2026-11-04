@@ -102,6 +102,78 @@ private slots:
                                                           &problem));
     }
 
+    void pluginPanelsPassValidationAndKeepTheirTitles()
+    {
+        using Layout = ui::WorkspaceLayoutController;
+        const QString board = Layout::pluginPanelId(QStringLiteral("com.example.line-tools"), QStringLiteral("timing-check"));
+        QCOMPARE(board, QStringLiteral("plugin:com.example.line-tools/timing-check"));
+        QVERIFY(Layout::isPluginPanel(board));
+        for (const char *name : {"Grid", "plugin:", "plugin:com.example", "plugin:/board", "plugin:com.example/",
+                                 "plugin:Com.Example/board", "plugin:com.example/a.b", "plugin:com.example/a/b"})
+            QVERIFY2(!Layout::isPluginPanel(QLatin1String(name)), name);
+
+        Layout::rememberPluginPanel(board, QStringLiteral("Timing check"), QStringLiteral("Line tools"));
+        const QByteArray payload = QStringLiteral(R"({"serializationVersion":3,"mainWindows":[{"uniqueName":"Classic"}],
+            "allDockWidgets":[{"uniqueName":"Grid"},{"uniqueName":"%1"}],"closedDockWidgets":["%1"]})").arg(board).toUtf8();
+        const QJsonObject written = QJsonDocument::fromJson(Layout::envelope(payload)).object();
+        QCOMPARE(written.value(QStringLiteral("pluginPanels")).toObject().value(board).toObject().value(QStringLiteral("title")),
+                 QJsonValue(QStringLiteral("Timing check")));
+        QString problem;
+        QVERIFY2(Layout::payloadOf(Layout::envelope(payload), &problem), qPrintable(problem));
+
+        const QString gone = Layout::pluginPanelId(QStringLiteral("com.example.gone"), QStringLiteral("notes"));
+        QJsonObject read = QJsonDocument::fromJson(Layout::envelope(R"({"mainWindows":[{"uniqueName":"Classic"}]})")).object();
+        read.insert(QStringLiteral("payload"), QJsonDocument::fromJson(QStringLiteral(
+            R"({"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[{"uniqueName":"%1"}]})").arg(gone).toUtf8()).object());
+        read.insert(QStringLiteral("pluginPanels"),
+                    QJsonObject{{gone, QJsonObject{{QStringLiteral("title"), QStringLiteral("Waveform notes")},
+                                                   {QStringLiteral("pluginName"), QStringLiteral("Karaoke helper")}}}});
+        QVERIFY2(Layout::payloadOf(QJsonDocument(read).toJson(), &problem), qPrintable(problem));
+        QCOMPARE(Layout::pluginPanelInfo(gone).value(QStringLiteral("pluginName")).toString(), QStringLiteral("Karaoke helper"));
+
+        QJsonArray many;
+        for (int i = 0; i <= Layout::kMaxPluginPanels; ++i)
+            many.append(QJsonObject{{QStringLiteral("uniqueName"), Layout::pluginPanelId(QStringLiteral("com.example.many"),
+                                                                                          QStringLiteral("p%1").arg(i))}});
+        read.insert(QStringLiteral("payload"), QJsonObject{{QStringLiteral("mainWindows"), QJsonArray{QJsonObject{
+                                                               {QStringLiteral("uniqueName"), QStringLiteral("Classic")}}}},
+                                                           {QStringLiteral("allDockWidgets"), many}});
+        QVERIFY(!Layout::payloadOf(QJsonDocument(read).toJson(), &problem));
+        QVERIFY2(problem.contains(QStringLiteral("more windows or panels")), qPrintable(problem));
+
+        read.insert(QStringLiteral("payload"), QJsonDocument::fromJson(
+            R"({"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[{"uniqueName":"plugin:Bad/x"}]})").object());
+        QVERIFY(!Layout::payloadOf(QJsonDocument(read).toJson(), &problem));
+        QVERIFY2(problem.contains(QStringLiteral("plugin:Bad/x")), qPrintable(problem));
+    }
+
+    void anArrangementHasOneMainWindowInAnyShellWindow()
+    {
+        const auto payloadWith = [](const char *mainWindows) {
+            return ui::WorkspaceLayoutController::envelope(
+                QByteArray(R"({"serializationVersion":3,"mainWindows":)") + mainWindows +
+                R"(,"allDockWidgets":[{"uniqueName":"Grid"}]})");
+        };
+        QString problem;
+        QVERIFY(ui::WorkspaceLayoutController::payloadOf(payloadWith(R"([{"uniqueName":"Classic"}])"), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(
+            payloadWith(R"([{"uniqueName":"Classic"},{"uniqueName":"Classic~1"}])"), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(
+            payloadWith(R"([{"uniqueName":"Classic"},{"uniqueName":"Classic"}])"), &problem));
+        QVERIFY(!ui::WorkspaceLayoutController::payloadOf(payloadWith(R"([{"uniqueName":"Classic~1"}])"), &problem));
+
+        const ui::ShellWindowNames second{1};
+        const QByteArray stored = R"({"mainWindows":[{"uniqueName":"Classic","affinities":[]}],)"
+                                  R"("allDockWidgets":[{"uniqueName":"Grid"}],"closedDockWidgets":["Grid"]})";
+        const QJsonObject engine = QJsonDocument::fromJson(second.toEngine(stored)).object();
+        const QJsonObject main = engine.value(QStringLiteral("mainWindows")).toArray().first().toObject();
+        QCOMPARE(main.value(QStringLiteral("uniqueName")).toString(), QStringLiteral("Classic~1"));
+        QCOMPARE(main.value(QStringLiteral("affinities")).toArray(), QJsonArray{QStringLiteral("w1")});
+        QCOMPARE(engine.value(QStringLiteral("closedDockWidgets")).toArray(), QJsonArray{QStringLiteral("Grid~1")});
+        QCOMPARE(QJsonDocument::fromJson(second.toStored(second.toEngine(stored))).object(),
+                 QJsonDocument::fromJson(stored).object());
+    }
+
     void theArrangementTheWindowClosedWithIsTheLastSaved()
     {
         start();

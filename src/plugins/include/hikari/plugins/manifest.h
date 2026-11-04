@@ -35,6 +35,14 @@ struct Contribution {
     std::string title;
 };
 
+enum class PanelArea { Left, Right, Bottom };
+
+struct Panel {
+    std::string id;
+    std::string title;
+    PanelArea area = PanelArea::Right;
+};
+
 struct Setting {
     std::string id;
     std::string title;
@@ -63,7 +71,7 @@ struct Manifest {
     std::optional<minisign::PublicKey> publicKey;
     Permissions permissions;
     std::vector<Contribution> commands;
-    std::vector<Contribution> panels;
+    std::vector<Panel> panels;
     std::vector<Setting> settings;
 };
 
@@ -79,6 +87,11 @@ struct ManifestProblem {
 };
 
 std::expected<Manifest, ManifestProblem> parseManifest(std::string_view text, std::int64_t apiVersion);
+
+// Why `value` doesn't fit the setting's type, options or bounds (English), or nothing when it does.
+std::optional<std::string> settingRefusal(const Setting &setting, const api::Json &value);
+// Every declared setting: the stored value when it still fits, else the default.
+api::Json settingValues(const Manifest &manifest, const api::Json &stored);
 
 // Semantic-version order; build metadata is ignored. Both must be valid versions.
 int compareVersions(std::string_view a, std::string_view b);

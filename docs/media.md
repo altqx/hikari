@@ -78,7 +78,8 @@ Video > Open timecodes loads a v1, v2 or v4 timecodes file into the editing tab 
 - While a tab has a file, saving an ASS file writes it as `Timecodes File` in `[Aegisub Project Garbage]`, relative to the subtitle file and with `/` separators, as Aegisub does. Close timecodes, or a video open that drops the file, removes the key on the next save. A file whose timecodes were never loaded or closed keeps the section as it was.
 - Opening a subtitle file lists its `Timecodes File` (from `[Aegisub Project Garbage]`, or Script Info in older files) with the other associated files, and Load associated opens it after the video. A missing file gets a "Timecodes file not found" notice; the subtitle file still opens.
 - A v2 or v4 file listing fewer frames than the video gets a warning once the video is ready, naming the frame where it ends. Later frames continue at its average rate.
-- The status bar's frames-per-second field shows the file's average rate, and its tooltip names the file.
+- The status bar's frames-per-second field shows the file's average rate, and its tooltip names the file. Each window's tooltip names the file of the tab that window shows.
+- The video is shared, so its frame times, the file's or the video's own, are those of the active window's tab. Every window's editor uses them.
 
 ## PortAudio, analysis and caches
 

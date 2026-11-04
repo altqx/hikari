@@ -5,6 +5,7 @@
 #include "hikari/application/grid_filtering.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/legacy_regex.h"
+#include "hikari/core/line_groups.h"
 #include "hikari/core/line_formats.h"
 #include "hikari/core/srt.h"
 #include "hikari/core/style.h"
@@ -16,6 +17,7 @@
 #include <QSet>
 #include <QString>
 #include <QStringList>
+#include <boost/dynamic_bitset.hpp>
 
 #include <algorithm>
 #include <array>
@@ -368,12 +370,15 @@ void LineTableModel::setDocument(const core::Document &document,
     };
     m_headerBlock = markAfter(-1);
     for (std::size_t r = 0; r + 1 < n; ++r)
-        if (lines[r]->group == core::GroupMarker::Description)
-            m_rows[r].groupClosed = lines[r + 1]->group == core::GroupMarker::Closed;
+        if (lines[r]->group == core::GroupMarker::Description) {
+            const auto level = core::groupDepth(*lines[r]);
+            const auto next = core::groupMemberships(*lines[r + 1]);
+            m_rows[r].groupClosed = next.size() > level && next[level] == core::GroupMarker::Closed;
+        }
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
     m_runs.clear();
-    std::unordered_set<std::uint64_t> unfolded;
+    absl::flat_hash_set<std::uint64_t> unfolded;
     for (const auto &found : application::generatedRuns(lines)) {
         Run run{static_cast<int>(found.first), static_cast<int>(found.count), static_cast<int>(found.first),
                 static_cast<int>(found.first), static_cast<int>(found.first), {}, {}};
@@ -476,19 +481,17 @@ void LineTableModel::emitRowChanged(int row)
 
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
-    std::vector<bool> touched(m_rows.size());
+    boost::dynamic_bitset<> touched(m_rows.size());
     for (const auto &id : ids)
         if (const auto row = rowOf(id))
             touched[static_cast<std::size_t>(*row)] = true;
-    const int rows = static_cast<int>(touched.size());
-    for (int first = 0; first < rows; ++first) {
-        if (!touched[static_cast<std::size_t>(first)])
-            continue;
-        int last = first;
-        while (last + 1 < rows && touched[static_cast<std::size_t>(last + 1)])
+    for (auto first = touched.find_first(); first != touched.npos;) {
+        auto last = first;
+        while (last + 1 < touched.size() && touched[last + 1])
             ++last;
-        emit dataChanged(index(first, 0), index(last, ColumnCount - 1), {ActiveRole, SelectedRole, AnchorRole});
-        first = last;
+        emit dataChanged(index(static_cast<int>(first), 0), index(static_cast<int>(last), ColumnCount - 1),
+                         {ActiveRole, SelectedRole, AnchorRole});
+        first = touched.find_next(last);
     }
 }
 
@@ -599,6 +602,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         }
     case GroupClosedRole:
         return r.groupClosed;
+    case GroupDepthRole:
+        return static_cast<int>(core::groupDepth(line));
     case CpsTooHighRole:
         return measuresOf(r).cpsTooHigh;
     case BadWrapsRole:
@@ -746,7 +751,7 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "L."),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Start"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "End"),
-                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Styles"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Style"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Actor"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Left"),
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Right"),

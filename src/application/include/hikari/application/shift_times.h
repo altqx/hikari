@@ -23,6 +23,7 @@ struct ShiftTimesSettings {
     bool moveToVideoTime = false;
     bool moveToAudioTime = false;
     bool tagTimes = false;          // keep \move, \t and \fad times on the frames
+    bool centerTimes = false;
     // 0 all Lines, 1 selected, 2 from the selection on, 3 times at or after
     // the first selected Line's start, 4 at or before it, 5 by styles.
     int whichLines = 0;
@@ -59,12 +60,47 @@ enum class ShiftProblem {
 struct ShiftOutcome {
     // End correction was skipped for lack of an exact timebase.
     bool endCorrectionSkipped = false;
+    bool centeringSkipped = false;
 };
 
-// One "Shifting times" step. Hidden Lines are skipped unless `visible` is empty.
-std::expected<ShiftOutcome, std::variant<ShiftProblem, CommandRefusal>>
-shiftTimes(EditSession &session, const ShiftTimesSettings &settings, const ShiftContext &context,
-           const LineVisible &visible = {});
+enum ShiftRule : unsigned {
+    LeadIn = 1,
+    LeadOut = 2,
+    GapClosed = 4,
+    SnappedStart = 8,
+    SnappedEnd = 16,
+};
+
+struct ShiftedLine {
+    core::LineId id;
+    std::size_t row = 0;
+    int startBefore = 0, endBefore = 0;
+    int start = 0, end = 0;
+    std::u8string text;
+    bool textChanged = false;
+    bool marked = false;
+    unsigned rules = 0;
+
+    bool changed() const { return start != startBefore || end != endBefore || textChanged; }
+};
+
+// What a run would do, in document order, without touching the Document.
+struct ShiftPlan {
+    std::vector<ShiftedLine> lines;
+    // The amount after To video or To audio mark, in ms or frames (byFrames).
+    int amount = 0;
+    ShiftOutcome outcome;
+};
+
+using ShiftFailure = std::variant<ShiftProblem, CommandRefusal>;
+
+std::expected<ShiftPlan, ShiftFailure> planShift(const EditSession &session, const ShiftTimesSettings &settings,
+                                                 const ShiftContext &context, const LineVisible &visible = {});
+
+// One step named `stepName` that applies planShift's result. Hidden Lines are skipped unless `visible` is empty.
+std::expected<ShiftOutcome, ShiftFailure> shiftTimes(EditSession &session, const ShiftTimesSettings &settings,
+                                                     const ShiftContext &context, const LineVisible &visible = {},
+                                                     const std::string &stepName = "Shifting times");
 
 // One line per profile: "<name>: Time: <ms> Forward: <0|1> Frames: <0|1> MoveTagTimes: ... EndTimeCorrection: <n>".
 // Values are read by position, so a style list with spaces shifts the later values.

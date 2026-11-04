@@ -4,6 +4,7 @@
 #include "hikari/core/style.h"
 
 #include <array>
+#include <functional>
 #include <map>
 #include <memory>
 #include <cstdint>
@@ -76,6 +77,30 @@ Quad subQuad(const Quad &quad, PointF a, PointF b);
 // of the projective horizon.
 bool planeHolds(const Quad &inner, PointF c1, PointF c2);
 
+// Where \pos shows: turned about \org and projected.
+PointF shownPosition(const Transform &t, double screenZ);
+
+// What measuring text needs besides the Line: the measure (none: nothing is measured) and the fonts only
+// the renderer is given, which the measure does not see.
+struct TextMeasure {
+    TextMeasurePort *port = nullptr;
+    std::function<bool(const std::string &name)> leased;
+    std::function<bool(const std::string &font, bool bold, bool italic, std::u16string_view text)> fallsBackToLeased;
+};
+
+// A Document as the readers see it, with or without a visual tool's host.
+struct Reader {
+    const core::Document *document = nullptr;
+    int width = 0, height = 0; // the script's resolution
+    // None: a \move is at its start and nothing stacks.
+    std::optional<std::int64_t> timeMs;
+    TextMeasure measure;
+    bool ignoreFiltered = false;
+    // With `document`, what StyleCache keys on.
+    std::uint64_t session = 0, revision = 0;
+};
+Reader reader(const VisualHost &host);
+
 // The first block's tags (the last of each), the first \pos, \move or \org anywhere, the first \an (or \a),
 // else the Style's values and the default position.
 struct LineState {
@@ -91,7 +116,7 @@ struct LineState {
 class StyleCache {
 public:
     struct Decoded;
-    std::shared_ptr<const Decoded> get(const VisualHost &host);
+    std::shared_ptr<const Decoded> get(const Reader &reader);
 
 private:
     std::uint64_t m_session = 0, m_revision = 0;
@@ -100,8 +125,10 @@ private:
 };
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line);
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line, StyleCache &styles);
+std::optional<LineState> readLine(const Reader &reader, const core::LineRecord &line, StyleCache &styles);
 // readLine without the box.
 LineState readTags(const VisualHost &host, const core::LineRecord &line);
+LineState readTags(const Reader &reader, const core::LineRecord &line, StyleCache &styles);
 
 // Writes `t` into the first block (adding one): \pos (or \move shifted by `t`.pos less `movedFrom`), \org, \fax,
 // \fsc, \fr and \bord/\shad per axis; conflicting leading tags are removed, tags at the Style's value left out,
@@ -109,6 +136,9 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line);
 // turn it or turns it about `t`.pos, unless `explicitOrg`.
 std::u16string writeTransform(std::u16string_view text, const Transform &t, const core::StyleValues &style,
                               std::optional<PointF> movedFrom = std::nullopt, bool explicitOrg = false);
+// The Line's text (its translation when it has one) with `t` written, against its Style as libass finds it.
+std::u16string writeTransform(const Reader &reader, StyleCache &styles, const core::LineRecord &line,
+                              const Transform &t);
 
 }
 

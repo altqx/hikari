@@ -46,6 +46,7 @@ hikari_add_gtest(hikari_application_recovery_store_tests SOURCES recovery_store_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_hotkeys_tests SOURCES automation_hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_frame_bake_tests SOURCES frame_bake_tests.cpp LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
@@ -60,6 +61,10 @@ hikari_add_gtest(hikari_application_select_lines_tests SOURCES select_lines_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_update_check_tests SOURCES update_check_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_update_signature_tests SOURCES update_signature_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_update_signature_tests PRIVATE
+    HIKARI_MINISIGN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/minisign/fixtures")
 hikari_add_gtest(hikari_application_whats_new_tests SOURCES whats_new_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
@@ -95,7 +100,7 @@ hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
-    LIBRARIES hikari_application LABELS application)
+    LIBRARIES hikari_application hikari_regex LABELS application)
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map/actions.csv")
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
@@ -137,7 +142,7 @@ target_include_directories(hikari_application_font_collector_tests PRIVATE "${PR
 hikari_add_gtest(hikari_application_matroska_tests SOURCES matroska_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_tools_tests SOURCES visual_tools_tests.cpp
-    LIBRARIES hikari_application Qt6::Core LABELS application)
+    LIBRARIES hikari_application hikari_regex Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")

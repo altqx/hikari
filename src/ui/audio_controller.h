@@ -118,7 +118,7 @@ public:
 
     void setLines(std::vector<application::AudioLineSpan> lines, int active, bool reselect);
     void setKeyframes(std::vector<int> keyframesMs);
-    void setVideoTime(std::optional<int> pausedMs);
+    void setVideoFrame(std::optional<application::AudioVideoFrame> paused);
     bool syncVideo() const { return m_syncVideo; }
     Q_INVOKABLE void setSyncVideo(bool on);
     void setPlayingVideoTime(std::optional<int> ms);
@@ -284,6 +284,8 @@ public:
     Q_INVOKABLE void nextLine();
     Q_INVOKABLE void previousLine();
     Q_INVOKABLE void goToSelection();
+    Q_INVOKABLE void goToSelectionStart();
+    Q_INVOKABLE void goToSelectionEnd();
     Q_INVOKABLE void leadIn() { addLead(true, false); }
     Q_INVOKABLE void leadOut() { addLead(false, true); }
     void showTime(int ms, bool mark);
@@ -372,7 +374,7 @@ private:
     int m_previousActive = 0;
     int m_startMs = 0, m_endMs = 0;
     std::vector<int> m_keyframes;
-    std::optional<int> m_videoMs;
+    std::optional<application::AudioVideoFrame> m_videoFrame;
     std::optional<float> m_cursor;
     bool m_pointerOver = false;
     bool m_focused = false;

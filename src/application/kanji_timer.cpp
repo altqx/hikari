@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/dynamic_bitset.hpp>
 #include <cmath>
 #include <limits>
 #include <tuple>
@@ -384,7 +385,7 @@ KanjiText kanjiText(u16v text)
         }
     };
     out.units = unitsOf(out.text);
-    std::vector<bool> hash(tags.size());
+    boost::dynamic_bitset<> hash(tags.size());
     std::vector<std::size_t> erased;
     for (std::size_t t = 1, u = 0; t < tags.size(); ++t) {
         while (u < out.units.size() && out.units[u].begin < tags[t])

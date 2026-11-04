@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md); this page is the package, install and signature contract that PL1 ([#413](https://github.com/altqx/hikari/issues/413)) built. Running a plugin (the helper, PL2) and the full plugin manager (PL4) come later.
+A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). Documents and selections (PL3), panels and the full plugin manager (PL4), and files and network (PL5) come later.
 
 ## The package
 
@@ -29,7 +29,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
 | `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`). |
-| `contributes` | no | `commands` and `panels` (`id`, `title`), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
+| `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, and `area`: `left`, `right` or `bottom`, where the panel docks when first shown; `right` by default), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
 
 Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`.
 
@@ -62,10 +62,154 @@ An author signs the `.hikariplugin` file with minisign and ships the `.minisig` 
 | `<user folder>/plugins/<id>/` | The installed files. An install stages them in `.staging-<id>` and swaps them in, so a failed install leaves the old copy. |
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
-| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key` and the remembered folder `grants`. |
+| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants` and the `settings` a plugin or the user changed. |
 
-An update keeps the enabled state and the grants whose ids the new manifest still asks for. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
+An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
 
 ## The plugin manager
 
-Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) lists the installed plugins with their trust, turns each on or off, installs from a file after showing what the package asks for, and uninstalls. PL4 ([#416](https://github.com/altqx/hikari/issues/416)) gives it its full design.
+Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window: the installed plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu.
+
+- **The list.** Each row shows the package icon, name, version and signer. It shows a state only when the plugin isn't simply running: Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
+- **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off.
+- **Settings.** A form built from `contributes.settings`: a check box for `boolean`, a field for `integer`, `number` and `string`, and a drop-down for `choice`. A change is kept at once, the same way `hikari.settings.set` keeps it, and a running plugin's `hikari.settings.get` sees it.
+- **Errors.** A plugin that didn't start, crashed or hit the time limit shows the error and its traceback, with Start again and Copy.
+- **Actions.** Install from file… for a new plugin, then per plugin Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
+
+## Running a plugin
+
+Each enabled plugin runs in its own `hikari-plugin-helper` process, started when HikariSub starts or when the plugin is turned on, installed or updated. The helper uses the same framing and endpoint as the automation helper. A plugin's crash ends only its own helper.
+
+- **Restricted (the default).** A fresh LuaJIT state with `string` (without `dump`), `table`, `math`, `bit`, `coroutine` and the base functions, minus `dofile`, `loadfile` and `module`. `load` and `loadstring` take text only, so bytecode never loads. There's no `ffi`, `io`, `os`, `debug`, `jit` or `package`, so no `package.loadlib` either. `require "a.b"` reads only `lua/a/b.lua` or `lua/a/b/init.lua` in the package, and only as text.
+- **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning.
+- **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
+- **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
+
+These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)).
+
+### The helper protocol
+
+The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 3) has two requests, `Load` and `Run`, plus events and seven services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock` and `Ui`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `dialogs.show`, `dialogs.ask`, `dialogs.close`) with JSON parameters, and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
+
+## The `hikari` global
+
+| Member | What it does |
+| --- | --- |
+| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. |
+| `hikari.commands.run(id)` | Runs a HikariSub command (`GLOBAL_SAVE_SUBS`), as `commands.run` does. |
+| `hikari.call(operation, params)` | Calls any [Hikari API](api.md) operation as the plugin. It returns the result, or `nil` and the error `{code, message, data}`. Without `documents.all` the plugin sees the editing target only. |
+| `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`). An unknown name is refused. |
+| `hikari.notify(text, level)` | A toast and a Log panel entry under the plugin's name. `level` is `"info"` (the default), `"warning"` or `"error"`. `print` writes to the Log panel only. |
+| `hikari.settings.get(id)`, `hikari.settings.set(id, value)` | The plugin's settings from `contributes.settings`. A value that doesn't fit the setting's type, options or bounds is refused, and kept values live in `plugins.json`. |
+| `hikari.i18n.locale`, `hikari.i18n.t(key, ...)` | The UI language (`"pt_BR"`, `"en"`) and the text for `key` from `i18n/<locale>.json`, then `i18n/<language>.json`, then `i18n/en.json`, then the key itself. `%1` to `%9` take the arguments. Each file is a JSON object of strings. |
+| `hikari.plugin.id`, `hikari.plugin.version`, `hikari.api_version` | Who the plugin is, and the Hikari API number. |
+| `hikari.null`, `hikari.array(t)` | JSON `null`, and a table marked as a JSON array (so `{}` can be sent as `[]`). Arrays that come back from HikariSub are marked too. |
+| `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
+| `hikari.selection.get(document)`, `hikari.selection.set(selected, active, document)` | The selected Lines and the active Line, as `selection.get` and `selection.set` give and take them. |
+| `hikari.panels.render(panel, tree)`, `hikari.panels.show(panel)`, `hikari.panels.on(panel, fn)` | Draws a panel from `contributes.panels`, opens it, and calls `fn(event)` for its events. See [Panels and dialogs](#panels-and-dialogs). |
+| `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
+
+Tables go to HikariSub as JSON: a table with keys 1 to n is an array, one with text keys an object. Numbers must be finite, text must be UTF-8, and a table that holds itself is refused.
+
+Errors carry the file and line inside the package (`lua/tools.lua:12: …`) and a traceback, never a path on disk.
+
+## Documents and selections
+
+A plugin sees the active subtitle file. With the `documents.all` permission it also sees the other tabs. Without it, `hikari.document.list()` lists the active Document only, and naming another Document gives the error `not_granted`. Every `document` argument is optional and defaults to the active Document.
+
+`hikari.document.read(document)` returns a snapshot: `{document, revision, title, format, lines, styles, info}`. `lines` are the `lines.list` Lines (`id`, `row` and every field, such as `text` and `start`), `styles` the `styles.list` Styles and `info` the `info.list` properties, all at one revision. When the Document changes during the read, it starts again. After three tries it returns `nil` and the error `busy`.
+
+`hikari.document.edit(name, fn, options)` makes one change:
+
+```lua
+local done, err = hikari.document.edit("Strip line breaks", function(doc, change)
+    for _, line in ipairs(doc.lines) do
+        change:set_line(line.id, {text = line.text:gsub("\\N", " ")})
+    end
+end)
+```
+
+`fn` gets a fresh snapshot (`options.document` picks the Document) and a `change` that stages edits: `set_line(line, fields)`, `insert_line(fields, {after = line} or {before = line})`, `delete_line(line)`, `move_line(line, before)` (to the end when `before` is `nil`), `set_style(name, fields)`, `delete_style(name)` and `set_info(key, value)` (removed when `value` is `nil`). Then HikariSub applies them with `document.apply` as one undo step, named `<plugin name>: <name>`. It returns the `document.apply` result `{revision, inserted, changed}`, or `nil` and the error. When nothing is staged, nothing is applied, and `changed` is `false`. When the Document changed after the snapshot, for example because the user typed, the error is `stale_revision`. An error in `fn` passes through. An edit inside another edit is refused.
+
+Only one plugin edits at a time, app-wide. An edit waits for another plugin's edit to finish. After 5 seconds it gives up and returns the error `busy`. Commands and event handlers of different plugins still run side by side; only their edits take turns. A plugin that stops, crashes or is turned off ends its turn.
+
+## Commands and shortcuts
+
+A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back.
+
+When a command fails, its error shows in a toast. When a plugin fails to load, the toast says it didn't start, and its details hold the error. Errors in event handlers go to the Log panel only.
+
+## Panels and dialogs
+
+A panel from `contributes.panels` is an ordinary HikariSub panel. It docks, tabs and floats, takes the focus mark and keeps its place in layouts and arrangements. Its dock id is `plugin:<plugin id>/<panel id>`. The header shows only its title. View › Panels lists plugin panels in a group after HikariSub's own, sorted by title, with the plugin's name after each. A panel stays closed until the user shows it or the plugin calls `hikari.panels.show`. It first docks in the manifest's `area`, tabbed with the panel already there, and after that wherever the user left it.
+
+The plugin never draws pixels. It gives HikariSub a tree of widgets, and HikariSub draws it with its own controls in the current theme:
+
+```lua
+hikari.panels.on("checks", function(e)
+    if e.kind == "show" or (e.kind == "click" and e.widget == "run") then
+        hikari.panels.render("checks", {kind = "column", children = {
+            {kind = "number", id = "cps", label = "Characters per second", value = 17, minimum = 1},
+            {kind = "button", id = "run", text = "Check", style = "primary"},
+            {kind = "list", id = "found", rows = {{id = "12", text = "Line 12", detail = "21 CPS"}}},
+        }})
+    end
+end)
+```
+
+The [Line tools sample](examples/line-tools/) draws a reading-speed panel with a chart, a list, a menu and a dialog.
+
+A panel's root may carry `menu = {{id, text, checked, disabled}}`. Those rows lead the panel's ⋯ menu, and choosing one sends the event `{kind = "menu", widget = id}`.
+
+### Widgets
+
+Every widget has a `kind` and may have an `id` (needed for anything that sends events, and unique in the tree), a `name` for screen readers, a `tooltip`, `disabled` and `grow` (take the spare room). A tree holds at most 2000 widgets, 24 levels deep.
+
+| `kind` | Fields | Events |
+| --- | --- | --- |
+| `label` | `text`, `style` (`heading`, `body`, `muted`, `small`), `wrap` | |
+| `button` | `text`, `style` (`normal`, `primary`, `danger`), `icon` | `click` |
+| `icon_button` | `icon`, `name`, `checked` | `click` |
+| `text`, `text_area` | `value`, `placeholder`, `label`; `rows` for `text_area` | `change`; `submit` on Enter in `text` |
+| `number` | `value`, `minimum`, `maximum`, `step`, `decimals`, `unit`, `label` | `change` |
+| `time` | `value` in milliseconds, `label` | `change` |
+| `check` | `text`, `value` | `change` |
+| `choice` (2 to 4 options), `radio`, `dropdown` | `options` (text, or `{value, text}`), `value`, `label` | `change` |
+| `colour` | `value` as an ASS colour (`&H00FF00&`, or `&HAABBGGRR` with `alpha`), `label` | `change` |
+| `slider` | `value`, `minimum`, `maximum`, `step`, `label` | `change` |
+| `progress` | `value` from 0 to 1 (none: busy), `text` | |
+| `list`, `tree` | `rows` (`{id, text, detail, icon, muted}`; a `tree` row may also have `children` and `expanded`), `selected`, `height`; at most 20000 rows | `select`, `activate` (double-click or Enter) |
+| `tabs` | `tabs` (`{text, body}`, at most 20), `selected` | `change` with the tab's index |
+| `group` | `title`, `children` | |
+| `row`, `column` | `children` | |
+| `grid` | `columns`, `children` | |
+| `link` | `text` | `click` |
+| `image` | `src` (a `.png`, `.svg` or `.jpg` in the package), `width`, `height` | |
+| `empty` | `text`, for an empty state | |
+| `canvas` | `height`, `width`, `draw`, `name`, `description`, `hover`, `tip` | `pointer` |
+
+`icon` names one of HikariSub's icons. Widgets take their colours from the theme only.
+
+A `canvas` draws a list of up to 10000 operations: `rect` (`x`, `y`, `w`, `h`, `radius`), `line` (`x1`, `y1`, `x2`, `y2`, `dash`), `polyline` (`points`, `closed`, `dash`), `path` (`d`, SVG path data), `ellipse`, `text` (`x`, `y`, `text`, `align`, `size` `body` or `small`) and `image` (`x`, `y`, `w`, `h`, `src`). Shapes take `fill`, `stroke` and `width`. A colour is a theme role (`accent`, `text`, `muted`, `line`, `danger`, `warning`, `success`, `panel`, `field`), or an ASS colour for subtitle content, which high contrast outlines in the text colour. Never make colour the only cue. `tip = {x, y, text}` draws a tooltip. A press, release, the pointer leaving, and with `hover` each move, send `{kind = "pointer", type, x, y, buttons, modifiers}`.
+
+### Events
+
+An event is a table `{kind, widget, value, panel or dialog, values}`. `values` holds the current value of every input in the panel or dialog, by id, so a click handler can read the form. A panel also gets `{kind = "show"}` when it opens, and again after its plugin starts while it is open. Render the tree then.
+
+### Dialogs
+
+```lua
+local button, values = hikari.dialogs.ask("rename", {
+    title = "Rename style",
+    body = {kind = "text", id = "name", label = "Name", value = "Default"},
+    buttons = {{id = "ok", text = "Rename", style = "primary", default = true}, {id = "cancel", text = "Cancel", cancel = true}},
+})
+```
+
+A dialog spec is `{title, body, buttons, width, height}`, with 1 to 4 buttons `{id, text, style, default, cancel, stays_open}`, at most one `default` and one `cancel`. A dialog's id is 1 to 64 lowercase letters, digits and `-`, and HikariSub remembers its size and place as `plugin.<plugin id>.<dialog id>`. A button closes the dialog unless it has `stays_open`. Closing it with the close button or Esc presses the `cancel` button. Without one, `ask` returns `nil` and `show` sends `{kind = "closed"}`.
+
+`ask` is modal and waits. `show` returns at once, and its buttons send `{kind = "button", button = id}`. Showing a dialog that is open again replaces its content. A plugin that stops or is turned off closes its dialogs.
+
+### When the plugin isn't there
+
+A layout can keep a place for a panel whose plugin is missing, turned off or stopped. The panel keeps the title the layout saved and shows why, with the one action that helps: Open Plugins… when the plugin isn't installed, Turn on when it is off, and Start again with Details when it stopped. When the plugin comes back, its panel fills the place. Closing a placeholder for a plugin that isn't installed, or View › Panels › <panel> › Remove from the layout, forgets the place.

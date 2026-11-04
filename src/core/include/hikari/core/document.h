@@ -82,6 +82,8 @@ struct LineRecord {
     bool bookmark = false;
     LineVisibility visibility = LineVisibility::Visible;
     GroupMarker group = GroupMarker::None;
+    // The [tree_opened] / [tree_closed] markers written before `group`, one per enclosing line group, outermost first.
+    std::vector<GroupMarker> outerGroups;
     IntField marginLeft;
     IntField marginRight;
     IntField marginVertical;

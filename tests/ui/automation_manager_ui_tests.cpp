@@ -1,5 +1,6 @@
 #include "automation_manager_controller.h"
 #include "hikari/backends/automation_manager.h"
+#include "menu_rows.h"
 
 #include <QDir>
 #include <QQmlExtensionPlugin>
@@ -70,6 +71,43 @@ private slots:
         QCOMPARE(item(QStringLiteral("macro_0_2"))->property("text").toString(), QStringLiteral("Count"));
         QCOMPARE(item(QStringLiteral("state_0"))->property("scriptState").toString(), QStringLiteral("ready"));
         QVERIFY(!item(QStringLiteral("state_0"))->property("visible").toBool());
+    }
+
+    void scriptAndMacroMenusReadInTheirOrder()
+    {
+        controller->load(QStringLiteral(HIKARI_LUA_FIXTURES "/host-fixture.lua"));
+        QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
+        QQuickItem *macro = nullptr;
+        QTRY_VERIFY((macro = qobject_cast<QQuickItem *>(item(QStringLiteral("macro_0_2")))) && macro->isVisible());
+        const auto rightClick = [&](QQuickItem *on, QPointF at) {
+            QTest::mouseClick(view.get(), Qt::RightButton, {}, on->mapToScene(at).toPoint());
+        };
+        auto *macroMenu = view->rootObject()->findChild<QObject *>(QStringLiteral("automationMacroMenu"));
+        rightClick(macro, QPointF(macro->width() / 2, macro->height() / 2));
+        QTRY_VERIFY(macroMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(macroMenu), (QStringList{QStringLiteral("macroMenuRun"), QStringLiteral("|"),
+                                                           QStringLiteral("macroMenuSetShortcut"),
+                                                           QStringLiteral("macroMenuClearShortcut")}));
+        QVERIFY(QMetaObject::invokeMethod(macroMenu, "close"));
+        QTRY_VERIFY(!macroMenu->property("visible").toBool());
+
+        auto *scriptMenu = view->rootObject()->findChild<QObject *>(QStringLiteral("automationScriptMenu"));
+        const QStringList scriptRows{QStringLiteral("scriptMenuReload"), QStringLiteral("scriptMenuEdit"), QStringLiteral("|"),
+                                     QStringLiteral("scriptMenuUnload")};
+        auto *reload = qobject_cast<QQuickItem *>(item(QStringLiteral("reload_0")));
+        QVERIFY(reload);
+        rightClick(reload, QPointF(-40, reload->height() / 2));
+        QTRY_VERIFY(scriptMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(scriptMenu), scriptRows);
+        QVERIFY(QMetaObject::invokeMethod(scriptMenu, "close"));
+        QTRY_VERIFY(!scriptMenu->property("visible").toBool());
+        auto *options = qobject_cast<QQuickItem *>(item(QStringLiteral("scriptMenu_0")));
+        QVERIFY(options);
+        QTest::mouseClick(view.get(), Qt::LeftButton, {},
+                          options->mapToScene(QPointF(options->width() / 2, options->height() / 2)).toPoint());
+        QTRY_VERIFY(scriptMenu->property("opened").toBool());
+        QCOMPARE(menu_rows::shown(scriptMenu), scriptRows);
+        QVERIFY(QMetaObject::invokeMethod(scriptMenu, "close"));
     }
 
     void aFailedLoadSaysWhy()
