@@ -942,7 +942,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 m_video->pause();
         };
         hooks.refresh = [this] {
-            m_editor->reloadFromSession();
+            editor().reloadFromSession();
             refreshViews();
         };
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
