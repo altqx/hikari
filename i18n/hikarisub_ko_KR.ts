@@ -2776,6 +2776,10 @@ Output device: %2</source>
         <translation>위치 또는 정렬 제거됨</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>가장 가까운 영역으로 위치 근사됨</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>노래방 시간 제거됨</translation>
     </message>
@@ -2798,6 +2802,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1”은(는) 폴더입니다.</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>en 또는 pt-BR 같은 언어 코드를 입력하거나 비워 두세요.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2904,6 +2912,18 @@ Output device: %2</source>
         <translation>배우 이름</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Netflix 타임드 텍스트 스타일</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>프레임 단위 시간</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>언어</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>겹치는 줄을 자막 하나로 병합</translation>
     </message>
@@ -2918,6 +2938,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>비디오 프레임 속도 사용</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>글자는 흰색으로 위나 아래 가운데에 놓이고, 기울임꼴만 유지되며, 시간은 프레임 단위입니다.</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -6884,10 +6908,6 @@ Failed to copy %2 fonts.</source>
         <translation>표시</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>숨기기</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>띄우기</translation>
     </message>
@@ -10158,8 +10178,24 @@ Failed to copy %2 fonts.</source>
         <translation>참조 줄(보호됨, 읽기 전용)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>다른 위치</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>다른 곳에 없음</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>참조 문서는 보호되어 있습니다(읽기 전용).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, %2번 줄</translation>
     </message>
 </context>
 <context>
@@ -13037,8 +13073,12 @@ Styles deleted:
         <translation>선택한 줄에 적용: 해당 줄의 스타일을 설정합니다(Enter 또는 스타일 두 번 클릭)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>편집…</translation>
+        <source>New style…</source>
+        <translation>새 스타일…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>스타일 편집…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -13047,10 +13087,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>목록에 복사…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>스타일 관리에서 열기</translation>
     </message>
 </context>
 <context>
@@ -13080,6 +13116,26 @@ Styles deleted:
         <translation>새 탭 열기</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>자막</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>영상</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>소리</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>키프레임</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>새 탭</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>저장</translation>
     </message>
@@ -13088,24 +13144,32 @@ Styles deleted:
         <translation>모두 저장</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>폴더에서 보기</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>경로 복사</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>전환</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>다른 탭 닫기</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>오른쪽 탭 닫기</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>모든 탭 닫기</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>폴더에서 자막 보기</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>폴더에서 영상 보기</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>폴더에서 소리 보기</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>폴더에서 키 프레임 보기</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15416,8 +15480,12 @@ Styles deleted:
         <translation>필터</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>영상 이동 시점</translation>
+        <source>Move video to the selected line</source>
+        <translation>선택한 줄로 영상 이동</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>이동한 뒤 재생</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15442,10 +15510,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>편집 시</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>이어서 재생</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16729,14 +16793,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>탭을 오른쪽으로 이동</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>도킹 해제</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>참조 닫기</translation>
     </message>
     <message>
         <source>Move panel</source>

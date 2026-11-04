@@ -1,4 +1,7 @@
+#include "hikari/application/update_check.h"
+#include "hikari/application/update_signature.h"
 #include "hikari/backends/ai_sidecar_download.h"
+#include "minisign_signer.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -92,6 +95,7 @@ struct Outcome {
     std::optional<QString> program;
     std::optional<SidecarDownloadError> error;
     std::optional<SidecarAsset> described;
+    QString detail;
     bool done() const { return program || error || described; }
 };
 
@@ -105,20 +109,27 @@ protected:
         static QCoreApplication app(argc, argv);
     }
 
-    void serve(const QByteArray &asset, const QByteArray &manifestBody)
+    void serve(const QByteArray &asset, const QByteArray &manifestBody, const std::string &signedFor = "v0.1.0")
     {
         const QString name = sidecarAssetName(kVersion, sidecarPlatform());
         server.files["/download/v0.1.0/" + name.toLatin1()] = asset;
         server.files["/download/v0.1.0/hikarisub-update.json"] = manifestBody;
+        server.files["/download/v0.1.0/hikarisub-update.json.minisig"] = QByteArray::fromStdString(signer.sign(
+            manifestBody.toStdString(),
+            hikari::application::releaseTrustedComment(signedFor, hikari::application::kManifestAsset)));
     }
+
+    SidecarSource source() const { return SidecarSource::local(server.base(), {signer.publicKey()}); }
 
     Outcome run(bool install = true)
     {
-        AiSidecarDownload download(root(), kVersion, SidecarSource::local(server.base()));
+        AiSidecarDownload download(root(), kVersion, source());
         Outcome outcome;
         QObject::connect(&download, &AiSidecarDownload::installed, [&](const QString &p) { outcome.program = p; });
-        QObject::connect(&download, &AiSidecarDownload::failed,
-                         [&](SidecarDownloadError e, const QString &) { outcome.error = e; });
+        QObject::connect(&download, &AiSidecarDownload::failed, [&](SidecarDownloadError e, const QString &detail) {
+            outcome.error = e;
+            outcome.detail = detail;
+        });
         QObject::connect(&download, &AiSidecarDownload::described,
                          [&](const SidecarAsset &a) { outcome.described = a; });
         install ? download.install() : download.describe();
@@ -134,6 +145,7 @@ protected:
 
     QTemporaryDir dir;
     Server server;
+    hikari::test::MinisignSigner signer;
     const QByteArray executable = QByteArray("#!/bin/sh\necho sidecar\n").repeated(2000);
 };
 
@@ -151,7 +163,7 @@ TEST_F(AiSidecarDownloadTest, InstallsAVerifiedSidecarAndRemovesOtherVersions)
     EXPECT_TRUE(file.permissions() & QFile::ExeOwner);
     EXPECT_EQ(filesInVersion(), QStringList{sidecarExecutableName()});
     EXPECT_FALSE(QDir(root() + QStringLiteral("/0.0.9")).exists());
-    AiSidecarDownload again(root(), kVersion, SidecarSource::local(server.base()));
+    AiSidecarDownload again(root(), kVersion, source());
     EXPECT_EQ(again.installedProgram(), outcome.program);
 }
 
@@ -165,7 +177,7 @@ TEST_F(AiSidecarDownloadTest, ADownloadWithTheWrongHashIsDeletedAndNeverRun)
     EXPECT_EQ(*outcome.error, SidecarDownloadError::Mismatch);
     EXPECT_TRUE(filesInVersion().isEmpty()) << filesInVersion().join(u',').toStdString();
     EXPECT_TRUE(QDir(root() + QStringLiteral("/0.0.9")).exists());
-    AiSidecarDownload again(root(), kVersion, SidecarSource::local(server.base()));
+    AiSidecarDownload again(root(), kVersion, source());
     EXPECT_FALSE(again.installedProgram());
 }
 
@@ -196,7 +208,36 @@ TEST_F(AiSidecarDownloadTest, AManifestWithoutTheSidecarDownloadsNothing)
     const Outcome outcome = run();
     ASSERT_TRUE(outcome.error);
     EXPECT_EQ(*outcome.error, SidecarDownloadError::NoAsset);
-    EXPECT_EQ(server.requested, std::vector<QByteArray>{"/download/v0.1.0/hikarisub-update.json"});
+    EXPECT_EQ(server.requested, (std::vector<QByteArray>{"/download/v0.1.0/hikarisub-update.json",
+                                                         "/download/v0.1.0/hikarisub-update.json.minisig"}));
+}
+
+TEST_F(AiSidecarDownloadTest, AManifestWithoutAGoodSignatureDownloadsNothing)
+{
+    const QByteArray packed = gzip(executable);
+    const QByteArray body = manifest(sidecarAssetName(kVersion, sidecarPlatform()), packed.size(),
+                                     QCryptographicHash::hash(packed, QCryptographicHash::Sha256).toHex());
+    serve(packed, body, "v0.0.9");
+    Outcome outcome = run();
+    ASSERT_TRUE(outcome.error);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    EXPECT_EQ(outcome.detail.toStdString(),
+              hikari::application::signatureProblemText(hikari::application::SignatureProblem::OtherRelease));
+
+    serve(packed, body);
+    server.files.erase("/download/v0.1.0/hikarisub-update.json.minisig");
+    outcome = run();
+    ASSERT_TRUE(outcome.error);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+
+    serve(packed, body);
+    server.files["/download/v0.1.0/hikarisub-update.json"] = body + " ";
+    outcome = run();
+    ASSERT_TRUE(outcome.error);
+    EXPECT_EQ(*outcome.error, SidecarDownloadError::Manifest);
+    for (const QByteArray &path : server.requested)
+        EXPECT_FALSE(path.endsWith(".gz")) << path.toStdString();
+    EXPECT_TRUE(filesInVersion().isEmpty());
 }
 
 TEST_F(AiSidecarDownloadTest, DescribeTellsTheSizeWithoutDownloading)
@@ -207,7 +248,7 @@ TEST_F(AiSidecarDownloadTest, DescribeTellsTheSizeWithoutDownloading)
     const Outcome outcome = run(false);
     ASSERT_TRUE(outcome.described);
     EXPECT_EQ(outcome.described->size, packed.size());
-    EXPECT_EQ(server.requested.size(), 1u);
+    EXPECT_EQ(server.requested.size(), 2u);
 }
 
 TEST(SidecarAssetIn, RefusesAnAssetNamedForAnotherVersionOrPlatformAndABadHash)

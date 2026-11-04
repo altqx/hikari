@@ -2776,6 +2776,10 @@ Output device: %2</source>
         <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>ประมาณตำแหน่งเป็นพื้นที่ที่ใกล้ที่สุดแล้ว</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>ลบการจัดเวลาคาราโอเกะแล้ว</translation>
     </message>
@@ -2798,6 +2802,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1” เป็นโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>ป้อนรหัสภาษา เช่น en หรือ pt-BR หรือเว้นว่างไว้</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2904,6 +2912,18 @@ Output device: %2</source>
         <translation>ชื่อผู้พูด</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>สไตล์ข้อความตามเวลาของ Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>เวลาเป็นเฟรม</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
     </message>
@@ -2918,6 +2938,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>ข้อความเป็นสีขาวและอยู่กึ่งกลางด้านบนหรือด้านล่าง คงไว้เฉพาะตัวเอียง และเวลาเป็นเฟรม</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -6884,10 +6908,6 @@ Failed to copy %2 fonts.</source>
         <translation>แสดง</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>ซ่อน</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>ลอย</translation>
     </message>
@@ -10158,8 +10178,24 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดอ้างอิง (ป้องกันไว้ อ่านอย่างเดียว)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>พบใน</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>ไม่พบที่อื่น</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>คำบรรยายอ้างอิงถูกป้องกันไว้ (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1 บรรทัด %2</translation>
     </message>
 </context>
 <context>
@@ -13037,8 +13073,12 @@ Styles deleted:
         <translation>นำไปใช้กับบรรทัดที่เลือก: กำหนดสไตล์ของบรรทัดเหล่านั้น (Enter หรือดับเบิลคลิกที่สไตล์)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>แก้ไข…</translation>
+        <source>New style…</source>
+        <translation>สไตล์ใหม่…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>แก้ไขสไตล์…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -13047,10 +13087,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>เปิดในตัวจัดการสไตล์</translation>
     </message>
 </context>
 <context>
@@ -13080,6 +13116,26 @@ Styles deleted:
         <translation>เปิดแท็บใหม่</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>เสียง</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>คีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>แท็บใหม่</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>บันทึก</translation>
     </message>
@@ -13088,24 +13144,32 @@ Styles deleted:
         <translation>บันทึกทั้งหมด</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>แสดงในโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>คัดลอกเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>สลับไปที่</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>ปิดแท็บอื่น</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>ปิดแท็บทางขวา</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>ปิดแท็บทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>แสดงไฟล์คำบรรยายในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>แสดงวิดีโอในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>แสดงเสียงในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>แสดงคีย์เฟรมในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15416,8 +15480,12 @@ Styles deleted:
         <translation>ตัวกรอง</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>เลื่อนวิดีโอเมื่อ</translation>
+        <source>Move video to the selected line</source>
+        <translation>เลื่อนวิดีโอไปยังบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>หลังเลื่อนแล้วเล่น</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15442,10 +15510,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>จากนั้นเล่น</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16729,14 +16793,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>ย้ายแท็บไปทางขวา</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>เลิกยึดติด</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>ปิดเอกสารอ้างอิง</translation>
     </message>
     <message>
         <source>Move panel</source>

@@ -1,5 +1,8 @@
 #include "hikari/backends/ai_sidecar_download.h"
 
+#include "hikari/application/update_check.h"
+#include "hikari/application/update_signature.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -11,6 +14,7 @@
 #include <zlib.h>
 
 #include <array>
+#include <string>
 
 namespace hikari::backends::ai {
 
@@ -116,15 +120,15 @@ std::optional<SidecarAsset> sidecarAssetIn(const QByteArray &manifest, const QSt
 
 SidecarSource SidecarSource::gitHub()
 {
-    return {QStringLiteral("https://github.com/altqx/hikari/releases/download/"), true};
+    return {QStringLiteral("https://github.com/altqx/hikari/releases/download/"), true, application::releaseKeys()};
 }
 
-SidecarSource SidecarSource::local(const QUrl &base)
+SidecarSource SidecarSource::local(const QUrl &base, std::vector<minisign::PublicKey> keys)
 {
     QString root = base.toString();
     if (!root.endsWith(QLatin1Char('/')))
         root += QLatin1Char('/');
-    return {root, false};
+    return {root, false, std::move(keys)};
 }
 
 AiSidecarDownload::AiSidecarDownload(QString root, QString version, SidecarSource source, QObject *parent)
@@ -205,7 +209,27 @@ void AiSidecarDownload::fetchManifest(bool thenDownload)
         m_reply = nullptr;
         if (reply->error() != QNetworkReply::NoError)
             return fail(SidecarDownloadError::Manifest, reply->errorString());
-        const auto asset = sidecarAssetIn(reply->readAll(), m_version, sidecarPlatform());
+        fetchSignature(reply->readAll(), thenDownload);
+    });
+}
+
+void AiSidecarDownload::fetchSignature(QByteArray manifest, bool thenDownload)
+{
+    const QUrl url(m_source.downloadBase + QStringLiteral("v%1/").arg(m_version) +
+                   QLatin1String(application::kManifestSignatureAsset));
+    m_reply = get(url, qint64(minisign::kMaxSignatureBytes));
+    connect(m_reply, &QNetworkReply::finished, this,
+            [this, thenDownload, manifest = std::move(manifest), reply = m_reply.data()] {
+        reply->deleteLater();
+        m_reply = nullptr;
+        const auto signature =
+            reply->error() == QNetworkReply::NoError ? std::optional(reply->readAll().toStdString()) : std::nullopt;
+        const auto problem = application::releaseSignatureProblem(manifest.toStdString(), signature,
+                                                                  "v" + m_version.toStdString(),
+                                                                  application::kManifestAsset, m_source.keys);
+        if (problem)
+            return fail(SidecarDownloadError::Manifest, QString::fromLatin1(application::signatureProblemText(*problem)));
+        const auto asset = sidecarAssetIn(manifest, m_version, sidecarPlatform());
         if (!asset)
             return fail(SidecarDownloadError::NoAsset);
         m_asset = asset;

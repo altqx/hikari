@@ -2334,15 +2334,17 @@ QVariantList Application::reviewClose(const QString &then)
     if (then != QLatin1String("files"))
         m_pendingFiles.reset();
     std::vector<application::DocumentId> scope;
-    if (then != QLatin1String("tab"))
-        m_closingTab.reset();
+    if (then != QLatin1String("tab")) {
+        m_closingTabs.clear();
+        m_tabAfterClose.reset();
+    }
     m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset();
     if (then == QLatin1String("quit") || then == QLatin1String("session"))
         scope = m_workspace.documents();
     else if (then == QLatin1String("tab"))
-        scope = m_closingTab ? std::vector{*m_closingTab} : std::vector<application::DocumentId>{};
+        scope = m_closingTabs;
     else if (then == QLatin1String("all"))
         scope = m_workspace.allTabs();
     else if (const auto target = m_workspace.editingTarget())
@@ -2550,8 +2552,14 @@ void Application::finishClose()
     } else if (then == QLatin1String("session")) {
         applySession();
     } else if (then == QLatin1String("tab")) {
-        if (const auto tab = std::exchange(m_closingTab, std::nullopt))
-            closeDocument(*tab);
+        const auto target = m_workspace.editingTarget();
+        const auto closing = std::exchange(m_closingTabs, {});
+        const auto after = std::exchange(m_tabAfterClose, std::nullopt);
+        for (const auto tab : closing)
+            closeDocument(tab);
+        if (after && target && std::ranges::find(closing, *target) != closing.end() &&
+            m_workspace.setEditingTarget(*after))
+            refreshViews();
     } else if (then == QLatin1String("all")) {
         closeAllTabs();
     } else if (then == QLatin1String("files")) {
@@ -2575,7 +2583,8 @@ void Application::cancelClose()
     m_pendingOpen.reset();
     m_pendingOpenPath.clear();
     m_pendingSession.reset();
-    m_closingTab.reset();
+    m_closingTabs.clear();
+    m_tabAfterClose.reset();
     m_videoAfterOpen.clear();
     m_videoAfterOpenFullscreen = false;
     m_openFromVideo = false;

@@ -36,6 +36,21 @@ ShellMenu {
     }
 
     ShellMenuItem {
+        iconRole: "compare"
+        objectName: "compareSubtitles"
+        text: qsTr("Compare")
+        enabled: comparison.menuState.canCompare === true
+        onTriggered: comparison.app.compareWithTab(comparison.tabIndex)
+    }
+    ShellMenuItem {
+        iconRole: "compare-off"
+        objectName: "turnOffComparison"
+        text: qsTr("Turn off comparison")
+        enabled: comparison.menuState.active === true
+        onTriggered: comparison.app.turnOffComparison()
+    }
+    MenuSeparator {}
+    ShellMenuItem {
         id: compareByTimes
         objectName: "compareByTimes"
         text: qsTr("Compare by times")
@@ -93,19 +108,5 @@ ShellMenu {
             onObjectAdded: (index, object) => stylesMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => stylesMenu.removeItem(object)
         }
-    }
-    ShellMenuItem {
-        iconRole: "compare"
-        objectName: "compareSubtitles"
-        text: qsTr("Compare")
-        enabled: comparison.menuState.canCompare === true
-        onTriggered: comparison.app.compareWithTab(comparison.tabIndex)
-    }
-    ShellMenuItem {
-        iconRole: "compare-off"
-        objectName: "turnOffComparison"
-        text: qsTr("Turn off comparison")
-        enabled: comparison.menuState.active === true
-        onTriggered: comparison.app.turnOffComparison()
     }
 }

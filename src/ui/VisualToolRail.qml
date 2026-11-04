@@ -100,6 +100,8 @@ Frame {
                 text: rail.tools.families[family]?.name ?? ""
                 help: rail.tipOf(family)
                 enabled: rail.tools.railEnabled
+                checkable: true
+                checked: rail.tools.activeFamily === family
                 keepsMenuOpen: false
                 // MUST KILL: the menu must close before selectFamily rebuilds its entries
                 onTriggered: {
