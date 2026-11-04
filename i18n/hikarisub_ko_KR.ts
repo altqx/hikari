@@ -6091,6 +6091,10 @@ Failed to copy %2 fonts.</source>
         <source>You cannot use the program exit shortcut.</source>
         <translation>프로그램 종료 단축키는 사용할 수 없습니다.</translation>
     </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>영상에 맞추기…</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Karaoke</name>
@@ -7896,6 +7900,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>사소한 오류 수정 기능이 제거되었습니다. 규칙은 %1에 그대로 남아 있지만 사용되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>선택한 지점이 색을 유지하는, 영상 프레임 주변의 프레임에 맞춰 활성 줄의 시간을 정합니다</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>영상에 맞추기…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>영상에 맞추기</translation>
     </message>
 </context>
 <context>
@@ -15254,6 +15270,68 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>열기</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>영상에 맞추기</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>먼저 영상을 여세요.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>먼저 맞출 줄을 선택하세요.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>영상의 프레임 하나를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>자막이 읽기 전용입니다.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>줄이 보여야 하는 동안 색이 유지되는 지점을 클릭하세요. 이 프레임 주변에서 그 색이 유지되는 모든 프레임에 줄의 시간이 맞춰집니다.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>영상 프레임</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>화살표 키로 지점을 옮기고, Enter로 맞춥니다</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>지점 X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>지점 Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>색상 %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>허용 오차</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>색이 얼마나 달라져도 같은 색으로 볼지, 0부터 255까지</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>검색 중… 프레임 %n개 확인함</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>맞추기</translation>
     </message>
 </context>
 <context>

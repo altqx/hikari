@@ -57,5 +57,6 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 5231 | `GLOBAL_PLUGINS` Plugins (HikariSub's own command, PL1) | — | none: opens the plugin manager; Automation > "Plugins…" | `shell_tests`, `hotkeys_tests` |
 | 1033 | `AUDIO_GOTO_START` Go to selection start (Aegisub 3.5 `audio/go_to/start`, FA10) | — | none (audio panel): centres the audio view on the start of the audio selection; audio panel » > "Go to selection start" | `audio_display_tests`, `shell_tests`, `hotkeys_tests` |
 | 1034 | `AUDIO_GOTO_END` Go to selection end (Aegisub 3.5 `audio/go_to/end`, FA10) | — | none (audio panel): centres the audio view on the end of the audio selection; audio panel » > "Go to selection end" | `audio_display_tests`, `shell_tests`, `hotkeys_tests` |
+| 5238 | `GLOBAL_ALIGN_TO_VIDEO` Align to video… (HikariSub's own command, FA14) | — | none: pauses the video and opens a window on its frame; a picked point's colour is followed frame by frame both ways, and the active line is timed to the frames where it holds, in one undo step; Video > "Align to video…" | `align_to_video_tests`, `shell_tests`, `hotkeys_tests` |
 
 A "Not yet" row is unfinished, not dropped: each is assigned to the card or surface named.

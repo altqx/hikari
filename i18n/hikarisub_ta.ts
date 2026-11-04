@@ -6134,6 +6134,10 @@ Failed to copy %2 fonts.</source>
         <source>You cannot use the program exit shortcut.</source>
         <translation>நிரலை விட்டு வெளியேறும் குறுக்குவிசையைப் பயன்படுத்த முடியாது.</translation>
     </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Karaoke</name>
@@ -7947,6 +7951,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>சிறு பிழைகளைச் சரிசெய் அம்சம் அகற்றப்பட்டது. உங்கள் விதிகள் %1 இல் பயன்படுத்தப்படாமல் அப்படியே உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>தேர்ந்த புள்ளி தன் வண்ணத்தைத் தக்கவைக்கும், வீடியோ சட்டகத்தைச் சுற்றியுள்ள சட்டகங்களுக்கு செயலில் உள்ள வரியின் நேரத்தை அமைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>வீடியோவுடன் சீரமை</translation>
     </message>
 </context>
 <context>
@@ -15356,6 +15372,69 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>திற</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>வீடியோவுடன் சீரமை</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>முதலில் சீரமைக்க ஒரு வரியைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>வீடியோவின் ஒரு சட்டகத்தைப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>வசன வரிகள் படிக்க மட்டுமே.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>வரி தெரிய வேண்டிய வரை தன் வண்ணத்தைத் தக்கவைக்கும் ஒரு புள்ளியைக் கிளிக் செய்யவும். இந்தச் சட்டகத்தைச் சுற்றி அது அப்படியே இருக்கும் ஒவ்வொரு சட்டகத்துக்கும் வரியின் நேரம் அமைக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>வீடியோ சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>அம்பு விசைகள் புள்ளியை நகர்த்தும்; Enter சீரமைக்கும்</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>புள்ளி X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>புள்ளி Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>வண்ணம் %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>சகிப்பளவு</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>ஒரு வண்ணம் எவ்வளவு மாறினாலும் அதே வண்ணமாகக் கருதப்படும் அளவு, 0 முதல் 255 வரை</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>தேடுகிறது… %n சட்டகம் சரிபார்க்கப்பட்டது</numerusform>
+            <numerusform>தேடுகிறது… %n சட்டகங்கள் சரிபார்க்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>சீரமை</translation>
     </message>
 </context>
 <context>

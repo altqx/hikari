@@ -309,6 +309,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_INSERT_HARD_SPACE", 5228},
         {"GLOBAL_PLUGINS", 5231},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
+        {"GLOBAL_ALIGN_TO_VIDEO", 5238},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
 };
 
@@ -584,6 +585,7 @@ constexpr NameRow kNames[] = {
         {5228, "Insert hard space"},
         {5231, "Plugins"},
         {5229, "Centre times within frames"},
+        {5238, "Align to video…"},
         {5223, "Import legacy settings…"},
 };
 

@@ -933,6 +933,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
     }
     {
+        AlignToVideoController::Hooks hooks;
+        hooks.video = [this] { return videoState() == application::VideoState::None ? nullptr : &m_video->session(); };
+        hooks.target = [this] { return targetSession(); };
+        hooks.pause = [this] {
+            if (m_video->playing())
+                m_video->pause();
+        };
+        hooks.refresh = [this] {
+            m_editor->reloadFromSession();
+            refreshViews();
+        };
+        m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
+    }
+    {
         FontCollectorController::Hooks hooks;
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
@@ -5720,6 +5734,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
+            {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},

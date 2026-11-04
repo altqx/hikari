@@ -55,3 +55,7 @@ Grid ▸ Split ▸ "Into frames" bakes animations by default (Grid ▸ Split ▸
 - Tags written by the bake keep FBF's values but not its tag order or number formatting.
 
 With the option off, the split is byte for byte what it was before FA15. [FA15 #572](https://github.com/altqx/hikari/issues/572), owner decision 2026-11-03 ("yes to all").
+
+## FA14-search-step
+
+Align to video checks every frame. Aegisub's Align subtitle to video by key point (wangqr's tool in arch1t3cht's fork) steps two frames at a time, so it can step over a single frame where the point does not hold and time the line across it. A run of matching pixels that reaches the frame's edge ends at the edge. In Aegisub it ended at the picked point, so a shape that touched the edge in one frame and had shrunk away from it in the next could still match. [FA14 #571](https://github.com/altqx/hikari/issues/571), coordinator decisions 2026-11-03.

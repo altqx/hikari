@@ -833,4 +833,14 @@
         </translation>
     </message>
 </context>
+<context>
+    <name>HikariSub.Video</name>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Searching… %n frame checked</numerusform>
+            <numerusform>Searching… %n frames checked</numerusform>
+        </translation>
+    </message>
+</context>
 </TS>
