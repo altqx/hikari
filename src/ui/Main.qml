@@ -5832,10 +5832,12 @@ ApplicationWindow {
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
                 ShiftTimesPanel {
                     id: shiftTimesPanel
+                    objectName: "shiftTimesPanel"
                     anchors.fill: parent
                     focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    shellWindow: root.shellWindow
                     messages: root.messages
                     hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
@@ -5865,6 +5867,7 @@ ApplicationWindow {
                     focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    shellWindow: root.shellWindow
                     messages: root.messages
                     onApply: root.applyShift("postprocessor")
                     onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
@@ -5906,6 +5909,7 @@ ApplicationWindow {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    shellWindow: root.shellWindow
                     editor: root.editor
                     onEscaped: root.focusPanel(editorPanel, Qt.OtherFocusReason)
                 }
@@ -5964,6 +5968,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     focus: true
                     app: root.app
+                    shellWindow: root.shellWindow
                     notices: root.notices
                     documentName: root.shell.editingTitle
                     onSettingsRequested: root.openSettings("spelling")
@@ -5991,6 +5996,7 @@ ApplicationWindow {
                     objectName: "stylesTool"
                     anchors.fill: parent
                     styles: root.styleManager
+                    shellWindow: root.shellWindow
                     editor: root.editor
                     app: root.app
                     manager: styleManagerWindow
