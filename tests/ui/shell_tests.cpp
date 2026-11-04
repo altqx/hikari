@@ -12055,7 +12055,7 @@ private slots:
         press(Qt::Key_Return, Qt::AltModifier);
         QTRY_VERIFY(item("findResultsPane")->isVisible());
         QTRY_VERIFY(item("findResultsList")->isVisible());
-        const auto rows = application->findResults();
+        const auto rows = application->findResults(0);
         QCOMPARE(rows.size(), 4);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("find.ass"));
         QCOMPARE(rows[2].toMap().value(QStringLiteral("line")).toInt(), 2);
@@ -12256,7 +12256,7 @@ private slots:
         application->findNext();
         find[QStringLiteral("scope")] = QStringLiteral("openDocuments");
         application->runFindReplace(QStringLiteral("findAll"), find);
-        const auto rows = application->findResults();
+        const auto rows = application->findResults(0);
         QCOMPARE(rows.size(), 6);
         application->showFindResult(5);
         QCOMPARE(application->workspace().editingTarget(), std::optional(second));
@@ -12421,7 +12421,7 @@ private slots:
                                      {QStringLiteral("find"), QStringLiteral("a dog")},
                                      {QStringLiteral("filters"), QStringLiteral("one.ass")},
                                      {QStringLiteral("folder"), folder.path()}});
-        const auto found = application->findResults();
+        const auto found = application->findResults(0);
         QCOMPARE(found.size(), 2);
         application->showFindResult(1);
         QCOMPARE(application->workspace().documents().size(), std::size_t(1));
@@ -12507,7 +12507,7 @@ private slots:
                                      {QStringLiteral("folder"), folder.path()},
                                      {QStringLiteral("subfolders"), true}});
         QStringList headers;
-        for (const QVariant &row : application->findResults())
+        for (const QVariant &row : application->findResults(0))
             if (row.toMap().value(QStringLiteral("header")).toBool())
                 headers << row.toMap().value(QStringLiteral("text")).toString();
         QCOMPARE(headers, expected);
@@ -12535,7 +12535,7 @@ private slots:
                                     {{QStringLiteral("scope"), QStringLiteral("folder")},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.path()}});
-        QCOMPARE(application->findResults().size(), 2);
+        QCOMPARE(application->findResults(0).size(), 2);
         const auto question = [&] { return item<QObject>("closeQuestion"); };
         const auto answer = [&](const char *id) {
             return QMetaObject::invokeMethod(question(), "answer", Q_ARG(QVariant, QLatin1String(id)));
@@ -13270,7 +13270,8 @@ private slots:
         QTRY_VERIFY((question = item<QObject>("findQuestion")));
         emit application->findQuestion(0, QStringLiteral("styles"), {{QStringLiteral("title"), QStringLiteral("Find")},
                                               {QStringLiteral("text"), QStringLiteral("a.ass has no style named “X”.")},
-                                              {QStringLiteral("severity"), QStringLiteral("warning")}});
+                                              {QStringLiteral("severity"), QStringLiteral("warning")}},
+                                       0);
         QTRY_VERIFY(question->property("opened").toBool());
         auto *questionBox = qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>());
         QVERIFY(questionBox);
@@ -14194,7 +14195,7 @@ private slots:
         QTRY_VERIFY((question = item<QObject>("findQuestion")));
         const auto ask = [&](const QString &kind, const QVariantMap &shown, const QString &file) {
             themed([&](const QString &theme) {
-                emit application->findQuestion(0, kind, shown);
+                emit application->findQuestion(0, kind, shown, 0);
                 QTRY_VERIFY(question->property("opened").toBool());
                 auto *box = qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>());
                 save(box, file, theme);

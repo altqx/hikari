@@ -8,6 +8,7 @@ FocusScope {
     id: panel
     required property ShiftTimesController shiftTimes
     required property var app
+    required property int shellWindow
     property var messages: null
     property bool exact: false
     property bool hasKeyframes: false
@@ -39,7 +40,7 @@ FocusScope {
             return
         exact = app.exactTimebase()
         hasKeyframes = app.hasKeyframes()
-        preview.plan = app.shiftPreview("postprocessor")
+        preview.plan = app.shiftPreview("postprocessor", shellWindow)
     }
     function ownsKey(event) {
         const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
