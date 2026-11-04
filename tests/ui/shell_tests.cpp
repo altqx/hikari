@@ -16356,8 +16356,39 @@ private slots:
         QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
         QVERIFY(!stored->keys.contains("codex-chatgpt"));
 
+        const auto fakeSignIns = [&](const char *outcome) {
+            app::AiFeatures *features = application->ai();
+            features->setDrafting(true);
+            backends::ai::AiSidecarHost *host = features->sidecarForAction();
+            features->setDrafting(false);
+            QVERIFY(host);
+            bool answered = false;
+            host->request("fake.signin", api::Json(outcome), [&](backends::ai::SidecarResult) { answered = true; });
+            QTRY_VERIFY(answered);
+        };
+        fakeSignIns("hang");
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
+        QQuickItem *code = nullptr;
+        QTRY_VERIFY((code = dialogItem("settingsDialog", "aiCodexCode")) && code->isVisible());
+        QCOMPARE(code->property("text").toString(), QStringLiteral("FAKE-1234"));
+        QCOMPARE(code->property("font").value<QFont>().featureValue(QFont::Tag("zero")), 1u);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexCancel"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
+
         QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
         QQuickItem *signIn = nullptr;
+        QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
+        QVERIFY(QMetaObject::invokeMethod(signIn, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiDraftDot")->isVisible());
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaitingText")->property("truncated").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiOpenRouterCancel"), "click"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(page, "closeForm"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
+        fakeSignIns("ok");
+
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("OpenRouter key"));
         QVERIFY(signIn->isVisible());
@@ -16368,6 +16399,17 @@ private slots:
         QQuickItem *note = nullptr;
         QTRY_VERIFY((note = dialogItem("settingsDialog", "aiProvider_openrouter")->findChild<QQuickItem *>(QStringLiteral("aiProviderKeyNote"))));
         QCOMPARE(note->property("text").toString(), QStringLiteral("Signed in (OpenRouter)"));
+        QVERIFY(QMetaObject::invokeMethod(
+            dialogItem("settingsDialog", "aiProvider_openrouter")->findChild<QQuickItem *>(QStringLiteral("aiProviderEdit")), "click"));
+        QQuickItem *signOut = nullptr;
+        QTRY_VERIFY((signOut = dialogItem("settingsDialog", "aiOpenRouterSignOut")) && signOut->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(signOut, "click"));
+        QTRY_VERIFY(!stored->keys.contains("openrouter"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiProvider_openrouter")
+                         ->findChild<QQuickItem *>(QStringLiteral("aiProviderKeyNote"))
+                         ->property("text")
+                         .toString(),
+                     QStringLiteral("No key"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }

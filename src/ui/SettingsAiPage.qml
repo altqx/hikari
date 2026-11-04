@@ -18,6 +18,11 @@ ScrollView {
     property var stagedRoles: ({})
     readonly property var codex: ai ? ai.codex : ({})
     property bool codexBrowser: false
+    readonly property string codeFontFamily: {
+        const marked = ["Cascadia Mono", "Consolas", "Menlo", "JetBrains Mono", "Noto Sans Mono"]
+        const installed = Qt.fontFamilies()
+        return marked.find(family => installed.includes(family)) ?? "monospace"
+    }
     readonly property var roleNames: [
         {id: "chat", name: qsTr("Chat")},
         {id: "translator", name: qsTr("Translator")},
@@ -375,8 +380,9 @@ ScrollView {
                     spacing: 8
                     BusyIcon {}
                     Label {
+                        objectName: "aiOpenRouterWaitingText"
                         text: qsTr("Waiting for openrouter.ai in your browser")
-                        elide: Text.ElideRight
+                        wrapMode: Text.Wrap
                         Layout.fillWidth: true
                     }
                     Button {
@@ -452,8 +458,13 @@ ScrollView {
                 spacing: 8
                 Layout.fillWidth: true
                 Layout.topMargin: 4
-                StatusDot { status: form.draft.state ?? ""; visible: (form.draft.state ?? "") !== "" }
+                StatusDot {
+                    objectName: "aiDraftDot"
+                    status: form.draft.state ?? ""
+                    visible: draftStatus.text !== ""
+                }
                 Label {
+                    id: draftStatus
                     objectName: "aiDraftStatus"
                     text: {
                         switch (form.draft.state) {
@@ -647,7 +658,8 @@ ScrollView {
                                         text: row.modelData.state === "failed" && row.modelData.error === "unauthorized"
                                               ? (row.modelData.signedIn ? qsTr("Sign in again with Edit") : qsTr("Replace the key with Edit"))
                                               : row.modelData.signedIn ? qsTr("Signed in (OpenRouter)")
-                                                                       : row.modelData.needsKey ? qsTr("Key in keychain") : qsTr("No key")
+                                              : row.modelData.needsKey && row.modelData.error !== "key" ? qsTr("Key in keychain")
+                                                                                                         : qsTr("No key")
                                         color: Theme.muted
                                     }
                                 }
@@ -918,7 +930,8 @@ ScrollView {
                                     objectName: "aiCodexCode"
                                     text: page.codex.userCode ?? ""
                                     textFormat: Text.PlainText
-                                    font.family: "monospace"
+                                    font.family: page.codeFontFamily
+                                    font.features: { "zero": 1 }
                                     font.pixelSize: 22
                                     font.bold: true
                                     font.letterSpacing: 2
