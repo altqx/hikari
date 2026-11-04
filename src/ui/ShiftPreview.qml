@@ -112,25 +112,37 @@ ColumnLayout {
                 color: Theme.muted
                 horizontalAlignment: Text.AlignRight
                 Layout.preferredWidth: 36
+                Layout.alignment: Qt.AlignTop
             }
-            Label {
-                text: row.modelData.start !== row.modelData.startBefore
-                      ? preview.timeText(row.modelData.startBefore) + " → " + preview.timeText(row.modelData.start)
-                      : preview.timeText(row.modelData.start)
-                font.family: "monospace"
-            }
-            Label {
-                text: row.modelData.end !== row.modelData.endBefore
-                      ? preview.timeText(row.modelData.endBefore) + " → " + preview.timeText(row.modelData.end)
-                      : preview.timeText(row.modelData.end)
-                font.family: "monospace"
-            }
-            Label {
-                text: row.reason
-                textFormat: Text.PlainText
-                elide: Text.ElideRight
-                color: preview.postprocessor ? Theme.muted : Theme.text
+            Flow {
+                id: times
+                spacing: 8
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Label {
+                    id: startTimes
+                    objectName: preview.tool + "PreviewStart"
+                    text: row.modelData.start !== row.modelData.startBefore
+                          ? preview.timeText(row.modelData.startBefore) + " → " + preview.timeText(row.modelData.start)
+                          : preview.timeText(row.modelData.start)
+                    font.family: "monospace"
+                }
+                Label {
+                    id: endTimes
+                    objectName: preview.tool + "PreviewEnd"
+                    text: row.modelData.end !== row.modelData.endBefore
+                          ? preview.timeText(row.modelData.endBefore) + " → " + preview.timeText(row.modelData.end)
+                          : preview.timeText(row.modelData.end)
+                    font.family: "monospace"
+                }
+                Label {
+                    text: row.reason
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    readonly property real besideTimes: times.width - startTimes.width - endTimes.width - 2 * times.spacing - 1
+                    width: Math.min(implicitWidth, besideTimes >= 80 ? besideTimes : times.width)
+                    color: preview.postprocessor ? Theme.muted : Theme.text
+                }
             }
         }
     }

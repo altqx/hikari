@@ -817,6 +817,58 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wczytanie skryptu uruchamia jego kod.</translation>
     </message>
     <message>
+        <source>Not installed by DependencyControl. Remove the file from your autoload folder.</source>
+        <translation>Skrypt nie został zainstalowany przez DependencyControl. Usuń plik z folderu autoload.</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>zainstalowany</translation>
+    </message>
+    <message>
+        <source>installing</source>
+        <translation>instalowanie</translation>
+    </message>
+    <message>
+        <source>uninstalling</source>
+        <translation>odinstalowywanie</translation>
+    </message>
+    <message>
+        <source>waiting to install</source>
+        <translation>oczekuje na instalację</translation>
+    </message>
+    <message>
+        <source>couldn’t install</source>
+        <translation>nie udało się zainstalować</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>niezainstalowany</translation>
+    </message>
+    <message>
+        <source>Uninstall script</source>
+        <translation>Odinstaluj skrypt</translation>
+    </message>
+    <message>
+        <source>Uninstall %1?</source>
+        <translation>Odinstalować %1?</translation>
+    </message>
+    <message>
+        <source>DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</source>
+        <translation>DependencyControl usuwa jego pliki z folderu użytkownika. Moduły zainstalowane razem z nim zostają dla innych skryptów.</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Odinstaluj</translation>
+    </message>
+    <message>
+        <source>Its macros are in Automation › %1.</source>
+        <translation>Jego makra są w menu Automatyzacja › %1.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>Skrypty</translation>
     </message>
@@ -829,6 +881,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Uruchomienia</translation>
     </message>
     <message>
+        <source>Recommended</source>
+        <translation>Zalecane</translation>
+    </message>
+    <message>
+        <source>Filter scripts</source>
+        <translation>Filtruj skrypty</translation>
+    </message>
+    <message>
+        <source>Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</source>
+        <translation>Instaluje z kanału każdego autora przez DependencyControl. Skrypt uruchamia swój kod przy wczytaniu.</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>Wczytaj</translation>
     </message>
@@ -837,12 +901,24 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wczytaj skrypty wymienione w tym pliku</translation>
     </message>
     <message>
+        <source>Browse recommended scripts</source>
+        <translation>Przeglądaj zalecane skrypty</translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation>Żadne makro nie pasuje</translation>
     </message>
     <message>
         <source>Macros</source>
         <translation>Makra</translation>
+    </message>
+    <message>
+        <source>No scripts match</source>
+        <translation>Żaden skrypt nie pasuje</translation>
+    </message>
+    <message>
+        <source>Recommended scripts</source>
+        <translation>Zalecane skrypty</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
@@ -1027,6 +1103,54 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Remove shortcut</source>
         <translation>Usuń skrót</translation>
+    </message>
+    <message>
+        <source>%1 (version %2)</source>
+        <translation>%1 (wersja %2)</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation>Instalowanie…</translation>
+    </message>
+    <message>
+        <source>Uninstalling…</source>
+        <translation>Odinstalowywanie…</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation>Oczekiwanie…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowany</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Show in Scripts</source>
+        <translation>Pokaż w widoku Skrypty</translation>
+    </message>
+    <message>
+        <source>Open project page</source>
+        <translation>Otwórz stronę projektu</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>Odinstaluj…</translation>
+    </message>
+    <message>
+        <source>Installed by hand</source>
+        <translation>Zainstalowany ręcznie</translation>
     </message>
     <message>
         <source>Shortcut</source>
@@ -1374,6 +1498,138 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>not ticked</source>
         <translation>niezaznaczone</translation>
+    </message>
+    <message>
+        <source>DependencyControl’s updater is turned off.</source>
+        <translation>Aktualizator DependencyControl jest wyłączony.</translation>
+    </message>
+    <message>
+        <source>DependencyControl is busy with another update. Try again later.</source>
+        <translation>DependencyControl jest zajęty inną aktualizacją. Spróbuj ponownie później.</translation>
+    </message>
+    <message>
+        <source>Its feed has no release that fits this system.</source>
+        <translation>Jego kanał nie ma wydania pasującego do tego systemu.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the feed: no network connection.</source>
+        <translation>Nie można odczytać kanału: brak połączenia z siecią.</translation>
+    </message>
+    <message>
+        <source>A module it needs couldn’t be installed.</source>
+        <translation>Nie można zainstalować wymaganego modułu.</translation>
+    </message>
+    <message>
+        <source>DependencyControl doesn’t trust its feed.</source>
+        <translation>DependencyControl nie ufa jego kanałowi.</translation>
+    </message>
+    <message>
+        <source>The install was cancelled.</source>
+        <translation>Instalacja została anulowana.</translation>
+    </message>
+    <message>
+        <source>DependencyControl blocks its feed.</source>
+        <translation>DependencyControl blokuje jego kanał.</translation>
+    </message>
+    <message>
+        <source>A downloaded file didn’t match its feed.</source>
+        <translation>Pobrany plik nie zgadza się z kanałem.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be written. Close what uses it and try again.</source>
+        <translation>Nie można zapisać pliku. Zamknij to, co go używa, i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be downloaded.</source>
+        <translation>Nie można pobrać pliku.</translation>
+    </message>
+    <message>
+        <source>DependencyControl couldn’t install it (status %1).</source>
+        <translation>DependencyControl nie mógł go zainstalować (stan %1).</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>Typesetting</translation>
+    </message>
+    <message>
+        <source>Makes a power-pin track from the lines’ perspective, for Perspective-Motion.</source>
+        <translation>Tworzy ścieżkę power-pin z perspektywy linijek, dla Perspective-Motion.</translation>
+    </message>
+    <message>
+        <source>Draws moving focus lines, frame by frame.</source>
+        <translation>Rysuje ruchome linie skupienia, klatka po klatce.</translation>
+    </message>
+    <message>
+        <source>Splits a line at its tags, one line per section.</source>
+        <translation>Dzieli linijkę w miejscach tagów, po jednej linijce na sekcję.</translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation>Edycja</translation>
+    </message>
+    <message>
+        <source>Keeps earlier rewrites of a line and switches between them.</source>
+        <translation>Przechowuje wcześniejsze wersje linijki i przełącza między nimi.</translation>
+    </message>
+    <message>
+        <source>QC</source>
+        <translation>QC</translation>
+    </message>
+    <message>
+        <source>Marks the lines changed since a git commit.</source>
+        <translation>Zaznacza linijki zmienione od commita git.</translation>
+    </message>
+    <message>
+        <source>Needs Git</source>
+        <translation>Wymaga Gita</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>Fixes old KFX templates so Aegisub 3.5 runs them too.</source>
+        <translation>Poprawia stare szablony KFX, aby działały też w Aegisub 3.5.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>Zainstaluj %1</translation>
+    </message>
+    <message>
+        <source>Uninstall %1</source>
+        <translation>Odinstaluj %1</translation>
+    </message>
+    <message>
+        <source>The user folder can’t be written.</source>
+        <translation>Nie można zapisywać w folderze użytkownika.</translation>
+    </message>
+    <message>
+        <source>The uninstall was cancelled.</source>
+        <translation>Odinstalowanie zostało anulowane.</translation>
+    </message>
+    <message>
+        <source>%1 is uninstalled.</source>
+        <translation>Odinstalowano %1.</translation>
+    </message>
+    <message>
+        <source>%1 is installed.</source>
+        <translation>Zainstalowano %1.</translation>
+    </message>
+    <message>
+        <source>The run ended before it finished.</source>
+        <translation>Uruchomienie zakończyło się przed ukończeniem.</translation>
+    </message>
+    <message>
+        <source>DependencyControl has no record of it.</source>
+        <translation>DependencyControl nie ma o nim zapisu.</translation>
+    </message>
+    <message>
+        <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
+        <translation>Nie można usunąć niektórych jego plików. Zamknij to, co ich używa, i spróbuj ponownie.</translation>
     </message>
 </context>
 <context>

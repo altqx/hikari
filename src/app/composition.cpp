@@ -16,6 +16,7 @@
 #include "hikari/app/user_folder.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/update_check.h"
+#include "hikari/backends/ai_mcp_bridge.h"
 #include "hikari/backends/legacy_spelling.h"
 
 #include <QCryptographicHash>
@@ -188,6 +189,13 @@ QString usagePackage(application::PackageKind kind, bool portableCopy)
     return portableCopy ? QStringLiteral("portable") : QStringLiteral("build_tree");
 }
 
+UserFolder::Environment folderEnvironmentOf(const UpdateEnvironment &updateEnvironment)
+{
+    return UserFolder::Environment::current(
+        updateEnvironment.package.kind == application::PackageKind::Portable &&
+        QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Automation/automation")));
+}
+
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
               UpdateInstaller::ExitAction &exitAction, const std::function<void()> &windowShown)
 {
@@ -199,9 +207,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
     const UpdateEnvironment updateEnvironment = UpdateEnvironment::current();
-    const auto folderEnvironment = UserFolder::Environment::current(
-        updateEnvironment.package.kind == application::PackageKind::Portable &&
-        QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Automation/automation")));
+    const auto folderEnvironment = folderEnvironmentOf(updateEnvironment);
     const UserFolder userFolder = UserFolder::locate(folderEnvironment);
     const UserFolder::OldFolders oldFolders = UserFolder::OldFolders::of(folderEnvironment);
     QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
@@ -424,6 +430,11 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
         QCoreApplication core(argc, argv);
         std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
         return 0;
+    }
+    if (startup.mcp) {
+        QCoreApplication core(argc, argv);
+        const UserFolder userFolder = UserFolder::locate(folderEnvironmentOf(UpdateEnvironment::current()));
+        backends::ai::runMcpBridge(backends::ai::mcpEndpointFile(userFolder.root()));
     }
     if (startup.exportDocs) {
         qputenv("QT_QPA_PLATFORM", "offscreen");

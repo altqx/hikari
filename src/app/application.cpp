@@ -750,6 +750,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                 options.appVersion.isEmpty()
                                                                     ? QStringLiteral(HIKARI_VERSION)
                                                                     : options.appVersion));
+    m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
+                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_aiSettings = std::make_unique<AiSettings>(*m_ai);
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
@@ -4120,10 +4122,10 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     for (const auto &l : plan->lines)
         if (selected.contains(l.id) && std::ssize(shown) < kRows)
             shown.push_back(&l);
-    if (shown.empty())
-        for (const auto &l : plan->lines)
-            if (l.changed() && std::ssize(shown) < kRows)
-                shown.push_back(&l);
+    for (const auto &l : plan->lines)
+        if (!selected.contains(l.id) && l.changed() && std::ssize(shown) < kRows)
+            shown.push_back(&l);
+    std::ranges::sort(shown, {}, &application::ShiftedLine::row);
     QVariantList rows;
     int shownChanged = 0;
     for (const auto *l : shown) {

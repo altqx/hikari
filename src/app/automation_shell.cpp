@@ -306,29 +306,11 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
     connect(&m_manager, &backends::AutomationManager::logged, this,
-            [this](const QString &, const QString &text, int level) {
-                if (m_log.size() < ui::AutomationRuns::kMaxChars)
-                    m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
-                if (m_run && !text.isEmpty()) {
-                    m_runs.append(m_runId, text, level);
-                    m_logged = true;
-                    showCard();
-                }
-                emit progressChanged();
-            });
-    connect(&m_manager, &backends::AutomationManager::progressChanged, this, [this](const QString &, double p) {
-        m_progress = p;
-        m_progressKnown = true;
-        if (m_run)
-            m_runs.setProgress(m_runId, p);
-        emit progressChanged();
-    });
-    connect(&m_manager, &backends::AutomationManager::taskChanged, this, [this](const QString &, const QString &t) {
-        m_task = t.left(ui::AutomationRuns::kMaxText);
-        if (m_run)
-            m_runs.setTask(m_runId, m_task);
-        emit progressChanged();
-    });
+            [this](const QString &, const QString &text, int level) { runLogged(text, level); });
+    connect(&m_manager, &backends::AutomationManager::progressChanged, this,
+            [this](const QString &, double p) { runProgress(p); });
+    connect(&m_manager, &backends::AutomationManager::taskChanged, this,
+            [this](const QString &, const QString &t) { runTaskText(t); });
     m_cardTimer.setSingleShot(true);
     connect(&m_manager, &backends::AutomationManager::macroStarted, this, [this](const QString &path) {
         if (!m_run || m_run->active != m_run->path || path.toStdString() != m_run->path)
@@ -338,13 +320,13 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         updateCardTimer();
     });
     connect(&m_runs, &ui::AutomationRuns::removed, this, [this](int id) {
-        if (id == m_runId && !m_run && !m_cardState.isEmpty()) {
+        if (id == m_runId && !running() && !m_cardState.isEmpty()) {
             m_cardState.clear();
             emit progressChanged();
         }
     });
     connect(&m_cardTimer, &QTimer::timeout, this, [this] {
-        if (m_run && !waitingForUser())
+        if (running() && !waitingForUser())
             showCard();
     });
     connect(&m_dialogs, &ui::AutomationDialogController::changed, this, &AutomationShell::updateCardTimer);
@@ -370,6 +352,119 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
             return off;
         },
         [this](const QString &script, bool enabled) { setAutoloadEnabled(script, enabled); });
+    m_packages = std::make_unique<ScriptPackages>(*this, recommendedScripts());
+}
+
+void AutomationShell::runLogged(const QString &text, int level)
+{
+    if (m_log.size() < ui::AutomationRuns::kMaxChars)
+        m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
+    if (running() && !text.isEmpty()) {
+        m_runs.append(m_runId, text, level);
+        m_logged = true;
+        if (m_run)
+            showCard();
+    }
+    emit progressChanged();
+}
+
+void AutomationShell::runProgress(double percent)
+{
+    m_progress = percent;
+    m_progressKnown = true;
+    if (running())
+        m_runs.setProgress(m_runId, percent);
+    emit progressChanged();
+}
+
+void AutomationShell::runTaskText(const QString &text)
+{
+    m_taskText = text.left(ui::AutomationRuns::kMaxText);
+    if (running())
+        m_runs.setTask(m_runId, m_taskText);
+    emit progressChanged();
+}
+
+QString AutomationShell::userAutomationRoot() const
+{
+    return m_paths.userAutomationDir.isEmpty() ? m_paths.automationDir : m_paths.userAutomationDir;
+}
+
+bool AutomationShell::runTask(const QString &title, const QString &script, TaskDone done)
+{
+    using Host = backends::LuaScriptHost;
+    if (busy())
+        return false;
+    auto host = std::make_unique<Host>(m_paths.helper, script, sharedIncludes(m_paths));
+    Host *h = host.get();
+    h->setServiceHandler([this](const application::HostServiceRequest &r, Host::ServiceReply reply) {
+        m_router.handle(r, std::move(reply));
+    });
+    h->setDialogHandler([this](const application::DialogRequest &request, Host::DialogReply reply) {
+        m_dialogs.present(m_title, request, std::move(reply));
+    });
+    connect(h, &Host::loaded, this, [this, h] {
+        if (!h->run(0))
+            endTask(Host::RunOutcome::Failed, h->lastError());
+    });
+    connect(h, &Host::loadFailed, this, [this](const QString &message) { endTask(Host::RunOutcome::Failed, message); });
+    connect(h, &Host::unavailable, this, [this](const QString &reason) { endTask(Host::RunOutcome::HelperLost, reason); });
+    connect(h, &Host::finished, this, &AutomationShell::endTask);
+    connect(h, &Host::logged, this, &AutomationShell::runLogged);
+    connect(h, &Host::progressChanged, this, &AutomationShell::runProgress);
+    connect(h, &Host::taskChanged, this, &AutomationShell::runTaskText);
+    connect(h, &Host::macroStarted, this, [this] {
+        m_macroStarted = true;
+        m_cardTimer.stop();
+        updateCardTimer();
+    });
+    connect(h, &Host::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
+    connect(h, &Host::forceStopOffered, this, &AutomationShell::progressChanged);
+    connect(h, &Host::servicesWithdrawn, this, [this] { m_router.withdraw(); });
+    m_task = Task{std::move(host), std::move(done)};
+    m_macroStarted = false;
+    m_cardTimer.stop();
+    m_cardLeft = m_cardDelay;
+    m_title = title;
+    m_taskText.clear();
+    m_log.clear();
+    m_lastMessage.clear();
+    m_lastOutcome.clear();
+    m_progress = 0;
+    m_keepLog = false;
+    m_problems = 0;
+    m_logged = false;
+    m_cancelling = false;
+    m_progressKnown = false;
+    m_cardState = QStringLiteral("notice");
+    m_cardText.clear();
+    m_runId = m_runs.begin(m_title, QStringLiteral("DependencyControl"), QString());
+    h->load();
+    emit progressChanged();
+    return true;
+}
+
+void AutomationShell::endTask(backends::LuaScriptHost::RunOutcome outcome, const QString &message)
+{
+    using Outcome = backends::LuaScriptHost::RunOutcome;
+    if (!m_task)
+        return;
+    Task task = std::move(*m_task);
+    m_task.reset();
+    m_router.withdraw();
+    m_dialogs.withdraw();
+    const QString text = task.done(outcome, message);
+    const QString ended = outcome == Outcome::Ok          ? QStringLiteral("applied")
+                          : outcome == Outcome::Cancelled ? QStringLiteral("cancelled")
+                                                          : QStringLiteral("failed");
+    m_lastMessage = text;
+    m_lastOutcome = ended;
+    finishCard(ended, text, QString());
+    if (outcome == Outcome::Ok)
+        m_cardState.clear();
+    task.host.release()->deleteLater();
+    emit progressChanged();
+    continueLastScript();
 }
 
 std::string AutomationShell::hostState() const
@@ -800,7 +895,7 @@ void AutomationShell::continueLastScript()
     using State = backends::LuaScriptHost::State;
     if (host && (host->state() == State::Loading || host->state() == State::Idle))
         return;
-    if (host && (m_run || m_manager.busy()))
+    if (host && busy())
         return;
     const std::string path = *m_pendingLast;
     m_pendingLast.reset();
@@ -983,18 +1078,21 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
 
 bool AutomationShell::forceStopOffered() const
 {
-    const auto *host = m_run ? m_manager.host(m_run->active) : nullptr;
+    const auto *host = m_task ? m_task->host.get() : m_run ? m_manager.host(m_run->active) : nullptr;
     return host && host->forceStopAvailable();
 }
 
 void AutomationShell::cancelRun()
 {
-    if (m_run && !m_cancelling) {
+    if (running() && !m_cancelling) {
         m_cancelling = true;
         showCard();
         emit progressChanged();
     }
-    m_manager.cancel();
+    if (m_task)
+        m_task->host->cancel();
+    else
+        m_manager.cancel();
 }
 
 void AutomationShell::finishCard(const QString &ended, const QString &text, const QString &validationError)
@@ -1027,7 +1125,7 @@ void AutomationShell::finishCard(const QString &ended, const QString &text, cons
 
 void AutomationShell::dismissCard()
 {
-    if (m_run || m_cardState.isEmpty())
+    if (running() || m_cardState.isEmpty())
         return;
     m_cardState.clear();
     emit progressChanged();
@@ -1040,7 +1138,7 @@ bool AutomationShell::waitingForUser() const
 
 void AutomationShell::updateCardTimer()
 {
-    if (!m_run || !m_macroStarted || m_cardState != QLatin1String("notice"))
+    if (!running() || !m_macroStarted || m_cardState != QLatin1String("notice"))
         return;
     if (waitingForUser()) {
         if (m_cardTimer.isActive()) {
@@ -1055,7 +1153,7 @@ void AutomationShell::updateCardTimer()
 void AutomationShell::showCard()
 {
     m_cardTimer.stop();
-    if (m_run && m_cardState != QLatin1String("running")) {
+    if (running() && m_cardState != QLatin1String("running")) {
         m_cardState = QStringLiteral("running");
         emit progressChanged();
     }
@@ -1063,12 +1161,14 @@ void AutomationShell::showCard()
 
 bool AutomationShell::forceStopRun()
 {
+    if (m_task)
+        return m_task->host->forceStop();
     return m_run && m_manager.forceStop(m_run->active);
 }
 
 bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin)
 {
-    if (m_run || m_manager.busy())
+    if (busy())
         return false;
     const auto target = m_workspace.editingTarget();
     auto *s = target ? session(*target) : nullptr;
@@ -1105,7 +1205,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_run = std::move(started);
     m_last = {path, ordinal};
     m_title = QString::fromStdString(macro);
-    m_task.clear();
+    m_taskText.clear();
     m_log.clear();
     m_lastMessage.clear();
     m_lastOutcome.clear();

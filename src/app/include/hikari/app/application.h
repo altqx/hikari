@@ -69,6 +69,7 @@
 #include "video_fullscreen_controller.h"
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -1042,6 +1043,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
+    std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;

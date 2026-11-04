@@ -812,6 +812,58 @@ Output device: %2</source>
         <translation>ஒரு ச்கிரிப்டை ஏற்றினால் அதன் நிரல் இயங்கும்.</translation>
     </message>
     <message>
+        <source>Not installed by DependencyControl. Remove the file from your autoload folder.</source>
+        <translation>DependencyControl மூலம் நிறுவப்படவில்லை. உங்கள் தானியங்கு ஏற்றக் கோப்புறையிலிருந்து கோப்பை நீக்கவும்.</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>installing</source>
+        <translation>நிறுவப்படுகிறது</translation>
+    </message>
+    <message>
+        <source>uninstalling</source>
+        <translation>நிறுவல் நீக்கப்படுகிறது</translation>
+    </message>
+    <message>
+        <source>waiting to install</source>
+        <translation>நிறுவக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>couldn’t install</source>
+        <translation>நிறுவ முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Uninstall script</source>
+        <translation>ச்கிரிப்டின் நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Uninstall %1?</source>
+        <translation>%1 இன் நிறுவலை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</source>
+        <translation>DependencyControl உங்கள் பயனர் கோப்புறையிலிருந்து இதன் கோப்புகளை நீக்கும். இதனுடன் வந்த தொகுதிக்கூறுகள் பிற ச்கிரிப்ட்களுக்காக அப்படியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Its macros are in Automation › %1.</source>
+        <translation>இதன் குறுநிரல்கள் தானியங்கு › %1 இல் உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>காட்டு</translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>ச்கிரிப்ட்கள்</translation>
     </message>
@@ -824,6 +876,18 @@ Output device: %2</source>
         <translation>இயக்கங்கள்</translation>
     </message>
     <message>
+        <source>Recommended</source>
+        <translation>பரிந்துரைக்கப்படுவது</translation>
+    </message>
+    <message>
+        <source>Filter scripts</source>
+        <translation>ச்கிரிப்ட்களை வடிகட்டு</translation>
+    </message>
+    <message>
+        <source>Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</source>
+        <translation>ஒவ்வொரு படைப்பாளரின் ஊட்டத்திலிருந்தும் DependencyControl மூலம் நிறுவும். ச்கிரிப்ட் ஏற்றப்படும்போது அதன் குறியீட்டை இயக்கும்.</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>ஏற்று</translation>
     </message>
@@ -832,12 +896,24 @@ Output device: %2</source>
         <translation>இந்தக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்களை ஏற்று</translation>
     </message>
     <message>
+        <source>Browse recommended scripts</source>
+        <translation>பரிந்துரைக்கப்பட்ட ச்கிரிப்ட்களை உலாவு</translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation>பொருந்தும் குறுநிரல்கள் இல்லை</translation>
     </message>
     <message>
         <source>Macros</source>
         <translation>குறுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>No scripts match</source>
+        <translation>பொருந்தும் ச்கிரிப்ட்கள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Recommended scripts</source>
+        <translation>பரிந்துரைக்கப்பட்ட ச்கிரிப்ட்கள்</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
@@ -1021,6 +1097,54 @@ Output device: %2</source>
     <message>
         <source>Remove shortcut</source>
         <translation>குறுக்குவிசையை நீக்கு</translation>
+    </message>
+    <message>
+        <source>%1 (version %2)</source>
+        <translation>%1 (பதிப்பு %2)</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்க</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>நிறுவு</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation>நிறுவுகிறது…</translation>
+    </message>
+    <message>
+        <source>Uninstalling…</source>
+        <translation>நிறுவலை நீக்குகிறது…</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation>காத்திருக்கிறது…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>Show in Scripts</source>
+        <translation>ச்கிரிப்ட்களில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Open project page</source>
+        <translation>திட்டப் பக்கத்தைத் திற</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>நிறுவலை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Installed by hand</source>
+        <translation>கைமுறையாக நிறுவப்பட்டது</translation>
     </message>
     <message>
         <source>Shortcut</source>
@@ -1364,6 +1488,138 @@ Output device: %2</source>
     <message>
         <source>not ticked</source>
         <translation>தேர்வுசெய்யப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>DependencyControl’s updater is turned off.</source>
+        <translation>DependencyControl இன் புதுப்பிப்பான் முடக்கப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>DependencyControl is busy with another update. Try again later.</source>
+        <translation>DependencyControl வேறொரு புதுப்பிப்பில் மும்முரமாக உள்ளது. பிறகு மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
+        <source>Its feed has no release that fits this system.</source>
+        <translation>இதன் ஊட்டத்தில் இந்த அமைப்புக்குப் பொருந்தும் வெளியீடு இல்லை.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the feed: no network connection.</source>
+        <translation>ஊட்டத்தைப் படிக்க முடியவில்லை: பிணைய இணைப்பு இல்லை.</translation>
+    </message>
+    <message>
+        <source>A module it needs couldn’t be installed.</source>
+        <translation>இதற்குத் தேவையான தொகுதிக்கூறை நிறுவ முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>DependencyControl doesn’t trust its feed.</source>
+        <translation>DependencyControl இதன் ஊட்டத்தை நம்பவில்லை.</translation>
+    </message>
+    <message>
+        <source>The install was cancelled.</source>
+        <translation>நிறுவல் ரத்துசெய்யப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>DependencyControl blocks its feed.</source>
+        <translation>DependencyControl இதன் ஊட்டத்தைத் தடுக்கிறது.</translation>
+    </message>
+    <message>
+        <source>A downloaded file didn’t match its feed.</source>
+        <translation>பதிவிறக்கிய கோப்பு அதன் ஊட்டத்துடன் பொருந்தவில்லை.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be written. Close what uses it and try again.</source>
+        <translation>ஒரு கோப்பை எழுத முடியவில்லை. அதைப் பயன்படுத்துவதை மூடிவிட்டு மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be downloaded.</source>
+        <translation>ஒரு கோப்பைப் பதிவிறக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>DependencyControl couldn’t install it (status %1).</source>
+        <translation>DependencyControl ஆல் இதை நிறுவ முடியவில்லை (நிலை %1).</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>டைப்செட்டிங்</translation>
+    </message>
+    <message>
+        <source>Makes a power-pin track from the lines’ perspective, for Perspective-Motion.</source>
+        <translation>வரிகளின் பார்வைக்கோணத்திலிருந்து Perspective-Motion க்கான power-pin தடத்தை உருவாக்கும்.</translation>
+    </message>
+    <message>
+        <source>Draws moving focus lines, frame by frame.</source>
+        <translation>நகரும் குவியக் கோடுகளைச் சட்டகம் சட்டகமாக வரையும்.</translation>
+    </message>
+    <message>
+        <source>Splits a line at its tags, one line per section.</source>
+        <translation>ஒரு வரியை அதன் குறிச்சொற்களில் பிரித்து, ஒவ்வொரு பகுதிக்கும் ஒரு வரியை உருவாக்கும்.</translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation>திருத்துதல்</translation>
+    </message>
+    <message>
+        <source>Keeps earlier rewrites of a line and switches between them.</source>
+        <translation>ஒரு வரியின் முந்தைய மறுஎழுத்துகளை வைத்திருந்து அவற்றுக்கிடையே மாற்றும்.</translation>
+    </message>
+    <message>
+        <source>QC</source>
+        <translation>QC</translation>
+    </message>
+    <message>
+        <source>Marks the lines changed since a git commit.</source>
+        <translation>ஒரு git commit க்குப் பிறகு மாற்றப்பட்ட வரிகளைக் குறிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Needs Git</source>
+        <translation>Git தேவை</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>கரோக்கி</translation>
+    </message>
+    <message>
+        <source>Fixes old KFX templates so Aegisub 3.5 runs them too.</source>
+        <translation>Aegisub 3.5 உம் இயக்கும்படி பழைய KFX வார்ப்புருக்களைச் சரிசெய்யும்.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>%1 ஐ நிறுவு</translation>
+    </message>
+    <message>
+        <source>Uninstall %1</source>
+        <translation>%1 இன் நிறுவலை நீக்கு</translation>
+    </message>
+    <message>
+        <source>The user folder can’t be written.</source>
+        <translation>பயனர் கோப்புறையில் எழுத முடியாது.</translation>
+    </message>
+    <message>
+        <source>The uninstall was cancelled.</source>
+        <translation>நிறுவல் நீக்கம் ரத்துசெய்யப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>%1 is uninstalled.</source>
+        <translation>%1 இன் நிறுவல் நீக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>%1 is installed.</source>
+        <translation>%1 நிறுவப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The run ended before it finished.</source>
+        <translation>இயக்கம் முடிவடைவதற்கு முன்பே நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>DependencyControl has no record of it.</source>
+        <translation>DependencyControl இல் இதன் பதிவு இல்லை.</translation>
+    </message>
+    <message>
+        <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
+        <translation>இதன் சில கோப்புகளை நீக்க முடியவில்லை. அவற்றைப் பயன்படுத்துவதை மூடிவிட்டு மீண்டும் முயலவும்.</translation>
     </message>
 </context>
 <context>

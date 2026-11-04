@@ -39,6 +39,8 @@ export const Method = {
     apiSubscribe: "_hikari/api.subscribe",
     toolsList: "_hikari/tools.list",
     toolsCall: "_hikari/tools.call",
+    mcpMessage: "_hikari/mcp.message",
+    mcpClosed: "_hikari/mcp.closed",
     secretStore: "_hikari/secret.store",
 } as const;
 
@@ -61,6 +63,33 @@ export interface InitializeResult extends InitializeParams {
 export interface ApiCallParams {
     operation: string;
     params?: unknown;
+    /** The MCP connection the call is for; Qt runs it as that connection's caller. */
+    mcp?: McpVia;
+}
+
+export interface McpVia {
+    connection: string;
+    /** The client's name from its clientInfo, which names its undo steps. */
+    client?: string;
+}
+
+export interface McpMessageParams {
+    connection: string;
+    /** One JSON-RPC message from the client, as it arrived. */
+    text: string;
+    /** Set for Streamable HTTP, whose headers must agree with the message. */
+    http?: { protocolVersion?: string; method?: string; name?: string };
+}
+
+export interface McpMessageResult {
+    /** The JSON-RPC reply to write back; none for a notification or a cancelled request. */
+    reply?: string;
+    /** The Streamable HTTP status. */
+    status: number;
+}
+
+export interface McpClosedParams {
+    connection: string;
 }
 
 export interface ToolsListParams {
