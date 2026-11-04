@@ -6,6 +6,7 @@
 #include <ffms.h>
 
 extern "C" {
+#include <libavutil/pixdesc.h>
 #include <libavutil/pixfmt.h>
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
@@ -216,6 +217,7 @@ void open(Source &source, Reader &in, Responder &r)
         return failDisplay(r, Outcome::Failed, Stage::Source, errorText(err));
     // Read before FFMS_SetOutputFormatV2, which resets the frame's colour fields.
     const int firstColorSpace = first->ColorSpace, firstColorRange = first->ColorRange;
+    const AVPixFmtDescriptor *encoded = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(first->EncodedPixelFormat));
     const int formats[] = {AV_PIX_FMT_BGRA, -1};
     if (FFMS_SetOutputFormatV2(video.get(), formats, first->EncodedWidth, first->EncodedHeight,
                                FFMS_RESIZER_BICUBIC, &err) != 0)
@@ -245,6 +247,15 @@ void open(Source &source, Reader &in, Responder &r)
     out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
     out.i32(first->EncodedWidth).i32(first->EncodedHeight).i32(props->SARNum).i32(props->SARDen);
     out.i32(firstColorSpace).i32(firstColorRange);
+    if (encoded)
+        out.str(encoded->name)
+            .u8((encoded->flags & AV_PIX_FMT_FLAG_RGB) != 0 ? 1 : 0)
+            .i32(encoded->nb_components)
+            .i32(encoded->log2_chroma_w)
+            .i32(encoded->log2_chroma_h)
+            .i32(encoded->comp[0].depth);
+    else
+        out.str({}).u8(0).i32(0).i32(0).i32(0).i32(0);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);

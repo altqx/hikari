@@ -116,6 +116,9 @@ public:
     Q_INVOKABLE bool seekChapter(int index);
     Q_INVOKABLE bool nextChapter();
     Q_INVOKABLE bool previousChapter();
+    // Video > Video details: file, resolution, frameRate, length, colourSpace, matrix
+    // and scriptMatrix (empty when the subtitles use the video's); empty without video.
+    Q_INVOKABLE QVariantMap details() const;
 
     void retranslate() { emit textsChanged(); }
 

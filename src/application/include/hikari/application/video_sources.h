@@ -56,9 +56,17 @@ private:
     int m_actualFile = 0;
 };
 
+// A decimal ("23.976") or an exact fraction ("24000/1001").
+struct DummyFrameRate {
+    double fps = 0;
+    std::int64_t numerator = 0, denominator = 0; // 0: decimal
+    bool exact() const { return denominator > 0; }
+};
+std::optional<DummyFrameRate> parseDummyFrameRate(std::string_view text);
+
 // "?dummy:fps:frames:width:height:r:g:b:c"
 struct DummyVideo {
-    float fps = 0;
+    DummyFrameRate rate;
     int frames = 0;
     int width = 0, height = 0;
     std::uint8_t red = 0, green = 0, blue = 0;
@@ -70,7 +78,7 @@ inline constexpr char kDummyVideoPrefix[] = "?dummy";
 bool isDummyVideo(std::string_view path);
 
 // `fps` 15 to 120, else InvalidFps; the text holds duration / (1000 / fps)
-// frames, truncated.
+// frames, truncated. A decimal is written "%f"; a fraction as "num/den".
 enum class DummyVideoError { InvalidFps };
 std::expected<std::string, DummyVideoError> dummyVideoText(std::string_view fps, int durationMs, int width, int height,
                                                            std::uint8_t red, std::uint8_t green, std::uint8_t blue,
@@ -87,7 +95,8 @@ std::optional<DummyVideo> parseDummyVideo(std::string_view text);
 // green).
 std::vector<std::byte> dummyVideoFrame(const DummyVideo &video);
 
-// Frame n at n * (1000 / fps) ms, truncated.
+// Frame n at n * (1000 / fps) ms, truncated; a fraction's in exact arithmetic.
+int dummyVideoFrameMs(const DummyVideo &video, int frame);
 std::vector<int> dummyVideoTimecodes(const DummyVideo &video);
 
 // The frames at `sampleRate` of silent audio as long as the video, rounded.

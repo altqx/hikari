@@ -8,6 +8,7 @@ FocusScope {
     id: panel
     required property ShiftTimesController shiftTimes
     required property var app
+    required property int shellWindow
     property var messages: null
     property bool hasVideo: false
     property bool audioHasMark: false
@@ -41,7 +42,7 @@ FocusScope {
         if (!visible)
             return
         exact = app.exactTimebase()
-        preview.plan = app.shiftPreview("shift")
+        preview.plan = app.shiftPreview("shift", shellWindow)
     }
     function timeText(ms) {
         return preview.timeText(ms)

@@ -314,6 +314,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_OPEN_TIMECODES", 5234},
         {"GLOBAL_SAVE_TIMECODES", 5235},
         {"GLOBAL_CLOSE_TIMECODES", 5236},
+        {"GLOBAL_VIDEO_DETAILS", 5237},
         {"GLOBAL_CONVERT_FOLDS_TO_GROUPS", 5239},
 };
 
@@ -594,6 +595,7 @@ constexpr NameRow kNames[] = {
         {5234, "Open timecodes"},
         {5235, "Save timecodes"},
         {5236, "Close timecodes"},
+        {5237, "Video details…"},
         {5239, "Convert Aegisub folds to line groups"},
 };
 

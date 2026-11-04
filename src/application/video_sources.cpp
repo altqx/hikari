@@ -43,6 +43,15 @@ std::optional<double> toCDouble(std::string_view text)
     return v;
 }
 
+std::optional<std::int64_t> toPositiveInt32(std::string_view text)
+{
+    std::int64_t v = 0;
+    const auto [end, ec] = std::from_chars(text.data(), text.data() + text.size(), v);
+    if (ec != std::errc() || end != text.data() + text.size() || v <= 0 || v > INT_MAX)
+        return std::nullopt;
+    return v;
+}
+
 int wxAtoi(std::string_view text)
 {
     return std::atoi(std::string(text).c_str());
@@ -301,6 +310,20 @@ bool isDummyVideo(std::string_view path)
     return path.starts_with('?');
 }
 
+std::optional<DummyFrameRate> parseDummyFrameRate(std::string_view text)
+{
+    if (const auto fps = toCDouble(text))
+        return DummyFrameRate{*fps};
+    const auto slash = text.find('/');
+    if (slash == std::string_view::npos)
+        return std::nullopt;
+    const auto numerator = toPositiveInt32(text.substr(0, slash));
+    const auto denominator = toPositiveInt32(text.substr(slash + 1));
+    if (!numerator || !denominator)
+        return std::nullopt;
+    return DummyFrameRate{static_cast<double>(*numerator) / static_cast<double>(*denominator), *numerator, *denominator};
+}
+
 std::expected<std::string, DummyVideoError> dummyVideoText(std::string_view fpsText, int durationMs, int width,
                                                            int height, std::uint8_t red, std::uint8_t green,
                                                            std::uint8_t blue, bool pattern)
@@ -308,19 +331,27 @@ std::expected<std::string, DummyVideoError> dummyVideoText(std::string_view fpsT
     const auto frames = dummyVideoFrames(fpsText, durationMs);
     if (!frames)
         return std::unexpected(frames.error());
-    const auto fps = toCDouble(fpsText);
-    char buffer[256];
-    std::snprintf(buffer, sizeof buffer, "?dummy:%f:%i:%i:%i:%i:%i:%i:%s", static_cast<double>(static_cast<float>(*fps)),
-                  *frames, width, height, red, green, blue, pattern ? "c" : "");
+    const auto rate = parseDummyFrameRate(fpsText);
+    char fps[64];
+    if (rate->exact())
+        std::snprintf(fps, sizeof fps, "%lld/%lld", static_cast<long long>(rate->numerator),
+                      static_cast<long long>(rate->denominator));
+    else
+        std::snprintf(fps, sizeof fps, "%f", static_cast<double>(static_cast<float>(rate->fps)));
+    char buffer[320];
+    std::snprintf(buffer, sizeof buffer, "?dummy:%s:%i:%i:%i:%i:%i:%i:%s", fps, *frames, width, height, red, green, blue,
+                  pattern ? "c" : "");
     return std::string(buffer);
 }
 
 std::expected<int, DummyVideoError> dummyVideoFrames(std::string_view fpsText, int durationMs)
 {
-    const auto fps = toCDouble(fpsText);
-    if (!fps || *fps < 15 || *fps > 120)
+    const auto rate = parseDummyFrameRate(fpsText);
+    if (!rate || rate->fps < 15 || rate->fps > 120)
         return std::unexpected(DummyVideoError::InvalidFps);
-    const float frametime = static_cast<float>(1000.f / *fps);
+    if (rate->exact())
+        return static_cast<int>(static_cast<std::int64_t>(durationMs) * rate->numerator / (1000 * rate->denominator));
+    const float frametime = static_cast<float>(1000.f / rate->fps);
     return static_cast<int>(durationMs / frametime);
 }
 
@@ -338,11 +369,11 @@ std::optional<DummyVideo> parseDummyVideo(std::string_view text)
     }
     if (tokens.size() < 9)
         return std::nullopt;
-    const auto fps = toCDouble(tokens[1]);
-    if (!fps)
+    const auto rate = parseDummyFrameRate(tokens[1]);
+    if (!rate)
         return std::nullopt;
     DummyVideo video;
-    video.fps = static_cast<float>(*fps);
+    video.rate = *rate;
     video.frames = wxAtoi(tokens[2]);
     if (video.frames < 1)
         return std::nullopt;
@@ -400,21 +431,38 @@ std::vector<std::byte> dummyVideoFrame(const DummyVideo &video)
     return buffer;
 }
 
+int dummyVideoFrameMs(const DummyVideo &video, int frame)
+{
+    if (video.rate.exact()) {
+        const std::int64_t whole = 1000 * video.rate.denominator / video.rate.numerator;
+        const std::int64_t part = 1000 * video.rate.denominator % video.rate.numerator;
+        return saturate(static_cast<double>(frame) * static_cast<double>(whole) +
+                        static_cast<double>(frame * part / video.rate.numerator));
+    }
+    // a float frame duration, multiplied in double
+    const float fps = static_cast<float>(video.rate.fps);
+    const float duration = fps > 0.f ? 1000.f / fps : 0.f;
+    return saturate(frame * static_cast<double>(duration));
+}
+
 std::vector<int> dummyVideoTimecodes(const DummyVideo &video)
 {
-    // a float frame duration, multiplied in double
-    const float duration = video.fps > 0.f ? 1000.f / video.fps : 0.f;
     std::vector<int> out;
     out.reserve(static_cast<std::size_t>(std::max(video.frames, 0)));
     for (int i = 0; i < video.frames; ++i)
-        out.push_back(saturate(i * static_cast<double>(duration)));
+        out.push_back(dummyVideoFrameMs(video, i));
     return out;
 }
 
 std::int64_t dummyVideoAudioFrames(const DummyVideo &video, int sampleRate)
 {
-    const double duration = video.fps > 0.f ? static_cast<double>(1000.f / video.fps) : 0.0;
-    return std::llround(std::max(video.frames, 0) * duration * sampleRate / 1000.0);
+    const double frames = std::max(video.frames, 0);
+    if (video.rate.exact())
+        return std::llround(frames * static_cast<double>(video.rate.denominator) * sampleRate /
+                            static_cast<double>(video.rate.numerator));
+    const float fps = static_cast<float>(video.rate.fps);
+    const double duration = fps > 0.f ? static_cast<double>(1000.f / fps) : 0.0;
+    return std::llround(frames * duration * sampleRate / 1000.0);
 }
 
 std::uint64_t DummyVideoSource::open(const std::string &path, Progress progress, Opened done)
@@ -443,14 +491,20 @@ std::uint64_t DummyVideoSource::openIndexed(const std::string &path, const Index
     SourceTimeline t;
     t.generation = m_generation;
     t.track = 0;
-    t.fpsNumerator = static_cast<std::int64_t>(static_cast<double>(m_dummy->fps) * 1'000'000.0 + 0.5);
-    t.fpsDenominator = 1'000'000;
+    if (m_dummy->rate.exact()) {
+        t.fpsNumerator = m_dummy->rate.numerator;
+        t.fpsDenominator = m_dummy->rate.denominator;
+    } else {
+        t.fpsNumerator = static_cast<std::int64_t>(static_cast<double>(static_cast<float>(m_dummy->rate.fps)) * 1'000'000.0 + 0.5);
+        t.fpsDenominator = 1'000'000;
+    }
     t.timeBaseNumerator = 1;
     t.timeBaseDenominator = 1000; // pts in ms
     for (const int ms : dummyVideoTimecodes(*m_dummy))
         t.pts.push_back(ms);
     t.width = m_dummy->width;
     t.height = m_dummy->height;
+    t.pixelFormat = {"bgra", true, 4, 0, 0, 8};
     t.newIndex = false;
     done(std::move(t));
     return m_generation;
@@ -475,8 +529,7 @@ void DummyVideoSource::frame(int index, FrameReady done)
     IndexedFrame f;
     f.generation = m_generation;
     f.index = index;
-    // MUST KILL: duplicates dummyVideoTimecodes' formula
-    f.pts = saturate(index * static_cast<double>(m_dummy->fps > 0.f ? 1000.f / m_dummy->fps : 0.f));
+    f.pts = dummyVideoFrameMs(*m_dummy, index);
     f.width = m_dummy->width;
     f.height = m_dummy->height;
     f.stride = m_dummy->width * 4;

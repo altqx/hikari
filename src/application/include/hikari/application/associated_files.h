@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace hikari::application {
 
@@ -18,6 +19,14 @@ struct TabMediaPaths {
     std::string video, audio, keyframes, timecodes;
 };
 
+enum class MediaKind { Video, Audio, Keyframes };
+
+struct MissingMedia {
+    MediaKind kind;
+    std::string path; // as the Script Info writes it
+    friend bool operator==(const MissingMedia &, const MissingMedia &) = default;
+};
+
 struct AssociationOffer {
     std::string video;     // empty: not listed
     std::string audio;
@@ -26,11 +35,16 @@ struct AssociationOffer {
     // Listed, but loads with the video, not on its own.
     bool audioIsVideo = false;
     std::string directoryVideo; // full path
+    std::vector<MissingMedia> missing;
     bool associated() const { return !video.empty() || !audio.empty() || !keyframes.empty() || !timecodes.empty(); }
-    bool asks() const { return associated() || !directoryVideo.empty(); }
+    bool loads() const { return associated() || !directoryVideo.empty(); }
+    bool asks() const { return loads() || !missing.empty(); }
 };
 
-// Offers nothing when the folder's video is already the tab's video.
+// Offers nothing when the folder's video is already the tab's video. A linked
+// file that does not exist is reported as missing, unless the tab already has
+// that kind of media open; audio linked to the same missing file as the video
+// is reported once.
 AssociationOffer associationOffer(const MediaAssociations &associations, const std::string &directoryVideo,
                                   const TabMediaPaths &tab);
 

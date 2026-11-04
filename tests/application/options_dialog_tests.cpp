@@ -285,9 +285,15 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(bake.page, OptionsPage::Grid);
     ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
+    const auto &mono = all[std::size(kLegacy) + 45];
+    EXPECT_EQ(mono.setting, "audio.playMono");
+    EXPECT_EQ(mono.control, OptionsControl::Check);
+    EXPECT_EQ(mono.page, OptionsPage::Audio);
+    ASSERT_NE(findSetting("audio.playMono"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("audio.playMono")->defaultValue), false);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 47);
-    const auto &hostApi = all[std::size(kLegacy) + 45];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 48);
+    const auto &hostApi = all[std::size(kLegacy) + 46];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -298,7 +304,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 45);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 46);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

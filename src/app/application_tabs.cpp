@@ -227,8 +227,8 @@ void Application::forgetTab(application::DocumentId document)
     m_originalColumns.erase(document.value);
     m_translationDeclined.erase(document.value);
     m_offers.erase(document.value);
-    if (m_kanjiTimer)
-        m_kanjiTimer->forget(document.value);
+    for (auto *views : allViews())
+        views->kanjiTimer->forget(document.value);
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });
     if (m_unresolved.size() != before)

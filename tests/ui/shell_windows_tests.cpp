@@ -5,6 +5,7 @@
 #include "status_bar_controller.h"
 #include "workspace_layout.h"
 
+#include <QDir>
 #include <QFile>
 #include <QGuiApplication>
 #include <QPointer>
@@ -28,17 +29,22 @@ const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock"
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
                                "postprocessorDock"};
 
-QString writeSubtitles(const QString &path, const char *text, int width)
+QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
     QFile f(path);
     if (!f.open(QIODevice::WriteOnly))
         return {};
-    f.write(QStringLiteral("[Script Info]\nScriptType: v4.00+\nPlayResX: %1\nPlayResY: %2\n\n[Events]\n")
+    f.write(QStringLiteral("[Script Info]\nScriptType: v4.00+\nPlayResX: %1\nPlayResY: %2\n\n")
                 .arg(width)
                 .arg(width * 9 / 16)
                 .toUtf8());
+    const QByteArray style = ",Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n";
+    f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+            "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+            "Alignment, MarginL, MarginR, MarginV, Encoding\n");
+    f.write("Style: Default" + style + "Style: " + text + "Style" + style + "\n[Events]\n");
     f.write("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
-    f.write(QByteArray("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,") + text + "\n");
+    f.write(QByteArray("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,") + text + "\n" + more);
     return path;
 }
 
@@ -142,15 +148,73 @@ class ShellWindowsTest : public QObject {
         QVERIFY(on);
         QTest::mouseClick(window, Qt::LeftButton, {}, on->mapToScene(QPointF(on->width() / 2, on->height() / 2)).toPoint());
     }
+    static void showPanel(QQuickWindow *window, const char *name)
+    {
+        QObject *panel = dock(window, name);
+        QVERIFY2(panel, name);
+        QVERIFY(QMetaObject::invokeMethod(window, "showPanel", Q_ARG(QVariant, QVariant::fromValue(panel))));
+        QTRY_VERIFY2(panel->property("isOpen").toBool(), name);
+    }
+    void openToolPanels()
+    {
+        for (const int window : {0, 1}) {
+            focus(window);
+            QQuickWindow *shell = shellWindow(window);
+            for (const char *name : {"stylesDock", "templateDock", "timingDock", "spellDock"})
+                showPanel(shell, name);
+            QVERIFY(QMetaObject::invokeMethod(shell, "openFind", Q_ARG(QVariant, false)));
+            QTRY_VERIFY(item(shell, "findText"));
+            QVERIFY(QMetaObject::invokeMethod(shell, "openKanjiTimer"));
+        }
+    }
+    static QStringList styleRows(QQuickWindow *window)
+    {
+        QStringList out;
+        for (const QVariant &row : item(window, "stylesTool")->property("rows").toList())
+            out << row.toMap().value(QStringLiteral("name")).toString() + u':' +
+                       QString::number(row.toMap().value(QStringLiteral("lines")).toInt());
+        return out;
+    }
+    void raise(const char *name, int active)
+    {
+        for (QQuickWindow *window : {first(), second.data()})
+            showPanel(window, name);
+        focus(active);
+    }
+    void raiseFind(int active)
+    {
+        raise("searchDock", active);
+        QTest::qWait(300);
+        for (QQuickWindow *window : {first(), second.data()})
+            item(window, "findText")->setProperty("text", QStringLiteral("i"));
+    }
+    static QString findCount(QQuickWindow *window) { return item(window, "findCount")->property("text").toString(); }
+    static QString shiftedText(QQuickWindow *window)
+    {
+        const QVariantList shown = item(window, "shiftTimesPanel")->property("plan").toMap().value(QStringLiteral("rows")).toList();
+        return shown.isEmpty() ? QString() : shown.first().toMap().value(QStringLiteral("text")).toString();
+    }
+    static QString misspelling(QQuickWindow *window) { return item(window, "spellMisspell")->property("text").toString(); }
+    static QStringList kanjiStyles(QQuickWindow *window) { return controller(window, "kanjiTimer")->property("styles").toStringList(); }
+    static int templates(QQuickWindow *window) { return controller(window, "templateEditor")->property("templateCount").toInt(); }
 
 private slots:
     void init()
     {
+        QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("Dictionary")));
+        for (const char *file : {"Dictionary/en_US.aff", "Dictionary/en_US.dic"}) {
+            QFile f(dir.filePath(QLatin1String(file)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            if (QByteArrayView(file).endsWith(".dic"))
+                f.write("1\nHello\n");
+        }
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
-        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("first.ass")), "first", 640)));
+        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("first.ass")), "first", 640,
+                                                     "Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template line,"
+                                                     "{\\fad(100,100)}\n")));
         firstTab = *target();
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -192,7 +256,7 @@ private slots:
         QVERIFY(menus);
         QCOMPARE(menus->property("count").toInt(), first()->findChild<QObject *>(QStringLiteral("appMenus"))->property("count").toInt());
         QVERIFY(item(second, "documentTabBar")->property("shown").toBool());
-        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar"})
+        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar", "templateEditor", "kanjiTimer"})
             QVERIFY2(controller(second, own) != controller(first(), own), own);
         QCOMPARE(second->property("hotkeys").value<QObject *>(), first()->property("hotkeys").value<QObject *>());
         QVERIFY(second->property("workspaceLayout").value<QObject *>() != first()->property("workspaceLayout").value<QObject *>());
@@ -283,6 +347,77 @@ private slots:
         QCOMPARE(application->workspace().activeWindow(), 1);
         QTRY_COMPARE(editorText(first()), QStringLiteral("first, changed elsewhere"));
         QVERIFY(firstGrid.count() > 0);
+    }
+
+    void eachWindowsToolPanelsShowItsOwnTab()
+    {
+        openToolPanels();
+        for (const int active : {1, 0, 1}) {
+            focus(active);
+            QTRY_COMPARE(styleRows(first()), (QStringList{QStringLiteral("Default:2"), QStringLiteral("firstStyle:0")}));
+            QTRY_COMPARE(styleRows(second), (QStringList{QStringLiteral("Default:1"), QStringLiteral("secondStyle:0")}));
+            QCOMPARE(templates(first()), 1);
+            QCOMPARE(templates(second), 0);
+            QCOMPARE(kanjiStyles(first()), (QStringList{QStringLiteral("Default"), QStringLiteral("firstStyle")}));
+            QCOMPARE(kanjiStyles(second), (QStringList{QStringLiteral("Default"), QStringLiteral("secondStyle")}));
+            raiseFind(active);
+            QTRY_COMPARE(findCount(first()), QStringLiteral("1 match(es)"));
+            QTRY_COMPARE(findCount(second), QStringLiteral("No matches"));
+            raise("timingDock", active);
+            QTRY_COMPARE(shiftedText(first()), QStringLiteral("first"));
+            QTRY_COMPARE(shiftedText(second), QStringLiteral("second"));
+            raise("spellDock", active);
+            QTRY_COMPARE(misspelling(first()), QStringLiteral("first"));
+            QTRY_COMPARE(misspelling(second), QStringLiteral("second"));
+        }
+    }
+
+    void anEditReachesAnotherWindowsToolPanelsOnlyForItsDocument()
+    {
+        openToolPanels();
+        focus(1);
+        const auto edit = [](application::EditSession *session, const char8_t *text, const char8_t *style) {
+            QVERIFY(session);
+            const auto line = session->document().lines().front()->id;
+            application::DraftChange change;
+            change.text = text;
+            change.style = style;
+            QVERIFY(session->editDraft(line, change));
+            QVERIFY(session->commitDraft());
+        };
+        const auto commitActor = [this](const QString &actor) {
+            auto *editor = controller(second, "editor");
+            QVERIFY(QMetaObject::invokeMethod(editor, "setActorText", Q_ARG(QString, actor)));
+            bool committed = false;
+            QVERIFY(QMetaObject::invokeMethod(editor, "commit", Q_RETURN_ARG(bool, committed)));
+            QVERIFY(committed);
+        };
+        edit(application->files().session(secondTab), u8"in it is", u8"secondStyle");
+        application->editor().reloadFromSession();
+        commitActor(QStringLiteral("Actor"));
+        raiseFind(1);
+        QTRY_COMPARE(findCount(second), QStringLiteral("3 match(es)"));
+        QTRY_COMPARE(styleRows(second), (QStringList{QStringLiteral("Default:0"), QStringLiteral("secondStyle:1")}));
+        raise("timingDock", 1);
+        QTRY_COMPARE(shiftedText(second), QStringLiteral("in it is"));
+        QTest::qWait(300);
+        QCOMPARE(shiftedText(first()), QStringLiteral("first"));
+        raiseFind(1);
+        QTest::qWait(300);
+        QCOMPARE(findCount(first()), QStringLiteral("1 match(es)"));
+        QCOMPARE(styleRows(first()), (QStringList{QStringLiteral("Default:2"), QStringLiteral("firstStyle:0")}));
+        QCOMPARE(templates(first()), 1);
+
+        raise("timingDock", 1);
+        edit(application->files().session(firstTab), u8"it is", u8"firstStyle");
+        commitActor(QStringLiteral("Other"));
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        QTRY_COMPARE(shiftedText(first()), QStringLiteral("it is"));
+        QTRY_COMPARE(styleRows(first()), (QStringList{QStringLiteral("Default:1"), QStringLiteral("firstStyle:1")}));
+        QCOMPARE(shiftedText(second), QStringLiteral("in it is"));
+        raiseFind(1);
+        QTRY_COMPARE(findCount(first()), QStringLiteral("2 match(es)"));
+        QCOMPARE(findCount(second), QStringLiteral("3 match(es)"));
     }
 
     void eachWindowShowsItsOwnTabs()

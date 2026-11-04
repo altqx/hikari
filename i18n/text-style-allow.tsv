@@ -29,6 +29,7 @@ HikariSub.Automation	%1 did not load. Its error is in Details.	title-case	names 
 HikariSub.Automation	The script has no such macro	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Automation	The script or its macro changed	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Documents	Associated files:	colon	heading line of the association offer; the files are listed under it
+HikariSub.Documents	Linked files not found:	colon	heading line of the association offer; the missing files are listed under it
 HikariSub.Fonts	In styles:\n	colon	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	In styles:\n	whitespace	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	 tabs: 	colon	font collector log layout; clicking a number goes to its style or line

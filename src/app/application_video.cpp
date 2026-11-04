@@ -218,7 +218,9 @@ QVariantMap Application::dummyVideoDefaults() const
             {QStringLiteral("height"), 1080},
             {QStringLiteral("colour"), QStringLiteral("&HFEA32F&")},
             {QStringLiteral("fpsChoices"), QStringList{QStringLiteral("23.976"), QStringLiteral("24"), QStringLiteral("25"),
-                                                       QStringLiteral("29.97"), QStringLiteral("30"), QStringLiteral("60")}},
+                                                       QStringLiteral("29.97"), QStringLiteral("30"), QStringLiteral("60"),
+                                                       QStringLiteral("24000/1001"), QStringLiteral("30000/1001"),
+                                                       QStringLiteral("60000/1001")}},
             {QStringLiteral("fps"), QStringLiteral("23.976")},
             {QStringLiteral("duration"), QStringLiteral("0:25:00.00")},
             {QStringLiteral("frames"), *application::dummyVideoFrames("23.976", 1500000)}};

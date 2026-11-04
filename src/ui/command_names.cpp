@@ -281,6 +281,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open timecodes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save timecodes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close timecodes"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Video details…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Convert Aegisub folds to line groups"),
 };
 

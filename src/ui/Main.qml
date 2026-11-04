@@ -2291,6 +2291,16 @@ ApplicationWindow {
                 video: root.video
             }
             ShellMenuItem {
+                command: "GLOBAL_VIDEO_DETAILS"
+                iconRole: "video-details"
+                objectName: "videoDetailsMenuItem"
+                action: Action {
+                    id: videoDetailsAction
+                    text: qsTr("Video details…"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_DETAILS")) root.openVideoDetails()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_VIDEO_ZOOM"
                 iconRole: "zoom"
                 objectName: "videoZoomMenuItem"
@@ -5876,10 +5886,12 @@ ApplicationWindow {
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
                 ShiftTimesPanel {
                     id: shiftTimesPanel
+                    objectName: "shiftTimesPanel"
                     anchors.fill: parent
                     focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    shellWindow: root.shellWindow
                     messages: root.messages
                     hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
@@ -5909,6 +5921,7 @@ ApplicationWindow {
                     focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    shellWindow: root.shellWindow
                     messages: root.messages
                     onApply: root.applyShift("postprocessor")
                     onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
@@ -5950,6 +5963,7 @@ ApplicationWindow {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    shellWindow: root.shellWindow
                     editor: root.editor
                     onEscaped: root.focusPanel(editorPanel, Qt.OtherFocusReason)
                 }
@@ -6008,6 +6022,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     focus: true
                     app: root.app
+                    shellWindow: root.shellWindow
                     notices: root.notices
                     documentName: root.shell.editingTitle
                     onSettingsRequested: root.openSettings("spelling")
@@ -6035,6 +6050,7 @@ ApplicationWindow {
                     objectName: "stylesTool"
                     anchors.fill: parent
                     styles: root.styleManager
+                    shellWindow: root.shellWindow
                     editor: root.editor
                     app: root.app
                     manager: styleManagerWindow
@@ -6706,6 +6722,18 @@ ApplicationWindow {
     function openDummyVideo() {
         dummyVideoLoader.active = true
         dummyVideoLoader.item.show()
+    }
+    Loader {
+        id: videoDetailsLoader
+        active: false
+        sourceComponent: VideoDetailsDialog {
+            video: root.video
+            settings: root.app.settings
+        }
+    }
+    function openVideoDetails() {
+        videoDetailsLoader.active = true
+        videoDetailsLoader.item.show()
     }
     VideoFileQuestion {
         id: videoFileQuestion
@@ -7641,6 +7669,7 @@ ApplicationWindow {
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
         GLOBAL_PLUGINS: pluginsAction,
+        GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,

@@ -1157,6 +1157,8 @@ DialogWindow {
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
+                        SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
                     }
                     SettingsSection {
                         title: qsTr("Display")

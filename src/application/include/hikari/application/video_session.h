@@ -173,6 +173,12 @@ public:
     {
         return m_state != State::Ready ? 0.f : m_frameTimes ? static_cast<float>(m_frameTimes->fps()) : m_legacyFps;
     }
+    // The source's nominal rate; {0, 1} without video.
+    std::pair<std::int64_t, std::int64_t> nominalFps() const
+    {
+        return m_state == State::Ready ? m_nominalFps : std::pair<std::int64_t, std::int64_t>{0, 1};
+    }
+    const PixelFormat &pixelFormat() const { return m_pixelFormat; }
     // The source's, else the first shown frame's; invalid without video. Kept
     // when a frame fails to decode.
     visual::SourceGeometry sourceGeometry() const;
@@ -257,6 +263,8 @@ private:
     bool m_newIndex = true;
     std::string m_indexHandoff;
     double m_fps = 0;
+    std::pair<std::int64_t, std::int64_t> m_nominalFps{0, 1};
+    PixelFormat m_pixelFormat;
     visual::SourceGeometry m_geometry; // the source's, from its timeline
     std::optional<std::pair<std::int64_t, std::int64_t>> m_progress;
     std::optional<OpenFailure> m_openFailure;

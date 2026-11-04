@@ -1796,6 +1796,10 @@ Output device: %2</source>
         <translation>ไม่</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
     </message>
@@ -2030,6 +2034,11 @@ Output device: %2</source>
     <message>
         <source>Video from directory: %1</source>
         <translation>วิดีโอจากไดเรกทอรี: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>ไม่พบไฟล์ที่ลิงก์ไว้:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3220,6 +3229,22 @@ Output device: %2</source>
         <source>Writing the new archive replaces it.</source>
         <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>มีไฟล์ฟอนต์ %n ไฟล์อยู่แล้วใน “%1”</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>และอีก %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>เก็บไฟล์เดิมไว้</translation>
+    </message>
     <message>
         <source>Action</source>
         <translation>การดำเนินการ</translation>
@@ -3746,6 +3771,10 @@ Output device: %2</source>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>การรวบรวมนี้ไม่ครบ ระบบจะเขียนก็ต่อเมื่อคุณรับทราบ และผลลัพธ์จะถูกระบุว่าไม่ครบ</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” มีอยู่แล้วในโฟลเดอร์ จึงเก็บไว้ตามเดิม</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -6110,6 +6139,10 @@ Failed to copy %2 fonts.</source>
         <translation>ปิดไทม์โค้ด</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -7232,6 +7265,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -8850,6 +8887,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>ไม่ต้องเล่นหลังเปลี่ยนบรรทัด</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>เล่นแบบโมโน</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>ผสมช่องเสียงสำหรับแผงเสียงและการเล่นขณะแก้ไข การเล่นวิดีโอทั่วไปจะคงช่องเสียงของไฟล์ไว้</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -15339,6 +15384,69 @@ or codecs or a splitter may be missing</source>
         <translation>เฟรม %1 จาก %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>ช่วง PC</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>ช่วง TV</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>วิดีโอจำลอง</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>ไม่คงที่</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n เฟรม (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>ไม่ทราบ</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1 บิต</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>ระดับสีเทา, %1 บิต</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1 บิต</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2 บิต</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (ไฟล์ไม่ได้ระบุ คาดเดาจากขนาด)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>อัตราส่วนภาพ: %1</translation>
     </message>
@@ -15518,6 +15626,42 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Timecodes file not found: %1</source>
         <translation>ไม่พบไฟล์ไทม์โค้ด: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>รายละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>ความละเอียด</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>ความยาว</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>ปริภูมิสี</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>เมทริกซ์สี</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>ที่ใช้กับซับไตเติล</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
     </message>
 </context>
 <context>

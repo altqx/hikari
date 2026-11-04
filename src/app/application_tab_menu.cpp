@@ -240,6 +240,27 @@ void Application::showAssociationOffer()
         prompt += QCoreApplication::translate("HikariSub.Documents",
                                               "Video from directory: %1").arg(QFileInfo(qs(offer.directoryVideo)).fileName());
     }
+    if (!offer.missing.empty()) {
+        if (!prompt.isEmpty())
+            prompt += u'\n';
+        //: Heading of the association bar's list of files the subtitle file links but that do not exist
+        prompt += QCoreApplication::translate("HikariSub.Documents", "Linked files not found:");
+        for (const auto &missing : offer.missing) {
+            const QString path = qs(missing.path);
+            prompt += u'\n';
+            switch (missing.kind) {
+            case application::MediaKind::Video:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Video: %1").arg(path);
+                break;
+            case application::MediaKind::Audio:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Audio: %1").arg(path);
+                break;
+            case application::MediaKind::Keyframes:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: %1").arg(path);
+                break;
+            }
+        }
+    }
     const bool both = offer.associated() && !offer.directoryVideo.empty();
     const QString yes = QCoreApplication::translate("HikariSub.Documents", "Yes");
     const QString associated = !offer.associated() ? QString()

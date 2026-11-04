@@ -67,7 +67,7 @@ qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs
 qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.qml VideoChaptersMenu.qml
-    VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
+    VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml VideoDetailsDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml PluginWidget.qml PluginList.qml PluginCanvas.qml PluginPanelBody.qml

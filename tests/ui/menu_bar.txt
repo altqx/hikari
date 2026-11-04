@@ -100,6 +100,7 @@ Video > -
 Video > Unload video
 Video > Streams >
 Video > Chapters >
+Video > Video details… [GLOBAL_VIDEO_DETAILS]
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Render cost [GLOBAL_VIDEO_RENDER_COST]

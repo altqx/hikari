@@ -78,6 +78,16 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
         offer.keyframes = keyframes;
     if (!timecodes.empty() && tab.timecodes != timecodes)
         offer.timecodes = timecodes;
+    const auto missing = [](const std::optional<MediaReference> &reference) {
+        return reference && !reference->resolved && !startsWith(reference->authored, "dummy");
+    };
+    if (missing(associations.video) && tab.video.empty())
+        offer.missing.push_back({MediaKind::Video, associations.video->authored});
+    if (missing(associations.audio) && tab.audio.empty() &&
+        !(missing(associations.video) && associations.audio->authored == associations.video->authored))
+        offer.missing.push_back({MediaKind::Audio, associations.audio->authored});
+    if (missing(associations.keyframes) && tab.keyframes.empty())
+        offer.missing.push_back({MediaKind::Keyframes, associations.keyframes->authored});
     if (!directoryVideo.empty()) {
         if (tab.video == directoryVideo)
             return {};
@@ -89,7 +99,7 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
 AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer answer)
 {
     AssociationLoad load;
-    if (!offer.asks() || answer == AssociationAnswer::No)
+    if (!offer.loads() || answer == AssociationAnswer::No)
         return load;
     if (answer == AssociationAnswer::LoadFromDirectory) {
         load.video = offer.directoryVideo;

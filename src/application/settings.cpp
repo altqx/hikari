@@ -261,6 +261,8 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.outputDevice", "", String, Profile, Mapped, false, std::string()},
         {"audio.outputDeviceName", "", String, Profile, Mapped, false, std::string()},
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
+        // PortAudio output only: general playback keeps the file's channels.
+        {"audio.playMono", "", Bool, Profile, Mapped, false, false},
         // An AUDIO_HOTKEY symbol.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
         // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",

@@ -2985,6 +2985,17 @@
    ]
   },
   {
+   "role": "video-details",
+   "file": "video-details.svg",
+   "label": "Video details",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "copy-position",
    "file": "copy-position.svg",
    "label": "Copy video position",
