@@ -116,7 +116,8 @@ void Application::showVideoAtAudio(int ms)
 {
     auto &video = m_video->session();
     if (video.state() != application::VideoSession::State::Ready || video.playing() || video.frameCount() <= 0
-        || !m_audioTimebase || m_audioTimebasePath != video.path())
+        || !m_audioTimebase || m_audioTimebasePath != video.path()
+        || m_audioTimebaseSerial != video.frameTimesSerial())
         return;
     const int frame = std::clamp(m_audioTimebase->frameShownAt(ms), 0, video.frameCount() - 1);
     if (frame == video.requestedFrame()) {

@@ -72,7 +72,10 @@ public:
                         QObject *parent = nullptr);
 
     QStringList fields() const;
-    static QStringList tooltips();
+    QStringList tooltips() const { return tooltipsFor(m_timecodesFile); }
+    // The frames-per-second tooltip names a loaded timecodes file.
+    static QStringList tooltipsFor(const QString &timecodesFile);
+    void setTimecodesFile(const QString &path);
     bool resolutionMismatch() const { return m_fields.mismatch; }
     const Fields &current() const { return m_fields; }
     Inputs inputs() const;
@@ -90,6 +93,7 @@ private:
     DocumentProvider m_document;
     Fields m_fields;
     Inputs m_last;
+    QString m_timecodesFile;
 };
 
 }

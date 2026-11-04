@@ -25,6 +25,15 @@ enum class SourceError {
     BackendFailure,
 };
 
+// Frame 0's encoded pixel format; an empty name: unknown.
+struct PixelFormat {
+    std::string name; // FFmpeg's, e.g. "yuv420p10le"
+    bool rgb = false;
+    int components = 0;
+    int chromaShiftX = 0, chromaShiftY = 0; // log2 subsampling
+    int bitDepth = 0;
+};
+
 struct SourceTimeline {
     std::uint64_t generation = 0;
     int track = 0;
@@ -42,8 +51,10 @@ struct SourceTimeline {
     // Frame 0's encoded size and the sample aspect ratio; 0 when unknown.
     int width = 0, height = 0;
     int sarNum = 0, sarDen = 0;
-    // Frame 0's FFMS_CS_* matrix and FFMS_CR_* range.
+    // Frame 0's FFMS_CS_* matrix and FFMS_CR_* range, then its primaries and transfer (AVCOL_PRI_*, AVCOL_TRC_*).
     int colorSpace = 2, colorRange = 0; // unspecified
+    int colorPrimaries = 2, transfer = 2; // unspecified
+    PixelFormat pixelFormat;
 };
 
 enum class OpenStage {

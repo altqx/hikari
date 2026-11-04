@@ -15,9 +15,9 @@ function(hikari_add_gtest target)
 endfunction()
 
 find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
-find_program(HIKARI_XVFB_RUN xvfb-run)
+find_program(HIKARI_XVFB Xvfb)
 
-# Suites that also run under xvfb-run, for window-system behaviour offscreen cannot show.
+# Suites that also run on Xvfb, for window-system behaviour offscreen cannot show.
 set(HIKARI_XVFB_SUITES
     # xcb: a first-frame arrangement upset a tab's cursor, and xcb's Redo key let Ctrl+Y skip the draft.
     hikari_ui_shell_tests.documents
@@ -66,14 +66,14 @@ function(_hikari_add_qt_modes name label)
     cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
     set_property(GLOBAL APPEND PROPERTY HIKARI_QT_MODE_NAMES ${name})
     set(modes offscreen)
-    if(HIKARI_XVFB_RUN AND NOT mode_OFFSCREEN_ONLY AND name IN_LIST HIKARI_XVFB_SUITES)
+    if(HIKARI_XVFB AND NOT mode_OFFSCREEN_ONLY AND name IN_LIST HIKARI_XVFB_SUITES)
         list(APPEND modes xvfb)
     endif()
     foreach(platform IN LISTS modes)
         set(command ${mode_UNPARSED_ARGUMENTS})
         set(qpa offscreen)
         if(platform STREQUAL "xvfb")
-            list(PREPEND command "${HIKARI_XVFB_RUN}" -a)
+            list(PREPEND command sh "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/run_on_own_xvfb.sh")
             set(qpa xcb)
         endif()
         if(WIN32 AND label STREQUAL "qttest")

@@ -98,7 +98,7 @@ class ExportDialogTest : public QObject {
     }
     void choose(const char *format, const QString &path)
     {
-        const QStringList ids{"srt", "vtt", "sbv", "txt", "mdvd", "mpl2", "tmp"};
+        const QStringList ids{"srt", "vtt", "sbv", "txt", "mdvd", "mpl2", "tmp", "ttml", "dfxp"};
         part("exportFormat")->setProperty("currentIndex", ids.indexOf(QLatin1String(format)));
         part("exportDestination")->setProperty("text", path);
     }
@@ -271,6 +271,62 @@ private slots:
         QVERIFY(!part("exportRun")->property("enabled").toBool());
         choose("srt", dir.filePath(QStringLiteral("fps.srt")));
         QVERIFY(part("exportRun")->property("enabled").toBool());
+    }
+
+    void ttmlTakesALanguageFramesAndTheNetflixStyle()
+    {
+        QVERIFY(!open("timed.ass").isEmpty());
+        openDialog();
+        const QString out = dir.filePath(QStringLiteral("timed.ttml"));
+        choose("ttml", out);
+        QVERIFY(part("exportTtmlNetflix")->isVisible());
+        QVERIFY(part("exportTtmlFrames")->isVisible());
+        QVERIFY(part("exportLanguage")->isVisible());
+        QVERIFY(!part("exportFps")->isVisible());
+        QVERIFY(!part("exportMerge")->isVisible());
+
+        part("exportLanguage")->setProperty("text", QStringLiteral("pt BR"));
+        run();
+        QTRY_VERIFY(part("exportProblem")->isVisible());
+        QCOMPARE(part("exportProblem")->property("text").toString(),
+                 QStringLiteral("Enter a language code such as en or pt-BR, or leave it empty."));
+        QVERIFY(!QFile::exists(out));
+
+        part("exportLanguage")->setProperty("text", QStringLiteral("pt-BR"));
+        part<QObject>("exportTtmlFrames")->setProperty("checked", true);
+        QTRY_VERIFY(part("exportFps")->isVisible());
+        part("exportFps")->setProperty("text", QStringLiteral("25"));
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        const QByteArray ttml = contents(out);
+        QVERIFY(ttml.contains("xml:lang=\"pt-BR\" ttp:profile=\"http://www.w3.org/ns/ttml/profile/imsc1/text\" "
+                              "ttp:frameRate=\"25\">"));
+        QVERIFY(ttml.contains("<p begin=\"25f\" end=\"50f\" region=\"bottom\" style=\"Default\" "
+                              "tts:textAlign=\"center\"><span tts:fontStyle=\"italic\">first</span></p>"));
+        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+
+        openDialog();
+        QCOMPARE(dialog()->property("format").toString(), QStringLiteral("ttml"));
+        QCOMPARE(part("exportLanguage")->property("text").toString(), QStringLiteral("pt-BR"));
+        QVERIFY(part<QObject>("exportTtmlFrames")->property("checked").toBool());
+        QCOMPARE(part("exportFps")->property("text").toString(), QStringLiteral("25"));
+
+        part<QObject>("exportTtmlNetflix")->setProperty("checked", true);
+        part<QObject>("exportTtmlFrames")->setProperty("checked", false);
+        QTRY_VERIFY(!part("exportTtmlFrames")->isVisible());
+        QVERIFY(part("exportFps")->isVisible());
+        const QString dfxp = dir.filePath(QStringLiteral("timed.dfxp"));
+        choose("dfxp", dfxp);
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        const QByteArray netflix = contents(dfxp);
+        QVERIFY(!netflix.contains("ttp:profile"));
+        QVERIFY(netflix.contains("ttp:frameRate=\"25\">"));
+        QVERIFY(!netflix.contains("tts:color"));
+        const QVariantList notes = dialog()->property("report").toMap().value(QStringLiteral("notes")).toList();
+        QCOMPARE(notes.size(), 2);
+        QCOMPARE(notes[0].toMap().value(QStringLiteral("losses")).toString(), QStringLiteral("Clip removed"));
     }
 
     void aRelativePathIsRefused()

@@ -5,8 +5,8 @@ import Hikari.Ui
 QtObject {
     id: follow
     required property SettingsStore settings
-    readonly property string seekName: qsTr("Seek on")
-    readonly property string playName: qsTr("Then play")
+    readonly property string seekName: qsTr("Move video to the selected line")
+    readonly property string playName: qsTr("After moving, play")
     readonly property var seekChoices: [qsTr("Double-clicking a line (always on)"), qsTr("Every line change"),
                                         qsTr("Clicking a line or editing when paused"), qsTr("Clicking a line or editing"),
                                         qsTr("Editing line when paused"), qsTr("Editing")]

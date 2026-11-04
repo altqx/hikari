@@ -10,6 +10,7 @@ Item {
     id: search
     objectName: "searchTool"
     required property var app
+    required property int shellWindow
     property var editor: null
     readonly property alias question: question
     property bool replaceShown: false
@@ -146,7 +147,7 @@ Item {
             return
         }
         if (opened)
-            findText.text = app.findReplaceActivated(findText.text)
+            findText.text = app.findReplaceActivated(findText.text, shellWindow)
         refreshCount()
     }
     function save() {
@@ -196,9 +197,9 @@ Item {
     function previous() { if (!inFolder) run("findPrevious") }
     function replaceOne() { if (inFolder) run("replaceAll"); else run("replace") }
     function refreshResults() {
-        rows = app.findResults()
-        resultsShown = app.findResultsShown()
-        canReplaceChecked = app.canReplaceFindResults()
+        rows = app.findResults(shellWindow)
+        resultsShown = app.findResultsShown(shellWindow)
+        canReplaceChecked = app.canReplaceFindResults(shellWindow)
     }
     function refreshCount() {
         if (opened && visible)
@@ -209,7 +210,7 @@ Item {
         const s = settings()
         patternError = app.findPatternError(s)
         const before = countSpoken
-        count = findText.text.length > 0 ? app.findCount(s) : { total: 0, current: 0 }
+        count = findText.text.length > 0 ? app.findCount(s, shellWindow) : { total: 0, current: 0 }
         if (countSpoken !== before && countSpoken.length > 0)
             countLabel.Accessible.announce(countSpoken)
     }
@@ -284,7 +285,10 @@ Item {
             search.countNow()
         }
         function onFindResultsChanged() { search.refreshResults() }
-        function onFindQuestion(id, kind, shown) { question.push(id, kind, shown) }
+        function onFindQuestion(id, kind, shown, shellWindow) {
+            if (shellWindow === search.shellWindow)
+                question.push(id, kind, shown)
+        }
         function onTabsChanged() { search.refreshCount() }
     }
     Connections {

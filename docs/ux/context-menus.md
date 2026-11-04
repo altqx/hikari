@@ -46,6 +46,7 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
+| 11.1 | Convert Aegisub folds to line groups (FA5) | GLOBAL_CONVERT_FOLDS_TO_GROUPS | `canConvertFolds()` | convert-folds |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |
 | 13 | Paste translation text | GRID_PASTE_TRANSLATION | `canPasteTranslation()`; opens a file dialog | paste-translation |
 | 14 | Dialogue shifting window | GRID_TRANSLATION_DIALOG | `canShiftTranslation()` | translation-shift |
@@ -100,6 +101,7 @@ Opens on a right press on a group's description row (`GroupRole == 1`, `line_gri
 1. Add lines (tree-add-lines)
 2. Copy line group (edit-copy)
 3. Change description (edit)
+3.1. Convert Aegisub folds to line groups (FA5, GLOBAL_CONVERT_FOLDS_TO_GROUPS, `canConvertFolds()`) (convert-folds)
 4. Select the group's lines (tree-select)
 5. Delete (delete)
 
@@ -608,6 +610,19 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Audio overflow.** » (menu-more) icon; the folded play buttons have their own group; Tap options ▸ is a real submenu (without its own Tap to time row, which sits just above it); Speech spectrum sits with Waveform and Spectrum.
 - **Names.** Auto-commit, Go to the next line after commit, Karaoke and Speech spectrum read the same in the menus, the dropdowns, Customise and the tooltips.
 
+### What CX6 built
+
+[#582](https://github.com/altqx/hikari/issues/582) built menus 16–28:
+
+- **Panels.** The panel ⋯ ends with Float or Dock and then Close, alone after a separator; “Close reference” is now “Close”. Automation's Clear runs has its own group. Show times and Show frames moved from the Video ⋯ to the Line editor ⋯. View › Panels › name is Show, one Float/Dock row, then Close.
+- **Video follow.** The submenus read “Move video to the selected line ▸” and “After moving, play ▸”, and Settings uses the same names. The choices keep their wording.
+- **Floating window (18.1).** The title bar ⋯ stays a window menu: Dock, a separator, then Close. With `Flag_HideTitleBarWhenTabsVisible` only a window of 2+ groups shows its own title bar, so a panel menu there would be ambiguous and would lose Dock and Close for the whole window. A single-panel window shows only its tab header, whose ⋯ is the full panel menu.
+- **Document tabs.** A tab's menu has Save, Save all, Show in folder and Copy path (submenus with one row per file when the tab has video, audio or keyframes), Subtitle comparison ▸ (Compare and Turn off comparison first), Switch to ▸, then Close, Close other tabs, Close tabs to the right and Close all tabs. The empty tab bar offers New tab, Save all, Switch to ▸ and Close all tabs. The current tab takes Tab focus; Left and Right move between tabs, and the Menu key or Shift+F10 opens the focused tab's menu.
+- **Styles.** The style row menu and the panel's » menu use one name per command (Edit style…, Style manager, New style…), and Delete comes last. The Style manager list ⋯ puts Delete unused styles after a separator.
+- **Automation.** A macro's Run shows its own shortcut and the run-script icon, with the shortcut rows in their own group. A right-click on a script row opens the script's ⋯ menu, and the Menu key opens it from the ⋯ button. In a script dialog, Presets ▸ takes dialog-memory, Delete preset ▸ sits behind a separator, and Reset takes restore-default.
+- **Reference tray.** The menu starts with Copy. Its “Also in” list comes from the right-clicked reference row, reads “title, line N”, and shows a disabled “No other occurrences” when there are none. Choosing a line in the edited document selects it there.
+- **Icons.** » (menu-more) marks only overflow; the layout switcher's dropdown uses a chevron. The visual tool rail's overflow rows are check items, as in the full-screen Tools menu.
+
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 
 Notation as above, plus: `{keys}` is the default binding shown in the key column; an icon role that is not in `src/ui/icons` yet is a new icon CX3 draws.
@@ -934,6 +949,9 @@ Right-release on the picture with the default tool, or the Menu key. Drawn while
   - ──
   - Save with subtitles as PNG… (frame-snapshot-subtitles)
   - Copy with subtitles (frame-copy-subtitles)
+  - ──
+  - Save subtitles only as PNG… (subtitles-snapshot; FA9)
+  - Copy subtitles only (subtitles-copy; FA9)
 - Audio track ▸ (video-streams; new)
   - (•) Japanese (AAC)
   - (•) English (AAC)
@@ -1453,6 +1471,21 @@ Changes:
 Approved:
 
 - **28.1** Approve the menu bar rows as drawn.
+
+### 29. Automation panel: recommended script (right-click and ⋯) (FA6 #563)
+
+The ⋯ on an installed row of the Recommended view, a right-click on it, the Menu key and Shift+F10. Rows not installed have no menu.
+
+- Show in Scripts (automation)
+- Open project page (open-link)
+- ──
+- Uninstall… (delete; {Del})
+
+Changes:
+
+- New with the Recommended view. A script installed by hand shows Uninstall… disabled, with “Installed by hand” in place of the key.
+
+Approved on [#563](https://github.com/altqx/hikari/issues/563#issuecomment-6616051376) (2026-11-04).
 
 ### Where moved rows go
 

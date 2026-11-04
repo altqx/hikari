@@ -208,8 +208,12 @@ public:
     /// Stores the key first; the provider is added only once the key is safe. An empty key is for
     /// providers that need none.
     void add(Provider provider, std::string key, std::function<void(std::optional<SaveError>)> done);
+    /// Changes an added provider in place. Nullopt keeps its stored key; its roles stay.
+    void update(Provider provider, std::optional<std::string> key, std::function<void(std::optional<SaveError>)> done);
     void remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done);
     bool assign(Role role, ModelRef model);
+    /// The role goes back to the chat model.
+    bool unassign(Role role);
     bool setCapabilities(const std::string &providerId, const std::string &modelId, Capabilities capabilities);
     /// Replaces the provider's catalogue; the user's capability corrections stay.
     bool setModels(const std::string &providerId, std::vector<Model> models);
@@ -219,6 +223,8 @@ public:
     void readKey(const std::string &providerId, std::function<void(std::optional<std::string>)> done);
 
 private:
+    void store(Provider provider, std::optional<std::string> key, std::function<void(std::optional<SaveError>)> done);
+
     ConfigStore &m_configs;
     KeyStore &m_keys;
     Config m_config;

@@ -467,6 +467,25 @@ void AudioBox::fail(SourceError error)
     notify();
 }
 
+bool AudioBox::reopen()
+{
+    if ((m_state != State::Ready && m_state != State::Loading) || isDummyName(m_path))
+        return false;
+    const std::string path = m_path;
+    const int track = m_track;
+    const bool fromVideo = m_fromVideo;
+    close();
+    const std::uint64_t request = ++m_request;
+    m_path = path;
+    m_error.reset();
+    m_declined = false;
+    m_fromVideo = fromVideo;
+    m_state = State::Opening;
+    notify();
+    openTrack(request, track);
+    return true;
+}
+
 void AudioBox::close()
 {
     const bool wasOpen = m_state != State::Closed;

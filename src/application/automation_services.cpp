@@ -177,8 +177,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
     switch (r.service) {
     case HostService::FrameFromMs:
     case HostService::MsFromFrame: {
-        auto starts = m_media ? m_media->frameStartsMs() : std::nullopt;
-        const auto times = starts ? AegisubFrameTimes::fromFrameStarts(std::move(*starts)) : std::nullopt;
+        const auto times = m_media ? m_media->frameTimes() : std::nullopt;
         if (!times)
             return unavailable();
         return reply(integers({r.service == HostService::FrameFromMs ? times->frameFromMs(integer(r, 0))
@@ -211,7 +210,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         if (!v)
             return unavailable();
         HostServiceReply out = integers({v->videoFrameShown});
-        out.strings = {v->audioFile, v->videoFile, v->keyframesFile};
+        out.strings = {v->audioFile, v->videoFile, v->keyframesFile, v->timecodesFile};
         out.numbers = {v->videoZoom};
         return reply(std::move(out));
     }

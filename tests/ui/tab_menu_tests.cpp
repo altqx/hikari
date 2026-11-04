@@ -4,8 +4,10 @@
 #include "hikari/application/session_file.h"
 #include "docking.h"
 #include "line_table_model.h"
+#include "menu_rows.h"
 #include "settings_store.h"
 
+#include <QClipboard>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -234,50 +236,115 @@ private slots:
         restoreThreeTabs();
         QObject *menu = openTabMenu(0);
         QVERIFY(menu);
+        QCOMPARE(menu_rows::shown(menu),
+                 (QStringList{"tabMenuSave", "tabMenuSaveAll", "|", "tabMenuFolders", "tabMenuCopyPaths",
+                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuClose", "tabMenuCloseOthers",
+                              "tabMenuCloseRight", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab0")->property("text").toString(), QStringLiteral("a.ass"));
         QCOMPARE(named("tabMenuTab2")->property("text").toString(), QStringLiteral("c.ass"));
         QVERIFY(!named("tabMenuTab0")->property("checked").toBool());
         QVERIFY(named("tabMenuTab2")->property("checked").toBool());
         QVERIFY(!named("tabMenuSave")->property("enabled").toBool());
         QVERIFY(named("tabMenuSaveAll")->property("enabled").toBool());
-        QCOMPARE(named("tabMenuSave")->property("text").toString(), QStringLiteral("Save"));
-        QCOMPARE(named("tabMenuCloseAll")->property("text").toString(), QStringLiteral("Close all tabs"));
-        QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(),
-                 QStringLiteral("Show subtitles in folder"));
-        QCOMPARE(named("tabMenuFolder_video")->property("text").toString(), QStringLiteral("Show video in folder"));
-        QCOMPARE(named("tabMenuFolder_audio")->property("text").toString(), QStringLiteral("Show audio in folder"));
-        QCOMPARE(named("tabMenuFolder_keyframes")->property("text").toString(),
-                 QStringLiteral("Show keyframes in folder"));
-        QStringList order;
-        const int count = menu->property("count").toInt();
-        for (int i = 0; i < count; ++i) {
-            QQuickItem *item = nullptr;
-            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
-            order << (item ? item->objectName() : QString());
-        }
-        QCOMPARE(order.mid(0, 3), (QStringList{QStringLiteral("tabMenuTab0"), QStringLiteral("tabMenuTab1"),
-                                              QStringLiteral("tabMenuTab2")}));
-        QCOMPARE(order.mid(4, 7), (QStringList{QStringLiteral("tabMenuSave"), QStringLiteral("tabMenuSaveAll"),
-                                              QStringLiteral("tabMenuCloseAll"), QStringLiteral("tabMenuFolder_subtitles"),
-                                              QStringLiteral("tabMenuFolder_video"), QStringLiteral("tabMenuFolder_audio"),
-                                              QStringLiteral("tabMenuFolder_keyframes")}));
-        QCOMPARE(order.size(), 12);
+        QVERIFY(named("tabMenuCloseRight")->property("enabled").toBool());
+        QCOMPARE(menu_rows::shown(named("tabMenuFolders")),
+                 (QStringList{"tabMenuFolder_subtitles", "tabMenuFolder_video", "tabMenuFolder_audio",
+                              "tabMenuFolder_keyframes"}));
+        QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(), QStringLiteral("Subtitles"));
+        QCOMPARE(named("tabMenuFolder_keyframes")->property("text").toString(), QStringLiteral("Keyframes"));
+        QCOMPARE(menu_rows::shown(named("tabMenuCopyPaths")),
+                 (QStringList{"tabMenuCopyPath_subtitles", "tabMenuCopyPath_video", "tabMenuCopyPath_audio",
+                              "tabMenuCopyPath_keyframes"}));
         trigger("tabMenuFolder_video");
         trigger("tabMenuFolder_subtitles");
         QCOMPARE(revealed, (QStringList{QDir::toNativeSeparators(dir.filePath(QStringLiteral("media/a video.mkv"))),
                                         QDir::toNativeSeparators(dir.filePath(QStringLiteral("tabs/a.ass")))}));
+        trigger("tabMenuCopyPath_audio");
+        QCOMPARE(QGuiApplication::clipboard()->text(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("sound/a.wav"))));
         closeTabMenu();
         edit(1, "b2");
         openTabMenu(1);
+        QCOMPARE(menu_rows::shown(menu),
+                 (QStringList{"tabMenuSave", "tabMenuSaveAll", "|", "tabMenuFolder_subtitles", "tabMenuCopyPath_subtitles",
+                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuClose", "tabMenuCloseOthers",
+                              "tabMenuCloseRight", "tabMenuCloseAll"}));
         QVERIFY(named("tabMenuSave")->property("enabled").toBool());
-        QVERIFY(named("tabMenuFolder_subtitles"));
+        QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(), QStringLiteral("Show in folder"));
+        QCOMPARE(named("tabMenuCopyPath_subtitles")->property("text").toString(), QStringLiteral("Copy path"));
         QVERIFY(!named("tabMenuFolder_video"));
-        QVERIFY(!named("tabMenuFolder_keyframes"));
+        trigger("tabMenuCopyPath_subtitles");
+        QCOMPARE(QGuiApplication::clipboard()->text(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("tabs/b.ass"))));
+        closeTabMenu();
+        openTabMenu(2);
+        QVERIFY(!named("tabMenuCloseRight")->property("enabled").toBool());
         closeTabMenu();
         openTabMenu(-1);
-        QVERIFY(!named("tabMenuSave")->property("enabled").toBool());
-        QVERIFY(!named("tabMenuFolder_subtitles"));
+        QCOMPARE(menu_rows::shown(menu), (QStringList{"tabMenuNewTab", "tabMenuSaveAll", "tabMenuSwitchTo", "|", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab1")->property("text").toString(), QStringLiteral("b.ass"));
+    }
+
+    void closeFromATabsMenu()
+    {
+        restoreThreeTabs();
+        openTabMenu(0);
+        trigger("tabMenuClose");
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
+        QCOMPARE(application->currentTab(), 1);
+        closeTabMenu();
+        openTabMenu(-1);
+        trigger("tabMenuNewTab");
+        QTRY_COMPARE(titles().size(), 3);
+    }
+
+    void closeOtherTabsAndTabsToTheRight()
+    {
+        restoreThreeTabs();
+        edit(0, "a changed");
+        openTabMenu(1);
+        trigger("tabMenuCloseRight");
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass")}));
+        QCOMPARE(application->currentTab(), 1);
+        closeTabMenu();
+        openTabMenu(1);
+        QVERIFY(!named("tabMenuCloseRight")->property("enabled").toBool());
+        trigger("tabMenuCloseOthers");
+        QObject *review = named("unsavedChanges");
+        QTRY_VERIFY(review->property("opened").toBool());
+        const QVariantList rows = review->property("rows").toList();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("a.ass"));
+        QSignalSpy finished(application, &app::Application::closeFinished);
+        application->resolveClose({QVariantMap{{QStringLiteral("id"), rows[0].toMap().value(QStringLiteral("id"))},
+                                               {QStringLiteral("save"), false},
+                                               {QStringLiteral("path"), QString()}}});
+        QTRY_COMPARE(finished.size(), 1);
+        QCOMPARE(titles(), QStringList{QStringLiteral("b.ass")});
+        QCOMPARE(application->currentTab(), 0);
+        QMetaObject::invokeMethod(review, "close");
+    }
+
+    void theMenuKeyOpensTheFocusedTabsMenu()
+    {
+        restoreThreeTabs();
+        auto *current = visualItem(QStringLiteral("documentTab2"));
+        QVERIFY(current);
+        QVERIFY(current->activeFocusOnTab());
+        QVERIFY(!visualItem(QStringLiteral("documentTab1"))->activeFocusOnTab());
+        current->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(current->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Left);
+        QTRY_VERIFY(visualItem(QStringLiteral("documentTab1"))->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Menu);
+        QObject *menu = named("documentTabMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(menu->property("tabIndex").toInt(), 1);
+        QMetaObject::invokeMethod(menu, "close");
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        visualItem(QStringLiteral("documentTab1"))->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_F10, Qt::ShiftModifier);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(menu->property("tabIndex").toInt(), 1);
+        QCOMPARE(application->currentTab(), 2);
     }
 
     void choosingATabMovesItToTheFirstVisiblePlace()
@@ -646,6 +713,108 @@ private slots:
         application->addPage();
         application->selectTab(0);
         QVERIFY(!application->video().offering());
+    }
+
+    void aTimecodesFileIsOfferedAndKeptInTheProjectGarbage()
+    {
+        const QString folder = dir.filePath(QStringLiteral("tcassoc"));
+        QDir().mkpath(folder + QStringLiteral("/tc"));
+        QFile::remove(folder + QStringLiteral("/ep.mkv"));
+        QVERIFY(QFile::copy(media("cfr.mkv"), folder + QStringLiteral("/ep.mkv")));
+        {
+            QFile t(folder + QStringLiteral("/tc/ep.txt"));
+            QVERIFY(t.open(QIODevice::WriteOnly));
+            t.write("# timestamp format v2\n0\n100\n200\n300\n400\n");
+        }
+        QFile::remove(folder + QStringLiteral("/ep.ass"));
+        const QString subs = writeAss(folder + QStringLiteral("/ep.ass"),
+                                      "Video File: ep.mkv\n\n[Aegisub Project Garbage]\nAudio File: ep.mkv\n"
+                                      "Timecodes File: tc/ep.txt\n",
+                                      "ep");
+        const QString n = QDir::toNativeSeparators(folder);
+        const QChar sep = QDir::separator();
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(),
+                 QStringLiteral("Associated files:\nVideo: %1%2ep.mkv\nTimecodes: %1%2tc%2ep.txt\n\nVideo from directory: ep.mkv")
+                     .arg(n, sep));
+        application->video().loadAssociated();
+        QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTRY_COMPARE(application->log().lastMessage(),
+                     QStringLiteral("The timecodes file ends before the video does (frame 5 of %1). Later frames continue "
+                                    "at its average frame rate.")
+                         .arg(application->video().session().frameCount()));
+        QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+
+        const auto written = [this] {
+            const auto last = application->files().lastSave(*application->workspace().editingTarget());
+            return last && last->outcome == hikari::application::WriteOutcome::Written;
+        };
+        const QString moved = folder + QStringLiteral("/out/ep.ass");
+        QDir().mkpath(folder + QStringLiteral("/out"));
+        QVERIFY(application->saveAs(moved));
+        QTRY_VERIFY(written());
+        QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\nTimecodes File: ../tc/ep.txt\n"));
+        application->closeTimecodes();
+        QVERIFY(application->saveAs(moved));
+        QTRY_VERIFY(written());
+        QVERIFY(!readAll(moved).contains("Timecodes File"));
+        QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\n"));
+
+        const QString untouched = writeAss(folder + QStringLiteral("/untouched.ass"),
+                                           "\n[Aegisub Project Garbage]\nTimecodes File: gone.txt\n", "u");
+        QVERIFY(application->openFile(untouched));
+        QCOMPARE(application->log().lastMessage(),
+                 QStringLiteral("Timecodes file not found: %1").arg(QStringLiteral("gone.txt")));
+        QCOMPARE(titles().last(), QStringLiteral("untouched.ass"));
+        application->selectTab(int(titles().size()) - 1);
+        QVERIFY(application->timecodesFile().isEmpty());
+        QVERIFY(application->saveAs(untouched));
+        QTRY_VERIFY(written());
+        QVERIFY(readAll(untouched).contains("[Aegisub Project Garbage]\nTimecodes File: gone.txt\n"));
+    }
+
+    void missingLinkedFilesAreReported()
+    {
+        const QString folder = dir.filePath(QStringLiteral("missing"));
+        QDir().mkpath(folder);
+        QFile::remove(folder + QStringLiteral("/gone.mkv"));
+        {
+            QFile k(folder + QStringLiteral("/gone_keyframes.txt"));
+            QVERIFY(k.open(QIODevice::WriteOnly));
+            k.write("# keyframe format v1\nfps 0\n0\n24\n");
+        }
+        const QString subs = writeAss(folder + QStringLiteral("/gone.ass"),
+                                      "Video File: gone.mkv\nAudio File: audio/gone.flac\nKeyframes File: gone_keyframes.txt\n",
+                                      "gone");
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(),
+                 QStringLiteral("Associated files:\nKeyframes: %1%2gone_keyframes.txt\n"
+                                "\nLinked files not found:\nVideo: gone.mkv\nAudio: audio/gone.flac")
+                     .arg(QDir::toNativeSeparators(folder), QDir::separator()));
+        QCOMPARE(application->video().offerAssociatedLabel(), QStringLiteral("Yes"));
+        QCOMPARE(visualItem(QStringLiteral("dismissAssociation"))->property("text").toString(), QStringLiteral("No"));
+        application->video().dismissOffer();
+        QVERIFY(!application->video().offering());
+
+        QFile::remove(folder + QStringLiteral("/gone_keyframes.txt"));
+        const QString only = writeAss(folder + QStringLiteral("/only.ass"), "Video File: gone.mkv\n", "only");
+        QVERIFY(application->openFile(only));
+        application->selectTab(1);
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(), QStringLiteral("Linked files not found:\nVideo: gone.mkv"));
+        QQuickItem *ok = visualItem(QStringLiteral("dismissAssociation"));
+        QVERIFY(ok && ok->isVisible());
+        QCOMPARE(ok->property("text").toString(), QStringLiteral("OK"));
+        QVERIFY(!visualItem(QStringLiteral("loadAssociated"))->isVisible());
+        QVERIFY(!visualItem(QStringLiteral("loadFromDirectory"))->isVisible());
+        QVERIFY(!visualItem(QStringLiteral("associationApplyToAll"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(ok, "clicked"));
+        QVERIFY(!application->video().offering());
+        QTest::qWait(200);
+        QVERIFY(!application->video().hasVideo());
     }
 
     void theFoldersVideoAndApplyToAll()

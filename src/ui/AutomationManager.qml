@@ -29,7 +29,88 @@ Pane {
     property string blocked: ""
     property var folded: ({ missing: true })
     property string view: "scripts"
+    onViewChanged: if (view === "recommended" && packages) packages.refresh()
     readonly property AutomationRuns runs: automation ? automation.runs : null
+    readonly property var packages: automation ? automation.packages : null
+    readonly property string recommendedFilterText: recommendedFilter.text.trim().toLowerCase()
+    property string chosen: ""
+    readonly property var recommendedRows: {
+        const out = []
+        const entries = packages ? packages.entries : []
+        const groups = []
+        for (const e of entries)
+            if (!groups.includes(e.groupKey))
+                groups.push(e.groupKey)
+        const shown = e => recommendedFilterText.length === 0
+                           || [e.name, e.line, e.credit].some(t => t.toLowerCase().includes(recommendedFilterText))
+        for (const group of groups) {
+            const members = entries.filter(e => e.groupKey === group && shown(e))
+            if (members.length === 0)
+                continue
+            const key = "recommended-" + group
+            out.push({ kind: "section", key: key, title: members[0].group, count: members.length })
+            if (!folded[key])
+                for (const e of members)
+                    out.push({ kind: "entry", entry: e })
+        }
+        return out
+    }
+    readonly property string byHandHint: qsTr("Not installed by DependencyControl. Remove the file from your autoload folder.")
+    function stateText(entry) {
+        return entry.state === "installed" || entry.state === "manual" ? qsTr("installed")
+             : entry.state === "installing" ? qsTr("installing")
+             : entry.state === "uninstalling" ? qsTr("uninstalling")
+             : entry.state === "queued" ? qsTr("waiting to install")
+             : entry.state === "failed" ? qsTr("couldn’t install") : qsTr("not installed")
+    }
+    function installEntry(entry) {
+        if (packages && (entry.state === "install" || entry.state === "failed"))
+            packages.install(entry.nameSpace)
+    }
+    function askUninstall(entry) {
+        if (!packages || entry.state !== "installed")
+            return
+        uninstallQuestion.ask({
+            title: qsTr("Uninstall script"),
+            text: qsTr("Uninstall %1?").arg(entry.name),
+            detail: qsTr("DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts."),
+            plainText: true,
+            severity: "warning",
+            choices: [{ id: "uninstall", text: qsTr("Uninstall"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => {
+            if (id === "uninstall")
+                packages.uninstall(entry.nameSpace)
+        })
+    }
+    function showScript(path) {
+        view = "scripts"
+        filter.text = ""
+        const f = Object.assign({}, folded)
+        f.autoload = false
+        folded = f
+        const i = rows.findIndex(r => r.kind === "macro" && r.script.path === path)
+        if (i < 0)
+            return
+        list.currentIndex = i
+        list.positionViewAtIndex(i, ListView.Contain)
+        list.forceActiveFocus(Qt.OtherFocusReason)
+    }
+    Connections {
+        target: root.packages
+        ignoreUnknownSignals: true
+        function onInstalled(nameSpace, name) {
+            if (!root.notices)
+                return
+            root.notices.post("info", qsTr("%1 is installed.").arg(name),
+                              qsTr("Its macros are in Automation › %1.").arg(name),
+                              { actions: [{ text: qsTr("Show"), run: () => {
+                                  const entry = root.packages.entries.find(e => e.nameSpace === nameSpace)
+                                  if (entry && entry.path !== "")
+                                      root.showScript(entry.path)
+                              } }] })
+        }
+    }
     function showRun(id) {
         view = "runs"
         runList.choose(id)
@@ -185,11 +266,13 @@ Pane {
             spacing: 4
             SegmentedButtons {
                 objectName: "automationView"
+                readonly property var views: ["scripts", "runs", "recommended"]
                 choices: [{text: qsTr("Scripts"), name: "automationViewScripts"},
                           {text: root.runs && root.runs.count > 0 ? qsTr("Runs %1").arg(root.runs.count) : qsTr("Runs"),
-                           name: "automationViewRuns"}]
-                currentIndex: root.view === "runs" ? 1 : 0
-                onActivated: index => root.view = index === 1 ? "runs" : "scripts"
+                           name: "automationViewRuns"},
+                          {text: qsTr("Recommended"), name: "automationViewRecommended"}]
+                currentIndex: Math.max(0, views.indexOf(root.view))
+                onActivated: index => root.view = views[index]
             }
             Item { Layout.fillWidth: true }
             IconToolButton {
@@ -231,6 +314,29 @@ Pane {
             placeholderText: qsTr("Filter macros")
             Accessible.name: qsTr("Filter macros")
             Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
+        }
+        TextField {
+            id: recommendedFilter
+            objectName: "recommendedFilter"
+            visible: root.view === "recommended"
+            Layout.fillWidth: true
+            Layout.margins: 8
+            Layout.bottomMargin: 4
+            placeholderText: qsTr("Filter scripts")
+            Accessible.name: qsTr("Filter scripts")
+            Keys.onDownPressed: recommendedList.forceActiveFocus(Qt.TabFocusReason)
+        }
+        Label {
+            objectName: "recommendedTrust"
+            visible: root.view === "recommended"
+            Layout.fillWidth: true
+            Layout.leftMargin: 10
+            Layout.rightMargin: 10
+            Layout.bottomMargin: 2
+            wrapMode: Text.Wrap
+            color: Theme.muted
+            font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
+            text: qsTr("Installs from each author’s feed through DependencyControl. A script runs its code when it loads.")
         }
 
         Rectangle {
@@ -315,6 +421,14 @@ Pane {
                 tip: qsTr("Load an Automation script")
                 onClicked: root.loadAction.trigger()
             }
+            LinkButton {
+                objectName: "scriptsEmptyRecommended"
+                visible: root.packages !== null
+                Layout.alignment: Qt.AlignHCenter
+                iconRole: "plugin-install"
+                text: qsTr("Browse recommended scripts")
+                onClicked: root.view = "recommended"
+            }
             Item { Layout.fillHeight: true }
         }
         Label {
@@ -380,6 +494,69 @@ Pane {
                 sourceComponent: modelData.kind === "section" ? sectionRow
                                  : modelData.kind === "script" ? scriptRow
                                  : modelData.kind === "macro" ? macroRow : missingRow
+            }
+        }
+
+        Label {
+            objectName: "recommendedNoMatch"
+            visible: root.view === "recommended" && root.recommendedRows.length === 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.margins: 12
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignTop
+            color: Theme.muted
+            text: qsTr("No scripts match")
+        }
+        ListView {
+            id: recommendedList
+            objectName: "recommendedScripts"
+            visible: root.view === "recommended" && root.recommendedRows.length > 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            activeFocusOnTab: true
+            boundsBehavior: Flickable.StopAtBounds
+            model: root.recommendedRows
+            currentIndex: root.recommendedRows.findIndex(r => r.kind === "entry" && r.entry.nameSpace === root.chosen)
+            highlightFollowsCurrentItem: false
+            ScrollBar.vertical: ScrollBar {
+                policy: recommendedList.contentHeight > recommendedList.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+            }
+            Accessible.role: Accessible.List
+            Accessible.name: qsTr("Recommended scripts")
+            readonly property var current: currentIndex >= 0 ? root.recommendedRows[currentIndex].entry : null
+            function step(by) {
+                const from = currentIndex >= 0 ? currentIndex : by > 0 ? -1 : root.recommendedRows.length
+                for (let i = from + by; i >= 0 && i < root.recommendedRows.length; i += by)
+                    if (root.recommendedRows[i].kind === "entry") {
+                        root.chosen = root.recommendedRows[i].entry.nameSpace
+                        positionViewAtIndex(i, ListView.Contain)
+                        return
+                    }
+            }
+            Keys.onUpPressed: step(-1)
+            Keys.onDownPressed: step(1)
+            MenuKey.onRequested: {
+                if (current && (current.state === "installed" || current.state === "manual"))
+                    recommendedMenu.openFor(current, currentItem)
+            }
+            Keys.onPressed: event => {
+                if (!current || event.modifiers !== Qt.NoModifier)
+                    return
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    root.installEntry(current)
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Delete) {
+                    root.askUninstall(current)
+                    event.accepted = true
+                }
+            }
+            delegate: Loader {
+                required property var modelData
+                required property int index
+                width: ListView.view.width
+                sourceComponent: modelData.kind === "section" ? sectionRow : entryRow
             }
         }
 
@@ -797,6 +974,10 @@ Pane {
             spacing: 0
             Accessible.role: Accessible.Grouping
             Accessible.name: root.scriptTitle(script)
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                onTapped: eventPoint => scriptMenu.openAt(scriptItem.script, scriptItem, eventPoint.position.x, eventPoint.position.y)
+            }
             RowLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: scriptItem.script.inDocument ? 28 : 20
@@ -849,6 +1030,7 @@ Pane {
                     iconRole: "panel-menu"
                     text: qsTr("%1 options").arg(root.scriptTitle(scriptItem.script))
                     onClicked: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
+                    MenuKey.onRequested: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
                 }
             }
             Label {
@@ -1109,6 +1291,205 @@ Pane {
         }
     }
 
+    Component {
+        id: entryRow
+        ItemDelegate {
+            id: entryItem
+            readonly property var entry: parent ? parent.modelData.entry : ({})
+            readonly property int rowIndex: parent ? parent.index : -1
+            readonly property bool current: recommendedList.currentIndex === rowIndex
+            readonly property string entryState: entry.state ?? ""
+            readonly property bool installed: entryState === "installed" || entryState === "manual"
+            readonly property bool busy: entryState === "installing" || entryState === "uninstalling"
+            readonly property bool failed: entryState === "failed"
+            objectName: "recommended_" + entry.nameSpace
+            highlighted: current
+            leftPadding: 20
+            rightPadding: 8
+            topPadding: 6
+            bottomPadding: 7
+            focusPolicy: Qt.NoFocus
+            Accessible.name: entry.name + ", " + root.stateText(entry)
+            Accessible.description: entry.line
+            onClicked: {
+                root.chosen = entry.nameSpace
+                recommendedList.forceActiveFocus(Qt.MouseFocusReason)
+            }
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                onTapped: {
+                    root.chosen = entryItem.entry.nameSpace
+                    if (entryItem.installed)
+                        recommendedMenu.openFor(entryItem.entry, entryItem)
+                }
+            }
+            background: Rectangle {
+                color: entryItem.current ? Theme.select : entryItem.hovered ? Color.transparent(Theme.select, 0.45) : "transparent"
+                Rectangle {
+                    visible: entryItem.current
+                    width: 3
+                    height: parent.height
+                    color: Theme.accent
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    visible: entryItem.current && recommendedList.activeFocus
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Theme.text
+                }
+            }
+            contentItem: ColumnLayout {
+                spacing: 1
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: 26
+                    spacing: 6
+                    Label {
+                        Layout.fillWidth: true
+                        text: entryItem.entry.name
+                        font.bold: true
+                        elide: Text.ElideRight
+                        HoverHandler { id: entryNameHover }
+                        ToolTip.visible: entryNameHover.hovered
+                        ToolTip.text: entryItem.entry.version !== ""
+                                      ? qsTr("%1 (version %2)").arg(entryItem.entry.about, entryItem.entry.version)
+                                      : entryItem.entry.about
+                    }
+                    IconTextButton {
+                        objectName: "install_" + entryItem.entry.nameSpace
+                        visible: entryItem.entryState === "install" || entryItem.failed
+                        iconRole: entryItem.failed ? "restart" : "plugin-install"
+                        text: entryItem.failed ? qsTr("Try again") : qsTr("Install")
+                        tip: qsTr("Install %1").arg(entryItem.entry.name)
+                        onClicked: {
+                            root.chosen = entryItem.entry.nameSpace
+                            root.installEntry(entryItem.entry)
+                        }
+                    }
+                    Icon {
+                        id: entryBusy
+                        visible: entryItem.busy
+                        iconRole: "run-busy"
+                        size: 14
+                        RotationAnimator on rotation {
+                            running: entryBusy.visible
+                            from: 0
+                            to: 360
+                            duration: 1200
+                            loops: Animation.Infinite
+                        }
+                    }
+                    Label {
+                        objectName: "busy_" + entryItem.entry.nameSpace
+                        visible: entryItem.busy || entryItem.entryState === "queued"
+                        color: Theme.muted
+                        text: entryItem.entryState === "installing" ? qsTr("Installing…")
+                            : entryItem.entryState === "uninstalling" ? qsTr("Uninstalling…") : qsTr("Waiting…")
+                    }
+                    Icon {
+                        visible: entryItem.installed
+                        iconRole: "run-applied"
+                        size: 14
+                    }
+                    Label {
+                        objectName: "installed_" + entryItem.entry.nameSpace
+                        visible: entryItem.installed
+                        text: qsTr("Installed")
+                        HoverHandler { id: installedHover }
+                        ToolTip.visible: installedHover.hovered && entryItem.entryState === "manual"
+                        ToolTip.text: root.byHandHint
+                    }
+                    IconToolButton {
+                        id: entryMenuButton
+                        objectName: "entryMenu_" + entryItem.entry.nameSpace
+                        visible: entryItem.installed
+                        iconRole: "panel-menu"
+                        text: qsTr("%1 options").arg(entryItem.entry.name)
+                        onClicked: {
+                            root.chosen = entryItem.entry.nameSpace
+                            recommendedMenu.openFor(entryItem.entry, entryMenuButton)
+                        }
+                    }
+                }
+                Label {
+                    Layout.fillWidth: true
+                    Layout.rightMargin: 8
+                    text: entryItem.entry.line
+                    wrapMode: Text.Wrap
+                }
+                Label {
+                    Layout.fillWidth: true
+                    text: entryItem.entry.credit
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
+                }
+                RowLayout {
+                    visible: (entryItem.entry.error ?? "") !== ""
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Label {
+                        objectName: "error_" + entryItem.entry.nameSpace
+                        Layout.fillWidth: true
+                        text: entryItem.entry.error ?? ""
+                        color: Theme.danger
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
+                    }
+                    LinkButton {
+                        objectName: "details_" + entryItem.entry.nameSpace
+                        visible: (entryItem.entry.runId ?? 0) > 0
+                        iconRole: "log"
+                        text: qsTr("Details")
+                        onClicked: root.showRun(entryItem.entry.runId)
+                    }
+                }
+            }
+        }
+    }
+
+    ShellMenu {
+        id: recommendedMenu
+        objectName: "recommendedMenu"
+        property var entry: null
+        function openFor(entry, anchor) {
+            recommendedMenu.entry = entry
+            popup(anchor, 0, anchor.height)
+        }
+        ShellMenuItem {
+            objectName: "recommendedShowInScripts"
+            iconRole: "automation"
+            text: qsTr("Show in Scripts")
+            enabled: recommendedMenu.entry !== null && recommendedMenu.entry.path !== ""
+            onTriggered: root.showScript(recommendedMenu.entry.path)
+        }
+        ShellMenuItem {
+            objectName: "recommendedOpenProject"
+            iconRole: "open-link"
+            text: qsTr("Open project page")
+            onTriggered: root.packages.openProject(recommendedMenu.entry.nameSpace)
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "recommendedUninstall"
+            iconRole: "delete"
+            text: qsTr("Uninstall…")
+            readonly property bool byHand: recommendedMenu.entry !== null && recommendedMenu.entry.state === "manual"
+            standardKey: byHand ? StandardKey.UnknownKey : StandardKey.Delete
+            enabled: recommendedMenu.entry !== null && recommendedMenu.entry.state === "installed"
+            detailText: byHand ? qsTr("Installed by hand") : ""
+            help: byHand ? root.byHandHint : ""
+            onTriggered: root.askUninstall(recommendedMenu.entry)
+        }
+    }
+
+    LazyMessageBox {
+        id: uninstallQuestion
+        name: "uninstallQuestion"
+        settings: root.settings
+    }
+
     Item {
         id: recorder
         objectName: "automationRecorder"
@@ -1154,8 +1535,11 @@ Pane {
         objectName: "automationScriptMenu"
         property var script: null
         function openFor(script, anchor) {
+            openAt(script, anchor, 0, anchor.height)
+        }
+        function openAt(script, anchor, x, y) {
             scriptMenu.script = script
-            popup(anchor, 0, anchor.height)
+            popup(anchor, x, y)
         }
         ShellMenuItem {
             objectName: "scriptMenuReload"
@@ -1192,18 +1576,23 @@ Pane {
             popup(anchor, 40, anchor.height)
         }
         ShellMenuItem {
-            iconRole: "media-play"
+            objectName: "macroMenuRun"
+            iconRole: "run-script"
             text: qsTr("Run")
+            shortcutText: macroMenu.row !== null ? root.keysOf(macroMenu.row.legacyName) : ""
             enabled: macroMenu.row !== null && macroMenu.row.script.state === "ready" && !root.controller.busy
             onTriggered: root.controller.run(macroMenu.row.script.path, macroMenu.row.macro.ordinal)
         }
+        MenuSeparator {}
         ShellMenuItem {
+            objectName: "macroMenuSetShortcut"
             iconRole: "hotkeys"
             text: qsTr("Set shortcut…")
             enabled: root.hotkeys !== null
             onTriggered: root.record(macroMenu.row.legacyName)
         }
         ShellMenuItem {
+            objectName: "macroMenuClearShortcut"
             iconRole: "clear"
             text: qsTr("Clear shortcut")
             enabled: macroMenu.row !== null && root.keysOf(macroMenu.row.legacyName).length > 0

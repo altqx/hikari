@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include <algorithm>
 #include <functional>
 #include <utility>
 #include <QAccessible>
@@ -681,6 +682,53 @@ private slots:
         QTRY_VERIFY(dock("Grid")->property("isFloating").toBool());
         QVERIFY(docking()->toggleFloating(QStringLiteral("Grid")));
         QTRY_VERIFY(!dock("Grid")->property("isFloating").toBool());
+    }
+
+    void aLockedLayoutRefusesDragsAndDoubleClicksButResizes()
+    {
+        restoreInitial();
+        hikari::ui::setLayoutLocked(true);
+        const auto unlock = qScopeGuard([] { hikari::ui::setLayoutLocked(false); });
+        const auto parkCursor = qScopeGuard([at = QCursor::pos()] { QCursor::setPos(at); });
+        QSignalSpy refused(docking(), &hikari::ui::Docking::layoutChangeRefused);
+        const QByteArray before = layout();
+
+        QQuickItem *audio = header(QStringLiteral("Audio"));
+        QQuickItem *gridGroup = groupOf(header(QStringLiteral("Grid")));
+        const QRectF g = sceneRect(gridGroup);
+        QTest::mouseMove(window, audio->mapToScene(QPointF(60, audio->height() / 2)).toPoint());
+        QTRY_COMPARE(window->cursor().shape(), Qt::ArrowCursor);
+        const QPoint start = window->mapToGlobal(audio->mapToScene(QPointF(60, audio->height() / 2)).toPoint());
+        const QPoint over = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
+        sendMouse(window, QEvent::MouseButtonPress, start, Qt::LeftButton);
+        for (int i = 1; i <= 12; ++i)
+            sendMouse(window, QEvent::MouseMove, start + (over - start) * i / 12, Qt::LeftButton);
+        QTest::qWait(200);
+        QVERIFY(!dock("Audio")->property("isFloating").toBool());
+        const auto highlights = itemsNamed(window, QStringLiteral("dockDropHighlight"));
+        QVERIFY(std::none_of(highlights.begin(), highlights.end(), [](QQuickItem *h) { return h->isVisible(); }));
+        sendMouse(window, QEvent::MouseButtonRelease, over, Qt::NoButton);
+        QCOMPARE(arrangement(layout()), arrangement(before));
+        QVERIFY(refused.count() >= 1);
+
+        QQuickItem *video = header(QStringLiteral("Video"));
+        QTest::mouseDClick(window, Qt::LeftButton, {}, video->mapToScene(QPointF(60, video->height() / 2)).toPoint());
+        QTest::qWait(200);
+        QVERIFY(!dock("Video")->property("isFloating").toBool());
+        QVERIFY(!docking()->toggleFloating(QStringLiteral("Video")));
+        QVERIFY(!dock("Video")->property("isFloating").toBool());
+
+        QQuickItem *videoGroup = groupOf(video);
+        const qreal width = videoGroup->width();
+        QQuickItem *upright = separatorThrough(Qt::Vertical, QPointF(sceneRect(videoGroup).right(), sceneRect(videoGroup).center().y()));
+        QVERIFY(upright);
+        dragFrom(sceneRect(upright).center().toPoint(), QPoint(-40, 0));
+        QTRY_VERIFY2(qAbs(videoGroup->width() - (width - 40)) <= 2, qPrintable(QString::number(videoGroup->width())));
+
+        hikari::ui::setLayoutLocked(false);
+        QTest::mouseMove(window, audio->mapToScene(QPointF(60, audio->height() / 2)).toPoint());
+        QTRY_COMPARE(window->cursor().shape(), Qt::SizeAllCursor);
+        QTest::mouseMove(window, centreOf(header(QStringLiteral("Grid"))));
     }
 
     void floatingPanelsAreBorderlessToolWindows()
@@ -1603,7 +1651,7 @@ private slots:
             if (entry)
                 items << entry->property("text").toString() + (entry->isEnabled() ? QString() : QStringLiteral(" (off)"));
         }
-        QCOMPARE(items, (QStringList{QStringLiteral("Dock"), QStringLiteral("Close")}));
+        QCOMPARE(items, (QStringList{QStringLiteral("Dock"), QString(), QStringLiteral("Close")}));
         QObject *dockItem = nullptr;
         for (QObject *o : titleBar->findChildren<QObject *>())
             if (o->objectName() == QLatin1String("dockWindowDock"))

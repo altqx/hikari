@@ -24,7 +24,7 @@ _Avoid_: Tab as a synonym for the Document's content or Workspace.
 
 **Session**:
 A restorable set of open Documents and associated media, view positions and each tab's Workspace. Every tab belongs to a shell window; the Session does not yet record which ([MW4 #628](https://github.com/altqx/hikari/issues/628)).
-_Avoid_: Project file, Workspace layout or complete undo archive.
+_Avoid_: Project (the folder a window opened), Workspace layout or complete undo archive.
 
 **Script properties**:
 Document-level subtitle information, including title, credits, resolutions and ASS options. Script Info is the ASS section name.
@@ -42,7 +42,7 @@ _Avoid_: Filter without qualification where automation or presentation is also d
 
 **Workspace**:
 The arrangement of subtitle-editing panels and tools in a shell window and its floating panels. Each Document tab has its own, in its own window, and switching tabs shows that tab's ([ADR 0020](docs/adr/0020-per-document-tab-layouts.md)); it places panels and never changes which Document is the editing target.
-_Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents.
+_Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents or for an opened folder (a Project).
 
 **Editing target**:
 The subtitle document to which ordinary editing commands apply: the current tab of the shell window that was active last ([ADR 0025](docs/adr/0025-multiple-windows.md)). A tool with an explicit pinned target may name a different unprotected document. Within a window it is distinct from the control or panel that currently has keyboard focus; focus moving to another window makes that window's current tab the editing target.
@@ -135,8 +135,31 @@ A plugin sideloaded from a `.hikariplugin` file rather than installed from the P
 One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
 _Avoid_: Command, which names a menu, toolbar or shortcut action.
 
+**AI tool**:
+A function a model can call: an Operation offered under a model-safe name, or a search the AI sidecar answers itself. The core tools are always offered; the others are in groups that `search_tools` finds.
+_Avoid_: Operation as a synonym; tool target, which names a tool's Document.
+
+**Attached Document**:
+A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
+
+**MCP server**:
+HikariSub serving its AI tools and the open Documents over MCP to agents outside it, such as Claude Code. It is off until the user turns it on, and never on with AI off.
+_Avoid_: MCP client, which is the sidecar reaching other servers.
+
 ### Files
 
 **User folder**:
 The one folder holding what a user may edit or keep: settings, automation scripts and modules, dictionaries, catalogues, presets, autosaves, recovery and logs. Automation's `?user` is this folder. Bundled scripts, modules and dictionaries are copied into it; caches live elsewhere.
 _Avoid_: Settings folder, data folder or config folder as names for it; program folder for the bundled files' source.
+
+**Project**:
+A folder opened in a shell window as its context: the Explorer shows it, the AI may read inside it, and its Project tier applies to the window. A window has one Project or none, and a subtitle file opened by itself has none ([ADR 0030](docs/adr/0030-open-a-folder-as-a-project.md)). The Project is the folder; the Session is what is open in which window; a Workspace is how one tab's panels are arranged.
+_Avoid_: Workspace or Session as names for the folder; Project as a name for the Document.
+
+**Project file**:
+The optional `.hikari/project.toml` in a Project. A Project exists without one; HikariSub writes it when a Project-level setting first changes.
+_Avoid_: Session file.
+
+**Project tier**:
+Where a shared thing (a Style catalogue, a layout, dictionary words, a preset or a setting) is kept in the Project's `.hikari/` folder rather than the User folder. The UI marks the two tiers **Project** and **Mine**.
+_Avoid_: Workspace settings.
