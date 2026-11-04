@@ -1,6 +1,0 @@
-#include "document_prelude.h"
-
-std::string_view hikari::plugin_helper::documentPrelude()
-{
-    return R"hikari-lua(@HIKARI_DOCUMENT_LUA@)hikari-lua";
-}

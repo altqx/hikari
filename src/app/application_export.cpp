@@ -164,7 +164,7 @@ QVariantMap Application::exportSetup() const
     options.insert(QStringLiteral("fps"), savedFps >= 1 ? savedFps : videoFps >= 1 ? videoFps : defaults.fps);
 
     int all = 0, selected = 0, shown = 0;
-    const auto shownIds = m_shell->actionLines();
+    const auto shownIds = shell().actionLines();
     const std::set<core::LineId> shownSet(shownIds.begin(), shownIds.end());
     for (const auto *line : session->document().lines()) {
         if (line->comment || line->unparsed)
@@ -224,11 +224,11 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     if (lines == QLatin1String("selected")) {
         options.lines = session->selection().selected;
     } else if (lines == QLatin1String("shown")) {
-        const auto shown = m_shell->actionLines();
+        const auto shown = shell().actionLines();
         options.lines = std::set<core::LineId>(shown.begin(), shown.end());
     }
 
-    const auto draft = m_editorDocument == target ? m_editor->draftDocument() : std::nullopt;
+    const auto draft = activeViews().editorDocument == target ? editor().draftDocument() : std::nullopt;
     const core::Document &document = draft ? *draft : session->document();
     const core::ExportResult result = core::exportDocument(document, format->format, options);
 

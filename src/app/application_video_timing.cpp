@@ -124,7 +124,7 @@ void Application::followActiveLine(bool rowChanged, bool edited, std::optional<c
 
 void Application::followEditOn(const application::FollowedLine &line)
 {
-    const bool visualTool = m_visualTools && m_visualTools->activeFamily() > 0;
+    const bool visualTool = activeViews().visualTools && visualTools().activeFamily() > 0;
     const auto seek = static_cast<application::SeekAfter>(m_settings->integer("video.moveToActiveLine"));
     applyVideoFollow(application::followEdit(seek, videoState(), visualTool, line));
 }
@@ -174,7 +174,7 @@ bool Application::setTimeFromVideo(bool end)
         video.legacyTimebase(), video.tellMs(), !end,
         m_settings->integer(end ? "grid.insertEndOffset" : "grid.insertStartOffset"));
     const auto done = application::setTimesFromVideo(*session, end, ms);
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done.has_value();
 }
@@ -186,7 +186,7 @@ bool Application::joinPreviousToAudioSelection()
         return false;
     const auto done =
         application::joinPreviousToAudioSelection(*session, m_audio->selectionStart(), m_audio->selectionEnd());
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done.has_value();
 }
@@ -200,7 +200,7 @@ bool Application::shiftFramesToVideo(bool byEnd, bool following)
     const auto timebase = video.legacyTimebase();
     const auto done = application::shiftFramesToVideo(
         *session, timebase, application::FrameShift{timebase.frameShownAt(video.tellMs()), byEnd, following});
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done.has_value();
 }
@@ -273,7 +273,7 @@ bool Application::snapToKeyframe(bool start)
     if (!session->editDraft(active, change))
         return false;
     const bool done = session->commitDraftAs("Snapping to keyframe");
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -283,7 +283,7 @@ bool Application::commitAndAdvance()
     m_lineChangeOrigin = LineChangeOrigin{false, true};
     // MUST KILL: the video refresh is held so the draft and the move reach the video at once.
     m_holdVideoRefresh = true;
-    const bool done = m_editor->commitAndAdvance();
+    const bool done = editor().commitAndAdvance();
     m_holdVideoRefresh = false;
     refreshVideo();
     m_lineChangeOrigin.reset();
@@ -298,7 +298,7 @@ bool Application::selectVisibleLineAfterFullScreen()
 {
     if (!m_settings->boolean("grid.setVisibleLineAfterFullScreen") || targetUntitled())
         return false;
-    m_editor->commit();
+    editor().commit();
     return selectLineFromVideo();
 }
 
@@ -319,7 +319,7 @@ bool Application::centerTimesInFrames()
     if (!session || videoState() == application::VideoState::None)
         return false;
     const auto done = application::centerTimesInFrames(*session, m_video->session().legacyTimebase());
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done.has_value();
 }

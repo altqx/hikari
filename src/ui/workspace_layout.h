@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <cstdint>
@@ -67,6 +68,13 @@ public:
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
     static const QStringList &panelIds();
+    static constexpr int kMaxPluginPanels = 64;
+    // plugin:<plugin id>/<panel id>, a plugin's panel outside panelIds().
+    Q_INVOKABLE static QString pluginPanelId(const QString &plugin, const QString &panel);
+    Q_INVOKABLE static bool isPluginPanel(const QString &name);
+    // {title, pluginName} for a plugin panel, as a layout keeps it for the panel's placeholder.
+    Q_INVOKABLE static QVariantMap pluginPanelInfo(const QString &dock);
+    Q_INVOKABLE static void rememberPluginPanel(const QString &dock, const QString &title, const QString &pluginName);
 
     explicit WorkspaceLayoutController(QString layoutFile = {}, QString savedLayoutsFile = {}, QObject *parent = nullptr);
 
@@ -140,6 +148,8 @@ signals:
     void presetModeChosen(const QString &mode);
     void presetModeLeft(const QString &mode);
     void presetApplied(const QString &name);
+    // Before a restore, the plugin panels its layout names, so that each has a dock to restore into.
+    void pluginDocksNeeded(const QStringList &docks);
 
 private:
     void checkModal();
