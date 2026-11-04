@@ -611,7 +611,7 @@ private slots:
 
     void aSessionReopensEachWindowWithItsTabsAndPlace()
     {
-        const QRect firstPlace(30, 60, 640, 480);
+        const QRect firstPlace(30, 60, 900, 650);
         const QRect secondPlace(100, 120, 900, 650);
         first()->setGeometry(firstPlace);
         second->setGeometry(secondPlace);
