@@ -105,7 +105,7 @@ Item {
             spacing: 12
             IconTextButton {
                 objectName: "pluginPanelAction"
-                iconRole: body.missing ? "plugins" : body.off ? "show" : "restart"
+                iconRole: body.missing ? "plugins" : body.off ? "plugin-turn-on" : "restart"
                 text: body.status === "missing" ? qsTr("Open Plugins…")
                     : body.status === "off" ? qsTr("Turn on") : qsTr("Start again")
                 onClicked: {
