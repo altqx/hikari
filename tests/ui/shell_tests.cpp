@@ -711,6 +711,12 @@ class ShellTest : public QObject {
                 return p->objectName();
         return {};
     }
+    static QString committedKey(const app::AutomationHotkeysController &macros, const char *macro)
+    {
+        const auto keys = macros.committedKeys();
+        const auto found = keys.find(macro);
+        return found == keys.end() ? QString() : QString::fromStdString(found->second);
+    }
     void keysNeverRepeat()
     {
         auto t = std::make_shared<qint64>(0);
@@ -19760,7 +19766,7 @@ private slots:
         h.select(hotkeyPosition(QStringLiteral("Global Script a.lua-1")));
         h.optionsMap(QStringLiteral("Ctrl-Shift-M"), 0, QStringLiteral("cancel"));
         h.commitOptions();
-        QCOMPARE(scripts.committedKeys().at("Script a.lua-1"), std::string("Ctrl+Shift+M"));
+        QCOMPARE(committedKey(scripts, "Script a.lua-1"), QStringLiteral("Ctrl+Shift+M"));
         QCOMPARE(application->settingsStore()->list(application::kAutomationHotkeysSetting.data()).first().split(QLatin1Char('\t')).value(1),
                  QStringLiteral("Ctrl+Shift+M"));
         h.gestureMap(application::hotkeyIdOf("GLOBAL_SEARCH"), QStringLiteral("Find"), QStringLiteral("Ctrl-Shift-F"), 0,
@@ -19768,7 +19774,7 @@ private slots:
         QCOMPARE(h.gestureTarget(QStringLiteral("Script a.lua-1")).value(QStringLiteral("id")).toInt(), 30100);
         QCOMPARE(h.gestureTarget(QStringLiteral("Script b.lua-0")).value(QStringLiteral("id")).toInt(), 30101);
         h.gestureMap(30101, QStringLiteral("Script b.lua-0"), QStringLiteral("Ctrl-Shift-F"), 0, QStringLiteral("switch"));
-        QCOMPARE(scripts.committedKeys().at("Script b.lua-0"), std::string("Ctrl+Shift+F"));
+        QCOMPARE(committedKey(scripts, "Script b.lua-0"), QStringLiteral("Ctrl+Shift+F"));
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
         h.resetDefaults();
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
@@ -20109,7 +20115,7 @@ private slots:
         QTRY_VERIFY(recorder->hasActiveFocus());
         keyTo(recorder, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         keyTo(recorder, Qt::Key_Return);
-        QCOMPARE(application->automationHotkeys().committedKeys().at("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
+        QCOMPARE(committedKey(application->automationHotkeys(), "Script shell-fixture.lua-0"), QStringLiteral("Ctrl+Alt+J"));
         QVERIFY(!application->automation().running());
     }
 
