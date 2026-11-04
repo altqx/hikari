@@ -4045,10 +4045,10 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     for (const auto &l : plan->lines)
         if (selected.contains(l.id) && std::ssize(shown) < kRows)
             shown.push_back(&l);
-    if (shown.empty())
-        for (const auto &l : plan->lines)
-            if (l.changed() && std::ssize(shown) < kRows)
-                shown.push_back(&l);
+    for (const auto &l : plan->lines)
+        if (!selected.contains(l.id) && l.changed() && std::ssize(shown) < kRows)
+            shown.push_back(&l);
+    std::ranges::sort(shown, {}, &application::ShiftedLine::row);
     QVariantList rows;
     int shownChanged = 0;
     for (const auto *l : shown) {
