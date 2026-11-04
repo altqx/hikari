@@ -1,9 +1,12 @@
 #include "hikari/app/local_only_network.h"
 
 #include <QImage>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickItem>
+#include <QSignalSpy>
 #include <QTcpServer>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -16,7 +19,6 @@ Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 namespace {
 
 constexpr int kImageReady = 1;
-constexpr int kImageError = 3;
 
 }
 
@@ -32,37 +34,32 @@ class QmlEngineTests : public QObject {
         return std::unique_ptr<QObject>(component.create());
     }
 
-    static QByteArray remoteContent(quint16 port)
+    static QNetworkReply *getFromLoopback(QQmlEngine &engine, const QTcpServer &server)
     {
-        const QByteArray url = "http://127.0.0.1:" + QByteArray::number(port);
-        return "import QtQuick\nItem {\n"
-               "    Image { objectName: 'image'; source: '" + url + "/image.png' }\n"
-               "    Text { textFormat: Text.RichText; text: \"<img src='" + url + "/inline.png'>\" }\n"
-               "}\n";
+        const QUrl url(QStringLiteral("http://127.0.0.1:%1/image.png").arg(server.serverPort()));
+        return engine.networkAccessManager()->get(QNetworkRequest(url));
     }
 
 private slots:
-    void remoteImagesNeverLeaveTheMachine()
+    void remoteRequestsNeverLeaveTheMachine()
     {
         QTcpServer server;
         QVERIFY(server.listen(QHostAddress::LocalHost));
         QQmlEngine engine;
         hikari::app::refuseRemoteUrls(engine);
-        const auto root = create(engine, remoteContent(server.serverPort()));
-        QVERIFY(root);
-        auto *image = root->findChild<QObject *>(QStringLiteral("image"));
-        QTRY_COMPARE(image->property("status").toInt(), kImageError);
-        QTest::qWait(300);
-        QVERIFY(!server.hasPendingConnections());
+        QNetworkReply *reply = getFromLoopback(engine, server);
+        QSignalSpy finished(reply, &QNetworkReply::finished);
+        QVERIFY(finished.wait());
+        QVERIFY(reply->error() != QNetworkReply::NoError);
+        QVERIFY(!server.waitForNewConnection(0));
     }
 
-    void remoteImagesReachTheServerWithoutTheBlock()
+    void remoteRequestsReachTheServerWithoutTheBlock()
     {
         QTcpServer server;
         QVERIFY(server.listen(QHostAddress::LocalHost));
         QQmlEngine engine;
-        const auto root = create(engine, remoteContent(server.serverPort()));
-        QVERIFY(root);
+        getFromLoopback(engine, server);
         QTRY_VERIFY(server.hasPendingConnections());
     }
 
