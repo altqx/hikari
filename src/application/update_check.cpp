@@ -574,7 +574,7 @@ UpdateOffer chooseOffer(PackageKind kind, bool windows, const ReleasePackages &p
         offer.kind = OfferKind::Aur;
         return offer;
     }
-    if (!installsUpdates(kind))
+    if (!installsUpdates(kind) || !packages.fromManifest)
         return offer;
     const auto found = packages.packages.find(packageKey(kind, windows));
     if (found == packages.packages.end())
