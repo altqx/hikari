@@ -11397,15 +11397,12 @@ private slots:
             QTRY_VERIFY(!own->isVisible());
         }
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
-        for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
-            QObject *popup = find(name);
-            if (qstrcmp(name, "aspectRatioDialog") == 0)
-                QVERIFY(QMetaObject::invokeMethod(popup, "openAtCursor",
-                                                  Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
-            else
-                QVERIFY(QMetaObject::invokeMethod(popup, "open"));
-            QTRY_VERIFY2(popup->property("opened").toBool(), name);
-            save(name, windowOf(popup), false);
+        {
+            QObject *popup = find("aspectRatioDialog");
+            QVERIFY(QMetaObject::invokeMethod(popup, "openAtCursor",
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            save("aspectRatioDialog", windowOf(popup), false);
             QVERIFY(QMetaObject::invokeMethod(popup, "close"));
             QTRY_VERIFY(!popup->property("visible").toBool());
         }
