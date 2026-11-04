@@ -75,3 +75,12 @@ target_compile_definitions(hikari_core_export_tests PRIVATE
 hikari_add_gtest(hikari_core_srv3_tests SOURCES srv3_tests.cpp LIBRARIES hikari_core LABELS core)
 target_compile_definitions(hikari_core_srv3_tests PRIVATE
     HIKARI_EXPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/export")
+if(NOT WIN32)
+    find_program(HIKARI_XMLLINT xmllint)
+    add_test(NAME Export.TtmlGoldensMatchTheImsc1Schema
+        COMMAND "${CMAKE_COMMAND}" "-DXMLLINT=${HIKARI_XMLLINT}"
+            "-DSCHEMA=${PROJECT_SOURCE_DIR}/tests/fixtures/export/ttml-schemas/validate.xsd"
+            "-DGOLDENS=${PROJECT_SOURCE_DIR}/tests/fixtures/export/golden"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/check_ttml_schema.cmake")
+    set_tests_properties(Export.TtmlGoldensMatchTheImsc1Schema PROPERTIES LABELS "core" TIMEOUT 60)
+endif()

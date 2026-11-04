@@ -2798,6 +2798,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Usunięto położenie lub wyrównanie</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>Położenie przybliżone najbliższym regionem</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>Usunięto timing karaoke</translation>
     </message>
@@ -2820,6 +2824,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>“%1” is a folder.</source>
         <translation>„%1” jest folderem.</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>Wpisz kod języka, np. en lub pt-BR, albo zostaw puste.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2926,6 +2934,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nazwy aktorów</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Styl napisów Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>Czas w klatkach</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Język</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>Scal nakładające się linijki w jeden napis</translation>
     </message>
@@ -2940,6 +2960,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Use video frame rate</source>
         <translation>Użyj liczby klatek wideo</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>Tekst pozostaje biały i wyśrodkowany u góry lub u dołu, zachowywana jest tylko kursywa, a czas jest w klatkach.</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>

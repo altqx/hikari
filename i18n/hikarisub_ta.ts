@@ -2775,6 +2775,10 @@ Output device: %2</source>
         <translation>நிலை அல்லது சீரமைப்பு நீக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>நிலை அருகிலுள்ள பகுதிக்குத் தோராயமாக்கப்பட்டது</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>கரோக்கி நேரமிடல் நீக்கப்பட்டது</translation>
     </message>
@@ -2797,6 +2801,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1” ஒரு கோப்புறை.</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>en அல்லது pt-BR போன்ற மொழிக் குறியீட்டை உள்ளிடு, அல்லது காலியாக விடு.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2903,6 +2911,18 @@ Output device: %2</source>
         <translation>நடிகர் பெயர்கள்</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Netflix நேரக்குறி உரை பாணி</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>நேரங்கள் சட்டகங்களில்</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>மொழி</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகளை ஒரே வசனமாக ஒன்றிணை</translation>
     </message>
@@ -2917,6 +2937,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>காணொளியின் சட்டக வீதத்தைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>உரை வெள்ளையாக, மேலே அல்லது கீழே நடுவில் இருக்கும்; சாய்வு மட்டும் வைக்கப்படும்; நேரங்கள் சட்டகங்களில் இருக்கும்.</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
