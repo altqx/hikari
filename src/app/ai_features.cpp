@@ -1,5 +1,6 @@
 #include "hikari/app/ai_features.h"
 
+#include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_config_store.h"
 #include "hikari/backends/ai_http_relay.h"
@@ -7,7 +8,9 @@
 #include "hikari/backends/ai_sidecar_host.h"
 #include "settings_store.h"
 
+#include <QDir>
 #include <QFileInfo>
+#include <QStandardPaths>
 
 namespace hikari::app {
 
@@ -27,6 +30,7 @@ struct AiFeatures::Live {
     std::unique_ptr<application::ai::Providers> providers;
     std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
+    std::unique_ptr<backends::ai::AgentBroker> agents;
 };
 
 AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion)
@@ -60,6 +64,15 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         options.buildId = HIKARI_AI_BUILD_ID;
         return std::make_unique<backends::ai::AiSidecarHost>(std::move(options), api,
                                                              api::Caller{"ai", "Hikari AI", false});
+    };
+    ports.agents = [ai](backends::ai::AgentBroker &broker) {
+        const QString agents = ai + QStringLiteral("/agents");
+        if (const QString claude = QStandardPaths::findExecutable(QStringLiteral("claude")); !claude.isEmpty())
+            broker.add("claude", backends::ai::claudeAgent(claude, QDir::homePath(), agents + QStringLiteral("/claude")));
+        if (const QString codex = QStandardPaths::findExecutable(QStringLiteral("codex")); !codex.isEmpty())
+            if (auto spec = backends::ai::codexAgent(codex, agents + QStringLiteral("/codex/home"),
+                                                     agents + QStringLiteral("/codex/work")))
+                broker.add("codex", std::move(*spec));
     };
     return ports;
 }
@@ -114,8 +127,13 @@ backends::ai::AiSidecarHost *AiFeatures::sidecarForAction()
         return nullptr;
     if (!m_live->host && m_live->configs && m_live->configs->load().enabled()) {
         m_live->host = m_ports.sidecarHost();
-        if (m_live->host)
+        if (m_live->host) {
             m_live->relay->attach(*m_live->host);
+            m_live->agents = std::make_unique<backends::ai::AgentBroker>();
+            if (m_ports.agents)
+                m_ports.agents(*m_live->agents);
+            m_live->agents->attach(*m_live->host);
+        }
     }
     return m_live->host.get();
 }

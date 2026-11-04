@@ -2,6 +2,9 @@
 
 #include "hikari/backends/ai_sidecar_host.h"
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QPointer>
 #include <QProcess>
 
@@ -163,6 +166,94 @@ QString refusedClaudeArguments(const QStringList &arguments)
 std::unique_ptr<AgentGuard> codexGuard()
 {
     return std::make_unique<CodexGuard>();
+}
+
+namespace {
+
+QProcessEnvironment privateTemporary(const QString &work)
+{
+    const QString temporary = QDir::toNativeSeparators(work + QStringLiteral("/tmp"));
+    QDir().mkpath(temporary);
+    QProcessEnvironment environment;
+    for (const char *name : {"TMPDIR", "TEMP", "TMP"})
+        environment.insert(QString::fromLatin1(name), temporary);
+    return environment;
+}
+
+bool isScript(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) && file.read(2) == "#!";
+}
+
+QString codexBinary(const QString &program)
+{
+    const QFileInfo found(program);
+    const QString installed = found.canonicalFilePath();
+    QString scope;
+    if (found.suffix().compare(QLatin1String("cmd"), Qt::CaseInsensitive) == 0)
+        scope = found.absolutePath() + QStringLiteral("/node_modules/@openai");
+    else if (isScript(installed))
+        scope = QFileInfo(installed).absolutePath() + QStringLiteral("/../..");
+    else
+        return installed;
+#ifdef Q_OS_WIN
+    const QString name = QStringLiteral("codex.exe");
+#else
+    const QString name = QStringLiteral("codex");
+#endif
+    // npm's launcher runs <@openai>/codex-<platform>/vendor/<target>/bin/codex, or codex/vendor/… in older packages.
+    const QDir packages(scope);
+    for (const QString &package : packages.entryList({QStringLiteral("codex-*"), QStringLiteral("codex")}, QDir::Dirs)) {
+        const QDir vendor(packages.filePath(package + QStringLiteral("/vendor")));
+        for (const QString &target : vendor.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+            if (const QFileInfo binary(vendor.filePath(target + QStringLiteral("/bin/") + name)); binary.isExecutable())
+                return binary.canonicalFilePath();
+    }
+    return {};
+}
+
+}
+
+AgentSpec claudeAgent(const QString &program, const QString &home, const QString &work)
+{
+    const QString installed = QFileInfo(program).canonicalFilePath();
+    AgentSpec spec;
+    spec.program = installed;
+    spec.profile = {.name = QStringLiteral("HikariSub.AI.Claude"),
+                    .readExecute = {QFileInfo(installed).absolutePath()},
+                    .readWrite = {home + QStringLiteral("/.claude"), home + QStringLiteral("/.claude.json"), work},
+                    .network = sandbox::Network::Any};
+    spec.workingDirectory = work;
+    spec.environment = privateTemporary(work);
+    spec.sidecarEnvironment = {QStringLiteral("CLAUDE_CODE_ENTRYPOINT"), QStringLiteral("CLAUDE_AGENT_SDK_VERSION"),
+                               QStringLiteral("CLAUDE_CODE_SDK_READS_SESSION_STATE"),
+                               QStringLiteral("CLAUDE_CODE_SDK_READS_STARTUP_MARKS")};
+    spec.refuse = refusedClaudeArguments;
+    return spec;
+}
+
+std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work)
+{
+    const QString binary = codexBinary(program);
+    if (binary.isEmpty())
+        return std::nullopt;
+    QDir().mkpath(codexHome);
+    AgentSpec spec;
+    spec.program = binary;
+    spec.arguments = {QStringLiteral("app-server")};
+    spec.profile = {.name = QStringLiteral("HikariSub.AI.Codex"),
+                    .readExecute = {QFileInfo(binary).absolutePath()},
+                    .readWrite = {codexHome, work},
+                    .network = sandbox::Network::Any};
+    spec.workingDirectory = work;
+    spec.environment = privateTemporary(work);
+    spec.environment.insert(QStringLiteral("CODEX_HOME"), QDir::toNativeSeparators(codexHome));
+    spec.refuse = [](const QStringList &arguments) {
+        return arguments.isEmpty() ? QString() : QStringLiteral("Codex takes no arguments from the sidecar");
+    };
+    spec.guard = codexGuard;
+    return spec;
 }
 
 struct AgentBroker::Running {

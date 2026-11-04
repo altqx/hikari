@@ -66,6 +66,12 @@ QString refusedClaudeArguments(const QStringList &arguments);
 /// overrides, and Qt itself declines every command, file change and permission the agent asks for.
 std::unique_ptr<AgentGuard> codexGuard();
 
+/// Claude Code at `program` with only its own state writable: `<home>/.claude`, `<home>/.claude.json` and `work`.
+AgentSpec claudeAgent(const QString &program, const QString &home, const QString &work);
+/// Codex app-server behind `program`, which may be npm's launcher, with Hikari's own `CODEX_HOME`. Empty when no
+/// native binary is found.
+std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work);
+
 /// Answers the sidecar's `_hikari/agent.*` requests: starts the agents Qt knows, each in its own sandbox, and relays
 /// their stdio as `_hikari/agent.output` and `_hikari/agent.exit` notifications. Every agent ends with the sidecar
 /// that started it.

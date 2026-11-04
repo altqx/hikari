@@ -30,6 +30,7 @@ struct Counts {
     int keyReads = 0;
     int configStores = 0;
     int sidecarHosts = 0;
+    int agentLists = 0;
 };
 
 class CountingKeyStore final : public ai::KeyStore {
@@ -102,6 +103,7 @@ protected:
             o.buildId = "test";
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
+        p.agents = [this](backends::ai::AgentBroker &) { ++counts.agentLists; };
         return p;
     }
 
@@ -124,6 +126,7 @@ TEST_F(AiFeaturesTest, WithAiOffNothingIsBuiltAcrossStartupAndASession)
     EXPECT_EQ(counts.keyReads, 0);
     EXPECT_EQ(counts.configStores, 0);
     EXPECT_EQ(counts.sidecarHosts, 0);
+    EXPECT_EQ(counts.agentLists, 0);
 }
 
 TEST_F(AiFeaturesTest, WithoutAProviderNoSidecarIsBuiltOrStarted)
@@ -133,6 +136,7 @@ TEST_F(AiFeaturesTest, WithoutAProviderNoSidecarIsBuiltOrStarted)
     EXPECT_EQ(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.sidecarHosts, 0);
     EXPECT_EQ(counts.keyReads, 0);
+    EXPECT_EQ(counts.agentLists, 0);
 }
 
 TEST_F(AiFeaturesTest, StartupAndOpeningSettingsDontBuildTheSidecar)
@@ -169,6 +173,7 @@ TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsO
     EXPECT_NE(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.keyStores, 2);
     EXPECT_EQ(counts.sidecarHosts, 2);
+    EXPECT_EQ(counts.agentLists, 2);
 }
 
 TEST(AiCommands, NoCommandOrMenuEntryIsAnAiOneWhileAiHasNoCommands)

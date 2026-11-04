@@ -2,7 +2,9 @@
 #include "hikari/backends/ai_sidecar_host.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QFileInfo>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
@@ -55,6 +57,61 @@ TEST(ClaudeArguments, BypassExtraFoldersPluginsSettingsAndOutsideServersAreRefus
     EXPECT_FALSE(with({"--mcp-config=/tmp/servers.json"}).isEmpty());
     EXPECT_FALSE(refusedClaudeArguments(strings({"--tools=", "--output-format", "stream-json"})).isEmpty());
     EXPECT_FALSE(refusedClaudeArguments(strings({"--strict-mcp-config"})).isEmpty());
+}
+
+void writeFile(const QString &path, const QByteArray &content, bool executable)
+{
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile file(path);
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    file.write(content);
+    file.close();
+    if (executable)
+        file.setPermissions(file.permissions() | QFile::ExeOwner);
+}
+
+TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
+{
+    QTemporaryDir dir;
+    const QString program = dir.filePath(QStringLiteral("versions/2.1.317"));
+    writeFile(program, "ELF", true);
+    const AgentSpec spec = claudeAgent(program, QStringLiteral("/h"), dir.filePath(QStringLiteral("work")));
+    EXPECT_EQ(spec.program, QFileInfo(program).canonicalFilePath());
+    EXPECT_EQ(spec.profile.readExecute, QStringList{QFileInfo(program).canonicalPath()});
+    EXPECT_EQ(spec.profile.readWrite,
+              (QStringList{QStringLiteral("/h/.claude"), QStringLiteral("/h/.claude.json"), dir.filePath(QStringLiteral("work"))}));
+    EXPECT_EQ(spec.profile.network, hikari::backends::sandbox::Network::Any);
+    EXPECT_TRUE(QFileInfo(dir.filePath(QStringLiteral("work/tmp"))).isDir());
+    EXPECT_TRUE(spec.sidecarEnvironment.contains(QStringLiteral("CLAUDE_CODE_ENTRYPOINT")));
+    EXPECT_FALSE(spec.sidecarEnvironment.contains(QStringLiteral("ANTHROPIC_BASE_URL")));
+    EXPECT_FALSE(spec.refuse(QStringList{QStringLiteral("--dangerously-skip-permissions")}).isEmpty());
+}
+
+TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
+{
+    QTemporaryDir dir;
+    const QString launcher = dir.filePath(QStringLiteral("node_modules/@openai/codex/bin/codex.js"));
+    writeFile(launcher, "#!/usr/bin/env node\n", true);
+#ifdef _WIN32
+    const QString native = dir.filePath(QStringLiteral("node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/bin/codex.exe"));
+#else
+    const QString native = dir.filePath(QStringLiteral("node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex"));
+#endif
+    writeFile(native, "ELF", true);
+    const auto spec = codexAgent(launcher, dir.filePath(QStringLiteral("home")), dir.filePath(QStringLiteral("work")));
+    ASSERT_TRUE(spec);
+    EXPECT_EQ(spec->program, QFileInfo(native).canonicalFilePath());
+    EXPECT_EQ(spec->arguments, QStringList{QStringLiteral("app-server")});
+    EXPECT_EQ(spec->environment.value(QStringLiteral("CODEX_HOME")),
+              QDir::toNativeSeparators(dir.filePath(QStringLiteral("home"))));
+    EXPECT_TRUE(QFileInfo(dir.filePath(QStringLiteral("home"))).isDir());
+    EXPECT_TRUE(spec->guard);
+    EXPECT_TRUE(spec->refuse({}).isEmpty());
+    EXPECT_FALSE(spec->refuse(QStringList{QStringLiteral("--dangerously-bypass-approvals-and-sandbox")}).isEmpty());
+
+    EXPECT_EQ(codexAgent(native, dir.path(), dir.path())->program, QFileInfo(native).canonicalFilePath());
+    QFile::remove(native);
+    EXPECT_FALSE(codexAgent(launcher, dir.path(), dir.path()));
 }
 
 class AgentBrokerTest : public ::testing::Test {

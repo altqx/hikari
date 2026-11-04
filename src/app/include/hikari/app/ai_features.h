@@ -12,6 +12,7 @@ namespace hikari::api {
 class Api;
 }
 namespace hikari::backends::ai {
+class AgentBroker;
 class AiSidecarHost;
 }
 namespace hikari::ui {
@@ -32,6 +33,8 @@ public:
         std::function<std::unique_ptr<application::ai::ConfigStore>()> configStore;
         /// Null when no sidecar is installed for this version.
         std::function<std::unique_ptr<backends::ai::AiSidecarHost>()> sidecarHost;
+        /// Adds the agent CLIs the sidecar may ask Qt to start.
+        std::function<void(backends::ai::AgentBroker &)> agents;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
     static Ports defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion);
