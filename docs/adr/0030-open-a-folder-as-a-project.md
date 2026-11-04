@@ -25,7 +25,7 @@ On 2026-11-04 altqx settled Projects in two grilling rounds, answering "yes to a
 
 ## Opening a Project
 
-- **Home** gets **Open folder** next to Open subtitles. Recent lists folders and files in one list. Once the user has opened a Project, Home leads with Recent projects, up to 20.
+- **Home** gets **Open folder** next to Open subtitles. Once the user has opened a Project, Home leads with Recent projects, up to 20, above Recent files.
 - **The command line:**
   - `hikarisub <folder>` opens the folder as a Project. A folder must never open as video, as it does today (`src/application/recent_files.cpp:107-126`).
   - `hikarisub <folder> <file>` opens both.
