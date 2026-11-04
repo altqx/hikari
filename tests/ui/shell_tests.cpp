@@ -21454,6 +21454,8 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         closeMismatchQuestion();
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
         keysNeverRepeat();
         QTest::mouseMove(window, kOverNoPanel);
         auto &hotkeys = application->hotkeys();
@@ -21547,6 +21549,8 @@ private slots:
             QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 20000);
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
             closeMismatchQuestion();
+            window->requestActivate();
+            QVERIFY(QTest::qWaitForWindowActive(window));
             keysNeverRepeat();
             QTest::mouseMove(window, kOverNoPanel);
         };
