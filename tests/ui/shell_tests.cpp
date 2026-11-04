@@ -8648,6 +8648,7 @@ private slots:
                               QStringLiteral("BSD 3-Clause")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
+        QVERIFY(names.contains(QStringLiteral("YTSubConverter")));
         QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
         QVERIFY(names.contains(QStringLiteral("ThamiZha! Solthiruthi")));
 #ifdef _WIN32

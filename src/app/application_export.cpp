@@ -1,6 +1,10 @@
 #include "hikari/app/application.h"
 
+#include "hikari/application/edit_session.h"
+#include "hikari/application/style_manager.h"
 #include "hikari/core/export.h"
+#include "hikari/core/srv3.h"
+#include "hikari/core/text_projection.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -13,6 +17,7 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <set>
 #include <cmath>
 
 namespace hikari::app {
@@ -33,7 +38,7 @@ constexpr ExportFormatRow kExportFormats[] = {
     {"sbv", ExportFormat::Sbv, "sbv"},      {"txt", ExportFormat::PlainText, "txt"},
     {"mdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
     {"tmp", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
-    {"dfxp", ExportFormat::Dfxp, "dfxp"},
+    {"dfxp", ExportFormat::Dfxp, "dfxp"},   {"srv3", ExportFormat::Srv3, "ytt"},
 };
 
 constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = {
@@ -116,13 +121,13 @@ QString lossText(ExportLoss loss, ExportFormat format)
     case ExportLoss::Rotation:
         return QCoreApplication::translate("HikariSub.Export", "Rotation or shearing removed");
     case ExportLoss::Font:
-        return QCoreApplication::translate("HikariSub.Export", "Font, size, scale or spacing tags removed");
+        return format == ExportFormat::Srv3 ? QCoreApplication::translate("HikariSub.Export", "Scale or spacing tags removed") : QCoreApplication::translate("HikariSub.Export", "Font, size, scale or spacing tags removed");
     case ExportLoss::Outline:
-        return QCoreApplication::translate("HikariSub.Export", "Border, shadow, blur, transparency or other colours removed");
+        return format == ExportFormat::Srv3 ? QCoreApplication::translate("HikariSub.Export", "Border, shadow or blur tags removed") : QCoreApplication::translate("HikariSub.Export", "Border, shadow, blur, transparency or other colours removed");
     case ExportLoss::Colour:
         return QCoreApplication::translate("HikariSub.Export", "Text colour removed");
     case ExportLoss::Formatting:
-        return QCoreApplication::translate("HikariSub.Export", "Some bold, italic, underline or strikeout removed");
+        return format == ExportFormat::Srv3 ? QCoreApplication::translate("HikariSub.Export", "Strikeout removed") : QCoreApplication::translate("HikariSub.Export", "Some bold, italic, underline or strikeout removed");
     case ExportLoss::Position:
         return isTtml(format) ? QCoreApplication::translate("HikariSub.Export", "Position approximated by the nearest region") : QCoreApplication::translate("HikariSub.Export", "Position or alignment removed");
     case ExportLoss::Karaoke:
@@ -140,6 +145,122 @@ constexpr ExportLoss kLossOrder[] = {
     ExportLoss::Rotation, ExportLoss::Font,    ExportLoss::Outline,    ExportLoss::Colour,   ExportLoss::Formatting,
     ExportLoss::Position, ExportLoss::Karaoke, ExportLoss::Effect,     ExportLoss::Merged,
 };
+
+QString srv3Colour(const std::optional<std::uint32_t> &rgb)
+{
+    return rgb ? u'#' + QStringLiteral("%1").arg(*rgb, 6, 16, QLatin1Char('0')).toUpper() : QString();
+}
+
+std::optional<std::uint32_t> srv3Colour(const QVariant &value)
+{
+    const QString text = value.toString();
+    bool ok = false;
+    const uint rgb = text.mid(1).toUInt(&ok, 16);
+    return text.size() == 7 && text.startsWith(u'#') && ok ? std::optional<std::uint32_t>(rgb) : std::nullopt;
+}
+
+QVariantMap srv3Values(const core::Srv3StyleOptions &o)
+{
+    return {{QStringLiteral("shadows"), int(o.shadows)},
+            {QStringLiteral("karaoke"), o.karaoke},
+            {QStringLiteral("text"), srv3Colour(o.currentWordText)},
+            {QStringLiteral("outline"), srv3Colour(o.currentWordOutline)},
+            {QStringLiteral("shadow"), srv3Colour(o.currentWordShadow)}};
+}
+
+core::Srv3StyleOptions srv3Options(const std::u16string &style, const QVariantMap &values)
+{
+    return {.style = style,
+            .shadows = static_cast<std::uint8_t>(values.value(QStringLiteral("shadows")).toInt() & 0xF),
+            .karaoke = values.value(QStringLiteral("karaoke")).toBool(),
+            .currentWordText = srv3Colour(values.value(QStringLiteral("text"))),
+            .currentWordOutline = srv3Colour(values.value(QStringLiteral("outline"))),
+            .currentWordShadow = srv3Colour(values.value(QStringLiteral("shadow")))};
+}
+
+std::vector<std::u8string> styleNames(const application::EditSession &session)
+{
+    std::vector<std::u8string> names;
+    if (const auto styles = application::documentStyles(session))
+        for (const auto &style : *styles)
+            if (std::ranges::find(names, style.name) == names.end())
+                names.push_back(style.name);
+    return names;
+}
+
+QVariantList srv3Rows(const application::EditSession &session, const std::set<core::LineId> &shown)
+{
+    const auto styles = application::documentStyles(session);
+    if (!styles)
+        return {};
+    std::set<std::u8string> inAll, inSelected, inShown;
+    for (const auto *line : session.document().lines()) {
+        if (line->comment || line->unparsed)
+            continue;
+        inAll.insert(line->style);
+        if (session.selection().selected.contains(line->id))
+            inSelected.insert(line->style);
+        if (shown.contains(line->id))
+            inShown.insert(line->style);
+    }
+    const auto saved = core::srv3StyleOptions(session.document());
+    QVariantList rows;
+    for (const auto &name : styleNames(session)) {
+        const auto &style = *std::ranges::find(*styles, name, &core::StyleValues::name);
+        const std::u16string wide = core::toUtf16(name);
+        const auto defaults = core::srv3DefaultOptions(wide);
+        const auto it = std::ranges::find(saved, wide, &core::Srv3StyleOptions::style);
+        rows << QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(wide)},
+                            {QStringLiteral("builtIn"), core::isSrv3BuiltInStyle(wide)},
+                            {QStringLiteral("hasShadow"), QString::fromUtf8(reinterpret_cast<const char *>(style.shadow.data()),
+                                                                            qsizetype(style.shadow.size())).toDouble() > 0},
+                            {QStringLiteral("all"), inAll.contains(name)},
+                            {QStringLiteral("selected"), inSelected.contains(name)},
+                            {QStringLiteral("shown"), inShown.contains(name)},
+                            {QStringLiteral("value"), srv3Values(it != saved.end() ? *it : defaults)},
+                            {QStringLiteral("default"), srv3Values(defaults)}};
+    }
+    return rows;
+}
+
+std::vector<core::Srv3StyleOptions> srv3Wanted(const application::EditSession &session, const QVariantList &rows,
+                                               const std::vector<core::Srv3StyleOptions> &saved)
+{
+    const auto names = styleNames(session);
+    std::vector<core::Srv3StyleOptions> wanted;
+    for (const auto &name : names) {
+        const std::u16string wide = core::toUtf16(name);
+        const auto row = std::ranges::find_if(rows, [&](const QVariant &r) {
+            return r.toMap().value(QStringLiteral("name")).toString() == QString::fromStdU16String(wide);
+        });
+        const auto savedIt = std::ranges::find(saved, wide, &core::Srv3StyleOptions::style);
+        if (row == rows.end()) {
+            if (savedIt != saved.end())
+                wanted.push_back(*savedIt);
+            continue;
+        }
+        auto o = srv3Options(wide, row->toMap().value(QStringLiteral("value")).toMap());
+        if (o != core::srv3DefaultOptions(wide))
+            wanted.push_back(std::move(o));
+    }
+    for (const auto &o : saved)
+        if (std::ranges::find(names, core::toUtf8(o.style)) == names.end())
+            wanted.push_back(o);
+    return wanted;
+}
+
+int srv3StylesChanged(const std::vector<core::Srv3StyleOptions> &before, const std::vector<core::Srv3StyleOptions> &after)
+{
+    const auto entry = [](const std::vector<core::Srv3StyleOptions> &list, const std::u16string &style) {
+        const auto it = std::ranges::find(list, style, &core::Srv3StyleOptions::style);
+        return it == list.end() ? std::nullopt : std::optional(*it);
+    };
+    std::set<std::u16string> styles;
+    for (const auto *list : {&before, &after})
+        for (const auto &o : *list)
+            styles.insert(o.style);
+    return static_cast<int>(std::ranges::count_if(styles, [&](const auto &style) { return entry(before, style) != entry(after, style); }));
+}
 
 QVariantMap problem(const QString &text)
 {
@@ -210,6 +331,7 @@ QVariantMap Application::exportSetup() const
             {QStringLiteral("selected"), selected},
             {QStringLiteral("shown"), shown},
             {QStringLiteral("videoFps"), videoFps},
+            {QStringLiteral("srv3Styles"), srv3Rows(*session, shownSet)},
             {QStringLiteral("folder"), key.isEmpty() ? QUrl() : QUrl::fromLocalFile(file.absolutePath())},
             {QStringLiteral("name"), key.isEmpty() ? QString() : file.completeBaseName()}};
 }
@@ -257,9 +379,24 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         options.lines = std::set<core::LineId>(shown.begin(), shown.end());
     }
 
-    const auto draft = activeViews().editorDocument == target ? editor().draftDocument() : std::nullopt;
+    auto draft = activeViews().editorDocument == target ? editor().draftDocument() : std::nullopt;
+    const auto srv3Saved = core::srv3StyleOptions(session->document());
+    std::optional<std::vector<core::Srv3StyleOptions>> srv3Changed;
+    if (format->format == ExportFormat::Srv3 && values.contains(QStringLiteral("srv3Styles"))) {
+        auto wanted = srv3Wanted(*session, values.value(QStringLiteral("srv3Styles")).toList(), srv3Saved);
+        if (wanted != srv3Saved) {
+            if (!draft)
+                draft = session->document();
+            if (!core::setSrv3StyleOptions(*draft, wanted))
+                return problem(QCoreApplication::translate("HikariSub.Export", "The style options can’t be saved in this file."));
+            srv3Changed = std::move(wanted);
+        }
+    }
     const core::Document &document = draft ? *draft : session->document();
     const core::ExportResult result = core::exportDocument(document, format->format, options);
+    if (!result.refusal.empty())
+        return problem(QCoreApplication::translate("HikariSub.Export", "YouTube timed text couldn’t be made from this file: %1")
+                           .arg(QString::fromStdString(result.refusal)));
 
     QSaveFile out(path);
     if (!out.open(QIODevice::WriteOnly) ||
@@ -267,6 +404,16 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
             qint64(result.bytes.size()) ||
         !out.commit())
         return problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2").arg(QFileInfo(path).fileName(), out.errorString()));
+
+    int srv3Styles = 0;
+    if (srv3Changed) {
+        auto *editable = m_files->session(*target);
+        const auto ran = editable->run(application::Command{
+            "Set srv3 style options", editable->revision(), {},
+            [&](core::Document &d) { return core::setSrv3StyleOptions(d, *srv3Changed); }});
+        if (ran)
+            srv3Styles = srv3StylesChanged(srv3Saved, *srv3Changed);
+    }
 
     QJsonObject choice{{QStringLiteral("format"), formatId},
                        {QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines}};
@@ -303,6 +450,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
             {QStringLiteral("written"), result.linesWritten},
             {QStringLiteral("comments"), result.commentsSkipped},
             {QStringLiteral("empty"), result.emptySkipped},
+            {QStringLiteral("srv3Styles"), srv3Styles},
             {QStringLiteral("notes"), notes}};
 }
 

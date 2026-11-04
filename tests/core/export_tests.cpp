@@ -1,6 +1,7 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/export.h"
+#include "hikari/core/srv3.h"
 #include "hikari/core/subtitle_load.h"
 
 #include <gtest/gtest.h>
@@ -525,4 +526,76 @@ TEST(Export, TtmlIdsAndFontNamesAreEscaped)
     EXPECT_EQ(attributeOf(styles[0], "tts:fontFamily"), "&quot;Times New Roman&quot;,proportionalSansSerif");
     EXPECT_EQ(attributeOf(styles[1], "xml:id"), "s1_x");
     EXPECT_EQ(attributeOf(styles[1], "tts:fontFamily"), "&quot;My \\&quot;Font\\&quot;&quot;,proportionalSansSerif");
+}
+
+TEST(Export, Srv3OfTheFixturesIsWhatYtSubConverterWrites)
+{
+    for (const char *name : {"plain", "karaoke", "typesetting"}) {
+        SCOPED_TRACE(name);
+        EXPECT_EQ(exported(fixture(name), ExportFormat::Srv3),
+                  readFile(kFixtures / "srv3" / "golden" / ("hikari-" + std::string(name) + ".ytt")));
+    }
+}
+
+TEST(Export, Srv3HasOnlyTheChosenLines)
+{
+    const auto d = ass("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                       "Comment: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,note\n"
+                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
+    ExportOptions o;
+    o.lines = std::set{d.lines()[1]->id, d.lines()[2]->id};
+    const auto r = exportDocument(d, ExportFormat::Srv3, o);
+    const auto out = text(r.bytes);
+    EXPECT_EQ(out.find("first"), std::string::npos);
+    EXPECT_NE(out.find("second"), std::string::npos);
+    EXPECT_EQ(r.linesWritten, 1);
+    EXPECT_EQ(r.commentsSkipped, 1);
+}
+
+TEST(Export, Srv3LeavesOutAttachedFontsAndGraphics)
+{
+    const std::string events = "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,hello\n";
+    const auto plain = ass(events);
+    const auto attached = ass(events + "\n[Fonts]\nfontname: a.ttf\n!!!!!!!!\n[Graphics]\nfilename: b.png\n[)!!\n");
+    const auto r = exportDocument(attached, ExportFormat::Srv3, {});
+    EXPECT_EQ(r.refusal, "");
+    EXPECT_EQ(text(r.bytes), exported(plain, ExportFormat::Srv3));
+}
+
+TEST(Export, Srv3ReportsTheTagsYtSubConverterIgnores)
+{
+    const auto d = ass("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\frz30\\clip(0,0,9,9)\\bord2\\p0\\s0}a\n"
+                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\kf20}b{\\fscx120\\s1}c\n"
+                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,Banner;10,{\\p1}m 0 0 l 9 9{\\p0}\n"
+                       "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,{\\pos(9,9)\\fad(9,9)\\b1\\k20}kept\n");
+    const auto r = exportDocument(d, ExportFormat::Srv3, {});
+    const auto lines = d.lines();
+    EXPECT_EQ(lossesOf(r, lines[0]->id), bit(ExportLoss::Rotation) | bit(ExportLoss::Clip) | bit(ExportLoss::Outline));
+    EXPECT_EQ(lossesOf(r, lines[1]->id), bit(ExportLoss::Karaoke) | bit(ExportLoss::Font) | bit(ExportLoss::Formatting));
+    EXPECT_EQ(lossesOf(r, lines[2]->id), bit(ExportLoss::Drawing) | bit(ExportLoss::Effect));
+    EXPECT_EQ(lossesOf(r, lines[3]->id), 0u);
+}
+
+TEST(Export, Srv3RefusalIsYtSubConvertersReason)
+{
+    const auto d = loadAss(bytes("[Script Info]\nPlayResX: 640\n\n[Events]\n"
+                                 "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"))
+                       .document;
+    const auto r = exportDocument(d, ExportFormat::Srv3, {});
+    EXPECT_FALSE(r.refusal.empty());
+    EXPECT_TRUE(r.bytes.empty());
+    EXPECT_EQ(r.linesWritten, 0);
+}
+
+TEST(Export, Srv3UsesTheStyleOptionsSavedInTheFile)
+{
+    auto d = assWithStyles(
+        "Style: YTGlow,Roboto,38,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,2,2,10,10,10,1\n",
+        "Dialogue: 0,0:00:01.00,0:00:03.00,YTGlow,,0,0,0,,Hello\n");
+    EXPECT_NE(exported(d, ExportFormat::Srv3).find("et=\"3\""), std::string::npos);
+    ASSERT_TRUE(setSrv3StyleOptions(d, {{.style = u"YTGlow", .shadows = Srv3SoftShadow}}));
+    const auto out = exported(d, ExportFormat::Srv3);
+    EXPECT_EQ(out.find("et=\"3\""), std::string::npos);
+    EXPECT_NE(out.find("et=\"4\""), std::string::npos);
 }

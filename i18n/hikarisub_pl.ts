@@ -1455,6 +1455,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>0 to pełne krycie, 255 to pełna przezroczystość</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>Brak koloru</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>Mniej</translation>
     </message>
@@ -2782,8 +2786,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Usunięto tagi czcionki, rozmiaru, skali lub odstępów</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>Usunięto znaczniki skali lub odstępów</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>Usunięto obramowanie, cień, rozmycie, przezroczystość lub inne kolory</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>Usunięto znaczniki obramowania, cienia lub rozmycia</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -2792,6 +2804,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Some bold, italic, underline or strikeout removed</source>
         <translation>Usunięto część pogrubienia, kursywy, podkreślenia lub przekreślenia</translation>
+    </message>
+    <message>
+        <source>Strikeout removed</source>
+        <translation>Usunięto przekreślenie</translation>
     </message>
     <message>
         <source>Position or alignment removed</source>
@@ -2834,6 +2850,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
     </message>
     <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>Nie można zapisać opcji stylów w tym pliku.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>Nie można utworzyć napisów czasowych YouTube z tego pliku: %1</translation>
+    </message>
+    <message>
         <source>Couldn’t write %1: %2</source>
         <translation>Nie można zapisać %1: %2</translation>
     </message>
@@ -2844,6 +2868,66 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Plain text</source>
         <translation>Zwykły tekst</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>Napisy czasowe YouTube (srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>Poświata</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>Cień poświaty dla %1</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>Miękki</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>Miękki cień dla %1</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>Twardy</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>Twardy cień dla %1</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>Faza</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>Cień fazowany dla %1</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>Tekst bieżącego słowa</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>Kolor tekstu bieżącego słowa dla %1</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>Obrys bieżącego słowa</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>Kolor obrysu bieżącego słowa dla %1</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>Cień bieżącego słowa</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>Kolor cienia bieżącego słowa dla %1</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -2904,6 +2988,46 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Options</source>
         <translation>Opcje</translation>
+    </message>
+    <message>
+        <source>srv3 style options</source>
+        <translation>Opcje stylów srv3</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1 nie ma cienia (Cień wynosi 0), więc typ cienia nie ma zastosowania.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>Karaoke dla %1</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>brak koloru</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>Przywróć %1</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>Cień określa, jak YouTube rysuje cień stylu; obrys zawsze jest rysowany jako poświata. Kolory bieżącego słowa dotyczą wierszy karaoke.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>Pokaż wszystkie style (%1)</translation>
     </message>
     <message>
         <source>Alignment as %1 tags</source>
@@ -2970,6 +3094,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>TMPlayer nie ma czasów końca: nakładające się linijki są scalane, a pusty napis czyści ekran.</translation>
     </message>
     <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>Konwersja taka sama jak w YTSubConverter 1.6.5. Czcionki i grafiki dołączone do pliku nie są eksportowane.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>Zmienione opcje zostaną zapisane w pliku napisów podczas eksportu.</translation>
+    </message>
+    <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
     </message>
@@ -2995,6 +3127,14 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>Pominięto %n linijkę bez treści do wyświetlenia.</numerusform>
             <numerusform>Pominięto %n linijki bez treści do wyświetlenia.</numerusform>
             <numerusform>Pominięto %n linijek bez treści do wyświetlenia.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>Zapisano w pliku napisów opcje %n stylu.</numerusform>
+            <numerusform>Zapisano w pliku napisów opcje %n stylów.</numerusform>
+            <numerusform>Zapisano w pliku napisów opcje %n stylów.</numerusform>
         </translation>
     </message>
     <message>

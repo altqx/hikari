@@ -1,9 +1,12 @@
 #include "hikari/core/srv3.h"
+#include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 #include "hikari/core/text_projection.h"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -146,6 +149,71 @@ TEST(Srv3, ScriptsYtSubConverterRefusesAreRefusedWithItsReason)
 {
     EXPECT_EQ(hikari::core::srv3FromAss(u"[Script Info]\nPlayResX: 640\n").error(), "The given key was not present in the dictionary.");
     EXPECT_EQ(hikari::core::srv3FromAss(u"[Script Info]\nnot an item\n").error(), "Unrecognized line in .ass");
+}
+
+
+std::string saved(const hikari::core::Document &d)
+{
+    const auto b = hikari::core::encodeAss(d);
+    return {reinterpret_cast<const char *>(b.data()), b.size()};
+}
+
+hikari::core::Document loaded(std::string_view text)
+{
+    std::vector<std::byte> b(text.size());
+    std::memcpy(b.data(), text.data(), text.size());
+    return hikari::core::loadAss(b).document;
+}
+
+TEST(Srv3, StyleOptionsAreNumberedScriptInfoKeysWrittenAsOneBlock)
+{
+    auto d = loaded("[Script Info]\nTitle: x\nHikari srv3 1: Old,glow,-,,,\nPlayResX: 1280\nHikari srv3 2: Gone,none,-,,,\n"
+                    "PlayResY: 720\n\n[Events]\n");
+    ASSERT_TRUE(hikari::core::setSrv3StyleOptions(
+        d, {{.style = u"Karaoke-Romaji", .shadows = hikari::core::Srv3Glow | hikari::core::Srv3HardShadow, .karaoke = true,
+             .currentWordText = 0xFFE45C, .currentWordOutline = 0x7A2BD8},
+            {.style = u"Sign-Top", .shadows = hikari::core::Srv3SoftShadow}}));
+    EXPECT_EQ(saved(d), "[Script Info]\nTitle: x\nHikari srv3 1: Karaoke-Romaji,glow+hard,karaoke,#FFE45C,#7A2BD8,\n"
+                        "Hikari srv3 2: Sign-Top,soft,-,,,\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n");
+    ASSERT_TRUE(hikari::core::setSrv3StyleOptions(d, {}));
+    EXPECT_EQ(saved(d), "[Script Info]\nTitle: x\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n");
+}
+
+TEST(Srv3, StyleOptionsReadBackAndBadKeysAreLeftOut)
+{
+    auto d = loaded("[Script Info]\nPlayResX: 1280\n\n[Events]\n");
+    const std::vector<Srv3StyleOptions> options{
+        {.style = u"Sign Top \u00e9", .shadows = 0, .karaoke = true, .currentWordShadow = 0x000001},
+        {.style = u"B", .shadows = hikari::core::Srv3Bevel | hikari::core::Srv3Glow}};
+    ASSERT_TRUE(hikari::core::setSrv3StyleOptions(d, options));
+    EXPECT_EQ(saved(d), "[Script Info]\nPlayResX: 1280\nHikari srv3 1: Sign Top \u00e9,none,karaoke,,,#000001\n"
+                        "Hikari srv3 2: B,glow+bevel,-,,,\n\n[Events]\n");
+    EXPECT_EQ(hikari::core::srv3StyleOptions(d), options);
+
+    const auto bad = loaded("[Script Info]\nHikari srv3 1: A,glitter,-,,,\nHikari srv3 2: B,soft,yes,,,\n"
+                            "Hikari srv3 3: C,soft,-,#12345,,\nHikari srv3 x: D,soft,-,,,\nHikari srv3 4: E,soft,-,,\n"
+                            "Hikari srv3 5: F,hard,-,#00FF00,,\n");
+    ASSERT_EQ(hikari::core::srv3StyleOptions(bad).size(), 1u);
+    EXPECT_EQ(hikari::core::srv3StyleOptions(bad)[0],
+              (Srv3StyleOptions{.style = u"F", .shadows = hikari::core::Srv3HardShadow, .currentWordText = 0x00FF00}));
+}
+
+TEST(Srv3, StyleOptionsGoInANewScriptInfoWhenThereIsNone)
+{
+    auto d = loaded("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+    ASSERT_TRUE(hikari::core::setSrv3StyleOptions(d, {{.style = u"A"}}));
+    EXPECT_EQ(hikari::core::srv3StyleOptions(d), (std::vector<Srv3StyleOptions>{{.style = u"A"}}));
+}
+
+TEST(Srv3, DefaultsAreTheBuiltInOptionsOrASoftShadow)
+{
+    EXPECT_EQ(hikari::core::srv3DefaultOptions(u"YTGlowBox").shadows, hikari::core::Srv3Glow);
+    EXPECT_EQ(hikari::core::srv3DefaultOptions(u"__ytbevel").shadows, hikari::core::Srv3Bevel);
+    EXPECT_EQ(hikari::core::srv3DefaultOptions(u"YTPlain").shadows, 0);
+    EXPECT_EQ(hikari::core::srv3DefaultOptions(u"ytglow").shadows, hikari::core::Srv3SoftShadow);
+    EXPECT_EQ(hikari::core::srv3DefaultOptions(u"Default"), (Srv3StyleOptions{.style = u"Default", .shadows = hikari::core::Srv3SoftShadow}));
+    EXPECT_TRUE(hikari::core::isSrv3BuiltInStyle(u"YTSoftShadow"));
+    EXPECT_FALSE(hikari::core::isSrv3BuiltInStyle(u"ytsoftshadow"));
 }
 
 }
