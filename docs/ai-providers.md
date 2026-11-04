@@ -81,8 +81,9 @@ Sources, read on 2026-11-02:
 
 ## Models and roles
 
-- `AiRequests::refreshModels` asks the sidecar for the provider's catalogue and `Providers::setModels` stores it. Capabilities (tools, vision) and prices come from the catalogue where it reports them (OpenRouter does). Otherwise the preset's defaults apply: tools and vision for OpenAI and Anthropic, tools, vision and video for Gemini, neither for OpenRouter's unlisted models and custom endpoints. The user's own correction for a model wins over both.
-- The roles are chat, translator, reviewer, vision and judge. A role without its own model uses the chat model. The first provider added with a catalogue becomes the chat model.
+- `AiRequests::refreshModels` asks the sidecar for the provider's catalogue and `Providers::setModels` stores it. `AiRequests::probe` lists the catalogue of a provider that isn't stored yet, with the key the user typed, for Test connection in [Settings › AI](ai-settings.md); nothing is saved.
+- `Providers::update` changes an added provider in place, keeping its key unless given a new one, and `Providers::unassign` sends a role back to the chat model. Capabilities (tools, vision) and prices come from the catalogue where it reports them (OpenRouter does). Otherwise the preset's defaults apply: tools and vision for OpenAI and Anthropic, tools, vision and video for Gemini, neither for OpenRouter's unlisted models and custom endpoints. The user's own correction for a model wins over both.
+- The roles are chat, translator, reviewer, vision and judge. A role without its own model uses the chat model. The first catalogue to arrive fills the chat role while it is empty, whether it came with the provider or from a later refresh.
 
 ## Usage and cost
 
@@ -106,6 +107,7 @@ Prompt caching runs on the provider the user chose, so long agent sessions and r
   - **Storage cost.** Google bills cache storage per hour, and that cost is not in `Usage`.
   - **Explicit caches are generateContent-only.** They aren't offered for Gemini 4 Argon and later, nor in Google's newer Interactions API. There a turn can chain on the server with `previous_interaction_id`, which needs the interaction stored (the default, kept up to 55 days); `store: false` turns storage off and with it the chaining, and only implicit caching applies. Hikari uses generateContent and stores nothing on Google beyond the explicit cache a request asks for.
 - **Custom endpoints** get nothing extra: no cache key, no markers, no explicit caches.
+- **Turned off.** Settings › AI › Use prompt caching (`ai.promptCaching`, on by default) is the switch. With it off, `AiRequests` sends every request with `caching: false`, and the sidecar drops the cache key, the explicit cache and every marker. OpenAI and Gemini's implicit cache still work on their own, which no request can turn off.
 - **Privacy.** Caching stays on the provider the user chose. Nothing new is stored on this machine, and no answer is replayed from a local cache.
 
 Sources, read on 2026-11-02 (Google's caching and Interactions pages again on 2026-11-03): Anthropic's [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), OpenAI's [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), OpenRouter's [prompt caching](https://openrouter.ai/docs/features/prompt-caching) and its [models list](https://openrouter.ai/api/v1/models) for the price fields, Google's [context caching](https://aistudio.google.com/docs/caching), [caching API](https://ai.google.dev/api/caching), [Interactions API](https://aistudio.google.com/docs/interactions-overview) and [pricing](https://ai.google.dev/gemini-api/docs/pricing), and `CachedContent` in the [Gemini API v1beta discovery document](https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta).

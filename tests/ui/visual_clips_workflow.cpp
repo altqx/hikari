@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/visual_vector.h"
 #include "hikari/application/visual_view.h"
 #include "docking.h"
 
@@ -167,16 +168,17 @@ int main(int argc, char **argv)
             const int x = view.toDevice(overlay->width() * fx), y = view.toDevice(overlay->height() * fy);
             const float px = ((x / view.zoomScale().x) + view.zoomMove().x) * view.coeffW() + nudge;
             const float py = ((y / view.zoomScale().y) + view.zoomMove().y) * view.coeffH();
-            char buffer[64];
-            std::snprintf(buffer, sizeof buffer, "%.0f %.0f", static_cast<double>(px), static_cast<double>(py));
-            return std::string(buffer);
+            using hikari::application::visual::kClipPointFormat;
+            using hikari::application::visual::legacy::getfloat;
+            const std::u16string written = getfloat(px, kClipPointFormat) + u" " + getfloat(py, kClipPointFormat);
+            return std::string(written.begin(), written.end());
         };
         const std::string expected = "{\\iclip(m " + point(0.25, 0.25, 0) + " l " + point(0.75, 0.25, 0) + " " +
                                      point(0.75, 0.75, 1) + ")\\an7}sign";
         const auto &text = session->document().lines().front()->text;
         const std::string line(reinterpret_cast<const char *>(text.data()), text.size());
         std::printf("line %s, expected %s\n", line.c_str(), expected.c_str());
-        expect(line == expected, "the clicks and the nudge write legacy's clip, inverted");
+        expect(line == expected, "the clicks and the nudge write the clip, inverted");
         int clipSteps = 0;
         for (const auto &step : session->history())
             clipSteps += step.name == "Visual vector clipping tool";

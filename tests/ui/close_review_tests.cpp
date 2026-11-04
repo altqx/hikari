@@ -594,6 +594,72 @@ private slots:
         QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("chosen"))));
         QVERIFY(readAll(dir.filePath(QStringLiteral("named.ass"))).contains("named work"));
     }
+
+    void savingAsAssOnCloseAsksFirst()
+    {
+        app::Application a;
+        const QString srt = dir.filePath(QStringLiteral("close-convert.srt"));
+        {
+            QFile f(srt);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("1\n00:00:01,000 --> 00:00:02,000\none\n\n");
+        }
+        QVERIFY(a.openFile(srt));
+        QTRY_VERIFY(target(a) && target(a)->document().format() == core::SubtitleFormat::Srt);
+        auto *session = target(a);
+        edit(a, u8"converted work");
+        a.addPage();
+        edit(a, u8"untitled work");
+        QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        window->close();
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeReview")));
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeReview"))->isVisible());
+        const auto named = [window](const char *name) { return find(window, name); };
+        QObject *unsaved = named("unsavedChanges");
+        QObject *picker = named("closeSaveAs");
+        const QVariantList rows = unsaved->property("rows").toList();
+        const int row = rows.at(0).toMap().value(QStringLiteral("title")).toString() == QStringLiteral("close-convert.srt") ? 0 : 1;
+        QCOMPARE(rows.at(row).toMap().value(QStringLiteral("title")).toString(), QStringLiteral("close-convert.srt"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved, "setSave", Q_ARG(QVariant, 1 - row), Q_ARG(QVariant, false)));
+        const QString chosen = dir.filePath(QStringLiteral("close-convert.ass"));
+        const auto box = [&] { return qvariant_cast<QQuickWindow *>(named("messages")->property("box")); };
+        const auto chooseAss = [&] {
+            QVERIFY(QMetaObject::invokeMethod(unsaved, "pick", Q_ARG(QVariant, row), Q_ARG(QVariant, QVariant())));
+            QTRY_VERIFY(picker->property("visible").toBool());
+            picker->setProperty("selectedFile", QUrl::fromLocalFile(chosen));
+            QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
+            QMetaObject::invokeMethod(picker, "close");
+            QTRY_VERIFY(box() && box()->isVisible());
+            QCOMPARE(box()->title(), QStringLiteral("Save as ASS"));
+            QCOMPARE(box()->property("text").toString(), QStringLiteral("Convert “close-convert.srt” to ASS before saving it?"));
+        };
+        const auto path = [&] {
+            return unsaved->property("choices").toList().at(row).toMap().value(QStringLiteral("path")).toString();
+        };
+
+        chooseAss();
+        QVERIFY(QMetaObject::invokeMethod(box(), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box()->isVisible());
+        QCOMPARE(path(), QString());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        QVERIFY(!a.quitApproved());
+
+        chooseAss();
+        QVERIFY(QMetaObject::invokeMethod(box(), "answer", Q_ARG(QVariant, QStringLiteral("convert"))));
+        QTRY_COMPARE(path(), chosen);
+        QVERIFY(QMetaObject::invokeMethod(named("closeSaveAndClose"), "clicked"));
+        QTRY_VERIFY(a.quitApproved());
+        a.waitForWrites();
+        const QByteArray written = readAll(chosen);
+        QVERIFY(written.contains("[V4+ Styles]"));
+        QVERIFY(written.contains("converted work"));
+        QVERIFY(!readAll(srt).contains("converted work"));
+    }
 };
 
 QTEST_MAIN(CloseReviewTests)

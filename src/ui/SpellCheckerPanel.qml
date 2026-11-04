@@ -8,6 +8,7 @@ import Hikari.Ui
 FocusScope {
     id: panel
     required property var app
+    required property int shellWindow
     property ToastStack notices: null
     property string documentName: ""
     property bool ignoreComments: false
@@ -83,9 +84,9 @@ FocusScope {
         checking = true
         if (grammarMode) {
             grammarShown = ""
-            showGrammar(app.startGrammarWalk())
+            showGrammar(app.startGrammarWalk(shellWindow))
         } else {
-            show(app.openSpellChecker(options()))
+            show(app.openSpellChecker(options(), shellWindow))
         }
         if (found)
             replacement.forceActiveFocus()
@@ -100,8 +101,8 @@ FocusScope {
         grammar = ({})
         grammarShown = ""
         suggestions = []
-        app.closeSpellChecker()
-        app.closeGrammarWalk()
+        app.closeSpellChecker(shellWindow)
+        app.closeGrammarWalk(shellWindow)
     }
     function setIgnoreComments(on) { ignoreComments = on }
     function setIgnoreUpperCase(on) { ignoreUpperCase = on }
@@ -175,7 +176,7 @@ FocusScope {
         if (!checking || grammarMode)
             return
         restarting = true
-        show(app.openSpellChecker(options()))
+        show(app.openSpellChecker(options(), shellWindow))
         restarting = false
     }
     Connections {
@@ -190,7 +191,7 @@ FocusScope {
         }
         function onGrammarWalkChanged() {
             if (panel.checking && panel.grammarMode)
-                panel.showGrammar(panel.app.grammarWalkState())
+                panel.showGrammar(panel.app.grammarWalkState(panel.shellWindow))
         }
         function onGrammarChanged() {
             if (panel.grammarMode && panel.checking && panel.grammar.on !== panel.app.grammarOn)

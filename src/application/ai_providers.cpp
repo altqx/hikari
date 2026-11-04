@@ -170,33 +170,57 @@ void Providers::add(Provider provider, std::string key, std::function<void(std::
         done(SaveError::Key);
         return;
     }
-    auto commit = [this, provider, key, done](std::optional<KeyError> error) mutable {
+    store(std::move(provider), std::move(key), std::move(done));
+}
+
+void Providers::update(Provider provider, std::optional<std::string> key,
+                       std::function<void(std::optional<SaveError>)> done)
+{
+    if (!m_config.provider(provider.id)) {
+        done(SaveError::Config);
+        return;
+    }
+    if (key && key->empty() && provider.needsKey) {
+        done(SaveError::Key);
+        return;
+    }
+    store(std::move(provider), std::move(key), std::move(done));
+}
+
+void Providers::store(Provider provider, std::optional<std::string> key,
+                      std::function<void(std::optional<SaveError>)> done)
+{
+    const bool newKey = key && !key->empty();
+    auto commit = [this, provider, key, newKey, done](std::optional<KeyError> error) mutable {
         if (error) {
             done(saveErrorOf(*error));
             return;
         }
         Config next = m_config;
-        std::erase_if(next.providers, [&](const Provider &p) { return p.id == provider.id; });
-        next.providers.push_back(provider);
+        const auto it = std::ranges::find(next.providers, provider.id, &Provider::id);
+        if (it == next.providers.end())
+            next.providers.push_back(provider);
+        else
+            *it = provider;
         if (!next.roles.contains(Role::Chat) && !provider.models.empty())
             next.roles[Role::Chat] = {provider.id, provider.models.front().id};
         if (!m_configs.save(next)) {
-            if (!key.empty())
+            if (newKey && !m_config.provider(provider.id))
                 m_keys.remove(provider.id, [](std::optional<KeyError>) {});
             done(SaveError::Config);
             return;
         }
         m_config = std::move(next);
-        if (key.empty())
+        if (newKey)
+            m_keyCache[provider.id] = *key;
+        else if (key)
             m_keyCache.erase(provider.id);
-        else
-            m_keyCache[provider.id] = key;
         done(std::nullopt);
     };
-    if (key.empty())
-        commit(std::nullopt);
+    if (newKey)
+        m_keys.write(provider.id, *key, std::move(commit));
     else
-        m_keys.write(provider.id, key, std::move(commit));
+        commit(std::nullopt);
 }
 
 void Providers::remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done)
@@ -227,6 +251,17 @@ bool Providers::assign(Role role, ModelRef model)
     return true;
 }
 
+bool Providers::unassign(Role role)
+{
+    Config next = m_config;
+    if (!next.roles.erase(role))
+        return true;
+    if (!m_configs.save(next))
+        return false;
+    m_config = std::move(next);
+    return true;
+}
+
 bool Providers::setCapabilities(const std::string &providerId, const std::string &modelId, Capabilities capabilities)
 {
     Config next = m_config;
@@ -247,6 +282,8 @@ bool Providers::setModels(const std::string &providerId, std::vector<Model> mode
     if (it == next.providers.end())
         return false;
     it->models = std::move(models);
+    if (!next.roles.contains(Role::Chat) && !it->models.empty())
+        next.roles[Role::Chat] = {providerId, it->models.front().id};
     if (!m_configs.save(next))
         return false;
     m_config = std::move(next);

@@ -8,6 +8,7 @@ Rectangle {
     id: group
     property var choices: []
     property int currentIndex: 0
+    property bool wrapsLabels: false
     signal activated(int index)
 
     implicitWidth: row.implicitWidth + 2
@@ -85,6 +86,8 @@ Rectangle {
                     color: choice.enabled ? Theme.text : Theme.disabled
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
+                    wrapMode: group.wrapsLabels ? Text.Wrap : Text.NoWrap
+                    maximumLineCount: group.wrapsLabels ? 2 : undefined
                     elide: Text.ElideRight
                 }
             }

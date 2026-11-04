@@ -718,7 +718,7 @@ std::u16string VectorClipTool::body() const
     u16 visual;
     if (m_vectorScale > 1)
         visual += number(m_vectorScale) + u",";
-    return visual + serializeVectorPoints(m_editor.points, "6.0f");
+    return visual + serializeVectorPoints(m_editor.points, kClipPointFormat);
 }
 
 VectorEditor::Callbacks VectorClipTool::callbacks(VisualHost &host)

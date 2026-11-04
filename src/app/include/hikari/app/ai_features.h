@@ -12,6 +12,8 @@ namespace hikari::api {
 class Api;
 }
 namespace hikari::backends::ai {
+class AiRequests;
+class AiSidecarDownload;
 class AiSidecarHost;
 }
 namespace hikari::ui {
@@ -26,12 +28,15 @@ class AiFeatures final : public QObject {
     Q_OBJECT
 public:
     static constexpr const char *kOffSetting = "ai.off";
+    static constexpr const char *kCachingSetting = "ai.promptCaching";
 
     struct Ports {
         std::function<std::unique_ptr<application::ai::KeyStore>()> keyStore;
         std::function<std::unique_ptr<application::ai::ConfigStore>()> configStore;
         /// Null when no sidecar is installed for this version.
         std::function<std::unique_ptr<backends::ai::AiSidecarHost>()> sidecarHost;
+        /// The download of this version's sidecar; null when one is installed or the build runs its own.
+        std::function<std::unique_ptr<backends::ai::AiSidecarDownload>()> sidecarDownload;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
     static Ports defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion);
@@ -43,9 +48,17 @@ public:
     /// Null with AI off.
     application::ai::KeyStore *keys() const;
     application::ai::ConfigStore *configs() const;
+    application::ai::Providers *providers() const;
+    backends::ai::AiRequests *requests() const;
+    /// Null with AI off, or when nothing needs downloading.
+    std::unique_ptr<backends::ai::AiSidecarDownload> sidecarDownload() const;
     /// The sidecar for an AI action: built on the first one once a provider exists. Null with AI off, without a
     /// provider, or without an installed sidecar.
     backends::ai::AiSidecarHost *sidecarForAction();
+    /// The sidecar for the MCP server, which needs no provider. Null with AI off or without an installed sidecar.
+    backends::ai::AiSidecarHost *sidecarForMcp();
+    /// While the user adds their first provider, its Test connection may start the sidecar too.
+    void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
     backends::ai::AiSidecarHost *sidecar() const;
 
