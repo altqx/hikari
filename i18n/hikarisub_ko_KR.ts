@@ -9559,6 +9559,10 @@ Failed to copy %2 fonts.</source>
         <translation>추가</translation>
     </message>
     <message>
+        <source>AI features</source>
+        <translation>AI 기능</translation>
+    </message>
+    <message>
         <source>Turn off all AI features</source>
         <translation>모든 AI 기능 끄기</translation>
     </message>

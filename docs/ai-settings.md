@@ -6,7 +6,7 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 
 | Section | What | Saved |
 | --- | --- | --- |
-| (top) | **Turn off all AI features** (`ai.off`, off by default) | On OK or Apply, like every other setting |
+| AI features | **Turn off all AI features** (`ai.off`, off by default) | On OK or Apply, like every other setting |
 | Providers | Add, edit, test and delete providers | At once (see below) |
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
 | Privacy | **Use prompt caching** (`ai.promptCaching`, on by default) and the What is sent to providers link | On OK or Apply |

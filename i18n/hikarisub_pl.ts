@@ -9671,6 +9671,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Dodaj</translation>
     </message>
     <message>
+        <source>AI features</source>
+        <translation>Funkcje AI</translation>
+    </message>
+    <message>
         <source>Turn off all AI features</source>
         <translation>Wyłącz wszystkie funkcje AI</translation>
     </message>

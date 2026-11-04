@@ -9559,6 +9559,10 @@ Failed to copy %2 fonts.</source>
         <translation>เพิ่ม</translation>
     </message>
     <message>
+        <source>AI features</source>
+        <translation>ฟีเจอร์ AI</translation>
+    </message>
+    <message>
         <source>Turn off all AI features</source>
         <translation>ปิดฟีเจอร์ AI ทั้งหมด</translation>
     </message>

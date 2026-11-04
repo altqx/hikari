@@ -9615,6 +9615,10 @@ Failed to copy %2 fonts.</source>
         <translation>சேர்</translation>
     </message>
     <message>
+        <source>AI features</source>
+        <translation>AI அம்சங்கள்</translation>
+    </message>
+    <message>
         <source>Turn off all AI features</source>
         <translation>அனைத்து AI அம்சங்களையும் அணை</translation>
     </message>

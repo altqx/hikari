@@ -24,11 +24,11 @@ ScrollView {
         {id: "judge", name: qsTr("Judge")}
     ]
     readonly property var presets: [
-        {id: "openai", name: "OpenAI"},
-        {id: "anthropic", name: "Anthropic"},
-        {id: "gemini", name: "Google Gemini"},
-        {id: "openrouter", name: "OpenRouter"},
-        {id: "custom", name: qsTr("Custom endpoint…")}
+        {id: "openai", name: "OpenAI", iconRole: "ai-assistant"},
+        {id: "anthropic", name: "Anthropic", iconRole: "ai-assistant"},
+        {id: "gemini", name: "Google Gemini", iconRole: "ai-assistant"},
+        {id: "openrouter", name: "OpenRouter", iconRole: "ai-assistant"},
+        {id: "custom", name: qsTr("Custom endpoint…"), iconRole: "link"}
     ]
     contentWidth: availableWidth
     contentHeight: column.implicitHeight + 44
@@ -315,7 +315,7 @@ ScrollView {
                                 Layout.preferredWidth: 180
                             }
                             Label {
-                                text: qsTr("%1 of %2 MB").arg(Math.round(form.download.received / 1000000)).arg(page.megabytes(form.download.size))
+                                text: qsTr("%1 of %2 MB").arg(Math.round(form.download.received / 1000000), page.megabytes(form.download.size))
                                 color: Theme.muted
                             }
                         }
@@ -371,6 +371,7 @@ ScrollView {
         spacing: 16
 
         SettingsSection {
+            title: qsTr("AI features")
             ruled: false
             AiCheck { setting: "ai.off"; text: qsTr("Turn off all AI features"); font.bold: true }
             Note { text: qsTr("Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.") }
@@ -572,6 +573,7 @@ ScrollView {
                         delegate: ShellMenuItem {
                             required property var modelData
                             objectName: "aiAdd_" + modelData.id
+                            iconRole: modelData.iconRole
                             text: modelData.name
                             onTriggered: page.openForm(modelData.id)
                         }

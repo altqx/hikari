@@ -16149,7 +16149,6 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "aiOffSummary")->isVisible());
 
         auto *off = dialogItem("settingsDialog", "setting_ai.off");
-        QCOMPARE(off->mapToItem(off->parentItem()->parentItem()->parentItem(), QPointF(0, 0)).y(), 0.0);
         QVERIFY(QMetaObject::invokeMethod(off, "click"));
         QTRY_VERIFY(dialogItem("settingsDialog", "aiOffSummary")->isVisible());
         for (const char *section : {"aiProviders", "aiModels", "aiPrivacy"})
