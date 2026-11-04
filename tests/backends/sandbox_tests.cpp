@@ -86,7 +86,7 @@ TEST_F(Sandbox, TheSystemsCoverageIsWhatALauncherGets)
         const Coverage system = systemCoverage(network);
         EXPECT_EQ(system.files, launcher.coverage().files);
         EXPECT_EQ(system.network, launcher.coverage().network);
-        EXPECT_EQ(system.missing, launcher.coverage().missing);
+        EXPECT_EQ(system.missing.toStdString(), launcher.coverage().missing.toStdString());
     }
 }
 

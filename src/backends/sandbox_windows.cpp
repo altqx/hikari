@@ -21,6 +21,22 @@ struct Grant {
     bool folder = false;
 };
 
+// Two processes creating the same new profile at once: the second can fail with ERROR_PATH_NOT_FOUND.
+HRESULT containerSid(const std::wstring &name, PSID *sid)
+{
+    const HANDLE creating = CreateMutexW(nullptr, FALSE, (L"Local\\" + name + L".profile").c_str());
+    const DWORD waited = creating ? WaitForSingleObject(creating, 30'000) : WAIT_FAILED;
+    const bool locked = waited == WAIT_OBJECT_0 || waited == WAIT_ABANDONED;
+    HRESULT hr = CreateAppContainerProfile(name.c_str(), name.c_str(), name.c_str(), nullptr, 0, sid);
+    if (hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
+        hr = DeriveAppContainerSidFromAppContainerName(name.c_str(), sid);
+    if (locked)
+        ReleaseMutex(creating);
+    if (creating)
+        CloseHandle(creating);
+    return hr;
+}
+
 bool hasAce(PACL acl, PSID sid, DWORD access)
 {
     if (!acl)
@@ -153,9 +169,7 @@ Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
     }
     const std::wstring name = profile->name.toStdWString();
     PSID sid = nullptr;
-    HRESULT hr = CreateAppContainerProfile(name.c_str(), name.c_str(), name.c_str(), nullptr, 0, &sid);
-    if (hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
-        hr = DeriveAppContainerSidFromAppContainerName(name.c_str(), &sid);
+    const HRESULT hr = containerSid(name, &sid);
     if (FAILED(hr) || !sid) {
         m->coverage.missing =
             QStringLiteral("the AppContainer couldn't be created (0x%1)").arg(static_cast<quint32>(hr), 8, 16,
