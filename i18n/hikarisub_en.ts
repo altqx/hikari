@@ -136,13 +136,6 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>Layer, style, actor, margins or effect removed from %n line.</numerusform>
-            <numerusform>Layer, style, actor, margins or effect removed from %n lines.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>Bookmarks, hidden lines and groups removed from %n line.</numerusform>

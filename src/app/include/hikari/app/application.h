@@ -22,6 +22,7 @@
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
@@ -300,7 +301,8 @@ public:
     // "dialog" when Save must ask for a file, "readonly" for a read-only file, "" to
     // save in place.
     Q_INVOKABLE QString saveRoute() const;
-    // {folder, file, filter, extension}.
+    // {folder, file, filter, filters, formats, extension}: formats[i] is "ass" for the
+    // filter that converts to ASS, else "".
     Q_INVOKABLE QVariantMap saveDialogValues() const;
     // Adds the format's extension when missing. "readonly" asks again; "" when the
     // save started.
@@ -311,7 +313,11 @@ public:
     // editing target).
     Q_INVOKABLE QString saveRouteFor(qulonglong id) const;
     Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
-    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file);
+    // format "ass" converts a Document of another format to ASS before it is saved.
+    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file, const QString &format = {});
+    // {} when saving as file in format keeps the Document's format; else {convert: true} with
+    // changes (what converting to ASS does, to confirm first) or problem.
+    Q_INVOKABLE QVariantMap assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const;
     Q_INVOKABLE bool saveDocument(qulonglong id);
     Q_INVOKABLE bool turnOffTranslationMode();
     // translationHint: why the mode is unavailable (a PlainText Document); else empty.
@@ -405,18 +411,7 @@ public:
     Q_INVOKABLE bool exactTimebase() const;
     // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
-    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix, resolutionWidth,
-    // resolutionHeight}.
-    Q_INVOKABLE QVariantMap conversionOptions() const;
-    Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
-    // "ass", "srt", "mdvd", "mpl2", "tmp"; none in translation mode.
-    Q_INVOKABLE QStringList conversionTargets() const;
-    Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {ok, problem, fpsInvalid, losses, kinds ("warning" removed, else "info")};
-    // acceptConversion applies it unless the Document or the options changed since.
-    Q_INVOKABLE QVariantMap previewConversion(const QString &target);
-    Q_INVOKABLE bool acceptConversion();
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
@@ -1051,15 +1046,9 @@ private:
     std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
-    struct ConversionPlan {
-        std::uint64_t document = 0;
-        std::uint64_t revision = 0;
-        QVariantMap options;
-        float frameMs = 0.f;
-        core::Document converted;
-    };
-    std::unique_ptr<ConversionPlan> m_conversionPlan;
-    std::set<std::uint64_t> m_formatChanged;
+    std::optional<core::ConversionOptions> assConversionOptions() const;
+    std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
+    bool convertToAss(application::DocumentId document);
     QString m_resolutionCheckedVideo;
     void checkResolution();
     QStringList m_selectRecent;

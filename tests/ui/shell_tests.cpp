@@ -141,6 +141,15 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
+QString writeSrt(const QTemporaryDir &dir, const char *name, const char *cues)
+{
+    const QString path = dir.filePath(QLatin1String(name));
+    QFile f(path);
+    f.open(QIODevice::WriteOnly);
+    f.write(cues);
+    return path;
+}
+
 QString writeSungWav(const QTemporaryDir &dir, const char *name, int ms, std::initializer_list<std::array<int, 3>> notes)
 {
     constexpr int rate = 48000;
@@ -8410,163 +8419,148 @@ private slots:
         application->editor().discard();
     }
 
-    void conversionPreviewsAndAppliesThePlan()
+    // openFile switches the editing target asynchronously.
+    application::EditSession *openedSrt()
     {
-        const QString path = dir.filePath(QStringLiteral("convert.ass"));
-        {
-            QFile f(path);
-            QVERIFY(f.open(QIODevice::WriteOnly));
-            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                    "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,note\n"
-                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\i1}two{\\i0}\n");
-        }
+        const auto target = [&]() -> application::EditSession * {
+            const auto id = application->workspace().editingTarget();
+            return id ? application->files().session(*id) : nullptr;
+        };
+        if (!QTest::qWaitFor([&] { return target() && target()->document().format() == core::SubtitleFormat::Srt; }))
+            return nullptr;
+        return target();
+    }
+
+    void saveAsOffersAssForADocumentOfAnotherFormat()
+    {
+        const QString path = writeSrt(dir, "save-as-ass.srt",
+                                      "1\n00:00:03,000 --> 00:00:04,000\n<i>two</i>\n\n"
+                                      "2\n00:00:01,000 --> 00:00:02,000\none\n\n");
         QVERIFY(application->openFile(path));
-        auto *session = application->files().session(*application->workspace().editingTarget());
-        QCOMPARE(application->conversionTargets(),
-                 (QStringList{QStringLiteral("srt"), QStringLiteral("mdvd"), QStringLiteral("mpl2"), QStringLiteral("tmp")}));
-        auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
-                                          Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("conversionDialog"));
-        QVERIFY(dialog);
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(!dialogItem("conversionDialog", "convStyleSection")->isVisible());
-        QVERIFY(!dialogItem("conversionDialog", "convFrameRateSection")->isVisible());
-        QVERIFY(dialogItem("conversionDialog", "convEndTimesSection")->isVisible());
-        QCOMPARE(dialog->property("preview").toMap().value(QStringLiteral("kinds")).toStringList().value(0), QStringLiteral("warning"));
-        const QStringList losses = dialog->property("preview").toMap().value(QStringLiteral("losses")).toStringList();
-        QVERIFY2(losses.contains(QStringLiteral("1 comment line(s) removed.")) ||
-                     losses.join(u'|').contains(QStringLiteral("comment")),
-                 qPrintable(losses.join(u'|')));
-        QVERIFY(losses.join(u'|').contains(QStringLiteral("script properties")));
-        QVERIFY(application->selectLines({{QStringLiteral("find"), QStringLiteral("two")}, {QStringLiteral("field"), 0},
-                                          {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 5}, {QStringLiteral("comments"), false}},
-                                         false)
-                    .startsWith(QStringLiteral("1 ")));
-        QVERIFY(!application->acceptConversion());
-        QVERIFY(application->editor().undo());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "refresh"));
+        auto *session = openedSrt();
+        QVERIFY(session);
+        const QVariantMap values = application->saveDialogValuesFor(0);
+        QCOMPARE(values.value(QStringLiteral("filters")).toStringList(),
+                 (QStringList{QStringLiteral("Subtitle file (*.srt)"), QStringLiteral("ASS subtitles (*.ass)")}));
+        QCOMPARE(values.value(QStringLiteral("formats")).toStringList(), (QStringList{QString(), QStringLiteral("ass")}));
+        const QUrl unnamed = QUrl::fromLocalFile(dir.filePath(QStringLiteral("save-as-ass")));
+        QCOMPARE(application->assConversionPreview(0, unnamed, QString()), QVariantMap());
+        const QVariantMap preview = application->assConversionPreview(0, unnamed, QStringLiteral("ass"));
+        QVERIFY(preview.value(QStringLiteral("convert")).toBool());
+        QVERIFY(preview.value(QStringLiteral("changes")).toStringList().join(u' ').contains(QStringLiteral("get the conversion style")));
+        auto &settings = *application->settingsStore();
+        const QVariant style = settings.value(QStringLiteral("convert.style"));
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("convert.style"), style); });
+        settings.set("convert.style", QStringLiteral("Converted"));
         const auto cursor = session->historyCursor();
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionAccept"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(application->saveChosenFor(0, QUrl::fromLocalFile(dir.filePath(QStringLiteral("save-as-ass"))), QStringLiteral("ass")),
+                 QString());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
         QCOMPARE(session->historyCursor(), cursor + 1);
         QCOMPARE(session->history().back().name, std::string("Subtitles conversion"));
-        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
-        QCOMPARE(session->document().lines().size(), std::size_t(1));
-        const auto &text = session->document().lines()[0]->text;
-        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())), QStringLiteral("<i>two</i>"));
-        QCOMPARE(application->saveRoute(), QStringLiteral("dialog"));
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), std::size_t(2));
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(lines[0]->text.data()), qsizetype(lines[0]->text.size())),
+                 QStringLiteral("{\\i1}two{\\i0}"));
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(lines[1]->text.data()), qsizetype(lines[1]->text.size())),
+                 QStringLiteral("one"));
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(lines[0]->style.data()), qsizetype(lines[0]->style.size())),
+                 QStringLiteral("Converted"));
+        const QString written = dir.filePath(QStringLiteral("save-as-ass.ass"));
+        QTRY_VERIFY(!session->isDirty());
+        QFile file(written);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QByteArray bytes = file.readAll();
+        QVERIFY(bytes.contains("[V4+ Styles]"));
+        QVERIFY(bytes.contains(",Converted,,0,0,0,,{\\i1}two{\\i0}"));
+        QCOMPARE(application->saveDialogValuesFor(0).value(QStringLiteral("formats")).toStringList(), QStringList{QString()});
+        QVERIFY(application->log().history().contains(QRegularExpression(QStringLiteral("2 line(s|\\(s\\)) get the conversion style “Converted”\\."))));
         QVERIFY(application->editor().undo());
-        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
         application->editor().discard();
     }
 
-    void conversionWindowFollowsEachChange()
+    void saveAsAssAsksFirstAndCancelKeepsTheDocument()
     {
-        const QString path = writeFile(dir, "convert-live.ass",
-                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}one two{\\i0}\n");
+        const QString path = writeSrt(dir, "confirm-ass.srt",
+                                      "1\n00:00:01,000 --> 00:00:02,000\none\n\n2\n00:00:03,000 --> 00:00:04,000\n<b>two</b>\n\n");
         QVERIFY(application->openFile(path));
-        const QVariantMap kept = application->conversionOptions();
-        application->setConversionOptions({{QStringLiteral("fps"), QStringLiteral("25")},
-                                           {QStringLiteral("fpsFromVideo"), false},
-                                           {QStringLiteral("newEndTimes"), false}});
-        auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("mdvd")),
-                                          Q_ARG(QVariant, QStringLiteral("Convert to MDVD"))));
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("conversionDialog"));
-        QVERIFY(dialog);
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Convert to MDVD"));
-        QVERIFY(dialogItem("conversionDialog", "convFrameRateSection")->isVisible());
-        QVERIFY(dialogItem("conversionDialog", "convEndTimesSection")->isVisible());
-        QVERIFY(!dialogItem("conversionDialog", "convStyleSection")->isVisible());
-        QVERIFY(!dialogItem("conversionDialog", "convResolutionSection")->isVisible());
-        const auto losses = [&] { return dialog->property("preview").toMap().value(QStringLiteral("losses")).toStringList().join(u'|'); };
-        auto *accept = dialogItem("conversionDialog", "conversionAccept");
-        QVERIFY(accept->property("enabled").toBool());
-        QVERIFY(!losses().contains(QStringLiteral("Times changed")));
-        {
-            const QVariantMap p = dialog->property("preview").toMap();
-            const QStringList rows = p.value(QStringLiteral("losses")).toStringList();
-            const auto row = std::find_if(rows.begin(), rows.end(),
-                                          [](const QString &r) { return r.startsWith(QLatin1String("Formatting tags")); });
-            QVERIFY2(row != rows.end(), qPrintable(rows.join(u'|')));
-            QCOMPARE(p.value(QStringLiteral("kinds")).toStringList().value(int(row - rows.begin())), QStringLiteral("warning"));
-        }
-        auto *fps = dialogItem("conversionDialog", "convFps");
-        fps->setProperty("text", QStringLiteral("0"));
-        QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
-        QVERIFY(dialog->property("preview").toMap().value(QStringLiteral("fpsInvalid")).toBool());
-        QVERIFY(!accept->property("enabled").toBool());
-        QCOMPARE(dialogItem("conversionDialog", "convFpsHint")->property("text").toString(),
-                 QStringLiteral("Enter a frame rate from 1 to 1000."));
-        QCOMPARE(dialogItem("conversionDialog", "conversionProblem")->property("text").toString(),
-                 QStringLiteral("Nothing to show until the frame rate is valid."));
-        for (const char *rate : {"nan", "inf", "-inf", "1001", "1e300"}) {
-            fps->setProperty("text", QString::fromLatin1(rate));
-            QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
-            QVERIFY2(dialog->property("preview").toMap().value(QStringLiteral("fpsInvalid")).toBool(), rate);
-            QVERIFY2(!accept->property("enabled").toBool(), rate);
-        }
-        fps->setProperty("text", QStringLiteral("25"));
-        QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
-        QVERIFY(accept->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "convNewEnds"), "click"));
-        auto *perLetter = dialogItem("conversionDialog", "convPerLetter");
-        perLetter->setProperty("text", QStringLiteral("600"));
-        QVERIFY(QMetaObject::invokeMethod(perLetter, "textEdited"));
-        QCOMPARE(application->conversionOptions().value(QStringLiteral("timePerCharacter")).toInt(), 600);
-        QVERIFY2(losses().contains(QStringLiteral("Times changed")), qPrintable(losses()));
-        QVERIFY(!dialog->property("previous").toStringList().join(u'|').contains(QStringLiteral("Times changed")));
-        perLetter->setProperty("text", QStringLiteral("5"));
-        QVERIFY(QMetaObject::invokeMethod(perLetter, "textEdited"));
-        QCOMPARE(application->conversionOptions().value(QStringLiteral("timePerCharacter")).toInt(), 600);
-        QVERIFY(perLetter->property("invalid").toBool());
-        QVERIFY(!accept->property("enabled").toBool());
-        perLetter->setProperty("text", QStringLiteral("600"));
-        QVERIFY(QMetaObject::invokeMethod(perLetter, "textEdited"));
-        QVERIFY(accept->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionCancel"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        auto *session = openedSrt();
+        QVERIFY(session);
+        const auto cursor = session->historyCursor();
+        auto *saveAs = named("saveAsDialog");
+        const auto accept = [&](const char *name) {
+            saveAs->setProperty("document", 0);
+            saveAs->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QLatin1String(name))));
+            QVERIFY(QMetaObject::invokeMethod(saveAs, "accepted"));
+        };
+        const QString question = QStringLiteral("Convert “confirm-ass.srt” to ASS before saving it?");
 
-        const QString srt = writeFile(dir, "convert-live.srt", "1\n00:00:01,000 --> 00:00:02,000\none two\n\n");
-        application->addPage(false);
-        QVERIFY(application->openFile(srt));
-        QVERIFY2(application->conversionTargets().contains(QStringLiteral("ass")),
-                 qPrintable(application->conversionTargets().join(u',')));
-        application->setConversionOptions({{QStringLiteral("styleCatalog"), QStringLiteral("No such catalog")},
-                                           {QStringLiteral("resolutionWidth"), QStringLiteral("1920")},
-                                           {QStringLiteral("resolutionHeight"), QStringLiteral("1080")}});
-        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("ass")),
-                                          Q_ARG(QVariant, QStringLiteral("Convert to ASS"))));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        const QStringList catalogs = dialog->property("catalogs").toStringList();
-        QVERIFY(!catalogs.isEmpty());
-        QCOMPARE(application->conversionOptions().value(QStringLiteral("styleCatalog")).toString(), catalogs.front());
-        QCOMPARE(dialogItem("conversionDialog", "convCatalog")->property("currentIndex").toInt(), 0);
-        QVERIFY(accept->property("enabled").toBool());
-        auto *width = dialogItem("conversionDialog", "convWidth");
-        width->setProperty("text", QString());
-        QVERIFY(QMetaObject::invokeMethod(width, "textEdited"));
-        QCOMPARE(application->conversionOptions().value(QStringLiteral("resolutionWidth")).toString(), QStringLiteral("1920"));
-        QVERIFY(width->property("invalid").toBool());
-        QVERIFY(!accept->property("enabled").toBool());
-        width->setProperty("text", QStringLiteral("1280"));
-        QVERIFY(QMetaObject::invokeMethod(width, "textEdited"));
-        QCOMPARE(application->conversionOptions().value(QStringLiteral("resolutionWidth")).toString(), QStringLiteral("1280"));
-        QVERIFY(accept->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionCancel"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        accept("confirm-cancel.ass");
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        const QVariantList choices = box->property("choices").toList();
+        QCOMPARE(choices.size(), 2);
+        QCOMPARE(choices.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Convert to ASS"));
+        QCOMPARE(choices.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Cancel"));
+        QVERIFY(box->property("detail").toString().contains(QStringLiteral("get the conversion style")));
+        answerMessage("messages", QStringLiteral("Save as ASS"), question, QStringLiteral("cancel"));
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        QCOMPARE(session->historyCursor(), cursor);
+        QTest::qWait(50);
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("confirm-cancel.ass"))));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("confirm-cancel.ass.srt"))));
 
-        application->setAskForBadResolution(false);
-        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
-        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
-        application->setConversionOptions({{QStringLiteral("fpsFromVideo"), true}});
-        QVERIFY(application->previewConversion(QStringLiteral("mdvd")).value(QStringLiteral("ok")).toBool());
-        QVERIFY(application->video().unloadVideo());
-        QVERIFY(!application->acceptConversion());
-        application->setConversionOptions(kept);
+        accept("confirm-done.ass");
+        answerMessage("messages", QStringLiteral("Save as ASS"), question, QStringLiteral("convert"));
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QCOMPARE(session->historyCursor(), cursor + 1);
+        QCOMPARE(session->history().back().name, std::string("Subtitles conversion"));
+        QTRY_VERIFY(!session->isDirty());
+        QFile written(dir.filePath(QStringLiteral("confirm-done.ass")));
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QVERIFY(written.readAll().contains("[V4+ Styles]"));
         application->editor().discard();
+    }
+
+    void anAssFileNameConvertsWithTheDocumentsOwnFilter()
+    {
+        const QString path = writeSrt(dir, "typed-ass.srt", "1\n00:00:01,000 --> 00:00:02,000\none\n\n");
+        QVERIFY(application->openFile(path));
+        auto *session = openedSrt();
+        QVERIFY(session);
+        QCOMPARE(application->saveChosenFor(0, QUrl::fromLocalFile(dir.filePath(QStringLiteral("typed-ass.ass")))), QString());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QTRY_VERIFY(!session->isDirty());
+        QVERIFY(QFileInfo::exists(dir.filePath(QStringLiteral("typed-ass.ass"))));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("typed-ass.ass.srt"))));
+        QCOMPARE(application->saveChosenFor(0, QUrl::fromLocalFile(dir.filePath(QStringLiteral("typed-again")))), QString());
+        QTRY_VERIFY(QFileInfo::exists(dir.filePath(QStringLiteral("typed-again.ass"))));
+    }
+
+    void storedConversionShortcutsAreDroppedWithANotice()
+    {
+        QVERIFY(!named("conversionMenu"));
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString ini = own.filePath(QStringLiteral("hikari.ini"));
+        ui::SettingsStore(ini).set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_CONVERT_TO_ASS G=F9"),
+                                                                    QStringLiteral("GLOBAL_CONVERT_TO_MPL2 G=Ctrl-Alt-2"),
+                                                                    QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
+        restartWithSettings(ini);
+        const QString log = application->log().history();
+        QVERIFY2(log.contains(QStringLiteral("The shortcut F9 of “Convert to ASS” was removed: choose ASS in File › Save as instead.")),
+                 qPrintable(log));
+        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-2 of “Convert to MPL2” was removed: use File › Export as instead.")),
+                 qPrintable(log));
+        QCOMPARE(application->settingsStore()->list("shortcuts.hotkeys"), QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
+        for (const char *symbol : {"GLOBAL_CONVERT_TO_ASS", "GLOBAL_CONVERT_TO_SRT", "GLOBAL_CONVERT_TO_TMP",
+                                   "GLOBAL_CONVERT_TO_MDVD", "GLOBAL_CONVERT_TO_MPL2"}) {
+            QVariant ran;
+            QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                              Q_ARG(QVariant, QString::fromLatin1(symbol))));
+            QVERIFY2(!ran.toBool(), symbol);
+        }
     }
 
     void resolutionMismatchAndResample()
@@ -11584,11 +11578,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *main = qobject_cast<QQuickWindow *>(root);
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
-        const QVariantMap kept = application->conversionOptions();
-        auto restore = qScopeGuard([&] {
-            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
-            application->setConversionOptions(kept);
-        });
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light")); });
         const auto setTheme = [&](const QString &code) {
             settings.setValue(QStringLiteral("appearance.theme"), code);
             auto *controls = root->property("palette").value<QObject *>();
@@ -11660,17 +11650,6 @@ private slots:
             QTRY_VERIFY(!question->isVisible());
             collector.changeOptions(0, false);
             hide(fonts);
-            application->setConversionOptions(kept);
-            QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
-                                              Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
-            save(shown("conversionDialog"), QStringLiteral("convert-srt-") + code);
-            hide(shown("conversionDialog"));
-            application->setConversionOptions({{QStringLiteral("fps"), QStringLiteral("0")}, {QStringLiteral("fpsFromVideo"), false}});
-            QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("mdvd")),
-                                              Q_ARG(QVariant, QStringLiteral("Convert to MDVD"))));
-            save(shown("conversionDialog"), QStringLiteral("convert-mdvd-invalid-") + code);
-            hide(shown("conversionDialog"));
-            application->setConversionOptions(kept);
             QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
             auto *resample = shown("resampleDialog");
             dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 1440);
@@ -13129,7 +13108,6 @@ private slots:
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
             {{"styleEditorOk", Accept}, {"styleEditorApply", Apply}, {"styleEditorCancel", Reject}},
-            {{"conversionAccept", Accept}, {"conversionCancel", Reject}},
             {{"resampleOk", Accept}, {"resampleCancel", Reject}},
             {{"scriptPropertiesSave", Accept}, {"scriptPropertiesCancel", Reject}},
             {{"spellAddedRemove", Destructive}, {"spellAddedClose", Reject}},
@@ -13173,8 +13151,6 @@ private slots:
         auto *dummyWindow = qobject_cast<QWindow *>(named("dummyVideoDialog"));
         auto *aspectWindow = named("aspectRatioDialog")->property("compactWindow").value<QWindow *>();
         QVERIFY(fpsWindow && dummyWindow && aspectWindow);
-        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
-                                          Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
         QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
         QVariant propertiesOpened;
         QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, propertiesOpened)));
@@ -13182,8 +13158,7 @@ private slots:
         QQmlExpression addedWords(qmlContext(root), root, QStringLiteral("panelOwnItems(spellDock)[2].run()"));
         addedWords.evaluate();
         QVERIFY(!addedWords.hasError());
-        const char *pu6Windows[] = {"conversionDialog", "resampleDialog", "scriptPropertiesDialog", "fontCollectorDialog",
-                                    "spellAddedWords"};
+        const char *pu6Windows[] = {"resampleDialog", "scriptPropertiesDialog", "fontCollectorDialog", "spellAddedWords"};
         const auto pu6Window = [&](const char *name) -> QWindow * {
             if (auto *found = qobject_cast<QWindow *>(named(name)))
                 return found;
@@ -19210,7 +19185,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 272);
+        QCOMPARE(hotkeyRows().size(), 267);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -19680,8 +19655,8 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_PREVIOUS_FRAME")), QStringLiteral("Left"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
-        QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 38);
+        QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
+        QCOMPARE(table().size(), 34);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -21312,8 +21287,15 @@ private slots:
         QStringList departures = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
         for (const auto &context : contexts)
             departures.append(QStringLiteral("%1 Ctrl-E: nothing, legacy GLOBAL_EDITOR").arg(QLatin1String(context.first)));
-        for (const auto &context : contexts)
-            departures.append(QStringLiteral("%1 F10: nothing, legacy GLOBAL_CONVERT_TO_MDVD").arg(QLatin1String(context.first)));
+        for (const auto &[accel, symbol] : std::initializer_list<std::pair<const char *, const char *>>{
+                 {"F9", "GLOBAL_CONVERT_TO_ASS"},
+                 {"F8", "GLOBAL_CONVERT_TO_SRT"},
+                 {"F10", "GLOBAL_CONVERT_TO_MDVD"},
+                 {"F11", "GLOBAL_CONVERT_TO_MPL2"},
+                 {"Ctrl-F12", "GLOBAL_CONVERT_TO_TMP"}})
+            for (const auto &context : contexts)
+                departures.append(QStringLiteral("%1 %2: nothing, legacy %3")
+                                      .arg(QLatin1String(context.first), QLatin1String(accel), QLatin1String(symbol)));
         for (const auto &[accel, symbol] : std::initializer_list<std::pair<const char *, const char *>>{
                  {"X", "VIDEO_TOOL_CROSSHAIR"},
                  {"G", "VIDEO_TOOL_MOVE"},
@@ -21392,7 +21374,7 @@ private slots:
         for (const auto &b : legacyDefaults()) {
             const QString symbol = QString::fromLatin1(b.symbol);
             if (symbol == QLatin1String("GLOBAL_QUIT") || symbol == QLatin1String("GLOBAL_EDITOR")
-                || symbol == QLatin1String("GLOBAL_CONVERT_TO_MDVD"))
+                || symbol.startsWith(QLatin1String("GLOBAL_CONVERT_TO_")))
                 continue;
             if (changed) {
                 fresh();
@@ -25244,10 +25226,10 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p);
         QCOMPARE(session->historySize(), steps);
 
-        application->setConversionOptions({{QStringLiteral("resolutionWidth"), 320},
-                                           {QStringLiteral("resolutionHeight"), 240}});
-        QVERIFY(application->previewConversion(QStringLiteral("ass")).value(QStringLiteral("ok")).toBool());
-        QVERIFY(application->acceptConversion());
+        application->settingsStore()->set("convert.resolutionWidth", QStringLiteral("320"));
+        application->settingsStore()->set("convert.resolutionHeight", QStringLiteral("240"));
+        QCOMPARE(application->saveChosenFor(0, QUrl::fromLocalFile(dir.filePath(QStringLiteral("cross"))), QStringLiteral("ass")),
+                 QString());
         QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
         QVERIFY(tools.railEnabled());
         QVERIFY(tools.tool());
@@ -25255,8 +25237,7 @@ private slots:
         QTest::mouseMove(window, p + QPoint(2, 1));
         QTRY_COMPARE(tools.overlay().size(), 5);
 
-        QVERIFY(application->previewConversion(QStringLiteral("srt")).value(QStringLiteral("ok")).toBool());
-        QVERIFY(application->acceptConversion());
+        QVERIFY(application->editor().undo());
         QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
         QVERIFY(!tools.railEnabled());
         QVERIFY(!tools.tool());

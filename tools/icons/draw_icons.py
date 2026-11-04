@@ -421,14 +421,8 @@ icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-t
                                                 "tab-menu"],
      stroke("M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z")
      + accent(dot(4.75, 7.5, 1), dot(6.75, 4.5, 1), dot(10, 4.5, 1)))
-CONVERT = stroke("M2.5 3.5h9M9.5 1.5l2 2-2 2")
-icon("convert", "Convert", ["Convert.png"], [SUBS],
+icon("convert", "Convert", ["Convert.png"], ["settings-dialog"],
      stroke("M2.5 5.5h10M10 3l2.5 2.5L10 8") + stroke("M13.5 10.5h-10M6 8l-2.5 2.5L6 13"))
-icon("convert-ass", "Convert to ASS", ["Convass.png"], [SUBS], CONVERT + accent(letters("ASS", 2, 9)))
-icon("convert-srt", "Convert to SRT", ["ConvSRT.png"], [SUBS], CONVERT + accent(letters("SRT", 2, 9)))
-icon("convert-mdvd", "Convert to MDVD", ["ConvMDVD.png"], [SUBS], CONVERT + accent(letters("MDVD", 0, 9)))
-icon("convert-mpl2", "Convert to MPL2", ["ConvMPL2.png"], [SUBS], CONVERT + accent(letters("MPL2", 0, 9)))
-icon("convert-tmp", "Convert to TMP", ["Convtmp.png"], [SUBS], CONVERT + accent(letters("TMP", 2, 9)))
 icon("shift-times", "Shift times", ["Time.png"], [TIMING, SUBS, VIDEO],
      circle(6.5, 6.5, 5) + stroke("M6.5 4v2.5l2 1.5") + accent(stroke("M9.5 12.5h5M12.5 10.5l2 2-2 2")))
 icon("resample", "Resample subtitles", ["subsResample.png"], [SUBS, VISUAL, "resample"],

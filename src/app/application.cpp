@@ -2345,6 +2345,7 @@ QVariantList Application::reviewClose(const QString &then)
 
 namespace {
 QString extensionFor(core::SubtitleFormat format);
+bool savesAsAss(core::SubtitleFormat format, const QString &path, const QString &chosen);
 }
 
 void Application::resolveClose(const QVariantList &choices)
@@ -2365,8 +2366,17 @@ void Application::resolveClose(const QVariantList &choices)
         }
         if (c.save) {
             QString path = row.value(QStringLiteral("path")).toString();
-            if (const QString ext = extensionFor(session->document().format()); !path.isEmpty() && !path.endsWith(ext))
+            const bool toAss = !path.isEmpty() && savesAsAss(session->document().format(), path,
+                                                              row.value(QStringLiteral("format")).toString());
+            if (const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
+                !path.isEmpty() && QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
                 path += u'.' + ext;
+            if (toAss && !convertToAss(id)) {
+                m_closing.clear();
+                emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
+                                                                      "A document could not be saved; nothing was closed."));
+                return;
+            }
             auto plan = m_files->prepareSave(
                 id, path.isEmpty() ? std::nullopt
                                    : std::optional(application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()}));
@@ -2598,6 +2608,12 @@ QString extensionFor(core::SubtitleFormat format)
                                                                                           : QStringLiteral("txt");
 }
 
+bool savesAsAss(core::SubtitleFormat format, const QString &path, const QString &chosen)
+{
+    return extensionFor(format) != QLatin1String("ass")
+           && (chosen == QLatin1String("ass") || QFileInfo(path).suffix().compare(u"ass", Qt::CaseInsensitive) == 0);
+}
+
 bool readOnly(const QString &path)
 {
     const QFileInfo info(path);
@@ -2624,7 +2640,7 @@ QString Application::saveRouteFor(qulonglong id) const
     const auto destination = m_files->destination(*document);
     const QString path = destination ? QString::fromStdString(destination->value) : QString();
     const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
-    if (path.isEmpty() || m_formatChanged.contains(document->value) || (saveWithVideoName() && !video.isEmpty() &&
+    if (path.isEmpty() || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
@@ -2651,10 +2667,18 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
     const QString ext = extensionFor(session->document().format());
     const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
                                .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
+    QStringList filters{filter};
+    QStringList formats{QString()};
+    if (ext != QLatin1String("ass")) {
+        filters << QCoreApplication::translate("HikariSub.Documents", "ASS subtitles (*.ass)");
+        formats << QStringLiteral("ass");
+    }
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
             {QStringLiteral("filter"), filter},
+            {QStringLiteral("filters"), filters},
+            {QStringLiteral("formats"), formats},
             {QStringLiteral("extension"), ext}};
 }
 
@@ -2663,7 +2687,7 @@ QString Application::saveChosen(const QUrl &file)
     return saveChosenFor(0, file);
 }
 
-QString Application::saveChosenFor(qulonglong id, const QUrl &file)
+QString Application::saveChosenFor(qulonglong id, const QUrl &file, const QString &format)
 {
     const auto document = documentOf(id);
     auto *session = document ? m_files->session(*document) : nullptr;
@@ -2672,18 +2696,22 @@ QString Application::saveChosenFor(qulonglong id, const QUrl &file)
         return QStringLiteral("failed");
     if (readOnly(path))
         return QStringLiteral("readonly");
-    const QString ext = extensionFor(session->document().format());
-    if (!path.endsWith(ext))
+    const bool toAss = savesAsAss(session->document().format(), path, format);
+    const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
+    if (QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
         path += u'.' + ext;
     if (readOnly(path))
         return QStringLiteral("readonly");
+    if (toAss && !convertToAss(*document))
+        return QStringLiteral("failed");
     auto plan = m_files->prepareSave(*document, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
     if (!plan || !m_files->startSave(std::move(*plan)))
         return QStringLiteral("failed");
-    m_formatChanged.erase(document->value);
     if (*document == m_workspace.editingTarget())
         editor().reloadFromSession();
     refreshViews();
+    if (toAss)
+        checkResolution();
     return {};
 }
 
@@ -5140,55 +5168,6 @@ void Application::setAskForBadResolution(bool on)
     m_settings->set("video.dontAskForBadResolution", !on);
 }
 
-namespace {
-
-constexpr std::pair<const char *, const char *> kConversionOptions[] = {
-    {"fps", "convert.fps"},
-    {"fpsFromVideo", "convert.fpsFromVideo"},
-    {"style", "convert.style"},
-    {"styleCatalog", "convert.styleCatalog"},
-    {"newEndTimes", "convert.newEndTimes"},
-    {"timePerCharacter", "convert.timePerCharacter"},
-    {"prefix", "convert.assTagsToInsertInLine"},
-    {"resolutionWidth", "convert.resolutionWidth"},
-    {"resolutionHeight", "convert.resolutionHeight"},
-};
-
-std::optional<core::SubtitleFormat> formatNamed(const QString &name)
-{
-    if (name == QLatin1String("ass"))
-        return core::SubtitleFormat::Ass;
-    if (name == QLatin1String("srt"))
-        return core::SubtitleFormat::Srt;
-    if (name == QLatin1String("tmp"))
-        return core::SubtitleFormat::TMPlayer;
-    if (name == QLatin1String("mdvd"))
-        return core::SubtitleFormat::MicroDvd;
-    if (name == QLatin1String("mpl2"))
-        return core::SubtitleFormat::Mpl2;
-    return std::nullopt;
-}
-
-}
-
-QVariantMap Application::conversionOptions() const
-{
-    QVariantMap out;
-    for (const auto &[key, setting] : kConversionOptions) {
-        const QVariant v = m_settings->value(QLatin1String(setting));
-        out.insert(QLatin1String(key), v.typeId() == QMetaType::LongLong ? QVariant(v.toInt()) : v);
-    }
-    return out;
-}
-
-void Application::setConversionOptions(const QVariantMap &options)
-{
-    for (const auto &[key, setting] : kConversionOptions)
-        if (options.contains(QLatin1String(key)))
-            m_settings->set(setting, options.value(QLatin1String(key)));
-    m_conversionPlan.reset();
-}
-
 QString Application::activeLineStyle() const
 {
     auto *session = targetSession();
@@ -5200,140 +5179,115 @@ QString Application::activeLineStyle() const
     return {};
 }
 
-QStringList Application::conversionTargets() const
+std::optional<core::ConversionOptions> Application::assConversionOptions() const
 {
-    auto *session = targetSession();
-    if (!session || session->document().scriptInfo(u8"TLMode") == std::optional<std::u8string>(u8"Yes"))
-        return {};
-    const auto format = session->document().format();
-    QStringList out;
-    if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
-        out << QStringLiteral("ass");
-    if (format != core::SubtitleFormat::Srt)
-        out << QStringLiteral("srt");
-    if (format != core::SubtitleFormat::MicroDvd)
-        out << QStringLiteral("mdvd");
-    if (format != core::SubtitleFormat::Mpl2)
-        out << QStringLiteral("mpl2");
-    if (format != core::SubtitleFormat::TMPlayer)
-        out << QStringLiteral("tmp");
-    return out;
-}
-
-QStringList Application::conversionStyles(const QString &catalog) const
-{
-    QStringList out;
-    if (const auto styles = m_styleManager->catalogStore().list(utf8(catalog)))
-        for (const auto &style : *styles)
-            out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), qsizetype(style.name.size()));
-    return out;
-}
-
-QVariantMap Application::previewConversion(const QString &targetName)
-{
-    m_conversionPlan.reset();
-    auto *session = targetSession();
-    const auto target = formatNamed(targetName);
-    if (!session || !target || !conversionTargets().contains(targetName))
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
-    const QVariantMap o = conversionOptions();
     core::ConversionOptions options;
     const auto &video = m_video->session();
     const bool hasVideo = video.state() == application::VideoSession::State::Ready;
     const float frameMs = hasVideo ? video.legacyTimebase().frameDuration() : 0.f;
-    options.fps = o.value(QStringLiteral("fpsFromVideo")).toBool() && hasVideo && frameMs > 0.f
+    options.fps = m_settings->boolean("convert.fpsFromVideo") && hasVideo && frameMs > 0.f
                       ? 1000.0 / frameMs
-                      : o.value(QStringLiteral("fps")).toString().toDouble();
+                      : m_settings->value(QStringLiteral("convert.fps")).toString().toDouble();
     if (!std::isfinite(options.fps) || options.fps < 1 || options.fps > 1000)
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("fpsInvalid"), true},
-                {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "Invalid FPS. Correct it in options and try again.")}};
+        return std::nullopt;
     options.videoFps = hasVideo && frameMs > 0.f ? 1000.0 / frameMs : 23.976;
-    options.prefix = utf8(o.value(QStringLiteral("prefix")).toString());
-    options.newEndTimes = o.value(QStringLiteral("newEndTimes")).toBool();
-    options.timePerCharacter = o.value(QStringLiteral("timePerCharacter")).toInt();
-    options.resolutionWidth = utf8(o.value(QStringLiteral("resolutionWidth")).toString());
-    options.resolutionHeight = utf8(o.value(QStringLiteral("resolutionHeight")).toString());
-    const std::u8string styleName = utf8(o.value(QStringLiteral("style")).toString());
-    if (const auto found = m_styleManager->catalogStore().find(utf8(o.value(QStringLiteral("styleCatalog")).toString()), styleName))
+    options.prefix = utf8(m_settings->text("convert.assTagsToInsertInLine"));
+    options.newEndTimes = m_settings->boolean("convert.newEndTimes");
+    options.timePerCharacter = m_settings->integer("convert.timePerCharacter");
+    options.resolutionWidth = utf8(m_settings->text("convert.resolutionWidth"));
+    options.resolutionHeight = utf8(m_settings->text("convert.resolutionHeight"));
+    const std::u8string styleName = utf8(m_settings->text("convert.style"));
+    if (const auto found = m_styleManager->catalogStore().find(utf8(m_settings->text("convert.styleCatalog")), styleName))
         options.style = *found;
     else
         options.style = application::defaultStyle(styleName);
-    const QCollator collator;
-    auto result = core::convertDocument(session->document(), *target, options, [&](std::u8string_view a, std::u8string_view b) {
-        return collator.compare(QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
-                                QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
-    });
-    if (!result)
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
-    const auto &r = result->report;
-    QStringList losses;
-    QStringList kinds;
-    const auto add = [&](const QString &text, bool removes) {
-        losses << text;
-        kinds << (removes ? QStringLiteral("warning") : QStringLiteral("info"));
-    };
-    if (r.headerDropped)
-        add(QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed."), true);
-    if (r.commentsRemoved)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved), true);
-    if (r.drawingsCleared)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared), true);
-    if (r.emptyRemoved)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved), true);
-    if (r.duplicatesRemoved)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved), true);
-    if (r.reordered)
-        add(QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time."), false);
-    if (r.textChanged)
-        add(QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
-                                        r.textChanged),
-            *target != core::SubtitleFormat::Ass);
-    if (r.fieldsDropped)
-        add(*target == core::SubtitleFormat::Ass
-                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
-                                              r.fieldsDropped)
-                      .arg(o.value(QStringLiteral("style")).toString())
-                : QCoreApplication::translate("HikariSub.Conversion",
-                                              "Layer, style, actor, margins or effect removed from %n line(s).", nullptr,
-                                              r.fieldsDropped),
-            *target != core::SubtitleFormat::Ass);
-    if (r.markersDropped)
-        add(QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
-                                        nullptr, r.markersDropped),
-            true);
-    if (r.timesChanged)
-        add(QCoreApplication::translate("HikariSub.Conversion",
-                                        "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
-                                        r.timesChanged),
-            false);
-    m_conversionPlan = std::make_unique<ConversionPlan>(
-        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, frameMs, std::move(result->document)});
-    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}, {QStringLiteral("kinds"), kinds}};
+    return options;
 }
 
-bool Application::acceptConversion()
+namespace {
+
+QString invalidConversionFrameRate()
 {
-    auto plan = std::move(m_conversionPlan);
-    auto *session = targetSession();
-    const auto target = m_workspace.editingTarget();
-    const auto &video = m_video->session();
-    const float frameMs =
-        video.state() == application::VideoSession::State::Ready ? video.legacyTimebase().frameDuration() : 0.f;
-    if (!plan || !session || !target || target->value != plan->document || session->revision() != plan->revision ||
-        conversionOptions() != plan->options || frameMs != plan->frameMs)
+    return QCoreApplication::translate("HikariSub.Documents",
+                                       "The frame rate in Settings › Conversion isn’t valid. Correct it and save again.");
+}
+
+QStringList assConversionChanges(const core::ConversionReport &r, const QString &style)
+{
+    QStringList out;
+    if (r.commentsRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved);
+    if (r.drawingsCleared)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared);
+    if (r.emptyRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+    if (r.duplicatesRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+    if (r.reordered)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time.");
+    if (r.textChanged)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
+                                           r.textChanged);
+    if (r.fieldsDropped)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
+                                           r.fieldsDropped)
+                   .arg(style);
+    if (r.markersDropped)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
+                                           nullptr, r.markersDropped);
+    if (r.timesChanged)
+        out << QCoreApplication::translate("HikariSub.Conversion",
+                                           "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
+                                           r.timesChanged);
+    return out;
+}
+
+}
+
+std::optional<core::ConversionResult> Application::convertedToAss(const application::EditSession &session) const
+{
+    const auto options = assConversionOptions();
+    if (!options)
+        return std::nullopt;
+    const QCollator collator;
+    return core::convertDocument(session.document(), core::SubtitleFormat::Ass, *options,
+                                 [&](std::u8string_view a, std::u8string_view b) {
+                                     return collator.compare(
+                                         QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
+                                         QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
+                                 });
+}
+
+QVariantMap Application::assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const
+{
+    const auto document = documentOf(id);
+    const auto *session = document ? m_files->session(*document) : nullptr;
+    if (!session || !savesAsAss(session->document().format(), file.toLocalFile(), format))
+        return {};
+    const auto result = convertedToAss(*session);
+    if (!result)
+        return {{QStringLiteral("convert"), true}, {QStringLiteral("problem"), invalidConversionFrameRate()}};
+    return {{QStringLiteral("convert"), true},
+            {QStringLiteral("changes"), assConversionChanges(result->report, m_settings->text("convert.style"))}};
+}
+
+bool Application::convertToAss(application::DocumentId document)
+{
+    auto *session = m_files->session(document);
+    if (!session)
         return false;
+    const QString title = QCoreApplication::translate("HikariSub.Documents", "Save as ASS");
+    auto result = convertedToAss(*session);
+    if (!result) {
+        m_log->notice(ui::LogController::Error, title, invalidConversionFrameRate());
+        return false;
+    }
     std::set<core::LineId> touches;
     for (const auto *line : session->document().lines())
         touches.insert(line->id);
     application::Command command{"Subtitles conversion", session->revision(), touches,
                                  [&](core::Document &d) {
-                                     d = plan->converted;
+                                     d = std::move(result->document);
                                      return true;
                                  }};
     command.keepGroups = false;
@@ -5349,10 +5303,11 @@ bool Application::acceptConversion()
     selection.anchor = selection.active;
     selection.extent.reset();
     session->setSelection(selection);
-    m_formatChanged.insert(target->value);
-    editor().reloadFromSession();
+    if (document == m_workspace.editingTarget())
+        editor().reloadFromSession();
     refreshViews();
-    checkResolution();
+    if (const QStringList changes = assConversionChanges(result->report, m_settings->text("convert.style")); !changes.isEmpty())
+        m_log->notice(ui::LogController::Info, title, changes.join(u' '));
     return true;
 }
 
@@ -5791,8 +5746,6 @@ void Application::settingChanged(const QString &id)
         emit saveWithVideoNameChanged();
     else if (id == QLatin1String("video.dontAskForBadResolution"))
         emit askForBadResolutionChanged();
-    else if (id.startsWith(QLatin1String("convert.")))
-        m_conversionPlan.reset();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)

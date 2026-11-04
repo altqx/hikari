@@ -1630,94 +1630,6 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>목록</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>모든 줄에 이 스타일이 적용됩니다.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>시작 태그</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>모든 줄의 시작 부분에 추가됩니다.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>해상도</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>너비</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>높이</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>새 파일의 스크립트 해상도입니다.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>프레임 속도</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>프레임</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>1에서 1000 사이의 프레임 속도를 입력하십시오.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD는 프레임 단위로 계산합니다. 시간은 이 속도에 따라 프레임으로 변환됩니다.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>종료 시간</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>글자당</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>줄의 길이는 글자 수 × 이 값이며, 최소 1초이고 다음 줄이 시작하는 곳에서 끝납니다.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>변경 내용</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>프레임 속도를 올바르게 입력할 때까지 표시할 내용이 없습니다.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>새로운 종료 시간</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>변환</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -1809,18 +1721,6 @@ Output device: %2</source>
             <numerusform>회전된 줄 %n개가 모양을 유지하지 못했습니다.</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>이 문서는 해당 형식으로 변환할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>잘못된 프레임 속도입니다. 설정에서 수정하고 다시 시도하십시오.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>스크립트 속성과 스타일이 제거됩니다.</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -1859,12 +1759,6 @@ Output device: %2</source>
         <source>%n line(s) get the conversion style “%1”.</source>
         <translation>
             <numerusform>줄 %n개에 변환 스타일 “%1”(이)가 적용됩니다.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>줄 %n개에서 레이어, 스타일, 배우, 여백 또는 효과가 제거됩니다.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1936,6 +1830,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>내 변경 사항 유지</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>저장하기 전에 “%1”을(를) ASS로 변환할까요?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS로 변환</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2066,6 +1968,14 @@ Output device: %2</source>
         <translation>새 자막을 저장할 위치를 선택하십시오.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>설정 › 변환의 프레임 속도가 올바르지 않습니다. 수정한 다음 다시 저장하십시오.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>ASS로 저장</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>문서를 저장하지 못해 아무것도 닫지 않았습니다.</translation>
     </message>
@@ -2080,6 +1990,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1(을)를 열 수 없습니다. 아무것도 변경되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>ASS 자막 (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -5058,6 +4972,26 @@ Failed to copy %2 fonts.</source>
         <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>“ASS로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 이름으로 저장에서 ASS를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>“SRT로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>“TMP로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>“MDVD로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>“MPL2로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>“빈 2h30m 소리 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
@@ -5500,26 +5434,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>문제 보고</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6568,26 +6482,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>시작 시간</translation>
     </message>
@@ -6960,10 +6854,6 @@ Failed to copy %2 fonts.</source>
         <translation>스크립트 속성</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>변환</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>글꼴 수집기</translation>
     </message>
@@ -7052,26 +6942,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>MicroDVD로 변환하기</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>TMPlayer(권하지 않음)로 변환</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7424,10 +7294,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens Script properties</source>
         <translation>스크립트 속성을 엽니다</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>다른 자막 형식으로 변환</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>

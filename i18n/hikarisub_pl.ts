@@ -1650,94 +1650,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>Katalog</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>Każda linijka otrzyma ten styl.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>Tagi na początku</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>Wstawiane na początku każdej linijki.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>Rozdzielczość</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>Szerokość</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>Wysokość</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>Rozdzielczość skryptu nowego pliku.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Liczba klatek na sekundę</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>Klatki</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD liczy klatki: czasy są zamieniane na klatki według tej liczby klatek na sekundę.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>Czasy końcowe</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>Na znak</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>Linijka trwa tyle, ile jej długość × ta wartość, co najmniej 1 s, i kończy się tam, gdzie zaczyna się następna.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>Co się zmieni</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>Nic do pokazania, dopóki liczba klatek na sekundę nie będzie poprawna.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Styl</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>Nowe czasy końcowe</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>Konwertuj</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>Napisy</translation>
     </message>
@@ -1833,18 +1745,6 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>%n obróconych linijek nie mogło zachować kształtu.</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>Tego dokumentu nie można przekonwertować do tego formatu.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>Nieprawidłowy FPS. Popraw opcje i spróbuj ponownie.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>Właściwości skryptu i style zostaną usunięte.</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -1895,14 +1795,6 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>%n linijka otrzyma styl konwersji “%1”.</numerusform>
             <numerusform>%n linijki otrzymają styl konwersji “%1”.</numerusform>
             <numerusform>%n linijek otrzyma styl konwersji “%1”.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijki.</numerusform>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1978,6 +1870,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Keep mine</source>
         <translation>Zachowaj moje</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>Przekonwertować „%1” do ASS przed zapisaniem?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>Konwertuj do ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2108,6 +2008,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wybierz, gdzie zapisać dokument bez nazwy.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>Liczba klatek na sekundę w Ustawienia › Konwersja jest nieprawidłowa. Popraw ją i zapisz ponownie.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>Zapisz jako ASS</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>Nie można zapisać dokumentu; nic nie zostało zamknięte.</translation>
     </message>
@@ -2122,6 +2030,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>Napisy ASS (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -5146,6 +5058,26 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do ASS” został usunięty: zamiast tego wybierz ASS w Plik › Zapisz jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do SRT” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do TMP” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do MDVD” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do MPL2” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>Usunięto skrót %1 polecenia “Otwórz puste audio na 2:30 godziny”: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
@@ -5588,26 +5520,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Report an issue</source>
         <translation>Zgłoś problem</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6660,26 +6572,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>Czas początkowy</translation>
     </message>
@@ -7052,10 +6944,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Właściwości skryptu</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>Konwersja</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>Kolekcjoner czcionek</translation>
     </message>
@@ -7146,26 +7034,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>Konwertuje do formatu ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>Konwertuje do formatu SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>Konwertuje do formatu microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>Konwertuje do formatu MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>Konwertuje do formatu TMPlayer (niezalecane)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7518,10 +7386,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Opens Script properties</source>
         <translation>Otwiera właściwości skryptu</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>Konwertuje napisy z jednego formatu na inny</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>

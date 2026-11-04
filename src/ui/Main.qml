@@ -68,13 +68,6 @@ ApplicationWindow {
         return out
     }
 
-    readonly property var conversionItems: [
-        ["ass", qsTr("Convert to ASS"), "GLOBAL_CONVERT_TO_ASS", qsTr("Converts to ASS format")],
-        ["srt", qsTr("Convert to SRT"), "GLOBAL_CONVERT_TO_SRT", qsTr("Converts to SRT format")],
-        ["mdvd", qsTr("Convert to MDVD"), "GLOBAL_CONVERT_TO_MDVD", qsTr("Converts to microDVD format")],
-        ["mpl2", qsTr("Convert to MPL2"), "GLOBAL_CONVERT_TO_MPL2", qsTr("Converts to MPL2 format")],
-        ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
-
     readonly property var sortKeys: [
         { key: "start", label: qsTr("Start time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
           selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES", help: qsTr("Sort by start time") },
@@ -1916,27 +1909,6 @@ ApplicationWindow {
                 text: qsTr("Script properties")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
-            }
-            ShellMenu {
-                help: qsTr("Converts from one format to another")
-                id: conversionMenu
-                iconRole: "convert"
-                objectName: "conversionMenu"
-                title: qsTr("Conversion")
-                property var targets: []
-                onAboutToShow: targets = root.app.conversionTargets()
-                Repeater {
-                    model: root.conversionItems
-                    ShellMenuItem {
-                        objectName: "convertTo_" + modelData[0]
-                        command: modelData[2]
-                        help: modelData[3]
-                        iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
-                        text: modelData[1]
-                        enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
-                        onTriggered: if (!root.hotkeyGesture(modelData[2])) root.openConversion(modelData[0], modelData[1])
-                    }
-                }
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_FONT_COLLECTOR"
@@ -6430,11 +6402,47 @@ ApplicationWindow {
         else
             openSaveDialog(next.id)
     }
+    function saveChosenAs(document, file, format) {
+        const result = root.app.saveChosenFor(document, file, format)
+        if (result === "readonly") {
+            root.warnReadOnly(document, root.app.localPath(file).replace(/^.*[\\/]/, ""))
+        } else {
+            const id = document === 0 ? root.currentTab().id : document
+            if (result === "" && root.changedOnDisk[id] === true)
+                root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
+            matroskaSubtitles.saveDone()
+            root.saveNext()
+        }
+    }
+    function confirmAssConversion(document, file, format, from, then, cancelled) {
+        const preview = root.app.assConversionPreview(document, file, format)
+        if (preview.convert !== true) {
+            then()
+            return
+        }
+        const title = qsTranslate("HikariSub.Documents", "Save as ASS")
+        if (preview.problem !== undefined) {
+            root.messages.ask({ title: title, text: preview.problem, severity: "error", from: from }, () => cancelled())
+            return
+        }
+        root.messages.ask({
+            title: title,
+            text: qsTranslate("HikariSub.Documents", "Convert “%1” to ASS before saving it?").arg(root.tabTitle(document)),
+            detail: preview.changes.join("\n"),
+            plainText: true,
+            from: from,
+            choices: [
+                { id: "convert", text: qsTranslate("HikariSub.Documents", "Convert to ASS"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject" }
+            ]
+        }, id => id === "convert" ? then() : cancelled())
+    }
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
         saveAsDialog.document = id ?? 0
+        saveAsDialog.formats = v.formats
         saveAsDialog.title = qsTranslate("HikariSub.Documents", "Save “%1” as").arg(root.tabTitle(id ?? 0))
-        saveAsDialog.nameFilters = [v.filter, qsTranslate("HikariSub.Documents", "All files (*)")]
+        saveAsDialog.nameFilters = v.filters.concat([qsTranslate("HikariSub.Documents", "All files (*)")])
         if (v.folder.toString() !== "")
             saveAsDialog.currentFolder = v.folder
         else if (root.pickerFolder("subtitles").length > 0)
@@ -6449,18 +6457,16 @@ ApplicationWindow {
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file (%1)").arg("*.ass")]
         // MUST KILL: document id 0 means the editing target
         property var document: 0
+        property var formats: []
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            const result = root.app.saveChosenFor(document, selectedFile)
-            if (result === "readonly") {
-                root.warnReadOnly(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
-            } else {
-                const id = document === 0 ? root.currentTab().id : document
-                if (result === "" && root.changedOnDisk[id] === true)
-                    root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
+            const target = document
+            const file = selectedFile
+            const format = formats[selectedNameFilter.index] ?? ""
+            root.confirmAssConversion(target, file, format, null, () => root.saveChosenAs(target, file, format), () => {
                 matroskaSubtitles.saveDone()
                 root.saveNext()
-            }
+            })
         }
         onRejected: {
             matroskaSubtitles.saveDone()
@@ -6565,6 +6571,7 @@ ApplicationWindow {
         settings: root.app.settings
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
+        confirmConversion: (id, file, format, from, then, cancelled) => root.confirmAssConversion(id, file, format, from, then, cancelled)
         confirmOverDisk: (ids, then, cancelled) => {
             const marked = ids.filter(id => root.changedOnDisk[id] === true)
             if (marked.length === 0)
@@ -7020,19 +7027,6 @@ ApplicationWindow {
         id: creditsDialog
         app: root.app
         settings: root.app.settings
-    }
-    function openConversion(target, label) {
-        conversionLoader.active = true
-        conversionLoader.item.openFor(target, label)
-    }
-    Loader {
-        id: conversionLoader
-        active: false
-        sourceComponent: ConversionWindow {
-            app: root.app
-            catalogs: root.styleManager.catalogs
-            settings: root.app.settings
-        }
     }
     function openResample() {
         resampleLoader.active = true
@@ -7642,12 +7636,6 @@ ApplicationWindow {
         }
         if (items[symbol] !== undefined) {
             root.runItem(items[symbol])
-            return true
-        }
-        const conversion = root.conversionItems.find(c => c[2] === symbol)
-        if (conversion) {
-            if (root.app.conversionTargets().indexOf(conversion[0]) >= 0)
-                root.openConversion(conversion[0], conversion[1])
             return true
         }
         const sort = root.sortKeys.find(k => k.all === symbol || k.selected === symbol)
