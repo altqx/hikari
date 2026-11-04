@@ -211,7 +211,9 @@ int main(int argc, char **argv)
 
     hikari::app::Application missing({QStringLiteral(HIKARI_MEDIA_HELPER)});
     expect(missing.openFile(orphan), "open the subtitles whose video is missing");
-    expect(!missing.video().offering(), "nothing is offered for a missing video");
+    expect(missing.video().offering() && missing.video().offer().startsWith(QStringLiteral("Linked files not found:\nVideo: ")) &&
+               missing.video().offerAssociatedLabel().isEmpty() && missing.video().offerDirectoryLabel().isEmpty(),
+           "a missing video is reported, with nothing to load");
     expect(!missing.video().hasVideo(), "no video is open");
     auto &editor = missing.editor();
     const auto target = missing.workspace().editingTarget();

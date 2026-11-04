@@ -214,10 +214,10 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         } else if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
-        } else if (added && section.kind == SectionKind::Hikari) {
+        } else if (added && (section.kind == SectionKind::Hikari || section.kind == SectionKind::Unknown)) {
             // An added [Hikari] section (at the end, or before trailing
-            // embedded data): after a blank line, in the line ends of the
-            // record before it.
+            // embedded data) or [Aegisub Project Garbage]: after a blank
+            // line, in the line ends of the record before it.
             if (newlines.openEnd)
                 append(newlines.newline);
             if (!out.empty() && !endsWithBlankLine(out))

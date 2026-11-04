@@ -998,6 +998,31 @@ TEST(VisualShiftDeparture, ADragKeepsTheExactOffset)
     EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\pos(991,541)}Hello");
 }
 
+TEST(VisualShiftDeparture, AVectorClipKeepsTwoDecimalPlacesAndARectangleWholeUnits)
+{
+    TestHost host;
+    setUp(host, departureCase({"{\\clip(m 10.25 20.5 l 100 20.5 100 100)}A", "{\\clip(10,20,100,101)}B"}));
+    PositionShifterTool shifter;
+    shifter.setToggled(PositionShifterTool::Clip);
+    shifter.selected(host);
+    const auto lines = ids(*host.s);
+    const auto drag = [&](core::LineId line) {
+        host.s->setSelection({line, {line}, line, std::nullopt});
+        host.targets = {line};
+        shifter.reset(host);
+        ASSERT_EQ(shifter.elements().size(), 1u);
+        const int x = static_cast<int>(std::lround(shifter.elements()[0].elem.x));
+        const int y = static_cast<int>(std::lround(shifter.elements()[0].elem.y));
+        shifter.pointer(pointerAt(Pointer::Kind::Press, x, y, Pointer::Button::Left, true), host);
+        shifter.pointer(pointerAt(Pointer::Kind::Move, x + 10, y, Pointer::Button::None, true), host);
+        shifter.pointer(pointerAt(Pointer::Kind::Release, x + 10, y, Pointer::Button::Left), host);
+    };
+    drag(lines[0]);
+    EXPECT_EQ(lineOf(*host.s, lines[0])->text, u8"{\\clip(m 40.25 20.5 l 130 20.5 130 100)}A");
+    drag(lines[1]);
+    EXPECT_EQ(lineOf(*host.s, lines[1])->text, u8"{\\clip(40,20,130,101)}B");
+}
+
 TEST(VisualShiftDeparture, OneWheelStepIsOneHistoryStep)
 {
     TestHost host;
@@ -1615,6 +1640,7 @@ const Departure *departureFor(const std::string &caseName, std::size_t step)
         {"shift-drawing",
          6,
          {{1, 0, u8"{\\an5\\pos(900,500)\\fscx200\\org(800,400)\\frz30\\p2}m -15 -96 b 85 -96 185 4 185 104 s 85 204 -15 104 -15 4 c{\\p0}"}}},
+        {"shift-no-move-click", 0, {{0, 0, u8"{\\pos(960.5,540.125)\\clip(m 1.5 2 l 3 4)}Hello"}}, std::nullopt, false, true},
         {"shift-nothing", 3, {{1, 0, u8"{\\pos(abc,14)\\move(13,14)}Odd"}}, std::nullopt, false, true},
         {"shift-tlmode",
          1,
@@ -1623,8 +1649,8 @@ const Departure *departureFor(const std::string &caseName, std::size_t step)
          false,
          true},
         {"shift-zoomed", 1, {{0, 0, u8"{\\pos(412,312)\\clip(m 312 312 l 512 312 512 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
-        {"shift-zoomed", 2, {{0, 0, u8"{\\pos(412.04,312)\\clip(m 312 312 l 512 312 512 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
-        {"shift-zoomed", 3, {{0, 0, u8"{\\pos(412.04,312)\\clip(m 312 312 l 512 312 512 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
+        {"shift-zoomed", 2, {{0, 0, u8"{\\pos(412.04,312)\\clip(m 312.04 312 l 512.04 312 512.04 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
+        {"shift-zoomed", 3, {{0, 0, u8"{\\pos(412.04,312)\\clip(m 312.04 312 l 512.04 312 512.04 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
         {"tags-gradient-text", 2, {{0, 0, u8"{\\blur12.1}\\hA{\\blur9.6}b {\\blur6.9}c{\\i1\\blur4.4}d\\N{\\blur1.9}e\\h"}}, std::nullopt, true},
         {"tags-wheel-colour", 0, {}, std::vector<std::string>{"47"}},
     };

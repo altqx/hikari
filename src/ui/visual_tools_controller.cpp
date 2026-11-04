@@ -74,7 +74,14 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QStringLiteral("video.visualWarningsOff"))
             emit changed();
+        if (id == QStringLiteral("video.handleSize"))
+            toolChanged();
     });
+}
+
+float VisualToolsController::handleScale() const
+{
+    return static_cast<float>(std::clamp(m_settings.integer("video.handleSize"), 50, 400)) / 100.f;
 }
 
 VisualToolsController::~VisualToolsController() = default;
@@ -825,6 +832,11 @@ bool VisualToolsController::takesKey(int key, int modifiers) const
 
 bool VisualToolsController::runHotkey(const QString &action)
 {
+    if (const auto option = application::visual::vectorClipOptionOfHotkey(action.toStdString())) {
+        if (m_family != Family::VectorClip)
+            selectFamily(static_cast<int>(Family::VectorClip));
+        return m_family == Family::VectorClip && setOption(QString::fromStdString(*option), 1);
+    }
     const auto family = application::visual::familyOfHotkey(action.toStdString());
     if (!family)
         return false;

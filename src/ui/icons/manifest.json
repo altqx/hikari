@@ -330,6 +330,50 @@
    ]
   },
   {
+   "role": "open-timecodes",
+   "file": "open-timecodes.svg",
+   "label": "Open timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "recent-timecodes",
+   "file": "recent-timecodes.svg",
+   "label": "Recently opened timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "save-timecodes",
+   "file": "save-timecodes.svg",
+   "label": "Save timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "close-timecodes",
+   "file": "close-timecodes.svg",
+   "label": "Close timecodes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "set-start-time",
    "file": "set-start-time.svg",
    "label": "Insert start time from video",
@@ -1253,72 +1297,7 @@
     "Convert.png"
    ],
    "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-ass",
-   "file": "convert-ass.svg",
-   "label": "Convert to ASS",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "Convass.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-srt",
-   "file": "convert-srt.svg",
-   "label": "Convert to SRT",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "ConvSRT.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-mdvd",
-   "file": "convert-mdvd.svg",
-   "label": "Convert to MDVD",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "ConvMDVD.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-mpl2",
-   "file": "convert-mpl2.svg",
-   "label": "Convert to MPL2",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "ConvMPL2.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
-   ]
-  },
-  {
-   "role": "convert-tmp",
-   "file": "convert-tmp.svg",
-   "label": "Convert to TMP",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "Convtmp.png"
-   ],
-   "surfaces": [
-    "menu:subtitles"
+    "settings-dialog"
    ]
   },
   {
@@ -1644,6 +1623,19 @@
     "menu:view",
     "status-bar",
     "manage-layouts"
+   ]
+  },
+  {
+   "role": "layout-lock",
+   "file": "layout-lock.svg",
+   "label": "Lock layout",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "status-bar",
+    "dock-headers"
    ]
   },
   {
@@ -3007,6 +2999,17 @@
    ]
   },
   {
+   "role": "video-details",
+   "file": "video-details.svg",
+   "label": "Video details",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "copy-position",
    "file": "copy-position.svg",
    "label": "Copy video position",
@@ -3272,6 +3275,17 @@
    ]
   },
   {
+   "role": "convert-folds",
+   "file": "convert-folds.svg",
+   "label": "Convert Aegisub folds to line groups",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
    "role": "tree-add-lines",
    "file": "tree-add-lines.svg",
    "label": "Add lines",
@@ -3413,6 +3427,17 @@
    "legacy": [],
    "surfaces": [
     "grid-menu",
+    "menu:video"
+   ]
+  },
+  {
+   "role": "align-to-video",
+   "file": "align-to-video.svg",
+   "label": "Align to video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
     "menu:video"
    ]
   },
@@ -3813,6 +3838,50 @@
    "legacy": [],
    "surfaces": [
     "video-context-menu"
+   ]
+  },
+  {
+   "role": "subtitles-snapshot",
+   "file": "subtitles-snapshot.svg",
+   "label": "Save subtitles as PNG",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "subtitles-copy",
+   "file": "subtitles-copy.svg",
+   "label": "Copy subtitles to clipboard",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "reload-video",
+   "file": "reload-video.svg",
+   "label": "Reload video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "reload-audio",
+   "file": "reload-audio.svg",
+   "label": "Reload audio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:audio"
    ]
   },
   {

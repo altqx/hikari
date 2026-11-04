@@ -5,6 +5,7 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
 
+#include "legacy_clip_places.h"
 #include "legacy_visual_keys.h"
 
 #include <gtest/gtest.h>
@@ -15,6 +16,7 @@
 #include <QJsonObject>
 #include <QString>
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <map>
@@ -27,6 +29,7 @@
 using namespace hikari;
 using namespace hikari::application;
 using namespace hikari::application::visual;
+using hikari::application::test::legacyClipPlaces;
 
 namespace {
 
@@ -68,8 +71,10 @@ public:
     int bells = 0;
     std::vector<std::u16string> notices;
     VisualTool *tool = nullptr;
+    float handles = 1.f;
 
     const VideoView &view() const override { return v; }
+    float handleScale() const override { return handles; }
     const EditSession *session() const override { return s.get(); }
     std::optional<core::LineId> activeLine() const override { return s ? s->selection().active : std::nullopt; }
     std::vector<core::LineId> batchTargets() const override { return s ? picker.targets(*s) : std::vector<core::LineId>{}; }
@@ -383,11 +388,11 @@ void compareDump(Replay &r, const QJsonObject &o, std::optional<Departure> depar
     const QJsonArray texts = o[QStringLiteral("texts")].toArray();
     for (int i = 0; i < texts.size(); ++i) {
         const auto *l = line(s, r.lineIds[i]);
-        EXPECT_EQ(l->text, u8(texts[i].toArray()[0])) << "line " << i;
+        EXPECT_EQ(legacyClipPlaces(l->text, u8(texts[i].toArray()[0])), u8(texts[i].toArray()[0])) << "line " << i;
         EXPECT_EQ(l->translation, u8(texts[i].toArray()[1])) << "line " << i;
     }
     if (!multi && departure != Departure::ZeroRectangle)
-        EXPECT_EQ(r.editorText(), u8(o[QStringLiteral("editor")]));
+        EXPECT_EQ(legacyClipPlaces(r.editorText(), u8(o[QStringLiteral("editor")])), u8(o[QStringLiteral("editor")]));
     if (departure != Departure::WheelInvertSlot) {
         EXPECT_EQ(r.steps(), o[QStringLiteral("steps")].toInt());
         const QJsonArray history = o[QStringLiteral("history")].toArray();
@@ -420,7 +425,8 @@ void compareDump(Replay &r, const QJsonObject &o, std::optional<Departure> depar
         EXPECT_EQ(e.points[i].start, p[3].toInt() == 1);
         EXPECT_EQ(e.points[i].selected, p[4].toInt() == 1);
     }
-    EXPECT_EQ(r.vector.body(), o[QStringLiteral("visual")].toString().toStdU16String());
+    const std::u16string visual = u"clip(" + o[QStringLiteral("visual")].toString().toStdU16String() + u")";
+    EXPECT_EQ(legacyClipPlaces(u"clip(" + r.vector.body() + u")", visual), visual);
     EXPECT_EQ(r.vector.vectorScale(), o[QStringLiteral("vectorScale")].toInt());
     EXPECT_EQ(e.mode, o[QStringLiteral("mode")].toInt());
     EXPECT_EQ(e.selecting(), o[QStringLiteral("selecting")].toBool());
@@ -437,7 +443,7 @@ void compareDump(Replay &r, const QJsonObject &o, std::optional<Departure> depar
         mask.chop(2);
         const QString layer = mask.section(QLatin1Char('|'), 0, 0);
         EXPECT_EQ(lines[0].layer.value, layer.toLongLong());
-        EXPECT_EQ(lines[0].text, u8(mask.section(QLatin1Char('|'), 1)));
+        EXPECT_EQ(legacyClipPlaces(lines[0].text, u8(mask.section(QLatin1Char('|'), 1))), u8(mask.section(QLatin1Char('|'), 1)));
     }
 }
 
@@ -785,6 +791,38 @@ void setUpLines(TestHost &host, std::string_view first, std::string_view second)
 
 }
 
+TEST(ClipPlaces, ClipsFromAegisub35AndOlderVersionsReadBackAsWritten)
+{
+    for (const auto &[clip, body] : std::vector<std::pair<std::string_view, std::u16string_view>>{
+             {"{\\clip(m 10.25 20.5 l 300.75 0 300 300.12)}first", u"m 10.25 20.5 l 300.75 0 300 300.12"},
+             {"{\\iclip(2,m 20.5 41 l 601.5 0 600 600.24)}first", u"2,m 20.5 41 l 601.5 0 600 600.24"},
+             {"{\\clip(m 0 0 l 300 0 300 300)}first", u"m 0 0 l 300 0 300 300"}}) {
+        SCOPED_TRACE(std::string(clip));
+        TestHost host;
+        setUpLines(host, clip, "second");
+        VectorClipTool tool;
+        host.tool = &tool;
+        tool.reset(host);
+        EXPECT_EQ(tool.body(), body);
+    }
+}
+
+TEST(ClipPlaces, ADragWritesTwoDecimalPlaces)
+{
+    TestHost host;
+    setUpLines(host, "{\\clip(m 0 0 l 300 0 300 300)}first", "second");
+    host.v.setScript(1000, 1080);
+    VectorClipTool tool;
+    host.tool = &tool;
+    tool.editor().mode = VectorEditor::Drag;
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Press, 192, 0, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 193, 1, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 193, 1, false, Pointer::Button::Left), host);
+    EXPECT_EQ(tool.editor().points[1].x, 301.5625f);
+    EXPECT_EQ(line(*host.s, ids(*host.s)[0])->text, u8"{\\clip(m 0 0 l 301.56 3 300 300)}first");
+}
+
 TEST(ClipDeparture, OnlyTheInvertButtonInverts)
 {
     TestHost host;
@@ -945,6 +983,44 @@ TEST(ClipOverlay, VectorHandlesAndPath)
         arms += l.argb == 0xFF0000FFu;
     EXPECT_EQ(arms, 2);
     EXPECT_GT(b.lines.size(), 6u);
+}
+
+TEST(ClipOverlay, TheHandleSizeSettingScalesHandlesAndTheirGrab)
+{
+    const auto handleWidth = [](const Overlay &o) {
+        for (const auto &p : o.polygons)
+            if (p.above && p.border == 0xFFBB0000u) {
+                const auto [minX, maxX] = std::minmax_element(p.points.begin(), p.points.end(),
+                                                              [](PointF a, PointF b) { return a.x < b.x; });
+                return maxX->x - minX->x;
+            }
+        return 0.f;
+    };
+    TestHost host;
+    setUp(host);
+    VectorClipTool tool;
+    host.tool = &tool;
+    tool.editor().mode = VectorEditor::Drag;
+    tool.reset(host);
+    const float normal = handleWidth(tool.overlay(host));
+    ASSERT_GT(normal, 0.f);
+    host.handles = 2.f;
+    EXPECT_FLOAT_EQ(handleWidth(tool.overlay(host)), 2 * normal);
+
+    const auto id = ids(*host.s)[0];
+    const auto dragFrom = [&](int x) {
+        tool.pointer(at(Pointer::Kind::Press, x, 0, true, Pointer::Button::Left), host);
+        tool.pointer(at(Pointer::Kind::Move, x + 20, 20, true), host);
+        tool.pointer(at(Pointer::Kind::Release, x + 20, 20, false, Pointer::Button::Left), host);
+    };
+    host.handles = 1.f;
+    const int reach = 100 + static_cast<int>(tool.frame(host).pointArea() * 1.5f);
+    dragFrom(reach);
+    EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 0 0 l 300 0 300 300)}first");
+    host.handles = 2.f;
+    tool.reset(host);
+    dragFrom(reach);
+    EXPECT_NE(line(*host.s, id)->text, u8"{\\clip(m 0 0 l 300 0 300 300)}first");
 }
 
 TEST(ClipMask, PreviewLineAboveEverything)

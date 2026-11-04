@@ -1886,94 +1886,6 @@ Output device: %2</source>
         <translation>เปลี่ยนความละเอียดของคำบรรยายให้ตรงกับวิดีโอหรือไม่? ทำภายหลังได้ด้วยคำบรรยาย › เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>แคตตาล็อก</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>ทุกบรรทัดจะใช้สไตล์นี้</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>แท็กที่ต้นบรรทัด</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>เขียนไว้ที่ต้นของทุกบรรทัด</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>ความละเอียด</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>ความกว้าง</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>ความสูง</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>ความละเอียดสคริปต์ของไฟล์ใหม่</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>อัตราเฟรม</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>เฟรม</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>ป้อนอัตราเฟรมตั้งแต่ 1 ถึง 1000</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD นับเป็นเฟรม: เวลาจะกลายเป็นเฟรมตามอัตรานี้</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>เวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>ต่ออักขระ</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>บรรทัดจะแสดงนานเท่ากับความยาว × ค่านี้ อย่างน้อย 1 วินาที และสิ้นสุดเมื่อบรรทัดถัดไปเริ่ม</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>สิ่งที่เปลี่ยน</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>ไม่มีสิ่งที่จะแสดงจนกว่าอัตราเฟรมจะถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>สไตล์</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>เวลาสิ้นสุดใหม่</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>แปลง</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>คำบรรยาย</translation>
     </message>
@@ -2065,18 +1977,6 @@ Output device: %2</source>
             <numerusform>บรรทัดที่หมุน %n บรรทัดไม่สามารถคงรูปร่างไว้ได้</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>ไม่สามารถแปลงเอกสารนี้เป็นรูปแบบนั้น</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>ค่า FPS ไม่ถูกต้อง แก้ไขตัวเลือกแล้วลองอีกครั้ง</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>คุณสมบัติสคริปต์และสไตล์จะถูกลบ</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -2118,12 +2018,6 @@ Output device: %2</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>ลบชั้น สไตล์ ผู้พูด ระยะขอบ หรือเอฟเฟกต์ออกจาก %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>ลบที่คั่นหน้า บรรทัดที่ซ่อน และกลุ่มออกจาก %n บรรทัด</numerusform>
@@ -2156,6 +2050,10 @@ Output device: %2</source>
     <message>
         <source>No</source>
         <translation>ไม่</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -2192,6 +2090,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>เก็บฉบับของฉัน</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>แปลง “%1” เป็น ASS ก่อนบันทึกหรือไม่</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>แปลงเป็น ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2322,6 +2228,14 @@ Output device: %2</source>
         <translation>เลือกตำแหน่งที่จะบันทึกเอกสารที่ไม่มีชื่อ</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>อัตราเฟรมใน การตั้งค่า › การแปลง ไม่ถูกต้อง แก้ไขแล้วบันทึกอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>บันทึกเป็น ASS</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>บันทึกเอกสารไม่ได้ จึงไม่ได้ปิดสิ่งใด</translation>
     </message>
@@ -2336,6 +2250,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>เปิด %1 ไม่ได้ จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>คำบรรยาย ASS (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2362,12 +2280,21 @@ Output device: %2</source>
         <translation>คีย์เฟรม: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>ไทม์โค้ด: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>ไฟล์ที่เกี่ยวข้อง:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>วิดีโอจากไดเรกทอรี: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>ไม่พบไฟล์ที่ลิงก์ไว้:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3558,6 +3485,22 @@ Output device: %2</source>
         <source>Writing the new archive replaces it.</source>
         <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>มีไฟล์ฟอนต์ %n ไฟล์อยู่แล้วใน “%1”</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>และอีก %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>เก็บไฟล์เดิมไว้</translation>
+    </message>
     <message>
         <source>Action</source>
         <translation>การดำเนินการ</translation>
@@ -4084,6 +4027,10 @@ Output device: %2</source>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>การรวบรวมนี้ไม่ครบ ระบบจะเขียนก็ต่อเมื่อคุณรับทราบ และผลลัพธ์จะถูกระบุว่าไม่ครบ</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” มีอยู่แล้วในโฟลเดอร์ จึงเก็บไว้ตามเดิม</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -4776,6 +4723,10 @@ Failed to copy %2 fonts.</source>
         <translation>กับบรรทัดถัดไป</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>เลือกบรรทัดที่ปรากฏในวิดีโอ</translation>
     </message>
@@ -4800,6 +4751,32 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>เพิ่มคำอธิบาย</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>ส่วนยุบของ Aegisub</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>ไฟล์นี้มีส่วนยุบของ Aegisub %n ส่วน</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>แปลงเป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>ส่วนยุบของ Aegisub %n ส่วนกลายเป็นกลุ่มบรรทัดแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>ข้ามส่วนยุบ %n ส่วน เพราะซ้อนทับกลุ่มบรรทัดหรือไม่มีคู่</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -5314,6 +5291,26 @@ Failed to copy %2 fonts.</source>
         <translation>นำปุ่มลัด %1 ของ “แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)” ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น ASS” ถูกนำออกแล้ว: ให้เลือก ASS ใน ไฟล์ › บันทึกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น SRT” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น TMP” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น MDVD” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น MPL2” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>นำปุ่มลัด %1 ของ “เปิดเสียงเปล่ายาว 2:30 ชั่วโมง” ออกแล้ว เนื่องจากเลิกใช้คำสั่งนี้แล้ว และวิดีโอจำลองมีเสียงเงียบมาในตัว</translation>
     </message>
@@ -5756,26 +5753,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>รายงานปัญหา</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6350,6 +6327,42 @@ Failed to copy %2 fonts.</source>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>คลิปเวกเตอร์: ย้ายจุด</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นตรง</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นโค้ง Bézier</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นโค้ง B-spline</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>คลิปเวกเตอร์: เพิ่มจุดแยกใหม่</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>คลิปเวกเตอร์: ลบจุด</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>คลิปเวกเตอร์: กลับด้าน</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>คัดลอกคำบรรยายไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>บันทึกคำบรรยายเป็น PNG</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>ตรวจคาราโอเกะ</translation>
     </message>
@@ -6394,12 +6407,40 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอิน</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>โหลดเสียงใหม่</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>เปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>บันทึกไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>ปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6432,6 +6473,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>You cannot use the program exit shortcut.</source>
         <translation>คุณไม่สามารถใช้ปุ่มลัดสำหรับออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
     </message>
 </context>
 <context>
@@ -6824,26 +6869,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>เวลาเริ่มต้น</translation>
     </message>
@@ -7216,10 +7241,6 @@ Failed to copy %2 fonts.</source>
         <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>การแปลง</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>ตัวรวบรวมแบบอักษร</translation>
     </message>
@@ -7308,26 +7329,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>แปลงเป็นรูปแบบ ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>แปลงเป็นรูปแบบ SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>แปลงเป็นรูปแบบ microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>แปลงเป็นรูปแบบ MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>แปลงเป็นรูปแบบ TMPlayer (ไม่แนะนำ)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7502,6 +7503,34 @@ Failed to copy %2 fonts.</source>
         <translation>กำหนดค่า FPS จากวิดีโอ</translation>
     </message>
     <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด VFR v1, v2 หรือ v4</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>เปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>ไทม์โค้ดที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>บันทึกเป็นไฟล์ไทม์โค้ด VFR v2</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>บันทึกไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>ปิดไฟล์ไทม์โค้ดที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>ปิดไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>เลื่อนทีละเฟรมไปยังวิดีโอ</translation>
     </message>
@@ -7538,8 +7567,20 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>ต้นทุนการเรนเดอร์</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>โหลดเสียงใหม่</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7548,6 +7589,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>วิดีโอไม่มีแท็ก</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>วิดีโอไม่ได้ระบุว่าใช้เมทริกซ์สีใด</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub คาดว่าเป็น %1 แต่เครื่องเล่นอื่นอาจคาดต่างออกไป สีของวิดีโอและสีคำบรรยายที่ปรับให้ตรงกับสีนั้นจึงอาจต่างกันในแต่ละเครื่องเล่น ให้ระบุเมทริกซ์สีในวิดีโอ เพื่อให้ทุกเครื่องเล่นแสดงผลเหมือนกัน</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>วิดีโอ HDR หรือขอบเขตสีกว้าง</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>วิดีโอมีสี HDR หรือขอบเขตสีกว้าง</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>คำบรรยายทั่วไปใช้กับวิดีโอนี้ได้ แต่สีของคำบรรยายจะไม่ตรงกับสีของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>ตั้งเมทริกซ์ YCbCr หรือไม่?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>หากคำบรรยายทำสำหรับวิดีโอนี้ ให้ตั้งเป็นค่าของวิดีโอ (%1) หากทำสำหรับวิดีโออื่น ให้ปล่อยว่างไว้จนกว่าจะเปิดวิดีโอนั้น</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>ไม่ตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>ตั้งเป็น %1</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>เมทริกซ์ YCbCr ไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>เมทริกซ์ YCbCr ของวิดีโอ (%1) ต่างจากของคำบรรยาย (%2)</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>ตั้งความละเอียดเค้าโครงหรือไม่?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>คำบรรยายไม่มีความละเอียดเค้าโครง</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>หากคำบรรยายทำสำหรับวิดีโอนี้ ให้ตั้งเป็นค่าของวิดีโอ (%1) หากเป็นไฟล์เก่า ให้ตั้งเป็นความละเอียดของวิดีโอที่ใช้ทำคำบรรยายนั้น ซึ่งมักเป็นความละเอียดสคริปต์ (%2)</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>ตั้งเป็นค่าของวิดีโอ (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>ตั้งเป็นความละเอียดสคริปต์ (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>ความละเอียดเค้าโครงไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>วิดีโอมีขนาด %1 และความละเอียดเค้าโครงของคำบรรยายคือ %2</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>อัตราส่วนภาพต่างกัน ตั้งความละเอียดเค้าโครงเป็นค่าของวิดีโอหรือไม่?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>โดยปกติไม่เป็นปัญหา หากคำบรรยายยังไม่มีการจัดรูปแบบที่สำคัญ และคุณจะจัดรูปแบบบนวิดีโอนี้ ให้ตั้งความละเอียดเค้าโครงเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7680,10 +7817,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens Script properties</source>
         <translation>เปิดคุณสมบัติของสคริปต์</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -8286,6 +8419,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>นำแก้ไขข้อผิดพลาดเล็กน้อยออกแล้ว กฎของคุณยังอยู่ใน %1 แต่ไม่ได้ใช้งาน</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>ตั้งเวลาบรรทัดปัจจุบันให้ตรงกับเฟรมรอบเฟรมของวิดีโอที่จุดที่เลือกยังคงสีเดิม</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>จัดให้ตรงกับวิดีโอ</translation>
     </message>
 </context>
 <context>
@@ -9112,6 +9257,18 @@ Failed to copy %2 fonts.</source>
         <translation>การซูมเริ่มต้น</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>ขนาดจุดจับ</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>ขนาดจุดจับของเครื่องมือภาพสามารถกำหนดค่าได้ตั้งแต่ 50 ถึง 400</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>ความละเอียดสคริปต์</translation>
     </message>
@@ -9122,6 +9279,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>ไม่ต้องเตือนเมื่อความละเอียดไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>ไม่ต้องตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>ถาม</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>ตั้งเป็นค่าของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>เมทริกซ์ YCbCr ต่างจากของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>คงค่าของคำบรรยายไว้</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>คำบรรยายไม่มีความละเอียดเค้าโครง</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>ตั้งเป็นความละเอียดสคริปต์</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>ความละเอียดเค้าโครงต่างจากของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>ไม่ต้องถาม</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>ถามเมื่ออัตราส่วนภาพต่างกัน</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>ถามทุกครั้ง</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>ตรวจสอบเมื่อเปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>เตือนเมื่อวิดีโอไม่มีแท็กเมทริกซ์สี</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>เตือนเมื่อวิดีโอมีสี HDR หรือขอบเขตสีกว้าง</translation>
     </message>
     <message>
         <source>Output</source>
@@ -9146,6 +9363,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>ไม่ต้องเล่นหลังเปลี่ยนบรรทัด</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>เล่นแบบโมโน</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>ผสมช่องเสียงสำหรับแผงเสียงและการเล่นขณะแก้ไข การเล่นวิดีโอทั่วไปจะคงช่องเสียงของไฟล์ไว้</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -11710,6 +11935,10 @@ because it was edited.</source>
         <translation>คีย์เฟรม</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>ไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>ไม่พบ %1 ซึ่งเป็นคำบรรยายของแท็บนี้</translation>
     </message>
@@ -11724,6 +11953,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>ไม่พบ %1 ซึ่งเป็นคีย์เฟรมของแท็บนี้</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>ไม่พบ %1 ซึ่งเป็นไฟล์ไทม์โค้ดของแท็บนี้</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11744,6 +11977,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>ไฟล์คีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>ไฟล์ไทม์โค้ด (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -12609,6 +12846,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>เฟรมต่อวินาที</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>เฟรมต่อวินาที ค่าเฉลี่ยของไฟล์ไทม์โค้ด %1</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -15626,6 +15867,14 @@ Styles deleted:
         <translation>เลือกไฟล์คีย์เฟรม</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>ไฟล์ไทม์โค้ด (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>บันทึกไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
@@ -15713,6 +15962,14 @@ Styles deleted:
     <message>
         <source>Copy with subtitles</source>
         <translation>คัดลอกพร้อมคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>บันทึกเฉพาะคำบรรยายเป็น PNG…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>คัดลอกเฉพาะคำบรรยาย</translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -15967,6 +16224,69 @@ or codecs or a splitter may be missing</source>
         <translation>เฟรม %1 จาก %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>ช่วง PC</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>ช่วง TV</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>วิดีโอจำลอง</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>ไม่คงที่</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n เฟรม (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>ไม่ทราบ</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1 บิต</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>ระดับสีเทา, %1 บิต</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1 บิต</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2 บิต</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (ไฟล์ไม่ได้ระบุ คาดเดาจากขนาด)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>อัตราส่วนภาพ: %1</translation>
     </message>
@@ -16000,6 +16320,188 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>จัดให้ตรงกับวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>เปิดวิดีโอก่อน</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>เลือกบรรทัดที่จะจัดก่อน</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>อ่านเฟรมของวิดีโอไม่ได้</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>คำบรรยายเป็นแบบอ่านอย่างเดียว</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>คลิกจุดที่ยังคงสีเดิมตลอดช่วงที่บรรทัดควรแสดง บรรทัดจะถูกตั้งเวลาให้ครอบคลุมทุกเฟรมรอบเฟรมนี้ที่จุดนั้นยังคงสีเดิม</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>ปุ่มลูกศรย้ายจุด กด Enter เพื่อจัด</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>จุด X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>จุด Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>สี %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>ค่าความคลาดเคลื่อน</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>สีเปลี่ยนไปได้มากเท่าใดแล้วยังนับว่าเป็นสีเดิม ตั้งแต่ 0 ถึง 255</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>กำลังค้นหา… ตรวจแล้ว %n เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>จัด</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>รูปแบบไทม์โค้ดที่ไม่รู้จัก</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>บรรทัดไทม์โค้ดไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>ต้องมีไทม์โค้ดอย่างน้อยสองค่า</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>ไฟล์ไทม์โค้ดเกินขีดจำกัด 10000000 รายการ</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>ไทม์โค้ดเรียงลำดับไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>ไทม์โค้ดเหมือนกันทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>ไม่สามารถกำหนดอัตราเฟรมให้เฟรมติดลบได้</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>เฟรมสิ้นสุดต้องมากกว่าหรือเท่ากับเฟรมเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>ช่วงไทม์โค้ด V1 เกินขีดจำกัด 10000000 เฟรม</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS ต้องมากกว่าศูนย์</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS ต้องไม่เกิน 1000</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>ช่วงที่กำหนดทับต้องไม่ซ้อนกัน</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>ไทม์โค้ดเกินช่วงเวลาที่รองรับ</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>แยกวิเคราะห์ไฟล์ไทม์โค้ดไม่สำเร็จ: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>ไม่สามารถเปิดไฟล์ไทม์โค้ด %1</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>ไฟล์ไทม์โค้ดจบก่อนวิดีโอ (เฟรม %1 จาก %2) เฟรมถัดไปจะใช้อัตราเฟรมเฉลี่ยของไฟล์</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>ไม่มีเวลาเฟรมให้บันทึก</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>ไม่สามารถบันทึกไฟล์ไทม์โค้ด %1</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>ไม่พบไฟล์ไทม์โค้ด: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>รายละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>ความละเอียด</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>ความยาว</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>ปริภูมิสี</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>เมทริกซ์สี</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>ที่ใช้กับซับไตเติล</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
     </message>
 </context>
 <context>

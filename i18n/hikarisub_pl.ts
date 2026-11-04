@@ -1906,94 +1906,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>Katalog</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>Każda linijka otrzyma ten styl.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>Tagi na początku</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>Wstawiane na początku każdej linijki.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>Rozdzielczość</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>Szerokość</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>Wysokość</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>Rozdzielczość skryptu nowego pliku.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Liczba klatek na sekundę</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>Klatki</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD liczy klatki: czasy są zamieniane na klatki według tej liczby klatek na sekundę.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>Czasy końcowe</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>Na znak</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>Linijka trwa tyle, ile jej długość × ta wartość, co najmniej 1 s, i kończy się tam, gdzie zaczyna się następna.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>Co się zmieni</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>Nic do pokazania, dopóki liczba klatek na sekundę nie będzie poprawna.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Styl</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>Nowe czasy końcowe</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>Konwertuj</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>Napisy</translation>
     </message>
@@ -2089,18 +2001,6 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>%n obróconych linijek nie mogło zachować kształtu.</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>Tego dokumentu nie można przekonwertować do tego formatu.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>Nieprawidłowy FPS. Popraw opcje i spróbuj ponownie.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>Właściwości skryptu i style zostaną usunięte.</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -2154,14 +2054,6 @@ Urządzenie wyjściowe: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijki.</numerusform>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijki.</numerusform>
@@ -2200,6 +2092,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
@@ -2234,6 +2130,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Keep mine</source>
         <translation>Zachowaj moje</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>Przekonwertować „%1” do ASS przed zapisaniem?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>Konwertuj do ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2364,6 +2268,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wybierz, gdzie zapisać dokument bez nazwy.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>Liczba klatek na sekundę w Ustawienia › Konwersja jest nieprawidłowa. Popraw ją i zapisz ponownie.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>Zapisz jako ASS</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>Nie można zapisać dokumentu; nic nie zostało zamknięte.</translation>
     </message>
@@ -2378,6 +2290,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>Napisy ASS (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2404,12 +2320,21 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Klatki kluczowe: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>Kody czasowe: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>Skojarzone pliki:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>Wideo z folderu: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>Nie znaleziono powiązanych plików:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3624,6 +3549,26 @@ Urządzenie wyjściowe: %2</translation>
         <source>Writing the new archive replaces it.</source>
         <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>%n plik czcionki już istnieje w “%1”.</numerusform>
+            <numerusform>%n pliki czcionek już istnieją w “%1”.</numerusform>
+            <numerusform>%n plików czcionek już istnieje w “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>i %n inny</numerusform>
+            <numerusform>i %n inne</numerusform>
+            <numerusform>i %n innych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>Zachowaj istniejące</translation>
+    </message>
     <message>
         <source>Action</source>
         <translation>Akcja</translation>
@@ -4154,6 +4099,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>Ta kolekcja jest niekompletna. Zostanie zapisana dopiero po potwierdzeniu tego faktu, a wynik zostanie oznaczony jako niekompletny.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” już istnieje w folderze i został zachowany.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -4852,6 +4801,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Z następną linijką</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>Zaznacz linijki widoczne na wideo</translation>
     </message>
@@ -4878,6 +4831,38 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Add description</source>
         <translation>Dodaj opis</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Zwinięcia Aegisub</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>Ten plik ma %n zwinięcie Aegisub.</numerusform>
+            <numerusform>Ten plik ma %n zwinięcia Aegisub.</numerusform>
+            <numerusform>Ten plik ma %n zwinięć Aegisub.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>Konwertuj na grupy linijek</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n zwinięcie Aegisub stało się grupą linijek.</numerusform>
+            <numerusform>%n zwinięcia Aegisub stały się grupami linijek.</numerusform>
+            <numerusform>%n zwinięć Aegisub stało się grupami linijek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>Pominięto %n zwinięcie: nakłada się na grupę linijek lub nie ma pary.</numerusform>
+            <numerusform>Pominięto %n zwinięcia: nakładają się na grupę linijek lub nie mają pary.</numerusform>
+            <numerusform>Pominięto %n zwinięć: nakładają się na grupę linijek lub nie mają pary.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -5402,6 +5387,26 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do ASS” został usunięty: zamiast tego wybierz ASS w Plik › Zapisz jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do SRT” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do TMP” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do MDVD” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do MPL2” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>Usunięto skrót %1 polecenia “Otwórz puste audio na 2:30 godziny”: polecenie zostało wycofane, a puste wideo ma własne ciche audio.</translation>
     </message>
@@ -5844,26 +5849,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Report an issue</source>
         <translation>Zgłoś problem</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6438,6 +6423,42 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>Wycinek wektorowy: przesuń punkty</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>Wycinek wektorowy: dodaj linię</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>Wycinek wektorowy: dodaj krzywą Béziera</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>Wycinek wektorowy: dodaj krzywą B-sklejaną</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>Wycinek wektorowy: dodaj oddzielny punkt</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>Wycinek wektorowy: usuń punkt</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>Wycinek wektorowy: odwróć</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>Kopiuj napisy do schowka</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>Zapisz napisy jako PNG</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>Sprawdź karaoke</translation>
     </message>
@@ -6482,12 +6503,40 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wtyczki</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>Wczytaj ponownie audio</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>Otwórz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>Zapisz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>Zamknij kody czasowe</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6520,6 +6569,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>You cannot use the program exit shortcut.</source>
         <translation>Nie można używać skrótu zamykania programu.</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>Dopasuj do wideo…</translation>
     </message>
 </context>
 <context>
@@ -6916,26 +6969,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>Czas początkowy</translation>
     </message>
@@ -7308,10 +7341,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Właściwości skryptu</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>Konwersja</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>Kolekcjoner czcionek</translation>
     </message>
@@ -7402,26 +7431,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>Konwertuje do formatu ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>Konwertuje do formatu SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>Konwertuje do formatu microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>Konwertuje do formatu MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>Konwertuje do formatu TMPlayer (niezalecane)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7596,6 +7605,34 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>Otwórz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>Ostatnio otwarte kody czasowe</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>Zapisuje plik kodów czasowych VFR v2</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>Zapisz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>Zamyka otwarty plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>Zamknij kody czasowe</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>Przesuń o klatki do wideo</translation>
     </message>
@@ -7632,8 +7669,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Następne linijki, koniec na wideo</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>Koszt renderowania</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>Wczytaj ponownie audio</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7642,6 +7691,102 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>Wideo bez oznaczenia</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>Wideo nie podaje, jakiej macierzy kolorów używa.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub przyjmuje %1, ale inne odtwarzacze mogą przyjąć coś innego, więc kolory wideo i dopasowane do nich kolory napisów mogą się różnić między odtwarzaczami. Oznacz wideo jego macierzą kolorów, aby każdy odtwarzacz pokazywał je tak samo.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>Wideo HDR lub o szerokiej gamie kolorów</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>Wideo ma kolory HDR lub o szerokiej gamie.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>Zwykłe napisy działają na nim poprawnie, ale kolory napisów nie mogą odpowiadać kolorom wideo.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>Ustawić macierz YCbCr?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>Napisy nie mają macierzy YCbCr.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>Jeśli napisy są do tego wideo, ustaw ją jak w wideo (%1). Jeśli są do innego wideo, nie ustawiaj jej, dopóki go nie otworzysz.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>Nie ustawiaj</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>Ustaw %1</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>Niezgodność macierzy YCbCr</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>Ustawić rozdzielczość układu?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>Napisy nie mają rozdzielczości układu.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>Jeśli napisy są do tego wideo, ustaw ją jak w wideo (%1). W przypadku starszego pliku ustaw rozdzielczość wideo, do którego powstał; często jest to jego rozdzielczość skryptu (%2).</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>Ustaw jak w wideo (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>Ustaw rozdzielczość skryptu (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>Niezgodność rozdzielczości układu</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>Wideo ma rozdzielczość %1, a rozdzielczość układu napisów to %2.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>Ich proporcje obrazu się różnią. Ustawić rozdzielczość układu jak w wideo?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>Zwykle nie stanowi to problemu. Jeśli napisy nie mają jeszcze istotnego formatowania, a będziesz je formatować na tym wideo, ustaw rozdzielczość układu jak w wideo.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7774,10 +7919,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Opens Script properties</source>
         <translation>Otwiera właściwości skryptu</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>Konwertuje napisy z jednego formatu na inny</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -8390,6 +8531,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>Funkcja Popraw drobne błędy została usunięta. Twoje reguły pozostają w %1, nieużywane.</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>Ustawia czasy aktywnej linijki na klatki wokół klatki wideo, w których wybrany punkt zachowuje swój kolor</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>Dopasuj do wideo…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>Dopasuj do wideo</translation>
     </message>
 </context>
 <context>
@@ -9218,6 +9371,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Początkowe powiększenie</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>Rozmiar uchwytów</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>Rozmiar uchwytów narzędzi wizualnych można ustawić od 50 do 400</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>Rozdzielczość skryptu</translation>
     </message>
@@ -9228,6 +9393,66 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>Nie ostrzegaj o niezgodności rozdzielczości</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>Brak macierzy YCbCr w napisach</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>Nie ustawiaj</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Pytaj</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>Ustaw jak w wideo</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>Macierz YCbCr inna niż w wideo</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>Brak rozdzielczości układu w napisach</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>Ustaw rozdzielczość skryptu</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>Rozdzielczość układu inna niż w wideo</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>Nigdy nie pytaj</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>Pytaj, gdy proporcje obrazu się różnią</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>Zawsze pytaj</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>Sprawdzane przy otwieraniu wideo.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>Ostrzegaj, gdy wideo nie ma oznaczenia macierzy kolorów</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>Ostrzegaj, gdy wideo ma kolory HDR lub o szerokiej gamie</translation>
     </message>
     <message>
         <source>Output</source>
@@ -9252,6 +9477,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>Nie odtwarzaj po zmianie linijki</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>Odtwarzaj w mono</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>Miesza kanały dla panelu audio i odtwarzania podczas edycji. Zwykłe odtwarzanie wideo zachowuje kanały pliku.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -11848,6 +12081,10 @@ ponieważ została zmieniona.</translation>
         <translation>klatki kluczowe</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>kody czasowe</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>Nie znaleziono pliku napisów tej zakładki: %1.</translation>
     </message>
@@ -11862,6 +12099,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>Nie znaleziono pliku klatek kluczowych tej zakładki: %1.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>Nie znaleziono pliku kodów czasowych tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11882,6 +12123,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>Plik klatek kluczowych (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>Plik kodów czasowych (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -12767,6 +13012,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Frames per second</source>
         <translation>Klatki na sekundę</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>Klatki na sekundę, średnia z pliku kodów czasowych %1</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -15836,6 +16085,14 @@ Usunięte style:
         <translation>Wybierz plik klatek kluczowych</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>Plik kodów czasowych (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>Zapisz plik kodów czasowych</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
     </message>
@@ -15923,6 +16180,14 @@ Usunięte style:
     <message>
         <source>Copy with subtitles</source>
         <translation>Kopiuj z napisami</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>Zapisz same napisy jako PNG…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>Kopiuj same napisy</translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -16177,6 +16442,71 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Klatka %1 z %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>Brak</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>zakres PC</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>zakres TV</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>Atrapa wideo</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>Zmienna</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 kl./s (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 kl./s</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n klatka (%1)</numerusform>
+            <numerusform>%n klatki (%1)</numerusform>
+            <numerusform>%n klatek (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Nieznana</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1 bit</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>Skala szarości, %1 bit</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1 bit</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2 bit</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (brak oznaczenia; ustalona na podstawie rozmiaru)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>Proporcje obrazu: %1</translation>
     </message>
@@ -16210,6 +16540,190 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>Dopasuj do wideo</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>Najpierw otwórz wideo.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>Najpierw zaznacz linijkę do dopasowania.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>Nie udało się odczytać klatki wideo.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>Napisy są tylko do odczytu.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>Kliknij punkt, który zachowuje kolor, dopóki linijka ma być widoczna. Linijka obejmie wszystkie klatki wokół tej, w których tak jest.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>Klatka wideo</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>Strzałki przesuwają punkt; Enter dopasowuje</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>Punkt X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>Punkt Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>Kolor %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>Tolerancja</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>Jak bardzo kolor może się zmienić i nadal liczyć się jako ten sam, od 0 do 255</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatkę</numerusform>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatki</numerusform>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>Dopasuj</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>Otwórz plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>Nieznany format kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>Nieprawidłowy wiersz kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>Potrzebne są co najmniej dwa kody czasowe</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>Plik kodów czasowych przekracza limit 10000000 wpisów</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>Kody czasowe nie są uporządkowane</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>Wszystkie kody czasowe są identyczne</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>Nie można podać liczby klatek na sekundę dla ujemnych klatek</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>Klatka końcowa musi być większa od początkowej lub jej równa</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>Zakres kodów czasowych v1 przekracza limit 10000000 klatek</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS musi być większe od zera</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS nie może być większe niż 1000</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>Zakresy nadpisań nie mogą się nakładać</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>Kod czasowy wykracza poza obsługiwany zakres czasu</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Wiersz %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>Nie udało się odczytać pliku kodów czasowych: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>Nie można otworzyć pliku kodów czasowych %1</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>Plik kodów czasowych kończy się przed końcem wideo (klatka %1 z %2). Dalsze klatki mają jego średnią liczbę klatek na sekundę.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>Brak czasów klatek do zapisania</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>Nie można zapisać pliku kodów czasowych %1</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>Nie znaleziono pliku kodów czasowych: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Plik</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Rozdzielczość</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>Długość</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>Przestrzeń barw</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>Macierz kolorów</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>Używana dla napisów</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
     </message>
 </context>
 <context>

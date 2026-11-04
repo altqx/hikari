@@ -8,7 +8,23 @@ Where HikariSub's automation API and file formats knowingly differ from what the
 
 ## FA4-timecodes-file
 
-`aegisub.project_properties().timecodes_file` is always `""`, because HikariSub has no way to load a timecodes file yet. `audio_file`, `keyframes_file` and `video_zoom` are real. [FA4 #561](https://github.com/altqx/hikari/issues/561), coordinator decision 2026-11-02.
+`aegisub.project_properties().timecodes_file` is the editing tab's loaded timecodes file, or `""` without one. Until FA21 it was always `""`. [FA4 #561](https://github.com/altqx/hikari/issues/561), coordinator decision 2026-11-02; [FA21 #648](https://github.com/altqx/hikari/issues/648).
+
+## FA21-timecodes-headers
+
+A timecodes file may start with mkvmerge's `# timestamp format v1`/`v2`/`v4` as well as Aegisub's `# timecode format v1`/`v2`. Aegisub 3.5.1 accepts only `timecode`, so it rejects what mkvextract writes today. Save timecodes still writes `# timecode format v2`, so Aegisub reads HikariSub's files. [FA21 #648](https://github.com/altqx/hikari/issues/648).
+
+## FA21-timecodes-v4
+
+v4 files open: their times are sorted into frame order, which gives the frames mkvmerge muxes. Aegisub 3.5.1 doesn't read v4. [FA21 #648](https://github.com/altqx/hikari/issues/648).
+
+## FA21-timecodes-rounding
+
+A fractional time in a v2 or v4 file rounds to the nearest millisecond, as mkvmerge rounds it when muxing (`41.708` is frame time 42). Aegisub 3.5.1 drops the fraction (41), so its frame times can be 1 ms off the muxed video. v1 files round in both. [FA21 #648](https://github.com/altqx/hikari/issues/648).
+
+## FA21-timecodes-lines
+
+Blank lines, lines of spaces and `#` comments are skipped anywhere, as mkvmerge skips them. Any other line that isn't a time (v2, v4) or a range (v1) fails the load and names its line number. Aegisub 3.5.1 silently skips a v2 line that doesn't start with a number, which moves every later frame, and rejects a v1 line of spaces. [FA21 #648](https://github.com/altqx/hikari/issues/648).
 
 ## FA4-frame-times
 
@@ -55,3 +71,27 @@ Grid ▸ Split ▸ "Into frames" bakes animations by default (Grid ▸ Split ▸
 - Tags written by the bake keep FBF's values but not its tag order or number formatting.
 
 With the option off, the split is byte for byte what it was before FA15. [FA15 #572](https://github.com/altqx/hikari/issues/572), owner decision 2026-11-03 ("yes to all").
+
+## FA14-search-step
+
+Align to video checks every frame. Aegisub's Align subtitle to video by key point (wangqr's tool in arch1t3cht's fork) steps two frames at a time, so it can step over a single frame where the point does not hold and time the line across it. A run of matching pixels that reaches the frame's edge ends at the edge. In Aegisub it ended at the picked point, so a shape that touched the edge in one frame and had shrunk away from it in the next could still match. [FA14 #571](https://github.com/altqx/hikari/issues/571), coordinator decisions 2026-11-03.
+
+## FA19-mono-scope
+
+"Play in mono" (Settings › Audio › Playback, `audio.playMono`) covers HikariSub's own PortAudio output only: the audio panel and indexed editing playback. General video playback keeps the file's channels, because Qt Multimedia owns that sound and its PCM is not routed through PortAudio. Aegisub 3.5.1 has no mono option outside its Avisynth audio provider. [FA19 #576](https://github.com/altqx/hikari/issues/576), coordinator decision 2026-11-03.
+
+## FA19-dummy-fraction
+
+A dummy video's frame rate may be a fraction, such as `24000/1001`, and its path stores it as written (`?dummy:24000/1001:…`), as Aegisub 3.5.1 does. Frame n starts at n × 1000 × den / num ms, truncated, so timing stays exact over long durations. A decimal rate still writes `%f` (`?dummy:23.976000:…`) with the old float timing, byte for byte as before. Aegisub releases before 3.5 can't open a fractional dummy path. [FA19 #576](https://github.com/altqx/hikari/issues/576).
+
+## FA9-dummy-drawn-size
+
+A dummy video can be up to 100000 pixels on each side, as in Aegisub 3.5. The smallest is still 300×200. When a side is over 8192, the frames are drawn scaled down to fit 8192×8192, so a huge dummy doesn't need gigabytes of memory per frame. The size you asked for is what the visual tools, the PlayRes and LayoutRes checks, Script properties and Lua (`aegisub.video_size()`) see. Only the picture and `aegisub.get_frame()` have the smaller size. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
+
+## FA9-clip-places
+
+Vector clips are written with up to two decimal places, as Aegisub 3.5 writes them, by the vector clip tool and the Position shifter. They used to be rounded to whole pixels. Rectangle clips, and the clips the scale and rotation tools rewrite, keep whole pixels. Files from older versions read back unchanged. [FA9 #566](https://github.com/altqx/hikari/issues/566).
+
+## FA9-video-property-prompts
+
+When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix and LayoutRes, as Aegisub 3.5 does, and each question has its own row in Settings › Video. "Don't ask again" sets that row. 3.5's extra choice to remember the last answer is left out. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
