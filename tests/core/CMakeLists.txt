@@ -72,3 +72,6 @@ target_compile_definitions(hikari_core_ass_attachments_tests PRIVATE
 hikari_add_gtest(hikari_core_export_tests SOURCES export_tests.cpp LIBRARIES hikari_core LABELS core)
 target_compile_definitions(hikari_core_export_tests PRIVATE
     HIKARI_EXPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/export")
+hikari_add_gtest(hikari_core_srv3_tests SOURCES srv3_tests.cpp LIBRARIES hikari_core LABELS core)
+target_compile_definitions(hikari_core_srv3_tests PRIVATE
+    HIKARI_EXPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/export")
