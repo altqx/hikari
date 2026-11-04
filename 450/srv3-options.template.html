@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>srv3 style options mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+  --code:#12161B; --tip:#0E1114; --ontip:#E8EDF2;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+  --code:#F1F4F6; --tip:#202832; --ontip:#F9FAFB;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+  --code:#FFFFFF; --tip:#000000; --ontip:#FFFFFF;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+  --code:#000000; --tip:#FFFFFF; --ontip:#000000;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle, svg .acc [fill="currentColor"] { fill:var(--accent); }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:repeat(2, 760px); gap:22px 24px; align-items:start; width:1592px; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+.band { grid-column:1 / -1; font-size:13px; font-weight:700; border-bottom:1px solid var(--line); padding-bottom:4px; margin-top:4px; display:flex; gap:10px; align-items:baseline; }
+.band span { font-weight:400; font-size:12px; color:var(--muted); }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; min-height:34px; }
+.cap b { color:var(--text); font-weight:600; }
+.mut { color:var(--muted); }
+.sp { flex:1; }
+
+.dlg { width:760px; background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.25); position:relative; }
+.tb { height:32px; display:flex; align-items:center; gap:8px; padding:0 6px 0 10px; border-bottom:1px solid var(--line); font-weight:600; }
+.tb .x { width:26px; height:24px; display:inline-flex; align-items:center; justify-content:center; color:var(--muted); font-weight:400; }
+.body { padding:14px 16px 12px; display:grid; grid-template-columns:72px 1fr; gap:10px 8px; align-items:center; }
+.body .lab.top { align-self:start; padding-top:4px; }
+.combo { height:26px; width:240px; display:flex; align-items:center; gap:6px; padding:0 4px 0 8px; border:1px solid var(--control); border-radius:2px; background:var(--field); }
+.combo .t { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.seg { display:inline-flex; border:1px solid var(--control); border-radius:2px; overflow:hidden; }
+.seg span { height:24px; display:inline-flex; align-items:center; padding:0 10px; border-left:1px solid var(--control); background:var(--raised); white-space:nowrap; }
+.seg span:first-child { border-left:0; }
+.seg span.on { background:var(--select); font-weight:600; box-shadow:inset 0 -2px 0 var(--accent); }
+.field { height:26px; display:flex; align-items:center; padding:0 8px; border:1px solid var(--control); border-radius:2px; background:var(--field); white-space:nowrap; overflow:hidden; }
+.row { display:flex; align-items:center; gap:8px; }
+.btn { height:26px; padding:0 12px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.sm { height:22px; padding:0 8px; font-size:12px; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.ring { outline:1px solid var(--focus); outline-offset:2px; }
+.hint { color:var(--muted); font-size:12px; }
+.foot { display:flex; justify-content:flex-end; gap:8px; padding:10px 16px 14px; }
+.chk { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+.box { width:14px; height:14px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.box.on { background:var(--accent); border-color:var(--accent); }
+.box.on::after { content:""; width:7px; height:4px; border-left:1.5px solid var(--onaccent); border-bottom:1.5px solid var(--onaccent); transform:rotate(-45deg) translate(1px,-1px); }
+.box.dis { border-color:var(--disabled); background:transparent; }
+
+.opts { display:flex; flex-direction:column; gap:6px; }
+.grid { border:1px solid var(--line); border-radius:2px; background:var(--field); }
+.gr { display:grid; grid-template-columns:minmax(0,1fr) 214px 62px 104px 30px; align-items:center; gap:0 10px; min-height:34px; padding:0 6px 0 10px; border-top:1px solid var(--line); }
+.gr.h { min-height:28px; border-top:0; color:var(--muted); font-size:12px; }
+.gr.cur { background:var(--select); }
+.gr .nm { display:flex; align-items:center; gap:6px; min-width:0; }
+.gr .nm .t { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gr .nm .mod { width:6px; height:6px; border-radius:3px; background:var(--accent); flex:none; }
+.gr .nm .gap { width:6px; flex:none; }
+.gr.dis .tg span { color:var(--disabled); border-color:var(--disabled); background:transparent; }
+.tag { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:9px; padding:0 6px; white-space:nowrap; flex:none; }
+.tg { display:inline-flex; gap:3px; }
+.tg span { height:22px; min-width:50px; display:inline-flex; align-items:center; justify-content:center; padding:0 6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); font-size:12px; }
+.tg span.on { background:var(--select); border-color:var(--accent); font-weight:600; color:var(--text); }
+.tg span.on::before { content:""; width:6px; height:3px; border-left:1.5px solid var(--accent); border-bottom:1.5px solid var(--accent); transform:rotate(-45deg); margin:0 5px 2px 0; }
+.ico3 { display:flex; gap:12px; padding-left:5px; }
+.ico3 svg { width:14px; height:14px; color:var(--muted); }
+.sw3 { display:flex; gap:6px; }
+.sw { width:26px; height:20px; border:1px solid var(--control); border-radius:2px; position:relative; overflow:hidden; flex:none; }
+.sw.dis { border-color:var(--disabled); opacity:.45; }
+.sw.none { background:var(--field); }
+.sw.none::after { content:""; position:absolute; left:-4px; right:-4px; top:50%; height:1px; background:var(--danger); transform:rotate(-37deg); }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.ib.ghost { visibility:hidden; }
+.gnote { padding:6px 10px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); }
+
+.tip { position:absolute; z-index:4; background:var(--tip); color:var(--ontip); border-radius:3px; padding:5px 8px; font-size:12px; max-width:300px; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+[data-theme="hcw"] .tip, [data-theme="hcb"] .tip { border:1px solid var(--line); }
+
+.pop { position:absolute; z-index:3; width:268px; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 10px 28px rgba(0,0,0,.4); padding:9px 10px; display:flex; flex-direction:column; gap:7px; }
+.pop .h { font-weight:600; display:flex; align-items:center; gap:6px; }
+.pop .on2 { display:flex; align-items:center; gap:8px; }
+.pop .pair { display:flex; border:1px solid var(--control); border-radius:2px; overflow:hidden; }
+.pop .pair i { width:34px; height:26px; display:block; }
+.pal { display:grid; grid-template-columns:repeat(8, 1fr); gap:4px; }
+.pal i { height:22px; border:1px solid var(--control); border-radius:2px; display:block; }
+.pal i.cur { outline:2px solid var(--focus); outline-offset:1px; }
+.arrow { position:absolute; width:10px; height:10px; background:var(--raised); border-right:1px solid var(--line); border-bottom:1px solid var(--line); transform:rotate(45deg); bottom:-6px; }
+
+.menu { background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.35); padding:4px 0; width:330px; }
+.menu .mi { min-height:28px; display:flex; align-items:center; gap:10px; padding:0 12px; white-space:nowrap; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .mi.dis { color:var(--disabled); }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+
+.code { background:var(--code); border:1px solid var(--line); border-radius:3px; padding:10px 12px; white-space:pre; overflow:hidden; line-height:1.55; }
+.code .k { color:var(--accent); font-weight:600; }
+.code .c { color:var(--muted); }
+.legend { display:grid; grid-template-columns:150px 1fr; gap:4px 12px; font-size:12px; margin-top:10px; }
+.legend b { font-weight:600; }
+.cmp { width:100%; border-collapse:collapse; font-size:12px; background:var(--panel); border:1px solid var(--line); }
+.cmp th, .cmp td { border:1px solid var(--line); padding:5px 7px; text-align:left; vertical-align:top; }
+.cmp th { background:var(--raised); font-weight:600; }
+.cmp tr.rec td { background:var(--select); }
+.cmp .no { color:var(--danger); font-weight:600; }
+.cmp .yes { color:var(--success); font-weight:600; }
+
+.smgr { width:760px; background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.25); padding:12px 16px 14px; display:grid; grid-template-columns:110px 1fr; gap:9px 10px; align-items:center; }
+.smgr .st { grid-column:1 / -1; font-weight:700; border-bottom:1px solid var(--line); padding-bottom:3px; margin-top:6px; }
+.smgr .fade { grid-column:1 / -1; color:var(--muted); font-size:12px; }
+.why { font-size:12.5px; margin:0; padding-left:18px; }
+.why li { margin-bottom:6px; }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="dark">Dark</button><button data-t="light">Light</button><button data-t="hcb">High contrast black</button><button data-t="hcw">High contrast white</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>srv3 style options</h1><span>EX3 #450 design gate · YouTube timed text export, per-style options from YTSubConverter 1.6.5</span></div>
+
+  <div class="band">Export as, with YouTube timed text (srv3) chosen <span>recs 1–4</span></div>
+
+  <div>
+    <p class="cap"><b>1 · The table.</b> When srv3 is the format, Options shows one row per style that the exported lines use. The dot marks a row you changed. YT* rows start from YTSubConverter's built-in options.</p>
+    <div class="dlg">
+      <div class="tb">{{i:export}}<span>Export as</span><span class="sp"></span><span class="x">✕</span></div>
+      <div class="body">
+        <span class="lab">Format</span>
+        <div class="combo"><span class="t">YouTube timed text (srv3)</span>{{i:chevron-down}}</div>
+        <span class="lab">Lines</span>
+        <div><span class="seg"><span class="on">All (214)</span><span>Selected (12)</span><span>Shown (214)</span></span></div>
+        <span class="lab">Save to</span>
+        <div class="row"><div class="field" style="flex:1">/home/mio/Subs/Hibike/ep01.ytt</div><span class="btn">Browse…</span></div>
+        <span class="lab top">Options</span>
+        <div class="opts">
+          <div class="grid" role="grid" aria-label="srv3 style options">
+            <div class="gr h"><span>Style</span><span>Shadow</span><span>Karaoke</span><span class="ico3" title="Current word: text, outline, shadow">{{i:colour-primary}}{{i:colour-outline}}{{i:colour-shadow}}</span><span></span></div>
+            <div class="gr"><span class="nm"><i class="gap"></i><span class="t">Default</span></span><span class="tg"><span>Glow</span><span class="on">Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#FFFFFF"></i><i class="sw dis" style="background:#000000"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gr dis"><span class="nm"><i class="gap"></i><span class="t">Sign-Top</span></span><span class="tg"><span>Glow</span><span>Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#F2E6C9"></i><i class="sw dis" style="background:#3B2A1A"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gr cur"><span class="nm"><i class="mod"></i><span class="t">Karaoke-Romaji</span></span><span class="tg"><span class="on">Glow</span><span>Soft</span><span class="on">Hard</span><span>Bevel</span></span><span><i class="box on"></i></span><span class="sw3"><i class="sw" style="background:#FFE45C"></i><i class="sw" style="background:#7A2BD8"></i><i class="sw none"></i></span><span class="ib" title="Reset Karaoke-Romaji">{{i:restore-default}}</span></div>
+            <div class="gr"><span class="nm"><i class="gap"></i><span class="t">YTGlow</span><span class="tag">YTSubConverter</span></span><span class="tg"><span class="on">Glow</span><span>Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#FFFFFF"></i><i class="sw dis" style="background:#1E5AC8"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gnote">Shadow is how YouTube draws the style's shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</div>
+          </div>
+          <span class="hint">Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</span>
+          <span class="hint">Changed options are saved in the subtitle file when you export.</span>
+        </div>
+      </div>
+      <div class="foot"><span class="btn">Cancel</span><span class="btn primary ring">Export</span></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>2 · A current-word colour.</b> A swatch opens the same colour popover as the Style manager, without Alpha (srv3 current-word colours are opaque), plus <b>No colour</b>.</p>
+    <div class="dlg" style="min-height:100%">
+      <div class="tb">{{i:export}}<span>Export as</span><span class="sp"></span><span class="x">✕</span></div>
+      <div class="body">
+        <span class="lab">Format</span>
+        <div class="combo"><span class="t">YouTube timed text (srv3)</span>{{i:chevron-down}}</div>
+        <span class="lab">Lines</span>
+        <div><span class="seg"><span class="on">All (214)</span><span>Selected (12)</span><span>Shown (214)</span></span></div>
+        <span class="lab">Save to</span>
+        <div class="row"><div class="field" style="flex:1">/home/mio/Subs/Hibike/ep01.ytt</div><span class="btn">Browse…</span></div>
+        <span class="lab top">Options</span>
+        <div class="opts">
+          <div class="grid">
+            <div class="gr h"><span>Style</span><span>Shadow</span><span>Karaoke</span><span class="ico3">{{i:colour-primary}}{{i:colour-outline}}{{i:colour-shadow}}</span><span></span></div>
+            <div class="gr"><span class="nm"><i class="gap"></i><span class="t">Default</span></span><span class="tg"><span>Glow</span><span class="on">Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#FFFFFF"></i><i class="sw dis" style="background:#000000"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gr dis"><span class="nm"><i class="gap"></i><span class="t">Sign-Top</span></span><span class="tg"><span>Glow</span><span>Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#F2E6C9"></i><i class="sw dis" style="background:#3B2A1A"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gr cur"><span class="nm"><i class="mod"></i><span class="t">Karaoke-Romaji</span></span><span class="tg"><span class="on">Glow</span><span>Soft</span><span class="on">Hard</span><span>Bevel</span></span><span><i class="box on"></i></span><span class="sw3"><i class="sw ring" style="background:#FFE45C"></i><i class="sw" style="background:#7A2BD8"></i><i class="sw none"></i></span><span class="ib">{{i:restore-default}}</span></div>
+            <div class="gr"><span class="nm"><i class="gap"></i><span class="t">YTGlow</span><span class="tag">YTSubConverter</span></span><span class="tg"><span class="on">Glow</span><span>Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#FFFFFF"></i><i class="sw dis" style="background:#1E5AC8"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gnote">Shadow is how YouTube draws the style's shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</div>
+          </div>
+          <span class="hint">Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</span>
+          <span class="hint">Changed options are saved in the subtitle file when you export.</span>
+        </div>
+      </div>
+      <div class="foot"><span class="btn">Cancel</span><span class="btn primary">Export</span></div>
+      <div class="pop" style="left:476px; top:2px">
+        <i class="arrow down" style="left:110px"></i>
+        <div class="h">Current word text · Karaoke-Romaji</div>
+        <div class="on2"><span class="pair" title="Previous and new colour"><i style="background:#FFFFFF"></i><i style="background:#FFE45C"></i></span><span class="sp"></span><span class="ib" title="Pick a colour from the screen">{{i:eyedropper}}</span></div>
+        <div class="pal">
+          <i style="background:#FFFFFF"></i><i style="background:#C0C0C0"></i><i style="background:#808080"></i><i style="background:#404040"></i><i style="background:#000000"></i><i style="background:#FF0000"></i><i style="background:#00FF00"></i><i style="background:#0000FF"></i>
+          <i style="background:#FFFF00"></i><i style="background:#00FFFF"></i><i style="background:#FF00FF"></i><i style="background:#FF8000"></i><i style="background:#80FF00"></i><i style="background:#00FF80"></i><i style="background:#0080FF"></i><i style="background:#8000FF"></i>
+        </div>
+        <div class="mut" style="font-size:12px">Recent colours</div>
+        <div class="pal"><i class="cur" style="background:#FFE45C"></i><i style="background:#7A2BD8"></i><i style="background:#1E5AC8"></i></div>
+        <div class="row"><span class="mut">Hex</span><div class="field mono" style="width:96px">#FFE45C</div><span class="sp"></span><span class="btn sm">No colour</span></div>
+        <div class="row"><span class="btn sm">More…</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="band">States <span>recs 2, 3 and 6</span></div>
+
+  <div>
+    <p class="cap"><b>3 · Selected lines, keyboard and a style with no shadow.</b> Rows follow the Lines choice; <b>Show all styles</b> lists the rest. Tab moves between rows, the arrow keys between toggles, Space toggles.</p>
+    <div class="dlg">
+      <div class="tb">{{i:export}}<span>Export as</span><span class="sp"></span><span class="x">✕</span></div>
+      <div class="body">
+        <span class="lab">Lines</span>
+        <div><span class="seg"><span>All (214)</span><span class="on">Selected (12)</span><span>Shown (214)</span></span></div>
+        <span class="lab top">Options</span>
+        <div class="opts">
+          <div class="grid">
+            <div class="gr h"><span>Style</span><span>Shadow</span><span>Karaoke</span><span class="ico3">{{i:colour-primary}}{{i:colour-outline}}{{i:colour-shadow}}</span><span></span></div>
+            <div class="gr cur"><span class="nm"><i class="gap"></i><span class="t">Default</span></span><span class="tg"><span>Glow</span><span class="on">Soft</span><span class="ring">Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#FFFFFF"></i><i class="sw dis" style="background:#000000"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+            <div class="gr dis"><span class="nm"><i class="gap"></i><span class="t">Sign-Top</span></span><span class="tg"><span>Glow</span><span>Soft</span><span>Hard</span><span>Bevel</span></span><span><i class="box"></i></span><span class="sw3"><i class="sw dis" style="background:#F2E6C9"></i><i class="sw dis" style="background:#3B2A1A"></i><i class="sw dis" style="background:#000000"></i></span><span class="ib ghost"></span></div>
+          </div>
+          <span class="chk"><i class="box"></i>Show all styles (6)</span>
+        </div>
+      </div>
+      <div class="foot" style="padding-top:34px"><span class="btn">Cancel</span><span class="btn primary">Export</span></div>
+      <div class="tip" style="left:300px; top:182px">Sign-Top has no shadow (its Shadow is 0), so no shadow type applies.</div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>4 · After the export.</b> If you changed any options, Export saves them as one undo step and marks the file as changed. Cancel throws the changes away.</p>
+    <div class="dlg" style="padding-bottom:6px">
+      <div class="tb">{{i:export}}<span>Export as</span><span class="sp"></span><span class="x">✕</span></div>
+      <div style="padding:14px 16px; display:flex; flex-direction:column; gap:8px">
+        <span>Exported 214 lines to “ep01.ytt”.</span>
+        <span class="hint">Style options for 1 style saved in the subtitle file.</span>
+      </div>
+      <div class="foot"><span class="btn primary ring">Close</span></div>
+    </div>
+    <div style="display:flex; gap:16px; margin-top:16px; align-items:flex-start">
+      <div class="menu">
+        <div class="mi hot">Undo Set srv3 style options<span class="k">Ctrl+Z</span></div>
+        <div class="mi dis">Redo<span class="k">Ctrl+Y</span></div>
+      </div>
+      <p class="cap" style="margin:0; min-height:0">The Edit menu after the export. If nothing changed, no undo step is added and the file isn't marked as changed.</p>
+    </div>
+  </div>
+
+  <div class="band">Where the options live <span>recs 5, 7 and 8</span></div>
+
+  <div>
+    <p class="cap"><b>5 · In the .ass, as [Script Info] keys.</b> Only rows that differ from the default are written, numbered in the order of the styles, and rewritten together on every change.</p>
+    <div class="code mono"><span class="c">[Script Info]</span>
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+<span class="k">Hikari srv3 1:</span> Karaoke-Romaji,glow+hard,karaoke,#FFE45C,#7A2BD8,
+<span class="k">Hikari srv3 2:</span> Sign-Top,soft,-,,,
+
+<span class="c">[V4+ Styles]</span>
+<span class="c">Format: Name, Fontname, Fontsize, …</span></div>
+    <div class="legend">
+      <b>Fields</b><span>style, shadow types (glow, soft, hard, bevel joined with +, or none), karaoke or -, then the current-word text, outline and shadow colours, each #RRGGBB or empty for No colour.</span>
+      <b>Why numbered</b><span>YTSubConverter reads [Script Info] lines as <span class="mono">^([\w ]+):</span>. A key with the style name in it, such as <span class="mono">Hikari srv3 Sign-Top:</span>, makes it refuse the whole file (tested on 1.6.5).</span>
+      <b>Style names</b><span>can't contain commas in ASS, so the style can come first.</span>
+      <b>Renaming a style</b><span>updates its key in the same undo step; deleting a style removes it; duplicating copies it.</span>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>6 · The candidates I checked.</b> Aegisub and libass behaviour is from the #577 research (Aegisub ass_parser.cpp and ass_file.cpp, libass ass.c). YTSubConverter behaviour was tested on 1.6.5.</p>
+    <table class="cmp">
+      <tr><th>Option</th><th>Aegisub open → save</th><th>libass</th><th>YTSubConverter</th><th>Per style</th></tr>
+      <tr class="rec"><td><b>[Script Info] keys</b></td><td class="yes">kept, in order</td><td>ignored</td><td>ignored, output unchanged (3 files, byte-for-byte)</td><td>yes</td></tr>
+      <tr><td>[Aegisub Extradata]</td><td>kept while a line points at it</td><td>ignored</td><td>ignored</td><td class="no">no: it belongs to lines</td></tr>
+      <tr><td>A new [Hikari srv3] section</td><td class="no">lost</td><td>read as part of the section before it</td><td>ignored, output unchanged</td><td>yes</td></tr>
+      <tr><td>[Aegisub Project Garbage]</td><td class="no">lost (only known keys are kept)</td><td>ignored</td><td>ignored</td><td>yes</td></tr>
+      <tr><td>StyleOptions.xml next to the file</td><td>separate file</td><td>—</td><td>only next to its own .exe</td><td>yes, but doesn't travel with the .ass</td></tr>
+      <tr><td>App settings</td><td>—</td><td>—</td><td>—</td><td class="no">lost on another machine</td></tr>
+    </table>
+  </div>
+
+  <div class="band">Alternative: in the Style manager <span>rec 1, not recommended</span></div>
+
+  <div>
+    <p class="cap"><b>7 · A YouTube (srv3) section at the end of the style editor.</b> Shown only to compare. It would sit below Margins and apply to the style in the file, not to catalogue copies.</p>
+    <div class="smgr">
+      <span class="fade">… Name, Font, Colours and transparency, Border, Alignment, Margins …</span>
+      <span class="st">YouTube (srv3)</span>
+      <span>Shadow</span><span class="tg"><span class="on">Glow</span><span>Soft</span><span class="on">Hard</span><span>Bevel</span></span>
+      <span>Karaoke</span><span class="chk"><i class="box on"></i>Highlight the current word</span>
+      <span>Current word</span><span class="row"><span class="ico3" style="padding:0">{{i:colour-primary}}</span><i class="sw" style="background:#FFE45C"></i><span class="ico3" style="padding:0 0 0 8px">{{i:colour-outline}}</span><i class="sw" style="background:#7A2BD8"></i><span class="ico3" style="padding:0 0 0 8px">{{i:colour-shadow}}</span><i class="sw none"></i></span>
+      <span></span><span class="hint">Used only by Export as › YouTube timed text (srv3).</span>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>Why the Export dialog is the recommended home</b></p>
+    <ul class="why">
+      <li>The options do nothing outside srv3 export. In the Style manager they would sit in front of everyone who never exports to YouTube.</li>
+      <li>The export table lists only the styles that the exported lines use, next to the choice that uses them.</li>
+      <li>The Style manager also edits catalogue styles and several styles at once. The options are stored in the file's [Script Info], not in the Style line, so neither case fits.</li>
+      <li>It is one place to build and test, and it can still grow an entry in the Style manager later if people look for it there.</li>
+    </ul>
+  </div>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const theme = params.get("theme") || "dark";
+if (params.has("shot")) document.body.classList.add("shot");
+function apply(t) {
+  document.documentElement.dataset.theme = t;
+  document.querySelectorAll(".pick button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t)));
+}
+document.querySelectorAll(".pick button").forEach(b => b.addEventListener("click", () => apply(b.dataset.t)));
+apply(theme);
+</script>
+</body>
+</html>
