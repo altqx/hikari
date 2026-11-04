@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI review mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+  --alt:#242A31; --label:#2F3136; --labelmod:#322F4E; --gridsel:#2D4A44;
+  --addbg:rgba(77,186,77,.24); --addfg:#B8EBB8; --delbg:rgba(255,173,173,.18); --delfg:#FFC2C2;
+  --video:#0B0E12;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+  --alt:#F0F2F4; --label:#C9CED3; --labelmod:#B0ADD8; --gridsel:#CFE6DF;
+  --addbg:#D3EFD3; --addfg:#0B4F0B; --delbg:#F8D7DA; --delfg:#8B1A2B;
+  --video:#1A1F26;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+  --alt:#FFFFFF; --label:#E0E0E0; --labelmod:#D0D0FF; --gridsel:#C9DAF8;
+  --addbg:#CCF2CC; --addfg:#003A00; --delbg:#FFD6D6; --delfg:#7A0000;
+  --video:#000000;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+  --alt:#000000; --label:#1E1E1E; --labelmod:#000060; --gridsel:#253F60;
+  --addbg:#003A00; --addfg:#9CFF9C; --delbg:#3A0000; --delfg:#FFC0C0;
+  --video:#000000;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:904px 904px; gap:22px 24px; align-items:start; width:1880px; }
+.full { grid-column:1 / -1; }
+.col { display:flex; flex-direction:column; gap:22px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; max-width:900px; }
+.full .cap { max-width:1600px; }
+.cap b { color:var(--text); font-weight:600; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+
+.win { background:var(--bg); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); overflow:hidden; display:flex; flex-direction:column; }
+.menubar { height:28px; display:flex; align-items:center; gap:2px; padding:0 6px; background:var(--panel); }
+.menubar span { padding:0 8px; }
+.tabbar { height:32px; display:flex; align-items:flex-end; gap:2px; padding:0 6px; background:var(--panel); border-bottom:1px solid var(--line); }
+.dtab { height:27px; display:flex; align-items:center; gap:6px; padding:0 6px 0 10px; border:1px solid var(--line); border-bottom:0; border-radius:3px 3px 0 0; background:var(--raised); color:var(--muted); position:relative; }
+.dtab.on { background:var(--bg); color:var(--text); border-color:var(--accent); }
+.dtab.on::after { content:""; position:absolute; left:-1px; right:-1px; bottom:-1px; height:1px; background:var(--bg); }
+.dtab.hot { outline:1px solid var(--focus); outline-offset:-3px; }
+.dtab .x svg { width:14px; height:14px; }
+.badge { display:inline-flex; align-items:center; gap:3px; height:17px; padding:0 5px 0 3px; border-radius:9px; background:var(--accent); color:var(--onaccent); font-size:11px; font-weight:700; }
+.badge svg { width:13px; height:13px; }
+.badge svg path, .badge svg .acc { stroke:var(--onaccent); }
+.badge.out { background:transparent; color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.badge.out svg path, .badge.out svg .acc { stroke:var(--accent); }
+.plus { width:26px; height:26px; display:flex; align-items:center; justify-content:center; }
+
+.body { display:grid; gap:4px; padding:4px; flex:1; min-height:0; }
+.dock { background:var(--panel); border:1px solid var(--line); border-radius:3px; display:flex; flex-direction:column; min-height:0; overflow:hidden; position:relative; }
+.dh { height:30px; display:flex; align-items:center; gap:8px; padding:0 4px 0 10px; font-weight:700; flex:none; }
+.dh .sp { flex:1; }
+.dh .tabs { display:flex; gap:0; align-self:stretch; margin-left:-10px; }
+.dh .tabs span { display:flex; align-items:center; gap:6px; padding:0 12px; font-weight:400; color:var(--muted); border-bottom:2px solid transparent; }
+.dh .tabs span.on { color:var(--text); font-weight:700; border-bottom-color:var(--accent); }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.ib.sm { width:22px; height:22px; }
+.ib.box1 { border:1px solid var(--control); background:var(--raised); }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.sm { height:22px; padding:0 8px; font-size:12px; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.primary svg path, .btn.primary svg .acc { stroke:var(--onaccent); }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.kbd { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:2px; padding:0 4px; }
+.mut { color:var(--muted); }
+.warn { color:var(--warning); }
+.ok { color:var(--success); }
+.sp { flex:1; }
+
+.lebar { display:flex; align-items:center; gap:8px; margin:0 10px; padding:5px 6px 5px 8px; border:1px solid var(--accent); border-bottom:0; border-radius:2px 2px 0 0; background:var(--select); font-size:12px; }
+.lebar.pend { border-style:dashed; }
+.letext { margin:0 10px; min-height:62px; background:var(--field); border:1px solid var(--accent); border-radius:0 0 2px 2px; padding:7px 9px; font-size:14px; line-height:1.55; }
+.letext.pend { border-style:dashed; }
+.lefields { display:flex; align-items:center; gap:8px; padding:8px 10px 10px; flex-wrap:wrap; }
+.lefields .f { display:flex; align-items:center; gap:6px; }
+.fld { height:26px; display:inline-flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 7px; white-space:nowrap; }
+.fld.chg { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.was { color:var(--delfg); background:var(--delbg); text-decoration:line-through; padding:0 2px; border-radius:2px; }
+.toolrow { display:flex; align-items:center; gap:2px; padding:2px 8px 6px; }
+.toolrow .ib svg { opacity:.9; }
+
+del { color:var(--delfg); background:var(--delbg); text-decoration:line-through; text-decoration-thickness:1px; border-radius:2px; padding:0 1px; }
+ins { color:var(--addfg); background:var(--addbg); text-decoration:underline; text-underline-offset:3px; border-radius:2px; padding:0 1px; }
+
+.rbar { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 8px; margin:0 6px 4px; background:var(--select); border:1px solid var(--accent); border-radius:2px; font-size:12px; flex:none; }
+.rbar.pend { border-style:dashed; }
+.rbar b { font-weight:700; }
+.grid { flex:1; min-height:0; overflow:hidden; font-size:12.5px; }
+.gr { display:grid; grid-template-columns:44px 26px 82px 82px 96px 62px 38px 1fr; height:22px; align-items:center; white-space:nowrap; }
+.gr > span { padding:0 6px; overflow:hidden; text-overflow:ellipsis; }
+.gr.hd { color:var(--muted); height:22px; border-bottom:1px solid var(--line); }
+.gr:nth-child(even):not(.hd) { background:var(--alt); }
+.gr > span:first-child { background:var(--label); align-self:stretch; display:flex; align-items:center; position:relative; padding-left:9px; }
+.gr.hd > span:first-child { background:transparent; }
+.gr.sel { background:var(--gridsel) !important; box-shadow:inset 0 0 0 1px var(--accent); }
+.gr.ai > span:first-child::before, .gr.pend > span:first-child::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--accent); }
+.gr.pend > span:first-child::before { background:repeating-linear-gradient(to bottom, var(--accent) 0 4px, transparent 4px 7px); }
+.gr.ai > span:first-child, .gr.pend > span:first-child { background:var(--labelmod); }
+.gr.ghost { color:var(--muted); }
+.gr.ghost > span:not(:first-child) { text-decoration:line-through; }
+.gr.ghost > span:first-child::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:repeating-linear-gradient(to bottom, var(--danger) 0 4px, transparent 4px 7px); }
+.gr .mk { display:inline-flex; width:12px; justify-content:center; font-weight:700; color:var(--accent); margin-left:auto; padding-right:3px; }
+.gr .mk.del { color:var(--danger); }
+.gr .chg { background:var(--addbg); color:var(--addfg); text-decoration:underline; text-underline-offset:3px; border-radius:2px; padding:0 1px; }
+.cpsbad { color:var(--danger); font-weight:600; }
+.gr .you { display:inline-block; width:7px; height:7px; border-radius:4px; background:var(--warning); margin-left:6px; vertical-align:1px; }
+
+.status { height:24px; display:flex; align-items:center; gap:18px; padding:0 12px; font-size:12px; color:var(--muted); background:var(--panel); border-top:1px solid var(--line); }
+.status .r { margin-left:auto; display:flex; gap:18px; }
+.status .ai { color:var(--text); display:flex; align-items:center; gap:6px; }
+
+.rv { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+.rvsum { display:flex; align-items:center; gap:6px; padding:4px 8px 8px; border-bottom:1px solid var(--line); flex:none; }
+.rvsum .t { flex:1; min-width:0; font-size:12px; }
+.rvsum .t b { display:block; font-size:13px; }
+.rvlist { flex:1; min-height:0; overflow:hidden; padding:4px 0; }
+.turn { padding:6px 8px 4px; }
+.turn + .turn { border-top:1px solid var(--line); }
+.th { display:flex; align-items:center; gap:7px; }
+.th .q { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.th .q b { font-weight:700; }
+.th .meta { font-size:11.5px; color:var(--muted); white-space:nowrap; }
+.tsub { display:flex; align-items:center; gap:6px; margin:2px 0 4px 23px; font-size:11.5px; color:var(--muted); }
+.chg-h { display:flex; align-items:center; gap:6px; margin:6px 0 2px 23px; font-size:12px; font-weight:600; }
+.chg-h .n { font-weight:400; color:var(--muted); }
+.chg-h .sp { flex:1; }
+.lr { display:flex; align-items:center; gap:8px; margin-left:23px; padding:0 2px 0 8px; height:26px; border-left:3px solid var(--accent); font-size:12px; }
+.lr.pend { border-left-style:dashed; }
+.lr.ghost { border-left-color:var(--danger); border-left-style:dashed; }
+.lr.sel { background:var(--select); outline:1px solid var(--accent); outline-offset:-1px; }
+.lr .no { width:26px; color:var(--muted); text-align:right; flex:none; }
+.lr .tx { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lr .acts { display:flex; gap:0; flex:none; }
+.lr.quiet .acts { visibility:hidden; }
+.lr .tag { font-size:11px; color:var(--muted); white-space:nowrap; }
+.lr .tag.warn { color:var(--warning); }
+.who { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:9px; padding:0 6px; height:18px; white-space:nowrap; }
+.who.full { color:var(--danger); border-color:var(--danger); }
+.fold { display:inline-flex; transform:rotate(0); }
+.fold.c { transform:rotate(-90deg); }
+.also { flex:none; border-top:1px solid var(--line); padding:8px; font-size:12px; }
+.also .row { display:flex; align-items:center; gap:8px; height:28px; }
+.also .row b { font-weight:600; }
+
+.notice { display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); border-left:3px solid var(--warning); background:var(--raised); padding:6px 8px; font-size:12px; margin:4px 0 2px 23px; }
+.notice svg { margin-top:1px; }
+
+.dlg { background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; overflow:hidden; }
+.title { height:32px; display:flex; align-items:center; gap:8px; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); flex:none; }
+.title .x { width:40px; height:32px; display:flex; align-items:center; justify-content:center; margin-left:auto; }
+.dbody { padding:14px 16px 6px; }
+.dbody p { margin:0 0 10px; }
+.dfoot { display:flex; align-items:center; gap:8px; padding:10px 14px 12px; }
+.check { display:flex; align-items:flex-start; gap:8px; min-height:24px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; margin-top:1px; }
+.box.on { background:var(--accent); border-color:var(--accent); }
+.box.on::after { content:""; width:8px; height:4px; border-left:2px solid var(--onaccent); border-bottom:2px solid var(--onaccent); transform:rotate(-45deg) translate(1px,-1px); }
+.tbl { border:1px solid var(--line); border-radius:2px; margin:0 0 10px; }
+.tbl .r { display:flex; align-items:center; gap:10px; padding:6px 10px; font-size:12.5px; }
+.tbl .r + .r { border-top:1px solid var(--line); }
+.tbl .r .n { margin-left:auto; color:var(--muted); white-space:nowrap; }
+
+.tip { position:absolute; z-index:4; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:6px 9px; font-size:12px; white-space:nowrap; }
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:300px; }
+.menu .mi { height:28px; display:flex; align-items:center; gap:10px; padding:0 12px; white-space:nowrap; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+
+.hist { border:1px solid var(--line); border-radius:2px; background:var(--field); }
+.hist .h { display:flex; align-items:center; gap:8px; height:26px; padding:0 8px; font-size:12.5px; white-space:nowrap; }
+.hist .h.cur { background:var(--select); font-weight:600; }
+.hist .h.cp { color:var(--muted); font-size:11.5px; height:22px; }
+.hist .h.cp::after { content:""; flex:1; border-top:1px dashed var(--line); }
+.hist .h.redo { color:var(--muted); }
+.hist .h .n { width:20px; text-align:right; color:var(--muted); }
+
+.thread { background:var(--panel); border:1px solid var(--line); border-radius:3px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.msg { align-self:flex-end; max-width:86%; background:var(--raised); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+.msgfoot { align-self:flex-end; display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); margin-top:-4px; }
+.reply { font-size:12.5px; }
+.cplink { display:inline-flex; align-items:center; gap:4px; color:var(--accent); text-decoration:underline; text-underline-offset:2px; }
+.divider { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11.5px; }
+.divider::before, .divider::after { content:""; flex:1; border-top:1px solid var(--line); }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+.key { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin-top:8px; align-items:center; }
+.key span { display:inline-flex; align-items:center; gap:6px; }
+.sw { display:inline-block; width:4px; height:16px; background:var(--accent); }
+.sw.p { background:repeating-linear-gradient(to bottom, var(--accent) 0 4px, transparent 4px 7px); }
+.sw.d { background:repeating-linear-gradient(to bottom, var(--danger) 0 4px, transparent 4px 7px); }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>AI review: Keep, Undo and checkpoints</h1><span>#430 design gate · <span id="tn">Dark</span> · main window at 1880 × 780</span></div>
+
+  <div class="full">
+    <p class="cap"><b>1 · Auto mode: the judge approved and the changes are already applied.</b> Turn 3 changed six Lines and one style in Ep01.ass and three Lines in the background tab Ep02.ass. Each changed Line keeps a mark in the Grid until you Keep or Undo it. Line 12 is selected, so the Line editor shows its diff. The new Review panel lists the changes by turn, each turn under its checkpoint.</p>
+    <div class="win" style="height:780px">
+      <div class="menubar"><span>File</span><span>Edit</span><span>Automation</span><span>Video</span><span>Audio</span><span>View</span><span>Subtitles</span><span>Help</span></div>
+      <div class="tabbar">
+        <div class="dtab on">Ep01.ass<span class="badge">{{i:review-keep}}6</span><span class="x">{{i:tab-close}}</span></div>
+        <div class="dtab">Ep02.ass<span class="badge out">{{i:review-keep}}3</span><span class="x">{{i:tab-close}}</span></div>
+        <div class="dtab">Signs.ass<span class="x">{{i:tab-close}}</span></div>
+        <span class="plus">{{i:add}}</span>
+      </div>
+      <div class="body" style="grid-template-columns:1fr 430px; grid-template-rows:206px 1fr;">
+        <div class="dock">
+          <div class="dh">Line editor<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+          <div class="toolrow"><span class="ib">{{i:tag-bold}}</span><span class="ib">{{i:tag-italic}}</span><span class="ib">{{i:tag-underline}}</span><span class="ib">{{i:tag-strikeout}}</span><span class="ib">{{i:tag-font}}</span><span class="ib">{{i:colour-primary}}</span><span class="ib">{{i:colour-secondary}}</span><span class="ib">{{i:colour-outline}}</span><span class="ib">{{i:colour-shadow}}</span></div>
+          <div class="lebar">{{i:ai-assistant}}<span><b>Changed by the AI</b> · turn 3 · shortened, it read at 24 CPS</span><span class="who">Auto · judge approved</span><span class="sp"></span><span class="btn sm">{{i:undo}}Undo</span><span class="btn sm primary">{{i:review-keep}}Keep</span><span class="ib sm">{{i:chevron-left}}</span><span class="mut">2 of 6</span><span class="ib sm">{{i:chevron-right}}</span></div>
+          <div class="letext"><del>Well, I</del><ins>I</ins> didn't think you meant it<del>, since you never mean anything you say</del><ins>. You never do</ins>.</div>
+          <div class="lefields">
+            <span class="f">Start<span class="fld mono">0:02:14.05</span></span>
+            <span class="f">End<span class="fld mono">0:02:16.80</span></span>
+            <span class="f">Style<span class="fld" style="width:120px">Default</span></span>
+            <span class="f">Actor<span class="fld" style="width:90px">Mio</span></span>
+            <span class="mut" style="font-size:12px">Click the text to edit the AI's version; your edit keeps it.</span>
+          </div>
+        </div>
+        <div class="dock" style="grid-row:1 / 3; grid-column:2">
+          <div class="dh"><span class="tabs"><span>{{i:ai-assistant}}Agent</span><span class="on">{{i:review-keep}}Review</span></span><span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+          <div class="rv">
+            <div class="rvsum"><span class="t"><b>Ep01.ass</b>6 Lines and 1 style to review</span><span class="btn sm">{{i:undo}}Undo all</span><span class="btn sm primary">{{i:review-keep}}Keep all</span></div>
+            <div class="rvlist">
+              <div class="turn">
+                <div class="th"><span class="fold">{{i:chevron-down}}</span>{{i:checkpoint}}<span class="q"><b>Turn 3</b> · Tighten anything over 18 CPS and use honorifics</span><span class="meta">14:32</span></div>
+                <div class="tsub"><span class="who">Auto · judge approved</span><span class="sp"></span><span class="btn sm">{{i:checkpoint}}Restore checkpoint</span></div>
+                <div class="chg-h">Shortened 2 Lines over 18 CPS<span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+                <div class="lr sel"><span class="no">12</span><span class="tx">I didn't think you meant it. You never do.</span><span class="tag">24 → 14 CPS</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+                <div class="lr quiet"><span class="no">16</span><span class="tx">Let's go before the train leaves.</span><span class="tag">20 → 17 CPS</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+                <div class="chg-h">Used honorifics<span class="n">· 3 Lines</span><span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+                <div class="lr quiet"><span class="no">14</span><span class="tx">Thank you, Tanaka-san.</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+                <div class="lr quiet"><span class="no">19</span><span class="tx">Haru-kun, wait up!</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+                <div class="lr quiet"><span class="no">27</span><span class="tx">Morning, Aoi-senpai.</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+                <div class="chg-h">Lengthened 1 Line under 1 s<span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+                <div class="lr quiet"><span class="no">15</span><span class="tx">Rude.</span><span class="tag">End +0.50 s</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+                <div class="chg-h">Changed style Signs<span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+                <div class="lr quiet"><span class="no">{{i:styles}}</span><span class="tx">Font size <span class="was">54</span> → 48</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              </div>
+              <div class="turn">
+                <div class="th"><span class="fold c">{{i:chevron-down}}</span>{{i:checkpoint}}<span class="q"><b>Turn 2</b> · Fix the typos in the first half</span><span class="meta">14:05</span></div>
+                <div class="tsub" style="margin-bottom:0">All kept or undone · checkpoint only</div>
+              </div>
+            </div>
+            <div class="also">
+              <div class="mut" style="margin-bottom:2px">Also to review</div>
+              <div class="row">{{i:review-keep}}<b>Ep02.ass</b><span class="mut">3 Lines · turn 3</span><span class="sp"></span><span class="btn sm">{{i:tab-switch}}Go to tab</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dock">
+          <div class="dh">Grid<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+          <div class="rbar">{{i:review-keep}}<span><b>6 Lines changed by the AI</b> · turn 3 · applied</span><span class="sp"></span><span class="ib sm">{{i:chevron-left}}</span><span class="mut">2 of 6</span><span class="ib sm">{{i:chevron-right}}</span><span class="btn sm">{{i:undo}}Undo all</span><span class="btn sm">{{i:review-keep}}Keep all</span></div>
+          <div class="grid">
+            <div class="gr hd"><span>#</span><span>L.</span><span>Start</span><span>End</span><span>Style</span><span>Actor</span><span>CPS</span><span>Text</span></div>
+            <div class="gr"><span>10</span><span>0</span><span>0:02:09.12</span><span>0:02:11.30</span><span>Default</span><span>Mio</span><span>13</span><span>Wait, you're actually coming with us?</span></div>
+            <div class="gr"><span>11</span><span>0</span><span>0:02:11.40</span><span>0:02:13.90</span><span>Default</span><span>Haru</span><span>10</span><span>I said I would, didn't I?</span></div>
+            <div class="gr ai sel"><span>12</span><span>0</span><span>0:02:14.05</span><span>0:02:16.80</span><span>Default</span><span>Mio</span><span>14</span><span><span class="chg">I</span> didn't think you meant it<span class="chg">. You never do</span>.</span></div>
+            <div class="gr"><span>13</span><span>0</span><span>0:02:16.90</span><span>0:02:18.20</span><span>Default</span><span>Haru</span><span>9</span><span>That's not fair.</span></div>
+            <div class="gr ai"><span>14</span><span>0</span><span>0:02:18.40</span><span>0:02:20.10</span><span>Default</span><span>Mio</span><span>12</span><span>Thank you, <span class="chg">Tanaka-san</span>.</span></div>
+            <div class="gr ai"><span>15</span><span>0</span><span>0:02:20.30</span><span><span class="chg">0:02:21.20</span></span><span>Default</span><span>Haru</span><span>5</span><span>Rude.</span></div>
+            <div class="gr ai"><span>16</span><span>0</span><span>0:02:21.40</span><span>0:02:23.30</span><span>Default</span><span>Mio</span><span>17</span><span>Let's go before the train leaves.</span></div>
+            <div class="gr"><span>17</span><span>0</span><span>0:02:23.50</span><span>0:02:25.00</span><span>Default</span><span>Haru</span><span>11</span><span>Fine, fine.</span></div>
+            <div class="gr"><span>18</span><span>5</span><span>0:02:23.50</span><span>0:02:29.00</span><span>Signs</span><span></span><span></span><span>{\an8\pos(960,80)}Kitamachi Station</span></div>
+            <div class="gr ai"><span>19</span><span>0</span><span>0:02:25.20</span><span>0:02:26.70</span><span>Default</span><span>Mio</span><span>14</span><span><span class="chg">Haru-kun</span>, wait up!</span></div>
+            <div class="gr"><span>20</span><span>0</span><span>0:02:27.00</span><span>0:02:29.40</span><span>Default</span><span>Haru</span><span>12</span><span>You're the one who's late.</span></div>
+            <div class="gr"><span>21</span><span>0</span><span>0:02:29.60</span><span>0:02:31.80</span><span>Default</span><span>Mio</span><span>15</span><span>Only because you took the long way.</span></div>
+            <div class="gr"><span>22</span><span>0</span><span>0:02:32.00</span><span>0:02:33.40</span><span>Default</span><span>Haru</span><span>8</span><span>Shortcut.</span></div>
+            <div class="gr"><span>23</span><span>0</span><span>0:02:33.60</span><span>0:02:36.10</span><span>Default</span><span>Mio</span><span>13</span><span>It was not a shortcut and you know it.</span></div>
+            <div class="gr"><span>24</span><span>0</span><span>0:02:36.30</span><span>0:02:38.00</span><span>Default</span><span>Haru</span><span>9</span><span>Agree to disagree.</span></div>
+            <div class="gr"><span>25</span><span>0</span><span>0:02:38.20</span><span>0:02:40.50</span><span>Default</span><span>Mio</span><span>12</span><span>We're going to miss it!</span></div>
+            <div class="gr"><span>26</span><span>0</span><span>0:02:40.70</span><span>0:02:42.30</span><span>Default</span><span>Haru</span><span>10</span><span>We won't. Run.</span></div>
+            <div class="gr ai"><span>27</span><span>0</span><span>0:02:45.00</span><span>0:02:47.20</span><span>Default</span><span>Haru</span><span>11</span><span>Morning, <span class="chg">Aoi-senpai</span>.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="status"><span>1 line selected</span><span class="ai">{{i:review-keep}}6 Lines to review in this tab · 3 in Ep02.ass</span><span class="r"><span>00:02:14.05</span><span>23.976 FPS</span><span>1920 × 1080</span><span>Ep01.mkv</span></span></div>
+    </div>
+    <div class="key"><b style="color:var(--text)">Marks</b><span><span class="sw"></span>applied, to review</span><span><span class="sw p"></span>waiting for Keep (Manual)</span><span><span class="sw d"></span>deleted, waiting for Keep</span><span><ins>added</ins> <del>removed</del> underline and strike-through, so colour is never the only cue</span><span><span class="badge">{{i:review-keep}}6</span> active tab · <span class="badge out">{{i:review-keep}}3</span> background tab</span></div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>2 · Manual mode: nothing is applied until you Keep it.</b> The Grid and the Line editor show the proposed version with dashed marks. A proposed new Line has a +, a proposed deletion stays as a struck-through row. The video preview shows the proposed version of the selected Line. Save writes the file without the waiting changes.</p>
+      <div class="win" style="height:560px">
+        <div class="tabbar">
+          <div class="dtab">Ep01.ass<span class="x">{{i:tab-close}}</span></div>
+          <div class="dtab on">Ep02.ass<span class="badge">{{i:review-keep}}3</span><span class="x">{{i:tab-close}}</span></div>
+        </div>
+        <div class="body" style="grid-template-rows:200px 1fr;">
+          <div class="dock">
+            <div class="dh">Line editor<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+            <div class="lebar pend">{{i:ai-assistant}}<span><b>Proposed by the AI</b> · turn 3 · not applied</span><span class="who">Manual</span><span class="sp"></span><span class="btn sm">{{i:undo}}Undo</span><span class="btn sm primary ring">{{i:review-keep}}Keep</span></div>
+            <div class="letext pend">Thank you, <del>Mr. Tanaka</del><ins>Tanaka-san</ins>. I'll <del>pay you back</del><ins>make it up to you</ins>.</div>
+            <div class="lefields">
+              <span class="f">Start<span class="fld mono">0:05:02.10</span></span>
+              <span class="f">End<span class="fld mono chg"><span class="was">0:05:04.00</span>0:05:04.60</span></span>
+              <span class="f">Style<span class="fld" style="width:100px">Default</span></span>
+              <span class="kbd">Ctrl+Shift+Enter</span><span class="mut" style="font-size:12px">Keep</span>
+            </div>
+          </div>
+          <div class="dock">
+            <div class="dh">Grid<span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+            <div class="rbar pend">{{i:review-keep}}<span><b>3 changes wait for Keep</b> · turn 3</span><span class="sp"></span><span class="ib sm">{{i:chevron-left}}</span><span class="mut">1 of 3</span><span class="ib sm">{{i:chevron-right}}</span><span class="btn sm">{{i:undo}}Undo all</span><span class="btn sm primary">{{i:review-keep}}Keep all</span></div>
+            <div class="grid">
+              <div class="gr hd"><span>#</span><span>L.</span><span>Start</span><span>End</span><span>Style</span><span>Actor</span><span>CPS</span><span>Text</span></div>
+              <div class="gr"><span>40</span><span>0</span><span>0:04:58.00</span><span>0:05:00.20</span><span>Default</span><span>Tanaka</span><span>12</span><span>Here. You dropped this.</span></div>
+              <div class="gr"><span>41</span><span>0</span><span>0:05:00.40</span><span>0:05:01.90</span><span>Default</span><span>Mio</span><span>9</span><span>Oh! My pass!</span></div>
+              <div class="gr pend sel"><span>42</span><span>0</span><span>0:05:02.10</span><span><span class="chg">0:05:04.60</span></span><span>Default</span><span>Mio</span><span>16</span><span>Thank you, <span class="chg">Tanaka-san</span>. I'll <span class="chg">make it up to you</span>.</span></div>
+              <div class="gr pend"><span>43<span class="mk">+</span></span><span>0</span><span>0:05:04.70</span><span>0:05:06.00</span><span>Default</span><span>Tanaka</span><span>11</span><span><span class="chg">No need. Really.</span></span></div>
+              <div class="gr ghost"><span>–<span class="mk del">−</span></span><span>0</span><span>0:05:04.70</span><span>0:05:05.20</span><span>Default</span><span>Tanaka</span><span>40</span><span>Nonononono.</span></div>
+              <div class="gr"><span>44</span><span>0</span><span>0:05:06.20</span><span>0:05:08.00</span><span>Default</span><span>Mio</span><span>13</span><span>Then at least let me—</span></div>
+              <div class="gr"><span>45</span><span>0</span><span>0:05:08.10</span><span>0:05:09.40</span><span>Default</span><span>Tanaka</span><span>8</span><span>Train's here.</span></div>
+              <div class="gr"><span>46</span><span>0</span><span>0:05:09.60</span><span>0:05:11.00</span><span>Default</span><span>Mio</span><span>10</span><span>Wait, what's your—</span></div>
+              <div class="gr"><span>47</span><span>5</span><span>0:05:09.60</span><span>0:05:14.00</span><span>Signs</span><span></span><span></span><span>{\an7\pos(80,60)}Platform 3</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="status"><span>1 line selected</span><span class="ai">{{i:review-keep}}3 changes wait for Keep · Save leaves them out</span><span class="r"><span>Ep02.mkv</span></span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>4 · Restore checkpoint.</b> Opened from turn 3's checkpoint. It undoes the AI's changes from that turn and later, in every tab they touched, as one undo step.</p>
+      <div style="display:flex; gap:18px; align-items:flex-start">
+        <div class="dlg" style="width:520px">
+          <div class="title">{{i:checkpoint}}Restore checkpoint<span class="x">{{i:window-close}}</span></div>
+          <div class="dbody">
+            <p>Go back to before <b>turn 3</b>, “Tighten anything over 18 CPS and use honorifics”? Every AI change since then is undone: turn 3, Claude Code's fix and turn 4.</p>
+            <div class="tbl">
+              <div class="r">{{i:review-keep}}Ep01.ass<span class="n">6 Lines, 1 style</span></div>
+              <div class="r">{{i:review-keep}}Ep02.ass<span class="n">3 Lines, not applied yet</span></div>
+            </div>
+            <div class="check"><span class="box"></span><span>Also undo my edits to <b>Line 34</b> in Ep01.ass<br><span class="mut" style="font-size:12px">You edited it after the AI did. Unticked, it stays as you left it.</span></span></div>
+            <p class="mut" style="font-size:12px; margin-top:10px">Your other edits stay. Ctrl+Z brings the AI's changes back. The thread keeps its messages and tells the agent what was undone.</p>
+          </div>
+          <div class="dfoot"><span class="sp"></span><span class="btn primary ring">{{i:checkpoint}}Restore</span><span class="btn">Cancel</span></div>
+        </div>
+        <div style="flex:1">
+          <p class="cap" style="margin-top:0">The same checkpoint sits on each of your messages in the agent panel (AI7 draws the panel).</p>
+          <div class="thread">
+            <div class="msg">Tighten anything over 18 CPS and use honorifics.</div>
+            <div class="msgfoot">14:32 · <span class="cplink">{{i:checkpoint}}Restore checkpoint</span></div>
+            <div class="reply">Shortened Lines 12 and 16, switched three names to honorifics and lengthened Line 15. Signs now uses size 48.</div>
+            <div class="divider">{{i:review-keep}} 6 Lines, 1 style · Ep01.ass · 3 Lines · Ep02.ass</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>3 · The Review panel in detail.</b> One tab at a time, the active one. A turn from Claude Code over MCP shows who made it. Line 34 was edited by you after the AI, so Undo there asks first. Deleted and new Lines get their own rows.</p>
+      <div class="dock" style="width:440px; height:560px; float:left">
+        <div class="dh"><span class="tabs"><span>{{i:ai-assistant}}Agent</span><span class="on">{{i:review-keep}}Review</span></span><span class="sp"></span><span class="ib">{{i:menu-more}}</span></div>
+        <div class="rv">
+          <div class="rvsum"><span class="t"><b>Ep01.ass</b>7 Lines to review</span><span class="btn sm">{{i:undo}}Undo all</span><span class="btn sm primary">{{i:review-keep}}Keep all</span></div>
+          <div class="rvlist">
+            <div class="turn">
+              <div class="th"><span class="fold">{{i:chevron-down}}</span>{{i:checkpoint}}<span class="q"><b>Turn 4</b> · Split the long Lines in the cold open</span><span class="meta">14:51</span></div>
+              <div class="tsub"><span class="who full">Full access</span><span class="sp"></span><span class="btn sm">{{i:checkpoint}}Restore checkpoint</span></div>
+              <div class="chg-h">Split Line 5 in two<span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+              <div class="lr"><span class="no">5</span><span class="tx">The station closes at midnight,</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr"><span class="no">6 <b style="color:var(--accent)">+</b></span><span class="tx">so we take the last train or we walk.</span><span class="tag">new</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="chg-h">Removed a duplicate<span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+              <div class="lr ghost"><span class="no">–</span><span class="tx" style="text-decoration:line-through">The station closes at midnight.</span><span class="tag">deleted</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+            </div>
+            <div class="turn">
+              <div class="th"><span class="fold">{{i:chevron-down}}</span>{{i:checkpoint}}<span class="q"><b>Claude Code</b> · over MCP</span><span class="meta">14:40</span></div>
+              <div class="tsub"><span class="who">Auto · judge approved</span><span class="sp"></span><span class="btn sm">{{i:checkpoint}}Restore checkpoint</span></div>
+              <div class="chg-h">Fixed overlapping times<span class="n">· 3 Lines</span><span class="sp"></span><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></div>
+              <div class="lr"><span class="no">33</span><span class="tx">Start <span class="was">0:03:10.80</span> 0:03:11.02</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="lr sel"><span class="no">34</span><span class="tx">Start <span class="was">0:03:12.40</span> 0:03:12.61</span><span class="tag warn">you edited it since</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+              <div class="notice">{{i:notice-warning}}<div>You changed Line 34's text after this change. Undo puts the whole Line back as it was before the AI, which drops your edit.<div style="display:flex; gap:6px; margin-top:6px"><span class="btn sm">Undo anyway</span><span class="btn sm">Cancel</span></div></div></div>
+              <div class="lr"><span class="no">35</span><span class="tx">End <span class="was">0:03:12.70</span> 0:03:12.48</span><span class="acts"><span class="ib sm">{{i:undo}}</span><span class="ib sm">{{i:review-keep}}</span></span></div>
+            </div>
+          </div>
+          <div class="also"><div class="row mut">Nothing to review in other tabs.</div></div>
+        </div>
+      </div>
+      <div style="margin-left:460px; position:relative">
+        <p class="cap" style="margin-top:0"><b>Grid context menu</b> on a changed Line.</p>
+        <div class="menu" style="position:relative; width:330px">
+          <div class="mi">{{i:edit-cut}}Cut<span class="k">Ctrl+X</span></div>
+          <div class="mi">{{i:edit-copy}}Copy<span class="k">Ctrl+C</span></div>
+          <div class="sepr"></div>
+          <div class="mi hot">{{i:review-keep}}Keep AI change<span class="k">Ctrl+Shift+Enter</span></div>
+          <div class="mi">{{i:undo}}Undo AI change<span class="k">Ctrl+Shift+Backspace</span></div>
+          <div class="mi">{{i:chevron-down}}Next AI change<span class="k">Ctrl+Alt+Down</span></div>
+          <div class="mi">{{i:review-keep}}Show in Review panel</div>
+          <div class="sepr"></div>
+          <div class="mi">{{i:delete}}Delete<span class="k">Ctrl+Del</span></div>
+        </div>
+        <p class="cap" style="margin-top:16px"><b>Hover on the tab badge.</b></p>
+        <div style="position:relative; height:80px">
+          <div class="tabbar" style="border:1px solid var(--line); width:300px"><div class="dtab">Ep01.ass<span class="x">{{i:tab-close}}</span></div><div class="dtab hot">Ep02.ass<span class="badge out">{{i:review-keep}}3</span><span class="x">{{i:tab-close}}</span></div></div>
+          <div class="tip" style="left:80px; top:38px">3 changes from the AI wait for Keep<br><span class="mut">Edit › Next AI change</span></div>
+        </div>
+      </div>
+      <div style="clear:both"></div>
+    </div>
+
+    <div>
+      <p class="cap"><b>5 · History, and closing a tab with changes still waiting.</b> Each AI change is one step named for who made it; checkpoints are dividers. Closing a tab with waiting changes asks, like unsaved edits do.</p>
+      <div style="display:flex; gap:18px; align-items:flex-start">
+        <div class="dlg" style="width:400px">
+          <div class="title">{{i:history}}History<span class="x">{{i:window-close}}</span></div>
+          <div class="dbody">
+            <p style="font-weight:700; margin-bottom:4px">Ep01.ass</p>
+            <p class="mut" style="font-size:12px">16 steps. Steps after the current one can be redone.</p>
+            <div class="hist">
+              <div class="h"><span class="n">8</span>Edit line text</div>
+              <div class="h cp">{{i:checkpoint}}Before turn 3</div>
+              <div class="h"><span class="n">9</span>{{i:ai-assistant}}AI: shortened 2 Lines over 18 CPS</div>
+              <div class="h"><span class="n">10</span>{{i:ai-assistant}}AI: used honorifics (3 Lines)</div>
+              <div class="h"><span class="n">11</span>{{i:ai-assistant}}AI: lengthened 1 Line under 1 s</div>
+              <div class="h"><span class="n">12</span>{{i:ai-assistant}}AI: changed style Signs</div>
+              <div class="h"><span class="n">13</span>Undo AI change to Line 19</div>
+              <div class="h cp">{{i:checkpoint}}Before Claude Code</div>
+              <div class="h"><span class="n">14</span>{{i:ai-assistant}}Claude Code: fixed overlapping times</div>
+              <div class="h cp">{{i:checkpoint}}Before turn 4</div>
+              <div class="h"><span class="n">15</span>{{i:ai-assistant}}AI: split Line 5 in two</div>
+              <div class="h cur"><span class="n">16</span>{{i:ai-assistant}}AI: removed a duplicate</div>
+            </div>
+          </div>
+          <div class="dfoot"><span class="sp"></span><span class="btn primary">Go to step</span><span class="btn">Close</span></div>
+        </div>
+        <div class="dlg" style="width:410px">
+          <div class="title">Close Ep02.ass<span class="x">{{i:window-close}}</span></div>
+          <div class="dbody">
+            <p><b>3 changes from the AI wait for Keep in Ep02.ass.</b></p>
+            <p class="mut" style="font-size:12px">They aren't in the file. Closing without them drops them; the thread still lists what was proposed.</p>
+          </div>
+          <div class="dfoot"><span class="btn primary ring">{{i:review-keep}}Keep all and close</span><span class="btn">Close without them</span><span class="sp"></span><span class="btn">Cancel</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app's own set: review-keep (Keep, the badge and the panel), checkpoint, undo, ai-assistant, history, chevrons, notice-warning. No new glyph.</span>
+    <span><b>Colours</b> are theme.cpp's roles for this theme, default accent. Added and removed text use the success and danger hues.</span>
+    <span><b>Lines, times, names and counts</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
