@@ -67,12 +67,6 @@ Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
-Subtitles > Conversion >
-Subtitles > Conversion > Convert to ASS [GLOBAL_CONVERT_TO_ASS]
-Subtitles > Conversion > Convert to SRT [GLOBAL_CONVERT_TO_SRT]
-Subtitles > Conversion > Convert to MDVD [GLOBAL_CONVERT_TO_MDVD]
-Subtitles > Conversion > Convert to MPL2 [GLOBAL_CONVERT_TO_MPL2]
-Subtitles > Conversion > Convert to TMP [GLOBAL_CONVERT_TO_TMP]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
 Subtitles > Resample subtitles [GLOBAL_OPEN_SUBS_RESAMPLE]
 Subtitles > Set FPS >
@@ -90,8 +84,14 @@ Video > Recently opened videos > None
 Video > Open keyframes [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
+Video > Open timecodes [GLOBAL_OPEN_TIMECODES]
+Video > Recently opened timecodes >
+Video > Recently opened timecodes > None
+Video > Save timecodes [GLOBAL_SAVE_TIMECODES]
+Video > Close timecodes [GLOBAL_CLOSE_TIMECODES]
 Video > Open dummy video [GLOBAL_OPEN_DUMMY_VIDEO]
 Video > Centre times within frames [GLOBAL_CENTER_TIMES_IN_FRAMES]
+Video > Align to video… [GLOBAL_ALIGN_TO_VIDEO]
 Video > Insert start time from video [GLOBAL_SET_START_TIME]
 Video > Insert end time from video [GLOBAL_SET_END_TIME]
 Video > Shift by frames to video >
@@ -108,8 +108,10 @@ Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
 Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
 Video > -
 Video > Unload video
+Video > Reload video [GLOBAL_RELOAD_VIDEO]
 Video > Streams >
 Video > Chapters >
+Video > Video details… [GLOBAL_VIDEO_DETAILS]
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
@@ -119,6 +121,7 @@ Audio > Recently opened audio >
 Audio > Recently opened audio > None
 Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
 Audio > Close audio [GLOBAL_CLOSE_AUDIO]
+Audio > Reload audio [GLOBAL_RELOAD_AUDIO]
 Audio > -
 Audio > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
 Audio > Set audio marker to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
@@ -145,6 +148,8 @@ View > Layout > -
 View > Layout > Save layout as…
 View > Layout > Reset this layout
 View > Layout > Manage layouts…
+View > Layout > -
+View > Layout > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 View > -
 View > Panels >
 View > Panels > Video >

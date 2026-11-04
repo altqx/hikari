@@ -45,6 +45,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "settingsImport", "/en/docs/get-started/moving-from-legacy"},
     GuideLink{Window, "shapesEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "styleManager", "/en/docs/basics/styles"},
+    GuideLink{Window, "videoDetails", "/en/docs/basics/video"},
 };
 
 }

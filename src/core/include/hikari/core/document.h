@@ -266,6 +266,15 @@ public:
     // for formats other than ASS.
     bool setHikariProperty(std::u8string_view key, std::u8string value);
 
+    // [Aegisub Project Garbage] "Key: Value" lines, as Aegisub 3.5.1 keeps its project properties; a
+    // section inside embedded data is data. The last value for key.
+    std::optional<std::u8string> projectGarbage(std::u8string_view key) const;
+    // Replaces the key's (last) value or adds it to the section, which is added after Script Info when
+    // there is none. False for formats other than ASS.
+    bool setProjectGarbage(std::u8string_view key, std::u8string value);
+    // False when absent. A section this Document added goes when its last key does.
+    bool removeProjectGarbage(std::u8string_view key);
+
     // Every [Aegisub Extradata] entry as loaded, unused ones too. Lines carry their values by copy.
     const std::vector<ExtradataEntry> &extradata() const { return m_extradata; }
 

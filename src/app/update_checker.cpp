@@ -1,12 +1,14 @@
 #include "hikari/app/update_checker.h"
 
 #include "hikari/application/update_check.h"
+#include "hikari/application/update_signature.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLoggingCategory>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QUrlQuery>
@@ -14,10 +16,14 @@
 #include <algorithm>
 #include <cmath>
 #include <optional>
+#include <string_view>
+#include <utility>
 
 namespace hikari::app {
 
 namespace {
+
+Q_LOGGING_CATEGORY(lcUpdates, "hikari.updates")
 
 namespace a = application;
 
@@ -148,6 +154,7 @@ struct UpdateChecker::Run {
     std::vector<a::ReleaseEntry> releases;
     std::vector<a::ReleaseEntry> candidates;
     std::size_t next = 0;
+    QByteArray manifest; // the candidate's, while its signature downloads
     QPointer<QNetworkReply> reply;
     qint64 cap = 0;
     QTimer deadline;
@@ -160,10 +167,11 @@ UpdateFeed UpdateFeed::github()
     feed.downloadBase = QStringLiteral("https://github.com/altqx/hikari/releases/download/");
     feed.pageBase = QStringLiteral("https://github.com/altqx/hikari/releases/tag/");
     feed.paginate = true;
+    feed.keys = a::releaseKeys();
     return feed;
 }
 
-UpdateFeed UpdateFeed::local(const QUrl &base)
+UpdateFeed UpdateFeed::local(const QUrl &base, std::vector<minisign::PublicKey> keys)
 {
     QString root = base.toString();
     if (!root.endsWith(QLatin1Char('/')))
@@ -172,6 +180,7 @@ UpdateFeed UpdateFeed::local(const QUrl &base)
     feed.releases = QUrl(root + QStringLiteral("releases.json"));
     feed.downloadBase = root + QStringLiteral("download/");
     feed.pageBase = root + QStringLiteral("releases/tag/");
+    feed.keys = std::move(keys);
     return feed;
 }
 
@@ -489,6 +498,11 @@ void UpdateChecker::walk()
     while (m_run->next < m_run->candidates.size()) {
         const a::ReleaseEntry &candidate = m_run->candidates[m_run->next];
         if (hasAsset(candidate, a::kManifestAsset)) {
+            if (!hasAsset(candidate, a::kManifestSignatureAsset)) {
+                ++m_run->next;
+                skip(candidate, a::signatureProblemText(a::SignatureProblem::Missing));
+                continue;
+            }
             const QString url = assetUrl(qs(candidate.tag), qs(std::string(a::kManifestAsset)));
             m_run->cap = a::kMaxManifestBytes;
             m_run->reply = get(QUrl(url), false);
@@ -510,12 +524,38 @@ void UpdateChecker::manifestFinished()
     QNetworkReply *reply = m_run->reply;
     m_run->reply = nullptr;
     reply->deleteLater();
-    const a::ReleaseEntry candidate = m_run->candidates[m_run->next++];
+    const a::ReleaseEntry &candidate = m_run->candidates[m_run->next];
     const QVariant status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-    const QByteArray body = reply->error() == QNetworkReply::NoError && (!status.isValid() || status.toInt() == 200)
-                                ? reply->readAll()
-                                : QByteArray();
-    if (body.isEmpty() || body.size() > a::kMaxManifestBytes) {
+    m_run->manifest = reply->error() == QNetworkReply::NoError && (!status.isValid() || status.toInt() == 200)
+                          ? reply->readAll()
+                          : QByteArray();
+    if (m_run->manifest.isEmpty() || m_run->manifest.size() > a::kMaxManifestBytes) {
+        ++m_run->next;
+        walk();
+        return;
+    }
+    const QString url = assetUrl(qs(candidate.tag), qs(std::string(a::kManifestSignatureAsset)));
+    m_run->cap = qint64(minisign::kMaxSignatureBytes);
+    m_run->reply = get(QUrl(url), false);
+    connect(m_run->reply, &QNetworkReply::finished, this, &UpdateChecker::signatureFinished);
+}
+
+void UpdateChecker::signatureFinished()
+{
+    QNetworkReply *reply = m_run->reply;
+    m_run->reply = nullptr;
+    reply->deleteLater();
+    const a::ReleaseEntry candidate = m_run->candidates[m_run->next++];
+    const QByteArray body = std::exchange(m_run->manifest, {});
+    const QVariant status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    std::optional<QByteArray> signature;
+    if (reply->error() == QNetworkReply::NoError && (!status.isValid() || status.toInt() == 200))
+        signature = reply->readAll();
+    const auto problem = a::releaseSignatureProblem(body.toStdString(),
+                                                    signature ? std::optional(signature->toStdString()) : std::nullopt,
+                                                    candidate.tag, a::kManifestAsset, m_feed.keys);
+    if (problem) {
+        skip(candidate, a::signatureProblemText(*problem));
         walk();
         return;
     }
@@ -531,6 +571,11 @@ void UpdateChecker::manifestFinished()
         return;
     }
     offer(candidate, packages);
+}
+
+void UpdateChecker::skip(const a::ReleaseEntry &release, std::string_view why)
+{
+    qCInfo(lcUpdates, "Skipped %s: %.*s", release.tag.c_str(), int(why.size()), why.data());
 }
 
 void UpdateChecker::offer(const a::ReleaseEntry &release, const a::ReleasePackages &packages)

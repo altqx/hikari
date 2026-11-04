@@ -85,8 +85,11 @@ public:
     // only when Apply starts.
     Q_INVOKABLE QVariantMap start(const QString &path, bool allTabs);
     Q_INVOKABLE bool confirmReplace(bool remove);
-    // `acknowledged`: the user accepted an incomplete review.
-    Q_INVOKABLE void apply(bool acknowledged);
+    // In Review, for a folder: the output file names already in it.
+    Q_INVOKABLE QStringList existingFiles() const;
+    // `acknowledged`: the user accepted an incomplete review. `keepExisting` skips the
+    // existingFiles(); otherwise they are replaced.
+    Q_INVOKABLE void apply(bool acknowledged, bool keepExisting = false);
     Q_INVOKABLE void cancel();
     // Drops a review not applied and cancels a running job.
     Q_INVOKABLE void close();
@@ -139,6 +142,7 @@ private:
     void mkvPrepared(bool cancelled);
     void mkvApply();
     void mkvApplied(std::vector<application::MatroskaFontsSaved> saved, bool cancelled);
+    void logKept();
     void logMkvTab(std::size_t index);
 
     ui::SettingsStore &m_settings;
@@ -156,6 +160,7 @@ private:
     QString m_copyPath;
     QString m_pendingArchive;
     QString m_removeArchive;
+    QStringList m_kept;
     std::vector<application::CollectorDocument> m_documents;
     application::CollectorAction m_runAction = application::CollectorAction::Check;
     std::optional<application::CollectorReview> m_review;

@@ -65,6 +65,11 @@ export interface Request {
      * context reused over many turns. Needs cacheKey. Where no cache can be made, the request goes out whole.
      */
     explicitCache?: boolean;
+    /**
+     * False sends no cache markers, cache key or explicit cache. Providers that cache on their own (OpenAI, Gemini's
+     * implicit cache) still may.
+     */
+    caching?: boolean;
     maxOutputTokens?: number;
 }
 

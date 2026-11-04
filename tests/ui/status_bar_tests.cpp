@@ -157,11 +157,13 @@ private slots:
 
     void tooltipsAreLegacys()
     {
-        QCOMPARE(StatusBarController::tooltips(),
+        QCOMPARE(StatusBarController::tooltipsFor({}),
                  (QStringList{QString(), QStringLiteral("Video scale"), QStringLiteral("Video zoom"),
                               QStringLiteral("Video duration"), QStringLiteral("Frames per second"),
                               QStringLiteral("Video resolution"), QStringLiteral("Video aspect ratio"),
                               QStringLiteral("Subtitles resolution"), QStringLiteral("Video file name")}));
+        QCOMPARE(StatusBarController::tooltipsFor(QStringLiteral("/media/tc/ep 01.txt"))[StatusBarController::FramesPerSecond],
+                 QStringLiteral("Frames per second, average of the timecodes file ep 01.txt"));
     }
 
     void progressShowsInTheFirstField()

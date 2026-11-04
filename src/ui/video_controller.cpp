@@ -2,6 +2,8 @@
 
 #include "video_presenter.h"
 
+#include "hikari/application/video_details.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -123,6 +125,16 @@ void VideoController::cancelIndexing()
     ++m_openRequest;
     m_session.cancelOpen();
     emit changed();
+}
+
+bool VideoController::reloadVideo()
+{
+    if (!hasVideo() || m_session.dummy())
+        return false;
+    const auto frame = m_session.reportedFrame();
+    open(QString::fromStdString(m_session.path()), frame ? m_session.frameStart(*frame) : std::nullopt);
+    emit changed();
+    return true;
 }
 
 bool VideoController::unloadVideo()
@@ -328,15 +340,17 @@ void VideoController::openVideo(const QString &path)
         emit offerWithdrawn();
 }
 
-void VideoController::open(const QString &path)
+void VideoController::open(const QString &path, std::optional<core::DocumentTime> at)
 {
     const std::uint64_t request = ++m_openRequest;
     m_requestedVideo = path;
-    auto asVideo = [self = QPointer<VideoController>(this), request, path](application::IndexRequest index) {
+    auto asVideo = [self = QPointer<VideoController>(this), request, path, at](application::IndexRequest index) {
         if (!self || request != self->m_openRequest)
             return;
         self->m_session.open(path.toStdString(), std::move(index));
         emit self->changed();
+        if (at)
+            self->m_session.seekTo(*at);
     };
     if (m_filter && !application::isDummyVideo(path.toStdString()))
         m_filter(path, std::move(asVideo));
@@ -492,6 +506,80 @@ void VideoController::setActiveLineTimes(std::optional<std::pair<core::DocumentT
         return;
     m_lineTimes = times;
     emit changed();
+}
+
+namespace {
+
+// "TV.709" as "BT.709, TV range".
+QString matrixText(const std::string &name)
+{
+    if (name == "None")
+        return QCoreApplication::translate("HikariSub.Video", "None");
+    const auto dot = name.find('.');
+    if (dot == std::string::npos)
+        return QString::fromStdString(name);
+    const std::string range = name.substr(0, dot), space = name.substr(dot + 1);
+    const QString standard = space == "709"    ? QStringLiteral("BT.709")
+                             : space == "601"  ? QStringLiteral("BT.601")
+                             : space == "240M" ? QStringLiteral("SMPTE 240M")
+                                               : QString::fromStdString(space);
+    //: Video details: a colour matrix and its range, "BT.709, TV range"
+    const QString full = range == "PC" ? QCoreApplication::translate("HikariSub.Video", "PC range")
+                                       : QCoreApplication::translate("HikariSub.Video", "TV range");
+    return QCoreApplication::translate("HikariSub.Video", "%1, %2").arg(standard, full);
+}
+
+}
+
+QVariantMap VideoController::details() const
+{
+    const auto d = application::videoDetails(m_session);
+    if (!d)
+        return {};
+    QVariantMap out;
+    out[QStringLiteral("file")] = m_session.dummy() ? QCoreApplication::translate("HikariSub.Video", "Dummy video")
+                                                    : QDir::toNativeSeparators(QString::fromStdString(d->path));
+    out[QStringLiteral("resolution")] = d->aspect.num > 0
+                                            ? QStringLiteral("%1 × %2 (%3:%4)")
+                                                  .arg(d->width)
+                                                  .arg(d->height)
+                                                  .arg(d->aspect.num)
+                                                  .arg(d->aspect.den)
+                                            : QStringLiteral("%1 × %2").arg(d->width).arg(d->height);
+    const QString decimal = QString::fromStdString(application::rateDecimal(d->fps));
+    if (d->variableRate)
+        out[QStringLiteral("frameRate")] = QCoreApplication::translate("HikariSub.Video", "Variable");
+    else if (application::rateIsRounded(d->fps))
+        out[QStringLiteral("frameRate")] = QCoreApplication::translate("HikariSub.Video", "%1 fps (%2/%3)")
+                                               .arg(decimal)
+                                               .arg(d->fps.num)
+                                               .arg(d->fps.den);
+    else
+        out[QStringLiteral("frameRate")] = QCoreApplication::translate("HikariSub.Video", "%1 fps").arg(decimal);
+    out[QStringLiteral("length")] = QCoreApplication::translate("HikariSub.Video", "%n frames (%1)", "", d->frames)
+                                        .arg(QString::fromStdString(application::lengthText(d->lastFrameMs)));
+    const auto &format = d->pixelFormat;
+    const QString chroma = QString::fromStdString(application::chromaSubsampling(format));
+    QString colourSpace;
+    if (format.name.empty())
+        colourSpace = QCoreApplication::translate("HikariSub.Video", "Unknown");
+    else if (format.rgb)
+        colourSpace = QCoreApplication::translate("HikariSub.Video", "RGB, %1-bit").arg(format.bitDepth);
+    else if (format.components < 3)
+        colourSpace = QCoreApplication::translate("HikariSub.Video", "Greyscale, %1-bit").arg(format.bitDepth);
+    else if (chroma.isEmpty())
+        colourSpace = QCoreApplication::translate("HikariSub.Video", "YUV, %1-bit").arg(format.bitDepth);
+    else
+        colourSpace =
+            QCoreApplication::translate("HikariSub.Video", "YUV %1, %2-bit").arg(chroma).arg(format.bitDepth);
+    out[QStringLiteral("colourSpace")] = colourSpace;
+    out[QStringLiteral("pixelFormat")] = QString::fromStdString(format.name);
+    out[QStringLiteral("matrix")] =
+        d->tagged ? matrixText(d->matrix)
+                  : QCoreApplication::translate("HikariSub.Video", "%1 (not tagged; guessed from the size)")
+                        .arg(matrixText(d->matrix));
+    out[QStringLiteral("scriptMatrix")] = d->scriptMatrix.empty() ? QString() : matrixText(d->scriptMatrix);
+    return out;
 }
 
 }

@@ -61,6 +61,7 @@ Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
 Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
 Grid > Make line group [GRID_TREE_MAKE]
+Grid > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
 Grid > -
 Grid > Select lines visible on video [GRID_SELECT_VISIBLE_LINES]
 Grid > Show subtitles preview [GRID_SHOW_PREVIEW]
@@ -88,6 +89,7 @@ Grid group row > Select the group’s lines
 Grid group row > Add 1 selected line(s)
 Grid group row > Copy line group
 Grid group row > Change description…
+Grid group row > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
 Grid group row > -
 Grid group row > Ungroup
 Video
@@ -109,6 +111,9 @@ Video > Export frame > Copy [VIDEO_COPY_FRAME_TO_CLIPBOARD]
 Video > Export frame > -
 Video > Export frame > Save with subtitles as PNG… [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
 Video > Export frame > Copy with subtitles [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
+Video > Export frame > -
+Video > Export frame > Save subtitles only as PNG… [VIDEO_SAVE_SUBTITLES_TO_PNG]
+Video > Export frame > Copy subtitles only [VIDEO_COPY_SUBTITLES_TO_CLIPBOARD]
 Video > Audio track >
 Video > Chapters >
 Video > -
@@ -141,6 +146,9 @@ Full-screen video > Export frame > Copy [VIDEO_COPY_FRAME_TO_CLIPBOARD]
 Full-screen video > Export frame > -
 Full-screen video > Export frame > Save with subtitles as PNG… [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
 Full-screen video > Export frame > Copy with subtitles [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
+Full-screen video > Export frame > -
+Full-screen video > Export frame > Save subtitles only as PNG… [VIDEO_SAVE_SUBTITLES_TO_PNG]
+Full-screen video > Export frame > Copy subtitles only [VIDEO_COPY_SUBTITLES_TO_CLIPBOARD]
 Full-screen video > Audio track >
 Full-screen video > Chapters >
 Full-screen video > -
@@ -192,6 +200,9 @@ Grid panel options > Move tab left
 Grid panel options > Move tab right
 Grid panel options > Float
 Grid panel options > -
+Grid panel options > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Grid panel options > -
+Grid panel options > -
 Grid panel options > Close
 Document tab
 Document tab > New tab
@@ -234,6 +245,11 @@ Automation macro > Run
 Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
+Automation recommended script
+Automation recommended script > Show in Scripts
+Automation recommended script > Open project page
+Automation recommended script > -
+Automation recommended script > Uninstall…
 Home row
 Home row > Open
 Home row > Show in folder

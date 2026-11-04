@@ -12,6 +12,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
@@ -22,7 +23,10 @@
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/aegisub_frame_times.h"
+#include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
 #include "hikari/application/document_files.h"
@@ -65,6 +69,8 @@
 #include "video_fullscreen_controller.h"
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_settings.h"
 #include "hikari/app/review_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -87,6 +93,7 @@
 
 #include <functional>
 #include <deque>
+#include <expected>
 #include <map>
 #include <memory>
 #include <set>
@@ -109,10 +116,15 @@ signals:
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
     void resolutionMismatch(const QVariantMap &sizes);
+    // kind: missingMatrix, matrixMismatch, missingLayoutRes, layoutResMismatch, untaggedMatrix or hdr.
+    void videoPropertyQuestion(const QVariantMap &question);
     void recentChanged();
     // description: the group the command would break (0: it would make a new
     // malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
+    // An opened file has Aegisub folds that Convert Aegisub folds to line groups would convert.
+    void aegisubFoldsFound(qulonglong document, int folds);
+    void foldsConverted(int converted, int skipped);
     void spellingChanged();
     // The dictionary changed; a running check starts over with it.
     void spellCheckerRestarted();
@@ -123,7 +135,7 @@ signals:
     void audioOutputChanged();
     // kind: "styles" (some chosen styles missing), "noStyles" or "confirmFiles"
     // (replace in files); each waits for answerFindQuestion(id, ...).
-    void findQuestion(int id, const QString &kind, const QVariantMap &question);
+    void findQuestion(int id, const QString &kind, const QVariantMap &question, int shellWindow);
     void findResultsChanged();
     // Also after its questions; settings: the tab as it is now, with the recent lists.
     void findFinished(const QVariantMap &settings);
@@ -151,6 +163,8 @@ public:
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
+        // Aegisub 3.5's questions and warnings about the YCbCr Matrix and LayoutRes when a video opens.
+        bool askVideoProperties = false;
         // Empty: in memory only.
         QString settingsFile;
         // Most preferred first; on the first start a leading Polish one picks Polish for
@@ -301,7 +315,8 @@ public:
     // "dialog" when Save must ask for a file, "readonly" for a read-only file, "" to
     // save in place.
     Q_INVOKABLE QString saveRoute() const;
-    // {folder, file, filter, extension}.
+    // {folder, file, filter, filters, formats, extension}: formats[i] is "ass" for the
+    // filter that converts to ASS, else "".
     Q_INVOKABLE QVariantMap saveDialogValues() const;
     // Adds the format's extension when missing. "readonly" asks again; "" when the
     // save started.
@@ -312,13 +327,18 @@ public:
     // editing target).
     Q_INVOKABLE QString saveRouteFor(qulonglong id) const;
     Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
-    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file);
+    // format "ass" converts a Document of another format to ASS before it is saved.
+    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file, const QString &format = {});
+    // {} when saving as file in format keeps the Document's format; else {convert: true} with
+    // changes (what converting to ASS does, to confirm first) or problem.
+    Q_INVOKABLE QVariantMap assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const;
     Q_INVOKABLE bool saveDocument(qulonglong id);
     Q_INVOKABLE bool turnOffTranslationMode();
     // translationHint: why the mode is unavailable (a PlainText Document); else empty.
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
+    Q_PROPERTY(QString timecodesFile READ timecodesFile NOTIFY timecodesChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
@@ -399,25 +419,14 @@ public:
     // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
     // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
     // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
-    Q_INVOKABLE QVariantMap shiftPreview(const QString &tool);
+    Q_INVOKABLE QVariantMap shiftPreview(const QString &tool, int shellWindow);
     Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.
     Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
     // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
-    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix, resolutionWidth,
-    // resolutionHeight}.
-    Q_INVOKABLE QVariantMap conversionOptions() const;
-    Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
-    // "ass", "srt", "mdvd", "mpl2", "tmp"; none in translation mode.
-    Q_INVOKABLE QStringList conversionTargets() const;
-    Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {ok, problem, fpsInvalid, losses, kinds ("warning" removed, else "info")};
-    // acceptConversion applies it unless the Document or the options changed since.
-    Q_INVOKABLE QVariantMap previewConversion(const QString &target);
-    Q_INVOKABLE bool acceptConversion();
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
@@ -425,6 +434,10 @@ public:
                               bool adjustRotations = true);
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
+    Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
+    // The question's setting then does what `choice` did: 0 leaves things as they are.
+    Q_INVOKABLE void stopAskingVideoProperty(const QString &kind, int choice);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
@@ -466,7 +479,7 @@ public:
     // restarted}: found false: no errors; available false: no dictionary; line: the
     // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
     // the word was shown, so the walk started again from it.
-    Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options);
+    Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options, int shellWindow);
     Q_INVOKABLE QVariantMap spellCheckerActivated(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplace(const QString &replacement, const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplaceAll(const QString &misspell, const QString &replacement,
@@ -474,7 +487,7 @@ public:
     Q_INVOKABLE QVariantMap spellCheckerIgnore(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerIgnoreAll(const QString &word, const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerAddWord(const QString &word, const QVariantMap &options);
-    Q_INVOKABLE void closeSpellChecker();
+    Q_INVOKABLE void closeSpellChecker(int shellWindow);
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
     Q_PROPERTY(bool grammarOn READ grammarOn NOTIFY grammarChanged)
@@ -501,14 +514,14 @@ public:
     // count), found, line, groupName, message, before, text, after, suggestions,
     // replacement, word, problem}; found false with done: no findings.
     // grammarWalkIgnoreRule's also has ignoredGroup. Only dialogue Lines are checked.
-    Q_INVOKABLE QVariantMap startGrammarWalk();
-    Q_INVOKABLE QVariantMap grammarWalkState();
+    Q_INVOKABLE QVariantMap startGrammarWalk(int shellWindow);
+    Q_INVOKABLE QVariantMap grammarWalkState(int shellWindow);
     Q_INVOKABLE QVariantMap cancelGrammarWalk();
     Q_INVOKABLE QVariantMap grammarWalkReplace(const QString &replacement);
     Q_INVOKABLE QVariantMap grammarWalkIgnore();
     Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
     Q_INVOKABLE QVariantMap grammarWalkAddWord();
-    Q_INVOKABLE void closeGrammarWalk();
+    Q_INVOKABLE void closeGrammarWalk(int shellWindow);
     // {rows, unlisted}: a row for each of the first core::kListedProblems ({document,
     // line (ids), number (the Grid's 1-based row), check, detail}), unlisted the rest.
     Q_INVOKABLE QVariantMap checkKaraoke() const;
@@ -534,9 +547,9 @@ public:
     // and Replace all work in the values' scope. findFinished ends it. Ignored while
     // findBusy.
     Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
-    // {total, current} in the editing target; current is 0 when the last match is not
-    // one of them.
-    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings);
+    // {total, current} in the shell window's current tab; current is 0 when the last match
+    // is not one of them.
+    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings, int shellWindow);
     // Empty unless the values hold an invalid regular expression.
     Q_INVOKABLE QString findPatternError(const QVariantMap &settings) const;
     Q_INVOKABLE void findNext();
@@ -545,12 +558,12 @@ public:
     Q_INVOKABLE void answerFindQuestion(int id, const QString &answer);
     bool findBusy() const;
     // The text selected in the Line editor, or find as it is.
-    Q_INVOKABLE QString findReplaceActivated(const QString &find);
+    Q_INVOKABLE QString findReplaceActivated(const QString &find, int shellWindow);
     Q_INVOKABLE void resetFindReplace();
     // Rows {header, text, line, before, match, after, checked, visible}.
-    Q_INVOKABLE QVariantList findResults() const;
-    Q_INVOKABLE bool findResultsShown() const;
-    Q_INVOKABLE bool canReplaceFindResults() const;
+    Q_INVOKABLE QVariantList findResults(int shellWindow) const;
+    Q_INVOKABLE bool findResultsShown(int shellWindow) const;
+    Q_INVOKABLE bool canReplaceFindResults(int shellWindow) const;
     Q_INVOKABLE void checkFindResults(bool check);
     Q_INVOKABLE void toggleFindResult(int row);
     Q_INVOKABLE void toggleFindGroup(int row);
@@ -573,6 +586,8 @@ public:
     Q_INVOKABLE bool addLinesToGroup(qulonglong description);
     Q_INVOKABLE bool copyGroup(qulonglong description);
     Q_INVOKABLE QString groupTitle(qulonglong description) const;
+    Q_INVOKABLE bool canConvertFolds() const;
+    Q_INVOKABLE bool convertFoldsToGroups();
     // key: "start", "end", "style", "actor", "effect" or "layer"; text keys use
     // the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
@@ -643,6 +658,15 @@ public:
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
+    // Empty: loaded; else the message.
+    Q_INVOKABLE QString openTimecodesFile(const QString &path);
+    // Empty: saved; else the message.
+    Q_INVOKABLE QString saveTimecodesFile(const QString &path);
+    Q_INVOKABLE void closeTimecodes();
+    Q_INVOKABLE QVariantList recentTimecodes();
+    Q_INVOKABLE QUrl timecodesDialogFolder() const;
+    // The current tab's loaded timecodes file; empty when none.
+    QString timecodesFile() const;
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
     // The error to log, else empty.
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
@@ -674,7 +698,7 @@ public:
 
     ui::ShellController &shell() const { return *activeViews().shell; }
     ui::LineEditorController &editor() const { return *activeViews().editor; }
-    ui::TemplateEditorController &templateEditor() { return *m_templateEditor; }
+    ui::TemplateEditorController &templateEditor() const { return *activeViews().templateEditor; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
@@ -701,7 +725,8 @@ public:
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
-    KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; }
+    KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
+    AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -733,6 +758,7 @@ public:
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
+    AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
@@ -883,6 +909,7 @@ signals:
     void documentWriteFailed(qulonglong document);
     // A later start handed files over, about to open.
     void filesForwarded();
+    void timecodesChanged();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
@@ -963,12 +990,27 @@ private:
     std::unique_ptr<ui::SettingsStore> m_settings;
     std::unique_ptr<SettingsImportStore> m_importStore;
     std::unique_ptr<SettingsImportController> m_settingsImport;
+    class FindHost;
+    friend class FindHost;
+    struct GrammarWalk;
     struct WindowViews {
+        WindowViews();
+        WindowViews(const WindowViews &) = delete;
+        WindowViews &operator=(const WindowViews &) = delete;
+        ~WindowViews();
         std::unique_ptr<ui::ShellController> shell;
         std::unique_ptr<ui::LineEditorController> editor;
         std::unique_ptr<ui::VisualToolsController> visualTools;
         std::unique_ptr<ui::VideoViewController> videoView;
         std::unique_ptr<ui::StatusBarController> statusBar;
+        std::unique_ptr<ui::TemplateEditorController> templateEditor;
+        std::unique_ptr<KanjiTimerController> kanjiTimer;
+        std::unique_ptr<FindHost> findHost;
+        std::unique_ptr<application::FindReplace> find;
+        std::optional<application::DocumentId> findDocument;
+        std::unique_ptr<application::SpellCheckWalk> spellWalk;
+        std::optional<application::DocumentId> spellWalkDocument;
+        std::unique_ptr<GrammarWalk> grammarWalk;
         std::optional<application::DocumentId> editorDocument;
         std::uint64_t shownRevision = 0;
     };
@@ -979,10 +1021,14 @@ private:
     const WindowViews &activeViews() const { return views(m_workspace.activeWindow()); }
     std::vector<WindowViews *> allViews();
     void makeViews(WindowViews &views, int shellWindow);
+    void makeTemplateEditor(WindowViews &views, int shellWindow);
+    void makeKanjiTimer(WindowViews &views, int shellWindow);
+    void commitTemplates();
+    bool kanjiPending(application::DocumentId document);
+    bool applyKanji(application::DocumentId document, application::EditSession &session);
     void refreshWindowViews(int shellWindow);
     void refreshInactiveViews(int shellWindow, int left);
     int m_viewsWindow = 0;
-    std::optional<application::DocumentId> m_findDocument;
     application::EditSession *windowSession(int shellWindow) const;
     // MUST KILL: hidden until MW3 #631 gives each window its own picture
     bool pictureShowsWindow(int shellWindow) const;
@@ -992,7 +1038,6 @@ private:
     bool m_selectLinesOpened = false;
     application::OptionsLists m_optionsLists;
     std::unique_ptr<AutomationShell> m_automation;
-    std::unique_ptr<ui::TemplateEditorController> m_templateEditor;
     bool m_videoShowsTemplate = false;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
@@ -1000,6 +1045,8 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
+    std::unique_ptr<AiMcp> m_aiMcp;
+    std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
@@ -1016,7 +1063,8 @@ private:
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
-    std::unique_ptr<KanjiTimerController> m_kanjiTimer;
+    std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    QString m_readingDictionary;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;
@@ -1054,26 +1102,21 @@ private:
     std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
-    struct ConversionPlan {
-        std::uint64_t document = 0;
-        std::uint64_t revision = 0;
-        QVariantMap options;
-        float frameMs = 0.f;
-        core::Document converted;
-    };
-    std::unique_ptr<ConversionPlan> m_conversionPlan;
-    std::set<std::uint64_t> m_formatChanged;
+    std::optional<core::ConversionOptions> assConversionOptions() const;
+    std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
+    bool convertToAss(application::DocumentId document);
     QString m_resolutionCheckedVideo;
+    bool m_askVideoProperties = false;
     void checkResolution();
+    void checkVideoMatrix();
+    void checkLayoutResolution();
     QStringList m_selectRecent;
     void destroyDialogs();
     void resetAllSettings();
-    class FindHost;
-    friend class FindHost;
-    std::unique_ptr<FindHost> m_findHost;
-    std::unique_ptr<application::FindReplace> m_find;
     bool m_findOpened = false;
-    void createFindReplace();
+    void createFindReplace(WindowViews &views, int shellWindow);
+    void setFindRecent(WindowViews &views);
+    application::FindReplace &finder() const { return *activeViews().find; }
     QString m_replaceBackup;
     std::function<int(int, const QString &)> m_findQuestionHandler;
     int m_findQuestionId = 0;
@@ -1081,8 +1124,8 @@ private:
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
-    void saveFindRecent(const application::FindReplaceSettings &window);
-    void findFinished();
+    void saveFindRecent(int shellWindow, const application::FindReplaceSettings &window);
+    void findFinished(int shellWindow);
     QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     application::SubtitleComparison m_comparison;
@@ -1145,7 +1188,7 @@ private:
     std::optional<std::uint64_t> m_videoRevision;
     bool m_videoShowsDraft = false;
     std::vector<std::byte> m_videoScript;
-    QString m_editorTimebaseVideo;
+    std::optional<std::pair<std::string, std::uint64_t>> m_editorTimebaseFor;
     std::optional<core::LineId> m_videoLine;
     struct LineChangeOrigin {
         bool gridClick = false;
@@ -1192,9 +1235,10 @@ private:
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
-    QVariantMap spellCheckState(bool changed, const QString &problem = {});
+    std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
+    QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
-    void showSpellCheckWord();
+    void showSpellCheckWord(int shellWindow);
     std::unique_ptr<application::SpellChecker> m_spellChecker;
     // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
     bool m_spellingStarted = false;
@@ -1209,8 +1253,6 @@ private:
     bool m_spellingOn = true;
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;
-    std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
-    std::optional<application::DocumentId> m_spellWalkDocument;
     struct GrammarCheck {
         std::u16string raw;
         core::grammar::CheckedText text;
@@ -1224,6 +1266,7 @@ private:
             bool handled = false;
         };
         application::DocumentId document;
+        int window = 0;
         bool translation = false;
         std::vector<core::LineId> lines;
         std::map<std::size_t, GrammarCheck> checks;
@@ -1244,7 +1287,7 @@ private:
     backends::HarperClient *grammarClient();
     QJsonObject grammarSettings() const;
     void applyGrammarSettings();
-    void grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after);
+    void grammarWalkSettingsChanged(GrammarWalk &walk, const QJsonObject &before, const QJsonObject &after);
     void scheduleGrammar();
     void checkEditorGrammar();
     void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
@@ -1255,11 +1298,15 @@ private:
     std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
                                                   int end) const;
     const backends::GrammarFinding *editorGrammarFinding(int role, int position) const;
-    void pumpGrammarWalk();
-    const core::LineRecord *grammarWalkLine(const application::EditSession &session, std::size_t index);
-    void nextGrammarFinding();
-    void showGrammarFinding();
-    bool grammarWalkStale();
+    GrammarWalk *grammarWalkOf(int shellWindow);
+    std::vector<GrammarWalk *> grammarWalks();
+    void pumpGrammarWalk(int shellWindow);
+    static const core::LineRecord *grammarWalkLine(GrammarWalk &walk, const application::EditSession &session,
+                                                   std::size_t index);
+    static void nextGrammarFinding(GrammarWalk &walk);
+    void showGrammarFinding(int shellWindow);
+    bool grammarWalkStale(int shellWindow);
+    void stopGrammarWalk(GrammarWalk &walk);
     QVariantMap grammarWalkProblem(const QString &problem);
     QString m_harperProgram;
     QString m_grammarDir;
@@ -1275,7 +1322,6 @@ private:
     bool m_grammarApplyPending = false;
     QString m_grammarWords;
     QStringList m_grammarOwnWords;
-    std::unique_ptr<GrammarWalk> m_grammarWalk;
     std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
     std::unique_ptr<ui::AudioController> m_audio;
     QList<QMetaObject::Connection> m_audioConnections;
@@ -1286,6 +1332,7 @@ private:
     std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine;
     std::optional<application::LegacyTimebase> m_audioTimebase;
     std::string m_audioTimebasePath;
+    std::uint64_t m_audioTimebaseSerial = 0;
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir;
@@ -1314,6 +1361,12 @@ private:
     bool keyframesWithoutVideo(const QString &path, QString &problem);
     application::RecentFiles m_recentVideo;
     application::RecentFiles m_recentKeyframes;
+    application::RecentFiles m_recentTimecodes;
+    void rememberRecentTimecodes(const QString &path);
+    std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
+    void showTabTimecodes(std::optional<application::DocumentId> document);
+    QString tabTimecodes(std::optional<application::DocumentId> document) const;
+    bool m_enteringTabMedia = false;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
     std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
     QString m_recentVideoSeen;
@@ -1330,6 +1383,10 @@ private:
         int position = 0;
         QString audio;
         QString keyframes;
+        QString timecodes;
+        std::optional<application::AegisubFrameTimes> frameTimes;
+        bool timecodesDropped = false;
+        bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
     };
@@ -1348,6 +1405,10 @@ private:
         std::vector<std::pair<QDateTime, qint64>> stamps;
     };
     std::map<std::uint64_t, TabMedia> m_tabMedia;
+    void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);
+    void warnShortTimecodes(TabMedia &media);
+    std::vector<application::ProjectGarbageEdit> timecodesGarbage(application::DocumentId document,
+                                                                   const application::DestinationKey &destination) const;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
     std::vector<application::DocumentId> m_closingTabs;

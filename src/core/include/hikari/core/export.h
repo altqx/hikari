@@ -6,11 +6,15 @@
 #include <cstdint>
 #include <optional>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace hikari::core {
 
-enum class ExportFormat { Srt, WebVtt, Sbv, PlainText, MicroDvd, Mpl2, TMPlayer };
+enum class ExportFormat { Srt, WebVtt, Sbv, PlainText, MicroDvd, Mpl2, TMPlayer, Ttml, Dfxp };
+
+// Netflix keeps italics only: white text, centred, at the top or the bottom, with times in frames.
+enum class TtmlProfile { Generic, Netflix };
 
 struct ExportOptions {
     // Only these Lines; every Line when empty.
@@ -26,6 +30,11 @@ struct ExportOptions {
     bool vttKaraoke = false;
     bool textTimes = false;
     bool textActors = false;
+    TtmlProfile ttmlProfile = TtmlProfile::Generic;
+    // Times as frames at `fps`; always with the Netflix profile.
+    bool ttmlFrames = false;
+    // xml:lang, a BCP 47 tag or empty.
+    std::u8string language;
     double fps = 24000.0 / 1001.0;
 };
 
@@ -38,8 +47,8 @@ enum class ExportLoss : std::uint32_t {
     Fade = 1u << 4,
     Rotation = 1u << 5,   // \fr \frx \fry \frz \fax \fay \org
     Font = 1u << 6,       // \fn \fs \fscx \fscy \fsp
-    Outline = 1u << 7,    // borders, shadows, blur, alphas, \3c \4c
-    Colour = 1u << 8,     // \c \1c \2c
+    Outline = 1u << 7,
+    Colour = 1u << 8,
     Formatting = 1u << 9, // \i \b \u \s
     Position = 1u << 10,  // \pos \an \a, or a Style that is not bottom centre
     Karaoke = 1u << 11,
