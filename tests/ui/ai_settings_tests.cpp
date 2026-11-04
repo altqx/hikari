@@ -6,13 +6,19 @@
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_signin.h"
+#include "hikari/backends/desktop_handoff.h"
 #include "local_release.h"
 #include "minisign_signer.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDateTime>
+#include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QFileInfo>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
@@ -111,6 +117,8 @@ protected:
                     backends::ai::SidecarSource::local(release.base(), {signer.publicKey()}));
                 return d->installedProgram() ? nullptr : std::move(d);
             };
+        p.findCodex = [this](std::function<void(std::optional<backends::ai::CodexCli>)> done) { done(codexCli); };
+        p.codexAuthPath = dir.filePath(QStringLiteral("codex/auth.json"));
         return p;
     }
 
@@ -143,6 +151,28 @@ protected:
     static QString draftState(const app::AiSettings &s) { return s.draft().value(QStringLiteral("state")).toString(); }
     static QString draftError(const app::AiSettings &s) { return s.draft().value(QStringLiteral("error")).toString(); }
     static QVariantMap row(const app::AiSettings &s, int i) { return s.providers().value(i).toMap(); }
+    static QVariant codex(const app::AiSettings &s, const char *key) { return s.codex().value(QLatin1String(key)); }
+
+    void SetUp() override
+    {
+        previousRoutes = backends::desktop::replaceRoutes({.openUrl = [this](const QUrl &url) {
+            opened.push_back(url);
+            return true;
+        }});
+    }
+    void TearDown() override { backends::desktop::replaceRoutes(previousRoutes); }
+
+    /// The fake sidecar's next sign-ins end with `outcome`: ok, hang, store-other or a failure's kind.
+    void fakeSignIns(app::AiFeatures &features, const char *outcome)
+    {
+        features.setDrafting(true);
+        backends::ai::AiSidecarHost *host = features.sidecarForAction();
+        features.setDrafting(false);
+        ASSERT_TRUE(host);
+        bool answered = false;
+        host->request("fake.signin", api::Json(outcome), [&](backends::ai::SidecarResult) { answered = true; });
+        ASSERT_TRUE(waitFor([&] { return answered; }));
+    }
 
     QTemporaryDir dir;
     ui::SettingsStore settings;
@@ -151,6 +181,9 @@ protected:
     test::LocalRelease release;
     test::MinisignSigner signer;
     int hostsBuilt = 0;
+    std::optional<backends::ai::CodexCli> codexCli;
+    std::vector<QUrl> opened;
+    backends::desktop::Routes previousRoutes;
 };
 
 }
@@ -392,4 +425,200 @@ TEST_F(AiSettingsTest, TheCachingSettingReachesEveryRequest)
     ASSERT_EQ(sent.size(), 4u);
     EXPECT_EQ(*sent[1].find("params")->find("request")->find("caching"), api::Json(false));
     EXPECT_EQ(sent[3].find("params")->find("request")->find("caching"), nullptr);
+}
+
+TEST_F(AiSettingsTest, CodexIsFoundOnPathWithItsVersion)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.checkCodex();
+    EXPECT_FALSE(codex(page, "found").toBool());
+    EXPECT_FALSE(codex(page, "signedIn").toBool());
+    EXPECT_FALSE(codex(page, "canImport").toBool());
+
+    codexCli = backends::ai::CodexCli{QStringLiteral("/usr/local/bin/codex"), QStringLiteral("0.58.0")};
+    page.checkCodex();
+    EXPECT_TRUE(codex(page, "found").toBool());
+    EXPECT_EQ(codex(page, "path").toString(), QStringLiteral("/usr/local/bin/codex"));
+    EXPECT_EQ(codex(page, "version").toString(), QStringLiteral("0.58.0"));
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, ACodexSignInShowsTheCodeOpensItsPageOnlyWhenAskedAndCancels)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    fakeSignIns(features, "hang");
+    page.signInCodex(false);
+    ASSERT_TRUE(waitFor([&] { return codex(page, "state").toString() == QLatin1String("code"); }));
+    EXPECT_EQ(codex(page, "userCode").toString(), QStringLiteral("FAKE-1234"));
+    EXPECT_GT(codex(page, "expiresAt").toLongLong(), QDateTime::currentMSecsSinceEpoch());
+    EXPECT_TRUE(codex(page, "browserAvailable").toBool());
+    EXPECT_TRUE(opened.empty());
+    page.openSignInPage();
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(opened[0], QUrl(QStringLiteral("https://auth.openai.com/codex/device")));
+
+    page.cancelSignIn();
+    EXPECT_EQ(codex(page, "state").toString(), QString());
+    EXPECT_EQ(codex(page, "error").toString(), QString());
+    EXPECT_FALSE(codex(page, "signedIn").toBool());
+    EXPECT_FALSE(chain.keys.contains(backends::ai::kCodexSecret));
+}
+
+TEST_F(AiSettingsTest, TheBrowserSignInOpensAuthOpenaiComAtOnce)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    fakeSignIns(features, "hang");
+    page.signInCodex(true);
+    ASSERT_TRUE(waitFor([&] { return codex(page, "state").toString() == QLatin1String("browser"); }));
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(opened[0].host(), QStringLiteral("auth.openai.com"));
+    EXPECT_EQ(opened[0].path(), QStringLiteral("/oauth/authorize"));
+    page.cancelSignIn();
+}
+
+TEST_F(AiSettingsTest, ASignedInCodexShowsItsEmailUntilSignedOut)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.signInCodex(false);
+    ASSERT_TRUE(waitFor([&] { return codex(page, "signedIn").toBool(); }));
+    EXPECT_EQ(codex(page, "email").toString(), QStringLiteral("owner@example.com"));
+    EXPECT_EQ(codex(page, "state").toString(), QString());
+    ASSERT_TRUE(chain.keys.contains(backends::ai::kCodexSecret));
+    EXPECT_EQ(backends::ai::sessionFromJson(chain.keys.at(backends::ai::kCodexSecret))->accountId, "acct-fake");
+
+    page.signOutCodex();
+    EXPECT_FALSE(codex(page, "signedIn").toBool());
+    EXPECT_FALSE(chain.keys.contains(backends::ai::kCodexSecret));
+}
+
+TEST_F(AiSettingsTest, AWorkspaceWithoutCodesSaysSoAndNothingIsStored)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    fakeSignIns(features, "codesOff");
+    page.signInCodex(false);
+    ASSERT_TRUE(waitFor([&] { return codex(page, "error").toString() == QLatin1String("codesOff"); }));
+    EXPECT_EQ(codex(page, "host").toString(), QStringLiteral("auth.openai.com"));
+    EXPECT_FALSE(codex(page, "signedIn").toBool());
+    EXPECT_TRUE(chain.keys.empty());
+    page.cancelSignIn();
+    EXPECT_EQ(codex(page, "error").toString(), QString());
+}
+
+TEST_F(AiSettingsTest, ImportCopiesTheCodexSignInAndLeavesAuthJsonAlone)
+{
+    const QString path = dir.filePath(QStringLiteral("codex/auth.json"));
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    const auto jwt = [](const QByteArray &claims) {
+        return "e30." + claims.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals) + ".sig";
+    };
+    const QByteArray contents = R"({"tokens":{"id_token":")" + jwt(R"({"email":"cli@example.com"})") +
+                                R"(","access_token":"a.b.c","refresh_token":"r","account_id":"acct"}})";
+    {
+        QFile file(path);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(contents);
+    }
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.checkCodex();
+    EXPECT_TRUE(codex(page, "canImport").toBool());
+    page.importCodex();
+    EXPECT_TRUE(codex(page, "signedIn").toBool());
+    EXPECT_EQ(codex(page, "email").toString(), QStringLiteral("cli@example.com"));
+    QFile file(path);
+    ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+    EXPECT_EQ(file.readAll(), contents);
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AnExpiredSessionIsRefreshedAndARefusedRefreshAsksToSignInAgain)
+{
+    const backends::ai::CodexSession old{.access = "old", .refresh = "r", .idToken = "i", .accountId = "a",
+                                         .email = "owner@example.com", .expiresAt = 1};
+    chain.keys[backends::ai::kCodexSecret] = backends::ai::sessionJson(old);
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    fakeSignIns(features, "ok");
+    page.checkCodex();
+    ASSERT_TRUE(waitFor([&] {
+        return backends::ai::sessionFromJson(chain.keys.at(backends::ai::kCodexSecret))->access == "fake-access-2";
+    }));
+    EXPECT_TRUE(codex(page, "signedIn").toBool());
+
+    chain.keys[backends::ai::kCodexSecret] = backends::ai::sessionJson(old);
+    fakeSignIns(features, "expired");
+    page.checkCodex();
+    ASSERT_TRUE(waitFor([&] { return codex(page, "error").toString() == QLatin1String("expired"); }));
+    EXPECT_FALSE(codex(page, "signedIn").toBool());
+}
+
+TEST_F(AiSettingsTest, SigningInToOpenRouterAddsTheProviderWithItsNewKey)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.openDraft();
+    fakeSignIns(features, "hang");
+    page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
+    EXPECT_EQ(draftState(page), QStringLiteral("signingIn"));
+    ASSERT_TRUE(waitFor([&] { return !opened.empty(); }));
+    EXPECT_EQ(opened[0].host(), QStringLiteral("openrouter.ai"));
+    page.cancelSignIn();
+    EXPECT_EQ(draftState(page), QString());
+    EXPECT_TRUE(page.providers().isEmpty());
+
+    fakeSignIns(features, "ok");
+    QSignalSpy saved(&page, &app::AiSettings::draftSaved);
+    page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
+    ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
+    EXPECT_EQ(chain.keys.at("openrouter"), "sk-or-v1-fake");
+    EXPECT_FALSE(chain.keys.contains("openrouter-key"));
+    EXPECT_TRUE(row(page, 0).value(QStringLiteral("signedIn")).toBool());
+    EXPECT_TRUE(stored.providers.at(0).signedIn);
+    EXPECT_TRUE(page.form(QStringLiteral("openrouter")).value(QStringLiteral("signedIn")).toBool());
+    ASSERT_TRUE(waitFor([&] { return row(page, 0).value(QStringLiteral("state")).toString() == QLatin1String("ok"); }));
+}
+
+TEST_F(AiSettingsTest, ARefusedOpenRouterSignInSaysSoAndAddsNothing)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.openDraft();
+    fakeSignIns(features, "denied");
+    page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
+    ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("failed"); }));
+    EXPECT_EQ(draftError(page), QStringLiteral("signIn"));
+    EXPECT_EQ(page.draft().value(QStringLiteral("detail")).toString(), QStringLiteral("denied"));
+    EXPECT_TRUE(page.providers().isEmpty());
+    EXPECT_TRUE(chain.keys.empty());
+
+    page.signInDraft(form(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), {}));
+    EXPECT_EQ(draftError(page), QStringLiteral("form"));
+}
+
+TEST_F(AiSettingsTest, SigningOutOfOpenRouterDeletesTheKeyAndAPastedKeyIsNoLongerSignedIn)
+{
+    ai::Provider p = ai::presetProvider(ai::Preset::OpenRouter, "openrouter", "OpenRouter");
+    p.signedIn = true;
+    stored.providers.push_back(p);
+    chain.keys["openrouter"] = "sk-or-v1-signed";
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.signOutProvider(QStringLiteral("openrouter"));
+    EXPECT_FALSE(chain.keys.contains("openrouter"));
+    EXPECT_FALSE(row(page, 0).value(QStringLiteral("signedIn")).toBool());
+    EXPECT_EQ(row(page, 0).value(QStringLiteral("error")).toString(), QStringLiteral("key"));
+
+    stored.providers[0].signedIn = true;
+    app::AiFeatures again(settings, ports());
+    app::AiSettings edited(again);
+    QSignalSpy saved(&edited, &app::AiSettings::draftSaved);
+    edited.saveDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), QStringLiteral("sk-pasted"),
+                          QStringLiteral("openrouter")));
+    ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
+    EXPECT_FALSE(stored.providers.at(0).signedIn);
 }

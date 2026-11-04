@@ -21,6 +21,8 @@ export const ErrorCode = {
     hikariApi: -32000,
     /** A provider failed; `data` is the ErrorData with its kind, HTTP status and message. */
     providerFailed: -32010,
+    /** A sign-in failed; `data` is `{kind, host, detail}`. */
+    signInFailed: -32011,
 } as const;
 
 export const Method = {
@@ -40,6 +42,9 @@ export const Method = {
     toolsList: "_hikari/tools.list",
     toolsCall: "_hikari/tools.call",
     secretStore: "_hikari/secret.store",
+    signinStart: "_hikari/signin.start",
+    signinRefresh: "_hikari/signin.refresh",
+    signinProgress: "_hikari/signin.progress",
 } as const;
 
 /** Qt's requests that later cards implement. */

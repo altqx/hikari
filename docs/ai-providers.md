@@ -74,6 +74,7 @@ Sources, read on 2026-11-02:
 ## Keys
 
 - Keys live only in the OS keychain through QtKeychain: the Secret Service (libsecret) or KWallet on Linux, the Credential Store on Windows. The entry is `ai-provider/<provider id>` under the service `HikariSub`. The sidecar never opens the keychain and never reads a key from its environment.
+- An OpenRouter key can come from signing in ([Settings › AI](ai-settings.md#providers)); it is stored like a pasted one, and the provider file marks it `signedIn`. HikariSub's ChatGPT sign-in for Codex is the entry `ai-provider/codex-chatgpt`.
 - A provider is added only once its key is in the keychain. With no keyring daemon, or when the user refuses access, it isn't added, and the caller gets `KeychainUnavailable` or `KeychainDenied` to tell the user. There is no plain-text fallback.
 - Every SDK client sends through one egress fetch. It reaches only URLs under the provider's base URL and never follows a redirect.
 - A key travels only over HTTPS, or over plain HTTP to this machine (`localhost`, `127.0.0.0/8`, `::1`) or to a Tailscale peer: an address in `100.64.0.0/10` or `fd7a:115c:a1e0::/48` while this machine has an address in the same range (the IPv4 range is also ISPs' CGNAT space). A host name, `*.ts.net` included, counts only by the address it resolves to: it is resolved once and the request goes to the address that passed, with the name kept in `Host`, so DNS can't send the key elsewhere. Anything else, a LAN address included, fails with `InsecureKey` before a connection opens.

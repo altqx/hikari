@@ -435,6 +435,11 @@ hikari_add_gtest(hikari_backends_ai_requests_tests SOURCES ai_requests_tests.cpp
 target_compile_definitions(hikari_backends_ai_requests_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_backends_ai_requests_tests hikari_fake_ai_sidecar)
+hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_ai_signin_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_backends_ai_signin_tests hikari_fake_ai_sidecar)
 if(HIKARI_AI_SIDECAR)
     hikari_add_gtest(hikari_backends_ai_tools_tests SOURCES ai_tools_tests.cpp
         LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends ai-sidecar)

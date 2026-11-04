@@ -408,12 +408,14 @@ TEST_F(AiSidecarHostTest, RequestsOverTheOutstandingLimitAreBusy)
 TEST_F(AiSidecarHostTest, NotificationsReachTheHandler)
 {
     auto h = host(options());
-    std::vector<std::pair<std::string, Json>> seen;
-    h->onNotification([&](const std::string &method, const Json &params) { seen.emplace_back(method, params); });
+    std::vector<Json> seen;
+    std::vector<Json> others;
+    h->onNotification("session/update", [&](const Json &params) { seen.push_back(params); });
+    h->onNotification("_hikari/signin.progress", [&](const Json &params) { others.push_back(params); });
     ASSERT_TRUE(call(*h, "notify", Json::object({{"text", "hi"}})));
     ASSERT_EQ(seen.size(), 1u);
-    EXPECT_EQ(seen[0].first, "session/update");
-    EXPECT_EQ(seen[0].second, Json::object({{"text", "hi"}}));
+    EXPECT_EQ(seen[0], Json::object({{"text", "hi"}}));
+    EXPECT_TRUE(others.empty());
 }
 
 }

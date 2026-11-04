@@ -5,8 +5,10 @@
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_signin.h"
 #include "settings_store.h"
 
+#include <QDir>
 #include <QFileInfo>
 
 namespace hikari::app {
@@ -27,6 +29,7 @@ struct AiFeatures::Live {
     std::unique_ptr<backends::ai::AiSidecarHost> host;
     std::unique_ptr<application::ai::Providers> providers;
     std::unique_ptr<backends::ai::AiRequests> requests;
+    std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
 };
 
@@ -65,6 +68,8 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         return download->installedProgram() ? nullptr : std::move(download);
 #endif
     };
+    ports.findCodex = backends::ai::findCodexCli;
+    ports.codexAuthPath = QDir::homePath() + QStringLiteral("/.codex/auth.json");
     return ports;
 }
 
@@ -95,6 +100,7 @@ void AiFeatures::apply()
         m_live->requests =
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
+        m_live->signIn = std::make_unique<backends::ai::AiSignIn>(*m_live->keys, [this] { return sidecarForSignIn(); });
     } else {
         m_live.reset();
     }
@@ -135,6 +141,20 @@ void AiFeatures::setDrafting(bool drafting)
 backends::ai::AiSidecarHost *AiFeatures::sidecar() const
 {
     return m_live ? m_live->host.get() : nullptr;
+}
+
+backends::ai::AiSignIn *AiFeatures::signIn() const
+{
+    return m_live ? m_live->signIn.get() : nullptr;
+}
+
+backends::ai::AiSidecarHost *AiFeatures::sidecarForSignIn()
+{
+    if (!m_live)
+        return nullptr;
+    if (!m_live->host)
+        m_live->host = m_ports.sidecarHost();
+    return m_live->host.get();
 }
 
 backends::ai::AiSidecarHost *AiFeatures::sidecarForAction()

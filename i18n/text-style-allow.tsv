@@ -40,4 +40,5 @@ HikariSub.Options	Chat Completions	title-case	the OpenAI API’s name, beside Re
 HikariSub.Options	Get a key in Google AI Studio	title-case	Google AI Studio is the product’s name
 HikariSub.Options	AI in Getting started and What’s new	title-case	names the Getting started and What’s new windows
 HikariSub.Options	Replace the key with Edit	title-case	names the row’s Edit button
+HikariSub.Options	Sign in again with Edit	title-case	names the row’s Edit button
 HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name

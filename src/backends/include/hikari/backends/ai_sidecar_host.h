@@ -31,6 +31,8 @@ inline constexpr int kProviderFailed = -32010;
 inline constexpr int kBusy = -32003;
 inline constexpr int kMethodNotFound = -32601;
 inline constexpr int kInvalidParams = -32602;
+inline constexpr int kInternalError = -32603;
+inline constexpr int kSignInFailed = -32011;
 inline constexpr int kRequestCancelled = -32800;
 }
 
@@ -82,7 +84,11 @@ public:
         int firstBackoffMs = 500; // doubles with each crash in the window
     };
 
-    using NotificationHandler = std::function<void(const std::string &method, const api::Json &params)>;
+    using NotificationHandler = std::function<void(const api::Json &params)>;
+    using Respond = std::function<void(SidecarResult)>;
+    /// Answers one of the sidecar's requests, once, through `respond`; a SidecarFailure's code and message become
+    /// the JSON-RPC error.
+    using RequestHandler = std::function<void(const api::Json &params, Respond respond)>;
 
     /// `hikari` answers `_hikari/api.call`; without it the sidecar's tool calls fail as unavailable.
     AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent = nullptr);
@@ -94,7 +100,10 @@ public:
     /// The reply still comes once, with Cancelled.
     void cancel(std::uint64_t request);
     void notify(const std::string &method, api::Json params);
-    void onNotification(NotificationHandler handler) { m_onNotification = std::move(handler); }
+    /// Replaces the method's handler.
+    void onNotification(std::string method, NotificationHandler handler);
+    /// Replaces the method's handler; `_hikari/api.call` always goes to Hikari's API.
+    void onRequest(std::string method, RequestHandler handler);
     /// The Documents the user attached with @; the sidecar's tools see them besides the editing target.
     void setAttachedDocuments(std::vector<application::DocumentId> documents) { m_caller.attached = std::move(documents); }
 
@@ -129,6 +138,7 @@ private:
     void readDiagnostics();
     void receive(const QByteArray &line);
     void receiveRequest(const api::Json &id, const std::string &method, const api::Json *params);
+    void receiveOwnRequest(const api::Json &id, const std::string &method, const api::Json *params);
     void receiveResponse(std::uint64_t id, const api::Json &message);
     void send(const api::Json &message);
     void sendQueued();
@@ -160,7 +170,8 @@ private:
     std::size_t m_incoming = 0;
     std::deque<qint64> m_crashes;
     QElapsedTimer m_clock;
-    NotificationHandler m_onNotification;
+    std::map<std::string, NotificationHandler, std::less<>> m_notificationHandlers;
+    std::map<std::string, RequestHandler, std::less<>> m_requestHandlers;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 #ifdef Q_OS_WIN
     void *m_job = nullptr;

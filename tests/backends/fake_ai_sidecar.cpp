@@ -65,6 +65,27 @@ Json environment()
     return env;
 }
 
+Json signInProgress(const std::string &flow)
+{
+    if (flow == "codexDevice")
+        return Json::object({{"flow", flow}, {"step", "code"}, {"userCode", "FAKE-1234"},
+                             {"openUrl", "https://auth.openai.com/codex/device"},
+                             {"expiresAt", std::chrono::duration_cast<std::chrono::milliseconds>(
+                                               std::chrono::system_clock::now().time_since_epoch() +
+                                               std::chrono::minutes(15)).count()},
+                             {"browserAvailable", true}});
+    if (flow == "codexBrowser")
+        return Json::object({{"flow", flow}, {"step", "browser"},
+                             {"openUrl", "https://auth.openai.com/oauth/authorize?client_id=fake"}});
+    return Json::object({{"flow", flow}, {"step", "browser"}, {"openUrl", "https://openrouter.ai/auth?callback_url=fake"}});
+}
+
+Json fakeSession(const std::string &access)
+{
+    return Json::object({{"access", access}, {"refresh", "fake-refresh"}, {"idToken", "fake-id"},
+                         {"accountId", "acct-fake"}, {"email", "owner@example.com"}, {"expiresAt", 4102444800000}});
+}
+
 std::int64_t spawnSleeper()
 {
 #ifdef _WIN32
@@ -117,7 +138,12 @@ int main(int argc, char **argv)
     if (g_mode == "exit-at-once")
         return 7;
 
-    std::map<std::int64_t, Json> waiting; // our request to Qt -> Qt's request it answers
+    struct Waiting {
+        Json qtId;
+        Json result; // what Qt's request answers when ours succeeds; null passes our answer through
+    };
+    std::map<std::int64_t, Waiting> waiting;
+    std::string signInOutcome = "ok";
     std::vector<Json> hanging;
     Json received = Json::array();
     std::int64_t nextId = 1;
@@ -133,12 +159,19 @@ int main(int argc, char **argv)
         if (!method) {
             const auto it = id && id->isInt() ? waiting.find(id->asInt()) : waiting.end();
             if (it != waiting.end()) {
-                Json answer = Json::object();
-                if (const Json *result = message.find("result"))
-                    answer["result"] = *result;
-                if (const Json *error = message.find("error"))
-                    answer["error"] = *error;
-                respond(it->second, std::move(answer));
+                const Json *error = message.find("error");
+                if (!error && !it->second.result.isNull()) {
+                    respond(it->second.qtId, it->second.result);
+                } else if (error && !it->second.result.isNull()) {
+                    send(Json::object({{"jsonrpc", "2.0"}, {"id", it->second.qtId}, {"error", *error}}));
+                } else {
+                    Json answer = Json::object();
+                    if (const Json *result = message.find("result"))
+                        answer["result"] = *result;
+                    if (error)
+                        answer["error"] = *error;
+                    respond(it->second.qtId, std::move(answer));
+                }
                 waiting.erase(it);
             }
             continue;
@@ -221,8 +254,38 @@ int main(int argc, char **argv)
             respond(*id, Json::object({{"pid", spawnSleeper()}}));
         } else if (name == "api") {
             const std::int64_t mine = nextId++;
-            waiting.emplace(mine, *id);
+            waiting.emplace(mine, Waiting{*id, Json()});
             send(Json::object({{"jsonrpc", "2.0"}, {"id", mine}, {"method", "_hikari/api.call"}, {"params", arg}}));
+        } else if (name == "fake.signin") {
+            signInOutcome = arg.isString() ? arg.asString() : "ok";
+            respond(*id, nullptr);
+        } else if (name == "_hikari/signin.start" || name == "_hikari/signin.refresh") {
+            const Json *flowValue = arg.find("flow");
+            const std::string flow = flowValue && flowValue->isString() ? flowValue->asString() : "codexDevice";
+            const Json *secret = arg.find("secret");
+            const std::string secretName = secret && secret->isString() ? secret->asString() : std::string();
+            if (name == "_hikari/signin.start")
+                send(Json::object({{"jsonrpc", "2.0"}, {"method", "_hikari/signin.progress"}, {"params", signInProgress(flow)}}));
+            if (signInOutcome == "hang") {
+                hanging.push_back(*id);
+            } else if (signInOutcome != "ok" && signInOutcome != "store-other") {
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
+                                   {"error", Json::object({{"code", -32011}, {"message", signInOutcome},
+                                                           {"data", Json::object({{"kind", signInOutcome},
+                                                                                  {"host", "auth.openai.com"},
+                                                                                  {"detail", ""}})}})}}));
+            } else {
+                const bool codex = flow != "openrouter";
+                const std::string access = name == "_hikari/signin.refresh" ? "fake-access-2" : "fake-access";
+                const std::int64_t mine = nextId++;
+                waiting.emplace(mine, Waiting{*id, codex ? Json::object({{"email", "owner@example.com"},
+                                                                         {"expiresAt", 4102444800000}})
+                                                         : Json::object()});
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", mine}, {"method", "_hikari/secret.store"},
+                                   {"params", Json::object({{"name", signInOutcome == "store-other" ? "elsewhere" : secretName},
+                                                            {"value", codex ? fakeSession(access).dump()
+                                                                            : std::string("sk-or-v1-fake")}})}}));
+            }
         } else if (name == "notify") {
             send(Json::object({{"jsonrpc", "2.0"}, {"method", "session/update"}, {"params", arg}}));
             respond(*id, nullptr);

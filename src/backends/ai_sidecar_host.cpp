@@ -144,6 +144,16 @@ void AiSidecarHost::notify(const std::string &method, api::Json params)
     send(message);
 }
 
+void AiSidecarHost::onNotification(std::string method, NotificationHandler handler)
+{
+    m_notificationHandlers.insert_or_assign(std::move(method), std::move(handler));
+}
+
+void AiSidecarHost::onRequest(std::string method, RequestHandler handler)
+{
+    m_requestHandlers.insert_or_assign(std::move(method), std::move(handler));
+}
+
 void AiSidecarHost::start()
 {
     if (m_state != State::Idle)
@@ -275,9 +285,10 @@ void AiSidecarHost::receive(const QByteArray &line)
     if (const api::Json *method = message.find("method"); method && method->isString()) {
         if (id)
             return receiveRequest(*id, method->asString(), message.find("params"));
-        if (method->asString() != kCancelRequest && m_onNotification && m_state == State::Ready) {
+        const auto handler = m_notificationHandlers.find(method->asString());
+        if (handler != m_notificationHandlers.end() && m_state == State::Ready) {
             const api::Json *params = message.find("params");
-            m_onNotification(method->asString(), params ? *params : api::Json());
+            handler->second(params ? *params : api::Json());
         }
         return;
     }
@@ -339,7 +350,7 @@ void AiSidecarHost::receiveRequest(const api::Json &id, const std::string &metho
     if (m_incoming >= m_options.maxOutstanding)
         return lose(QStringLiteral("the sidecar went over the outstanding-request limit"));
     if (method != kApiCall)
-        return respond(id, errorBody(rpc::kMethodNotFound, "unknown method " + method));
+        return receiveOwnRequest(id, method, params);
     const api::Json *operation = params ? params->find("operation") : nullptr;
     if (!operation || !operation->isString())
         return respond(id, errorBody(rpc::kInvalidParams, "_hikari/api.call needs an operation"));
@@ -360,6 +371,24 @@ void AiSidecarHost::receiveRequest(const api::Json &id, const std::string &metho
                            data["data"] = std::move(result.error().data);
                        respond(id, errorBody(rpc::kHikariApiError, result.error().message, std::move(data)));
                    });
+}
+
+void AiSidecarHost::receiveOwnRequest(const api::Json &id, const std::string &method, const api::Json *params)
+{
+    const auto handler = m_requestHandlers.find(method);
+    if (handler == m_requestHandlers.end())
+        return respond(id, errorBody(rpc::kMethodNotFound, "unknown method " + method));
+    ++m_incoming;
+    handler->second(params ? *params : api::Json(),
+                    [this, alive = std::weak_ptr(m_alive), generation = m_generation, id](SidecarResult result) {
+                        if (alive.expired() || generation != m_generation)
+                            return;
+                        --m_incoming;
+                        if (result)
+                            return respond(id, api::Json::object({{"result", std::move(*result)}}));
+                        respond(id, errorBody(result.error().code ? result.error().code : rpc::kInternalError,
+                                              result.error().message, result.error().data));
+                    });
 }
 
 void AiSidecarHost::respond(const api::Json &id, api::Json body)

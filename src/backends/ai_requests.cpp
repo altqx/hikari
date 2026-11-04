@@ -144,9 +144,9 @@ AiSidecarHost *AiRequests::connect(const app::Config &config)
     AiSidecarHost *host = m_host();
     if (!host)
         return nullptr;
-    host->onNotification([this, alive = std::weak_ptr(m_alive)](const std::string &method, const Json &params) {
+    host->onNotification("session/update", [this, alive = std::weak_ptr(m_alive)](const Json &params) {
         if (alive.lock())
-            receive(method, params);
+            receive(params);
     });
     host->request("_hikari/providers.set", providersJson(config), [](SidecarResult) {});
     return host;
@@ -291,10 +291,8 @@ void AiRequests::endConversation(const std::string &providerId, const std::strin
     });
 }
 
-void AiRequests::receive(const std::string &method, const Json &params)
+void AiRequests::receive(const Json &params)
 {
-    if (method != "session/update")
-        return;
     const Json *stream = params.find("stream");
     const Json *update = params.find("update");
     if (!stream || !stream->isInt() || !update)

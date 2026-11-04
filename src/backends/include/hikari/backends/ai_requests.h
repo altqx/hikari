@@ -48,7 +48,7 @@ private:
     struct Pending;
     AiSidecarHost *connect(const application::ai::Config &config);
     AiSidecarHost *connect() { return connect(m_providers.config()); }
-    void receive(const std::string &method, const api::Json &params);
+    void receive(const api::Json &params);
     void end(application::ai::StreamId id, const application::ai::Event &event);
 
     application::ai::Providers &m_providers;

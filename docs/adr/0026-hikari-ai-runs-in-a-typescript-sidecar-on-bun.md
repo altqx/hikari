@@ -67,7 +67,9 @@ The rest of ADR 0024 stands. That includes no AI in core, off and silent until a
 | sidecar → Qt | `session/update` | text, tool calls, plans, usage and cost |
 | sidecar → Qt | `session/request_permission` | Manual mode and the always-prompt list |
 | sidecar → Qt | `_hikari/api.call`, `_hikari/api.subscribe` | Hikari's tools through HA1 |
-| sidecar → Qt | `_hikari/secret.store` | refreshed OAuth tokens |
+| Qt → sidecar | `_hikari/signin.start`, `_hikari/signin.refresh` | a Codex or OpenRouter sign-in, a Codex refresh |
+| sidecar → Qt | `_hikari/signin.progress` | the device code or the page to open |
+| sidecar → Qt | `_hikari/secret.store` | new and refreshed OAuth tokens |
 
 - **Streaming.** The sidecar coalesces text deltas into at most one notification per frame interval.
 - **Cancel.** Turns are cancelled with `session/cancel`; any other request with a `$/cancel_request` notification that carries its id. A cancelled request still gets exactly one response, with the cancel error code.
@@ -101,7 +103,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 - **Codex: `codex app-server`** over stdio JSON-RPC, using the user's installed `codex`.
   - The types are generated from `codex app-server generate-json-schema` for a pinned minimum version, and features are detected rather than assumed. OpenAI labels app-server experimental.
   - The sandbox is read-only, and every `commandExecution` and `fileChange` approval is declined.
-  - Sign-in stays with `codex login` unless the owner decides otherwise in AI15.
+  - HikariSub keeps its own ChatGPT sign-in for Codex (AI6), apart from `codex login`'s, and hands it to `codex app-server` (AI15). It never writes `~/.codex`.
 - **Gemini CLI and custom agents: ACP** (`gemini --acp`, a registry entry or a user command). Permission requests for anything but Hikari's tools are declined. Hikari never reuses Gemini CLI's OAuth.
 - **Every agent edits only through Hikari's tools,** into the review, under the thread's mode.
 - **Hikari never downloads or installs a vendor CLI.** It finds the CLI on `PATH` or at a path the user sets.
@@ -110,7 +112,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 
 - **Qt opens the keychain.** It reads keys with QtKeychain and sends only the key a request needs, inside that request on the pipe.
 - **The sidecar never opens the keychain.** It holds a key only for the request that carries it, and never writes one to disk, its environment, a log or stderr.
-- **OAuth** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): tokens refresh in the sidecar, where the HTTP call is. The sidecar sends the new tokens to Qt with `_hikari/secret.store`, and Qt writes them to the keychain.
+- **OAuth** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): sign-ins and refreshes run in the sidecar, where the HTTP calls are. Its 127.0.0.1 listener for a browser's redirect is open only while a sign-in runs. The sidecar sends the tokens to Qt with `_hikari/secret.store`; Qt takes only the name the running sign-in expects and writes the keychain. Qt opens the browser, and only on https pages of auth.openai.com and openrouter.ai.
 - **Agent CLIs** use the user's own login. Hikari passes them no key.
 - **The process boundary separates crashes, not trust.** Code running as the user can read what the user can. The defences are the supply-chain rules below and, later, the OS sandbox.
 
