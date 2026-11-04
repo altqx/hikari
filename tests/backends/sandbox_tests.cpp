@@ -141,12 +141,20 @@ TEST_F(Sandbox, AnyNetworkReachesTheNetwork)
     bus.setSocketOptions(QLocalServer::UserAccessOption);
     ASSERT_TRUE(bus.listen(path("outside/bus")));
     Launcher launcher(profile(Network::Any));
+    ASSERT_TRUE(launcher.coverage().network) << launcher.coverage().missing.toStdString();
     const QStringList lines = run(launcher, {QStringLiteral("tcp"), QStringLiteral("127.0.0.1"),
                                              QString::number(server.serverPort()), QStringLiteral("unix"),
                                              bus.fullServerName()});
     EXPECT_TRUE(ok(lines, QStringLiteral("tcp"))) << lines.join(QLatin1Char('\n')).toStdString();
-    if (launcher.coverage().complete() && launcher.coverage().missing.isEmpty())
-        EXPECT_TRUE(denied(lines, QStringLiteral("unix"))) << lines.join(QLatin1Char('\n')).toStdString();
+    EXPECT_TRUE(denied(lines, QStringLiteral("unix"))) << lines.join(QLatin1Char('\n')).toStdString();
+}
+
+TEST_F(Sandbox, NoNewNamespaces)
+{
+    Launcher launcher(profile(Network::Any));
+    ASSERT_TRUE(launcher.coverage().network) << launcher.coverage().missing.toStdString();
+    const QStringList lines = run(launcher, {QStringLiteral("userns")});
+    EXPECT_TRUE(denied(lines, QStringLiteral("userns"))) << lines.join(QLatin1Char('\n')).toStdString();
 }
 #endif
 

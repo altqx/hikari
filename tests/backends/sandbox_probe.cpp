@@ -13,6 +13,7 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <sched.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/un.h>
@@ -125,6 +126,11 @@ void uring(const std::string &action)
         ::close(static_cast<int>(fd));
 }
 
+void userNamespace(const std::string &action)
+{
+    report(action, ::unshare(CLONE_NEWUSER) == 0, errno);
+}
+
 int spawn(int first, int argc, char **argv)
 {
     std::vector<char *> args{argv[0]};
@@ -170,6 +176,8 @@ int main(int argc, char **argv)
             ++i;
         } else if (action == "uring") {
             uring(action);
+        } else if (action == "userns") {
+            userNamespace(action);
 #endif
         } else {
             std::printf("%s: unknown\n", action.c_str());
