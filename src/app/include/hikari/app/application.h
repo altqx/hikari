@@ -421,8 +421,9 @@ public:
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
-    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
-    // option: 0 only the resolution, 1 resample, 2 resample with stretch.
+    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
+                              bool adjustRotations = true);
+    // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
@@ -774,6 +775,8 @@ public:
     Q_INVOKABLE void selectTab(int index);
     // Rows as reviewClose's; with none, finishClose() closes the tab.
     Q_INVOKABLE QVariantList reviewCloseTab(int index);
+    // The tabs other than index, or only those to its right; index stays and is shown if the shown tab closes.
+    Q_INVOKABLE QVariantList reviewCloseTabs(int index, bool toTheRight);
     // Empty file: the last session. Returns {ok, problem, rows}, rows as reviewClose's
     // for every open Document; ok without rows: finishClose() replaces the tabs. UNC
     // hosts not all in allowedHosts: {ok: false, network: [hosts]}.
@@ -860,7 +863,7 @@ public:
     Q_INVOKABLE void selectAllReferenceLines();
     Q_INVOKABLE bool copyReferenceLines();
     Q_INVOKABLE void refuseReferenceChange();
-    // Every occurrence of the editing Line in each other Document: [{text, checked}].
+    // Every occurrence of the reference's active Line in each other Document: [{text, checked}].
     Q_INVOKABLE QVariantList referenceOccurrences();
     Q_INVOKABLE bool chooseReferenceOccurrence(int index);
     // The reference row paired with the editing Grid's shown row, or -1.
@@ -900,6 +903,8 @@ private:
     void protectReference();
     void refreshViews();
     void refreshVideo();
+    bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
+                          bool adjustRotations);
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
@@ -1345,7 +1350,8 @@ private:
     std::map<std::uint64_t, TabMedia> m_tabMedia;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
-    std::optional<application::DocumentId> m_closingTab;
+    std::vector<application::DocumentId> m_closingTabs;
+    std::optional<application::DocumentId> m_tabAfterClose;
     std::optional<application::DocumentId> m_closeTarget;
     QString m_keepTabAudio;
     std::optional<std::pair<QString, int>> m_pendingTabSeek;

@@ -87,6 +87,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n rotated line could not keep its shape.</numerusform>
+            <numerusform>%n rotated lines could not keep their shape.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>%n comment line removed.</numerusform>

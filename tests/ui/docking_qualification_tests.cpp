@@ -1603,7 +1603,7 @@ private slots:
             if (entry)
                 items << entry->property("text").toString() + (entry->isEnabled() ? QString() : QStringLiteral(" (off)"));
         }
-        QCOMPARE(items, (QStringList{QStringLiteral("Dock"), QStringLiteral("Close")}));
+        QCOMPARE(items, (QStringList{QStringLiteral("Dock"), QString(), QStringLiteral("Close")}));
         QObject *dockItem = nullptr;
         for (QObject *o : titleBar->findChildren<QObject *>())
             if (o->objectName() == QLatin1String("dockWindowDock"))
