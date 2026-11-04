@@ -12917,6 +12917,44 @@ private slots:
         QTRY_COMPARE(ms(0), (Ms{410, 1200}));
     }
 
+    void shiftTimesFitsANarrowPanel()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        item<QObject>("timingDock")->setProperty("isFloating", true);
+        QTRY_VERIFY(item("timingPanel")->window() != window);
+        item("timingPanel")->window()->resize(340, 800);
+        setShift("whichLines", 0);
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), 2);
+        auto *panel = item("timingPanel");
+        QTRY_COMPARE(panel->window()->width(), 340);
+        for (const char *name : {"shiftByAmount", "shiftByVideo", "shiftByAudio"}) {
+            QQuickItem *choice = findItem(panel, QLatin1String(name));
+            QVERIFY2(choice, name);
+            auto *label = choice->property("contentItem").value<QQuickItem *>();
+            QTRY_VERIFY2(!label->property("truncated").toBool(), name);
+            QVERIFY2(choice->mapToItem(panel, QPointF(choice->width(), 0)).x() <= panel->width(), name);
+        }
+        auto *rows = item("shiftPreviewRows");
+        QTRY_COMPARE(rows->property("count").toInt(), 2);
+        QVERIFY(!item("shiftPreviewMore")->isVisible());
+        const auto ends = [&] {
+            QList<QQuickItem *> found;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                if (from->objectName() == QLatin1String("shiftPreviewEnd") && from->isVisible())
+                    found << from;
+                for (QQuickItem *child : from->childItems())
+                    walk(child);
+            };
+            walk(rows);
+            return found;
+        };
+        QTRY_COMPARE(ends().size(), 2);
+        for (QQuickItem *end : ends())
+            QTRY_VERIFY2(end->mapToItem(rows, QPointF(end->width(), 0)).x() <= rows->width(),
+                         qPrintable(end->property("text").toString()));
+    }
+
     void shiftTimesScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
