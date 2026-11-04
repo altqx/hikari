@@ -41,6 +41,7 @@ The pieces in C++:
 
 - **`AiFeatures`** (`src/app/ai_features.*`) is the only place that builds AI objects. It reads `ai.off`, the "Turn off all AI features" switch, before anything else. With it on, no key store, config store or sidecar host exists, so nothing reads the keychain, downloads, starts or listens. Turning the switch on builds them on demand; turning it off destroys them and stops the sidecar.
 - **`AiSidecarHost`** (`src/backends/ai_sidecar_host.*`) starts the sidecar on the first AI action once a provider exists, never at startup or when Settings opens. It starts it with an allowlisted environment (no `*_API_KEY`, `*_BASE_URL`, `ANTHROPIC_*`, `OPENAI_*`, `GEMINI_*`, `GOOGLE_*`, `OTEL_*` or `NODE_OPTIONS`), in `<user folder>/ai/work`, in its own process group on Linux and a kill-on-close job object on Windows. Shutdown closes stdin, waits 3 s, then kills the tree.
+- **`AiMcp`** (`src/app/ai_mcp.*`) runs the [MCP server](ai-mcp.md) while AI is on and `ai.mcp.server` is on. It starts the sidecar on the first MCP message, with or without a provider.
 - **`AiSidecarDownload`** (`src/backends/ai_sidecar_download.*`) fetches `hikari-ai-<version>-<platform>.gz` from the app's own release into `<user folder>/ai/sidecar/<version>/`. It checks the size and SHA-256 that release's `hikarisub-update.json` gives, and deletes a file that fails.
 
 **The link** is JSON-RPC 2.0, one message per line on the sidecar's stdin and stdout, with requests both ways:
@@ -49,6 +50,7 @@ The pieces in C++:
 - `$/cancel_request {requestId}` cancels a request, which still gets exactly one response, with code -32800.
 - `_hikari/api.call {operation, params}` runs `Api::call` under the sidecar's `Caller`. An HA1 error comes back as code -32000, with HA1's code in `data.code`.
 - `_hikari/tools.list` and `_hikari/tools.call` list and run Hikari's AI tools, which the sidecar builds from HA1's operations ([AI tools](ai-tools.md)).
+- `_hikari/mcp.message` and `_hikari/mcp.closed` relay HikariSub's MCP server: Qt listens, the sidecar speaks MCP, and an `_hikari/api.call` marked `mcp` runs as that connection's caller ([MCP server](ai-mcp.md)).
 - The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
 
 The ACP session methods and the other `_hikari/*` methods in the ADR are declared in `src/ai-sidecar/src/protocol.ts`. Until their cards land they answer "not implemented".

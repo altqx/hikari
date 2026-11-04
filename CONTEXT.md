@@ -142,6 +142,10 @@ _Avoid_: Operation as a synonym; tool target, which names a tool's Document.
 **Attached Document**:
 A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
 
+**MCP server**:
+HikariSub serving its AI tools and the open Documents over MCP to agents outside it, such as Claude Code. It is off until the user turns it on, and never on with AI off.
+_Avoid_: MCP client, which is the sidecar reaching other servers.
+
 ### Files
 
 **User folder**:

@@ -98,6 +98,15 @@ backends::ai::AiSidecarHost *AiFeatures::sidecar() const
     return m_live ? m_live->host.get() : nullptr;
 }
 
+backends::ai::AiSidecarHost *AiFeatures::sidecarForMcp()
+{
+    if (!m_live)
+        return nullptr;
+    if (!m_live->host && m_ports.sidecarHost)
+        m_live->host = m_ports.sidecarHost();
+    return m_live->host.get();
+}
+
 backends::ai::AiSidecarHost *AiFeatures::sidecarForAction()
 {
     if (!m_live)

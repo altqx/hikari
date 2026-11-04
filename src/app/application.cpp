@@ -786,6 +786,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                 options.appVersion.isEmpty()
                                                                     ? QStringLiteral(HIKARI_VERSION)
                                                                     : options.appVersion));
+    m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
+                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
         pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),

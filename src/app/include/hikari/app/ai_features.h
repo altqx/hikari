@@ -46,6 +46,8 @@ public:
     /// The sidecar for an AI action: built on the first one once a provider exists. Null with AI off, without a
     /// provider, or without an installed sidecar.
     backends::ai::AiSidecarHost *sidecarForAction();
+    /// The sidecar for the MCP server, which needs no provider. Null with AI off or without an installed sidecar.
+    backends::ai::AiSidecarHost *sidecarForMcp();
     /// The host if one was built; never builds it.
     backends::ai::AiSidecarHost *sidecar() const;
 

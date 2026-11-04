@@ -91,6 +91,10 @@ export class ToolSet {
         return kCatalogue.filter((e) => all || this.offered.has(e.tool.name)).map((e) => e.tool);
     }
 
+    has(name: string): boolean {
+        return this.byName.has(name);
+    }
+
     async call(name: string, args: unknown): Promise<CallToolResult> {
         const entry = this.byName.get(name);
         if (!entry)
