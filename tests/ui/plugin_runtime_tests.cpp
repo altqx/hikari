@@ -626,7 +626,10 @@ private slots:
         write(m_dir.filePath(QStringLiteral("secret/key.txt")), "secret");
         const QString data = folders().data + QStringLiteral("/com.example.tidy");
         QDir().mkpath(data);
-        const bool linked = QFile::link(m_dir.filePath(QStringLiteral("secret")), data + QStringLiteral("/door"));
+        std::error_code linkError;
+        std::filesystem::create_directory_symlink(m_dir.filePath(QStringLiteral("secret")).toStdU16String(),
+                                                  (data + QStringLiteral("/door")).toStdU16String(), linkError);
+        const bool linked = !linkError;
         QStringList refused{QStringLiteral("../com.example.other/x"), QStringLiteral("../../plugins.json"), QStringLiteral("/etc/passwd"),
                             QStringLiteral("notes/../../x"), QStringLiteral("C:/Windows/win.ini")};
         if (linked)
@@ -726,9 +729,11 @@ private slots:
             ui->fileRequest()->accept(QUrl::fromLocalFile(fonts), false);
             QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: fonts font not_granted")));
         }
-        QFile report(exports + QStringLiteral("/week/report.txt"));
-        QVERIFY(report.open(QIODevice::ReadOnly));
-        QCOMPARE(report.readAll(), QByteArray("report"));
+        {
+            QFile report(exports + QStringLiteral("/week/report.txt"));
+            QVERIFY(report.open(QIODevice::ReadOnly));
+            QCOMPARE(report.readAll(), QByteArray("report"));
+        }
         const auto registry = plugins::loadRegistry(std::filesystem::path(folders().registry.toStdU16String()));
         QVERIFY(registry);
         const auto &grants = registry->at("com.example.tidy").grants;
