@@ -142,6 +142,8 @@ constexpr OptionsBinding kBindings[] = {
     {"video.shiftScrollAction", IndexChoice, Video, 0, 0, 5},
     {"editor.softLineBreak", Check, LineEditor},
     {"grid.splitFramesBakeAnimations", Check, Grid},
+    {"ai.off", Check, Ai},
+    {"ai.promptCaching", Check, Ai},
     {"video.handleSize", Number, Video, 50, 400},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
     {"video.matrixMismatch", IndexChoice, Video, 0, 0, 3},
@@ -160,7 +162,7 @@ constexpr std::pair<OptionsPage, std::string_view> kPageIds[] = {
     {General, "general"},   {Appearance, "appearance"}, {LineEditor, "lineEditor"}, {Spelling, "spelling"},
     {Grid, "grid"},         {Video, "video"},           {Audio, "audio"},
     {Conversion, "conversion"}, {SubtitleProperties, "subtitleProperties"}, {Automation, "automation"},
-    {Updates, "updates"},
+    {Updates, "updates"},   {Ai, "ai"},
 };
 
 constexpr std::string_view kFps[] = {"23.976", "24", "25", "29.97", "30", "60"};

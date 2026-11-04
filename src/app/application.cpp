@@ -750,6 +750,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                 options.appVersion.isEmpty()
                                                                     ? QStringLiteral(HIKARI_VERSION)
                                                                     : options.appVersion));
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai);
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
         pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
@@ -6018,6 +6019,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
+            {QStringLiteral("aiSettings"), QVariant::fromValue(static_cast<QObject *>(m_aiSettings.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},

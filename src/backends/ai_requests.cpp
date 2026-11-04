@@ -4,6 +4,8 @@
 
 #include <QPointer>
 
+#include <algorithm>
+
 namespace hikari::backends::ai {
 
 namespace app = hikari::application::ai;
@@ -137,7 +139,7 @@ AiRequests::~AiRequests()
             pending->host->cancel(pending->request);
 }
 
-AiSidecarHost *AiRequests::connect()
+AiSidecarHost *AiRequests::connect(const app::Config &config)
 {
     AiSidecarHost *host = m_host();
     if (!host)
@@ -146,7 +148,7 @@ AiSidecarHost *AiRequests::connect()
         if (alive.lock())
             receive(method, params);
     });
-    host->request("_hikari/providers.set", providersJson(m_providers.config()), [](SidecarResult) {});
+    host->request("_hikari/providers.set", providersJson(config), [](SidecarResult) {});
     return host;
 }
 
@@ -163,6 +165,8 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
         return id;
     }
     request["model"] = ref->modelId;
+    if (!m_caching)
+        request["caching"] = false;
     auto pending = std::make_shared<Pending>();
     pending->sink = std::move(sink);
     m_pending[id] = pending;
@@ -246,6 +250,30 @@ void AiRequests::refreshModels(const std::string &providerId, std::function<void
                               done(std::nullopt);
                       });
     });
+}
+
+void AiRequests::probe(const app::Provider &provider, const std::string &key, std::function<void(Probed)> done)
+{
+    app::Config config = m_providers.config();
+    const auto it = std::ranges::find(config.providers, provider.id, &app::Provider::id);
+    if (it == config.providers.end())
+        config.providers.push_back(provider);
+    else
+        *it = provider;
+    AiSidecarHost *host = connect(config);
+    if (!host) {
+        done(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"});
+        return;
+    }
+    host->request("_hikari/models.list", Json::object({{"providerId", provider.id}, {"key", key}}),
+                  [alive = std::weak_ptr(m_alive), done = std::move(done)](SidecarResult result) {
+                      if (!alive.lock())
+                          return;
+                      if (result)
+                          done(modelsOf(*result));
+                      else
+                          done(requestError(result.error()));
+                  });
 }
 
 void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey)

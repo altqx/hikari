@@ -12,6 +12,16 @@ export function prefixTexts(request: Request): string[] {
     return [request.system ?? "", request.context ?? ""].filter((text) => text !== "");
 }
 
+/** The request as sent: with caching off, without the cache key and explicit cache. */
+export function withCaching(request: Request): Request {
+    if (request.caching !== false)
+        return request;
+    const { cacheKey: _key, explicitCache: _explicit, cacheLifetime: _lifetime, ...rest } = request;
+    return rest;
+}
+
+export const marksCache = (request: Request) => request.caching !== false;
+
 export function cacheControl(lifetime: CacheLifetime | undefined): Json {
     return lifetime === "hour" ? { type: "ephemeral", ttl: "1h" } : { type: "ephemeral" };
 }

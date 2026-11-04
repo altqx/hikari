@@ -9317,6 +9317,10 @@ Failed to copy %2 fonts.</source>
         <translation>이전 버전 단축키 가져오기…</translation>
     </message>
     <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
         <source>Legacy</source>
         <translation>이전 버전</translation>
     </message>
@@ -9590,6 +9594,358 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>다른 언어의 단어는 해당 문자 체계에 맞는 다른 설치된 사전으로 검사합니다. 사전이 없는 문자 체계의 단어는 표시하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>채팅</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation>번역자</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation>검토자</translation>
+    </message>
+    <message>
+        <source>Vision</source>
+        <translation>비전</translation>
+    </message>
+    <message>
+        <source>Judge</source>
+        <translation>판정자</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>사용자 지정 엔드포인트…</translation>
+    </message>
+    <message>
+        <source>Delete provider</source>
+        <translation>공급자 삭제</translation>
+    </message>
+    <message>
+        <source>Delete the provider “%1”?</source>
+        <translation>“%1” 공급자를 삭제하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Its key is removed from the keychain. Roles that use its models go back to the chat model.</source>
+        <translation>키가 키체인에서 제거됩니다. 이 공급자의 모델을 쓰는 역할은 채팅 모델로 돌아갑니다.</translation>
+    </message>
+    <message>
+        <source>Roles that use its models go back to the chat model.</source>
+        <translation>이 공급자의 모델을 쓰는 역할은 채팅 모델로 돌아갑니다.</translation>
+    </message>
+    <message>
+        <source>Chat Completions</source>
+        <translation>Chat Completions</translation>
+    </message>
+    <message>
+        <source>Responses</source>
+        <translation>Responses</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation>Messages</translation>
+    </message>
+    <message>
+        <source>Gemini API</source>
+        <translation>Gemini API</translation>
+    </message>
+    <message>
+        <source>Key rejected (%1)</source>
+        <translation>키가 거부됨(%1)</translation>
+    </message>
+    <message>
+        <source>Too many requests (%1)</source>
+        <translation>요청이 너무 많음(%1)</translation>
+    </message>
+    <message>
+        <source>Request refused (%1)</source>
+        <translation>요청이 거부됨(%1)</translation>
+    </message>
+    <message>
+        <source>Provider error (%1)</source>
+        <translation>공급자 오류(%1)</translation>
+    </message>
+    <message>
+        <source>Can’t reach the provider</source>
+        <translation>공급자에 연결할 수 없음</translation>
+    </message>
+    <message>
+        <source>No answer from the provider</source>
+        <translation>공급자가 응답하지 않음</translation>
+    </message>
+    <message>
+        <source>Unexpected answer</source>
+        <translation>예상하지 못한 응답</translation>
+    </message>
+    <message>
+        <source>A key goes only over HTTPS, to this computer or to a Tailscale peer</source>
+        <translation>키는 HTTPS, 이 컴퓨터 또는 Tailscale 피어로만 보내집니다</translation>
+    </message>
+    <message>
+        <source>Enter a key</source>
+        <translation>키를 입력하세요</translation>
+    </message>
+    <message>
+        <source>No system keychain is available</source>
+        <translation>사용할 수 있는 시스템 키체인이 없습니다</translation>
+    </message>
+    <message>
+        <source>Access to the keychain was refused</source>
+        <translation>키체인이 접근을 거부했습니다</translation>
+    </message>
+    <message>
+        <source>Can’t save the provider list</source>
+        <translation>공급자 목록을 저장할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Fill in the name and a valid address</source>
+        <translation>이름과 올바른 주소를 입력하세요</translation>
+    </message>
+    <message>
+        <source>Can’t download the AI component</source>
+        <translation>AI 구성 요소를 다운로드할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component is damaged</source>
+        <translation>다운로드한 AI 구성 요소가 손상되었습니다</translation>
+    </message>
+    <message>
+        <source>Can’t save the AI component</source>
+        <translation>AI 구성 요소를 저장할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Test failed</source>
+        <translation>테스트 실패</translation>
+    </message>
+    <message>
+        <source>Edit “%1”</source>
+        <translation>“%1” 편집</translation>
+    </message>
+    <message>
+        <source>Add a custom endpoint</source>
+        <translation>사용자 지정 엔드포인트 추가</translation>
+    </message>
+    <message>
+        <source>Add %1</source>
+        <translation>%1 추가</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>이름</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>기본 URL</translation>
+    </message>
+    <message>
+        <source>Gemini API key</source>
+        <translation>Gemini API 키</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>API 키(선택 사항)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>API 키</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. Type a new key to replace it</source>
+        <translation>키체인에 저장되어 있습니다. 바꾸려면 새 키를 입력하세요</translation>
+    </message>
+    <message>
+        <source>Hide key</source>
+        <translation>키 숨기기</translation>
+    </message>
+    <message>
+        <source>Show key</source>
+        <translation>키 표시</translation>
+    </message>
+    <message>
+        <source>Get a key in Google AI Studio</source>
+        <translation>Google AI Studio에서 키 받기</translation>
+    </message>
+    <message>
+        <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
+        <translation>Google AI Studio에서 받은 키입니다. Vertex AI와 Google Cloud 로그인은 지원하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
+        <translation>Ollama나 LM Studio 같은 로컬 서버는 키가 필요 없습니다. 키는 HTTPS, 이 컴퓨터 또는 Tailscale 피어로만 보내집니다.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once: %1 MB.</source>
+        <translation>첫 공급자를 추가할 때 AI 구성 요소를 한 번 다운로드합니다: %1MB.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once.</source>
+        <translation>첫 공급자를 추가할 때 AI 구성 요소를 한 번 다운로드합니다.</translation>
+    </message>
+    <message>
+        <source>Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.</source>
+        <translation>연결 테스트나 추가를 누르면 다운로드합니다. AI 기능을 사용할 때만 실행되며, AI가 꺼져 있을 때는 실행되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>%1 of %2 MB</source>
+        <translation>%1/%2MB</translation>
+    </message>
+    <message>
+        <source>Tests when the download finishes</source>
+        <translation>다운로드가 끝나면 테스트합니다</translation>
+    </message>
+    <message>
+        <source>Testing…</source>
+        <translation>테스트하는 중…</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>저장하는 중…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>연결됨 · 모델 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>연결 테스트</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>저장</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>추가</translation>
+    </message>
+    <message>
+        <source>AI features</source>
+        <translation>AI 기능</translation>
+    </message>
+    <message>
+        <source>Turn off all AI features</source>
+        <translation>모든 AI 기능 끄기</translation>
+    </message>
+    <message>
+        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>AI 관련 항목은 표시되거나 다운로드되거나 실행되지 않으며 키체인을 읽지도 않습니다. 공급자, 키, 스레드는 유지되며 AI를 다시 켜면 다시 시작하지 않아도 돌아옵니다.</translation>
+    </message>
+    <message>
+        <source>Kept while AI is off</source>
+        <translation>AI가 꺼져 있어도 유지되는 항목</translation>
+    </message>
+    <message>
+        <source>Your providers, and their keys in the keychain</source>
+        <translation>공급자와 키체인에 있는 해당 키</translation>
+    </message>
+    <message>
+        <source>Your agent threads</source>
+        <translation>에이전트 스레드</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component</source>
+        <translation>다운로드한 AI 구성 요소</translation>
+    </message>
+    <message>
+        <source>Hidden while AI is off</source>
+        <translation>AI가 꺼져 있으면 숨겨지는 항목</translation>
+    </message>
+    <message>
+        <source>The agent panel, inline AI actions and AI rows in every menu</source>
+        <translation>에이전트 패널, 인라인 AI 작업, 모든 메뉴의 AI 항목</translation>
+    </message>
+    <message>
+        <source>AI commands in command search, their shortcuts and toolbar buttons</source>
+        <translation>명령 검색의 AI 명령, 해당 단축키와 도구 모음 버튼</translation>
+    </message>
+    <message>
+        <source>AI in Getting started and What’s new</source>
+        <translation>시작하기와 새로운 기능의 AI 안내</translation>
+    </message>
+    <message>
+        <source>MCP server, which stops listening</source>
+        <translation>MCP 서버(수신을 중지함)</translation>
+    </message>
+    <message>
+        <source>Press OK or Apply to turn AI back on.</source>
+        <translation>AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>공급자</translation>
+    </message>
+    <message>
+        <source>No providers yet. AI sends nothing until you add one.</source>
+        <translation>아직 공급자가 없습니다. 공급자를 추가하기 전까지 AI는 아무것도 보내지 않습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>테스트 안 함 · 모델 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the key with Edit</source>
+        <translation>편집에서 키를 바꾸세요</translation>
+    </message>
+    <message>
+        <source>Key in keychain</source>
+        <translation>키체인에 키 있음</translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation>키 없음</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>편집</translation>
+    </message>
+    <message>
+        <source>Add provider</source>
+        <translation>공급자 추가</translation>
+    </message>
+    <message>
+        <source>Changes to providers and keys apply at once.</source>
+        <translation>공급자와 키 변경 사항은 바로 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>모델</translation>
+    </message>
+    <message>
+        <source>Refresh models</source>
+        <translation>모델 새로 고침</translation>
+    </message>
+    <message>
+        <source>Same as chat</source>
+        <translation>채팅과 같음</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>먼저 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
+        <translation>자체 모델이 없는 역할은 채팅 모델을 사용합니다. 비전에는 이미지를 읽는 모델만 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Use prompt caching</source>
+        <translation>프롬프트 캐싱 사용</translation>
+    </message>
+    <message>
+        <source>The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</source>
+        <translation>공급자가 대화의 앞부분을 몇 분 동안 보관하므로 다음 차례의 비용이 줄어듭니다. 이 컴퓨터에는 아무것도 저장되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What is sent to providers</source>
+        <translation>공급자에게 보내는 내용</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
     </message>
 </context>
 <context>
