@@ -113,7 +113,6 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDelay->setSingleShot(true);
     m_grammarDelay->setInterval(300);
     connect(m_grammarDelay, &QTimer::timeout, this, &Application::checkEditorGrammar);
-    connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::scheduleGrammar);
     connect(this, &Application::spellingChanged, this, &Application::syncGrammarWords);
 }
 
@@ -181,11 +180,12 @@ void Application::applyGrammarSettings()
             m_harper.reset();
             m_grammarTicket = 0;
             m_grammarEditor.reset();
-            if (m_grammarWalk && !m_grammarWalk->pending.empty()) {
-                m_grammarWalk->pending.clear();
-                m_grammarWalk->queue.clear();
-                m_grammarWalk->cancelled = true;
-            }
+            for (auto *walk : grammarWalks())
+                if (!walk->pending.empty()) {
+                    walk->pending.clear();
+                    walk->queue.clear();
+                    walk->cancelled = true;
+                }
             emit grammarChanged();
             emit grammarWalkChanged();
             return;
@@ -197,8 +197,8 @@ void Application::applyGrammarSettings()
                 return;
             m_harper->setSettings(settings);
             m_grammarTicket = 0;
-            if (m_grammarWalk)
-                grammarWalkSettingsChanged(before, settings);
+            for (auto *walk : grammarWalks())
+                grammarWalkSettingsChanged(*walk, before, settings);
         }
         m_grammarEditor.reset();
         checkEditorGrammar();
@@ -206,9 +206,8 @@ void Application::applyGrammarSettings()
     }, Qt::QueuedConnection);
 }
 
-void Application::grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after)
+void Application::grammarWalkSettingsChanged(GrammarWalk &walk, const QJsonObject &before, const QJsonObject &after)
 {
-    auto &walk = *m_grammarWalk;
     const QJsonObject wasOn = before.value(QStringLiteral("linters")).toObject();
     const QJsonObject isOn = after.value(QStringLiteral("linters")).toObject();
     QJsonObject rest = before, restAfter = after;
@@ -227,10 +226,10 @@ void Application::grammarWalkSettingsChanged(const QJsonObject &before, const QJ
             walk.queue.push_front(it->second);
         walk.pending.clear();
         if (walk.current && walk.findings[*walk.current].handled) {
-            nextGrammarFinding();
-            showGrammarFinding();
+            nextGrammarFinding(walk);
+            showGrammarFinding(walk.window);
         }
-        pumpGrammarWalk();
+        pumpGrammarWalk(walk.window);
         emit grammarWalkChanged();
         return;
     }
@@ -244,7 +243,7 @@ void Application::grammarWalkSettingsChanged(const QJsonObject &before, const QJ
     if (!walk.cancelled)
         for (std::size_t i = 0; i < walk.lines.size(); ++i)
             walk.queue.push_back(i);
-    pumpGrammarWalk();
+    pumpGrammarWalk(walk.window);
     emit grammarWalkChanged();
 }
 
@@ -257,7 +256,7 @@ void Application::scheduleGrammar()
 void Application::checkEditorGrammar()
 {
     const int role = spellingRole();
-    auto raw = core::syntax::spellChecked(m_editor->syntaxState()) ? editorRaw(role) : std::nullopt;
+    auto raw = core::syntax::spellChecked(editor().syntaxState()) ? editorRaw(role) : std::nullopt;
     if (raw && raw->size() > kMaxCheckedUnits)
         raw.reset();
     if (!raw) {
@@ -307,26 +306,26 @@ void Application::grammarChecked(quint64 ticket, const QList<backends::GrammarFi
         emit grammarChanged();
         return;
     }
-    if (!m_grammarWalk)
-        return;
-    const auto it = m_grammarWalk->pending.find(ticket);
-    if (it == m_grammarWalk->pending.end())
-        return;
-    m_grammarWalk->arrived[it->second] = findings;
-    m_grammarWalk->pending.erase(it);
-    pumpGrammarWalk();
+    for (auto *walk : grammarWalks())
+        if (const auto it = walk->pending.find(ticket); it != walk->pending.end()) {
+            walk->arrived[it->second] = findings;
+            walk->pending.erase(it);
+            pumpGrammarWalk(walk->window);
+            return;
+        }
 }
 
 void Application::grammarFailed(const QString &message)
 {
     m_grammarTicket = 0;
-    if (m_grammarWalk && !m_grammarWalk->pending.empty()) {
-        m_grammarWalk->pending.clear();
-        m_grammarWalk->queue.clear();
-        m_grammarWalk->cancelled = true;
-        m_grammarWalk->problem = QCoreApplication::translate("HikariSub.Spelling", "The grammar checker stopped.");
-        emit grammarWalkChanged();
-    }
+    for (auto *walk : grammarWalks())
+        if (!walk->pending.empty()) {
+            walk->pending.clear();
+            walk->queue.clear();
+            walk->cancelled = true;
+            walk->problem = QCoreApplication::translate("HikariSub.Spelling", "The grammar checker stopped.");
+            emit grammarWalkChanged();
+        }
     if (m_grammarFailed)
         return;
     m_grammarFailed = true;
@@ -356,8 +355,10 @@ void Application::syncGrammarWords()
     m_grammarTicket = 0;
     m_grammarEditor.reset();
     scheduleGrammar();
-    if (m_grammarWalk && (!m_grammarWalk->pending.empty() || !m_grammarWalk->arrived.empty())) {
-        auto &walk = *m_grammarWalk;
+    for (auto *each : grammarWalks()) {
+        auto &walk = *each;
+        if (walk.pending.empty() && walk.arrived.empty())
+            continue;
         std::set<std::size_t> again;
         for (const auto &[ticket, index] : walk.pending) {
             m_harper->cancel(ticket);
@@ -369,14 +370,14 @@ void Application::syncGrammarWords()
         walk.arrived.clear();
         for (auto it = again.rbegin(); it != again.rend(); ++it)
             walk.queue.push_front(*it);
-        pumpGrammarWalk();
+        pumpGrammarWalk(walk.window);
     }
 }
 
 const Application::GrammarCheck *Application::editorGrammarCheck(int role) const
 {
     if (!grammarOn() || !m_grammarEditor || role != m_grammarEditorRole || role != spellingRole() ||
-        !core::syntax::spellChecked(m_editor->syntaxState()))
+        !core::syntax::spellChecked(editor().syntaxState()))
         return nullptr;
     const auto raw = editorRaw(role);
     return raw && *raw == m_grammarEditor->raw && m_grammarEditor->format == editorFormat() ? &*m_grammarEditor
@@ -395,7 +396,7 @@ std::optional<std::pair<int, int>> Application::fieldSpan(int role, const core::
     const auto raw = core::grammar::rawRange(text, std::size_t(start), std::size_t(end));
     if (!raw)
         return std::nullopt;
-    const auto span = m_editor->displaySpan(role, int(raw->first), int(raw->second));
+    const auto span = editor().displaySpan(role, int(raw->first), int(raw->second));
     if (span.first >= span.second)
         return std::nullopt;
     return span;
@@ -459,10 +460,10 @@ bool Application::replaceEditorGrammar(int role, int position, const QString &re
                                                    replacement.toStdU16String());
     if (!caret)
         return false;
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
-    const int shown = m_editor->displaySpan(role, int(*caret), int(*caret)).first;
-    m_editor->selectInField(shown, shown);
+    const int shown = editor().displaySpan(role, int(*caret), int(*caret)).first;
+    editor().selectInField(shown, shown);
     m_grammarEditor.reset();
     checkEditorGrammar();
     emit grammarChanged();
@@ -518,15 +519,16 @@ bool Application::addGrammarWord(const QString &word)
     return true;
 }
 
-QVariantMap Application::startGrammarWalk()
+QVariantMap Application::startGrammarWalk(int shellWindow)
 {
-    closeGrammarWalk();
-    auto *session = targetSession();
+    closeGrammarWalk(shellWindow);
+    auto *session = windowSession(shellWindow);
     if (!grammarOn() || !session)
-        return grammarWalkState();
-    m_editor->commit();
+        return grammarWalkState(shellWindow);
+    views(shellWindow).editor->commit();
     auto walk = std::make_unique<GrammarWalk>();
-    walk->document = *m_workspace.editingTarget();
+    walk->document = *m_workspace.currentTab(shellWindow);
+    walk->window = shellWindow;
     walk->translation = application::spellsTranslation(session->document());
     const auto lines = session->document().lines();
     std::size_t first = 0;
@@ -537,14 +539,31 @@ QVariantMap Application::startGrammarWalk()
         walk->lines.push_back(lines[(first + i) % lines.size()]->id);
     for (std::size_t i = 0; i < walk->lines.size(); ++i)
         walk->queue.push_back(i);
-    m_grammarWalk = std::move(walk);
-    pumpGrammarWalk();
-    return grammarWalkState();
+    views(shellWindow).grammarWalk = std::move(walk);
+    pumpGrammarWalk(shellWindow);
+    return grammarWalkState(shellWindow);
 }
 
-const core::LineRecord *Application::grammarWalkLine(const application::EditSession &session, std::size_t index)
+Application::GrammarWalk *Application::grammarWalkOf(int shellWindow)
 {
-    auto &walk = *m_grammarWalk;
+    if (shellWindow == 0)
+        return m_mainViews.grammarWalk.get();
+    const auto found = m_shellWindows.find(shellWindow);
+    return found != m_shellWindows.end() && found->second.views ? found->second.views->grammarWalk.get() : nullptr;
+}
+
+std::vector<Application::GrammarWalk *> Application::grammarWalks()
+{
+    std::vector<GrammarWalk *> out;
+    for (auto *views : allViews())
+        if (views->grammarWalk)
+            out.push_back(views->grammarWalk.get());
+    return out;
+}
+
+const core::LineRecord *Application::grammarWalkLine(GrammarWalk &walk, const application::EditSession &session,
+                                                     std::size_t index)
+{
     if (walk.rowsOf != &session.document() || walk.rowsRevision != session.revision()) {
         walk.rows.clear();
         for (const auto *line : session.document().lines())
@@ -556,13 +575,14 @@ const core::LineRecord *Application::grammarWalkLine(const application::EditSess
     return it == walk.rows.end() ? nullptr : it->second;
 }
 
-void Application::pumpGrammarWalk()
+void Application::pumpGrammarWalk(int shellWindow)
 {
-    if (!m_grammarWalk || m_grammarWalk->cancelled)
+    auto *pumped = grammarWalkOf(shellWindow);
+    if (!pumped || pumped->cancelled)
         return;
-    if (grammarWalkStale())
+    if (grammarWalkStale(shellWindow))
         return;
-    auto &walk = *m_grammarWalk;
+    auto &walk = *pumped;
     const auto *session = m_files->session(walk.document);
     std::set<std::size_t> open;
     for (const auto &found : walk.findings)
@@ -577,14 +597,14 @@ void Application::pumpGrammarWalk()
             ++it;
         }
     }
-    const auto again = [this, &walk] {
+    const auto again = [this, &walk, shellWindow] {
         if (walk.pumpQueued)
             return;
         walk.pumpQueued = true;
-        QTimer::singleShot(0, this, [this] {
-            if (m_grammarWalk)
-                m_grammarWalk->pumpQueued = false;
-            pumpGrammarWalk();
+        QTimer::singleShot(0, this, [this, shellWindow] {
+            if (auto *queued = grammarWalkOf(shellWindow))
+                queued->pumpQueued = false;
+            pumpGrammarWalk(shellWindow);
         });
     };
     std::size_t read = 0;
@@ -595,7 +615,7 @@ void Application::pumpGrammarWalk()
         }
         const std::size_t index = walk.queue.front();
         walk.queue.pop_front();
-        const auto *line = session ? grammarWalkLine(*session, index) : nullptr;
+        const auto *line = session ? grammarWalkLine(walk, *session, index) : nullptr;
         if (!line || !core::syntax::spellChecked(core::syntax::textState(line->comment, core::toUtf16(line->effect)))) {
             walk.arrived[index] = {};
             continue;
@@ -631,17 +651,16 @@ void Application::pumpGrammarWalk()
         ++walk.checked;
     }
     if (added && !walk.current) {
-        nextGrammarFinding();
-        showGrammarFinding();
+        nextGrammarFinding(walk);
+        showGrammarFinding(shellWindow);
     }
     if (kept >= kWalkKept && walk.checked > joined && !walk.queue.empty())
         again();
     emit grammarWalkChanged();
 }
 
-void Application::nextGrammarFinding()
+void Application::nextGrammarFinding(GrammarWalk &walk)
 {
-    auto &walk = *m_grammarWalk;
     const std::size_t from = walk.current ? *walk.current + 1 : 0;
     walk.current.reset();
     for (std::size_t i = from; i < walk.findings.size(); ++i)
@@ -656,66 +675,70 @@ void Application::nextGrammarFinding()
         }
 }
 
-void Application::showGrammarFinding()
+void Application::showGrammarFinding(int shellWindow)
 {
-    if (!m_grammarWalk || !m_grammarWalk->current || m_workspace.editingTarget() != m_grammarWalk->document)
+    auto *shown = grammarWalkOf(shellWindow);
+    if (!shown || !shown->current || m_workspace.currentTab(shellWindow) != shown->document)
         return;
-    auto *session = targetSession();
+    auto *session = windowSession(shellWindow);
     if (!session)
         return;
-    auto &walk = *m_grammarWalk;
-    while (walk.current && !grammarWalkLine(*session, walk.findings[*walk.current].line)) {
+    auto &walk = *shown;
+    auto &editor = *views(shellWindow).editor;
+    while (walk.current && !grammarWalkLine(walk, *session, walk.findings[*walk.current].line)) {
         const std::size_t gone = walk.findings[*walk.current].line;
         for (auto &other : walk.findings)
             if (other.line == gone)
                 other.handled = true;
-        nextGrammarFinding();
+        nextGrammarFinding(walk);
     }
     if (!walk.current)
         return;
     const auto &found = walk.findings[*walk.current];
     const auto &check = walk.checks.at(found.line);
     const auto line = walk.lines[found.line];
-    m_editor->commit();
+    editor.commit();
     if (session->draftLine() && *session->draftLine() != line)
         return;
     session->setSelection(application::Selection{line, {line}, line, {}});
-    m_editor->reloadFromSession();
-    m_editor->showLine(line.value);
+    editor.reloadFromSession();
+    editor.showLine(line.value);
     refreshViews();
     const int role = walk.translation ? 1 : 0;
-    if (editorRaw(role) != check.raw)
+    if (windowLineRaw(shellWindow, role) != check.raw)
         return;
     if (const auto span = fieldSpan(role, check.text, found.finding.start, found.finding.end))
-        m_editor->selectInField(span->first, span->second, role);
+        editor.selectInField(span->first, span->second, role);
 }
 
-bool Application::grammarWalkStale()
+bool Application::grammarWalkStale(int shellWindow)
 {
-    if (!m_grammarWalk)
+    auto *walk = grammarWalkOf(shellWindow);
+    if (!walk)
         return true;
-    if (m_workspace.editingTarget() == m_grammarWalk->document)
+    if (m_workspace.currentTab(shellWindow) == walk->document)
         return false;
-    cancelGrammarWalk();
-    m_grammarWalk->current.reset();
-    m_grammarWalk->problem = QCoreApplication::translate("HikariSub.Spelling", "Another file is open in the editor.");
+    stopGrammarWalk(*walk);
+    walk->current.reset();
+    walk->problem = QCoreApplication::translate("HikariSub.Spelling", "Another file is open in the editor.");
     emit grammarWalkChanged();
     return true;
 }
 
 QVariantMap Application::grammarWalkProblem(const QString &problem)
 {
-    QVariantMap state = grammarWalkState();
+    QVariantMap state = grammarWalkState(m_workspace.activeWindow());
     state.insert(QStringLiteral("problem"), problem);
     return state;
 }
 
-QVariantMap Application::grammarWalkState()
+QVariantMap Application::grammarWalkState(int shellWindow)
 {
     QVariantMap out{{QStringLiteral("on"), grammarOn()}};
-    if (!m_grammarWalk)
+    const auto *own = grammarWalkOf(shellWindow);
+    if (!own)
         return out;
-    const auto &walk = *m_grammarWalk;
+    const auto &walk = *own;
     const bool walking = !walk.cancelled && walk.checked < walk.lines.size();
     out.insert(QStringLiteral("walking"), walking);
     out.insert(QStringLiteral("done"), !walking && !walk.cancelled);
@@ -759,9 +782,14 @@ QVariantMap Application::grammarWalkState()
 
 QVariantMap Application::cancelGrammarWalk()
 {
-    if (!m_grammarWalk)
-        return grammarWalkState();
-    auto &walk = *m_grammarWalk;
+    const int shellWindow = m_workspace.activeWindow();
+    if (auto *walk = grammarWalkOf(shellWindow))
+        stopGrammarWalk(*walk);
+    return grammarWalkState(shellWindow);
+}
+
+void Application::stopGrammarWalk(GrammarWalk &walk)
+{
     if (m_harper)
         for (const auto &[ticket, index] : walk.pending)
             m_harper->cancel(ticket);
@@ -770,24 +798,25 @@ QVariantMap Application::cancelGrammarWalk()
     walk.arrived.clear();
     walk.cancelled = walk.checked < walk.lines.size();
     emit grammarWalkChanged();
-    return grammarWalkState();
 }
 
-void Application::closeGrammarWalk()
+void Application::closeGrammarWalk(int shellWindow)
 {
-    if (!m_grammarWalk)
+    auto *walk = grammarWalkOf(shellWindow);
+    if (!walk)
         return;
-    cancelGrammarWalk();
-    m_grammarWalk.reset();
+    stopGrammarWalk(*walk);
+    views(shellWindow).grammarWalk.reset();
 }
 
 QVariantMap Application::grammarWalkReplace(const QString &replacement)
 {
-    if (grammarWalkStale() || !m_grammarWalk->current)
-        return grammarWalkState();
-    auto &walk = *m_grammarWalk;
+    const int shellWindow = m_workspace.activeWindow();
+    if (grammarWalkStale(shellWindow) || !grammarWalkOf(shellWindow)->current)
+        return grammarWalkState(shellWindow);
+    auto &walk = *grammarWalkOf(shellWindow);
     auto *session = targetSession();
-    m_editor->commit();
+    editor().commit();
     auto &found = walk.findings[*walk.current];
     auto &check = walk.checks.at(found.line);
     const int start = found.finding.start, end = found.finding.end;
@@ -795,8 +824,8 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
                                                    std::size_t(start), std::size_t(end), replacement.toStdU16String());
     found.handled = true;
     if (!caret) {
-        nextGrammarFinding();
-        showGrammarFinding();
+        nextGrammarFinding(walk);
+        showGrammarFinding(shellWindow);
         emit grammarWalkChanged();
         return grammarWalkProblem(caret.error() == application::CommandRefusal::StaleRevision
                                       ? QCoreApplication::translate("HikariSub.Spelling", "The line changed since it was checked.")
@@ -813,48 +842,51 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
             other.handled = true;
         }
     }
-    if (const auto *line = grammarWalkLine(*session, found.line)) {
+    if (const auto *line = grammarWalkLine(walk, *session, found.line)) {
         check.raw = core::toUtf16(walk.translation ? line->translation : line->text);
         check.text = core::grammar::checkedText(check.raw, session->document().format());
     }
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
-    nextGrammarFinding();
-    showGrammarFinding();
-    pumpGrammarWalk();
+    nextGrammarFinding(walk);
+    showGrammarFinding(shellWindow);
+    pumpGrammarWalk(shellWindow);
     emit grammarWalkChanged();
-    return grammarWalkState();
+    return grammarWalkState(shellWindow);
 }
 
 QVariantMap Application::grammarWalkIgnore()
 {
-    if (grammarWalkStale() || !m_grammarWalk->current)
-        return grammarWalkState();
-    m_grammarWalk->findings[*m_grammarWalk->current].handled = true;
-    nextGrammarFinding();
-    showGrammarFinding();
-    pumpGrammarWalk();
+    const int shellWindow = m_workspace.activeWindow();
+    if (grammarWalkStale(shellWindow) || !grammarWalkOf(shellWindow)->current)
+        return grammarWalkState(shellWindow);
+    auto &walk = *grammarWalkOf(shellWindow);
+    walk.findings[*walk.current].handled = true;
+    nextGrammarFinding(walk);
+    showGrammarFinding(shellWindow);
+    pumpGrammarWalk(shellWindow);
     emit grammarWalkChanged();
-    return grammarWalkState();
+    return grammarWalkState(shellWindow);
 }
 
 QVariantMap Application::grammarWalkIgnoreRule()
 {
-    if (grammarWalkStale() || !m_grammarWalk->current)
-        return grammarWalkState();
-    auto &walk = *m_grammarWalk;
+    const int shellWindow = m_workspace.activeWindow();
+    if (grammarWalkStale(shellWindow) || !grammarWalkOf(shellWindow)->current)
+        return grammarWalkState(shellWindow);
+    auto &walk = *grammarWalkOf(shellWindow);
     const auto group = groupOf(walk.findings[*walk.current].finding);
     walk.findings[*walk.current].handled = true;
     if (group)
         for (auto &other : walk.findings)
             if (groupOf(other.finding) == group)
                 other.handled = true;
-    nextGrammarFinding();
-    showGrammarFinding();
-    pumpGrammarWalk();
+    nextGrammarFinding(walk);
+    showGrammarFinding(shellWindow);
+    pumpGrammarWalk(shellWindow);
     if (group)
         setGrammarGroup(int(*group), false);
-    QVariantMap state = grammarWalkState();
+    QVariantMap state = grammarWalkState(shellWindow);
     state.insert(QStringLiteral("ignoredGroup"), group ? int(*group) : -1);
     state.insert(QStringLiteral("ignoredGroupName"), group ? groupName(*group) : QString());
     emit grammarWalkChanged();
@@ -863,28 +895,29 @@ QVariantMap Application::grammarWalkIgnoreRule()
 
 QVariantMap Application::grammarWalkAddWord()
 {
-    if (grammarWalkStale() || !m_grammarWalk->current)
-        return grammarWalkState();
-    auto &walk = *m_grammarWalk;
+    const int shellWindow = m_workspace.activeWindow();
+    if (grammarWalkStale(shellWindow) || !grammarWalkOf(shellWindow)->current)
+        return grammarWalkState(shellWindow);
+    auto &walk = *grammarWalkOf(shellWindow);
     const auto &found = walk.findings[*walk.current];
     if (!found.finding.word)
-        return grammarWalkState();
+        return grammarWalkState(shellWindow);
     const auto covered = [&](const GrammarWalk::Finding &f) {
         const auto &text = walk.checks.at(f.line).text.text;
         return text.substr(std::size_t(f.finding.start), std::size_t(f.finding.end - f.finding.start));
     };
     const std::u16string word = covered(found);
     if (!addGrammarWord(QString::fromStdU16String(word)))
-        return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "Error. Word \"%1\" was not added.")
+        return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "“%1” was not added to the dictionary.")
                                       .arg(QString::fromStdU16String(word)));
     for (auto &other : walk.findings)
         if (other.finding.word && !other.handled && covered(other) == word)
             other.handled = true;
-    nextGrammarFinding();
-    showGrammarFinding();
-    pumpGrammarWalk();
+    nextGrammarFinding(walk);
+    showGrammarFinding(shellWindow);
+    pumpGrammarWalk(shellWindow);
     emit grammarWalkChanged();
-    return grammarWalkState();
+    return grammarWalkState(shellWindow);
 }
 
 }

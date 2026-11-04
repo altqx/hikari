@@ -40,9 +40,10 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9 | Split lines ▸ | | | split-lines |
 | 9.1 | Split line at video time | GRID_SPLIT_BY_VIDEO_TIME | video loaded | split-at-video |
 | 9.2 | Split lines into frames | GRID_SPLIT_BY_FRAME | video loaded | split-frames |
-| 9.3 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
-| 9.4 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
-| 9.5 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
+| 9.3 | [x] Bake animations | | `grid.splitFramesBakeAnimations`, on by default | |
+| 9.4 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
+| 9.5 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
+| 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |
@@ -235,8 +236,9 @@ The panel's own items come first (`panelOwnItems`, `Main.qml:604-639`; `panelOwn
 | Spellchecker | [x] Ignore comments, [x] Ignore words in capitals, Words added to dictionary… (dictionary) |
 | Grid | [x] Fold generated lines |
 | Audio, Line editor, Original text, Search, Log, Styles, Shift times, Template editor | none |
+| A plugin panel | the rows of its tree's `menu`, while the plugin runs ([plugins.md](../plugins.md), "Panels and dialogs") |
 
-Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), Close (tab-close), or "Close reference" for the Reference panel.
+Then `|` Move panel… (panel-move), Move tab left (tab-move-left), Move tab right (tab-move-right) (both only with 2+ tabs), Undock / Dock (panel-float / panel-dock), About <plugin>… (about; plugin panels whose plugin is installed), Close (tab-close), or "Close reference" for the Reference panel.
 
 Items: 5 shared + 23 panel-owned = 28 (5–19 shown at a time).
 
@@ -575,9 +577,9 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 
 [#579](https://github.com/altqx/hikari/issues/579) built the pieces every redesigned menu uses:
 
-- **Menu key and Shift+F10.** An application event filter (`src/ui/menu_key.cpp`) turns either key, and Windows' keyboard context-menu event, into a request to the focused item. The nearest `MenuKey.onRequested` at or above the focused item opens its menu at a point in the focused item: below the text cursor in a text field, below the active row in the Grid and the reference tray, below the current row in Home, Styles and the Automation panel, at the video cursor in the video panel and in full screen. Without a `MenuKey` owner the request goes to Qt Quick's own `ContextMenu` at that point, which is how text fields and the Line editor get it. Document tabs, the title bar and the full-screen speaker never take the keyboard focus, so they have no keyboard request; CX4 gave tag buttons and the tag list one.
+- **Menu key and Shift+F10.** An application event filter (`src/ui/menu_key.cpp`) turns either key, and Windows' keyboard context-menu event, into a request to the focused item. The nearest `MenuKey.onRequested` at or above the focused item opens its menu at a point in the focused item: below the text cursor in a text field, below the active row in the Grid and the reference tray, below the current row in Home, Styles and the Automation panel, at the video cursor in the video panel and in full screen. Without a `MenuKey` owner the request goes to Qt Quick's own `ContextMenu` at that point, which is how text fields and the Line editor get it. Document tabs and the title bar never take the keyboard focus, so they have no keyboard request; CX4 gave tag buttons and the tag list one, CX5 the full-screen speaker.
 - **Key column.** A row with a `command` shows the key bound to it now, and follows Settings › Shortcuts; `standardKey` shows the platform's key, `shortcutText` a fixed one. `detailText` is a value that is not a key (the grammar group, a chapter's time, the tap speed), drawn dimmed and in italics. No label holds a tab or a key.
-- **Text menu.** `src/ui/TextMenu.qml` and `TextMenuItem.qml`, made once per field by the style's `TextMenus` singleton, replace Qt's menu in every TextField and TextArea. Each row sends its own key to the field, so a row does what its key does there: Undo in the Line editor is the document's, Paste in a time field goes through the time mask. Editable combo boxes keep Qt's menu.
+- **Text menu.** `src/ui/TextMenu.qml` and `TextMenuItem.qml`, made once per field by the style's `TextMenus` singleton, replace Qt's menu in every TextField and TextArea. Each row sends its own key to the field, so a row does what its key does there: Undo in the Line editor is the document's, Paste in a time field goes through the time mask. Editable combo boxes get it too: the style's ComboBox calls `TextMenus.adopt` on its inner field, which clears the menu Fusion gives that field.
 - **Order.** `tests/ui/context_menus.txt` lists every right-click menu, Line editor text first; `contextMenusAreTheListedOnes` fails on any change, the way `menu_bar.txt` pins the menu bar.
 - **The listing is a ledger.** A PR that adds, removes, renames or moves a right-click menu row, or gives one a command, updates `context_menus.txt` in the same PR. Each line is a menu, a row (`Menu > Row [COMMAND]`), a submenu (`Menu > Sub >`) or a separator (`Menu > -`). It lists conditional rows too, even when they are hidden, and leaves out rows built from data (recent files, streams, chapters, macros). Regenerate it rather than edit it by hand: run `hikari_ui_shell_tests contextMenusAreTheListedOnes`, then copy the `context_menus.actual.txt` the failing test writes in its working directory over `tests/ui/context_menus.txt`, and review the diff.
 
@@ -592,6 +594,32 @@ The total is **28 menus with 257 items**: 16 right-click entries (two of them, R
 - **Tag buttons and the tag list.** Tag buttons take Tab focus, so the Menu key opens their menu. The tag list has a ⋯ button in its header ("Tag list options"); while the list is open, the Menu key in the Line editor opens those options instead of the text menu.
 - **Menu bar.** Subtitles › Set FPS ▸ and File › Import subtitles from MKV…; `menu_bar.txt` and the docs export (paths "Grid header menu > …" and "Grid options > …") follow.
 - **Names.** GRID_PASTE_TRANSLATION is "Paste translation from a file…" and GRID_TRANSLATION_DIALOG "Translation matching…" in the menu, the hotkey list and the command search (1.3).
+
+### What CX5 built
+
+[#581](https://github.com/altqx/hikari/issues/581) built menus 10–15:
+
+- **One video menu.** `VideoContextMenu.qml` serves the panel and full screen. Rows that only make sense in full screen (Open editor, the file rows, Recently opened ▸, Progress bar, Full screen bar ▸) are hidden in the panel, not greyed out. A `ShellMenu` with `shown: false` hides its row in the parent menu; hidden rows stay in `context_menus.txt`.
+- **Submenus.** Full screen on ▸ (only with a second monitor), Export frame ▸, Audio track ▸ and Chapters ▸. The two Recently opened submenus are one, with a heading per kind. Audio tracks, chapters and the bar modes are radio rows (`MenuRadioItem.qml`); headings are `MenuHeading.qml`.
+- **Check items.** Full screen, Progress bar, Render cost (also in the menu bar) and Tap to time are check items wherever they appear.
+- **Zoom.** The video menu gains GLOBAL_RESET_VIDEO_ZOOM, “Reset zoom and pan”, the name the menu bar took in 10.2.
+- **Full screen bar.** The modes are “Show when the pointer moves”, “Always show” and “Never show”, in the menu, on the bar's mode button and in the hotkey row.
+- **Speaker.** Shift+Tab in full screen focuses the bar's speaker, and the bar stays up while it has focus; the Menu key opens its output menu, which now always shows the “Output device” heading.
+- **Audio overflow.** » (menu-more) icon; the folded play buttons have their own group; Tap options ▸ is a real submenu (without its own Tap to time row, which sits just above it); Speech spectrum sits with Waveform and Spectrum.
+- **Names.** Auto-commit, Go to the next line after commit, Karaoke and Speech spectrum read the same in the menus, the dropdowns, Customise and the tooltips.
+
+### What CX6 built
+
+[#582](https://github.com/altqx/hikari/issues/582) built menus 16–28:
+
+- **Panels.** The panel ⋯ ends with Float or Dock and then Close, alone after a separator; “Close reference” is now “Close”. Automation's Clear runs has its own group. Show times and Show frames moved from the Video ⋯ to the Line editor ⋯. View › Panels › name is Show, one Float/Dock row, then Close.
+- **Video follow.** The submenus read “Move video to the selected line ▸” and “After moving, play ▸”, and Settings uses the same names. The choices keep their wording.
+- **Floating window (18.1).** The title bar ⋯ stays a window menu: Dock, a separator, then Close. With `Flag_HideTitleBarWhenTabsVisible` only a window of 2+ groups shows its own title bar, so a panel menu there would be ambiguous and would lose Dock and Close for the whole window. A single-panel window shows only its tab header, whose ⋯ is the full panel menu.
+- **Document tabs.** A tab's menu has Save, Save all, Show in folder and Copy path (submenus with one row per file when the tab has video, audio or keyframes), Subtitle comparison ▸ (Compare and Turn off comparison first), Switch to ▸, then Close, Close other tabs, Close tabs to the right and Close all tabs. The empty tab bar offers New tab, Save all, Switch to ▸ and Close all tabs. The current tab takes Tab focus; Left and Right move between tabs, and the Menu key or Shift+F10 opens the focused tab's menu.
+- **Styles.** The style row menu and the panel's » menu use one name per command (Edit style…, Style manager, New style…), and Delete comes last. The Style manager list ⋯ puts Delete unused styles after a separator.
+- **Automation.** A macro's Run shows its own shortcut and the run-script icon, with the shortcut rows in their own group. A right-click on a script row opens the script's ⋯ menu, and the Menu key opens it from the ⋯ button. In a script dialog, Presets ▸ takes dialog-memory, Delete preset ▸ sits behind a separator, and Reset takes restore-default.
+- **Reference tray.** The menu starts with Copy. Its “Also in” list comes from the right-clicked reference row, reads “title, line N”, and shows a disabled “No other occurrences” when there are none. Choosing a line in the edited document selects it there.
+- **Icons.** » (menu-more) marks only overflow; the layout switcher's dropdown uses a chevron. The visual tool rail's overflow rows are check items, as in the full-screen Tools menu.
 
 Proposal for [#578](https://github.com/altqx/hikari/issues/578), from the 2026-10-31 decisions in the card and the round-2 decisions of 2026-11-02 (round 2 wins where they differ). The mockup draws each menu before and after in Light, Dark and high contrast with the theme roles and the icons from `src/ui/icons`: `cx2/index.html` and the screenshots on the orphan branch `evidence/w8-cx2`. The owner approved every menu and every flagged point on 2026-11-02 ([#578 decision](https://github.com/altqx/hikari/issues/578)); CX3–CX6 build this.
 
@@ -1026,9 +1054,9 @@ Approved:
 
 - **13.1** Approve.
 
-### 14. Audio: overflow menu (when the bar folds) (CX5 #581; inventory M3)
+### 14. Audio: overflow menu (CX5 #581; inventory M3)
 
-The overflow button at the end of the audio bar, shown only when its controls fold. Its icon changes from ⋯ to » (menu-more).
+The overflow button at the end of the audio bar. Its icon changes from ⋯ to » (menu-more). It shows at every width, because Go to selection start and end are in no other menu (FA10b #726). In a wide bar the menu holds only those two rows; the other rows appear as the bar folds them out, so no row is also a button in the bar.
 
 - Play before the mark (play-before-mark)
 - Play after the mark (play-after-mark)
@@ -1057,10 +1085,13 @@ The overflow button at the end of the audio bar, shown only when its controls fo
 - ──
 - (•) Waveform
 - (•) Spectrum
-- [x] Speech spectrum (was “Speech (non-linear spectrum)”)
+- [x] Speech spectrum (was “Speech (non-linear spectrum)”; while the toggles fold)
 - ──
-- [x] Auto-scroll
-- [x] Sync with video
+- Go to selection start (video-to-start-time; FA10, at every width)
+- Go to selection end (video-to-end-time; FA10, at every width)
+- ──
+- [x] Auto-scroll (while the toggles fold)
+- [x] Sync with video (while the toggles fold)
 
 Changes:
 

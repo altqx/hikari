@@ -95,11 +95,11 @@ std::optional<QByteArray> readSessionBytes(const QString &path)
 
 }
 
-QVariantList Application::tabs() const
+QVariantList Application::windowTabs(int shellWindow) const
 {
     QVariantList rows;
-    const auto target = m_workspace.editingTarget();
-    for (const auto id : m_workspace.tabs()) {
+    const auto target = m_workspace.currentTab(shellWindow);
+    for (const auto id : m_workspace.tabs(shellWindow)) {
         const std::string *title = m_workspace.title(id);
         const QString name = title ? qs(*title) : QString();
         QString label = name;
@@ -123,12 +123,24 @@ QVariantList Application::tabs() const
     return rows;
 }
 
-int Application::currentTab() const
+int Application::windowCurrentTab(int shellWindow) const
 {
-    const auto tabs = m_workspace.tabs();
-    const auto target = m_workspace.editingTarget();
+    const auto tabs = m_workspace.tabs(shellWindow);
+    const auto target = m_workspace.currentTab(shellWindow);
     const auto it = target ? std::ranges::find(tabs, *target) : tabs.end();
     return it == tabs.end() ? -1 : static_cast<int>(it - tabs.begin());
+}
+
+bool Application::windowHome(int shellWindow) const
+{
+    return m_workspace.tabs(shellWindow).empty() &&
+           !(m_workspace.reference() && m_workspace.window(*m_workspace.reference()) == shellWindow);
+}
+
+void Application::activateShellWindow(int shellWindow)
+{
+    if (m_workspace.activateWindow(shellWindow))
+        refreshViews();
 }
 
 qulonglong Application::editingDocument() const
@@ -173,7 +185,22 @@ QVariantList Application::reviewCloseTab(int index)
     const auto tabs = m_workspace.tabs();
     if (index < 0 || index >= static_cast<int>(tabs.size()))
         return {};
-    m_closingTab = tabs[static_cast<std::size_t>(index)];
+    m_closingTabs = {tabs[static_cast<std::size_t>(index)]};
+    m_tabAfterClose.reset();
+    return reviewClose(QStringLiteral("tab"));
+}
+
+QVariantList Application::reviewCloseTabs(int index, bool toTheRight)
+{
+    const auto tabs = m_workspace.tabs();
+    if (index < 0 || index >= static_cast<int>(tabs.size()))
+        return {};
+    const auto kept = tabs[static_cast<std::size_t>(index)];
+    m_closingTabs.clear();
+    for (std::size_t i = toTheRight ? static_cast<std::size_t>(index) + 1 : 0; i < tabs.size(); ++i)
+        if (tabs[i] != kept)
+            m_closingTabs.push_back(tabs[i]);
+    m_tabAfterClose = kept;
     return reviewClose(QStringLiteral("tab"));
 }
 
@@ -192,14 +219,15 @@ void Application::closeDocument(application::DocumentId document)
 void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
-    m_workspaceLayout->forgetTab(document.value);
+    for (auto *layout : layouts())
+        layout->forgetTab(document.value);
     m_importPaths.erase(document.value);
     m_lyricsImports.erase(document.value);
     m_originalColumns.erase(document.value);
     m_translationDeclined.erase(document.value);
     m_offers.erase(document.value);
-    if (m_kanjiTimer)
-        m_kanjiTimer->forget(document.value);
+    for (auto *views : allViews())
+        views->kanjiTimer->forget(document.value);
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });
     if (m_unresolved.size() != before)
@@ -256,15 +284,16 @@ ui::WorkspaceLayoutController::TabStart Application::tabStart(application::Docum
 void Application::replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
                                         ui::WorkspaceLayoutController::TabStart start)
 {
-    m_workspaceLayout->replaceTab(old.value, replacement.value, start);
-    if (m_layoutDocument == old)
-        m_layoutDocument = replacement;
+    layoutFor(replacement).replaceTab(old.value, replacement.value, start);
+    for (auto &[window, shown] : m_layoutDocuments)
+        if (shown == old)
+            shown = replacement;
 }
 
 void Application::registerTabArrangements()
 {
-    for (const auto id : m_workspace.tabs())
-        m_workspaceLayout->addTab(id.value, tabStart(id));
+    for (const auto id : m_workspace.allTabs())
+        layoutFor(id).addTab(id.value, tabStart(id));
 }
 
 namespace {
@@ -276,7 +305,7 @@ void Application::setUpFileArrangements()
     m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
         if (!m_settings->boolean(kLayoutInFile))
             return std::nullopt;
-        const QByteArray text = m_workspaceLayout->fileArrangement(document.value);
+        const QByteArray text = layoutFor(document).fileArrangement(document.value);
         if (text.isEmpty())
             return std::nullopt;
         return std::u8string(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size()));
@@ -306,7 +335,7 @@ std::optional<QByteArray> Application::fileArrangement(application::DocumentId d
 void Application::takeFileArrangement(application::DocumentId document)
 {
     if (const auto file = fileArrangement(document, true))
-        m_workspaceLayout->setFileArrangement(document.value, *file);
+        layoutFor(document).setFileArrangement(document.value, *file);
 }
 
 void Application::openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement)
@@ -314,17 +343,18 @@ void Application::openIntoTabArrangement(application::DocumentId old, applicatio
     const auto file = fileArrangement(replacement);
     replaceTabArrangement(old, replacement, file ? ui::WorkspaceLayoutController::TabStart::Copy : tabStart(replacement));
     if (file)
-        m_workspaceLayout->setFileArrangement(replacement.value, *file);
+        layoutFor(replacement).setFileArrangement(replacement.value, *file);
 }
 
 void Application::showTabArrangement()
 {
     registerTabArrangements();
     const auto target = m_workspace.editingTarget();
-    if (!target || target == m_layoutDocument)
+    const int window = m_workspace.activeWindow();
+    if (const auto shown = m_layoutDocuments.find(window); !target || (shown != m_layoutDocuments.end() && shown->second == *target))
         return;
-    m_layoutDocument = target;
-    m_workspaceLayout->showTab(target->value, tabStart(*target));
+    m_layoutDocuments[window] = *target;
+    layoutOf(window).showTab(target->value, tabStart(*target));
 }
 
 void Application::trackTabMedia()
@@ -549,7 +579,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
     application::Session session;
     session.header = "HikariSub " HIKARI_VERSION;
     auto &tabs = session.tabs;
-    for (const auto id : m_workspace.tabs()) {
+    for (const auto id : m_workspace.allTabs()) {
         if (id == target)
             session.activeTab = tabs.size();
         application::SessionTab tab;
@@ -589,7 +619,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
         tab.keyframes = utf8(media.keyframes);
         if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
             tab.keyframes = utf8(u->path);
-        if (const auto arrangement = m_workspaceLayout->tabArrangement(id.value))
+        if (const auto arrangement = layoutFor(id).tabArrangement(id.value))
             tab.layout = arrangement->serialise().toStdString();
         tabs.push_back(std::move(tab));
     }
@@ -780,8 +810,9 @@ void Application::applySession()
         m_workspace.remove(id);
     }
     m_tabMedia.clear();
-    m_workspaceLayout->forgetTabs();
-    m_layoutDocument.reset();
+    for (auto *layout : layouts())
+        layout->forgetTabs();
+    m_layoutDocuments.clear();
     m_originalColumns.clear();
     m_unresolved.clear();
     std::optional<application::DocumentId> last, active;
@@ -837,7 +868,7 @@ void Application::applySession()
         m_tabMedia[id->value] = media;
         if (!tab.layout.empty()) {
             const std::string *title = m_workspace.title(*id);
-            m_workspaceLayout->setTabArrangement(id->value, QByteArray::fromStdString(tab.layout),
+            layoutFor(*id).setTabArrangement(id->value, QByteArray::fromStdString(tab.layout),
                                                  title ? qs(*title) : QString());
         }
         last = id;

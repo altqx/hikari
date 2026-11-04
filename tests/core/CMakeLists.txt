@@ -55,7 +55,7 @@ hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES
 hikari_add_gtest(hikari_core_spelling_scripts_tests SOURCES spelling_scripts_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_editor_syntax_tests SOURCES editor_syntax_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_matroska_tests SOURCES matroska_tests.cpp LIBRARIES hikari_core LABELS core)
-hikari_add_gtest(hikari_core_lyrics_import_tests SOURCES lyrics_import_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_lyrics_import_tests SOURCES lyrics_import_tests.cpp LIBRARIES hikari_core hikari_regex LABELS core)
 target_compile_definitions(hikari_core_lyrics_import_tests PRIVATE
     HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_gtest(hikari_core_karaoke_checks_tests SOURCES karaoke_checks_tests.cpp LIBRARIES hikari_core LABELS core)
@@ -72,3 +72,12 @@ target_compile_definitions(hikari_core_ass_attachments_tests PRIVATE
 hikari_add_gtest(hikari_core_export_tests SOURCES export_tests.cpp LIBRARIES hikari_core LABELS core)
 target_compile_definitions(hikari_core_export_tests PRIVATE
     HIKARI_EXPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/export")
+if(NOT WIN32)
+    find_program(HIKARI_XMLLINT xmllint)
+    add_test(NAME Export.TtmlGoldensMatchTheImsc1Schema
+        COMMAND "${CMAKE_COMMAND}" "-DXMLLINT=${HIKARI_XMLLINT}"
+            "-DSCHEMA=${PROJECT_SOURCE_DIR}/tests/fixtures/export/ttml-schemas/validate.xsd"
+            "-DGOLDENS=${PROJECT_SOURCE_DIR}/tests/fixtures/export/golden"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/check_ttml_schema.cmake")
+    set_tests_properties(Export.TtmlGoldensMatchTheImsc1Schema PROPERTIES LABELS "core" TIMEOUT 60)
+endif()

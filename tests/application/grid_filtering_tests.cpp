@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <string>
 #include <string_view>
 
 using namespace hikari;
@@ -112,6 +113,23 @@ TEST_F(FilterTest, HiddenBlocksOpenAndCloseFromTheLineBeforeThem)
     ASSERT_TRUE(hideSelectedLines(session));
     EXPECT_EQ(hidden(), "vbbh");
     EXPECT_EQ(hiddenBlockAfter(session.document(), 2), 1);
+}
+
+TEST(Filter, HideSelectedFindsASelectionPastTheFirstWords)
+{
+    std::string text(kFour.substr(0, kFour.find("Dialogue:")));
+    for (int i = 0; i < 130; ++i)
+        text += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n";
+    EditSession session{load(text)};
+    const core::LineId last = session.document().lines()[129]->id;
+    session.setSelection(Selection{last, {last}, last, {}});
+    ASSERT_TRUE(hideSelectedLines(session));
+    std::size_t hidden = 0;
+    for (const auto *l : session.document().lines())
+        hidden += l->visibility == core::LineVisibility::Hidden;
+    EXPECT_EQ(hidden, 1u);
+    EXPECT_EQ(session.document().lines()[129]->visibility, core::LineVisibility::Hidden);
+    EXPECT_FALSE(hideSelectedLines(session)) << "the hidden selection is no longer shown";
 }
 
 TEST_F(FilterTest, TranslationFiltersShowOnlyTheLinesLeftToDo)

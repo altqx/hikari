@@ -649,6 +649,7 @@ DialogWindow {
                         title: qsTr("Editing")
                         SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit"; text: qsTr("Stay on the line when editing times") }
                         SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
+                        SettingCheck { setting: "editor.softLineBreak"; text: qsTr("Shift+Enter inserts a soft line break (%1)").arg("\\n") }
                     }
                     SettingsSection {
                         title: qsTr("Translation mode")
@@ -913,6 +914,10 @@ DialogWindow {
                         title: qsTr("Counting")
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps"; text: qsTr("Count spaces and punctuation for wraps") }
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
+                    }
+                    SettingsSection {
+                        title: qsTr("Splitting")
+                        SettingCheck { setting: "grid.splitFramesBakeAnimations"; text: qsTr("Bake animations when splitting into frames") }
                     }
                     SettingsSection {
                         title: qsTr("New lines")

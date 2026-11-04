@@ -265,7 +265,7 @@ private slots:
         MouseGrid grid;
         grid.setModel(&model);
         grid.setSize(QSizeF(1600, 300));
-        const int style = columnTitled(grid, QStringLiteral("Styles"));
+        const int style = columnTitled(grid, QStringLiteral("Style"));
         const int text = grid.columnCount() - 1;
         QVERIFY(style >= 0);
         const QRectF before = grid.cellRect(0, style);
@@ -365,7 +365,7 @@ private slots:
         LineGrid grid;
         grid.setModel(&model);
         grid.setSize(QSizeF(1600, 300));
-        const int style = columnTitled(grid, QStringLiteral("Styles"));
+        const int style = columnTitled(grid, QStringLiteral("Style"));
         const int text = grid.columnCount() - 1;
         const double styleDefault = grid.cellRect(0, style).width();
         const double textDefault = grid.cellRect(0, text).width();
@@ -886,7 +886,7 @@ private slots:
         QCOMPARE(tips.value(QStringLiteral("Vert.")), QStringLiteral("Vertical margin"));
         QCOMPARE(tips.value(QStringLiteral("CPS")), QStringLiteral("Characters per second"));
         QCOMPARE(tips.value(QStringLiteral("Wraps")), QStringLiteral("Line wraps"));
-        for (const char *word : {"#", "Start", "End", "Styles", "Actor", "Effect", "Text"}) {
+        for (const char *word : {"#", "Start", "End", "Style", "Actor", "Effect", "Text"}) {
             QVERIFY2(tips.contains(QLatin1String(word)), word);
             QVERIFY2(tips.value(QLatin1String(word)).isEmpty(), word);
         }

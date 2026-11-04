@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_manager.h"
 
 #include "hikari/api/api.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include <QBuffer>
 #include <QCollator>
@@ -8,6 +9,9 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QUrl>
 #include <private/qzipreader_p.h>
 
 #include <algorithm>
@@ -183,6 +187,43 @@ QStringList permissionLines(const plugins::Manifest &manifest)
     return lines;
 }
 
+QVariant variantOf(const api::Json &json)
+{
+    const QByteArray wrapped = QByteArray("[") + QByteArray::fromStdString(json.dump()) + "]";
+    return QJsonDocument::fromJson(wrapped).array().at(0).toVariant();
+}
+
+QString authorsText(const plugins::Manifest &manifest)
+{
+    QStringList names;
+    for (const std::string &author : manifest.authors)
+        names << text(author);
+    return names.join(QStringLiteral(", "));
+}
+
+QStringList contributionLines(const plugins::Manifest &manifest)
+{
+    QStringList lines;
+    for (const plugins::Contribution &command : manifest.commands)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Command: %1").arg(text(command.title));
+    for (const plugins::Panel &panel : manifest.panels)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));
+    return lines;
+}
+
+QVariantList settingRows(const plugins::Manifest &manifest, const api::Json &stored)
+{
+    const api::Json values = plugins::settingValues(manifest, stored);
+    QVariantList rows;
+    for (const plugins::Setting &setting : manifest.settings) {
+        QVariantMap row = variantOf(setting.definition).toMap();
+        if (const api::Json *value = values.find(setting.id))
+            row.insert(QStringLiteral("value"), variantOf(*value));
+        rows << row;
+    }
+    return rows;
+}
+
 QString changeName(plugins::Change change)
 {
     switch (change) {
@@ -243,6 +284,14 @@ void PluginManager::refresh()
                     {QStringLiteral("enabled"), entry.enabled},
                     {QStringLiteral("keyId"), keyId(entry.key)},
                     {QStringLiteral("unrestricted"), manifest && manifest->tier == plugins::Tier::Unrestricted},
+                    {QStringLiteral("icon"), manifest && !manifest->icon.empty()
+                                                 ? QUrl::fromLocalFile(QFileInfo(file).dir().filePath(text(manifest->icon)))
+                                                 : QUrl()},
+                    {QStringLiteral("authors"), manifest ? authorsText(*manifest) : QString()},
+                    {QStringLiteral("homepage"), manifest ? text(manifest->homepage) : QString()},
+                    {QStringLiteral("permissions"), manifest ? permissionLines(*manifest) : QStringList()},
+                    {QStringLiteral("adds"), manifest ? contributionLines(*manifest) : QStringList()},
+                    {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings) : QVariantList()},
                 });
             }
         }
@@ -300,6 +349,35 @@ QVariantMap PluginManager::review(const QUrl &url)
     };
 }
 
+QVariantMap PluginManager::reviewUpdate(const QUrl &file, const QString &id)
+{
+    QVariantMap review = this->review(file);
+    if (review.value(QStringLiteral("ok")).toBool() && review.value(QStringLiteral("id")).toString() != id) {
+        m_review.reset();
+        QString installed = id;
+        for (const QVariant &row : std::as_const(m_rows))
+            if (row.toMap().value(QStringLiteral("id")).toString() == id)
+                installed = row.toMap().value(QStringLiteral("name")).toString();
+        return {{QStringLiteral("ok"), false},
+                {QStringLiteral("message"), QCoreApplication::translate("HikariSub.Plugins", "This package is “%1”, not an update of “%2”.")
+                                                .arg(review.value(QStringLiteral("name")).toString(), installed)}};
+    }
+    return review;
+}
+
+QString PluginManager::setSetting(const QString &id, const QString &setting, const QString &json)
+{
+    const auto value = api::Json::parse(json.toStdString());
+    if (!m_installer || !value)
+        return {};
+    const auto done = m_installer->setSetting(id.toStdString(), setting.toStdString(), *value);
+    if (!done)
+        return problemText(done.error());
+    refresh();
+    emit settingChanged(id, setting, json);
+    return {};
+}
+
 QString PluginManager::install(bool retrusted)
 {
     if (!m_installer || !m_review)
@@ -317,6 +395,22 @@ QString PluginManager::setEnabled(const QString &id, bool enabled)
     const auto done = m_installer->setEnabled(id.toStdString(), enabled);
     refresh();
     return done ? QString() : problemText(done.error());
+}
+
+QUrl PluginManager::dataFolder(const QString &id) const
+{
+    if (!m_installer)
+        return {};
+    const QString folder = QString::fromStdU16String((m_installer->folders().data / path(id)).u16string());
+    if (!QDir().mkpath(folder))
+        return {};
+    return QUrl::fromLocalFile(folder);
+}
+
+bool PluginManager::openDataFolder(const QString &id) const
+{
+    const QUrl folder = dataFolder(id);
+    return !folder.isEmpty() && backends::desktop::openUrl(folder);
 }
 
 bool PluginManager::hasData(const QString &id) const

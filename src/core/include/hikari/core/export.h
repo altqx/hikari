@@ -6,11 +6,15 @@
 #include <cstdint>
 #include <optional>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace hikari::core {
 
-enum class ExportFormat { Srt, WebVtt, Sbv, PlainText, MicroDvd, Mpl2, TMPlayer };
+enum class ExportFormat { Srt, WebVtt, Sbv, PlainText, MicroDvd, Mpl2, TMPlayer, Ttml, Dfxp };
+
+// Netflix keeps italics only: white text, centred, at the top or the bottom, with times in frames.
+enum class TtmlProfile { Generic, Netflix };
 
 struct ExportOptions {
     // Only these Lines; every Line when empty.
@@ -26,6 +30,11 @@ struct ExportOptions {
     bool vttKaraoke = false;
     bool textTimes = false;
     bool textActors = false;
+    TtmlProfile ttmlProfile = TtmlProfile::Generic;
+    // Times as frames at `fps`; always with the Netflix profile.
+    bool ttmlFrames = false;
+    // xml:lang, a BCP 47 tag or empty.
+    std::u8string language;
     double fps = 24000.0 / 1001.0;
 };
 

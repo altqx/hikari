@@ -4,6 +4,7 @@
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/core/text_projection.h"
+#include "hikari/regex/regex.h"
 #include "lua_native.h"
 
 extern "C" {
@@ -21,12 +22,11 @@ extern "C" {
 #include <filesystem>
 #include <limits>
 #include <map>
-#include <regex>
 #include <system_error>
 #include <type_traits>
 #include <utility>
 #include <chrono>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <variant>
 #include <fstream>
 #include <iterator>
@@ -194,8 +194,9 @@ int addStackTrace(lua_State *L)
     std::string message = err;
     if (lua_gettop(L))
         lua_pop(L, 1);
-    static const std::regex location("^\\[string (.*)\\]:[0-9]+: ");
-    message = std::regex_replace(message, location, "", std::regex_constants::format_first_only);
+    static const hikari::regex::Pattern location =
+        *hikari::regex::Pattern::compile("^\\[string (.*)\\]:[0-9]+: ", hikari::regex::Syntax::EcmaScript);
+    message = location.replaceFirst(message, "");
 
     std::string frames;
     lua_Debug ar;
@@ -1012,8 +1013,7 @@ bool lineToLua(lua_State *L, int i)
         setNumber(L, "scale_y", std::atoi(field(s, 12).c_str()));
         setNumber(L, "spacing", toDouble(field(s, 13)));
         setNumber(L, "angle", toDouble(field(s, 14)));
-        // borderstyle is 1 for an opaque box (BorderStyle 3), else 0.
-        setNumber(L, "borderstyle", std::atoi(field(s, 15).c_str()) == 3 ? 1 : 0);
+        setNumber(L, "borderstyle", std::atoi(field(s, 15).c_str()));
         setNumber(L, "outline", toDouble(field(s, 16)));
         setNumber(L, "shadow", toDouble(field(s, 17)));
         setNumber(L, "align", std::atoi(field(s, 18).c_str()));
@@ -1157,7 +1157,6 @@ std::optional<Entry> luaToLine(lua_State *L)
         const std::string bold = flag("bold"), italic = flag("italic"), underline = flag("underline"),
                           strike = flag("strikeout");
         const double sx = num("scale_x"), sy = num("scale_y"), spacing = num("spacing"), angle = num("angle");
-        // MUST KILL: BorderStyle reads back as borderstyle == -3
         const int border = static_cast<int>(num("borderstyle"));
         const double outline = num("outline"), shadow = num("shadow");
         const int align = static_cast<int>(num("align")), ml = static_cast<int>(num("margin_l")),
@@ -1171,7 +1170,7 @@ std::optional<Entry> luaToLine(lua_State *L)
         };
         s.fields = {name, font, numberText(size), hex(c1), hex(c2), hex(c3), hex(c4), bold, italic, underline,
                     strike, numberText(sx), numberText(sy), numberText(spacing), numberText(angle),
-                    border == -3 ? "3" : "1", numberText(outline), numberText(shadow), std::to_string(align),
+                    std::to_string(border), numberText(outline), numberText(shadow), std::to_string(align),
                     std::to_string(ml), std::to_string(mr), std::to_string(std::max(mt, mb)), std::to_string(enc)};
         return s;
     }
@@ -1487,7 +1486,7 @@ int hikariSources(lua_State *L)
     checkLive(L);
     const auto &d = g_subs->lists.dialogues;
     const int offset = static_cast<int>(g_subs->lists.info.size() + g_subs->lists.styles.size()) + 1;
-    std::unordered_map<std::uint64_t, int> at;
+    absl::flat_hash_map<std::uint64_t, int> at;
     for (std::size_t k = 0; k < d.size(); ++k)
         if (d[k].id)
             at.emplace(d[k].id, offset + static_cast<int>(k));

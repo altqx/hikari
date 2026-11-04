@@ -52,7 +52,7 @@ void PluginProcess::dropHelper(bool kill)
 
 void PluginProcess::start()
 {
-    if (m_state == State::Idle || m_state == State::Stopped)
+    if (m_state == State::Idle || m_state == State::Stopped || m_state == State::LoadFailed)
         startHelper();
 }
 
@@ -70,7 +70,7 @@ void PluginProcess::startHelper()
         emit loadFailed(message);
     };
     connect(host, &HelperHost::ready, this, [this] {
-        m_queue.push_front(Unit{Unit::Kind::Load, {}, {}});
+        m_queue.push_front(Unit{Unit::Kind::Load, {}, {}, {}});
         next();
     });
     connect(host, &HelperHost::refused, this,
@@ -94,7 +94,7 @@ bool PluginProcess::run(const std::string &command)
 {
     if (m_state == State::LoadFailed || m_queue.size() >= m_limits.maxQueued)
         return false;
-    m_queue.push_back(Unit{Unit::Kind::Command, command, {}});
+    m_queue.push_back(Unit{Unit::Kind::Command, command, {}, {}});
     if (m_state == State::Idle || m_state == State::Stopped)
         startHelper();
     else
@@ -102,19 +102,20 @@ bool PluginProcess::run(const std::string &command)
     return true;
 }
 
-bool PluginProcess::push(const std::string &event, const std::string &json)
+bool PluginProcess::deliver(const std::string &event, const std::string &json, const std::string &coalesceKey)
 {
     if (m_state != State::Ready && m_state != State::Starting)
         return false;
-    const auto queued = std::ranges::find_if(
-        m_queue, [&](const Unit &u) { return u.kind == Unit::Kind::Event && u.name == event; });
+    const auto queued = coalesceKey.empty() ? m_queue.end() : std::ranges::find_if(m_queue, [&](const Unit &u) {
+        return u.kind == Unit::Kind::Event && u.key == coalesceKey;
+    });
     if (queued != m_queue.end()) {
         queued->json = json;
         return true;
     }
     if (m_queue.size() >= m_limits.maxQueued)
         return false;
-    m_queue.push_back(Unit{Unit::Kind::Event, event, json});
+    m_queue.push_back(Unit{Unit::Kind::Event, event, json, coalesceKey});
     next();
     return true;
 }
@@ -204,6 +205,7 @@ void PluginProcess::onService(const helper::Event &event)
     request.service = static_cast<plugin::Service>(in.i32());
     switch (request.service) {
     case plugin::Service::Call:
+    case plugin::Service::Ui:
     case plugin::Service::SetSetting:
         request.name = in.str();
         request.json = in.str();
@@ -218,6 +220,9 @@ void PluginProcess::onService(const helper::Event &event)
     case plugin::Service::Subscribe:
         request.name = in.str();
         break;
+    case plugin::Service::Lock:
+    case plugin::Service::Unlock:
+        break;
     default:
         m_host->answer(m_request, event.call, Outcome::Unsupported);
         return;
@@ -231,7 +236,7 @@ void PluginProcess::onService(const helper::Event &event)
     HelperHost *host = m_host.get();
     const std::uint64_t requestId = m_request;
     const std::uint64_t call = event.call;
-    const bool carriesText = request.service != plugin::Service::Notify;
+    const bool carriesText = request.service != plugin::Service::Notify && request.service != plugin::Service::Unlock;
     ServiceReply reply = [this, host, requestId, call, carriesText](std::string text) {
         if (m_host.get() != host || m_request != requestId)
             return;
@@ -247,7 +252,7 @@ void PluginProcess::onService(const helper::Event &event)
     };
     if (m_services)
         m_services(request, std::move(reply));
-    else if (request.service == plugin::Service::Call)
+    else if (request.service == plugin::Service::Call || request.service == plugin::Service::Ui)
         reply(R"({"error": {"code": "unavailable", "message": "HikariSub offers no API here"}})");
     else
         reply({});
@@ -260,6 +265,7 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
         return;
     const Unit unit = std::move(*m_running);
     m_running.reset();
+    emit unitEnded();
     const QString name = QString::fromStdString(unit.name);
     QString message = QString::fromStdString(helper::textOf(payload));
     if (outcome != Outcome::Ok && outcome != Outcome::Failed)

@@ -144,7 +144,7 @@ QVariantList Application::reviewCloseAll()
 void Application::closeAllTabs()
 {
     m_comparison.remove();
-    for (const auto id : m_workspace.tabs()) {
+    for (const auto id : m_workspace.allTabs()) {
         m_comparison.forget(id);
         discardRecovery(id);
         m_files->close(id);

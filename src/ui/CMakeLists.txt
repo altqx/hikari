@@ -21,7 +21,8 @@ qt_add_qml_module(hikari_ui
     VERSION 1.0
     QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
-qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml TimingPostprocessorPanel.qml ShiftPresetBar.qml ShiftPreview.qml
+    ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
 qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
@@ -68,7 +69,8 @@ qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.q
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml VideoDetailsDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
-qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml PluginWidget.qml PluginList.qml PluginCanvas.qml PluginPanelBody.qml
+    PluginDialog.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
@@ -97,7 +99,7 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog
     VideoTemplateBadge.qml
     VideoVolumeSlider.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
-qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml MenuRadioItem.qml MenuHeading.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioSliderRow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml KeycapSentence.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml

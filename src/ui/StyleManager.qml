@@ -1234,23 +1234,31 @@ DialogWindow {
             id: moreMenu
             objectName: tools.prefix + "MoreMenu"
             ShellMenuItem {
+                objectName: tools.prefix + "MoveToTop"
                 iconRole: "move-to-top"
                 text: qsTr("Move to top")
                 enabled: tools.selected.length > 0
                 onTriggered: manager.moveSelected(tools.store, 0)
             }
             ShellMenuItem {
+                objectName: tools.prefix + "MoveToBottom"
                 iconRole: "move-to-bottom"
                 text: qsTr("Move to bottom")
                 enabled: tools.selected.length > 0
                 onTriggered: manager.moveSelected(tools.store, 3)
             }
-            MenuSeparator {}
-            Component.onCompleted: if (tools.store) removeItem(cleanItem)
             ShellMenuItem {
+                objectName: tools.prefix + "SortByName"
                 iconRole: "sort"
                 text: qsTr("Sort by name")
                 onTriggered: manager.sortList(tools.store)
+            }
+            Component.onCompleted: if (tools.store) {
+                removeItem(cleanItem)
+                removeItem(cleanSeparator)
+            }
+            MenuSeparator {
+                id: cleanSeparator
             }
             ShellMenuItem {
                 id: cleanItem
@@ -1529,8 +1537,9 @@ DialogWindow {
                         scaleYField.text = show("scaleY", m.scaleY)
                         angleField.text = show("angle", m.angle)
                         spacingField.text = show("spacing", m.spacing)
-                        borderBox.checkState = manager.isMixed("borderStyle") ? Qt.PartiallyChecked
-                                             : m.borderStyle ? Qt.Checked : Qt.Unchecked
+                        borderStyles.code = m.borderStyle
+                        const border = borderStyles.codes.indexOf(m.borderStyle)
+                        borderStyles.currentIndex = manager.isMixed("borderStyle") ? -1 : Math.max(border, 0)
                         const at = [7, 8, 9, 4, 5, 6, 1, 2, 3].indexOf(Number(m.alignment))
                         for (let i = 0; i < 9; ++i)
                             alignments.itemAt(i).checked = !manager.isMixed("alignment") && i === at
@@ -1540,7 +1549,8 @@ DialogWindow {
                         // MUST KILL: an unknown encoding shows as "1 - Default" while encodings.code keeps it
                         encodings.code = String(m.encoding)
                         const enc = encodings.model.findIndex(e => e.startsWith(m.encoding + " "))
-                        encodings.currentIndex = manager.isMixed("encoding") ? -1 : enc < 0 ? 1 : enc
+                        encodings.currentIndex = manager.isMixed("encoding") ? -1
+                                               : enc < 0 ? encodings.model.findIndex(e => e.startsWith("1 ")) : enc
                     }
                     function values() {
                         let alignment = String(manager.values.alignment)
@@ -1555,7 +1565,7 @@ DialogWindow {
                             bold: boldBox.checked, italic: italicBox.checked, underline: underlineBox.checked,
                             strikeOut: strikeBox.checked, outlineWidth: outlineField.text, shadow: shadowField.text,
                             scaleX: scaleXField.text, scaleY: scaleYField.text, angle: angleField.text,
-                            spacing: spacingField.text, borderStyle: borderBox.checkState === Qt.Checked, alignment: alignment,
+                            spacing: spacingField.text, borderStyle: borderStyles.code, alignment: alignment,
                             marginLeft: marginLeft.text, marginRight: marginRight.text, marginVertical: marginVertical.text,
                             encoding: encodings.code
                         }
@@ -1703,7 +1713,7 @@ DialogWindow {
                         Accessible.name: qsTr("Text encoding")
                         displayText: currentIndex < 0 ? qsTr("Multiple values") : currentText
                         onActivated: { code = currentText.split(" ")[0]; manager.edited("encoding") }
-                        model: [qsTr("0 - ANSI"), qsTr("1 - Default"), qsTr("2 - Symbol"), qsTr("77 - Mac"), qsTr("128 - Japanese"),
+                        model: [qsTr("-1 - Detect text direction (libass)"), qsTr("0 - ANSI"), qsTr("1 - Default"), qsTr("2 - Symbol"), qsTr("77 - Mac"), qsTr("128 - Japanese"),
                                 qsTr("129 - Hangul"), qsTr("130 - Johab"), qsTr("134 - Chinese GB2312"), qsTr("135 - Chinese BIG5"),
                                 qsTr("161 - Greek"), qsTr("162 - Turkish"), qsTr("163 - Vietnamese"), qsTr("177 - Hebrew"),
                                 qsTr("178 - Arabic"), qsTr("186 - Baltic"), qsTr("204 - Russian"), qsTr("222 - Thai"),
@@ -1758,15 +1768,17 @@ DialogWindow {
                         FieldLabel { Layout.row: 2; Layout.column: 3; text: qsTr("Alignment"); key: "alignment" }
                         StyleField { id: angleField; objectName: "styleAngle"; key: "angle"; unit: "°"; Layout.row: 3; Layout.column: 0; Accessible.name: qsTr("Angle") }
                         StyleField { id: spacingField; objectName: "styleSpacing"; key: "spacing"; Layout.row: 3; Layout.column: 1; Accessible.name: qsTr("Spacing") }
-                        CheckBox {
-                            id: borderBox
-                            objectName: "styleOpaqueBox"
+                        ComboBox {
+                            id: borderStyles
+                            objectName: "styleBorderStyle"
+                            readonly property var codes: [1, 3, 4]
+                            property int code: 1
                             Layout.row: 3; Layout.column: 2
                             Layout.fillWidth: true
-                            Layout.minimumWidth: implicitWidth
-                            text: qsTr("Opaque box")
-                            Accessible.description: checkState === Qt.PartiallyChecked ? qsTr("Multiple values") : ""
-                            onToggled: manager.edited("borderStyle")
+                            Accessible.name: qsTr("Border type")
+                            displayText: currentIndex < 0 ? qsTr("Multiple values") : currentText
+                            onActivated: index => { code = codes[index]; manager.edited("borderStyle") }
+                            model: [qsTr("Outline"), qsTr("Opaque box"), qsTr("Opaque box per line (libass)")]
                         }
                         Rectangle {
                             objectName: "styleAlignment"

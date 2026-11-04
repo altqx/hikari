@@ -188,6 +188,9 @@ A development-only Linux preset reloads QML from the source tree while the app r
   - The runner without network needs both source archives in its `vcpkg/downloads`: `taku910-mecab-3a07c4eefaffb4e7a0690a7f4e5e0263d3ddb8a3.tar.gz` and `unidic-mecab-2.1.2_bin.zip`.
 - **toml++** (CF1, #488) comes from vcpkg's `tomlplusplus` port at the baseline: 3.4.0, MIT, built as a static library by the port (`TOML_HEADER_ONLY=0` comes with the target), with no runtime dependencies. `hikari_ui` links it (`Hikari::tomlplusplus`) for the user folder's TOML files (`src/ui/toml_file.h`, `settings_files.h`); the application layer keeps to core, and its `owned_file.h` (convert once, `.old`, `.broken`) is standard C++ only. The runner without network needs `marzer-tomlplusplus-v3.4.0.tar.gz` in its `vcpkg/downloads`.
 - **libsodium** (PL1, #413) comes from vcpkg's `libsodium` port at the baseline: 1.0.22, ISC, static. The port's config sets no `SODIUM_STATIC`, so `Hikari::sodium` defines it. Only `hikari_minisign` links it, for Ed25519 and BLAKE2b; Windows builds have no OpenSSL (curl uses Schannel), which is why the verifier doesn't use it. The runner without network needs `jedisct1-libsodium-1.0.22-RELEASE.tar.gz` in its `vcpkg/downloads`.
+- **PCRE2** comes from vcpkg's `pcre2` port at the baseline: 10.47, BSD-3-Clause, static. `hikari_core` links the 16-bit library for legacy's regex engine on UTF-16 text. `hikari_regex` (`src/regex`, RX1 [#669](https://github.com/altqx/hikari/issues/669)) wraps the 8-bit library for UTF-8 text in Qt-free code, with an ECMAScript mode for JSON Schema `pattern`. `std::regex` is banned under `src/` and `tests/` (`modules.std-regex`); the Lua helper's `re` keeps Boost.Regex, and Qt code keeps `QRegularExpression`.
+- **Abseil** (AB1, [#670](https://github.com/altqx/hikari/issues/670)) comes from the owned overlay `ports/abseil`: vcpkg's port at the baseline (20260107.1, Apache-2.0, static) built with C++23, so it and our code agree on the language standard. The overlay sets the standard rather than the triplets, because a triplet change rebuilds every port. `hikari_core` links `absl::flat_hash_map` and `absl::flat_hash_set` publicly; they replace `std::unordered_map` and `std::unordered_set` under `src/`, which `modules.std-unordered` bans. Their iteration order changes from run to run, so no output may follow it: sort first. Keys with only a `std::hash` (`QString`, `std::u8string`) hash through Abseil's `std::hash` fallback. The licence ships as `licenses/abseil/LICENSE`. The runner without network needs `abseil-abseil-cpp-20260107.1.tar.gz` in its `vcpkg/downloads`.
+- **Boost.DynamicBitset** comes from vcpkg's `boost-dynamic-bitset` port at the baseline: 1.92.0, BSL-1.0, header-only. `hikari_core` links `Boost::dynamic_bitset` PUBLIC, because `tag_list.h`, `font_service.h` and `matroska.h` expose it. It replaces `std::vector<bool>`, which is banned under `src/` (`modules.std-vector-bool`; BL1 [#671](https://github.com/altqx/hikari/issues/671)). BSL-1.0 asks for no notice in binary copies, so the packages carry none, as for Boost.Regex and Boost.Locale.
 - **LuaJIT** comes from vcpkg's port at the baseline (2026-09-08 snapshot, static, with FFI). Its link flags export the executable's symbols (`-Wl,-E`), which Lua native modules need, so `Hikari::luajit` is for the Lua helper only, never the application. `luajit-load` runs it in its own process and checks the JIT and FFI.
 
 ## Lua helper native modules (L6, 2026-10-03)
@@ -201,6 +204,27 @@ The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/Automat
 ## Grammar check (GR1, 2026-10-27)
 
 **harper-ls** 3.0.0, Automattic's Harper as a language server, is upstream's release build pinned in `cmake/HikariHarper.cmake`: the archive, the binary in it and Harper's `LICENSE` at the tag, each by SHA-256. Linux takes the static musl build, so it needs no host library and passes the packages' glibc ceiling; Windows takes the MSVC build, whose VCRUNTIME140 the package already ships. Configure fetches them into `<build>/harper-downloads` (the cache path `HIKARI_HARPER_DOWNLOADS` names another; a folder already holding them works offline), and the install tree puts `harper-ls` (`harper-ls.exe`) beside the application, with `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, the cargo-about list of the licences of the crates built into it. The application starts it only while Settings › Spelling & grammar has an English chosen, and talks LSP to it over stdio (`hikari::backends::HarperClient`). Its rule groups (`src/core/grammar_rules.inc`) are generated from the pinned tag; `tools/harper/README.md` lists what moves with the pin. harper-ls 3.0.0 deadlocks when two of its texts are opened at once (each opening pulls the settings and takes their write lock while another holds a read lock it takes twice, `load_user_dictionary`), so the client keeps one text open at a time and queues the rest.
+
+## AI sidecar (SC1, 2026-11-02)
+
+**Bun** 1.4.4 is pinned in `cmake/HikariBun.cmake`: upstream's baseline x86-64 archives for linux-x64 and windows-x64, and the binary in each, by SHA-256. The baseline builds run on CPUs without AVX2.
+
+- Configure fetches the host's copy into `<build>/bun-downloads`. The cache path `HIKARI_BUN_DOWNLOADS` names another folder, and one that already holds the archives works offline.
+- `cmake -DDOWNLOADS=<dir> -DPLATFORM=windows-x64 -P cmake/HikariBun.cmake` fetches the other platform's copy, which cross-builds use as the embedded runtime.
+
+**The build.** With `HIKARI_AI_SIDECAR` on (the default), the `hikari_ai_sidecar` target builds `src/ai-sidecar` in three steps:
+
+1. `bun ci --ignore-scripts` installs the locked packages. It is frozen, runs no lifecycle scripts and has no `trustedDependencies`. `bunfig.toml` sets `minimumReleaseAge` to 7 days for any lock change.
+2. `bun tools/build.ts` runs `bun build --compile --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig --target=bun-<platform>-baseline --compile-executable-path=<pinned bun>`, with the build id (`<version>+<commit>`) and HA1's `kApiVersion` defined in. The output is `<build>/src/ai-sidecar/hikari-ai[.exe]`.
+3. It then checks the bundle's metafile: no input from `@anthropic-ai/claude-agent-sdk`, and `NOTICES.txt` current.
+
+Without the two `--no-compile-autoload-*` flags, a `.env` or `bunfig.toml` in the working directory would reach the binary; `test/compile.test.ts` proves both ways.
+
+**Tests and the local sidecar.**
+
+- ctest runs `bun test` as `hikari_ai_sidecar_bun_tests` (label `ai-sidecar`).
+- `-DHIKARI_AI_LOCAL_SIDECAR=ON` makes the app run that build's sidecar instead of downloading one. Packages leave it off.
+- `tools/release/build-ai-sidecar.sh <version> <out>` makes the release assets. The commit must match the app's, because the build id must match.
 
 ## Editor audio output tests (N6, 2026-10-03)
 

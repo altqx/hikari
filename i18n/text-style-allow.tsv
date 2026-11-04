@@ -1,114 +1,16 @@
 # Strings that break docs/ux/text-style.md, each with the reason it may. "pending #596 <area>": that area PR fixes it.
 context	source	rule	reason
-HikariSub.Audio	 or 	whitespace	pending #596 Menus
-HikariSub.Audio	Shortcut can be set using Shift + Click	title-case	pending #596 Menus
-HikariSub.Audio	Second shortcut can be set using Control + Click	title-case	pending #596 Menus
-HikariSub.Audio	Shift+wheel and Ctrl+wheel on the waveform zoom too	title-case	pending #596 Menus
-HikariSub.Audio	Volume: %1\nOutput device: %2	title-case	pending #596 Menus
-HikariSub.Documents	Subtitle file 	whitespace	pending #596 Menus
 HikariSub.Editor	Bottom-center	spelling	pending #596 Menus
 HikariSub.Editor	Center	spelling	pending #596 Menus
 HikariSub.Editor	Top-center	spelling	pending #596 Menus
-HikariSub.Editor	0: the Style's (%1)	quotes	pending #596 Grid and Line editor
-HikariSub.Editor	0: the Style's (%1)	title-case	pending #596 Grid and Line editor
-HikariSub.Editor	Edit style: allows quick editing of the current line's style	quotes	pending #596 Grid and Line editor
-HikariSub.Editor	Allows quick editing of the current line's style	quotes	pending #596 Grid and Line editor
-HikariSub.Editor	&Add word "%1" to dictionary	quotes	pending #596 Grid and Line editor
-HikariSub.Editor	Error. Word "%1" was not added.	quotes	pending #596 Grid and Line editor
-HikariSub.Editor	Primary color	spelling	pending #596 Menus
-HikariSub.Editor	Secondary color for karaoke	spelling	pending #596 Menus
-HikariSub.Editor	Border color	spelling	pending #596 Menus
-HikariSub.Editor	Shadow color	spelling	pending #596 Menus
-HikariSub.Editor	Insert Tag at text beginning	title-case	pending #596 Grid and Line editor
-HikariSub.Editor	End is before Start.	title-case	pending #596 Grid and Line editor
-HikariSub.Editor	This document can't be saved here.	quotes	pending #596 Grid and Line editor
-HikariSub.Editor	The document can't be saved right now.	quotes	pending #596 Grid and Line editor
 HikariSub.Fonts	Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.	spelling	the folder on disk is named catalogs
 HikariSub.Fonts	fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.	spelling	the folder on disk is named catalogs
 HikariSub.GettingStarted	I said I’d be there by nine.	title-case	sample subtitle the Getting started preview renders; “I’d” is the pronoun
-HikariSub.Grid	Copy\tCtrl+C	hard-coded-key	pending #596 Grid and Line editor
-HikariSub.Grid	Copy\tCtrl+C	title-case	pending #596 Grid and Line editor
-HikariSub.Grid	Cut\tCtrl+X	hard-coded-key	pending #596 Grid and Line editor
-HikariSub.Grid	Cut\tCtrl+X	title-case	pending #596 Grid and Line editor
-HikariSub.Grid	Paste\tCtrl+V	hard-coded-key	pending #596 Grid and Line editor
-HikariSub.Grid	Paste\tCtrl+V	title-case	pending #596 Grid and Line editor
-HikariSub.Grid	Select the group's lines	quotes	pending #596 Grid and Line editor
-HikariSub.Grid	The starting time	leading-the	pending #596 Grid and Line editor
-HikariSub.Grid	Copy these columns of the selected line:	colon	pending #596 Grid and Line editor
-HikariSub.Grid	Copy these columns of the %1 selected lines:	colon	pending #596 Grid and Line editor
-HikariSub.Hotkeys	Shortcut can be set using Shift + Click	title-case	pending #596 Menus
-HikariSub.Hotkeys	Border color	spelling	pending #596 Menus
-HikariSub.Hotkeys	Primary color	spelling	pending #596 Menus
-HikariSub.Hotkeys	Secondary color for karaoke	spelling	pending #596 Menus
-HikariSub.Hotkeys	Shadow color	spelling	pending #596 Menus
-HikariSub.MainWindow	The starting time	leading-the	pending #596 Menus
-HikariSub.MainWindow	Shows or hides the Fix minor errors panel	title-case	pending #596 Menus
 HikariSub.MainWindow	Opens the Find panel	title-case	Find is the panel’s name
-HikariSub.MainWindow	Import legacy settings...	ellipsis	pending #596 Menus
-HikariSub.MainWindow	Shift &times...	ellipsis	pending #596 Menus
-HikariSub.MainWindow	What's &new	quotes	pending #596 Menus
-HikariSub.MisspellReplacer	Line %1: 	colon	pending #596 Messages, after #634 rewrites or moves it
-HikariSub.MisspellReplacer	Line %1: 	whitespace	pending #596 Messages, after #634 rewrites or moves it
 HikariSub.Reports	Nothing is sent until you press Send report	title-case	names the Send report button
-HikariSub.Reports	The crash report could not be sent	leading-the	pending #596 Menus
-HikariSub.Reports	The browser did not open	leading-the	pending #596 Menus
-HikariSub.Search	, 	whitespace	pending #596 Grid and Line editor
-HikariSub.Search	Invalid regular expression '%1': %2	quotes	pending #596 Messages
-HikariSub.SelectLines	Search text:	colon	pending #596 Panels
-HikariSub.Spelling	Error. Word "%1" was not added.	quotes	pending #596 Menus
+HikariSub.Search	, 	whitespace	list separator between quoted names; each language joins them its own way
 HikariSub.Styles	Create it from Default and edit it?	title-case	Default is the style’s name
 HikariSub.Styles	238 - Central European (Polish)	title-case	the ASS encoding’s name
-HikariSub.TagList	Primary color	spelling	pending #596 Menus
-HikariSub.TagList	Border color	spelling	pending #596 Menus
-HikariSub.TagList	Shadow color	spelling	pending #596 Menus
-HikariSub.TemplateEditor	Each syllable swells as it is sung and settles back to its Style's size in the sung colour.	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	syllable start, from the line's start (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	syllable end, from the line's start (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	middle of the syllable, from the line's start (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line's layer	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line's layer	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	middle of the line, from the video's start (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line's Style	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line's Style	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line's actor	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line's actor	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	x of the line's left edge (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	x of the line's centre (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	x of the line's right edge (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	y of the line's top (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	y of the line's middle (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	y of the line's bottom (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	skdur; the line's duration in centiseconds in a pre-line template	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	smid, from the line's start; lmid, from the video's start, in a pre-line template (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	sets the generated line's time, by mode	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	sets the generated line's layer	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	sets the generated line's Style	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the line being generated	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the karaoke line	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	x of the syllable's left edge (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	x of the syllable's centre (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	x of the syllable's right edge (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	y of the syllable's top (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	y of the syllable's middle (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	y of the syllable's bottom (px)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	Line start, from the video's start (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	Line end, from the video's start (ms)	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	sets the loop's counter and count	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the loop's counter, from 1	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the loop's counter, from 1	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the loop's count	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the loop's count	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the syllable	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the syllable a furigana part is on	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the script's resolution and properties	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	the script's resolution and properties	leading-the	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	Lua's math library	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	Lua's string library	quotes	pending #596 Grid and Line editor
-HikariSub.TemplateEditor	every global, karaskel's included	quotes	pending #596 Grid and Line editor
-HikariSub.TimeShift	The starting time	leading-the	pending #596 Panels
-HikariSub.TimeShift	The choice of lines to move	leading-the	pending #596 Panels
-HikariSub.TimeShift	The choice of times to move	leading-the	pending #596 Panels
-HikariSub.Translation	Tags from original: the translation gets the Original text's tags	quotes	pending #596 Grid and Line editor
 HikariSub.Video	%1 event(s), %2 bitmap(s), %3 Mpx	title-case	Mpx is the megapixel unit symbol in the render-cost readout
 HikariSub.VisualTools	How each line's number changes the value	quotes	pending #596 Menus
 HikariSub.VisualTools	Add B-spline	title-case	pending #596 Menus
@@ -123,6 +25,7 @@ HikariSub.VisualTools	A double "m" was blocked because of a VSFilter bug	quotes	
 HikariSub.VisualTools	Show surrounding plane\nA rectangle of the text's plane: match it to one in the shot, then place the text inside it	quotes	pending #596 Menus
 HikariSub.VisualTools	Top-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Video must be set at least one frame after the line's start time	quotes	pending #596 Menus
+HikariSub.Automation	%1 did not load. Its error is in Details.	title-case	names the toast’s Details button
 HikariSub.Automation	The script has no such macro	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Automation	The script or its macro changed	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Documents	Associated files:	colon	heading line of the association offer; the files are listed under it
@@ -133,12 +36,5 @@ HikariSub.Fonts	 tabs: 	colon	font collector log layout; clicking a number goes 
 HikariSub.Fonts	 tabs: 	whitespace	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	In lines: 	colon	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	In lines: 	whitespace	font collector log layout; clicking a number goes to its style or line
-HikariSub.Hotkeys	The shortcut %1 of "Open shortcut mapping window" was removed: the window is gone and each macro's shortcut is set in the Automation panel.	quotes	pending #596 Messages, after #634 rewrites or moves it
-HikariSub.Hotkeys	Shortcut "%1" is invalid	quotes	pending #596 Messages, after #634 rewrites or moves it
-HikariSub.MisspellReplacer	Rule "%1" is invalid.	quotes	pending #596 Messages, after #634 rewrites or moves it
-HikariSub.Search	Invalid regular expression '%1': %2	quotes	pending #596 Messages, after #634 rewrites or moves it
-HikariSub.SelectLines	Invalid regular expression '%1': %2	quotes	pending #596 Messages, after #634 rewrites or moves it
 HikariSub.Spelling	The grammar checker (harper-ls) stopped: %1	leading-the	a message, not a label; the helper’s error follows the colon
-HikariSub.Video	Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end	quotes	pending #596 Menus (Main.qml)
-HikariSub.MisspellReplacer	Cannot replace "%1" with "%2" using rule "%3" in line %4.	quotes	pending #596 Messages, after #634 rewrites or moves it
-HikariSub.Hotkeys	The shortcut %1 of "Open blank 2h30m audio" was removed: the command is retired and a dummy video brings its own silent audio.	quotes	pending #596 Messages, after #634 rewrites or moves it
+HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name

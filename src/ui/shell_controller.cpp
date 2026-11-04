@@ -55,7 +55,7 @@ QString ShellController::titleOf(std::optional<application::DocumentId> id) cons
 
 QString ShellController::editingTitle() const
 {
-    return titleOf(m_workspace.editingTarget());
+    return titleOf(m_workspace.currentTab(m_shellWindow));
 }
 
 QString ShellController::referenceTitle() const

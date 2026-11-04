@@ -10,7 +10,7 @@
 #include <map>
 #include <optional>
 #include <set>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -226,7 +226,7 @@ private:
     Selection m_selection;
     std::optional<Draft> m_draft;
     std::optional<ContentId> m_saved;
-    std::unordered_set<std::uint64_t> m_savedVersions;
+    absl::flat_hash_set<std::uint64_t> m_savedVersions;
     // Kept until the write is reported; the step may leave history meanwhile.
     std::map<std::uint64_t, std::vector<std::uint64_t>> m_preparedVersions;
     std::uint64_t m_revision = 0;

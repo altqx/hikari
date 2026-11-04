@@ -4,6 +4,7 @@
 // anything unresolved is reported, never counted as complete.
 
 #include <atomic>
+#include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <expected>
 #include <memory>
@@ -170,12 +171,12 @@ public:
     }
     // Per face of `faces` (from pickerFaces with `environment`): whether it
     // has a glyph for every one of `characters`.
-    virtual std::vector<bool> facesCover(const std::vector<SystemFace> &faces, const FontEnvironment &environment,
-                                         const std::u32string &characters)
+    virtual boost::dynamic_bitset<> facesCover(const std::vector<SystemFace> &faces, const FontEnvironment &environment,
+                                               const std::u32string &characters)
     {
         (void)environment;
         (void)characters;
-        return std::vector<bool>(faces.size(), true);
+        return boost::dynamic_bitset<>(faces.size()).set();
     }
     // The next listing, and renderer contexts made after, read the installed
     // fonts again.
