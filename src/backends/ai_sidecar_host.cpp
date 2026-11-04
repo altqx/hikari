@@ -6,10 +6,9 @@
 #include <algorithm>
 #include <array>
 #include <string_view>
+#include <utility>
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#else
+#ifndef Q_OS_WIN
 #include <csignal>
 #include <sys/types.h>
 #endif
@@ -58,9 +57,57 @@ QProcessEnvironment sidecarEnvironment(const QProcessEnvironment &from)
     return clean;
 }
 
-AiSidecarHost::AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent)
-    : QObject(parent), m_options(std::move(options)), m_hikari(hikari), m_caller(std::move(caller))
+SidecarRequest::SidecarRequest(AiSidecarHost &host, api::Json id, std::uint64_t generation)
+    : m_host(&host), m_alive(host.m_alive), m_id(std::move(id)), m_generation(generation)
 {
+}
+
+bool SidecarRequest::open() const
+{
+    const auto alive = m_alive.lock();
+    return !m_answered && alive && *alive && m_host->m_generation == m_generation;
+}
+
+void SidecarRequest::respond(api::Json result)
+{
+    if (!open())
+        return;
+    m_answered = true;
+    m_host->answer(*this, api::Json::object({{"result", std::move(result)}}));
+}
+
+void SidecarRequest::fail(int code, std::string message, api::Json data)
+{
+    if (!open())
+        return;
+    m_answered = true;
+    m_host->answer(*this, errorBody(code, std::move(message), std::move(data)));
+}
+
+void SidecarRequest::notify(const std::string &method, api::Json params)
+{
+    if (open())
+        m_host->send(api::Json::object({{"jsonrpc", "2.0"}, {"method", method}, {"params", std::move(params)}}));
+}
+
+void SidecarRequest::onCancel(std::function<void()> cancel)
+{
+    m_cancel = std::move(cancel);
+}
+
+void SidecarRequest::cancel()
+{
+    if (auto cancel = std::exchange(m_cancel, {}))
+        cancel();
+}
+
+AiSidecarHost::AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent)
+    : QObject(parent), m_options(std::move(options)), m_hikari(hikari), m_caller(std::move(caller)),
+      m_launcher(m_options.sandbox)
+{
+    handle(std::string(kApiCall), [this](const api::Json &params, std::shared_ptr<SidecarRequest> request) {
+        callApi(params, std::move(request));
+    });
     m_clock.start();
     m_handshakeTimer.setSingleShot(true);
     m_startTimer.setSingleShot(true);
@@ -134,6 +181,11 @@ void AiSidecarHost::cancel(std::uint64_t request)
     finish(request, std::unexpected(failure(SidecarError::Cancelled, "cancelled")));
 }
 
+void AiSidecarHost::handle(const std::string &method, SidecarRequestHandler handler)
+{
+    m_handlers.insert_or_assign(method, std::move(handler));
+}
+
 void AiSidecarHost::notify(const std::string &method, api::Json params)
 {
     if (m_state != State::Ready)
@@ -159,18 +211,25 @@ void AiSidecarHost::startProcess()
 {
     m_buffer.clear();
     m_diagnostics.clear();
-    m_incoming = 0;
     ++m_generation;
+    dropIncoming();
     if (!m_options.workingDirectory.isEmpty()) {
         QDir().mkpath(m_options.workingDirectory);
         QFile::setPermissions(m_options.workingDirectory,
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
     }
+    QProcessEnvironment environment = sidecarEnvironment(m_options.environment);
+    if (m_options.sandbox && !m_options.workingDirectory.isEmpty()) {
+        const QString temporary = QDir::toNativeSeparators(m_options.workingDirectory + QStringLiteral("/tmp"));
+        QDir().mkpath(temporary);
+        for (const char *name : {"TMPDIR", "TEMP", "TMP"})
+            environment.insert(QString::fromLatin1(name), temporary);
+    }
     m_process = std::make_unique<QProcess>();
     m_process->setProgram(m_options.program);
     m_process->setArguments(m_options.arguments);
     m_process->setWorkingDirectory(m_options.workingDirectory);
-    m_process->setProcessEnvironment(sidecarEnvironment(m_options.environment));
+    m_process->setProcessEnvironment(environment);
     m_process->setProcessChannelMode(QProcess::SeparateChannels);
 #ifndef Q_OS_WIN
     m_process->setUnixProcessParameters(QProcess::UnixProcessFlag::CreateNewSession |
@@ -178,7 +237,9 @@ void AiSidecarHost::startProcess()
                                         QProcess::UnixProcessFlag::ResetSignalHandlers);
 #endif
 #ifdef Q_OS_LINUX
-    m_process->setChildProcessModifier([] { ::prctl(PR_SET_PDEATHSIG, SIGKILL); });
+    m_launcher.prepare(*m_process, [] { ::prctl(PR_SET_PDEATHSIG, SIGKILL); });
+#else
+    m_launcher.prepare(*m_process);
 #endif
     connect(m_process.get(), &QProcess::readyReadStandardOutput, this, &AiSidecarHost::readOutput);
     connect(m_process.get(), &QProcess::readyReadStandardError, this, &AiSidecarHost::readDiagnostics);
@@ -195,18 +256,6 @@ void AiSidecarHost::startProcess()
 void AiSidecarHost::handshake()
 {
     m_pid = m_process->processId();
-#ifdef Q_OS_WIN
-    m_job = CreateJobObjectW(nullptr, nullptr);
-    if (m_job) {
-        JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
-        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-        SetInformationJobObject(m_job, JobObjectExtendedLimitInformation, &limits, sizeof limits);
-        if (HANDLE process = OpenProcess(PROCESS_SET_QUOTA | PROCESS_TERMINATE, FALSE, static_cast<DWORD>(m_pid))) {
-            AssignProcessToJobObject(m_job, process);
-            CloseHandle(process);
-        }
-    }
-#endif
     m_initializeId = m_nextId++;
     send(api::Json::object({{"jsonrpc", "2.0"}, {"id", m_initializeId}, {"method", "initialize"},
                             {"params", api::Json::object({{"protocolVersion", kSidecarProtocolVersion},
@@ -275,8 +324,11 @@ void AiSidecarHost::receive(const QByteArray &line)
     if (const api::Json *method = message.find("method"); method && method->isString()) {
         if (id)
             return receiveRequest(*id, method->asString(), message.find("params"));
-        if (method->asString() != kCancelRequest && m_onNotification && m_state == State::Ready) {
-            const api::Json *params = message.find("params");
+        const api::Json *params = message.find("params");
+        if (method->asString() == kCancelRequest) {
+            if (const api::Json *request = params ? params->find("requestId") : nullptr)
+                cancelIncoming(*request);
+        } else if (m_onNotification && m_state == State::Ready) {
             m_onNotification(method->asString(), params ? *params : api::Json());
         }
         return;
@@ -336,30 +388,60 @@ void AiSidecarHost::receiveRequest(const api::Json &id, const std::string &metho
         return lose(QStringLiteral("the sidecar sent a request with an invalid id"));
     if (m_state != State::Ready)
         return respond(id, errorBody(rpc::kBusy, "initialize first"));
-    if (m_incoming >= m_options.maxOutstanding)
+    if (m_incoming.size() >= m_options.maxOutstanding)
         return lose(QStringLiteral("the sidecar went over the outstanding-request limit"));
-    if (method != kApiCall)
+    const std::string key = id.dump();
+    if (m_incoming.contains(key))
+        return lose(QStringLiteral("the sidecar reused the id of an outstanding request"));
+    const auto handler = m_handlers.find(method);
+    if (handler == m_handlers.end())
         return respond(id, errorBody(rpc::kMethodNotFound, "unknown method " + method));
-    const api::Json *operation = params ? params->find("operation") : nullptr;
+    std::shared_ptr<SidecarRequest> request(new SidecarRequest(*this, id, m_generation));
+    m_incoming.emplace(key, request);
+    handler->second(params ? *params : api::Json(), std::move(request));
+}
+
+void AiSidecarHost::callApi(const api::Json &params, std::shared_ptr<SidecarRequest> request)
+{
+    const api::Json *operation = params.find("operation");
     if (!operation || !operation->isString())
-        return respond(id, errorBody(rpc::kInvalidParams, "_hikari/api.call needs an operation"));
+        return request->fail(rpc::kInvalidParams, "_hikari/api.call needs an operation");
     if (!m_hikari)
-        return respond(id, errorBody(rpc::kHikariApiError, "Hikari's API isn't available",
-                                     api::Json::object({{"code", api::errors::kUnavailable}})));
-    ++m_incoming;
-    const api::Json *operationParams = params->find("params");
+        return request->fail(rpc::kHikariApiError, "Hikari's API isn't available",
+                             api::Json::object({{"code", api::errors::kUnavailable}}));
+    const api::Json *operationParams = params.find("params");
     m_hikari->call(m_caller, operation->asString(), operationParams ? *operationParams : api::Json(),
-                   [this, alive = std::weak_ptr(m_alive), generation = m_generation, id](api::Result result) {
-                       if (alive.expired() || generation != m_generation)
-                           return;
-                       --m_incoming;
+                   [request = std::move(request)](api::Result result) {
                        if (result)
-                           return respond(id, api::Json::object({{"result", std::move(*result)}}));
+                           return request->respond(std::move(*result));
                        auto data = api::Json::object({{"code", result.error().code}});
                        if (!result.error().data.isNull())
                            data["data"] = std::move(result.error().data);
-                       respond(id, errorBody(rpc::kHikariApiError, result.error().message, std::move(data)));
+                       request->fail(rpc::kHikariApiError, result.error().message, std::move(data));
                    });
+}
+
+void AiSidecarHost::answer(SidecarRequest &request, api::Json body)
+{
+    const api::Json id = request.m_id;
+    m_incoming.erase(id.dump());
+    respond(id, std::move(body));
+}
+
+void AiSidecarHost::cancelIncoming(const api::Json &id)
+{
+    const auto it = m_incoming.find(id.dump());
+    if (it == m_incoming.end())
+        return;
+    const std::shared_ptr<SidecarRequest> request = it->second;
+    request->cancel();
+}
+
+void AiSidecarHost::dropIncoming()
+{
+    const auto incoming = std::exchange(m_incoming, {});
+    for (const auto &[id, request] : incoming)
+        request->cancel();
 }
 
 void AiSidecarHost::respond(const api::Json &id, api::Json body)
@@ -453,12 +535,9 @@ void AiSidecarHost::reset()
 void AiSidecarHost::killTree()
 {
     ++m_generation;
+    dropIncoming();
 #ifdef Q_OS_WIN
-    if (m_job) {
-        TerminateJobObject(m_job, 1);
-        CloseHandle(m_job);
-        m_job = nullptr;
-    }
+    m_launcher.killTree();
 #else
     if (m_pid > 0)
         ::kill(-static_cast<pid_t>(m_pid), SIGKILL);
