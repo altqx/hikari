@@ -323,6 +323,31 @@ TEST_F(ApiScripts, AListenerMayUnsubscribeWhileHearing)
     EXPECT_EQ(heard, 1);
 }
 
+TEST_F(ApiScripts, AttachedDocumentsAreVisibleBesidesTheEditingTarget)
+{
+    Caller attaching = pluginCaller();
+    attaching.attached = {hikari::application::DocumentId{2}};
+    const Result before = client.call(pluginCaller(), "lines.list", params(R"({"document": 2})"));
+    ASSERT_FALSE(before);
+    EXPECT_EQ(before.error().code, errors::kNotGranted);
+    const Result lines = client.call(attaching, "lines.list", params(R"({"document": 2, "fields": ["text"]})"));
+    ASSERT_TRUE(lines) << lines.error().message;
+    EXPECT_EQ(lines->find("lines")->asArray()[0].find("text")->asString(), "other");
+    const Result listed = client.call(attaching, "documents.list", Json());
+    ASSERT_TRUE(listed);
+    EXPECT_EQ(listed->find("documents")->asArray().size(), 2u);
+
+    std::vector<std::string> heard;
+    const auto s = api.subscribe(attaching, {"document.changed", "documents.changed"},
+                                 [&](const Event &e) { heard.push_back(e.name + " " + e.data.dump()); });
+    api.documentChanged(hikari::application::DocumentId{2});
+    api.documentsChanged();
+    ASSERT_EQ(heard.size(), 2u);
+    EXPECT_TRUE(heard[0].starts_with(R"(document.changed {"document":2,)")) << heard[0];
+    EXPECT_EQ(heard[1], R"(documents.changed {"documents":[1,2],"editingTarget":1})");
+    api.unsubscribe(s);
+}
+
 TEST_F(ApiScripts, DocumentsChangedIsNarrowedWithoutTheGrant)
 {
     std::vector<Json> ai, plugin;

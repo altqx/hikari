@@ -418,8 +418,8 @@ add_test(NAME directshow-adapter-presence COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/directshow_presence.cmake")
 set_tests_properties(directshow-adapter-presence PROPERTIES LABELS packaging TIMEOUT 120)
 
-hikari_add_gtest(hikari_backends_ai_provider_tests SOURCES ai_provider_tests.cpp
-    LIBRARIES hikari_ai LABELS backends)
+hikari_add_gtest(hikari_backends_ai_config_store_tests SOURCES ai_config_store_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
 hikari_add_gtest(hikari_backends_ai_keychain_tests SOURCES ai_keychain_tests.cpp
     LIBRARIES hikari_ai Qt6::Core LABELS backends)
 add_executable(hikari_fake_ai_sidecar fake_ai_sidecar.cpp)
@@ -430,5 +430,19 @@ target_include_directories(hikari_backends_ai_sidecar_host_tests PRIVATE "${PROJ
 target_compile_definitions(hikari_backends_ai_sidecar_host_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_backends_ai_sidecar_host_tests hikari_fake_ai_sidecar)
+hikari_add_gtest(hikari_backends_ai_requests_tests SOURCES ai_requests_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_ai_requests_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_backends_ai_requests_tests hikari_fake_ai_sidecar)
+if(HIKARI_AI_SIDECAR)
+    hikari_add_gtest(hikari_backends_ai_tools_tests SOURCES ai_tools_tests.cpp
+        LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends ai-sidecar)
+    target_include_directories(hikari_backends_ai_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
+    target_compile_definitions(hikari_backends_ai_tools_tests PRIVATE
+        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+    add_dependencies(hikari_backends_ai_tools_tests hikari_ai_sidecar)
+endif()
 hikari_add_gtest(hikari_backends_ai_sidecar_download_tests SOURCES ai_sidecar_download_tests.cpp
-    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB LABELS backends)
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
+target_include_directories(hikari_backends_ai_sidecar_download_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

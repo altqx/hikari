@@ -276,6 +276,8 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.tapLatency", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
+        {"editor.softLineBreak", "", Bool, Profile, Mapped, false, false},
+        {"grid.splitFramesBakeAnimations", "", Bool, Profile, Mapped, false, true},
         // usageDataId: random, made at the first send, cleared when usage data is turned off.
         {"privacy.usageData", "", Bool, Profile, Mapped, false, true},
         {"privacy.usageDataId", "", String, Profile, Mapped, false, std::string()},
@@ -299,8 +301,13 @@ const std::vector<SettingDefinition> &definitions()
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
         // Without a "v"; empty: none.
         {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
-        // Section ids: "amount", "lines", "videoAudio", "leadInOut", "continuous", "snap".
-        {"shiftTimes.collapsedSections", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        {"shiftTimes.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"shiftTimes.preset", "", String, Profile, Mapped, false, std::string()},
+        {"postprocessor.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"postprocessor.preset", "", String, Profile, Mapped, false, std::string()},
+        {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
+        {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},

@@ -8,8 +8,10 @@ extern "C" {
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <map>
 #include <random>
 
@@ -31,10 +33,16 @@ public:
     std::vector<std::pair<std::string, Json>> settings;
     std::vector<std::string> subscriptions;
     std::string settingRefusal;
+    std::string lockRefusal;
+    std::vector<std::string> sequence;
+    std::map<std::string, std::function<std::expected<Json, Json>(const Json &)>> operations;
 
     std::expected<Json, Json> call(const std::string &operation, const Json &params) override
     {
         calls.emplace_back(operation, params);
+        sequence.push_back(operation);
+        if (const auto it = operations.find(operation); it != operations.end())
+            return it->second(params);
         if (operation == "missing.op")
             return std::unexpected(Json::object({{"code", "unknown_operation"}, {"message", "no such operation"}}));
         return Json::object({{"echo", params}, {"nothing", nullptr}, {"list", Json::array({1, 2})}});
@@ -53,6 +61,31 @@ public:
             return std::unexpected("there is no event “no.such.event”");
         subscriptions.push_back(event);
         return {};
+    }
+    std::expected<void, std::string> lock() override
+    {
+        sequence.push_back("lock");
+        if (!lockRefusal.empty())
+            return std::unexpected(lockRefusal);
+        return {};
+    }
+    void unlock() override { sequence.push_back("unlock"); }
+    std::vector<std::pair<std::string, Json>> uiCalls;
+    std::map<std::string, std::function<std::expected<Json, Json>(const Json &)>> uiOperations;
+    std::expected<Json, Json> ui(const std::string &operation, const Json &params) override
+    {
+        uiCalls.emplace_back(operation, params);
+        if (const auto it = uiOperations.find(operation); it != uiOperations.end())
+            return it->second(params);
+        return Json::object();
+    }
+    std::vector<Json> paramsOf(const std::string &operation) const
+    {
+        std::vector<Json> out;
+        for (const auto &[name, params] : calls)
+            if (name == operation)
+                out.push_back(params);
+        return out;
     }
     std::vector<std::string> texts() const
     {
@@ -123,6 +156,29 @@ protected:
     std::expected<std::unique_ptr<PluginState>, std::string> load(const std::string &main)
     {
         return load(main, options());
+    }
+    void serveDocument(std::size_t lineCount, std::int64_t &revision)
+    {
+        auto &ops = m_host.operations;
+        ops["documents.get"] = [&revision](const Json &) {
+            return Json::object({{"document", 4}, {"revision", revision}, {"title", "Episode 1"}, {"format", "ass"}});
+        };
+        ops["lines.list"] = [&revision, lineCount](const Json &params) {
+            const auto offset = std::size_t(params.find("offset")->asInt());
+            const auto limit = std::size_t(params.find("limit")->asInt());
+            Json lines = Json::array();
+            for (std::size_t i = offset; i < lineCount && i < offset + limit; ++i)
+                lines.push(Json::object({{"id", std::int64_t(100 + i)}, {"row", std::int64_t(i + 1)},
+                                         {"text", "line " + std::to_string(i + 1)}}));
+            return Json::object({{"revision", revision}, {"total", std::int64_t(lineCount)}, {"lines", lines}});
+        };
+        ops["styles.list"] = [&revision](const Json &) {
+            return Json::object({{"revision", revision}, {"styles", Json::array({Json::object({{"name", "Default"}})})}});
+        };
+        ops["info.list"] = [&revision](const Json &) {
+            return Json::object(
+                {{"revision", revision}, {"info", Json::array({Json::object({{"key", "Title"}, {"value", "Demo"}})})}});
+        };
     }
     // The text the main file's last hikari.notify gave.
     std::string evaluate(const std::string &expression, Tier tier = Tier::Restricted)
@@ -296,6 +352,17 @@ TEST_F(PluginStateTest, SettingsReadAndWriteThroughHikariSub)
     EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
 }
 
+TEST_F(PluginStateTest, ASettingChangedInThePluginManagerReadsAtOnce)
+{
+    auto state = load("hikari.commands.register('greet', function() hikari.notify(tostring(hikari.settings.get('count'))) end)");
+    ASSERT_TRUE(state) << state.error();
+    ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "count"}, {"value", 2}}), m_host));
+    ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "other"}, {"value", 9}}), m_host));
+    ASSERT_TRUE((*state)->run("greet", m_host));
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"2"});
+    EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
+}
+
 TEST_F(PluginStateTest, CallsReachTheHikariApiAsJson)
 {
     auto state = load("local r = hikari.call('lines.list', {fields = hikari.array({'text'}), limit = 2, "
@@ -372,4 +439,218 @@ TEST_F(PluginStateTest, TheHikariGlobalNamesThePlugin)
     EXPECT_EQ(evaluate("hikari.plugin.id .. ' ' .. hikari.plugin.version .. ' ' .. hikari.api_version"),
               "com.example.test 1.0.0 1");
     EXPECT_EQ(evaluate("hikari.i18n.locale"), "en");
+}
+
+TEST_F(PluginStateTest, ADocumentReadPagesItsLinesAtOneRevision)
+{
+    std::int64_t revision = 7;
+    serveDocument(6001, revision);
+    auto state = load("local doc = hikari.document.read() "
+                      "hikari.notify(table.concat({doc.document, doc.revision, doc.title, doc.format, #doc.lines, "
+                      "doc.lines[6001].id, doc.lines[6001].text, doc.styles[1].name, doc.info[1].value}, ' '))");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"4 7 Episode 1 ass 6001 6100 line 6001 Default Demo"});
+    const auto pages = m_host.paramsOf("lines.list");
+    ASSERT_EQ(pages.size(), 2u);
+    EXPECT_EQ(pages[0].dump(), Json::parse(R"({"document": 4, "limit": 5000, "offset": 0})")->dump());
+    EXPECT_EQ(pages[1].find("offset")->asInt(), 5000);
+    EXPECT_EQ(m_host.paramsOf("documents.get").front().dump(), Json::object().dump());
+}
+
+TEST_F(PluginStateTest, AReadStartsAgainWhenTheDocumentMovesAndGivesUpAsBusy)
+{
+    std::int64_t revision = 1;
+    serveDocument(3, revision);
+    auto moving = m_host.operations["lines.list"];
+    int moves = 1;
+    m_host.operations["lines.list"] = [&](const Json &params) {
+        auto page = moving(params);
+        if (moves-- > 0)
+            ++revision;
+        return page;
+    };
+    auto state = load("local doc = hikari.document.read(4) hikari.notify(doc.revision .. ' ' .. #doc.lines)");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"2 3"});
+    EXPECT_EQ(m_host.paramsOf("documents.get").size(), 2u);
+    EXPECT_EQ(m_host.paramsOf("documents.get").front().dump(), Json::parse(R"({"document": 4})")->dump());
+
+    m_host.calls.clear();
+    moves = 100;
+    auto busy = load("local doc, err = hikari.document.read() hikari.notify(tostring(doc) .. ' ' .. err.code)");
+    ASSERT_TRUE(busy) << busy.error();
+    EXPECT_EQ(m_host.texts().back(), "nil busy");
+    EXPECT_EQ(m_host.paramsOf("documents.get").size(), 3u);
+}
+
+TEST_F(PluginStateTest, AnEditStagesEveryChangeIntoOneApplyUnderTheLock)
+{
+    std::int64_t revision = 9;
+    serveDocument(2, revision);
+    m_host.operations["document.apply"] = [](const Json &) {
+        return Json::object({{"revision", 10}, {"inserted", Json::array({300})}, {"changed", true}});
+    };
+    auto state = load(R"~(
+        local done = hikari.document.edit('Tidy', function(doc, change)
+            local first, second = doc.lines[1].id, doc.lines[2].id
+            change:set_line(first, {text = 'one'})
+            change:insert_line({text = 'new'}, {after = first})
+            change:delete_line(second)
+            change:move_line(first)
+            change:move_line(first, second)
+            change:set_style('Default', {fontsize = 20})
+            change:delete_style('Old')
+            change:set_info('Title', 'Demo')
+            change:set_info('Comment', nil)
+        end)
+        hikari.notify(done.revision .. ' ' .. done.inserted[1])
+    )~");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"10 300"});
+    const auto applied = m_host.paramsOf("document.apply");
+    ASSERT_EQ(applied.size(), 1u);
+    EXPECT_EQ(applied[0].dump(), Json::parse(R"~({"document": 4, "edits": [
+        {"fields": {"text": "one"}, "line": 100, "op": "set_line"},
+        {"after": 100, "fields": {"text": "new"}, "op": "insert_line"},
+        {"line": 101, "op": "delete_line"},
+        {"before": null, "line": 100, "op": "move_line"},
+        {"before": 101, "line": 100, "op": "move_line"},
+        {"fields": {"fontsize": 20}, "name": "Default", "op": "set_style"},
+        {"name": "Old", "op": "delete_style"},
+        {"key": "Title", "op": "set_info", "value": "Demo"},
+        {"key": "Comment", "op": "set_info", "value": null}],
+        "name": "Tidy", "revision": 9})~")->dump());
+    EXPECT_EQ(m_host.sequence.front(), "lock");
+    EXPECT_EQ(m_host.sequence.at(m_host.sequence.size() - 2), "document.apply");
+    EXPECT_EQ(m_host.sequence.back(), "unlock");
+}
+
+TEST_F(PluginStateTest, AnEditWithNothingStagedAppliesNothing)
+{
+    std::int64_t revision = 3;
+    serveDocument(1, revision);
+    auto state = load("local done = hikari.document.edit('Nothing', function() end) "
+                      "hikari.notify(done.revision .. ' ' .. tostring(done.changed) .. ' ' .. #done.inserted)");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"3 false 0"});
+    EXPECT_TRUE(m_host.paramsOf("document.apply").empty());
+    EXPECT_EQ(m_host.sequence.back(), "unlock");
+}
+
+TEST_F(PluginStateTest, AStaleOrBusyEditReturnsTheError)
+{
+    std::int64_t revision = 3;
+    serveDocument(1, revision);
+    m_host.operations["document.apply"] = [](const Json &) -> std::expected<Json, Json> {
+        return std::unexpected(Json::object({{"code", "stale_revision"}, {"message", "the Document changed"}}));
+    };
+    const std::string edit = "local done, err = hikari.document.edit('Fix', function(doc, change) "
+                             "change:set_line(doc.lines[1].id, {text = 'x'}) end) "
+                             "hikari.notify(tostring(done) .. ' ' .. err.code .. ': ' .. err.message)";
+    auto stale = load(edit);
+    ASSERT_TRUE(stale) << stale.error();
+    EXPECT_EQ(m_host.texts().back(), "nil stale_revision: the Document changed");
+    EXPECT_EQ(m_host.sequence.back(), "unlock");
+
+    m_host.sequence.clear();
+    m_host.lockRefusal = "another plugin is applying edits";
+    auto busy = load(edit);
+    ASSERT_TRUE(busy) << busy.error();
+    EXPECT_EQ(m_host.texts().back(), "nil busy: another plugin is applying edits");
+    EXPECT_EQ(m_host.sequence, std::vector<std::string>{"lock"});
+}
+
+TEST_F(PluginStateTest, AnEditUnlocksWhenItsFunctionFailsAndRefusesNesting)
+{
+    std::int64_t revision = 3;
+    serveDocument(1, revision);
+    auto failing = load("hikari.document.edit('Fix', function() error('no fix today') end)");
+    ASSERT_FALSE(failing);
+    EXPECT_NE(failing.error().find("main.lua:1: no fix today"), std::string::npos) << failing.error();
+    EXPECT_EQ(m_host.sequence.back(), "unlock");
+
+    m_host.sequence.clear();
+    auto nested = load(R"~(
+        local ok, err = pcall(hikari.document.edit, 'Outer', function()
+            hikari.document.edit('Inner', function() end)
+        end)
+        hikari.document.edit('Again', function() end)
+        hikari.notify(tostring(ok) .. ' ' .. err)
+    )~");
+    ASSERT_TRUE(nested) << nested.error();
+    EXPECT_EQ(m_host.texts().back(), "false main.lua:3: hikari.document.edit can't run inside another edit");
+    EXPECT_EQ(std::ranges::count(m_host.sequence, "lock"), 2);
+    EXPECT_EQ(std::ranges::count(m_host.sequence, "unlock"), 2);
+}
+
+TEST_F(PluginStateTest, SelectionsGoThroughTheApi)
+{
+    auto state = load("hikari.selection.get() hikari.selection.get(5) "
+                      "hikari.selection.set({101, 102}) hikari.selection.set({}, 103, 9) "
+                      "hikari.selection.set({101}, hikari.null)");
+    ASSERT_TRUE(state) << state.error();
+    const auto gets = m_host.paramsOf("selection.get");
+    ASSERT_EQ(gets.size(), 2u);
+    EXPECT_EQ(gets[0].dump(), Json::object().dump());
+    EXPECT_EQ(gets[1].dump(), Json::parse(R"({"document": 5})")->dump());
+    const auto sets = m_host.paramsOf("selection.set");
+    ASSERT_EQ(sets.size(), 3u);
+    EXPECT_EQ(sets[0].dump(), Json::parse(R"({"selected": [101, 102]})")->dump());
+    EXPECT_EQ(sets[1].dump(), Json::parse(R"({"active": 103, "document": 9, "selected": []})")->dump());
+    EXPECT_EQ(sets[2].dump(), Json::parse(R"({"active": null, "selected": [101]})")->dump());
+}
+
+TEST_F(PluginStateTest, PanelsAndDialogsGoToHikariSubAsTheirOwnService)
+{
+    auto state = load(R"~(
+        hikari.panels.render('board', {kind = 'label', text = 'Hi'})
+        hikari.panels.show('board')
+        hikari.dialogs.show('join', {title = 'Join', body = {kind = 'empty', text = 'Nothing'}})
+        hikari.dialogs.close('join')
+    )~");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_TRUE(m_host.calls.empty());
+    ASSERT_EQ(m_host.uiCalls.size(), 4u);
+    EXPECT_EQ(m_host.uiCalls[0].first, "panels.render");
+    EXPECT_EQ(m_host.uiCalls[0].second.dump(), Json::parse(R"({"panel": "board", "tree": {"kind": "label", "text": "Hi"}})")->dump());
+    EXPECT_EQ(m_host.uiCalls[1].second.dump(), Json::parse(R"({"panel": "board"})")->dump());
+    EXPECT_EQ(m_host.uiCalls[2].first, "dialogs.show");
+    EXPECT_EQ(m_host.uiCalls[3].first, "dialogs.close");
+}
+
+TEST_F(PluginStateTest, AskReturnsTheButtonAndTheValues)
+{
+    m_host.uiOperations["dialogs.ask"] = [](const Json &) {
+        return *Json::parse(R"({"button": "join", "values": {"glue": "space"}})");
+    };
+    auto state = load(R"~(
+        local button, values = hikari.dialogs.ask('join', {title = 'Join'})
+        hikari.notify(button .. ' ' .. values.glue)
+    )~");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), std::vector<std::string>{"join space"});
+}
+
+TEST_F(PluginStateTest, ARefusedRenderRaisesAtTheCallersLine)
+{
+    m_host.uiOperations["panels.render"] = [](const Json &) -> std::expected<Json, Json> {
+        return std::unexpected(Json::object({{"code", "invalid_params"}, {"message", "tree: unknown kind \u201cfoo\u201d"}}));
+    };
+    auto state = load("\nhikari.panels.render('board', {kind = 'foo'})");
+    ASSERT_FALSE(state);
+    EXPECT_NE(state.error().find("main.lua:2: tree: unknown kind"), std::string::npos) << state.error();
+    auto unnamed = load("hikari.panels.show('')");
+    ASSERT_FALSE(unnamed);
+    EXPECT_NE(unnamed.error().find("main.lua:1: hikari.panels.show needs an id"), std::string::npos) << unnamed.error();
+}
+
+TEST_F(PluginStateTest, PanelAndDialogHandlersRunWithoutAnApiSubscription)
+{
+    auto state = load("hikari.panels.on('board', function(e) hikari.notify('panel ' .. e.widget) end) "
+                      "hikari.dialogs.on('join', function(e) hikari.notify('dialog ' .. e.button) end)");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_TRUE(m_host.subscriptions.empty());
+    ASSERT_TRUE((*state)->dispatch("panel:board", Json::object({{"kind", "click"}, {"widget", "refresh"}}), m_host));
+    ASSERT_TRUE((*state)->dispatch("dialog:join", Json::object({{"kind", "button"}, {"button", "cancel"}}), m_host));
+    EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"panel refresh", "dialog cancel"}));
 }

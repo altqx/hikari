@@ -996,6 +996,20 @@ bool Docking::hasPlace(const QString &uniqueName) const
     return dock && (dock->isOpen() || dock->hasPreviousDockedLocation());
 }
 
+void Docking::setPanelTip(const QString &uniqueName, const QString &tip)
+{
+    if (m_tips.value(uniqueName) == tip)
+        return;
+    m_tips.insert(uniqueName, tip);
+    ++m_revision;
+    emit headersChanged();
+}
+
+QString Docking::panelTip(const QString &uniqueName) const
+{
+    return m_tips.value(uniqueName);
+}
+
 bool Docking::isHorizontal(const QString &uniqueName) const
 {
     return m_headers.value(uniqueName).horizontal;

@@ -62,7 +62,7 @@ A caller subscribes to events by name and hears them only while subscribed.
 | --- | --- |
 | `document.changed` | A Document's revision moved: an edit, an undo, a write. |
 | `selection.changed` | The selection or active Line of a Document changed. |
-| `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target only. |
+| `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target and the caller's attached Documents only. |
 | `panel.changed` | A panel opened, closed or floated. |
 | `command.ran` | A command ran, from the API, a menu, a toolbar or a key. |
 
@@ -72,7 +72,7 @@ The application notices changes after each refresh of its views and each selecti
 
 `Api::call(caller, operation, params, reply)` validates the parameters, then runs the operation on the GUI thread. The reply comes exactly once, either before `call` returns or later for operations that wait on a backend.
 
-A **caller** names itself for undo steps and holds its grants. Without the `documents.all` grant a caller sees only the editing target: an omitted `document` means the editing target, and naming any other gives `not_granted`.
+A **caller** names itself for undo steps and holds its grants. Without the `documents.all` grant a caller sees only the editing target and its `attached` Documents, which the user attached with `@` in an AI thread. An omitted `document` means the editing target, and naming any other Document gives `not_granted`. Events about other Documents don't reach that caller.
 
 An error is `{code, message, data}`. The message is English text for developers and models, not translated.
 
@@ -97,7 +97,7 @@ The version is a running number. Every release that grows the API bumps it, and 
 
 ## Reference
 
-`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. The plugin reference (PL9) and the site build from it.
+`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. The plugin reference (PL9) and the site build from it. The AI sidecar keeps a copy as `src/ai-sidecar/src/tools/api.json`, from which its tool schemas and types are built; see [AI tools](ai-tools.md).
 
 ## Tests
 

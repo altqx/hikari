@@ -30,8 +30,8 @@
 #include <cstdlib>
 #include <string_view>
 #include <system_error>
-#include <unordered_map>
-#include <unordered_set>
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 
 namespace hikari::application::visual {
 
@@ -373,6 +373,14 @@ Quad textToQuad(const Transform &t, const Box &box, double z)
     return out;
 }
 
+PointF shownPosition(const Transform &t, double z)
+{
+    const V2 p = v2(t.pos) - v2(t.org);
+    const V3 q = turnY(turnX(turnZ(V3{p.x, p.y, 0}, t.frz / kDeg), t.frx / kDeg), t.fry / kDeg);
+    const double k = z / (q.z + z);
+    return pf(V2{q.x * k, q.y * k} + v2(t.org));
+}
+
 PointF centre(const Quad &q)
 {
     const V2 d1 = v2(q[2]) - v2(q[0]), d2 = v2(q[1]) - v2(q[3]), b = v2(q[3]) - v2(q[0]);
@@ -635,18 +643,17 @@ std::size_t styleBytes(const core::StyleValues &s)
 
 struct StyleCache::Decoded {
     std::vector<core::StyleValues> all;
-    std::unordered_set<const core::StyleValues *> oversized;
+    absl::flat_hash_set<const core::StyleValues *> oversized;
     // The last Style of each name, as libass looks Styles up; a nameless Style is Default.
-    std::unordered_map<std::u8string_view, const core::StyleValues *> last;
+    absl::flat_hash_map<std::u8string_view, const core::StyleValues *> last;
 };
 
-std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &host)
+std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const Reader &reader)
 {
-    const EditSession *session = host.session();
-    if (!session)
+    const core::Document *document = reader.document;
+    if (!document)
         return std::make_shared<const Decoded>();
-    const core::Document *document = &session->document();
-    if (m_decoded && m_session == session->serial() && m_revision == session->revision() && m_document == document)
+    if (m_decoded && m_session == reader.session && m_revision == reader.revision && m_document == document)
         return m_decoded;
     auto decoded = std::make_shared<Decoded>();
     decoded->all = core::decodeStyles(*document);
@@ -656,8 +663,8 @@ std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &hos
         decoded->last.insert_or_assign(s.name.empty() ? std::u8string_view(u8"Default") : std::u8string_view(s.name),
                                        &s);
     }
-    m_session = session->serial();
-    m_revision = session->revision();
+    m_session = reader.session;
+    m_revision = reader.revision;
     m_document = document;
     m_decoded = std::move(decoded);
     return m_decoded;
@@ -666,8 +673,8 @@ std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &hos
 namespace {
 
 struct StyleIndex {
-    StyleIndex(const transform::Context &context, const StyleCache::Decoded &decoded)
-        : ctx(context), last(decoded.last), oversized(decoded.oversized)
+    StyleIndex(const Reader &r, const StyleCache::Decoded &decoded)
+        : reader(r), last(decoded.last), oversized(decoded.oversized)
     {
     }
     // As libass's ass_lookup_style: leading *s dropped, "default" in any case is Default, the last of the
@@ -718,9 +725,9 @@ struct StyleIndex {
         }();
         return s;
     }
-    const transform::Context &ctx;
-    const std::unordered_map<std::u8string_view, const core::StyleValues *> &last;
-    const std::unordered_set<const core::StyleValues *> &oversized;
+    const Reader &reader;
+    const absl::flat_hash_map<std::u8string_view, const core::StyleValues *> &last;
+    const absl::flat_hash_set<const core::StyleValues *> &oversized;
 };
 
 // The Style a \r names (a missing Default is libass's own); null for the Line's, as libass's
@@ -939,7 +946,7 @@ std::optional<std::array<double, 4>> drawingBounds(u16v code)
 }
 
 // `edited`: the Line the tool writes; an outline or shadow change after its leading blocks is not taken.
-std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
+std::optional<Box> measureBox(const Reader &reader, const StyleIndex &styles, const core::LineRecord &line,
                               u16v text, const core::StyleValues &style, const Leading &lead, bool edited,
                               MeasureBudget &budget)
 {
@@ -966,7 +973,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             box.lineHeight = std::max(height - pbo, 0.) + std::max(pbo, 0.);
         return box;
     }
-    TextMeasurePort *measure = host.textMeasure();
+    TextMeasurePort *measure = reader.measure.port;
     if (!measure)
         return std::nullopt;
     // The leading \fs, \fn, \fsp, \b and \i as libass applies them: one at 0 or below, or without a value
@@ -1028,7 +1035,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         }
     }
     // The measure cannot lay out a vertical (@) font or see a font only the renderer is given.
-    if (builtin || s.fontname.starts_with(u8"@") || host.fontLeased(std::string(s.fontname.begin(), s.fontname.end())))
+    if (builtin || s.fontname.starts_with(u8"@") ||
+        (reader.measure.leased && reader.measure.leased(std::string(s.fontname.begin(), s.fontname.end()))))
         return std::nullopt;
     s.fontsize = core::toUtf8(fmt(size, 4));
     s.scaleX = u8"100";
@@ -1038,9 +1046,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         fields.emplace_back(f.begin(), f.end());
     // As libass reads it: \N breaks, \n too under wrap style 2 and is a space otherwise, \h a hard space.
     // A drawing within the text, or a glyph-changing tag after some, is not measured.
-    const transform::Context &ctx = styles.ctx;
-    const auto wrapOf = [&ctx] {
-        const auto v = ctx.document ? ctx.document->scriptInfo(u8"WrapStyle") : std::nullopt;
+    const auto wrapOf = [&reader] {
+        const auto v = reader.document ? reader.document->scriptInfo(u8"WrapStyle") : std::nullopt;
         const int n = v ? std::atoi(std::string(v->begin(), v->end()).c_str()) : 0;
         return n >= 0 && n <= 3 ? n : 0;
     };
@@ -1117,7 +1124,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         all += piece;
     }
     // libass may fall back to a font only it is given, the measure to a system one.
-    if (host.fallsBackToLeased(std::string(s.fontname.begin(), s.fontname.end()), s.bold, s.italic, all))
+    if (reader.measure.fallsBackToLeased &&
+        reader.measure.fallsBackToLeased(std::string(s.fontname.begin(), s.fontname.end()), s.bold, s.italic, all))
         return std::nullopt;
     double width = 0, height = 0;
     for (const u16 &piece : lines) {
@@ -1134,7 +1142,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         const auto margin = [](std::int64_t own, const std::u8string &styleMargin) {
             return own != 0 ? static_cast<double>(own) : transform::styleNumber(styleMargin, 0);
         };
-        const double room = ctx.width - margin(line.marginLeft.value, style.marginLeft) -
+        const double room = reader.width - margin(line.marginLeft.value, style.marginLeft) -
                             margin(line.marginRight.value, style.marginRight);
         if (width * scaleX / 100 > room)
             return std::nullopt;
@@ -1176,7 +1184,7 @@ bool scrolls(const core::LineRecord &line)
     return std::count(e.begin(), e.end(), u8';') >= 3;
 }
 
-LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line);
+LineState readTagsIn(const Reader &reader, const StyleIndex &styles, const core::LineRecord &line);
 
 bool stylesTooLarge(const StyleIndex &styles, const core::LineRecord &line)
 {
@@ -1192,22 +1200,23 @@ bool stylesTooLarge(const StyleIndex &styles, const core::LineRecord &line)
 
 // As libass's fix_collisions: only colliding Lines of its Layer count, each its box at its leading scale with
 // its outline (not its shadow). nullopt when one before it cannot be measured.
-std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
+std::optional<double> stackOffset(const Reader &reader, const StyleIndex &styles, const core::LineRecord &line,
                                   const Transform &t, const Box &box, MeasureBudget &budget)
 {
-    const transform::Context &ctx = styles.ctx;
-    const std::int64_t time = host.videoTimeMs();
+    if (!reader.document || !reader.timeMs)
+        return 0.0;
+    const std::int64_t time = *reader.timeMs;
     const auto shown = [time](const core::LineRecord &l) {
         return time >= transform::startMs(l) && time < transform::endMs(l);
     };
-    if (!ctx.document || !shown(line))
+    if (!shown(line))
         return 0.0;
-    const auto rect = [&ctx](const core::LineRecord &l, const core::StyleValues &st, const Transform &lt,
+    const auto rect = [&reader](const core::LineRecord &l, const core::StyleValues &st, const Transform &lt,
                              const Box &b) {
         const double w = b.width() * lt.fscx / 100 + 2 * lt.bord.x;
         const double h = b.layoutHeight() * lt.fscy / 100 + 2 * lt.bord.y;
         const int a = lt.an;
-        const PointF p = transform::defaultPosition(l, st, a, ctx.width, ctx.height);
+        const PointF p = transform::defaultPosition(l, st, a, reader.width, reader.height);
         double x = p.x, y = p.y;
         if (a % 3 == 2)
             x -= w / 2;
@@ -1247,8 +1256,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
     };
     constexpr int kMaxMeasured = 256, kMaxCandidates = 4096;
     int measured = 0, candidates = 0;
-    for (const core::LineRecord *dial : ctx.document->lines()) {
-        if ((!ctx.ignoreFiltered && dial->visibility == core::LineVisibility::Hidden) || dial->unparsed)
+    for (const core::LineRecord *dial : reader.document->lines()) {
+        if ((!reader.ignoreFiltered && dial->visibility == core::LineVisibility::Hidden) || dial->unparsed)
             continue;
         if (dial->id == line.id)
             break;
@@ -1256,14 +1265,14 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             continue; // libass renders no Comment
         if (++candidates > kMaxCandidates || !budget.parse(*dial) || stylesTooLarge(styles, *dial))
             return std::nullopt;
-        const LineState other = readTagsIn(host, styles, *dial);
+        const LineState other = readTagsIn(reader, styles, *dial);
         if (!other.stacks)
             continue;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues &style = styles.line(dial->style);
         // libass's rectangle takes its glyphs' largest border.
         static constexpr u16v kBorderTags[] = {u"bord", u"xbord", u"ybord"};
-        const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false, budget);
+        const auto otherBox = measureBox(reader, styles, *dial, text, style, leadingOf(text), false, budget);
         if (!otherBox || afterText(text, kBorderTags))
             return std::nullopt;
         if (otherBox->width() <= 0)
@@ -1278,9 +1287,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
     return fit(mine, t.an);
 }
 
-LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line)
+LineState readTagsIn(const Reader &reader, const StyleIndex &styles, const core::LineRecord &line)
 {
-    const transform::Context &ctx = styles.ctx;
     const u16 text = transform::lineText(line);
     const core::StyleValues &style = styles.line(line.style);
     LineState out;
@@ -1333,7 +1341,8 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
                     t1 = 0;
                     t2 = static_cast<double>(transform::endMs(line) - transform::startMs(line));
                 }
-                const double now = static_cast<double>(host.videoTimeMs()) - transform::startMs(line);
+                const double now =
+                    reader.timeMs ? static_cast<double>(*reader.timeMs) - transform::startMs(line) : 0.0;
                 const double k = now <= t1 ? 0 : (now >= t2 ? 1 : (now - t1) / (t2 - t1));
                 pos = V2{(*a)[0] + ((*a)[2] - (*a)[0]) * k, (*a)[1] + ((*a)[3] - (*a)[1]) * k};
             } else if (tag.name == u"org" && !org) {
@@ -1411,7 +1420,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     }
 
     if (!pos) {
-        pos = v2(transform::defaultPosition(line, style, t.an, ctx.width, ctx.height));
+        pos = v2(transform::defaultPosition(line, style, t.an, reader.width, reader.height));
         out.stacks = !org && !timed && !scrolls(line);
     }
     t.pos = pf(*pos);
@@ -1422,12 +1431,36 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
 
 }
 
+Reader reader(const VisualHost &host)
+{
+    Reader r;
+    if (const EditSession *session = host.session()) {
+        r.document = &session->document();
+        r.session = session->serial();
+        r.revision = session->revision();
+    }
+    r.width = host.view().scriptWidth();
+    r.height = host.view().scriptHeight();
+    r.timeMs = host.videoTimeMs();
+    r.measure.port = host.textMeasure();
+    r.measure.leased = [&host](const std::string &name) { return host.fontLeased(name); };
+    r.measure.fallsBackToLeased = [&host](const std::string &font, bool bold, bool italic, u16v text) {
+        return host.fallsBackToLeased(font, bold, italic, text);
+    };
+    r.ignoreFiltered = host.ignoreFiltered();
+    return r;
+}
+
 LineState readTags(const VisualHost &host, const core::LineRecord &line)
 {
     StyleCache cache;
-    const auto decoded = cache.get(host);
-    const transform::Context ctx = transform::context(host, false);
-    return readTagsIn(host, StyleIndex(ctx, *decoded), line);
+    return readTags(reader(host), line, cache);
+}
+
+LineState readTags(const Reader &reader, const core::LineRecord &line, StyleCache &cache)
+{
+    const auto decoded = cache.get(reader);
+    return readTagsIn(reader, StyleIndex(reader, *decoded), line);
 }
 
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line)
@@ -1438,23 +1471,27 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
 
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line, StyleCache &cache)
 {
+    return readLine(reader(host), line, cache);
+}
+
+std::optional<LineState> readLine(const Reader &reader, const core::LineRecord &line, StyleCache &cache)
+{
     MeasureBudget budget;
     if (scrolls(line) || !budget.parse(line))
         return std::nullopt;
-    const auto decoded = cache.get(host);
-    const transform::Context ctx = transform::context(host, false);
-    const StyleIndex styles(ctx, *decoded);
+    const auto decoded = cache.get(reader);
+    const StyleIndex styles(reader, *decoded);
     if (stylesTooLarge(styles, line))
         return std::nullopt;
-    LineState out = readTagsIn(host, styles, line);
+    LineState out = readTagsIn(reader, styles, line);
     const u16 text = transform::lineText(line);
     const auto box =
-        measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text), true, budget);
+        measureBox(reader, styles, line, text, styles.line(line.style), leadingOf(text), true, budget);
     if (!box)
         return std::nullopt;
     out.box = *box;
     if (out.stacks) {
-        const auto offset = stackOffset(host, styles, line, out.transform, *box, budget);
+        const auto offset = stackOffset(reader, styles, line, out.transform, *box, budget);
         if (!offset)
             return std::nullopt;
         out.transform.pos.y += static_cast<float>(*offset);
@@ -1585,6 +1622,14 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     }
     const std::size_t rest = leading.empty() ? 0 : leading.back().second + 1;
     return head + out.substr(rest);
+}
+
+std::u16string writeTransform(const Reader &reader, StyleCache &cache, const core::LineRecord &line,
+                              const Transform &t)
+{
+    const auto decoded = cache.get(reader);
+    const StyleIndex styles(reader, *decoded);
+    return writeTransform(transform::lineText(line), t, styles.line(line.style));
 }
 
 }
@@ -1837,9 +1882,9 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
         host.cancelGesture();
         return false;
     }
-    const transform::Context ctx = transform::context(host, false);
-    const auto decoded = m_styles.get(host);
-    const perspective::StyleIndex styles(ctx, *decoded);
+    const Reader r = reader(host);
+    const auto decoded = m_styles.get(r);
+    const perspective::StyleIndex styles(r, *decoded);
     for (const core::LineId &id : host.gesture()->targets())
         if (perspective::stylesTooLarge(styles, host.gesture()->before(id))) {
             host.cancelGesture();
@@ -1853,13 +1898,13 @@ void PerspectiveTool::stageAll(VisualHost &host)
     Gesture *g = host.gesture();
     if (!g)
         return;
-    const transform::Context ctx = transform::context(host, false);
-    const auto decoded = m_styles.get(host);
-    const StyleIndex styles(ctx, *decoded);
+    const Reader r = reader(host);
+    const auto decoded = m_styles.get(r);
+    const StyleIndex styles(r, *decoded);
     for (const core::LineId &id : g->targets()) {
         const core::LineRecord &line = g->before(id);
         Transform t = m_state.transform;
-        const LineState own = readTagsIn(host, styles, line);
+        const LineState own = readTagsIn(r, styles, line);
         const double kx = m_startTransform.fscx != 0 ? t.fscx / m_startTransform.fscx : 1;
         const double ky = m_startTransform.fscy != 0 ? t.fscy / m_startTransform.fscy : 1;
         t.bord = {static_cast<float>(own.transform.bord.x * kx), static_cast<float>(own.transform.bord.y * ky)};
@@ -1950,13 +1995,13 @@ bool PerspectiveTool::keepsMovingOrigins(const Transform &t, VisualHost &host, b
     const Gesture *g = host.gesture();
     if (!g || g->targets().size() < 2)
         return true;
-    const transform::Context ctx = transform::context(host, false);
-    const auto decoded = m_styles.get(host);
-    const StyleIndex styles(ctx, *decoded);
+    const Reader r = reader(host);
+    const auto decoded = m_styles.get(r);
+    const StyleIndex styles(r, *decoded);
     for (const core::LineId &id : g->targets()) {
         if (m_line && id == *m_line)
             continue;
-        const LineState own = readTagsIn(host, styles, g->before(id));
+        const LineState own = readTagsIn(r, styles, g->before(id));
         if (own.hasMove && !own.ownOrg)
             return false;
     }

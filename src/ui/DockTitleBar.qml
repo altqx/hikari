@@ -62,6 +62,7 @@ KDDWViews.TitleBarBase {
             text: qsTr("Dock")
             onTriggered: root.floatButtonClicked()
         }
+        MenuSeparator {}
         ShellMenuItem {
             iconRole: "tab-close"
             objectName: "dockWindowClose"

@@ -78,7 +78,7 @@ TEST(Style, AssLayout)
     EXPECT_EQ(v.secondary, (Colour{255, 0, 0, 0}));
     EXPECT_EQ(v.back, (Colour{0, 0, 0, 0x80}));
     EXPECT_TRUE(v.bold);
-    EXPECT_TRUE(v.borderStyle);
+    EXPECT_EQ(v.borderStyle, 3);
     EXPECT_EQ(v.alignment, u8"2");
     EXPECT_FALSE(v.ssaTertiaryColour);
 }
@@ -105,7 +105,7 @@ TEST(Style, SsaV4CaptureInput)
     EXPECT_EQ(d.marginVertical, u8"30");
     EXPECT_EQ(d.encoding, u8"0");
     EXPECT_EQ(styles[1].alignment, u8"8");
-    EXPECT_TRUE(styles[1].borderStyle);
+    EXPECT_EQ(styles[1].borderStyle, 3);
     EXPECT_EQ(styles[1].back, (Colour{0x80, 0, 0, 0}));
     EXPECT_EQ(styles[2].alignment, u8"4");
 }
@@ -131,6 +131,22 @@ TEST(Style, ShortLinesAndNames)
     EXPECT_FALSE(legacy::decodeStyle(
                      u8"Style: T,Arial,20,1,2,3,4,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,", false)
                      .complete);
+}
+
+TEST(Style, BorderStylesKeepTheirValue)
+{
+    const auto border = [](std::u8string_view value) {
+        const auto v = legacy::decodeStyle(u8"Style: B,Arial,20,1,2,3,4,0,0,0,0,100,100,0,0," + std::u8string(value) +
+                                               u8",2,0,2,10,10,10,1",
+                                           false);
+        return std::pair{v.borderStyle, legacy::styleRawFields(v)[15]};
+    };
+    EXPECT_EQ(border(u8"1"), (std::pair{1, std::u8string(u8"1")}));
+    EXPECT_EQ(border(u8"3"), (std::pair{3, std::u8string(u8"3")}));
+    EXPECT_EQ(border(u8"4"), (std::pair{4, std::u8string(u8"4")}));
+    EXPECT_EQ(border(u8"0"), (std::pair{1, std::u8string(u8"1")}));
+    EXPECT_EQ(border(u8"30"), (std::pair{1, std::u8string(u8"1")}));
+    EXPECT_EQ(border(u8"x"), (std::pair{1, std::u8string(u8"1")}));
 }
 
 TEST(Style, LegacyColourParsing)

@@ -15,7 +15,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 #include <vector>
 
 namespace hikari::application {
@@ -108,7 +108,7 @@ private:
     // A load that started before the latest user dictionary change starts again.
     std::uint64_t m_userGeneration = 0;
     // Cleared whenever a dictionary changes.
-    std::unordered_map<std::u16string, bool> m_results;
+    absl::flat_hash_map<std::u16string, bool> m_results;
 };
 
 // Written as UTF-8 with a BOM; reading drops the BOM (and CRLF on Windows). nullopt when unreadable or empty.

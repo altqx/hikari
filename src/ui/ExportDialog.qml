@@ -25,7 +25,9 @@ DialogWindow {
         { id: "txt", text: qsTr("Plain text") },
         { id: "mdvd", text: "MicroDVD" },
         { id: "mpl2", text: "MPL2" },
-        { id: "tmp", text: "TMPlayer" }
+        { id: "tmp", text: "TMPlayer" },
+        { id: "ttml", text: "TTML (IMSC1)" },
+        { id: "dfxp", text: "DFXP" }
     ]
     readonly property string format: formats[Math.max(0, formatChoice.currentIndex)].id
     readonly property var lineChoices: ["all", "selected", "shown"]
@@ -33,7 +35,9 @@ DialogWindow {
     property var report: null
     readonly property bool reported: report !== null
     property string problem: ""
-    readonly property bool fpsValid: format !== "mdvd" || (fpsNumber() >= 1 && fpsNumber() <= 1000)
+    readonly property bool ttml: format === "ttml" || format === "dfxp"
+    readonly property bool usesFrames: format === "mdvd" || (ttml && (ttmlNetflix.checked || ttmlFrames.checked))
+    readonly property bool fpsValid: !usesFrames || (fpsNumber() >= 1 && fpsNumber() <= 1000)
 
     function openDialog() {
         setup = app.exportSetup()
@@ -52,6 +56,9 @@ DialogWindow {
         vttKaraoke.checked = o.vttKaraoke
         textTimes.checked = o.textTimes
         textActors.checked = o.textActors
+        ttmlNetflix.checked = o.ttmlNetflix
+        ttmlFrames.checked = o.ttmlFrames
+        language.text = o.language
         fps.text = Number(o.fps).toFixed(3).replace(/\.?0+$/, "")
         destination.text = suggestedPath()
         open()
@@ -78,6 +85,7 @@ DialogWindow {
             lines: lineChoices[linesChoice.currentIndex], mergeOverlaps: merge.checked, srtFontColour: srtColour.checked,
             srtAlignmentTags: srtAlignment.checked, vttPositions: vttPositions.checked, vttStyles: vttStyles.checked,
             vttKaraoke: vttKaraoke.checked, textTimes: textTimes.checked, textActors: textActors.checked,
+            ttmlNetflix: ttmlNetflix.checked, ttmlFrames: ttmlFrames.checked, language: language.text.trim(),
             fps: fpsNumber(), replace: replace
         }
     }
@@ -229,13 +237,40 @@ DialogWindow {
                 text: qsTr("Actor names")
             }
             CheckBox {
+                id: ttmlNetflix
+                objectName: "exportTtmlNetflix"
+                visible: dialog.ttml
+                text: qsTr("Netflix timed-text style")
+            }
+            CheckBox {
+                id: ttmlFrames
+                objectName: "exportTtmlFrames"
+                visible: dialog.ttml && !ttmlNetflix.checked
+                text: qsTr("Times in frames")
+            }
+            RowLayout {
+                visible: dialog.ttml
+                spacing: 6
+                Layout.leftMargin: merge.leftPadding
+                Label { text: qsTr("Language") }
+                TextField {
+                    id: language
+                    objectName: "exportLanguage"
+                    Layout.preferredWidth: 80
+                    selectByMouse: true
+                    placeholderText: "en"
+                    validator: RegularExpressionValidator { regularExpression: /^[A-Za-z0-9-]{0,35}$/ }
+                    Accessible.name: qsTr("Language")
+                }
+            }
+            CheckBox {
                 id: merge
                 objectName: "exportMerge"
                 visible: ["srt", "sbv", "mdvd", "mpl2"].indexOf(dialog.format) >= 0
                 text: qsTr("Merge overlapping lines into one subtitle")
             }
             RowLayout {
-                visible: dialog.format === "mdvd"
+                visible: dialog.usesFrames
                 spacing: 6
                 Layout.leftMargin: merge.leftPadding
                 Label { text: qsTr("Frame rate") }
@@ -255,6 +290,10 @@ DialogWindow {
                     text: qsTr("Use video frame rate")
                     onClicked: fps.text = Number(dialog.setup.videoFps).toFixed(3).replace(/\.?0+$/, "")
                 }
+            }
+            Hint {
+                visible: dialog.ttml && ttmlNetflix.checked
+                text: qsTr("Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.")
             }
             Hint {
                 visible: dialog.format === "tmp"

@@ -135,6 +135,12 @@ feature ccmp {
           [(3, 1, 4, mapping)], {},
           os2={'fsSelection': (178 << 8) | 0x40})
 
+    hebrew = [0x20, 0x21, 0x05D0, 0x05D1, 0x05D2]
+    glyphs = {gname(c): bits_glyph(c) for c in hebrew}
+    mapping = {c: gname(c) for c in hebrew}
+    build(os.path.join(out, 'forktest-hebrew.ttf'), 'ForkTest Hebrew', glyphs,
+          [(0, 3, 4, mapping), (3, 1, 4, mapping)], {})
+
 
 if __name__ == '__main__':
     main()

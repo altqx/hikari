@@ -50,6 +50,7 @@ Grid > Join > Keep last [GRID_JOIN_TO_LAST_LINE]
 Grid > Split >
 Grid > Split > At video time [GRID_SPLIT_BY_VIDEO_TIME]
 Grid > Split > Into frames [GRID_SPLIT_BY_FRAME]
+Grid > Split > Bake animations
 Grid > Split > -
 Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split > Into words [GRID_SPLIT_BY_WORDS]
@@ -93,51 +94,65 @@ Video > Copy video position [VIDEO_COPY_COORDS]
 Video > Play [VIDEO_PLAY_PAUSE]
 Video > Stop [VIDEO_STOP]
 Video > Full screen [VIDEO_FULL_SCREEN]
-Video > Full screen bar >
-Video > Full screen bar > Auto
-Video > Full screen bar > Always
-Video > Full screen bar > Never
+Video > Full screen on >
 Video > Open editor
-Video > Recently opened subtitles >
-Video > Recently opened videos >
-Video > Open video [GLOBAL_OPEN_VIDEO]
-Video > Open subtitles [GLOBAL_OPEN_SUBS]
-Video > Show / hide progress bar [VIDEO_HIDE_PROGRESS_BAR]
-Video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > -
+Video > Open video… [GLOBAL_OPEN_VIDEO]
+Video > Open subtitles… [GLOBAL_OPEN_SUBS]
+Video > Recently opened >
+Video > Recently opened > -
+Video > -
+Video > Export frame >
+Video > Export frame > Save as PNG… [VIDEO_SAVE_FRAME_TO_PNG]
+Video > Export frame > Copy [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Video > Export frame > -
+Video > Export frame > Save with subtitles as PNG… [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
+Video > Export frame > Copy with subtitles [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
+Video > Audio track >
+Video > Chapters >
+Video > -
+Video > Progress bar [VIDEO_HIDE_PROGRESS_BAR]
+Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
+Video > Full screen bar >
+Video > Full screen bar > Show when the pointer moves
+Video > Full screen bar > Always show
+Video > Full screen bar > Never show
 Video > Change aspect ratio [VIDEO_ASPECT_RATIO]
-Video > Save frame with subtitles as PNG [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
-Video > Copy frame with subtitles to clipboard [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
-Video > Save frame as PNG [VIDEO_SAVE_FRAME_TO_PNG]
-Video > Copy frame to clipboard [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > -
 Video > Unload video [VIDEO_DELETE_FILE]
-Video > -
-Video > -
 Full-screen video
 Full-screen video > Copy video position [VIDEO_COPY_COORDS]
 Full-screen video > Play [VIDEO_PLAY_PAUSE]
 Full-screen video > Stop [VIDEO_STOP]
 Full-screen video > Full screen [VIDEO_FULL_SCREEN]
-Full-screen video > Full screen bar >
-Full-screen video > Full screen bar > Auto
-Full-screen video > Full screen bar > Always
-Full-screen video > Full screen bar > Never
+Full-screen video > Full screen on >
 Full-screen video > Open editor
-Full-screen video > Recently opened subtitles >
-Full-screen video > Recently opened videos >
-Full-screen video > Open video [GLOBAL_OPEN_VIDEO]
-Full-screen video > Open subtitles [GLOBAL_OPEN_SUBS]
-Full-screen video > Show / hide progress bar [VIDEO_HIDE_PROGRESS_BAR]
-Full-screen video > Show / hide render cost [GLOBAL_VIDEO_RENDER_COST]
+Full-screen video > -
+Full-screen video > Open video… [GLOBAL_OPEN_VIDEO]
+Full-screen video > Open subtitles… [GLOBAL_OPEN_SUBS]
+Full-screen video > Recently opened >
+Full-screen video > Recently opened > -
+Full-screen video > -
+Full-screen video > Export frame >
+Full-screen video > Export frame > Save as PNG… [VIDEO_SAVE_FRAME_TO_PNG]
+Full-screen video > Export frame > Copy [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Full-screen video > Export frame > -
+Full-screen video > Export frame > Save with subtitles as PNG… [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
+Full-screen video > Export frame > Copy with subtitles [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
+Full-screen video > Audio track >
+Full-screen video > Chapters >
+Full-screen video > -
+Full-screen video > Progress bar [VIDEO_HIDE_PROGRESS_BAR]
+Full-screen video > Render cost [GLOBAL_VIDEO_RENDER_COST]
+Full-screen video > Full screen bar >
+Full-screen video > Full screen bar > Show when the pointer moves
+Full-screen video > Full screen bar > Always show
+Full-screen video > Full screen bar > Never show
 Full-screen video > Change aspect ratio [VIDEO_ASPECT_RATIO]
-Full-screen video > Save frame with subtitles as PNG [VIDEO_SAVE_SUBBED_FRAME_TO_PNG]
-Full-screen video > Copy frame with subtitles to clipboard [VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD]
-Full-screen video > Save frame as PNG [VIDEO_SAVE_FRAME_TO_PNG]
-Full-screen video > Copy frame to clipboard [VIDEO_COPY_FRAME_TO_CLIPBOARD]
+Full-screen video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Full-screen video > -
 Full-screen video > Unload video [VIDEO_DELETE_FILE]
-Full-screen video > -
-Full-screen video > -
 Grid panel options
 Grid panel options > Filtering >
 Grid panel options > Filtering > Filter [GRID_FILTER]
@@ -170,40 +185,54 @@ Grid panel options > Columns > Reset column widths
 Grid panel options > Ignore filtering in some actions [GRID_FILTER_IGNORE_IN_ACTIONS]
 Grid panel options > Fold generated lines
 Grid panel options > -
+Grid panel options > -
 Grid panel options > Move panel…
 Grid panel options > Move tab left
 Grid panel options > Move tab right
-Grid panel options > Undock
+Grid panel options > Float
 Grid panel options > -
 Grid panel options > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 Grid panel options > -
 Grid panel options > Close
 Document tab
-Document tab > -
+Document tab > New tab
 Document tab > Save
 Document tab > Save all
-Document tab > Close all tabs
+Document tab > -
+Document tab > Show in folder
+Document tab > Show in folder >
+Document tab > Copy path
+Document tab > Copy path >
 Document tab > Subtitle comparison >
+Document tab > Subtitle comparison > Compare
+Document tab > Subtitle comparison > Turn off comparison
+Document tab > Subtitle comparison > -
 Document tab > Subtitle comparison > Compare by times
 Document tab > Subtitle comparison > Compare by visible lines
 Document tab > Subtitle comparison > Compare by selections
 Document tab > Subtitle comparison > Compare by styles
 Document tab > Subtitle comparison > Compare by selected styles >
-Document tab > Subtitle comparison > Compare
-Document tab > Subtitle comparison > Turn off comparison
+Document tab > Switch to >
+Document tab > -
+Document tab > Close
+Document tab > Close other tabs
+Document tab > Close tabs to the right
+Document tab > Close all tabs
 Styles row
 Styles row > Apply to the selected lines
-Styles row > -
-Styles row > Edit…
-Styles row > Duplicate
-Styles row > Delete
-Styles row > -
 Styles row > Select lines with this style
+Styles row > -
+Styles row > New style…
+Styles row > Edit style…
+Styles row > Duplicate
 Styles row > Copy to the catalogue…
 Styles row > -
-Styles row > Open in Style manager
+Styles row > Style manager
+Styles row > -
+Styles row > Delete
 Automation macro
 Automation macro > Run
+Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
 Home row
@@ -214,6 +243,9 @@ Home row > -
 Home row > Remove from list
 Home row > Remove missing files
 Reference tray
+Reference tray > Copy
+Reference tray > -
+Reference tray > No other occurrences
 Tag button
 Tag button > Edit…
 Tag button > Move left

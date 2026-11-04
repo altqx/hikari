@@ -162,7 +162,7 @@ int main(int argc, char **argv)
         expect(o[7] == "3", "the tray's Down arrow moves the reference");
         expect(o[8].find("Reference (protected, read-only): ref.ass") != std::string::npos, "the tray names the reference");
         expect(o[9] == "3", "an independent reference does not follow the editing Line");
-        expect(o[10] == "none", "Close reference ends the reference");
+        expect(o[10] == "none", "Close ends the reference");
         expect(o[11] == "tab kept", "the previewed tab stays");
     }
     expect(read(edit) == editBefore && read(ref) == refBefore, "neither file was written");

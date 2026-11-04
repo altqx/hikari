@@ -58,7 +58,7 @@ ToolButton {
             Layout.alignment: Qt.AlignVCenter
         }
         Icon {
-            iconRole: "menu-more"
+            iconRole: "chevron-down"
             size: 12
             Layout.alignment: Qt.AlignVCenter
         }

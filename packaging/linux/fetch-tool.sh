@@ -2,7 +2,7 @@
 # Downloads a tool pinned in packaging/linux/tools.lock into <dir> (reusing a file with the pinned hash), checks its
 # SHA-256 and prints its path.
 #
-#   packaging/linux/fetch-tool.sh <appimagetool|type2-runtime|nfpm> <dir>
+#   packaging/linux/fetch-tool.sh <appimagetool|type2-runtime|nfpm|minisign> <dir>
 #   packaging/linux/fetch-tool.sh --image <name>     (prints the image reference)
 set -eu
 
@@ -45,6 +45,13 @@ nfpm)
         tar -xzf "$file" -C "$out" nfpm
     fi
     echo "$out/nfpm" ;;
+minisign)
+    out=$dir/minisign-$version
+    if [ ! -x "$out/minisign" ]; then
+        mkdir -p "$out"
+        tar --warning=no-unknown-keyword -xzf "$file" -C "$out" --strip-components=2 minisign-linux/x86_64/minisign
+    fi
+    echo "$out/minisign" ;;
 *)
     echo "$file" ;;
 esac

@@ -63,7 +63,7 @@ TEST(PluginManifest, EveryFieldReads)
         "network": {"hosts": ["api.example.com"], "reason": "Looks words up"},
         "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}]})");
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
-        "panels": [{"id": "board", "title": "Board"}],
+        "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
                      {"id": "mode", "title": "Mode", "type": "choice", "options": ["a", "b"], "default": "b"},
                      {"id": "count", "title": "Count", "type": "integer", "default": 3, "minimum": 1}]})");
@@ -78,8 +78,29 @@ TEST(PluginManifest, EveryFieldReads)
     EXPECT_TRUE(m->permissions.files[0].writable);
     ASSERT_EQ(m->commands.size(), 1u);
     EXPECT_EQ(m->commands[0].title, "Greet");
+    ASSERT_EQ(m->panels.size(), 2u);
     EXPECT_EQ(m->panels[0].id, "board");
+    EXPECT_EQ(m->panels[0].area, PanelArea::Right);
+    EXPECT_EQ(m->panels[1].area, PanelArea::Bottom);
     EXPECT_EQ(m->settings.size(), 3u);
+}
+
+TEST(PluginManifest, APanelDocksInTheAreaItNames)
+{
+    for (const auto &[area, expected] : {std::pair{"left", PanelArea::Left}, std::pair{"right", PanelArea::Right},
+                                         std::pair{"bottom", PanelArea::Bottom}}) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(
+            std::string(R"({"panels": [{"id": "board", "title": "Board", "area": ")") + area + R"("}]})");
+        const auto m = parse(json);
+        ASSERT_TRUE(m) << area;
+        EXPECT_EQ(m->panels[0].area, expected) << area;
+    }
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"panels": [{"id": "board", "title": "Board", "area": "top"}]})");
+    const ManifestProblem p = problem(json);
+    EXPECT_EQ(p.kind, Kind::Schema);
+    EXPECT_EQ(p.at, "/contributes/panels/0/area");
 }
 
 TEST(PluginManifest, SchemaFailuresNameTheField)

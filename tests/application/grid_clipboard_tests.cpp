@@ -96,6 +96,37 @@ TEST_F(GridClipboardTest, PastedLinesJoinTheGroupTheyLandIn)
     EXPECT_EQ(grouped.document().lines()[3]->group, core::GroupMarker::None);
 }
 
+TEST_F(GridClipboardTest, PastedGroupsAreRebasedToTheDepthTheyLandAt)
+{
+    EditSession grouped{load("[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,[tree_description],0,0,0,,S\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,[tree_opened],0,0,0,,member\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,after\n")};
+    constexpr std::u8string_view innerGroup =
+        u8"Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_opened][tree_description],0,0,0,,C\r\n"
+        u8"Dialogue: 0,0:00:01.00,0:00:02.00,Default,[tree_opened][tree_closed],0,0,0,,c\r\n";
+    auto markers = [&](std::size_t row) {
+        const auto *l = grouped.document().lines()[row];
+        auto out = l->outerGroups;
+        out.push_back(l->group);
+        return out;
+    };
+    using enum core::GroupMarker;
+    const auto after = grouped.document().lines()[2]->id;
+    grouped.setSelection(Selection{after, {after}, after, {}});
+    ASSERT_TRUE(pasteRows(grouped, innerGroup));
+    EXPECT_EQ(markers(2), (std::vector{Description}));
+    EXPECT_EQ(markers(3), (std::vector{Closed}));
+    ASSERT_TRUE(grouped.undo());
+    const auto member = grouped.document().lines()[1]->id;
+    grouped.setSelection(Selection{member, {member}, member, {}});
+    ASSERT_TRUE(pasteRows(grouped, innerGroup));
+    EXPECT_EQ(markers(1), (std::vector{Opened, Description}));
+    EXPECT_EQ(markers(2), (std::vector{Opened, Closed}));
+    EXPECT_EQ(grouped.document().lines()[2]->visibility, core::LineVisibility::Hidden);
+    EXPECT_TRUE(grouped.lastGroupBreak().empty());
+}
+
 TEST_F(GridClipboardTest, PasteColumnsFillsTheSelectedLinesInOrder)
 {
     select({a, c}, c);

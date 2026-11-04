@@ -119,6 +119,7 @@ int main(int argc, char **argv)
 
     std::map<std::int64_t, Json> waiting; // our request to Qt -> Qt's request it answers
     std::vector<Json> hanging;
+    Json received = Json::array();
     std::int64_t nextId = 1;
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -165,7 +166,37 @@ int main(int argc, char **argv)
             continue;
         }
         const Json arg = params ? *params : Json();
-        if (name == "echo") {
+        if (name != "received")
+            received.push(Json::object({{"method", name}, {"params", arg}}));
+        if (name == "received") {
+            respond(*id, received);
+        } else if (name == "_hikari/providers.set" || name == "_hikari/conversation.end") {
+            respond(*id, nullptr);
+        } else if (name == "_hikari/complete") {
+            const Json *request = arg.find("request");
+            const Json *model = request ? request->find("model") : nullptr;
+            const std::string modelId = model && model->isString() ? model->asString() : std::string();
+            if (modelId == "hang") {
+                hanging.push_back(*id);
+            } else if (modelId == "fail") {
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
+                                   {"error", Json::object({{"code", -32010}, {"message", "slow down"},
+                                                           {"data", Json::object({{"kind", "rateLimited"},
+                                                                                  {"httpStatus", 429},
+                                                                                  {"detail", "slow down"}})}})}}));
+            } else {
+                const Json *stream = arg.find("stream");
+                send(Json::object({{"jsonrpc", "2.0"}, {"method", "session/update"},
+                                   {"params", Json::object({{"stream", stream ? *stream : Json()},
+                                                            {"update", Json::object({{"kind", "text"}, {"text", "Hi"}})}})}}));
+                respond(*id, Json::object({{"reason", "end"}, {"text", "Hi"}, {"toolCalls", Json::array()},
+                                           {"usage", Json::object({{"inputTokens", 3}, {"outputTokens", 1},
+                                                                   {"cachedInputTokens", 0}, {"cacheWriteTokens", 2},
+                                                                   {"cacheWriteHourTokens", 1}})}}));
+            }
+        } else if (name == "_hikari/models.list") {
+            respond(*id, Json::object({{"models", Json::array({Json::object({{"id", "b/model"}, {"name", "B"}})})}}));
+        } else if (name == "echo") {
             respond(*id, arg);
         } else if (name == "environment") {
             Json args = Json::array();

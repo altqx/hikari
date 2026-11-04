@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 
@@ -58,6 +59,17 @@ def pairs(values, what):
     return result
 
 
+def test_key(out, minisign):
+    """The feed's throwaway minisign key, made once and kept beside the feed: (secret key path, public key line)."""
+    folder = os.path.join(out, "test-key")
+    secret, public = os.path.join(folder, "feed.key"), os.path.join(folder, "feed.pub")
+    if not (os.path.isfile(secret) and os.path.isfile(public)):
+        os.makedirs(folder, exist_ok=True)
+        subprocess.run([minisign, "-G", "-W", "-f", "-p", public, "-s", secret], check=True, capture_output=True)
+    with open(public, encoding="utf-8") as file:
+        return secret, file.read().splitlines()[-1]
+
+
 def build(source, out, args):
     releases = {}
     for name in sorted(os.listdir(source)):
@@ -77,6 +89,12 @@ def build(source, out, args):
             elif os.path.exists(path):
                 os.remove(path)
     os.makedirs(out, exist_ok=True)
+    signing = None
+    if any(version not in args.no_manifest + args.no_signature for version in releases):
+        minisign = shutil.which(args.minisign)
+        if not minisign:
+            sys.exit(f"make-feed: {args.minisign} is needed to sign the manifests (or pass --no-signature V for each)")
+        signing = test_key(out, minisign)
 
     listing = []
     published = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -113,6 +131,12 @@ def build(source, out, args):
             with open(path, "w", encoding="utf-8") as file:
                 file.write(json.dumps(manifest, indent=2) + "\n")
             assets.append({"name": MANIFEST, "size": os.path.getsize(path), "digest": f"sha256:{sha256_of(path)}"})
+            if version not in args.no_signature:
+                signature = path + ".minisig"
+                subprocess.run([shutil.which(args.minisign), "-S", "-s", signing[0], "-m", path, "-x", signature,
+                                "-t", f"hikarisub v{version} {MANIFEST}"], check=True, capture_output=True)
+                assets.append({"name": MANIFEST + ".minisig", "size": os.path.getsize(signature),
+                               "digest": f"sha256:{sha256_of(signature)}"})
         tag = f"v{version}"
         listing.append({
             "tag_name": tag,
@@ -132,6 +156,8 @@ def build(source, out, args):
         file.write(json.dumps(listing, indent=2) + "\n")
     for release in listing:
         print(f"{release['tag_name']}: {', '.join(asset['name'] for asset in release['assets'])}")
+    if signing:
+        print(f"start the test build with HIKARISUB_UPDATE_KEY={signing[1]}")
 
 
 def serve(out, port):
@@ -170,6 +196,9 @@ def main():
     parser.add_argument("--no-serve", action="store_true", help="write the feed only")
     parser.add_argument("--no-manifest", action="append", default=[], metavar="V",
                         help="leave out the manifest of version V")
+    parser.add_argument("--no-signature", action="append", default=[], metavar="V",
+                        help="leave out the manifest signature of version V")
+    parser.add_argument("--minisign", default="minisign", help="the minisign that signs the manifests")
     parser.add_argument("--bad-sha256", action="append", default=[], metavar="NAME",
                         help="give asset NAME a wrong SHA-256 in its manifest")
     parser.add_argument("--offer-to", action="append", default=[], metavar="V=LIST",

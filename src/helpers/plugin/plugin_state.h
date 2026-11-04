@@ -25,6 +25,11 @@ public:
     virtual void notify(Level level, bool toast, const std::string &text) = 0;
     virtual std::expected<void, std::string> setSetting(const std::string &id, const api::Json &value) = 0;
     virtual std::expected<void, std::string> subscribe(const std::string &event) = 0;
+    // Waits for the app-wide edit lock; the error says why it wasn't given.
+    virtual std::expected<void, std::string> lock() = 0;
+    virtual void unlock() = 0;
+    // The plugin's panels and dialogs; answered like call.
+    virtual std::expected<api::Json, api::Json> ui(const std::string &operation, const api::Json &params) = 0;
 };
 
 struct Options {
@@ -64,6 +69,7 @@ public:
 private:
     explicit PluginState(Options options);
     std::expected<void, std::string> open();
+    std::expected<void, std::string> runPrelude();
     std::expected<void, std::string> protectedCall(int arguments, Host &host);
     std::expected<void, std::string> readCatalog();
 
