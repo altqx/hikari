@@ -89,7 +89,8 @@ void Application::choosePlayer()
         return;
     m_activePlayer = player;
     m_video->session().setGeneralPlayer(player);
-    m_videoView->setPlayer(player);
+    for (auto *views : allViews())
+        views->videoView->setPlayer(player);
 #ifdef _WIN32
     if (player != m_directShow.get())
         m_directShow.reset();

@@ -76,8 +76,10 @@ public:
         // Where user scripts live and scripts write; empty: automationDir.
         QString userAutomationDir;
     };
+    using EditorSource = std::function<ui::LineEditorController &()>;
+    using ShellSource = std::function<ui::ShellController &()>;
     AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
-                    ui::LineEditorController &editor, ui::VideoController &video, ui::ShellController &shell,
+                    EditorSource editor, ui::VideoController &video, ShellSource shell,
                     application::IndexedSourcePort &source, QObject *parent = nullptr);
     ~AutomationShell() override;
 
@@ -279,9 +281,9 @@ private:
     Paths m_paths;
     application::DocumentFiles &m_files;
     application::Workspace &m_workspace;
-    ui::LineEditorController &m_editor;
+    EditorSource m_editor;
     ui::VideoController &m_video;
-    ui::ShellController &m_shell;
+    ShellSource m_shell;
     backends::AutomationManager m_manager;
     application::AutomationServiceRouter m_router;
     ui::ScriptDialogMemory m_dialogMemory;

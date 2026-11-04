@@ -10,7 +10,7 @@ Out of scope: the application icon and the file-type icons (kept as they are), a
 | --- | --- |
 | `src/ui/icons/<role>.svg` | One icon per role, the shipped source. |
 | `src/ui/icons/manifest.json` | Per role: file, label (the legacy tooltip or menu text, the default accessible name), whether it has an accent layer, whether it mirrors, the legacy bitmaps it replaces, the surfaces using it, and `pending` (the later card that places it) for a role whose surface does not exist yet; and `notReplaced`, the legacy bitmaps left out with the reason (retired commands among them: GLOBAL_VIDEO_INDEXING's FFMS2 Indexing.png). |
-| `tools/icons/draw_icons.py` | How the icons are drawn: shared motifs (page, floppy, film frame, note, badges) and the rules below, enforced when it writes the SVGs and the manifest. Change an icon here and run it. |
+| `tools/icons/draw_icons.py` | How the icons are drawn: shared motifs (page, floppy, film frame, note, badges) and the rules below, enforced when it writes the SVGs and the manifest. Change an icon or its manifest entry here and run it; never edit `src/ui/icons` by hand: `tools.draw-icons` fails when the checked-in files differ from the script's output. |
 | `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`), in the theme layer's four themes (it reads their colours from `src/ui/theme.cpp`); `HIKARI_ICON_SHEET_ROLES` limits it to those roles. |
 | `src/ui/Icon.qml`, `IconButton.qml`, `IconToolButton.qml` | The Icon item and the icon-only buttons. |
 | `src/ui/IconTextButton.qml` | A push button with an icon of the set beside its text (legacy buttons with a bitmap beside the label). |
