@@ -93,10 +93,11 @@ class AutomationPackagesTests : public QObject {
     app::AutomationShell &automation() { return application->automation(); }
     QString user() const { return dir.filePath(QStringLiteral("user")); }
     QString autoload(const QString &file) const { return user() + QStringLiteral("/automation/autoload/") + file; }
+    static bool samePath(const QString &a, const QString &b) { return QFileInfo(a) == QFileInfo(b); }
     bool loaded(const QString &path)
     {
         return std::ranges::any_of(automation().scripts(), [&](const auto &s) {
-            return QString::fromStdString(s.path) == path && s.state == application::ScriptStatus::State::Ready;
+            return samePath(QString::fromStdString(s.path), path) && s.state == application::ScriptStatus::State::Ready;
         });
     }
     bool settles(const app::ScriptPackages &packages, const QString &nameSpace, const QString &state)
@@ -220,7 +221,7 @@ private slots:
         const QString path = QDir::toNativeSeparators(autoload(QStringLiteral("test.Hello.lua")));
         QVERIFY(QFile::exists(path));
         QTRY_VERIFY_WITH_TIMEOUT(loaded(path), 30'000);
-        QCOMPARE(entry(packages, QStringLiteral("test.Hello")).value(QStringLiteral("path")).toString(), path);
+        QVERIFY(samePath(entry(packages, QStringLiteral("test.Hello")).value(QStringLiteral("path")).toString(), path));
         QVERIFY(app::dependencyControlScripts(user() + QStringLiteral("/config/l0.DependencyControl.json"))
                     .contains(QStringLiteral("test.Hello")));
         QVERIFY(QDir(user() + QStringLiteral("/temp")).entryList({QStringLiteral("hikari-*")}, QDir::Files).isEmpty());
@@ -231,7 +232,7 @@ private slots:
         QCOMPARE(runMessage(automation().runId()), QStringLiteral("Hello is uninstalled."));
         QVERIFY(!QFile::exists(path));
         QVERIFY(std::ranges::none_of(automation().scripts(),
-                                     [&](const auto &s) { return QString::fromStdString(s.path) == path; }));
+                                     [&](const auto &s) { return samePath(QString::fromStdString(s.path), path); }));
         QCOMPARE(installed.count(), 1);
     }
 
