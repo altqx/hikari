@@ -127,6 +127,16 @@ void VideoController::cancelIndexing()
     emit changed();
 }
 
+bool VideoController::reloadVideo()
+{
+    if (!hasVideo() || m_session.dummy())
+        return false;
+    const auto frame = m_session.reportedFrame();
+    open(QString::fromStdString(m_session.path()), frame ? m_session.frameStart(*frame) : std::nullopt);
+    emit changed();
+    return true;
+}
+
 bool VideoController::unloadVideo()
 {
     if (m_session.state() == VideoSession::State::Closed)
@@ -330,15 +340,17 @@ void VideoController::openVideo(const QString &path)
         emit offerWithdrawn();
 }
 
-void VideoController::open(const QString &path)
+void VideoController::open(const QString &path, std::optional<core::DocumentTime> at)
 {
     const std::uint64_t request = ++m_openRequest;
     m_requestedVideo = path;
-    auto asVideo = [self = QPointer<VideoController>(this), request, path](application::IndexRequest index) {
+    auto asVideo = [self = QPointer<VideoController>(this), request, path, at](application::IndexRequest index) {
         if (!self || request != self->m_openRequest)
             return;
         self->m_session.open(path.toStdString(), std::move(index));
         emit self->changed();
+        if (at)
+            self->m_session.seekTo(*at);
     };
     if (m_filter && !application::isDummyVideo(path.toStdString()))
         m_filter(path, std::move(asVideo));

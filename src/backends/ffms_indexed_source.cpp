@@ -236,6 +236,8 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 t.sarDen = in.i32();
                 t.colorSpace = in.i32();
                 t.colorRange = in.i32();
+                t.colorPrimaries = in.i32();
+                t.transfer = in.i32();
                 t.pixelFormat.name = in.str();
                 t.pixelFormat.rgb = in.u8() != 0;
                 t.pixelFormat.components = in.i32();

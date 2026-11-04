@@ -19,7 +19,8 @@
 //                      i32 width, i32 height (frame 0's encoded size),
 //                      i32 sarNum, i32 sarDen (the track's SAR; 0: unknown),
 //                      i32 colorSpace, i32 colorRange (frame 0's FFMS_CS_* matrix and
-//                      FFMS_CR_* range),
+//                      FFMS_CR_* range), i32 primaries, i32 transfer (frame 0's
+//                      ColorPrimaries and TransferCharateristics),
 //                      str pixelFormat (frame 0's encoded format, FFmpeg's name; empty:
 //                      unknown), u8 rgb, i32 components, i32 chromaShiftX,
 //                      i32 chromaShiftY (log2 subsampling), i32 bitDepth

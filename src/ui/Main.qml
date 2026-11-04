@@ -2282,6 +2282,17 @@ ApplicationWindow {
                 enabled: root.video.loaded
                 onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
             }
+            ShellMenuItem {
+                command: "GLOBAL_RELOAD_VIDEO"
+                iconRole: "reload-video"
+                objectName: "reloadVideoMenuItem"
+                action: Action {
+                    id: reloadVideoAction
+                    text: qsTr("Reload video")
+                    enabled: root.video.hasVideo && !root.video.dummy
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_VIDEO")) root.video.reloadVideo()
+                }
+            }
             VideoStreamsMenu {
                 objectName: "videoStreamsMenu"
                 video: root.video
@@ -2406,6 +2417,17 @@ ApplicationWindow {
                     text: qsTr("Close audio")
                     enabled: root.audio.hasAudio
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_RELOAD_AUDIO"
+                iconRole: "reload-audio"
+                objectName: "reloadAudioMenuItem"
+                action: Action {
+                    id: reloadAudioAction
+                    text: qsTr("Reload audio")
+                    enabled: root.audio.reloadable
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_AUDIO")) root.audio.reloadAudio()
                 }
             }
             MenuSeparator {}
@@ -7219,9 +7241,65 @@ ApplicationWindow {
                 root.app.matchVideoResolution(option)
         })
     }
+    function askVideoProperty(question) {
+        const size = s => s.width + " × " + s.height
+        const leave = (text, isDefault) => ({ id: "leave", text: text, role: "reject", isDefault: isDefault })
+        const set = (id, text, isDefault) => ({ id: id, text: text, role: "action", isDefault: isDefault })
+        let o
+        switch (question.kind) {
+        case "untaggedMatrix":
+            o = { title: qsTr("Untagged video"), severity: "warning",
+                  text: qsTr("The video doesn’t say which colour matrix it uses."),
+                  detail: qsTr("HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.").arg(question.recommended) }
+            break
+        case "hdr":
+            o = { title: qsTr("HDR or wide-gamut video"), severity: "warning",
+                  text: qsTr("The video has HDR or wide-gamut colours."),
+                  detail: qsTr("Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.") }
+            break
+        case "missingMatrix":
+            o = { title: qsTr("Set the YCbCr matrix?"),
+                  text: qsTr("The subtitles have no YCbCr matrix."),
+                  detail: qsTr("If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.").arg(question.recommended),
+                  choices: [leave(qsTr("Leave unset"), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+            break
+        case "matrixMismatch":
+            o = { title: qsTr("YCbCr matrix mismatch"),
+                  text: qsTr("The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).").arg(question.recommended, question.script),
+                  detail: qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+            break
+        case "missingLayoutRes":
+            o = { title: qsTr("Set the layout resolution?"),
+                  text: qsTr("The subtitles have no layout resolution."),
+                  detail: qsTr("If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).").arg(size(question.videoSize), size(question.playSize)),
+                  choices: [leave(qsTr("Leave unset"), false), set("set", qsTr("Set to the video’s (%1)").arg(size(question.videoSize)), true),
+                            set("play", qsTr("Set to the script resolution (%1)").arg(size(question.playSize)), false)] }
+            break
+        case "layoutResMismatch":
+            o = { title: qsTr("Layout resolution mismatch"),
+                  text: qsTr("The video is %1 and the subtitles’ layout resolution is %2.").arg(size(question.videoSize), size(question.layoutSize)),
+                  detail: question.aspectChanged
+                          ? qsTr("Their aspect ratios differ. Set the layout resolution to the video’s?")
+                          : qsTr("This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(size(question.layoutSize)), true), set("set", qsTr("Set to the video’s (%1)").arg(size(question.videoSize)), false)] }
+            break
+        default:
+            return
+        }
+        o.dontAsk = true
+        root.messages.ask(o, (id, dontAskAgain) => {
+            const choice = ({ set: 1, play: 2 })[id] ?? 0
+            if (dontAskAgain)
+                root.app.stopAskingVideoProperty(question.kind, choice)
+            if (choice > 0)
+                root.app.answerVideoProperty(question, choice)
+        })
+    }
     Connections {
         target: root.app
         function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
+        function onVideoPropertyQuestion(question) { root.askVideoProperty(question) }
     }
     StyleManager {
         id: styleManagerWindow
@@ -7642,6 +7720,7 @@ ApplicationWindow {
         GLOBAL_FIND_NEXT: findNextAction, GLOBAL_FIND_PREVIOUS: findPreviousAction,
         GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
+        GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
         GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction,
@@ -7926,6 +8005,8 @@ ApplicationWindow {
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
         case "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD":
+        case "VIDEO_SAVE_SUBTITLES_TO_PNG":
+        case "VIDEO_COPY_SUBTITLES_TO_CLIPBOARD":
             root.videoView.snapshot(action)
             return true
         }

@@ -236,6 +236,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.userFolder = userFolder.root();
     options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
     options.gettingStarted = true;
+    options.askVideoProperties = true;
     options.settingsFile = userFolder.settingsFile();
     options.recoveryDir = userFolder.recovery();
     options.spellingBackend = backends::hunspellSpellingLoader();

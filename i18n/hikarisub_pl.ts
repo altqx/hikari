@@ -6167,6 +6167,42 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>Wycinek wektorowy: przesuń punkty</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>Wycinek wektorowy: dodaj linię</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>Wycinek wektorowy: dodaj krzywą Béziera</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>Wycinek wektorowy: dodaj krzywą B-sklejaną</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>Wycinek wektorowy: dodaj oddzielny punkt</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>Wycinek wektorowy: usuń punkt</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>Wycinek wektorowy: odwróć</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>Kopiuj napisy do schowka</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>Zapisz napisy jako PNG</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>Sprawdź karaoke</translation>
     </message>
@@ -6209,6 +6245,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Plugins</source>
         <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>Wczytaj ponownie audio</translation>
     </message>
     <message>
         <source>Centre times within frames</source>
@@ -7373,8 +7417,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Szczegóły wideo…</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>Koszt renderowania</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>Wczytaj ponownie audio</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7383,6 +7435,102 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>Wideo bez oznaczenia</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>Wideo nie podaje, jakiej macierzy kolorów używa.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub przyjmuje %1, ale inne odtwarzacze mogą przyjąć coś innego, więc kolory wideo i dopasowane do nich kolory napisów mogą się różnić między odtwarzaczami. Oznacz wideo jego macierzą kolorów, aby każdy odtwarzacz pokazywał je tak samo.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>Wideo HDR lub o szerokiej gamie kolorów</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>Wideo ma kolory HDR lub o szerokiej gamie.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>Zwykłe napisy działają na nim poprawnie, ale kolory napisów nie mogą odpowiadać kolorom wideo.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>Ustawić macierz YCbCr?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>Napisy nie mają macierzy YCbCr.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>Jeśli napisy są do tego wideo, ustaw ją jak w wideo (%1). Jeśli są do innego wideo, nie ustawiaj jej, dopóki go nie otworzysz.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>Nie ustawiaj</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>Ustaw %1</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>Niezgodność macierzy YCbCr</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>Ustawić rozdzielczość układu?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>Napisy nie mają rozdzielczości układu.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>Jeśli napisy są do tego wideo, ustaw ją jak w wideo (%1). W przypadku starszego pliku ustaw rozdzielczość wideo, do którego powstał; często jest to jego rozdzielczość skryptu (%2).</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>Ustaw jak w wideo (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>Ustaw rozdzielczość skryptu (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>Niezgodność rozdzielczości układu</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>Wideo ma rozdzielczość %1, a rozdzielczość układu napisów to %2.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>Ich proporcje obrazu się różnią. Ustawić rozdzielczość układu jak w wideo?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>Zwykle nie stanowi to problemu. Jeśli napisy nie mają jeszcze istotnego formatowania, a będziesz je formatować na tym wideo, ustaw rozdzielczość układu jak w wideo.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -8967,6 +9115,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Początkowe powiększenie</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>Rozmiar uchwytów</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>Rozmiar uchwytów narzędzi wizualnych można ustawić od 50 do 400</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>Rozdzielczość skryptu</translation>
     </message>
@@ -8977,6 +9137,66 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>Nie ostrzegaj o niezgodności rozdzielczości</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>Brak macierzy YCbCr w napisach</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>Nie ustawiaj</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Pytaj</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>Ustaw jak w wideo</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>Macierz YCbCr inna niż w wideo</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>Brak rozdzielczości układu w napisach</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>Ustaw rozdzielczość skryptu</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>Rozdzielczość układu inna niż w wideo</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>Nigdy nie pytaj</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>Pytaj, gdy proporcje obrazu się różnią</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>Zawsze pytaj</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>Sprawdzane przy otwieraniu wideo.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>Ostrzegaj, gdy wideo nie ma oznaczenia macierzy kolorów</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>Ostrzegaj, gdy wideo ma kolory HDR lub o szerokiej gamie</translation>
     </message>
     <message>
         <source>Output</source>
@@ -15344,6 +15564,14 @@ Usunięte style:
     <message>
         <source>Copy with subtitles</source>
         <translation>Kopiuj z napisami</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>Zapisz same napisy jako PNG…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>Kopiuj same napisy</translation>
     </message>
     <message>
         <source>Audio track</source>

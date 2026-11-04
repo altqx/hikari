@@ -98,6 +98,7 @@ Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
 Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
 Video > -
 Video > Unload video
+Video > Reload video [GLOBAL_RELOAD_VIDEO]
 Video > Streams >
 Video > Chapters >
 Video > Video details… [GLOBAL_VIDEO_DETAILS]
@@ -110,6 +111,7 @@ Audio > Recently opened audio >
 Audio > Recently opened audio > None
 Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
 Audio > Close audio [GLOBAL_CLOSE_AUDIO]
+Audio > Reload audio [GLOBAL_RELOAD_AUDIO]
 Audio > -
 Audio > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
 Audio > Set audio marker to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]

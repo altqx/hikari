@@ -949,6 +949,9 @@ Right-release on the picture with the default tool, or the Menu key. Drawn while
   - ──
   - Save with subtitles as PNG… (frame-snapshot-subtitles)
   - Copy with subtitles (frame-copy-subtitles)
+  - ──
+  - Save subtitles only as PNG… (subtitles-snapshot; FA9)
+  - Copy subtitles only (subtitles-copy; FA9)
 - Audio track ▸ (video-streams; new)
   - (•) Japanese (AAC)
   - (•) English (AAC)

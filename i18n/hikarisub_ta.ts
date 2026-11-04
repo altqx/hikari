@@ -6119,6 +6119,42 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>திசையன் கிளிப்: புள்ளிகளை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>திசையன் கிளிப்: நேர்கோட்டைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>திசையன் கிளிப்: பெசியர் வளைவைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>திசையன் கிளிப்: பி-ச்ப்ளைனைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>திசையன் கிளிப்: தனிப் புள்ளியைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>திசையன் கிளிப்: புள்ளியை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>திசையன் கிளிப்: தலைகீழாக்கு</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>வசன வரிகளை இடைநிலைப்பலகைக்கு நகலெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>வசன வரிகளை PNG ஆகச் சேமிக்கவும்</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>கரோக்கியைச் சரிபார்</translation>
     </message>
@@ -6161,6 +6197,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugins</source>
         <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>வீடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>ஆடியோவை மீண்டும் ஏற்று</translation>
     </message>
     <message>
         <source>Centre times within frames</source>
@@ -7322,8 +7366,16 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோ விவரங்கள்…</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>வீடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>ரெண்டர் செலவு</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>ஆடியோவை மீண்டும் ஏற்று</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7332,6 +7384,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>குறிச்சொல் இல்லாத வீடியோ</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>வீடியோ எந்த வண்ண மேட்ரிக்சைப் பயன்படுத்துகிறது என்று குறிப்பிடவில்லை.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub %1 என ஊகிக்கிறது, ஆனால் மற்ற இயக்கிகள் வேறுவிதமாக ஊகிக்கலாம்; எனவே வீடியோவின் வண்ணங்களும் அவற்றுக்குப் பொருத்திய வசன வண்ணங்களும் இயக்கிக்கு இயக்கி வேறுபடலாம். எல்லா இயக்கிகளும் ஒரே மாதிரி காட்டும்படி வீடியோவை அதன் வண்ண மேட்ரிக்சுடன் குறியிடவும்.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>HDR அல்லது பரந்த வண்ண வரம்பு வீடியோ</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>வீடியோவில் HDR அல்லது பரந்த வண்ண வரம்பு வண்ணங்கள் உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>சாதாரண வசன வரிகள் இதில் வேலை செய்யும், ஆனால் வசன வண்ணங்கள் வீடியோவின் வண்ணங்களுடன் பொருந்த முடியாது.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>YCbCr மேட்ரிக்சை அமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>வசன வரிகளில் YCbCr மேட்ரிக்ச் இல்லை.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>இவை இந்த வீடியோவுக்கானவை என்றால், அதை வீடியோவினுடையதற்கு (%1) அமைக்கவும். வேறொரு வீடியோவுக்கானவை என்றால், அந்த வீடியோவைத் திறக்கும் வரை அமைக்காமல் விடவும்.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>அமைக்காமல் விடு</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>%1 ஆக அமை</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>YCbCr மேட்ரிக்ச் பொருந்தாமை</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>வீடியோவின் YCbCr மேட்ரிக்ச் (%1) வசன வரிகளுடையதிலிருந்து (%2) வேறுபடுகிறது.</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>இந்த வீடியோவின் வண்ணங்கள், வசன வரிகள் உருவாக்கப்பட்ட வீடியோவின் வண்ணங்களைப் போலவே தோன்றினால், வசன வரிகளின் மேட்ரிக்சை வீடியோவினுடையதற்கு அமைக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 ஐ வை</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>தளவமைப்புத் தெளிவுத்திறனை அமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>வசன வரிகளில் தளவமைப்புத் தெளிவுத்திறன் இல்லை.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>இவை இந்த வீடியோவுக்கானவை என்றால், அதை வீடியோவினுடையதற்கு (%1) அமைக்கவும். பழைய கோப்பு என்றால், அது உருவாக்கப்பட்ட வீடியோவின் தெளிவுத்திறனுக்கு அமைக்கவும்; அது பெரும்பாலும் அதன் ச்கிரிப்ட் தெளிவுத்திறன் (%2) ஆகும்.</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>வீடியோவினுடையதற்கு அமை (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>ச்கிரிப்ட் தெளிவுத்திறனுக்கு அமை (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>தளவமைப்புத் தெளிவுத்திறன் பொருந்தாமை</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>வீடியோவின் தெளிவுத்திறன் %1, வசன வரிகளின் தளவமைப்புத் தெளிவுத்திறன் %2.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>அவற்றின் தோற்ற விகிதங்கள் வேறுபடுகின்றன. தளவமைப்புத் தெளிவுத்திறனை வீடியோவினுடையதற்கு அமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>இது பொதுவாகச் சிக்கலில்லை. வசன வரிகளில் இன்னும் குறிப்பிடத்தக்க வடிவமைப்பு இல்லை, அவற்றை இந்த வீடியோவில் வடிவமைக்கப் போகிறீர்கள் என்றால், தளவமைப்புத் தெளிவுத்திறனை வீடியோவினுடையதற்கு அமைக்கவும்.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -8910,6 +9058,18 @@ Failed to copy %2 fonts.</source>
         <translation>தொடக்கப் பெரிதாக்கம்</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>காட்சிக் கருவிகள்</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>கைப்பிடி அளவு</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>காட்சிக் கருவிகளின் கைப்பிடிகளின் அளவு. 50 முதல் 400 வரை</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>ச்கிரிப்ட் தெளிவுத்திறன்</translation>
     </message>
@@ -8920,6 +9080,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>தெளிவுத்திறன் பொருந்தாமை பற்றி எச்சரிக்காதே</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>வசன வரிகளில் YCbCr மேட்ரிக்ச் இல்லை</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>அமைக்காமல் விடு</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>கேள்</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>வீடியோவினுடையதற்கு அமை</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>வீடியோவிலிருந்து வேறுபட்ட YCbCr மேட்ரிக்ச்</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>வசன வரிகளுடையதை வை</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>வசன வரிகளில் தளவமைப்புத் தெளிவுத்திறன் இல்லை</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>ச்கிரிப்ட் தெளிவுத்திறனுக்கு அமை</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>வீடியோவிலிருந்து வேறுபட்ட தளவமைப்புத் தெளிவுத்திறன்</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>ஒருபோதும் கேட்காதே</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>தோற்ற விகிதம் வேறுபடும்போது கேள்</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>எப்போதும் கேள்</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>வீடியோ திறக்கும்போது சரிபார்க்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>வீடியோவில் வண்ண மேட்ரிக்ச் குறிச்சொல் இல்லையென்றால் எச்சரி</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>வீடியோவில் HDR அல்லது பரந்த வண்ண வரம்பு வண்ணங்கள் இருந்தால் எச்சரி</translation>
     </message>
     <message>
         <source>Output</source>
@@ -15237,6 +15457,14 @@ Styles deleted:
     <message>
         <source>Copy with subtitles</source>
         <translation>வசன வரிகளுடன் நகலெடு</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>வசன வரிகளை மட்டும் PNG ஆகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>வசன வரிகளை மட்டும் நகலெடு</translation>
     </message>
     <message>
         <source>Audio track</source>

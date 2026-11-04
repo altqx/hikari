@@ -6071,6 +6071,42 @@ Failed to copy %2 fonts.</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>벡터 클립: 점 이동</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>벡터 클립: 직선 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>벡터 클립: 베지어 곡선 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>벡터 클립: B-스플라인 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>벡터 클립: 별도 점 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>벡터 클립: 점 삭제</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>벡터 클립: 반전</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>자막 복사(클립보드)</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>PNG 파일로 자막 저장</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>노래방 검사</translation>
     </message>
@@ -6113,6 +6149,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugins</source>
         <translation>플러그인</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>영상 다시 불러오기</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>소리 다시 불러오기</translation>
     </message>
     <message>
         <source>Centre times within frames</source>
@@ -7271,8 +7315,16 @@ Failed to copy %2 fonts.</source>
         <translation>영상 정보…</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>영상 다시 불러오기</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>렌더링 비용</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>소리 다시 불러오기</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7281,6 +7333,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>태그 없는 영상</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>영상에 사용하는 색상 매트릭스가 명시되어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub은 %1(으)로 추정하지만 다른 플레이어는 다르게 추정할 수 있으므로, 영상의 색상과 그에 맞춘 자막 색상이 플레이어마다 다르게 보일 수 있습니다. 모든 플레이어에서 똑같이 보이도록 영상에 색상 매트릭스 태그를 지정하십시오.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>HDR 또는 광색역 영상</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>영상이 HDR 또는 광색역 색상을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>일반 자막은 문제없이 쓸 수 있지만, 자막 색상을 영상 색상과 일치시킬 수는 없습니다.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>YCbCr 매트릭스를 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>자막에 YCbCr 매트릭스가 없습니다.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>이 영상용 자막이면 영상 값(%1)으로 설정하십시오. 다른 영상용이면 그 영상을 열 때까지 설정하지 마십시오.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>설정 안 함</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>%1(으)로 설정</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>YCbCr 매트릭스 불일치</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>영상의 YCbCr 매트릭스(%1)가 자막의 매트릭스(%2)와 다릅니다.</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>이 영상의 색상이 자막을 만든 원래 영상의 색상과 같아 보이면 자막의 매트릭스를 영상 값으로 설정하십시오.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>레이아웃 해상도를 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>자막에 레이아웃 해상도가 없습니다.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>이 영상용 자막이면 영상 값(%1)으로 설정하십시오. 오래된 파일이면 그 파일을 만든 영상의 해상도로 설정하십시오. 대개 스크립트 해상도(%2)와 같습니다.</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>영상 값(%1)으로 설정</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>스크립트 해상도(%1)로 설정</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>레이아웃 해상도 불일치</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>영상 해상도는 %1이고 자막의 레이아웃 해상도는 %2입니다.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>가로 세로 비율이 다릅니다. 레이아웃 해상도를 영상 값으로 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>대개는 문제없습니다. 자막에 아직 이렇다 할 서식이 없고 이 영상에서 서식을 지정할 예정이면 레이아웃 해상도를 영상 값으로 설정하십시오.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -8853,6 +9001,18 @@ Failed to copy %2 fonts.</source>
         <translation>시작 확대 비율</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>시각 도구</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>핸들 크기</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>시각 도구 핸들의 크기는 50에서 400까지 설정할 수 있습니다</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>스크립트 해상도</translation>
     </message>
@@ -8863,6 +9023,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>해상도 불일치 경고 안 함</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>자막에 YCbCr 매트릭스 없음</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>설정하지 않음</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>묻기</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>영상 값으로 설정</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>영상과 다른 YCbCr 매트릭스</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>자막 값 유지</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>자막에 레이아웃 해상도 없음</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>스크립트 해상도로 설정</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>영상과 다른 레이아웃 해상도</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>묻지 않음</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>가로 세로 비율이 다를 때 묻기</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>항상 묻기</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>영상을 열 때 확인합니다.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>영상에 색상 매트릭스 태그가 없으면 경고</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>영상이 HDR 또는 광색역 색상이면 경고</translation>
     </message>
     <message>
         <source>Output</source>
@@ -15130,6 +15350,14 @@ Styles deleted:
     <message>
         <source>Copy with subtitles</source>
         <translation>자막과 함께 복사</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>자막만 PNG로 저장…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>자막만 복사</translation>
     </message>
     <message>
         <source>Audio track</source>

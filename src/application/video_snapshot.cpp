@@ -34,6 +34,32 @@ SnapshotImage snapshotImage(const IndexedFrame &frame, const OverlayFrame *overl
     return out;
 }
 
+SubtitlesImage subtitlesImage(const OverlayFrame &overlay)
+{
+    SubtitlesImage out;
+    out.width = overlay.width;
+    out.height = overlay.height;
+    out.rgba.assign(static_cast<std::size_t>(overlay.width) * static_cast<std::size_t>(overlay.height) * 4, 0);
+    if (overlay.empty)
+        return out;
+    std::uint8_t *dst = out.rgba.data();
+    for (int y = 0; y < overlay.height; ++y) {
+        const std::uint8_t *src = overlay.pixels.data() + static_cast<std::size_t>(y) * overlay.stride;
+        for (int x = 0; x < overlay.width; ++x, dst += 4) {
+            const std::uint8_t *q = src + x * 4;
+            const int alpha = q[3];
+            if (alpha == 0)
+                continue;
+            const auto straight = [alpha](int c) { return static_cast<std::uint8_t>(std::min(255, (c * 255 + alpha / 2) / alpha)); };
+            dst[0] = straight(q[2]);
+            dst[1] = straight(q[1]);
+            dst[2] = straight(q[0]);
+            dst[3] = static_cast<std::uint8_t>(alpha);
+        }
+    }
+    return out;
+}
+
 namespace {
 
 std::string_view beforeLast(std::string_view text, char c)

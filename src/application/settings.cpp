@@ -357,6 +357,16 @@ const std::vector<SettingDefinition> &definitions()
         {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
         // One "<document file>\t<JSON>" row per document, last used first, at most 100; "" holds the last export.
         {"export.choices", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // Percent of HikariSub legacy's size.
+        {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        // application::VideoPropertyAction values; video.missingLayoutRes adds 3, set to the PlayRes.
+        {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        {"video.missingLayoutRes", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        // application::LayoutResMismatch values.
+        {"video.layoutResMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        {"video.untaggedMatrixWarning", "", Bool, Profile, Mapped, false, true},
+        {"video.hdrWarning", "", Bool, Profile, Mapped, false, true},
     };
     return table;
 }

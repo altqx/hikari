@@ -90,9 +90,16 @@ std::expected<int, DummyVideoError> dummyVideoFrames(std::string_view fps, int d
 // or a size not above zero.
 std::optional<DummyVideo> parseDummyVideo(std::string_view text);
 
-// One top-down BGRA frame: the colour, or a checkerboard of 10 px squares in
-// the colour and the colour 24 lighter (HSL with Aegisub's swapped blue and
-// green).
+// Larger dummies are drawn scaled to fit this square; the timeline keeps the size asked for.
+inline constexpr int kDummyVideoDrawnLimit = 8192;
+struct DummyVideoSize {
+    int width = 0, height = 0;
+    bool operator==(const DummyVideoSize &) const = default;
+};
+DummyVideoSize dummyVideoDrawnSize(const DummyVideo &video);
+
+// One top-down BGRA frame at dummyVideoDrawnSize: the colour, or a checkerboard of 10 px squares in
+// the colour and the colour 24 lighter (HSL with Aegisub's swapped blue and green).
 std::vector<std::byte> dummyVideoFrame(const DummyVideo &video);
 
 // Frame n at n * (1000 / fps) ms, truncated; a fraction's in exact arithmetic.

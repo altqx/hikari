@@ -615,7 +615,8 @@ void PositionShifterTool::changeInLines(bool all, VisualHost &host)
                                 continue;
                             }
                             if (vector)
-                                visual += getfloat(static_cast<float>(val), type == Clip ? "6.0f" : "6.2f") + delimiterText;
+                                visual += getfloat(static_cast<float>(val), type == Clip && delimiter == u',' ? "6.0f" : kClipPointFormat)
+                                          + delimiterText;
                             else
                                 visual += getfloat(static_cast<float>(val)) + delimiterText;
                             count++;
