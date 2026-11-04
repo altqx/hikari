@@ -34,7 +34,7 @@ public:
     void injectLoss();       // the next callback aborts the stream
 
     application::OutputStatus status() const;
-    // `now` is steady_clock seconds; a snapshot older than stallLimit() is invalid.
+    // `now` is steady_clock seconds; a snapshot older than stallLimit() is invalid. Waits out a publish in progress.
     application::ClockEstimate clock(double now) const;
     double stallLimit() const;
 
