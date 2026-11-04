@@ -712,6 +712,12 @@ class ShellTest : public QObject {
                 return p->objectName();
         return {};
     }
+    static QString committedKey(const app::AutomationHotkeysController &macros, const char *macro)
+    {
+        const auto keys = macros.committedKeys();
+        const auto found = keys.find(macro);
+        return found == keys.end() ? QString() : QString::fromStdString(found->second);
+    }
     void keysNeverRepeat()
     {
         auto t = std::make_shared<qint64>(0);
@@ -6193,6 +6199,7 @@ private slots:
             {QStringLiteral("Document tab"), named("documentTabMenu")},
             {QStringLiteral("Styles row"), named("stylesRowMenu")},
             {QStringLiteral("Automation macro"), named("automationMacroMenu")},
+            {QStringLiteral("Automation recommended script"), named("recommendedMenu")},
             {QStringLiteral("Home row"), named("homeRowMenu")},
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
@@ -11391,15 +11398,12 @@ private slots:
             QTRY_VERIFY(!own->isVisible());
         }
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
-        for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
-            QObject *popup = find(name);
-            if (qstrcmp(name, "aspectRatioDialog") == 0)
-                QVERIFY(QMetaObject::invokeMethod(popup, "openAtCursor",
-                                                  Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
-            else
-                QVERIFY(QMetaObject::invokeMethod(popup, "open"));
-            QTRY_VERIFY2(popup->property("opened").toBool(), name);
-            save(name, windowOf(popup), false);
+        {
+            QObject *popup = find("aspectRatioDialog");
+            QVERIFY(QMetaObject::invokeMethod(popup, "openAtCursor",
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            save("aspectRatioDialog", windowOf(popup), false);
             QVERIFY(QMetaObject::invokeMethod(popup, "close"));
             QTRY_VERIFY(!popup->property("visible").toBool());
         }
@@ -12918,6 +12922,44 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Shift times"));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(ms(0), (Ms{410, 1200}));
+    }
+
+    void shiftTimesFitsANarrowPanel()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        item<QObject>("timingDock")->setProperty("isFloating", true);
+        QTRY_VERIFY(item("timingPanel")->window() != window);
+        item("timingPanel")->window()->resize(340, 800);
+        setShift("whichLines", 0);
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), 2);
+        auto *panel = item("timingPanel");
+        QTRY_COMPARE(panel->window()->width(), 340);
+        for (const char *name : {"shiftByAmount", "shiftByVideo", "shiftByAudio"}) {
+            QQuickItem *choice = findItem(panel, QLatin1String(name));
+            QVERIFY2(choice, name);
+            auto *label = choice->property("contentItem").value<QQuickItem *>();
+            QTRY_VERIFY2(!label->property("truncated").toBool(), name);
+            QVERIFY2(choice->mapToItem(panel, QPointF(choice->width(), 0)).x() <= panel->width(), name);
+        }
+        auto *rows = item("shiftPreviewRows");
+        QTRY_COMPARE(rows->property("count").toInt(), 2);
+        QVERIFY(!item("shiftPreviewMore")->isVisible());
+        const auto ends = [&] {
+            QList<QQuickItem *> found;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                if (from->objectName() == QLatin1String("shiftPreviewEnd") && from->isVisible())
+                    found << from;
+                for (QQuickItem *child : from->childItems())
+                    walk(child);
+            };
+            walk(rows);
+            return found;
+        };
+        QTRY_COMPARE(ends().size(), 2);
+        for (QQuickItem *end : ends())
+            QTRY_VERIFY2(end->mapToItem(rows, QPointF(end->width(), 0)).x() <= rows->width(),
+                         qPrintable(end->property("text").toString()));
     }
 
     void shiftTimesScreenshots()
@@ -19839,7 +19881,7 @@ private slots:
         h.select(hotkeyPosition(QStringLiteral("Global Script a.lua-1")));
         h.optionsMap(QStringLiteral("Ctrl-Shift-M"), 0, QStringLiteral("cancel"));
         h.commitOptions();
-        QCOMPARE(scripts.committedKeys().at("Script a.lua-1"), std::string("Ctrl+Shift+M"));
+        QCOMPARE(committedKey(scripts, "Script a.lua-1"), QStringLiteral("Ctrl+Shift+M"));
         QCOMPARE(application->settingsStore()->list(application::kAutomationHotkeysSetting.data()).first().split(QLatin1Char('\t')).value(1),
                  QStringLiteral("Ctrl+Shift+M"));
         h.gestureMap(application::hotkeyIdOf("GLOBAL_SEARCH"), QStringLiteral("Find"), QStringLiteral("Ctrl-Shift-F"), 0,
@@ -19847,7 +19889,7 @@ private slots:
         QCOMPARE(h.gestureTarget(QStringLiteral("Script a.lua-1")).value(QStringLiteral("id")).toInt(), 30100);
         QCOMPARE(h.gestureTarget(QStringLiteral("Script b.lua-0")).value(QStringLiteral("id")).toInt(), 30101);
         h.gestureMap(30101, QStringLiteral("Script b.lua-0"), QStringLiteral("Ctrl-Shift-F"), 0, QStringLiteral("switch"));
-        QCOMPARE(scripts.committedKeys().at("Script b.lua-0"), std::string("Ctrl+Shift+F"));
+        QCOMPARE(committedKey(scripts, "Script b.lua-0"), QStringLiteral("Ctrl+Shift+F"));
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
         h.resetDefaults();
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
@@ -20188,7 +20230,7 @@ private slots:
         QTRY_VERIFY(recorder->hasActiveFocus());
         keyTo(recorder, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         keyTo(recorder, Qt::Key_Return);
-        QCOMPARE(application->automationHotkeys().committedKeys().at("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
+        QCOMPARE(committedKey(application->automationHotkeys(), "Script shell-fixture.lua-0"), QStringLiteral("Ctrl+Alt+J"));
         QVERIFY(!application->automation().running());
     }
 
@@ -20426,6 +20468,44 @@ private slots:
         keyTo(recorder, Qt::Key_Escape);
         QTRY_COMPARE(tool->property("recording").toString(), QString());
         QVERIFY(!macros.committedKeys().contains(legacyName.toStdString()));
+    }
+
+    void automationPanelRecommendsScripts()
+    {
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = named("automationTool");
+        const auto restore = qScopeGuard([&] { tool->setProperty("view", QStringLiteral("scripts")); });
+        QVERIFY(QMetaObject::invokeMethod(named("scriptsEmptyRecommended"), "clicked"));
+        QCOMPARE(tool->property("view").toString(), QStringLiteral("recommended"));
+        auto *list = visualItem("recommendedScripts");
+        QTRY_VERIFY(list && list->isVisible());
+        QVERIFY(visualItem("recommendedTrust")->isVisible());
+        QVERIFY(!visualItem("automationFilter")->isVisible());
+        QCOMPARE(tool->property("recommendedRows").toList().size(),
+                 static_cast<qsizetype>(app::recommendedScripts().size() + app::recommendedScriptGroups().size()));
+        QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(tool->property("chosen").toString(), QString::fromStdString(app::recommendedScripts().front().nameSpace));
+        QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(tool->property("chosen").toString(), QString::fromStdString(app::recommendedScripts().at(1).nameSpace));
+
+        auto *filter = visualItem("recommendedFilter");
+        filter->setProperty("text", QStringLiteral("git"));
+        QTRY_COMPARE(tool->property("recommendedRows").toList().size(), 2);
+        QTRY_VERIFY(!visualItem("recommended_arch.FocusLines"));
+        QQuickItem *gitSigns = nullptr;
+        QTRY_VERIFY(gitSigns = visualItem("recommended_arch.GitSigns"));
+        QCOMPARE(gitSigns->property("entryState").toString(), QStringLiteral("install"));
+        QVERIFY(visualItem("install_arch.GitSigns")->isVisible());
+        QVERIFY(!visualItem("entryMenu_arch.GitSigns")->isVisible());
+        QCOMPARE(gitSigns->property("entry").toMap().value(QStringLiteral("credit")).toString(),
+                 QStringLiteral("arch1t3cht · MIT · Needs Git"));
+        filter->setProperty("text", QStringLiteral("no such script"));
+        QTRY_VERIFY(visualItem("recommendedNoMatch")->isVisible());
+        QVERIFY(!list->isVisible());
+        filter->setProperty("text", QString());
+        QTRY_VERIFY(list->isVisible());
     }
 
     void automationRecorderKeepsTheKeysFromTheRouter()
@@ -21489,6 +21569,8 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         closeMismatchQuestion();
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
         keysNeverRepeat();
         QTest::mouseMove(window, kOverNoPanel);
         auto &hotkeys = application->hotkeys();
@@ -21582,6 +21664,8 @@ private slots:
             QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 20000);
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
             closeMismatchQuestion();
+            window->requestActivate();
+            QVERIFY(QTest::qWaitForWindowActive(window));
             keysNeverRepeat();
             QTest::mouseMove(window, kOverNoPanel);
         };
@@ -24193,6 +24277,8 @@ private slots:
         QQuickItem *overlay = item("visualOverlay");
         QVERIFY(overlay);
         const auto cursorAtScene = [&](QPoint at) {
+            // Qt drops a move to the pointer's current position, so each poll steps off and back.
+            QTest::mouseMove(shown, at + QPoint(1, 0));
             QTest::mouseMove(shown, at);
             QCoreApplication::processEvents();
             return shown->cursor().shape();

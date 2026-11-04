@@ -152,7 +152,16 @@ backends::ai::AiSidecarHost *AiFeatures::sidecarForSignIn()
 {
     if (!m_live)
         return nullptr;
-    if (!m_live->host)
+    if (!m_live->host && m_ports.sidecarHost)
+        m_live->host = m_ports.sidecarHost();
+    return m_live->host.get();
+}
+
+backends::ai::AiSidecarHost *AiFeatures::sidecarForMcp()
+{
+    if (!m_live)
+        return nullptr;
+    if (!m_live->host && m_ports.sidecarHost)
         m_live->host = m_ports.sidecarHost();
     return m_live->host.get();
 }

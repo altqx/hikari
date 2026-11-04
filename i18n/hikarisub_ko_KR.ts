@@ -807,6 +807,58 @@ Output device: %2</source>
         <translation>스크립트를 불러오면 해당 코드가 실행됩니다.</translation>
     </message>
     <message>
+        <source>Not installed by DependencyControl. Remove the file from your autoload folder.</source>
+        <translation>DependencyControl로 설치하지 않았습니다. 자동 불러오기 폴더에서 파일을 삭제하십시오.</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>설치됨</translation>
+    </message>
+    <message>
+        <source>installing</source>
+        <translation>설치 중</translation>
+    </message>
+    <message>
+        <source>uninstalling</source>
+        <translation>설치 제거 중</translation>
+    </message>
+    <message>
+        <source>waiting to install</source>
+        <translation>설치 대기 중</translation>
+    </message>
+    <message>
+        <source>couldn’t install</source>
+        <translation>설치하지 못함</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>설치 안 됨</translation>
+    </message>
+    <message>
+        <source>Uninstall script</source>
+        <translation>스크립트 설치 제거</translation>
+    </message>
+    <message>
+        <source>Uninstall %1?</source>
+        <translation>%1의 설치를 제거하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</source>
+        <translation>DependencyControl이 사용자 폴더에서 스크립트 파일을 삭제합니다. 함께 설치된 모듈은 다른 스크립트를 위해 남겨 둡니다.</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>설치 제거</translation>
+    </message>
+    <message>
+        <source>Its macros are in Automation › %1.</source>
+        <translation>매크로는 자동화 › %1에 있습니다.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>스크립트</translation>
     </message>
@@ -819,6 +871,18 @@ Output device: %2</source>
         <translation>실행 기록</translation>
     </message>
     <message>
+        <source>Recommended</source>
+        <translation>권장</translation>
+    </message>
+    <message>
+        <source>Filter scripts</source>
+        <translation>스크립트 필터</translation>
+    </message>
+    <message>
+        <source>Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</source>
+        <translation>각 작성자의 피드에서 DependencyControl을 통해 설치합니다. 스크립트는 불러올 때 코드를 실행합니다.</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>불러오기</translation>
     </message>
@@ -827,12 +891,24 @@ Output device: %2</source>
         <translation>이 파일에 지정된 스크립트 불러오기</translation>
     </message>
     <message>
+        <source>Browse recommended scripts</source>
+        <translation>권장 스크립트 둘러보기</translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation>일치하는 매크로 없음</translation>
     </message>
     <message>
         <source>Macros</source>
         <translation>매크로</translation>
+    </message>
+    <message>
+        <source>No scripts match</source>
+        <translation>일치하는 스크립트 없음</translation>
+    </message>
+    <message>
+        <source>Recommended scripts</source>
+        <translation>권장 스크립트</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
@@ -1015,6 +1091,54 @@ Output device: %2</source>
     <message>
         <source>Remove shortcut</source>
         <translation>단축키 제거</translation>
+    </message>
+    <message>
+        <source>%1 (version %2)</source>
+        <translation>%1 (버전 %2)</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>설치</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation>설치하는 중…</translation>
+    </message>
+    <message>
+        <source>Uninstalling…</source>
+        <translation>설치 제거하는 중…</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation>대기 중…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>설치됨</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>Show in Scripts</source>
+        <translation>스크립트에서 보기</translation>
+    </message>
+    <message>
+        <source>Open project page</source>
+        <translation>프로젝트 페이지 열기</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>설치 제거…</translation>
+    </message>
+    <message>
+        <source>Installed by hand</source>
+        <translation>직접 설치함</translation>
     </message>
     <message>
         <source>Shortcut</source>
@@ -1354,6 +1478,138 @@ Output device: %2</source>
     <message>
         <source>not ticked</source>
         <translation>체크 안 됨</translation>
+    </message>
+    <message>
+        <source>DependencyControl’s updater is turned off.</source>
+        <translation>DependencyControl의 업데이트 기능이 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>DependencyControl is busy with another update. Try again later.</source>
+        <translation>DependencyControl이 다른 업데이트를 진행하고 있습니다. 나중에 다시 시도하십시오.</translation>
+    </message>
+    <message>
+        <source>Its feed has no release that fits this system.</source>
+        <translation>피드에 이 시스템에 맞는 릴리스가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the feed: no network connection.</source>
+        <translation>피드를 읽을 수 없습니다: 네트워크에 연결되어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>A module it needs couldn’t be installed.</source>
+        <translation>필요한 모듈을 설치할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>DependencyControl doesn’t trust its feed.</source>
+        <translation>DependencyControl이 이 피드를 신뢰하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>The install was cancelled.</source>
+        <translation>설치가 취소되었습니다.</translation>
+    </message>
+    <message>
+        <source>DependencyControl blocks its feed.</source>
+        <translation>DependencyControl이 이 피드를 차단합니다.</translation>
+    </message>
+    <message>
+        <source>A downloaded file didn’t match its feed.</source>
+        <translation>내려받은 파일이 피드와 일치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be written. Close what uses it and try again.</source>
+        <translation>파일을 쓸 수 없습니다. 파일을 사용하는 프로그램을 닫고 다시 시도하십시오.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be downloaded.</source>
+        <translation>파일을 내려받을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>DependencyControl couldn’t install it (status %1).</source>
+        <translation>DependencyControl이 설치하지 못했습니다(상태 %1).</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>식자</translation>
+    </message>
+    <message>
+        <source>Makes a power-pin track from the lines’ perspective, for Perspective-Motion.</source>
+        <translation>줄의 원근으로 Perspective-Motion용 파워 핀 트랙을 만듭니다.</translation>
+    </message>
+    <message>
+        <source>Draws moving focus lines, frame by frame.</source>
+        <translation>움직이는 집중선을 프레임마다 그립니다.</translation>
+    </message>
+    <message>
+        <source>Splits a line at its tags, one line per section.</source>
+        <translation>줄을 태그 위치에서 나누어 구간마다 한 줄을 만듭니다.</translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation>편집</translation>
+    </message>
+    <message>
+        <source>Keeps earlier rewrites of a line and switches between them.</source>
+        <translation>줄의 이전 수정본을 보관하고 서로 전환합니다.</translation>
+    </message>
+    <message>
+        <source>QC</source>
+        <translation>QC</translation>
+    </message>
+    <message>
+        <source>Marks the lines changed since a git commit.</source>
+        <translation>git 커밋 이후 바뀐 줄을 표시합니다.</translation>
+    </message>
+    <message>
+        <source>Needs Git</source>
+        <translation>Git 필요</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>노래방</translation>
+    </message>
+    <message>
+        <source>Fixes old KFX templates so Aegisub 3.5 runs them too.</source>
+        <translation>Aegisub 3.5에서도 실행되도록 오래된 KFX 템플릿을 고칩니다.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>%1 설치</translation>
+    </message>
+    <message>
+        <source>Uninstall %1</source>
+        <translation>%1 설치 제거</translation>
+    </message>
+    <message>
+        <source>The user folder can’t be written.</source>
+        <translation>사용자 폴더에 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The uninstall was cancelled.</source>
+        <translation>설치 제거가 취소되었습니다.</translation>
+    </message>
+    <message>
+        <source>%1 is uninstalled.</source>
+        <translation>%1의 설치가 제거되었습니다.</translation>
+    </message>
+    <message>
+        <source>%1 is installed.</source>
+        <translation>%1 설치가 완료되었습니다.</translation>
+    </message>
+    <message>
+        <source>The run ended before it finished.</source>
+        <translation>실행이 완료되기 전에 끝났습니다.</translation>
+    </message>
+    <message>
+        <source>DependencyControl has no record of it.</source>
+        <translation>DependencyControl에 이 스크립트의 기록이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
+        <translation>일부 파일을 삭제할 수 없습니다. 파일을 사용하는 프로그램을 닫고 다시 시도하십시오.</translation>
     </message>
 </context>
 <context>

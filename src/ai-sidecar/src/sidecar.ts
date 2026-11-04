@@ -1,5 +1,7 @@
+import { McpServer } from "./mcp/server";
 import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallParams, type InitializeParams,
-    type InitializeResult, type ToolsCallParams, type ToolsListParams } from "./protocol";
+    type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
+    type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
 import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
 import type { UpdateParams } from "./providers/types";
@@ -16,10 +18,12 @@ export interface Build {
 
 /** Hikari's tools: every call goes into HA1's `Api::call` in Qt. */
 export class HikariApi implements HikariCalls {
-    constructor(private readonly peer: Peer) {}
+    constructor(private readonly peer: Peer, private readonly via?: () => McpVia) {}
 
     call<O extends OperationName>(operation: O, params?: Operations[O]["params"]): Promise<Operations[O]["result"]> {
         const body: ApiCallParams = params === undefined ? { operation } : { operation, params };
+        if (this.via)
+            body.mcp = this.via();
         return this.peer.request(Method.apiCall, body) as Promise<Operations[O]["result"]>;
     }
 }
@@ -44,6 +48,7 @@ export class Sidecar {
     readonly providers: ProviderService;
     readonly tools: ToolSet;
     readonly signIn: SignInService;
+    readonly mcp: McpServer;
     private initialized = false;
 
     constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}, signIn: SignInOptions = {}) {
@@ -54,6 +59,8 @@ export class Sidecar {
             progress: (params) => peer.notify(Method.signinProgress, params),
             store: (name, value) => peer.request(Method.secretStore, { name, value }),
         }, signIn);
+        this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
+            { name: "hikarisub", title: "HikariSub", version: build.buildId });
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         for (const method of kDeclaredMethods)
             this.handle(method, () => {
@@ -73,6 +80,17 @@ export class Sidecar {
         });
         this.handle(Method.signinStart, (params, signal) => wire(() => this.signIn.start(params, signal)));
         this.handle(Method.signinRefresh, (params, signal) => wire(() => this.signIn.refresh(params, signal)));
+        this.handle(Method.mcpMessage, (params): Promise<McpMessageResult> => {
+            const p = (params ?? {}) as Partial<McpMessageParams>;
+            if (typeof p.connection !== "string" || typeof p.text !== "string")
+                throw new RpcError(ErrorCode.invalidParams, "_hikari/mcp.message needs a connection and a text");
+            return this.mcp.message(p.connection, p.text, p.http);
+        });
+        peer.onNotification(Method.mcpClosed, (params) => {
+            const connection = (params as Partial<McpClosedParams> | null)?.connection;
+            if (typeof connection === "string")
+                this.mcp.closed(connection);
+        });
     }
 
     /** Registers a Qt request that only runs after `initialize`. */

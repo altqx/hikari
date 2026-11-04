@@ -89,6 +89,9 @@ public:
     /// Answers one of the sidecar's requests, once, through `respond`; a SidecarFailure's code and message become
     /// the JSON-RPC error.
     using RequestHandler = std::function<void(const api::Json &params, Respond respond)>;
+    /// The caller an `_hikari/api.call` for an MCP connection runs as, given its `mcp` field and the operation, or
+    /// the HA1 error that refuses it.
+    using McpGate = std::function<std::expected<api::Caller, api::Error>(const api::Json &mcp, const std::string &operation)>;
 
     /// `hikari` answers `_hikari/api.call`; without it the sidecar's tool calls fail as unavailable.
     AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent = nullptr);
@@ -106,6 +109,8 @@ public:
     void onRequest(std::string method, RequestHandler handler);
     /// The Documents the user attached with @; the sidecar's tools see them besides the editing target.
     void setAttachedDocuments(std::vector<application::DocumentId> documents) { m_caller.attached = std::move(documents); }
+    /// Without a gate, calls for MCP connections fail as unavailable.
+    void setMcpGate(McpGate gate) { m_mcpGate = std::move(gate); }
 
     /// Closes stdin, waits, then kills the sidecar's process tree. Pending requests fail with SidecarLost.
     void shutdown();
@@ -172,6 +177,7 @@ private:
     QElapsedTimer m_clock;
     std::map<std::string, NotificationHandler, std::less<>> m_notificationHandlers;
     std::map<std::string, RequestHandler, std::less<>> m_requestHandlers;
+    McpGate m_mcpGate;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 #ifdef Q_OS_WIN
     void *m_job = nullptr;
