@@ -58,6 +58,15 @@ On 2026-11-02 altqx replaced the curated index repository with the HikariSub plu
 
 v1 is the narrow API plus process isolation, and the docs and the app describe it in those plain terms. The OS sandbox of plugin helpers (Landlock on Linux, AppContainer on Windows) comes later, in [PL7 #419](https://github.com/altqx/hikari/issues/419). Nothing calls plugins "sandboxed" until it lands.
 
+## Plugin first
+
+altqx decided on 2026-11-04 that a new feature ships as an official plugin when it fits the plugin API and most users won't need it. Fitting the API means it needs only commands, panels, document edits, and files and network.
+
+- **Stays native:** core editing, video, audio and timing, the document model, and anything that draws on or reads input from the video surface.
+- **New cards** are checked against this rule. A card that could be a plugin says why it is native.
+- **First official plugins:** macro chains, a keyframe generator and Git-ref line marks. Their cards are filed once the marketplace ([PL6 #418](https://github.com/altqx/hikari/issues/418)) ships.
+- **Exception:** FA20's QC notes ([#577](https://github.com/altqx/hikari/issues/577)) stay native, because they mark Grid rows, add a Grid menu entry and move the video, which the plugin API can't do.
+
 ## Around the plugins
 
 - **Analytics** ([AN1 #404](https://github.com/altqx/hikari/issues/404)) counts plugin use by feature id only.
