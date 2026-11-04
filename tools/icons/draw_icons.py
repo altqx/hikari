@@ -367,7 +367,7 @@ icon("spectrum", "Spectrum mode", ["button_spectrum.png"], [AUDIOBOX],
 icon("spectrum-nonlinear", "Non-linear spectrum", ["SpectrumNonLinear.png"], [AUDIOBOX],
      stroke("M2.5 13.5v-3M5 13.5v-7M7.5 13.5v-10M10 13.5v-6M12.5 13.5v-8")
      + accent(stroke("M1.5 12.5C6 12.5 11 9 14.5 2.5")))
-icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties"],
+icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties", "settings-dialog"],
      stroke("M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8")
      + stroke("M6.5 9.5l3-3"))
 
@@ -999,7 +999,7 @@ icon("plugin-unverified", "Unverified plugin", [], ["plugin-manager"],
 icon("node-editor", "Node effects", [], [VIEW, "node-editor"],
      rect(1.5, 2.5, 4, 3.5, 1) + rect(1.5, 10, 4, 3.5, 1) + rect(10.5, 6, 4, 3.5, 1)
      + accent(stroke("M5.5 4.25C8 4.25 8 7.75 10.5 7.75M5.5 11.75C8 11.75 8 7.75 10.5 7.75")))
-icon("ai-assistant", "Assistant", [], ["agent-panel"],
+icon("ai-assistant", "Assistant", [], ["agent-panel", "settings-dialog"],
      stroke("M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z")
      + accent(stroke("M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z")))
 icon("ai-send", "Send", [], ["agent-panel"],
@@ -1029,7 +1029,7 @@ NOT_REPLACED = {
 PENDING = {}
 for card, roles in {
     "NE2 #424": ["node-editor"],
-    "AI7 #435": ["ai-assistant", "ai-send"],
+    "AI7 #435": ["ai-send"],
     "AI2 #430": ["review-keep", "checkpoint"],
 }.items():
     for role in roles:
