@@ -30,7 +30,7 @@ Spaces at the start and end of each row are trimmed, and empty rows are dropped,
 | WebVTT | `.vtt` | `00:00:01.000`, LF | `<b>` `<i>` `<u>`; one `::cue(.Style)` rule per Style used (colour, alpha, font, bold, italic, decoration, outline as `text-shadow`, opaque box as `background-color`); colour tags as `::cue(.cRRGGBB)` classes; `line`/`position`/`align` from alignment, `\pos` and margins over PlayRes | positions (on), styles and colours (on), karaoke timestamps (off) |
 | YouTube SBV | `.sbv` | `0:00:01.000,0:00:02.000`, CRLF | text only | merge overlaps |
 | Plain text | `.txt` | none, LF | text only, one Line per row | times (tab separated), actor names |
-| MicroDVD | `.sub` | frames at the chosen rate (the video's when open, else 23.976) | `{y:i}` `{y:b}` `{y:u}` `{y:s}` and `{c:$BBGGRR}` for a whole row | frame rate, merge overlaps |
+| MicroDVD | `.sub` | frames at the chosen rate: the last one used for that file (for a file never exported, the last export's), else the video's, else 23.976 | `{y:i}` `{y:b}` `{y:u}` `{y:s}` and `{c:$BBGGRR}` for a whole row | frame rate, merge overlaps |
 | MPL2 | `.txt` | deciseconds | `/` for an italic row | merge overlaps |
 | TMPlayer | `.txt` | whole seconds, start only | text only | overlaps are always merged; an empty `hh:mm:ss:` clears the screen when no Line follows at once |
 | TTML (IMSC1) | `.ttml` | `00:00:01.000`, or frames (`24f`) with `ttp:frameRate`; LF | IMSC1 text profile (`ttp:profile`); one `<style>` per Style used; `<span>` for tag changes (`tts:fontStyle`, `tts:fontWeight`, `tts:textDecoration`, `tts:color`); up to three regions (below) | Netflix timed-text style (off), times in frames (off), frame rate, language |
@@ -99,6 +99,11 @@ After writing, the window lists every Line that lost or had something approximat
 
 srv3 reports what YTSubConverter ignores. **Drawing** is `\p1` and up, **Clip** is `\clip` and `\iclip`, and **Rotation** is the `\fr…` tags, `\fax`, `\fay` and `\org`. **Font** covers `\fscx`, `\fscy` and `\fsp`. **Outline** is the border, shadow and blur tags. **Formatting** is `\s1`, **Position** is `\a`, **Karaoke** is `\kf`, `\ko` and `\K`, and **Effect** is Banner and Scroll.
 
+## Save as ASS
+Export as leaves the Document alone. To turn an SRT, WebVTT, SBV, MicroDVD, MPL2 or TMPlayer Document into ASS, use **File › Save as…**. For a Document in another format, it lists that format plus **ASS subtitles (\*.ass)**. A name ending in `.ass` also picks ASS. Choosing ASS first asks **Convert “…” to ASS before saving it?** and lists what changes. The list comes from a dry run of `core::convertDocument` with the **Settings › Conversion** options (frame rate or From video, style and catalog, new end times, time per character, tags at the start of each line, resolution): Lines given the conversion style, tags converted, times changed, sorting, and duplicates, empty Lines and markers removed. **Cancel** leaves the Document unconverted and saves nothing. **Convert to ASS** converts as one undoable step, "Subtitles conversion", writes the same list to the Log under "Save as ASS", then saves. If the frame rate is invalid, an error says so and nothing is converted or written. The save dialog on close asks the same way.
+
+Subtitles › Conversion and its five commands (5020–5024, `GLOBAL_CONVERT_TO_*`) were removed in [#611](https://github.com/altqx/hikari/issues/611). Shortcut files and imported settings that bind them still load. The bindings are dropped with a Log notice that points to Save as (ASS) or Export as (other formats).
+
 ## Memory
 The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). A document without a remembered choice, or without a file, gets the last export's.
 
@@ -109,3 +114,4 @@ The last format and options are kept per document file in `export.choices` (at m
 - `hikari_application_document_files_tests` and `hikari_ui_open_reload_tests`: a `.ytt` opens as an untitled import, and a refused one names YTSubConverter's reason and changes nothing.
 - `hikari_application_style_manager_tests`: srv3 options follow renames, deletions and copies.
 - `hikari_ui_export_dialog_tests`: the window, the unchanged Document, replacing a file, the report's links, the Lines choice, the memory, the TTML options (language, frames, Netflix style), and srv3: the conversion and its report, the style table, saving as one undo step, Reset, and Cancel.
+- `hikari_ui_shell_tests`: `saveAsOffersAssForADocumentOfAnotherFormat`, `anAssFileNameConvertsWithTheDocumentsOwnFilter` and `storedConversionShortcutsAreDroppedWithANotice`; `hikari_application_hotkeys_tests` and `hikari_application_settings_import_tests` cover the retired commands.

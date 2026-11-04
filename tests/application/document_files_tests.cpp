@@ -460,3 +460,39 @@ TEST_F(Files, OnlyAssSavesWriteTheLayout)
     EXPECT_FALSE(plan->layout);
     EXPECT_EQ(text(plan->bytes), "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
 }
+
+TEST_F(Files, SaveAppliesTheProjectGarbageEditsForItsDestination)
+{
+    std::vector<std::string> destinations;
+    std::vector<ProjectGarbageEdit> edits{{u8"Timecodes File", u8"tc/a.txt"}};
+    service.setProjectGarbageSource([&](DocumentId, const DestinationKey &destination) {
+        destinations.push_back(destination.value);
+        return edits;
+    });
+    const auto doc = open("/a.ass");
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_NE(text(plan->bytes).find("\n[Aegisub Project Garbage]\nTimecodes File: tc/a.txt\n"), std::string::npos);
+    ASSERT_TRUE(service.startSave(*plan));
+    finish(WriteOutcome::Written);
+    EXPECT_FALSE(service.session(doc)->document().projectGarbage(u8"Timecodes File"));
+
+    ASSERT_TRUE(service.prepareSave(doc, DestinationKey{"/b/c.ass"}));
+    EXPECT_EQ(destinations, (std::vector<std::string>{"/a.ass", "/b/c.ass"}));
+
+    edits = {{u8"Timecodes File", std::nullopt}};
+    disk.files["/g.ass"] =
+        bytesOf(kAss + "\n[Aegisub Project Garbage]\nAudio File: a.wav\nTimecodes File: old.txt\n");
+    plan = service.prepareSave(open("/g.ass"));
+    ASSERT_TRUE(plan);
+    EXPECT_NE(text(plan->bytes).find("[Aegisub Project Garbage]\nAudio File: a.wav\n"), std::string::npos);
+    EXPECT_EQ(text(plan->bytes).find("Timecodes File"), std::string::npos);
+
+    disk.files["/srt.srt"] = bytesOf("1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+    destinations.clear();
+    edits = {{u8"Timecodes File", u8"x.txt"}};
+    plan = service.prepareSave(open("/srt.srt"));
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(destinations.empty());
+    EXPECT_EQ(text(plan->bytes), "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+}

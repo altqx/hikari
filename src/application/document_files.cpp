@@ -210,6 +210,7 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     core::Document saved = withActiveLine(std::move(snapshot->document), activeLine);
     if (layout)
         saved.setHikariProperty(kLayoutKey, *layout);
+    applyProjectGarbage(document, destination, saved);
     return SavePlan{document,
                     entry->generation,
                     snapshot->revision,
@@ -226,6 +227,19 @@ std::optional<std::u8string> DocumentFiles::layoutToSave(DocumentId document, co
     if (!m_layoutSource || saved.format() != core::SubtitleFormat::Ass)
         return std::nullopt;
     return m_layoutSource(document);
+}
+
+void DocumentFiles::applyProjectGarbage(DocumentId document, const DestinationKey &destination,
+                                        core::Document &saved) const
+{
+    if (!m_projectGarbageSource || saved.format() != core::SubtitleFormat::Ass)
+        return;
+    for (const auto &edit : m_projectGarbageSource(document, destination)) {
+        if (edit.value)
+            saved.setProjectGarbage(edit.key, *edit.value);
+        else
+            saved.removeProjectGarbage(edit.key);
+    }
 }
 
 std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, bool overwriteExternalChange)

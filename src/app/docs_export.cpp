@@ -359,6 +359,7 @@ bool exportDocs(const QString &dir, QString *error)
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
+    attachAlignToVideoStill(engine, application.alignToVideo());
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())

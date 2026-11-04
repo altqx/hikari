@@ -93,6 +93,15 @@ core::Document withActiveLine(core::Document document, const std::optional<std::
 inline constexpr std::u8string_view kLayoutKey = u8"Layout";
 using LayoutSource = std::function<std::optional<std::u8string>(DocumentId)>;
 
+// An [Aegisub Project Garbage] key a save sets to `value`, or removes when it is nullopt.
+struct ProjectGarbageEdit {
+    std::u8string key;
+    std::optional<std::u8string> value;
+    bool operator==(const ProjectGarbageEdit &) const = default;
+};
+// The edits for a save of the Document to the destination (empty for an Untitled autosave).
+using ProjectGarbageSource = std::function<std::vector<ProjectGarbageEdit>(DocumentId, const DestinationKey &)>;
+
 struct SaveStatus {
     PermitId permit;
     std::optional<WriteOutcome> outcome; // empty while the write is running
@@ -133,11 +142,14 @@ public:
     void setSaveOptions(const core::AssSaveOptions &options) { m_saveOptions = options; }
     const core::AssSaveOptions &saveOptions() const { return m_saveOptions; }
     void setLayoutSource(LayoutSource source) { m_layoutSource = std::move(source); }
+    void setProjectGarbageSource(ProjectGarbageSource source) { m_projectGarbageSource = std::move(source); }
     // Called as prepareSave starts, so a panel's pending edit reaches its Document.
     void setBeforeSave(std::function<void()> before) { m_beforeSave = std::move(before); }
     // An ASS Document's arrangement from the layout source; nullopt for other
     // formats or without a source.
     std::optional<std::u8string> layoutToSave(DocumentId document, const core::Document &saved) const;
+    // Applies the project garbage source's edits to an ASS Document saved to `destination`.
+    void applyProjectGarbage(DocumentId document, const DestinationKey &destination, core::Document &saved) const;
 
 private:
     struct Entry {
@@ -167,6 +179,7 @@ private:
     std::uint64_t m_nextDocument = 1;
     core::AssSaveOptions m_saveOptions;
     LayoutSource m_layoutSource;
+    ProjectGarbageSource m_projectGarbageSource;
     std::function<void()> m_beforeSave;
 };
 

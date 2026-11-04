@@ -21,6 +21,14 @@ struct SnapshotImage {
 // `overlay` (premultiplied BGRA at the frame's size) may be null or empty.
 SnapshotImage snapshotImage(const IndexedFrame &frame, const OverlayFrame *overlay);
 
+// The subtitles alone: tightly packed 8-bit R, G, B and straight alpha, top-down, at the overlay's size.
+struct SubtitlesImage {
+    int width = 0, height = 0;
+    std::vector<std::uint8_t> rgba;
+};
+// `overlay` is premultiplied BGRA; an empty one gives a transparent image.
+SubtitlesImage subtitlesImage(const OverlayFrame &overlay);
+
 // The smallest number from 1 that no file name in `paths` (full paths matching
 // snapshotPattern) holds as "<video name>_<digits>_".
 int nextSnapshotNumber(std::string_view videoPath, const std::vector<std::string> &paths);

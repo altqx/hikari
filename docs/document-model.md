@@ -32,6 +32,8 @@ Hikari writes these keys itself (XD1, [#659](https://github.com/altqx/hikari/iss
 | `_hikari_tm_order` | The Line editor in TLMode, with the translation's commit, for a translation that reads back differently without the order its runs were placed in | `1;`, a 64-bit FNV-1a hash of the translation's UTF-8 bytes as 16 lowercase hex digits, `;`, then the runs' numbers in the order they are placed, joined by `,`, e.g. `1;3a0c9e1f72b4d685;2`. It is read only while the hash matches the Line's translation |
 | `_hikari_kanji_skip` | The Kanji timer, at Apply: on each romaji or kanji Line skipped, and taken off each Line paired again | `1` |
 
+`[Aegisub Project Garbage]` stays an unknown section, kept line for line. `Document::projectGarbage` reads one of its `Key: Value` lines; `setProjectGarbage` and `removeProjectGarbage` change only that line, and a file without the section gains one after Script Info, where Aegisub writes it. Only a timecodes file's `Timecodes File` is written so far (FA21 [#648](https://github.com/altqx/hikari/issues/648)); the other keys stay as they were.
+
 ## Interfaces and ownership
 
 Conceptual interfaces, not production declarations:

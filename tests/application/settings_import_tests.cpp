@@ -326,7 +326,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 287);
+    EXPECT_EQ(bound, 300);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
@@ -533,6 +533,24 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
     EXPECT_FALSE(profile.values.contains("toolbar.actions"));
     EXPECT_FALSE(profile.values.contains("toolbar.alignment"));
     EXPECT_FALSE(profile.values.contains(std::string(kHotkeysSetting)));
+}
+
+TEST(SettingsImport, RetiredConversionShortcutsAreDroppedWithANotice)
+{
+    const Plan plan = buildPlan({hotkeys("GLOBAL_CONVERT_TO_ASS G=F9\r\nGLOBAL_CONVERT_TO_SRT G=F8\r\n"
+                                         "GLOBAL_CONVERT_TO_TMP G=Ctrl-F12\r\nGLOBAL_CONVERT_TO_MDVD G=F10\r\n"
+                                         "GLOBAL_CONVERT_TO_MPL2 G=F11\r\nGLOBAL_SAVE_SUBS G=Ctrl-S\r\n")},
+                                linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &ass = rowOf(plan, "shortcut:GLOBAL_CONVERT_TO_ASS:G");
+    EXPECT_EQ(ass.disposition, Disposition::Retired);
+    EXPECT_NE(ass.reason.find("Save as"), std::string::npos) << ass.reason;
+    for (const auto *symbol : {"GLOBAL_CONVERT_TO_SRT", "GLOBAL_CONVERT_TO_TMP", "GLOBAL_CONVERT_TO_MDVD",
+                               "GLOBAL_CONVERT_TO_MPL2"}) {
+        const PlanRow &row = rowOf(plan, std::string("shortcut:") + symbol + ":G");
+        EXPECT_EQ(row.disposition, Disposition::Retired) << symbol;
+        EXPECT_NE(row.reason.find("Export as"), std::string::npos) << row.reason;
+    }
+    EXPECT_NE(rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS:G").disposition, Disposition::Retired);
 }
 
 TEST(SettingsImport, RetiredViewArrangementsAndEditorSwitchAreDroppedWithANotice)

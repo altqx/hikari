@@ -79,6 +79,17 @@ Shortcuts go through the shortcut editor's gesture path, so they are the same bi
 
 The Automation menu lists the macros after its commands, in load and registration order. A "/" in a macro's name opens submenus as in Aegisub ([AS1](https://github.com/altqx/hikari/issues/471)): `Group/Sub/Macro` shows Macro under Group ▸ Sub, names sharing a prefix share its submenus, and empty pieces stay (an untitled submenu, an item with no text). Two departures from Aegisub (`src/menu.cpp` AutomationMenu): a macro and a submenu of the same name both show in either order (Aegisub drops the macros under the name when the macro registers first), and each level keeps load order (Aegisub sorts it alphabetically). A macro with an empty name stays as an empty item, where Aegisub leaves it out. Shortcuts, the panel and Settings → Hotkeys keep the full name.
 
+### Recommended scripts (FA6, 2026-11-04)
+
+The panel's third view, **Recommended** ([FA6 #563](https://github.com/altqx/hikari/issues/563), design approved on the card), lists third-party scripts HikariSub runs as Aegisub 3.5 does. The list is built in (`src/app/script_packages.cpp`), and each entry must be one of the third-party corpus's runs (`automation_packages_tests`). It holds six of arch1t3cht's scripts in four folding groups: Typesetting, Editing, QC and Karaoke. A row has three lines: the name in bold with Install, the one line saying what it does, and its author, licence and anything it needs, muted. Hovering the name shows the feed's own description and the installed version. A muted line at the top says where installs come from. The empty Scripts view links here.
+
+- **Install** runs the bundled DependencyControl as an Automation run named "Install <name>". It goes through the Runs log and the progress card, and installs the feed's current release into the user folder's `automation/autoload`. Only the new script then loads, and it is turned on if it was off. A toast says "<name> is installed." with Show, which selects it in Scripts. Installs and uninstalls wait in a queue while a macro or another install runs ("Waiting…").
+- **Installed** means DependencyControl's config (`config/l0.DependencyControl.json`) records the namespace, or an autoload folder has a script of the same file name. A copy put there by hand shows as Installed with "Installed by hand", and Uninstall… stays off for it.
+- **Uninstall…** (the row's ⋯, a right-click, or Delete) asks "Uninstall <name>?" with Cancel as the default. DependencyControl deletes the script's files from the user folder and keeps the modules it brought. The script unloads at once.
+- **A failed install** keeps its reason on the row in red, with Details opening its run in the Runs view, and Install becomes Try again.
+
+Nothing here adds a command or a hotkey.
+
 ### Scripts a subtitle file names (2026-10-31)
 
 Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › Automation › Trusted script folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
@@ -91,7 +102,7 @@ Scripts get Aegisub 3.5.1's Lua API with the additions of arch1t3cht's fork ([FA
 
 - `aegisub.version` is `{string = "3.5.1", major = 3, minor = 5, patch = 1, build = 9914}`, the TypesettingTools release the host matches.
 - `frame:getPixel(x, y)` returns r, g, b. `frame:data()` returns the BGRA pixels as a light userdata for FFI, the pitch in bytes (width × 4) and `false` for "flipped". The pixels stay valid while the frame object is alive.
-- `project_properties()` gives the open audio file, the editing tab's keyframes file and `video_zoom`, the video panel's logical pixels per video pixel (1 without video). `timecodes_file` is `""`.
+- `project_properties()` gives the open audio file, the editing tab's keyframes file and `video_zoom`, the video panel's logical pixels per video pixel (1 without video). `timecodes_file` is the editing tab's loaded timecodes file, or `""`. With a timecodes file loaded, `frame_from_ms` and `ms_from_frame` use its frame times.
 - `frame_from_ms` and `ms_from_frame` round as Aegisub does (`AegisubFrameTimes`, ported from libaegisub's `vfr.cpp`). Only the automation services use it.
 - `aegisub.lfs`, `aegisub.util.deep_copy`, `include()` and `require()` errors behave as in Aegisub 3.5. Argument checking stays as lenient as it was.
 

@@ -127,6 +127,24 @@ describe("cache markers", () => {
     });
 });
 
+test("with caching off no wire gets markers, a cache key or an explicit cache", async () => {
+    const off = (request: Request): Request => ({ ...request, caching: false, explicitCache: true, cacheLifetime: "hour" });
+    h.mock.replies.push(kDone["anthropic-messages"](), kDone["chat-completions"](), kDone.responses(), kDone.gemini());
+    await h.turn(h.service("anthropic-messages"), off(conversation(2)));
+    await h.turn(h.service("chat-completions"), off({ ...conversation(2), model: "anthropic/claude-x" }));
+    await h.turn(h.service("responses"), off(conversation(1)));
+    await h.turn(h.service("gemini"), off(conversation(1)));
+    expect(h.mock.received).toHaveLength(4);
+    for (const r of h.mock.received) {
+        const body = r.json() as Json;
+        expect(r.path).not.toContain("cachedContents");
+        expect(JSON.stringify(body)).not.toContain("cache_control");
+        expect(body.prompt_cache_key).toBeUndefined();
+        expect(body.cachedContent).toBeUndefined();
+    }
+    expect((h.mock.received[3]!.json() as Json).systemInstruction.parts).toHaveLength(2);
+});
+
 test("cache reads and writes come back from every wire", async () => {
     h.mock.replies.push({
         chunks: [

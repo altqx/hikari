@@ -48,8 +48,10 @@ ApplicationWindow {
     required property var analytics
     required property var starPrompt
     required property var crashReports
+    required property var aiSettings
     required property var styleManager
     required property var kanjiTimer
+    required property var alignToVideo
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
@@ -67,13 +69,6 @@ ApplicationWindow {
                 out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
         return out
     }
-
-    readonly property var conversionItems: [
-        ["ass", qsTr("Convert to ASS"), "GLOBAL_CONVERT_TO_ASS", qsTr("Converts to ASS format")],
-        ["srt", qsTr("Convert to SRT"), "GLOBAL_CONVERT_TO_SRT", qsTr("Converts to SRT format")],
-        ["mdvd", qsTr("Convert to MDVD"), "GLOBAL_CONVERT_TO_MDVD", qsTr("Converts to microDVD format")],
-        ["mpl2", qsTr("Convert to MPL2"), "GLOBAL_CONVERT_TO_MPL2", qsTr("Converts to MPL2 format")],
-        ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
 
     readonly property var sortKeys: [
         { key: "start", label: qsTr("Start time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
@@ -550,17 +545,53 @@ ApplicationWindow {
         }
     }
 
+    readonly property bool layoutLocked: root.workspaceLayout.locked
+    readonly property bool panelFloats: root.dockList.some(dock => dock.isOpen && dock.isFloating)
+    readonly property string lockReason: !root.layoutLocked && root.panelFloats
+        ? qsTranslate("HikariSub.Workspace", "Dock floating panels to lock the layout") : ""
+    property bool lockRefusalShown: false
+    Action {
+        id: lockLayoutAction
+        text: qsTranslate("HikariSub.Workspace", "Lock layout")
+        checkable: true
+        checked: root.layoutLocked
+        enabled: root.layoutLocked || !root.panelFloats
+        onTriggered: {
+            if (!root.hotkeyGesture("GLOBAL_TOGGLE_LOCK_LAYOUT"))
+                root.workspaceLayout.setLocked(!root.layoutLocked)
+            checked = Qt.binding(() => root.layoutLocked)
+        }
+    }
+    Connections {
+        target: Docking
+        function onLayoutChangeRefused() {
+            if (root.lockRefusalShown)
+                return
+            root.lockRefusalShown = true
+            root.notify("info", qsTranslate("HikariSub.Workspace", "The layout is locked"),
+                        qsTranslate("HikariSub.Workspace", "Unlock it to move panels. Resizing still works."),
+                        { actions: [{ text: qsTranslate("HikariSub.Workspace", "Unlock"),
+                                      run: () => root.workspaceLayout.setLocked(false) }] })
+        }
+    }
+
     function applyPreset(name) {
+        if (root.layoutLocked)
+            return
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applyPreset(name))
         root.analytics.layoutChanged(name)
     }
     function applySavedLayout(name) {
+        if (root.layoutLocked)
+            return
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.applySavedLayout(name))
         root.analytics.layoutChanged("saved")
     }
     function resetLayout() {
+        if (root.layoutLocked)
+            return
         root.settleArrangement()
         root.keepFocusShown(() => root.workspaceLayout.resetCurrentLayout())
     }
@@ -716,6 +747,8 @@ ApplicationWindow {
             root.addRightOfGrid(dock)
         else
             dock.open()
+        if (root.layoutLocked && dock.isFloating)
+            dock.isFloating = false
     }
 
     function panelOf(item) {
@@ -951,7 +984,7 @@ ApplicationWindow {
             iconRole: "panel-move"
             objectName: "panelOptionsMove"
             text: qsTranslate("HikariSub.Workspace", "Move panel…")
-            enabled: panelOptionsMenu.dockable
+            enabled: panelOptionsMenu.dockable && !root.layoutLocked
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
         }
         ShellMenuItem {
@@ -961,7 +994,7 @@ ApplicationWindow {
             text: qsTranslate("HikariSub.Workspace", "Move tab left")
             visible: panelOptionsMenu.tabCount > 1
             height: visible ? implicitHeight : 0
-            enabled: panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep >= 0
+            enabled: !root.layoutLocked && panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep >= 0
                      && panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep < panelOptionsMenu.tabCount
             onTriggered: root.moveTab(panelOptionsMenu.dock, panelOptionsMenu.leftStep)
         }
@@ -971,7 +1004,7 @@ ApplicationWindow {
             text: qsTranslate("HikariSub.Workspace", "Move tab right")
             visible: panelOptionsTabLeft.visible
             height: visible ? implicitHeight : 0
-            enabled: panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep >= 0
+            enabled: !root.layoutLocked && panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep >= 0
                      && panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep < panelOptionsMenu.tabCount
             onTriggered: root.moveTab(panelOptionsMenu.dock, -panelOptionsMenu.leftStep)
         }
@@ -979,10 +1012,22 @@ ApplicationWindow {
             iconRole: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? "panel-dock" : "panel-float"
             objectName: "panelOptionsFloat"
             text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Float")
-            enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
+            enabled: panelOptionsMenu.dock !== null && !root.layoutLocked
+                     && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "panelOptionsLock"
+            command: "GLOBAL_TOGGLE_LOCK_LAYOUT"
+            iconRole: "layout-lock"
+            action: lockLayoutAction
+            keepsMenuOpen: false
+            reason: root.lockReason
+        }
+        MenuSeparator {}
         Instantiator {
+            id: panelOptionsAbout
             readonly property var panelState: root.isPluginDock(panelOptionsMenu.dock) ? (panelOptionsMenu.dock.body?.panelState ?? null) : null
             model: panelState !== null && panelState.status !== "missing" ? [panelState] : []
             delegate: ShellMenuItem {
@@ -995,12 +1040,15 @@ ApplicationWindow {
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 2, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
-        MenuSeparator {}
+        MenuSeparator {
+            visible: panelOptionsAbout.count > 0
+            height: panelOptionsAbout.count > 0 ? implicitHeight : 0
+        }
         ShellMenuItem {
             iconRole: "tab-close"
             objectName: "panelOptionsClose"
             text: qsTranslate("HikariSub.Workspace", "Close")
-            enabled: panelOptionsMenu.closable
+            enabled: panelOptionsMenu.closable && !root.layoutLocked
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
     }
@@ -1271,6 +1319,8 @@ ApplicationWindow {
 
     // Deferred: KDDW reparents the panel into its new window first.
     function setPanelFloating(dock, floating) {
+        if (root.layoutLocked && floating)
+            return
         const panel = panels[dockList.indexOf(dock)]
         dock.isFloating = floating
         Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
@@ -1417,6 +1467,8 @@ ApplicationWindow {
         menus: appMenus
         switcher: LayoutSwitcher {
             layouts: root.workspaceLayout
+            lockAction: lockLayoutAction
+            lockReason: root.lockReason
             Layout.leftMargin: titleBar.switcherGap
             onPresetChosen: name => root.applyPreset(name)
             onSavedLayoutChosen: name => root.applySavedLayout(name)
@@ -1917,27 +1969,6 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) root.openScriptProperties()
             }
-            ShellMenu {
-                help: qsTr("Converts from one format to another")
-                id: conversionMenu
-                iconRole: "convert"
-                objectName: "conversionMenu"
-                title: qsTr("Conversion")
-                property var targets: []
-                onAboutToShow: targets = root.app.conversionTargets()
-                Repeater {
-                    model: root.conversionItems
-                    ShellMenuItem {
-                        objectName: "convertTo_" + modelData[0]
-                        command: modelData[2]
-                        help: modelData[3]
-                        iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
-                        text: modelData[1]
-                        enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
-                        onTriggered: if (!root.hotkeyGesture(modelData[2])) root.openConversion(modelData[0], modelData[1])
-                    }
-                }
-            }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_FONT_COLLECTOR"
                 help: qsTr("Font collector")
@@ -2081,6 +2112,49 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                command: "GLOBAL_OPEN_TIMECODES"
+                objectName: "openTimecodesMenuItem"
+                help: qsTr("Open a VFR timecodes v1, v2 or v4 file")
+                iconRole: "open-timecodes"
+                action: Action {
+                    id: openTimecodesAction
+                    text: qsTr("Open timecodes")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
+                }
+            }
+            RecentFilesMenu {
+                iconRole: "recent-timecodes"
+                objectName: "recentTimecodesMenu"
+                prefix: "recentTimecodes"
+                title: qsTr("Recently opened timecodes")
+                load: () => root.app.recentTimecodes()
+                onChosen: path => root.openTimecodes(path)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SAVE_TIMECODES"
+                objectName: "saveTimecodesMenuItem"
+                help: qsTr("Save a VFR timecodes v2 file")
+                iconRole: "save-timecodes"
+                action: Action {
+                    id: saveTimecodesAction
+                    text: qsTr("Save timecodes")
+                    enabled: root.video.hasVideo || root.app.timecodesFile.length > 0
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_TIMECODES")) saveTimecodesDialog.show()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_CLOSE_TIMECODES"
+                objectName: "closeTimecodesMenuItem"
+                help: qsTr("Close the currently open timecodes file")
+                iconRole: "close-timecodes"
+                action: Action {
+                    id: closeTimecodesAction
+                    text: qsTr("Close timecodes")
+                    enabled: root.app.timecodesFile.length > 0
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_TIMECODES")) root.app.closeTimecodes()
+                }
+            }
+            ShellMenuItem {
                 command: "GLOBAL_OPEN_DUMMY_VIDEO"
                 iconRole: "dummy-video"
                 objectName: "dummyVideoMenuItem"
@@ -2100,6 +2174,18 @@ ApplicationWindow {
                     text: qsTr("Centre times within frames")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CENTER_TIMES_IN_FRAMES")) root.app.centerTimesInFrames()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_ALIGN_TO_VIDEO"
+                help: qsTr("Times the active line to the frames around the video’s frame where a picked point keeps its colour")
+                iconRole: "align-to-video"
+                objectName: "alignToVideoMenuItem"
+                action: Action {
+                    id: alignToVideoAction
+                    text: qsTr("Align to video…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
                 }
             }
             ShellMenuItem {
@@ -2254,6 +2340,17 @@ ApplicationWindow {
                 enabled: root.video.loaded
                 onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
             }
+            ShellMenuItem {
+                command: "GLOBAL_RELOAD_VIDEO"
+                iconRole: "reload-video"
+                objectName: "reloadVideoMenuItem"
+                action: Action {
+                    id: reloadVideoAction
+                    text: qsTr("Reload video")
+                    enabled: root.video.hasVideo && !root.video.dummy
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_VIDEO")) root.video.reloadVideo()
+                }
+            }
             VideoStreamsMenu {
                 objectName: "videoStreamsMenu"
                 video: root.video
@@ -2261,6 +2358,16 @@ ApplicationWindow {
             VideoChaptersMenu {
                 objectName: "videoChaptersMenu"
                 video: root.video
+            }
+            ShellMenuItem {
+                command: "GLOBAL_VIDEO_DETAILS"
+                iconRole: "video-details"
+                objectName: "videoDetailsMenuItem"
+                action: Action {
+                    id: videoDetailsAction
+                    text: qsTr("Video details…"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_DETAILS")) root.openVideoDetails()
+                }
             }
             ShellMenuItem {
                 command: "GLOBAL_VIDEO_ZOOM"
@@ -2368,6 +2475,17 @@ ApplicationWindow {
                     text: qsTr("Close audio")
                     enabled: root.audio.hasAudio
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_RELOAD_AUDIO"
+                iconRole: "reload-audio"
+                objectName: "reloadAudioMenuItem"
+                action: Action {
+                    id: reloadAudioAction
+                    text: qsTr("Reload audio")
+                    enabled: root.audio.reloadable
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RELOAD_AUDIO")) root.audio.reloadAudio()
                 }
             }
             MenuSeparator {}
@@ -2535,6 +2653,8 @@ ApplicationWindow {
                 title: qsTr("&Layout")
                 prefix: "viewLayout"
                 layouts: root.workspaceLayout
+                lockAction: lockLayoutAction
+                lockReason: root.lockReason
                 onPresetChosen: name => root.applyPreset(name)
                 onSavedLayoutChosen: name => root.applySavedLayout(name)
                 onSaveRequested: saveLayoutDialog.show()
@@ -2557,14 +2677,14 @@ ApplicationWindow {
                             iconRole: "show"
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
-                            enabled: root.panelAvailable(modelData)
+                            enabled: root.panelAvailable(modelData) && !root.layoutLocked
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
                             iconRole: modelData.isFloating ? "panel-dock" : "panel-float"
                             objectName: "panelFloat" + modelData.uniqueName
                             text: modelData.isFloating ? qsTr("Dock") : qsTr("Float")
-                            enabled: modelData.isOpen
+                            enabled: modelData.isOpen && !root.layoutLocked
                             onTriggered: root.setPanelFloating(modelData, !modelData.isFloating)
                         }
                         MenuSeparator {}
@@ -2572,7 +2692,7 @@ ApplicationWindow {
                             iconRole: "tab-close"
                             objectName: "panelClose" + modelData.uniqueName
                             text: qsTr("Close")
-                            enabled: modelData.isOpen
+                            enabled: modelData.isOpen && !root.layoutLocked
                             onTriggered: root.closePanel(modelData)
                         }
                     }
@@ -2598,14 +2718,14 @@ ApplicationWindow {
                             iconRole: "show"
                             objectName: "panelShow" + pluginPanelMenu.modelData.dock
                             text: qsTr("Show")
-                            enabled: !pluginPanelMenu.kept
+                            enabled: !pluginPanelMenu.kept && !root.layoutLocked
                             onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
                         }
                         ShellMenuItem {
                             iconRole: pluginPanelMenu.dock?.isFloating ? "panel-dock" : "panel-float"
                             objectName: "panelFloat" + pluginPanelMenu.modelData.dock
                             text: pluginPanelMenu.dock?.isFloating ? qsTr("Dock") : qsTr("Float")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
                             onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !pluginPanelMenu.dock.isFloating)
                         }
                         MenuSeparator {}
@@ -2613,7 +2733,7 @@ ApplicationWindow {
                             iconRole: "tab-close"
                             objectName: "panelClose" + pluginPanelMenu.modelData.dock
                             text: qsTr("Close")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
+                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen && !root.layoutLocked
                             onTriggered: root.closePanel(pluginPanelMenu.dock)
                         }
                         ShellMenuItem {
@@ -2622,6 +2742,7 @@ ApplicationWindow {
                             text: qsTr("Remove from the layout")
                             visible: pluginPanelMenu.kept
                             height: pluginPanelMenu.kept ? implicitHeight : 0
+                            enabled: !root.layoutLocked
                             onTriggered: root.forgetPluginDock(pluginPanelMenu.dock)
                         }
                     }
@@ -2633,13 +2754,14 @@ ApplicationWindow {
                 iconRole: "panel-move"
                 objectName: "movePanel"
                 text: qsTr("&Move panel…")
+                enabled: !root.layoutLocked
                 onTriggered: placementWindow.openFor(root.focusedDock())
             }
             ShellMenuItem {
                 iconRole: "layout-restore"
                 objectName: "restoreLayoutBackup"
                 text: qsTr("Restore the previous layout")
-                enabled: root.workspaceLayout.hasBackup
+                enabled: root.workspaceLayout.hasBackup && !root.layoutLocked
                 onTriggered: root.workspaceLayout.restoreBackup()
             }
             MenuSeparator {}
@@ -2648,6 +2770,7 @@ ApplicationWindow {
                 objectName: "logMenuItem"
                 action: Action {
                     text: qsTr("Log")
+                    enabled: !root.layoutLocked
                     onTriggered: {
                         if (logDock.isOpen)
                             logDock.close()
@@ -5556,6 +5679,14 @@ ApplicationWindow {
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description…")
                             onTriggered: groupDescriptionPopover.edit(groupMenu.description, grid, groupMenu.at)
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
+                            iconRole: "convert-folds"
+                            objectName: "groupConvertFolds"
+                            text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
+                            enabled: groupMenu.visible && root.app.canConvertFolds()
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
                         MenuSeparator {}
                         ShellMenuItem { iconRole: "remove"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Ungroup"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
@@ -5738,6 +5869,14 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem {
+                            command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
+                            iconRole: "convert-folds"
+                            objectName: "convertFolds"
+                            text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
+                            enabled: gridMenu.visible && root.app.canConvertFolds()
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
                         MenuSeparator {}
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
@@ -5832,10 +5971,12 @@ ApplicationWindow {
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
                 ShiftTimesPanel {
                     id: shiftTimesPanel
+                    objectName: "shiftTimesPanel"
                     anchors.fill: parent
                     focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    shellWindow: root.shellWindow
                     messages: root.messages
                     hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
@@ -5865,6 +6006,7 @@ ApplicationWindow {
                     focus: true
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    shellWindow: root.shellWindow
                     messages: root.messages
                     onApply: root.applyShift("postprocessor")
                     onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
@@ -5906,6 +6048,7 @@ ApplicationWindow {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    shellWindow: root.shellWindow
                     editor: root.editor
                     onEscaped: root.focusPanel(editorPanel, Qt.OtherFocusReason)
                 }
@@ -5964,6 +6107,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     focus: true
                     app: root.app
+                    shellWindow: root.shellWindow
                     notices: root.notices
                     documentName: root.shell.editingTitle
                     onSettingsRequested: root.openSettings("spelling")
@@ -5991,6 +6135,7 @@ ApplicationWindow {
                     objectName: "stylesTool"
                     anchors.fill: parent
                     styles: root.styleManager
+                    shellWindow: root.shellWindow
                     editor: root.editor
                     app: root.app
                     manager: styleManagerWindow
@@ -6125,6 +6270,7 @@ ApplicationWindow {
                     iconRole: "layout-restore"
                     text: qsTranslate("HikariSub.Workspace", "Restore the previous layout")
                     visible: root.workspaceLayout.hasBackup
+                    enabled: !root.layoutLocked
                     onClicked: root.workspaceLayout.restoreBackup()
                 }
                 Button {
@@ -6430,11 +6576,47 @@ ApplicationWindow {
         else
             openSaveDialog(next.id)
     }
+    function saveChosenAs(document, file, format) {
+        const result = root.app.saveChosenFor(document, file, format)
+        if (result === "readonly") {
+            root.warnReadOnly(document, root.app.localPath(file).replace(/^.*[\\/]/, ""))
+        } else {
+            const id = document === 0 ? root.currentTab().id : document
+            if (result === "" && root.changedOnDisk[id] === true)
+                root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
+            matroskaSubtitles.saveDone()
+            root.saveNext()
+        }
+    }
+    function confirmAssConversion(document, file, format, from, then, cancelled) {
+        const preview = root.app.assConversionPreview(document, file, format)
+        if (preview.convert !== true) {
+            then()
+            return
+        }
+        const title = qsTranslate("HikariSub.Documents", "Save as ASS")
+        if (preview.problem !== undefined) {
+            root.messages.ask({ title: title, text: preview.problem, severity: "error", from: from }, () => cancelled())
+            return
+        }
+        root.messages.ask({
+            title: title,
+            text: qsTranslate("HikariSub.Documents", "Convert “%1” to ASS before saving it?").arg(root.tabTitle(document)),
+            detail: preview.changes.join("\n"),
+            plainText: true,
+            from: from,
+            choices: [
+                { id: "convert", text: qsTranslate("HikariSub.Documents", "Convert to ASS"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject" }
+            ]
+        }, id => id === "convert" ? then() : cancelled())
+    }
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
         saveAsDialog.document = id ?? 0
+        saveAsDialog.formats = v.formats
         saveAsDialog.title = qsTranslate("HikariSub.Documents", "Save “%1” as").arg(root.tabTitle(id ?? 0))
-        saveAsDialog.nameFilters = [v.filter, qsTranslate("HikariSub.Documents", "All files (*)")]
+        saveAsDialog.nameFilters = v.filters.concat([qsTranslate("HikariSub.Documents", "All files (*)")])
         if (v.folder.toString() !== "")
             saveAsDialog.currentFolder = v.folder
         else if (root.pickerFolder("subtitles").length > 0)
@@ -6449,18 +6631,16 @@ ApplicationWindow {
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file (%1)").arg("*.ass")]
         // MUST KILL: document id 0 means the editing target
         property var document: 0
+        property var formats: []
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            const result = root.app.saveChosenFor(document, selectedFile)
-            if (result === "readonly") {
-                root.warnReadOnly(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
-            } else {
-                const id = document === 0 ? root.currentTab().id : document
-                if (result === "" && root.changedOnDisk[id] === true)
-                    root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
+            const target = document
+            const file = selectedFile
+            const format = formats[selectedNameFilter.index] ?? ""
+            root.confirmAssConversion(target, file, format, null, () => root.saveChosenAs(target, file, format), () => {
                 matroskaSubtitles.saveDone()
                 root.saveNext()
-            }
+            })
         }
         onRejected: {
             matroskaSubtitles.saveDone()
@@ -6565,6 +6745,7 @@ ApplicationWindow {
         settings: root.app.settings
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
+        confirmConversion: (id, file, format, from, then, cancelled) => root.confirmAssConversion(id, file, format, from, then, cancelled)
         confirmOverDisk: (ids, then, cancelled) => {
             const marked = ids.filter(id => root.changedOnDisk[id] === true)
             if (marked.length === 0)
@@ -6627,6 +6808,18 @@ ApplicationWindow {
     function openDummyVideo() {
         dummyVideoLoader.active = true
         dummyVideoLoader.item.show()
+    }
+    Loader {
+        id: videoDetailsLoader
+        active: false
+        sourceComponent: VideoDetailsDialog {
+            video: root.video
+            settings: root.app.settings
+        }
+    }
+    function openVideoDetails() {
+        videoDetailsLoader.active = true
+        videoDetailsLoader.item.show()
     }
     VideoFileQuestion {
         id: videoFileQuestion
@@ -6746,6 +6939,8 @@ ApplicationWindow {
         initialFocus: placementPanel
         defaultButton: placementClose
         function openFor(dock) {
+            if (root.layoutLocked)
+                return
             placementPanel.currentIndex = Math.max(0, root.dockList.indexOf(dock))
             refreshSize()
             open()
@@ -6910,6 +7105,42 @@ ApplicationWindow {
             open()
         }
     }
+    function openTimecodes(path) {
+        const problem = root.app.openTimecodesFile(path)
+        if (problem.length > 0)
+            root.notices.post("error", qsTranslate("HikariSub.Video", "Open timecodes file"), problem)
+    }
+    FileDialog {
+        id: timecodesDialog
+        objectName: "timecodesDialog"
+        title: qsTranslate("HikariSub.Video", "Open timecodes file")
+        nameFilters: [qsTranslate("HikariSub.Video", "Timecodes file (*.txt)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("timecodes", selectedFile)
+            root.openTimecodes(selectedFile.toString())
+        }
+        function show() {
+            currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
+            open()
+        }
+    }
+    FileDialog {
+        id: saveTimecodesDialog
+        objectName: "saveTimecodesDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Video", "Save timecodes file")
+        nameFilters: [qsTranslate("HikariSub.Video", "Timecodes file (*.txt)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("timecodes", selectedFile)
+            const problem = root.app.saveTimecodesFile(selectedFile.toString())
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Video", "Save timecodes file"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
+            open()
+        }
+    }
     FileDialog {
         id: translationFileDialog
         title: qsTranslate("HikariSub.Translation", "Choose subtitle file")
@@ -7022,19 +7253,6 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    function openConversion(target, label) {
-        conversionLoader.active = true
-        conversionLoader.item.openFor(target, label)
-    }
-    Loader {
-        id: conversionLoader
-        active: false
-        sourceComponent: ConversionWindow {
-            app: root.app
-            catalogs: root.styleManager.catalogs
-            settings: root.app.settings
-        }
-    }
     function openResample() {
         resampleLoader.active = true
         resampleLoader.item.openDialog()
@@ -7090,9 +7308,65 @@ ApplicationWindow {
                 root.app.matchVideoResolution(option)
         })
     }
+    function askVideoProperty(question) {
+        const size = s => s.width + " × " + s.height
+        const leave = (text, isDefault) => ({ id: "leave", text: text, role: "reject", isDefault: isDefault })
+        const set = (id, text, isDefault) => ({ id: id, text: text, role: "action", isDefault: isDefault })
+        let o
+        switch (question.kind) {
+        case "untaggedMatrix":
+            o = { title: qsTr("Untagged video"), severity: "warning",
+                  text: qsTr("The video doesn’t say which colour matrix it uses."),
+                  detail: qsTr("HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.").arg(question.recommended) }
+            break
+        case "hdr":
+            o = { title: qsTr("HDR or wide-gamut video"), severity: "warning",
+                  text: qsTr("The video has HDR or wide-gamut colours."),
+                  detail: qsTr("Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.") }
+            break
+        case "missingMatrix":
+            o = { title: qsTr("Set the YCbCr matrix?"),
+                  text: qsTr("The subtitles have no YCbCr matrix."),
+                  detail: qsTr("If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.").arg(question.recommended),
+                  choices: [leave(qsTr("Leave unset"), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+            break
+        case "matrixMismatch":
+            o = { title: qsTr("YCbCr matrix mismatch"),
+                  text: qsTr("The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).").arg(question.recommended, question.script),
+                  detail: qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+            break
+        case "missingLayoutRes":
+            o = { title: qsTr("Set the layout resolution?"),
+                  text: qsTr("The subtitles have no layout resolution."),
+                  detail: qsTr("If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).").arg(size(question.videoSize), size(question.playSize)),
+                  choices: [leave(qsTr("Leave unset"), false), set("set", qsTr("Set to the video’s (%1)").arg(size(question.videoSize)), true),
+                            set("play", qsTr("Set to the script resolution (%1)").arg(size(question.playSize)), false)] }
+            break
+        case "layoutResMismatch":
+            o = { title: qsTr("Layout resolution mismatch"),
+                  text: qsTr("The video is %1 and the subtitles’ layout resolution is %2.").arg(size(question.videoSize), size(question.layoutSize)),
+                  detail: question.aspectChanged
+                          ? qsTr("Their aspect ratios differ. Set the layout resolution to the video’s?")
+                          : qsTr("This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(size(question.layoutSize)), true), set("set", qsTr("Set to the video’s (%1)").arg(size(question.videoSize)), false)] }
+            break
+        default:
+            return
+        }
+        o.dontAsk = true
+        root.messages.ask(o, (id, dontAskAgain) => {
+            const choice = ({ set: 1, play: 2 })[id] ?? 0
+            if (dontAskAgain)
+                root.app.stopAskingVideoProperty(question.kind, choice)
+            if (choice > 0)
+                root.app.answerVideoProperty(question, choice)
+        })
+    }
     Connections {
         target: root.app
         function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
+        function onVideoPropertyQuestion(question) { root.askVideoProperty(question) }
     }
     StyleManager {
         id: styleManagerWindow
@@ -7131,6 +7405,7 @@ ApplicationWindow {
                 hotkeys: root.hotkeys
                 updates: root.updates
                 crashReports: root.crashReports
+                ai: root.aiSettings
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
@@ -7211,6 +7486,20 @@ ApplicationWindow {
     function openKanjiTimer() {
         kanjiTimerLoader.active = true
         kanjiTimerLoader.item.openDialog()
+    }
+    Loader {
+        id: alignToVideoLoader
+        active: false
+        sourceComponent: AlignToVideoDialog {
+            controller: root.alignToVideo
+            settings: root.app.settings
+        }
+    }
+    function openAlignToVideo() {
+        alignToVideoLoader.active = true
+        const problem = alignToVideoLoader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", qsTr("Align to video"), problem)
     }
     ListChooser {
         id: fixSuggestions
@@ -7321,6 +7610,22 @@ ApplicationWindow {
 
     Connections {
         target: root.app
+        function onAegisubFoldsFound(document, folds) {
+            root.notices.post("info", qsTranslate("HikariSub.Grid", "Aegisub folds"),
+                              qsTranslate("HikariSub.Grid", "This file has %n Aegisub folds.", "", folds), {
+                actions: [{ text: qsTranslate("HikariSub.Grid", "Convert to line groups"), run: () => {
+                    const tab = root.app.tabs.findIndex(t => t.id === document)
+                    if (tab >= 0)
+                        root.app.selectTab(tab)
+                    root.app.convertFoldsToGroups()
+                } }]
+            })
+        }
+        function onFoldsConverted(converted, skipped) {
+            const done = qsTranslate("HikariSub.Grid", "%n Aegisub folds became line groups.", "", converted)
+            root.notices.post("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
+                              : done + " " + qsTranslate("HikariSub.Grid", "%n folds were skipped: they overlap a line group or do not pair.", "", skipped))
+        }
         function onGroupBreakRefused(description, title) {
             if (!description) {
                 root.notices.post("warning", qsTranslate("HikariSub.Grid", "This would leave lines outside their line group"),
@@ -7483,6 +7788,7 @@ ApplicationWindow {
         GLOBAL_FIND_NEXT: findNextAction, GLOBAL_FIND_PREVIOUS: findPreviousAction,
         GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
+        GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
         GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction,
@@ -7496,17 +7802,21 @@ ApplicationWindow {
         GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END: shiftFollowingFramesToVideoEndAction,
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
+        GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
         GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
+        GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
+        GLOBAL_CLOSE_TIMECODES: closeTimecodesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: userGuideAction,
         GLOBAL_GETTING_STARTED: gettingStartedAction,
-        GLOBAL_PLUGINS: pluginsAction,
+        GLOBAL_PLUGINS: pluginsAction, GLOBAL_TOGGLE_LOCK_LAYOUT: lockLayoutAction,
+        GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
@@ -7629,6 +7939,7 @@ ApplicationWindow {
         if (symbol.startsWith("GRID_"))
             return root.runGridHotkey(symbol)
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
+                               "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
@@ -7645,12 +7956,6 @@ ApplicationWindow {
             root.runItem(items[symbol])
             return true
         }
-        const conversion = root.conversionItems.find(c => c[2] === symbol)
-        if (conversion) {
-            if (root.app.conversionTargets().indexOf(conversion[0]) >= 0)
-                root.openConversion(conversion[0], conversion[1])
-            return true
-        }
         const sort = root.sortKeys.find(k => k.all === symbol || k.selected === symbol)
         if (sort) {
             if (root.editor.editable)
@@ -7661,6 +7966,7 @@ ApplicationWindow {
         switch (symbol) {
         case "GLOBAL_QUIT": root.close(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
+        case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)
@@ -7767,6 +8073,8 @@ ApplicationWindow {
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
         case "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD":
+        case "VIDEO_SAVE_SUBTITLES_TO_PNG":
+        case "VIDEO_COPY_SUBTITLES_TO_CLIPBOARD":
             root.videoView.snapshot(action)
             return true
         }

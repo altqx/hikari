@@ -159,12 +159,12 @@ struct FixtureVideo : app::MacroMediaPort {
     }();
     std::optional<std::int64_t> frameFromMs(std::int64_t) const override { return std::nullopt; }
     std::optional<std::int64_t> msFromFrame(std::int64_t) const override { return std::nullopt; }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return starts; }
+    std::optional<app::AegisubFrameTimes> frameTimes() const override { return app::AegisubFrameTimes::fromFrameStarts(starts); }
     std::optional<VideoSize> videoSize() const override { return VideoSize{1920, 1080, 16, 9}; }
     std::optional<std::vector<std::int64_t>> keyframes() const override { return std::vector<std::int64_t>{0, 96, 336}; }
     void frame(std::int64_t, bool, std::function<void(std::optional<Frame>)> reply) override { reply(std::nullopt); }
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
-    std::optional<Project> project() const override { return Project{96, "", "", "", 1}; }
+    std::optional<Project> project() const override { return Project{96, "", "", "", "", 1}; }
     std::optional<std::string> fileName() const override { return std::nullopt; }
 };
 
