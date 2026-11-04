@@ -1,6 +1,7 @@
 import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult, type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
+import { LinkRelay } from "./providers/relay";
 import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
 import type { UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
@@ -41,9 +42,9 @@ export class Sidecar {
     readonly tools: ToolSet;
     private initialized = false;
 
-    constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}) {
+    constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions) {
         this.api = new HikariApi(peer);
-        this.providers = new ProviderService(providers);
+        this.providers = new ProviderService(providers ?? { relay: new LinkRelay(peer) });
         this.tools = new ToolSet(this.api);
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         for (const method of kDeclaredMethods)

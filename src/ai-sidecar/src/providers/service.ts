@@ -2,10 +2,10 @@ import { anthropicClient } from "./anthropic";
 import { prefixTexts, sortedTools } from "./cache";
 import type { Client, ClientOptions } from "./client";
 import { Collector } from "./collector";
-import { egressFetch, kSystemNetwork, type Network } from "./egress";
 import { ProviderError, providerErrorOf } from "./errors";
 import { geminiClient } from "./gemini";
 import { openAiClient } from "./openai";
+import { type Relay, relayFetch } from "./relay";
 import { kSchemas, type Schema, validate } from "./schema";
 import type { CompleteParams, ConversationEndParams, Finished, ModelsListParams, ModelsListResult, ProviderConfig,
     ProvidersSetParams, Request, Update } from "./types";
@@ -52,7 +52,7 @@ function watched(fetchFn: typeof fetch, touch: () => void): typeof fetch {
 }
 
 export interface ServiceOptions {
-    network?: Network;
+    relay: Relay;
     idleTimeoutMs?: number;
     /** Milliseconds, for explicit cache expiry. */
     now?: () => number;
@@ -76,18 +76,18 @@ function cacheContents(providerId: string, request: Request): string {
 }
 
 /**
- * The providers Qt configured, keyless. Keys come in with each call and live only as long as it does. Every
- * request leaves through the egress fetch, and one that hears nothing for the idle timeout fails.
+ * The providers Qt configured, keyless: every request leaves through Qt's relay, which adds the key. One that hears
+ * nothing for the idle timeout fails.
  */
 export class ProviderService {
     private providers = new Map<string, ProviderConfig>();
-    private readonly network: Network;
+    private readonly relay: Relay;
     private readonly idleTimeoutMs: number;
     private readonly now: () => number;
     private readonly caches = new Map<string, ConversationCache>();
 
-    constructor(options: ServiceOptions = {}) {
-        this.network = options.network ?? kSystemNetwork;
+    constructor(options: ServiceOptions) {
+        this.relay = options.relay;
         this.idleTimeoutMs = options.idleTimeoutMs ?? kIdleTimeoutMs;
         this.now = options.now ?? Date.now;
     }
@@ -106,20 +106,20 @@ export class ProviderService {
         const cache = this.caches.get(p.cacheKey);
         this.caches.delete(p.cacheKey);
         if (cache?.name && cache.providerId === p.providerId)
-            await this.run(p.providerId, p.key ?? "", signal, (client, s) => client.deleteCache?.(cache.name!, s) ?? Promise.resolve());
+            await this.run(p.providerId, signal, (client, s) => client.deleteCache?.(cache.name!, s) ?? Promise.resolve());
         return null;
     }
 
     async models(params: unknown, signal: AbortSignal): Promise<ModelsListResult> {
         const p = checked<ModelsListParams>(kSchemas.modelsListParams, params);
-        return { models: await this.run(p.providerId, p.key ?? "", signal, (client, s) => client.models(s)) };
+        return { models: await this.run(p.providerId, signal, (client, s) => client.models(s)) };
     }
 
     complete(params: unknown, signal: AbortSignal, emit: (stream: number, update: Update) => void): Promise<Finished> {
         const p = checked<CompleteParams>(kSchemas.completeParams, params);
         if (!p.request.model)
             return Promise.reject(new ProviderError("noModel"));
-        return this.run(p.providerId, p.key ?? "", signal, async (client, s, touch) => {
+        return this.run(p.providerId, signal, async (client, s, touch) => {
             const out = new Collector((update) => {
                 touch();
                 emit(p.stream, update);
@@ -165,7 +165,7 @@ export class ProviderService {
         }
     }
 
-    private async run<T>(providerId: string, key: string, signal: AbortSignal,
+    private async run<T>(providerId: string, signal: AbortSignal,
         work: (client: Client, signal: AbortSignal, touch: () => void) => Promise<T>): Promise<T> {
         const config = this.providers.get(providerId);
         if (!config)
@@ -186,8 +186,8 @@ export class ProviderService {
             onCancel();
         touch();
         try {
-            const fetchFn = watched(egressFetch(config.baseUrl, key !== "", this.network), touch);
-            const client = clientFor({ config, key, fetch: fetchFn });
+            const fetchFn = watched(relayFetch(this.relay, { kind: "provider", id: providerId }), touch);
+            const client = clientFor({ config, fetch: fetchFn });
             const aborted = new Promise<never>((_, reject) => {
                 controller.signal.addEventListener("abort", () => reject(controller.signal.reason));
             });

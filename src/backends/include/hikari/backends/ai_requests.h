@@ -14,8 +14,8 @@ namespace hikari::backends::ai {
 class AiSidecarHost;
 struct SidecarFailure;
 
-/// Runs AI requests in the sidecar. Each one reads its provider's key from the keychain and hands it over with the
-/// request; the sidecar is asked for only once a request has a provider, a model and a key.
+/// Runs AI requests in the sidecar. The sidecar never gets a key: its provider calls go out through the HttpRelay,
+/// which adds one. The sidecar is asked for only once a request has a provider and a model.
 class AiRequests {
 public:
     /// Null when AI is off or no sidecar is installed.

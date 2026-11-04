@@ -145,6 +145,25 @@ struct HttpRelay::Exchange {
     }
 };
 
+RelayTargets providerTargets(app::Providers &providers)
+{
+    return [&providers](const api::Json &target, std::function<void(RelayTargetResult)> done) {
+        const api::Json *kind = target.find("kind");
+        const api::Json *id = target.find("id");
+        if (!kind || *kind != api::Json("provider") || !id || !id->isString())
+            return done(std::unexpected(app::Error{app::ErrorKind::Rejected, 0, "unknown target"}));
+        const app::Provider *provider = providers.config().provider(id->asString());
+        if (!provider)
+            return done(std::unexpected(app::Error{app::ErrorKind::NoProvider, 0, ""}));
+        providers.readKey(provider->id, [base = QUrl(QString::fromStdString(provider->baseUrl)),
+                                         done = std::move(done)](std::optional<std::string> key) {
+            if (!key)
+                return done(std::unexpected(app::Error{app::ErrorKind::Key, 0, ""}));
+            done(RelayTarget{base, std::move(*key)});
+        });
+    };
+}
+
 bool keySafeOverPlainHttp(const QHostAddress &address, const QList<QHostAddress> &local)
 {
     const QHostAddress a = unmapped(address);

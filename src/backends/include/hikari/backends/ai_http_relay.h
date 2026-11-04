@@ -38,6 +38,10 @@ using RelayTargetResult = std::expected<RelayTarget, application::ai::Error>;
 using RelayTargets =
     std::function<void(const api::Json &target, std::function<void(RelayTargetResult)> done)>;
 
+/// The user's providers: {"kind": "provider", "id": …} reaches the provider's base URL with its keychain key.
+/// `providers` must outlive the lookup.
+RelayTargets providerTargets(application::ai::Providers &providers);
+
 /// How the relay answers one request.
 struct RelayExchange {
     std::function<void(const std::string &method, api::Json params)> notify;

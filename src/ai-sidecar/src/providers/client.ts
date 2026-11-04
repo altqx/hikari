@@ -1,7 +1,7 @@
 import type { Collector } from "./collector";
 import type { Model, ProviderConfig, Request, StopReason } from "./types";
 
-/** One provider, reached through its official SDK and the egress fetch. */
+/** One provider, reached through its official SDK and the relay fetch. */
 export interface Client {
     /**
      * Streams `request` into `out`; throws a ProviderError, or anything `providerErrorOf` maps. With `cache`, the
@@ -16,8 +16,6 @@ export interface Client {
 
 export interface ClientOptions {
     config: ProviderConfig;
-    /** Empty for a provider that needs none. */
-    key: string;
     fetch: typeof fetch;
 }
 

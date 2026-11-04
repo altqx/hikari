@@ -1,3 +1,4 @@
+#include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 
@@ -42,23 +43,15 @@ struct MemoryConfigs final : app::ConfigStore {
 
 struct Keys final : app::KeyStore {
     std::map<std::string, std::string> keys;
-    bool deferReads = false;
-    std::deque<std::function<void()>> deferred;
     int reads = 0;
 
     void read(const std::string &id, std::function<void(app::KeyResult)> done) override
     {
         ++reads;
-        auto answer = [this, id, done] {
-            if (const auto it = keys.find(id); it != keys.end())
-                done(it->second);
-            else
-                done(app::KeyError::NotFound);
-        };
-        if (deferReads)
-            deferred.push_back(answer);
+        if (const auto it = keys.find(id); it != keys.end())
+            done(it->second);
         else
-            answer();
+            done(app::KeyError::NotFound);
     }
     void write(const std::string &id, const std::string &key, std::function<void(std::optional<app::KeyError>)> done) override
     {
@@ -173,36 +166,39 @@ TEST_F(AiRequestsTest, WithAiOffOrNoSidecarInstalledTheRequestFails)
     EXPECT_EQ(run.error().kind, app::ErrorKind::Network);
 }
 
-TEST_F(AiRequestsTest, AMissingKeyFailsTheRequestWithoutAskingForTheSidecar)
+TEST_F(AiRequestsTest, TheRelayReachesAProviderWithItsKeychainKey)
 {
     configure({{app::Role::Chat, "a/model"}});
-    keys.keys.clear();
+    app::Provider local = app::presetProvider(app::Preset::Custom, "ollama", "Ollama");
+    local.baseUrl = "http://127.0.0.1:11434/v1";
+    local.needsKey = false;
+    configs.stored.providers.push_back(local);
+    app::Provider locked = app::presetProvider(app::Preset::OpenAI, "locked", "Locked");
+    configs.stored.providers.push_back(locked);
     app::Providers providers(configs, keys);
-    AiRequests requests(providers, [this] { return sidecar(); });
-    Stream run;
-    requests.complete(app::Role::Chat, chat(), run.sink());
-    ASSERT_EQ(run.events.size(), 1u);
-    EXPECT_EQ(run.error().kind, app::ErrorKind::Key);
-    EXPECT_EQ(hostsAskedFor, 0);
+    const RelayTargets targets = providerTargets(providers);
+    const auto lookup = [&](Json target) {
+        std::optional<RelayTargetResult> found;
+        targets(target, [&](RelayTargetResult r) { found = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return found.has_value(); }));
+        return found.value_or(std::unexpected(app::Error{}));
+    };
+    const auto provider = [](const char *id) { return Json::object({{"kind", "provider"}, {"id", id}}); };
+
+    const auto openRouterTarget = lookup(provider("or"));
+    ASSERT_TRUE(openRouterTarget);
+    EXPECT_EQ(openRouterTarget->base, QUrl(QString::fromStdString(openRouter.baseUrl)));
+    EXPECT_EQ(openRouterTarget->key, kKey);
+    const auto keyless = lookup(provider("ollama"));
+    ASSERT_TRUE(keyless);
+    EXPECT_EQ(keyless->key, "");
+    EXPECT_EQ(lookup(provider("locked")).error().kind, app::ErrorKind::Key);
+    EXPECT_EQ(lookup(provider("nobody")).error().kind, app::ErrorKind::NoProvider);
+    EXPECT_EQ(lookup(Json::object({{"kind", "search"}, {"id", "or"}})).error().kind, app::ErrorKind::Rejected);
+    EXPECT_EQ(keys.reads, 2);
 }
 
-TEST_F(AiRequestsTest, CancelBeforeTheKeyArrivesSendsNothing)
-{
-    configure({{app::Role::Chat, "a/model"}});
-    keys.deferReads = true;
-    app::Providers providers(configs, keys);
-    AiRequests requests(providers, [this] { return sidecar(); });
-    Stream run;
-    const app::StreamId id = requests.complete(app::Role::Chat, chat(), run.sink());
-    requests.cancel(id);
-    ASSERT_EQ(run.events.size(), 1u);
-    EXPECT_EQ(run.error().kind, app::ErrorKind::Cancelled);
-    keys.deferred.front()();
-    EXPECT_EQ(run.events.size(), 1u);
-    EXPECT_EQ(hostsAskedFor, 0);
-}
-
-TEST_F(AiRequestsTest, RequestsCarryTheRolesModelAndTheKeyAndStreamTheAnswer)
+TEST_F(AiRequestsTest, RequestsCarryTheRolesModelButNeverAKeyAndStreamTheAnswer)
 {
     configure({{app::Role::Chat, "a/model"}, {app::Role::Translator, "t/model"}});
     app::Providers providers(configs, keys);
@@ -230,28 +226,14 @@ TEST_F(AiRequestsTest, RequestsCarryTheRolesModelAndTheKeyAndStreamTheAnswer)
     const Json &complete = *sent.asArray()[1].find("params");
     EXPECT_EQ(*complete.find("stream"), Json(id));
     EXPECT_EQ(*complete.find("providerId"), Json("or"));
-    EXPECT_EQ(*complete.find("key"), Json(kKey));
+    EXPECT_FALSE(complete.find("key"));
+    EXPECT_EQ(sent.dump().find(kKey), std::string::npos);
     EXPECT_EQ(*complete.find("request")->find("model"), Json("t/model"));
 
     Stream second;
     requests.complete(app::Role::Judge, chat(), second.sink());
     ASSERT_TRUE(waitFor([&] { return second.done(); }));
     EXPECT_EQ(*received().asArray()[3].find("params")->find("request")->find("model"), Json("a/model"));
-    EXPECT_EQ(keys.reads, 1);
-}
-
-TEST_F(AiRequestsTest, AKeylessProviderSendsAnEmptyKey)
-{
-    app::Provider local = app::presetProvider(app::Preset::Custom, "ollama", "Ollama");
-    local.baseUrl = "http://127.0.0.1:11434/v1";
-    configs.stored.providers.push_back(local);
-    configs.stored.roles[app::Role::Chat] = {"ollama", "llama"};
-    app::Providers providers(configs, keys);
-    AiRequests requests(providers, [this] { return sidecar(); });
-    Stream run;
-    requests.complete(app::Role::Chat, chat(), run.sink());
-    ASSERT_TRUE(waitFor([&] { return run.done(); }));
-    EXPECT_EQ(*received().asArray()[1].find("params")->find("key"), Json(""));
     EXPECT_EQ(keys.reads, 0);
 }
 
@@ -297,7 +279,7 @@ TEST_F(AiRequestsTest, RefreshingTheCatalogueKeepsTheUsersCorrections)
     EXPECT_EQ(app::capabilitiesOf(p, "b/model"), (app::Capabilities{.tools = true, .vision = true}));
     const Json list = received().asArray().back();
     EXPECT_EQ(list, Json::object({{"method", "_hikari/models.list"},
-                                  {"params", Json::object({{"providerId", "or"}, {"key", kKey}})}}));
+                                  {"params", Json::object({{"providerId", "or"}})}}));
 }
 
 TEST_F(AiRequestsTest, EndingAConversationAsksTheSidecarToDropItsCache)
@@ -313,6 +295,5 @@ TEST_F(AiRequestsTest, EndingAConversationAsksTheSidecarToDropItsCache)
     ASSERT_EQ(sent.asArray().size(), 2u);
     EXPECT_EQ(sent.asArray()[1], Json::object({{"method", "_hikari/conversation.end"},
                                                {"params", Json::object({{"providerId", "or"},
-                                                                        {"key", kKey},
                                                                         {"cacheKey", "thread-1"}})}}));
 }

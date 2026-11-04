@@ -198,9 +198,9 @@ describe("Gemini explicit caches", () => {
         expect((h.mock.received[5]!.json() as Json).cachedContent).toBe("cachedContents/c2");
 
         h.mock.replies.push(json({}));
-        expect(await service.endConversation({ providerId: "mock", key: kKey, cacheKey: "thread-1" }, new AbortController().signal)).toBeNull();
+        expect(await service.endConversation({ providerId: "mock", cacheKey: "thread-1" }, new AbortController().signal)).toBeNull();
         expect([h.mock.received[6]!.method, h.mock.received[6]!.path]).toEqual(["DELETE", "/v1/cachedContents/c2"]);
-        expect(await service.endConversation({ providerId: "mock", key: kKey, cacheKey: "thread-1" }, new AbortController().signal)).toBeNull();
+        expect(await service.endConversation({ providerId: "mock", cacheKey: "thread-1" }, new AbortController().signal)).toBeNull();
         expect(h.mock.received).toHaveLength(7);
     });
 
