@@ -124,6 +124,14 @@ TEST(PluginSurface, OnlyAPanelsRootCarriesAMenu)
               "tree.menu[2].id: “x” is used twice");
 }
 
+TEST(PluginSurface, OnlyAPanelsRootTakesDrops)
+{
+    EXPECT_EQ(treeProblem(R"({"kind": "column", "drop": true, "children": []})"), "");
+    EXPECT_EQ(treeProblem(R"({"kind": "column", "drop": "yes", "children": []})"), "tree.drop: must be true or false");
+    EXPECT_EQ(treeProblem(R"({"kind": "column", "children": [{"kind": "empty", "text": "a", "drop": true}]})"),
+              "tree.children[1]: “drop” isn't a field of an empty");
+}
+
 TEST(PluginSurface, TreesAreBounded)
 {
     std::string deep = R"({"kind": "label", "text": "x"})";

@@ -15,7 +15,7 @@ inline constexpr std::size_t kMaxRows = 20000;
 inline constexpr std::size_t kMaxDrawOps = 10000;
 
 // Why a panel's widget tree is refused (English, naming the place), or nothing when it fits.
-// Only a panel's root may carry a `menu`.
+// Only a panel's root may carry a `menu` and `drop`.
 std::optional<std::string> panelTreeProblem(const api::Json &tree);
 // The same for hikari.dialogs.show and ask: {title, body, buttons, width, height}.
 std::optional<std::string> dialogProblem(const api::Json &spec);

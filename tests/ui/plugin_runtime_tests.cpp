@@ -3,6 +3,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
+#include "hikari/plugins/registry.h"
 
 #include <QDir>
 #include <QFile>
@@ -14,6 +15,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <filesystem>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -23,6 +25,8 @@ using backends::PluginProcess;
 namespace {
 
 const QString kGreet = QStringLiteral("plugin.com.example.hello.greet");
+const QString kTidyGreet = QStringLiteral("plugin.com.example.tidy.greet");
+const QString kTidySpin = QStringLiteral("plugin.com.example.tidy.spin");
 
 struct Notice {
     ui::LogController::Severity severity;
@@ -615,6 +619,261 @@ private slots:
         const QStringList wanted{QStringLiteral("Left: selection 2"), QStringLiteral("Right: selection 2"),
                                  QStringLiteral("Left: document"), QStringLiteral("Right: document")};
         QTRY_VERIFY(std::ranges::all_of(wanted, [&](const QString &w) { return texts(noticed).contains(w); }));
+    }
+
+    void aPluginOpensOnlyPathsInsideItsOwnFolders()
+    {
+        write(m_dir.filePath(QStringLiteral("secret/key.txt")), "secret");
+        const QString data = folders().data + QStringLiteral("/com.example.tidy");
+        QDir().mkpath(data);
+        const bool linked = QFile::link(m_dir.filePath(QStringLiteral("secret")), data + QStringLiteral("/door"));
+        QStringList refused{QStringLiteral("../com.example.other/x"), QStringLiteral("../../plugins.json"), QStringLiteral("/etc/passwd"),
+                            QStringLiteral("notes/../../x"), QStringLiteral("C:/Windows/win.ini")};
+        if (linked)
+            refused << QStringLiteral("door/key.txt");
+        QByteArray main = R"~(
+            hikari.commands.register('greet', function()
+                local note = hikari.files.open('data', 'notes/today.txt')
+                hikari.files.write(note, 'hello')
+                hikari.notify('data ' .. note.name .. ' ' .. note.access .. ' ' .. hikari.files.read(note))
+                hikari.notify('cache ' .. hikari.files.open('cache', 'thumbs/a.bin').access)
+                hikari.notify('entries ' .. hikari.files.entries('data', 'notes')[1].name)
+                for _, path in ipairs({PATHS}) do
+                    local _, err = hikari.files.open('data', path)
+                    hikari.notify('refused ' .. path .. ' ' .. err.code)
+                end
+                local _, empty = hikari.files.open('data', '')
+                hikari.notify('empty ' .. empty.code)
+                local _, home = hikari.files.open('home', '.bashrc')
+                hikari.notify('home ' .. home.code)
+                local _, forged = hikari.files.read('f999')
+                hikari.notify('forged ' .. forged.code)
+            end)
+        )~";
+        main.replace("PATHS", (u'\'' + refused.join(QStringLiteral("', '")) + u'\'').toUtf8());
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), main);
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        QVERIFY(runtime.run(kTidyGreet));
+        QStringList wanted{QStringLiteral("Tidy: data notes/today.txt write hello"), QStringLiteral("Tidy: cache write"),
+                           QStringLiteral("Tidy: entries today.txt")};
+        for (const QString &path : refused)
+            wanted << QStringLiteral("Tidy: refused %1 not_granted").arg(path);
+        wanted << QStringLiteral("Tidy: empty invalid_params") << QStringLiteral("Tidy: home not_granted")
+               << QStringLiteral("Tidy: forged not_granted");
+        QTRY_COMPARE(texts(noticed).size(), wanted.size());
+        QCOMPARE(texts(noticed), wanted);
+        QFile note(data + QStringLiteral("/notes/today.txt"));
+        QVERIFY(note.open(QIODevice::ReadOnly));
+        QCOMPARE(note.readAll(), QByteArray("hello"));
+        QVERIFY(QFileInfo(folders().cache + QStringLiteral("/com.example.tidy/thumbs")).isDir());
+        QFile secret(m_dir.filePath(QStringLiteral("secret/key.txt")));
+        QVERIFY(secret.open(QIODevice::ReadOnly));
+        QCOMPARE(secret.readAll(), QByteArray("secret"));
+    }
+
+    void aFolderIsAskedForOnceAndRememberedWhenTheUserSaysSo()
+    {
+        const QString exports = m_dir.filePath(QStringLiteral("exports"));
+        const QString fonts = m_dir.filePath(QStringLiteral("fonts"));
+        write(fonts + QStringLiteral("/a.ttf"), "font");
+        QDir().mkpath(exports);
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.commands.register('greet', function()
+                hikari.notify('exports ' .. tostring(hikari.files.folder('exports')))
+                local report = hikari.files.open('exports', 'week/report.txt')
+                hikari.notify('wrote ' .. tostring(hikari.files.write(report, 'report')))
+            end)
+            hikari.commands.register('spin', function()
+                local font, err = hikari.files.open('fonts', 'a.ttf')
+                if not font then hikari.notify('fonts ' .. err.code) return end
+                local _, refused = hikari.files.write(font, 'x')
+                hikari.notify('fonts ' .. hikari.files.read(font) .. ' ' .. refused.code)
+            end)
+        )~", true, R"(, "permissions": {"files": [
+                {"id": "exports", "title": "Exports", "writable": true, "reason": "Saves the weekly report"},
+                {"id": "fonts", "title": "Fonts", "reason": "Reads your fonts"}]})");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        {
+            app::PluginRuntime runtime(wiring(*a));
+            runtime.sync();
+            app::PluginUi *ui = runtime.ui();
+            QVERIFY(runtime.run(kTidyGreet));
+            QTRY_VERIFY(ui->fileRequest());
+            app::PluginFileRequest *asked = ui->fileRequest();
+            QCOMPARE(asked->kind(), QStringLiteral("folder"));
+            QCOMPARE(asked->pluginName(), QStringLiteral("Tidy"));
+            QCOMPARE(asked->title(), QStringLiteral("Exports"));
+            QCOMPARE(asked->reason(), QStringLiteral("Saves the weekly report"));
+            QVERIFY(asked->writable());
+            asked->accept(QUrl::fromLocalFile(exports), true);
+            QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: wrote true")));
+            QVERIFY(texts(noticed).contains(QStringLiteral("Tidy: exports true")));
+            QVERIFY(!ui->fileRequest());
+
+            QVERIFY(runtime.run(kTidySpin));
+            QTRY_VERIFY(ui->fileRequest());
+            QVERIFY(!ui->fileRequest()->writable());
+            ui->fileRequest()->reject();
+            QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: fonts not_granted")));
+            QVERIFY(runtime.run(kTidySpin));
+            QTRY_VERIFY(ui->fileRequest());
+            ui->fileRequest()->accept(QUrl::fromLocalFile(fonts), false);
+            QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: fonts font not_granted")));
+        }
+        QFile report(exports + QStringLiteral("/week/report.txt"));
+        QVERIFY(report.open(QIODevice::ReadOnly));
+        QCOMPARE(report.readAll(), QByteArray("report"));
+        const auto registry = plugins::loadRegistry(std::filesystem::path(folders().registry.toStdU16String()));
+        QVERIFY(registry);
+        const auto &grants = registry->at("com.example.tidy").grants;
+        QCOMPARE(grants.size(), std::size_t(1));
+        QCOMPARE(QString::fromStdString(grants.at("exports").path), QDir(exports).absolutePath());
+        QVERIFY(grants.at("exports").writable);
+
+        noticed.clear();
+        app::PluginRuntime again(wiring(*a));
+        again.sync();
+        QVERIFY(again.run(kTidyGreet));
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: wrote true")));
+        QVERIFY(!again.ui()->fileRequest());
+        QVERIFY(again.run(kTidySpin));
+        QTRY_VERIFY(again.ui()->fileRequest());
+        again.ui()->fileRequest()->reject();
+    }
+
+    void aPickedOrDroppedFileIsTheOnlyFileGranted()
+    {
+        const QString picked = m_dir.filePath(QStringLiteral("picked.txt"));
+        const QString dropped = m_dir.filePath(QStringLiteral("dropped.txt"));
+        write(picked, "picked");
+        write(dropped, "dropped");
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.panels.render('notes', {kind = 'column', drop = true, children = {{kind = 'label', text = 'Drop notes here'}}})
+            hikari.panels.on('notes', function(e)
+                if e.kind == 'drop' then
+                    hikari.notify('dropped ' .. e.files[1].name .. ' ' .. e.files[1].access .. ' ' .. hikari.files.read(e.files[1]))
+                end
+            end)
+            hikari.commands.register('greet', function()
+                local file = hikari.files.pick({title = 'Pick a note', filters = {{name = 'Notes', patterns = {'*.txt', '*.md'}}}})
+                local _, refused = hikari.files.write(file, 'x')
+                hikari.notify('picked ' .. file.name .. ' ' .. hikari.files.read(file) .. ' ' .. refused.code)
+                local saved = hikari.files.pick({save = true, name = 'out.txt'})
+                hikari.notify('saved ' .. tostring(hikari.files.write(saved, 'saved')))
+                hikari.notify('cancelled ' .. tostring(hikari.files.pick()))
+                local _, bad = hikari.files.pick({filters = {{name = 'Bad', patterns = {'*.(x)'}}}})
+                hikari.notify('bad ' .. bad.code)
+                hikari.notify('granted ' .. #hikari.files.list())
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_VERIFY(ui->fileRequest());
+        QCOMPARE(ui->fileRequest()->kind(), QStringLiteral("open"));
+        QCOMPARE(ui->fileRequest()->title(), QStringLiteral("Pick a note"));
+        QCOMPARE(ui->fileRequest()->nameFilters(), QStringList{QStringLiteral("Notes (*.txt *.md)")});
+        ui->fileRequest()->accept(QUrl::fromLocalFile(picked));
+        QTRY_VERIFY(ui->fileRequest() && ui->fileRequest()->kind() == QStringLiteral("save"));
+        QCOMPARE(ui->fileRequest()->file().fileName(), QStringLiteral("out.txt"));
+        ui->fileRequest()->accept(QUrl::fromLocalFile(m_dir.filePath(QStringLiteral("out.txt"))));
+        QTRY_VERIFY(ui->fileRequest() && ui->fileRequest()->kind() == QStringLiteral("open"));
+        ui->fileRequest()->reject();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: granted 2")));
+        QVERIFY(texts(noticed).contains(QStringLiteral("Tidy: picked picked.txt picked not_granted")));
+        QVERIFY(texts(noticed).contains(QStringLiteral("Tidy: saved true")));
+        QVERIFY(texts(noticed).contains(QStringLiteral("Tidy: cancelled nil")));
+        QVERIFY(texts(noticed).contains(QStringLiteral("Tidy: bad invalid_params")));
+        QFile out(m_dir.filePath(QStringLiteral("out.txt")));
+        QVERIFY(out.open(QIODevice::ReadOnly));
+        QCOMPARE(out.readAll(), QByteArray("saved"));
+
+        const QString dock = QStringLiteral("plugin:com.example.tidy/notes");
+        QTRY_VERIFY(!ui->panel(dock)->tree().isNull());
+        QVERIFY(!ui->drop(dock, {QUrl(QStringLiteral("https://example.com/x.txt"))}));
+        QVERIFY(ui->drop(dock, {QUrl::fromLocalFile(dropped)}));
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: dropped dropped.txt read dropped")));
+        QVERIFY(!ui->drop(QStringLiteral("plugin:com.example.other/notes"), {QUrl::fromLocalFile(dropped)}));
+    }
+
+    void aStoppedPluginLosesItsPickerAndItsHandles()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            hikari.commands.register('greet', function() hikari.files.pick() end)
+            hikari.commands.register('spin', function()
+                local note = hikari.files.open('data', 'a.txt')
+                hikari.files.write(note, 'a')
+                hikari.notify('handle ' .. note.file)
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        QVERIFY(runtime.run(kTidySpin));
+        QTRY_COMPARE(texts(noticed).size(), 1);
+        const std::string handle = texts(noticed).first().section(u' ', -1).toStdString();
+        auto &api = a->apiHost()->api();
+        const auto read = [&] {
+            std::optional<api::Result> answer;
+            api.call(api::Caller{"plugin:com.example.tidy", "Tidy"}, "files.read", api::Json::object({{"file", handle}}),
+                     [&](api::Result r) { answer = std::move(r); });
+            return answer;
+        };
+        QVERIFY(read() && *read());
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_VERIFY(runtime.ui()->fileRequest());
+        runtime.forceStop(QStringLiteral("com.example.tidy"));
+        QTRY_VERIFY(!runtime.ui()->fileRequest());
+        QCOMPARE(read()->error().code, std::string(api::errors::kNotGranted));
+    }
+
+    void pluginRequestsNeedTheSwitchHttpsAndADeclaredHost()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            local function fetch(urls)
+                for _, url in ipairs(urls) do
+                    local _, err = hikari.net.fetch(url)
+                    hikari.notify(url .. ' ' .. err.code .. ' ' .. tostring(err.data.reason or err.data.host))
+                end
+            end
+            hikari.commands.register('greet', function()
+                fetch({'https://api.example.com/v1', 'http://api.example.com/v1', 'https://evil.example.net/'})
+            end)
+            hikari.commands.register('spin', function()
+                fetch({'http://api.example.com/v1', 'https://evil.example.net/'})
+            end)
+        )~", true, R"(, "permissions": {"network": {"hosts": ["api.example.com"], "reason": "Looks words up"}})");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        bool allowed = false;
+        auto w = wiring(*a);
+        w.networkAllowed = [&] { return allowed; };
+        app::PluginRuntime runtime(std::move(w));
+        runtime.sync();
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_COMPARE(texts(noticed).size(), 3);
+        QCOMPARE(texts(noticed), (QStringList{QStringLiteral("Tidy: https://api.example.com/v1 refused network_off"),
+                                              QStringLiteral("Tidy: http://api.example.com/v1 refused network_off"),
+                                              QStringLiteral("Tidy: https://evil.example.net/ refused network_off")}));
+        allowed = true;
+        noticed.clear();
+        QVERIFY(runtime.run(kTidySpin));
+        QTRY_COMPARE(texts(noticed).size(), 2);
+        QCOMPARE(texts(noticed), (QStringList{QStringLiteral("Tidy: http://api.example.com/v1 refused not_https"),
+                                              QStringLiteral("Tidy: https://evil.example.net/ not_granted evil.example.net")}));
     }
 };
 

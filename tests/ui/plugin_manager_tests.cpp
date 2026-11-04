@@ -3,6 +3,8 @@
 
 #include <QDir>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -212,6 +214,51 @@ private slots:
         QCOMPARE(count.value(QStringLiteral("value")).toInt(), 4);
         QVERIFY(!reread.setSetting(QStringLiteral("com.example.hello"), QStringLiteral("count"), QStringLiteral("9")).isEmpty());
         QCOMPARE(kept.count(), 1);
+    }
+
+    void rememberedFoldersAreListedAndCanBeForgotten()
+    {
+        PluginManager manager(folders());
+        QVERIFY(manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        QFile manifest(installed("hikari-plugin.json"));
+        QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        manifest.write(R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "main": "main.lua",
+            "authors": ["Ana"],
+            "permissions": {"files": [{"id": "fonts", "title": "Font folder", "writable": false, "reason": "It measures lines."}]}})");
+        manifest.close();
+        QFile registry(folders().registry);
+        QVERIFY(registry.open(QIODevice::ReadOnly));
+        QJsonObject json = QJsonDocument::fromJson(registry.readAll()).object();
+        registry.close();
+        QJsonObject hello = json.value(QStringLiteral("plugins")).toObject().value(QStringLiteral("com.example.hello")).toObject();
+        const QString fonts = m_dir.filePath(QStringLiteral("fonts"));
+        hello.insert(QStringLiteral("grants"),
+                     QJsonObject{{QStringLiteral("fonts"), QJsonObject{{QStringLiteral("path"), fonts}, {QStringLiteral("writable"), true}}}});
+        QJsonObject plugins = json.value(QStringLiteral("plugins")).toObject();
+        plugins.insert(QStringLiteral("com.example.hello"), hello);
+        json.insert(QStringLiteral("plugins"), plugins);
+        QVERIFY(registry.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        registry.write(QJsonDocument(json).toJson());
+        registry.close();
+
+        PluginManager reread(folders());
+        const QVariantList rows = only(reread).value(QStringLiteral("folders")).toList();
+        QCOMPARE(rows.size(), 1);
+        const QVariantMap row = rows.first().toMap();
+        QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("fonts"));
+        QCOMPARE(row.value(QStringLiteral("title")).toString(), QStringLiteral("Font folder"));
+        QCOMPARE(row.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(fonts));
+        QVERIFY(!row.value(QStringLiteral("writable")).toBool());
+
+        QSignalSpy forgotten(&reread, &PluginManager::folderForgotten);
+        QVERIFY(!reread.forgetFolder(QStringLiteral("com.example.hello"), QStringLiteral("home")).isEmpty());
+        QCOMPARE(forgotten.count(), 0);
+        QCOMPARE(reread.forgetFolder(QStringLiteral("com.example.hello"), QStringLiteral("fonts")), QString());
+        QCOMPARE(forgotten.count(), 1);
+        QCOMPARE(forgotten.first().at(0).toString(), QStringLiteral("com.example.hello"));
+        QVERIFY(only(reread).value(QStringLiteral("folders")).toList().isEmpty());
+        QVERIFY(only(PluginManager(folders())).value(QStringLiteral("folders")).toList().isEmpty());
     }
 
     void anUpdateFromFileTakesOnlyTheSamePlugin()

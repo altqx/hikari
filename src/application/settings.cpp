@@ -337,6 +337,7 @@ const std::vector<SettingDefinition> &definitions()
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.closedCompounds", "", Bool, Profile, Mapped, false, true},

@@ -9208,6 +9208,14 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>플러그인의 인터넷 연결 허용</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 플러그인의 요청을 모두 거부합니다.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>단축키 (Hotkeys.txt)</translation>
     </message>
@@ -9646,6 +9654,22 @@ Failed to copy %2 fonts.</source>
         <translation>권한</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>기억한 폴더</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>잊기</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>다음에 이 폴더가 필요할 때 %1이(가) 다시 묻습니다</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>추가하는 항목</translation>
     </message>
@@ -9780,6 +9804,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1이(가) 읽고 쓸 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1이(가) 읽을 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1에 이 폴더 기억하기</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>폴더 선택…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: 파일 저장</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: 파일 선택</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
     </message>
 </context>
 <context>

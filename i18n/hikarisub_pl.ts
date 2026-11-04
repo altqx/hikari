@@ -9314,6 +9314,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>Pozwól wtyczkom łączyć się z internetem</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: każde żądanie wtyczki jest odrzucane.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>Skróty klawiszowe (Hotkeys.txt)</translation>
     </message>
@@ -9758,6 +9766,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Uprawnienia</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>Zapamiętane foldery</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>Zapomnij</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>%1 zapyta ponownie, gdy następnym razem będzie potrzebować tego folderu</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>Co dodaje</translation>
     </message>
@@ -9896,6 +9920,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Details</source>
         <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1 prosi o folder do odczytu i zapisu: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1 prosi o folder do odczytu: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>Zapamiętaj ten folder dla %1</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>Wybierz folder…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: zapisz plik</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: wybierz plik</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
 </context>
 <context>

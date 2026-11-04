@@ -15,6 +15,8 @@ namespace hikari::plugin_helper {
 
 enum class Tier { Restricted, Unrestricted };
 enum class Level { Info, Warning, Error };
+// What a request beyond the Hikari API is about: panels and dialogs, files, or the network.
+enum class Area { Ui, Files, Net };
 
 // What a plugin asks of HikariSub. Each call blocks until HikariSub answers.
 class Host {
@@ -28,8 +30,7 @@ public:
     // Waits for the app-wide edit lock; the error says why it wasn't given.
     virtual std::expected<void, std::string> lock() = 0;
     virtual void unlock() = 0;
-    // The plugin's panels and dialogs; answered like call.
-    virtual std::expected<api::Json, api::Json> ui(const std::string &operation, const api::Json &params) = 0;
+    virtual std::expected<api::Json, api::Json> request(Area area, const std::string &operation, const api::Json &params) = 0;
 };
 
 struct Options {

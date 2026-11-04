@@ -9261,6 +9261,14 @@ Failed to copy %2 fonts.</source>
         <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: செருகுநிரலின் ஒவ்வொரு கோரிக்கையும் மறுக்கப்படும்.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>குறுக்குவிசைகள் (Hotkeys.txt)</translation>
     </message>
@@ -9702,6 +9710,22 @@ Failed to copy %2 fonts.</source>
         <translation>அனுமதிகள்</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>நினைவில் வைத்த கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>மற</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>அடுத்த முறை இந்தக் கோப்புறை தேவைப்படும்போது %1 மீண்டும் கேட்கும்</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>இது சேர்ப்பவை</translation>
     </message>
@@ -9838,6 +9862,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>படிக்கவும் எழுதவும் %1 ஒரு கோப்புறையைக் கேட்கிறது: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>படிக்க %1 ஒரு கோப்புறையைக் கேட்கிறது: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1-க்கு இந்தக் கோப்புறையை நினைவில் வை</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>கோப்புறையைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: கோப்பைச் சேமி</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: கோப்பைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
 </context>
 <context>
