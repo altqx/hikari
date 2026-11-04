@@ -17,7 +17,7 @@ This card ships the review of applied changes (Auto and Full access). Manual mod
 ## Changes and turns
 
 - **A change** is one `document.apply` from a caller with `Caller::reviewed`: one history step, named `<caller label>: <name>`. Its `name` is the summary the panel and History show. Its items are the Lines, Styles and Script Info properties it touched. A Line item keeps the Line before and after, and where it stood.
-- **Callers.** The sidecar's caller is `{id: "ai", label: "AI", reviewed: true}`. An MCP client sets `reviewed` with its own label, so its changes land in the review too. Plugins don't set it.
+- **Callers.** The sidecar's caller is `{id: "ai", label: "AI", reviewed: true}`. An MCP connection's caller (`McpServer::callerFor`) is `{id: "mcp:<connection>", label: <client name>, reviewed: true}`, so its changes land in the review too, in a turn of their own. Plugins don't set it.
 - **A turn** groups the changes made for one user message. A caller's write opens a turn when it has none open, or when the user edited that Document since the caller's last step there. AI7 opens one per message with `beginTurn`. Each turn starts with a checkpoint.
 - **Waiting.** An item waits while the Document still differs from its before. Undoing it through History hides it; Redo brings it back. An item is **edited since** when the Document no longer holds what the newest AI change on it left.
 
