@@ -24159,6 +24159,8 @@ private slots:
         QQuickItem *overlay = item("visualOverlay");
         QVERIFY(overlay);
         const auto cursorAtScene = [&](QPoint at) {
+            // Qt drops a move to the pointer's current position, so each poll steps off and back.
+            QTest::mouseMove(shown, at + QPoint(1, 0));
             QTest::mouseMove(shown, at);
             QCoreApplication::processEvents();
             return shown->cursor().shape();
