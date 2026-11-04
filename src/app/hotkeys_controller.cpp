@@ -497,7 +497,7 @@ void HotkeysController::beginOptions()
 {
     m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
-    m_list->build(listed());
+    m_list->build(listed(), m_hidden);
     emit rowsChanged();
 }
 
@@ -763,7 +763,7 @@ QVariantMap HotkeysController::importLegacyScripts(const QString &path)
         // MUST KILL: m_copy must be cleared, or the next edit stages from the pre-import bindings.
         m_copy.clear();
         m_list->clear();
-        m_list->build(listed());
+        m_list->build(listed(), m_hidden);
         m_list->filter(mode);
         emit rowsChanged();
     }
@@ -801,7 +801,7 @@ void HotkeysController::resetDefaults()
     split(application::defaultHotkeys());
     if (m_list) {
         m_list->clear();
-        m_list->build(listed());
+        m_list->build(listed(), m_hidden);
     }
     emit rowsChanged();
 }

@@ -174,7 +174,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -399,7 +399,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 112u);
+    EXPECT_EQ(count(1), 116u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 30u);
     list.filter(5);
@@ -409,10 +409,10 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 112u);
+    EXPECT_EQ(list.shown().size(), 116u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 111u);
+    EXPECT_EQ(list.shown().size(), 115u);
     list.filter(0);
     EXPECT_EQ(list.shown().size(), 279u);
 }
@@ -630,7 +630,7 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 273u);
+    ASSERT_EQ(list.rowCount(), 280u);
     const auto &added = list.row(279);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
@@ -638,7 +638,7 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 273u);
+    EXPECT_EQ(list.rowCount(), 280u);
     EXPECT_EQ(list.row(279).accel, "F6");
     EXPECT_EQ(list.selection(), 279);
 }

@@ -1253,7 +1253,7 @@ void HotkeyList::append(std::string text, std::string name, std::string accel, H
     m_filtered.push_back(row);
 }
 
-void HotkeyList::build(const HotkeyMap &live)
+void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> &hidden)
 {
     HotkeyMap mapped = live;
     const auto &names = hotkeyNames();
@@ -1279,6 +1279,9 @@ void HotkeyList::build(const HotkeyMap &live)
         }
         if (mapped.empty())
             break;
+        lastType = htype;
+        if (hidden && hidden(cur->first))
+            continue;
         std::string accel;
         const auto it = mapped.find(HotkeyId{cur->first, htype});
         if (it != mapped.end()) {
@@ -1287,7 +1290,6 @@ void HotkeyList::build(const HotkeyMap &live)
         }
         append(std::string(hotkeyWindowName(htype)) + " " + cur->second, cur->second, accel,
                HotkeyId{cur->first, htype});
-        lastType = htype;
     }
     m_history.push_back(m_rows);
     m_sel = findShown(0);

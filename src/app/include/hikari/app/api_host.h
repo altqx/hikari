@@ -38,7 +38,7 @@ public:
         application::MacroMediaPort *media = nullptr;
         // The editing target's selection, as the Grid sets it.
         std::function<bool(application::Selection)> selectTarget;
-        std::function<void()> refresh;
+        std::function<void(application::DocumentId committed)> refresh;
         std::function<std::vector<std::string>(std::string_view command)> keys;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);

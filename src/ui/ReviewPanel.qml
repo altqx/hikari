@@ -59,42 +59,43 @@ FocusScope {
         anchors.fill: parent
         spacing: 0
 
-        RowLayout {
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.margins: 8
-            spacing: 8
-            ColumnLayout {
+            spacing: 0
+            Label {
                 Layout.fillWidth: true
-                spacing: 0
-                Label {
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                    font.bold: true
-                    text: panel.targetTitle
-                }
-                Label {
-                    objectName: "reviewWaiting"
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                    color: Theme.muted
-                    text: panel.review.waiting > 0 ? qsTr("%n change(s) to review", "", panel.review.waiting)
-                                                   : qsTr("Nothing to review")
-                }
+                elide: Text.ElideRight
+                font.bold: true
+                text: panel.targetTitle
             }
-            IconTextButton {
-                objectName: "reviewUndoAll"
-                iconRole: "undo"
-                text: qsTr("Undo all")
-                enabled: panel.review.waiting > 0
-                onClicked: panel.undo(0, -1)
+            Label {
+                objectName: "reviewWaiting"
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                color: Theme.muted
+                text: panel.review.waiting > 0 ? qsTr("%n change(s) to review", "", panel.review.waiting)
+                                               : qsTr("Nothing to review")
             }
-            IconTextButton {
-                objectName: "reviewKeepAll"
-                iconRole: "review-keep"
-                text: qsTr("Keep all")
-                highlighted: true
-                enabled: panel.review.waiting > 0
-                onClicked: panel.review.keep(0, -1)
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Layout.topMargin: 6
+                spacing: 8
+                IconTextButton {
+                    objectName: "reviewUndoAll"
+                    iconRole: "undo"
+                    text: qsTr("Undo all")
+                    enabled: panel.review.waiting > 0
+                    onClicked: panel.undo(0, -1)
+                }
+                IconTextButton {
+                    objectName: "reviewKeepAll"
+                    iconRole: "review-keep"
+                    text: qsTr("Keep all")
+                    highlighted: true
+                    enabled: panel.review.waiting > 0
+                    onClicked: panel.review.keep(0, -1)
+                }
             }
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }

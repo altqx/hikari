@@ -104,7 +104,11 @@ class ApiHostTest : public QObject {
         if (out.isEmpty())
             return;
         QVERIFY(QDir().mkpath(out));
-        auto restore = qScopeGuard([] { ui::theme::endPreview(); });
+        shell(QStringLiteral("notices.visible = false"));
+        auto restore = qScopeGuard([this] {
+            ui::theme::endPreview();
+            shell(QStringLiteral("notices.visible = true"));
+        });
         for (const auto code : ui::theme::kCodes) {
             ui::theme::preview({{QStringLiteral("appearance.theme"), ui::theme::codeName(code)},
                                 {QStringLiteral("appearance.followSystem"), false}});
@@ -191,6 +195,7 @@ private slots:
         QVERIFY(application->review()->isAiStep(int(session().historySize()) - 1));
 
         QVERIFY(select(first));
+        QCOMPARE(application->editor().text(), QStringLiteral("changed"));
         QTRY_VERIFY(shell(QStringLiteral("reviewStrip.visible")).toBool());
         const QVariantMap current = application->review()->current();
         QCOMPARE(current.value(QStringLiteral("caller")).toString(), QStringLiteral("AI"));
@@ -218,6 +223,7 @@ private slots:
         QVERIFY(select(first));
         QVERIFY(application->review()->undoLine(false));
         QCOMPARE(textAt(0), std::u8string(u8"first"));
+        QCOMPARE(application->editor().text(), QStringLiteral("first"));
         QCOMPARE(session().history().back().name, std::string("Undo AI change to Line 1"));
         QCOMPARE(application->review()->waiting(), 0);
 

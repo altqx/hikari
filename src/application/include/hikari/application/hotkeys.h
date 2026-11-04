@@ -183,8 +183,9 @@ public:
     HotkeyList(const HotkeyList &) = delete;
     HotkeyList &operator=(const HotkeyList &) = delete;
 
-    // Selects the first row. clear() keeps the history and the modified flag.
-    void build(const HotkeyMap &live);
+    // Selects the first row; a named command `hidden` takes gets no row.
+    // clear() keeps the history and the modified flag.
+    void build(const HotkeyMap &live, const std::function<bool(int id)> &hidden = {});
     void clear();
     // Rows added while the page is open (a macro registered meanwhile),
     // at the end and in every step of the history, shown as the filter shows

@@ -19681,7 +19681,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 38);
+        QCOMPARE(table().size(), 42);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

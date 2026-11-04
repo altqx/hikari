@@ -78,7 +78,7 @@ QString diffHtml(const QString &before, const QString &after)
     const auto view = [](const QString &text) {
         return std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()), std::size_t(text.size()));
     };
-    const auto &roles = theme::current().roles;
+    const auto &roles = ui::theme::current().roles;
     QColor fill = roles.success;
     fill.setAlphaF(0.22F);
     const QString added = QStringLiteral("<span style=\"background-color:%1\">").arg(fill.name(QColor::HexArgb));

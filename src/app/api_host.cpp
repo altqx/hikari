@@ -45,9 +45,9 @@ bool ApiHost::select(application::DocumentId document, const application::Select
     return true;
 }
 
-void ApiHost::committed(application::DocumentId)
+void ApiHost::committed(application::DocumentId document)
 {
-    m_wiring.refresh();
+    m_wiring.refresh(document);
     observe();
 }
 

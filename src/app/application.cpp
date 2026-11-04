@@ -775,7 +775,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
-        [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
+        [this](application::Selection next) { return applySelection(std::move(next)); },
+        [this](application::DocumentId document) {
+            for (WindowViews *v : allViews())
+                if (v->editor && v->editorDocument == document)
+                    v->editor->reloadFromSession();
+            refreshViews();
+        },
         [this](std::string_view command) {
             const QString accel = m_hotkeys->accelOf(
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
