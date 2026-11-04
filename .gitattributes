@@ -30,6 +30,9 @@
 # FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
 /tests/fixtures/aegisub-extradata/** -text
 
+# tools/icons/draw_icons.py writes the icons and their manifest with LF; tools.draw-icons compares them byte for byte.
+/src/ui/icons/** text eol=lf
+
 # PL1: signed fixtures; a converted line ending breaks the signature.
 /tests/minisign/fixtures/** -text
 /tests/plugins/fixtures/** -text

@@ -52,6 +52,7 @@
 #include "hikari/app/composition.h"
 #include "next_file_folder.h"
 #include "menu_icon_scan.h"
+#include "menu_rows.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -1786,6 +1787,88 @@ private slots:
             shoot(grid, QStringLiteral("/menu-grid-group-") + QLatin1String(code) + QStringLiteral(".png"),
                   [&] { return named("groupMenu"); });
         }
+    }
+
+    void panelTabAndListMenuScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1400, 860);
+        QVERIFY(application->openFile(writeStyled("menus.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        application->addPage(true);
+        QVERIFY(application->openFile(writeFile(dir, "second.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,two\n")));
+        application->selectTab(0);
+        QVERIFY(application->openReference(original));
+        auto *root = engine->rootObjects().first();
+        for (const char *dock : {"automationDock", "stylesDock"})
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock)))));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto grab = [&](const QString &name) {
+            QTest::qWait(300);
+            const QRect frame = window->frameGeometry();
+            QVERIFY(window->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height()).save(out + name));
+        };
+        const auto closed = [&](QObject *menu) {
+            QMetaObject::invokeMethod(menu, "close");
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        };
+        const auto rightClick = [&](QQuickItem *at) {
+            QTest::mouseClick(window, Qt::RightButton, {}, centreOf(at));
+        };
+        auto *panelMenu = named("panelOptionsMenu");
+        auto *tabMenu = named("documentTabMenu");
+        auto *bar = named("documentTabBar");
+        for (const char *code : {"light", "dark"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QLatin1String(code) + QStringLiteral(".png");
+            for (const QString panel : {QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Automation"),
+                                        QStringLiteral("Reference")}) {
+                auto *dock = item<QObject>(qPrintable(panel.toLower() + QStringLiteral("Dock")));
+                QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+                QTRY_VERIFY(dock->property("isOpen").toBool());
+                QVERIFY2(openPanelMenu(panel), qPrintable(panel));
+                grab(QStringLiteral("/menu-panel-") + panel.toLower() + suffix);
+                closed(panelMenu);
+            }
+            for (int index : {0, -1}) {
+                auto *anchor = qobject_cast<QQuickItem *>(bar);
+                QVERIFY(anchor && anchor->isVisible());
+                QVERIFY(QMetaObject::invokeMethod(bar, "openTabMenu", Q_ARG(QVariant, index),
+                                                  Q_ARG(QVariant, QVariant::fromValue(anchor)), Q_ARG(QVariant, 10),
+                                                  Q_ARG(QVariant, anchor->height())));
+                QTRY_VERIFY(tabMenu->property("opened").toBool());
+                grab(QString::fromLatin1(index < 0 ? "/menu-tab-bar" : "/menu-tab") + suffix);
+                if (index == 0) {
+                    QObject *switchTo = named("tabMenuSwitchTo");
+                    QVERIFY(QMetaObject::invokeMethod(switchTo, "open"));
+                    QTRY_VERIFY(switchTo->property("opened").toBool());
+                    grab(QStringLiteral("/menu-tab-switchto") + suffix);
+                    closed(switchTo);
+                }
+                closed(tabMenu);
+            }
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("stylesDock")))));
+            QQuickItem *style = nullptr;
+            QTRY_VERIFY((style = findItem(item("stylesList"), QStringLiteral("stylesRow0"))) && style->isVisible());
+            rightClick(style);
+            QTRY_VERIFY(named("stylesRowMenu")->property("opened").toBool());
+            grab(QStringLiteral("/menu-styles-row") + suffix);
+            closed(named("stylesRowMenu"));
+            auto *grid = qobject_cast<ui::LineGrid *>(item("referenceGrid"));
+            QVERIFY(grid);
+            QTest::mouseClick(window, Qt::RightButton, {}, grid->mapToScene(grid->cellRect(0, 1).center()).toPoint());
+            QTRY_VERIFY(named("referenceOccurrenceMenu")->property("opened").toBool());
+            grab(QStringLiteral("/menu-reference") + suffix);
+            closed(named("referenceOccurrenceMenu"));
+        }
+        settings.setValue(QStringLiteral("appearance.followSystem"), true);
     }
 
     void videoAndAudioMenuScreenshots()
@@ -4420,6 +4503,18 @@ private slots:
         auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(window->isVisible());
+        const auto more = [&](const QString &prefix) {
+            for (QObject *o : root->findChildren<QObject *>())
+                if (o->objectName() == prefix + QStringLiteral("MoreMenu"))
+                    return menu_rows::shown(o);
+            return QStringList{prefix + QStringLiteral("MoreMenu not found")};
+        };
+        QCOMPARE(more(QStringLiteral("ass")), (QStringList{QStringLiteral("assMoveToTop"), QStringLiteral("assMoveToBottom"),
+                                                          QStringLiteral("assSortByName"), QStringLiteral("|"),
+                                                          QStringLiteral("assClean")}));
+        QCOMPARE(more(QStringLiteral("store")), (QStringList{QStringLiteral("storeMoveToTop"),
+                                                            QStringLiteral("storeMoveToBottom"),
+                                                            QStringLiteral("storeSortByName")}));
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(window, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
         auto *font = findItem(window->contentItem(), QStringLiteral("styleFont"));
@@ -5939,6 +6034,9 @@ private slots:
             return found;
         };
 
+        QCOMPARE(menu_rows::shown(menuItem("panelMenuEditor")),
+                 (QStringList{QStringLiteral("panelShowEditor"), QStringLiteral("panelFloatEditor"), QStringLiteral("|"),
+                              QStringLiteral("panelCloseEditor")}));
         QObject *floatEditor = menuItem("panelFloatEditor");
         QVERIFY(floatEditor);
         QVERIFY(QMetaObject::invokeMethod(floatEditor, "triggered"));
@@ -5948,12 +6046,12 @@ private slots:
         QVERIFY(session->draftLine());
         QVERIFY(application->workspace().editingTarget());
 
-        QVERIFY(QMetaObject::invokeMethod(menuItem("panelDockEditor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem("panelFloatEditor"), "triggered"));
         QTRY_VERIFY(!editorDock->property("isFloating").toBool());
         QTRY_COMPARE(item("editorPanel")->window(), window);
         QCOMPARE(text->property("text").toString(), QStringLiteral("first!"));
 
-        QVERIFY(QMetaObject::invokeMethod(menuItem("panelHideGrid"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem("panelCloseGrid"), "triggered"));
         QTRY_VERIFY(!gridDock->property("isOpen").toBool());
         QVERIFY(application->workspace().editingTarget());
         QVERIFY(QMetaObject::invokeMethod(menuItem("panelShowGrid"), "triggered"));
@@ -6432,6 +6530,8 @@ private slots:
              QStringLiteral("the empty list's placeholder")},
             {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogues yet"))"),
              QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("ReferenceTray.qml"), QStringLiteral(R"(text: qsTr("No other occurrences"))"),
+             QStringLiteral("the empty list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())
@@ -6573,7 +6673,7 @@ private slots:
             QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
         QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
 
-        QVERIFY(QMetaObject::invokeMethod(named("panelDockEditor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelFloatEditor"), "triggered"));
         QTRY_COMPARE(item("editorPanel")->window(), window);
         if (!becomesFocusWindow(window))
             QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
@@ -6712,7 +6812,7 @@ private slots:
         QVERIFY(menu);
         audioOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
-        QCOMPARE(named("panelOptionsFloat")->property("text").toString(), QStringLiteral("Undock"));
+        QCOMPARE(named("panelOptionsFloat")->property("text").toString(), QStringLiteral("Float"));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
         QTRY_VERIFY(audioDock->property("isFloating").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
@@ -6770,7 +6870,7 @@ private slots:
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
     }
 
-    void panelMenuHoldsMoveUndockAndClose()
+    void panelMenuHoldsMoveFloatAndClose()
     {
         QVERIFY(application->openFile(episode));
         QVERIFY(application->openReference(original));
@@ -6781,8 +6881,8 @@ private slots:
         QVERIFY(openPanelMenu(QStringLiteral("Reference")));
         const QStringList referenceItems = panelMenuItems();
         QCOMPARE(referenceItems, (QStringList{QStringLiteral("Compare with reference"), QStringLiteral("|"),
-                                              QStringLiteral("Move panel…"), QStringLiteral("Undock"),
-                                              QStringLiteral("Close reference")}));
+                                              QStringLiteral("Move panel…"), QStringLiteral("Float"), QStringLiteral("|"),
+                                              QStringLiteral("Close")}));
         QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));
         std::function<void(QQuickItem *)> noRepeat = [&](QQuickItem *from) {
             for (QQuickItem *child : from->childItems()) {
@@ -6799,12 +6899,12 @@ private slots:
         QCOMPARE(findItem(referenceHeader, QStringLiteral("dockMenuButton"))->property("contentItem").value<QObject *>()
                      ->property("iconRole").toString(),
                  QStringLiteral("panel-menu"));
-        const QStringList videoOwn{QStringLiteral("Show times (off) (on)"), QStringLiteral("Show frames (off)"),
-                                   QStringLiteral("Seek on"), QStringLiteral("Then play"), QStringLiteral("|")};
+        const QStringList videoOwn{QStringLiteral("Move video to the selected line"), QStringLiteral("After moving, play"),
+                                   QStringLiteral("|")};
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("down").toBool());
         QCOMPARE(panelMenuItems(),
-                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("down").toBool());
 
@@ -6812,7 +6912,7 @@ private slots:
         QVERIFY(videoDock->setProperty("options", 1));
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QCOMPARE(panelMenuItems(),
-                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Float"), QStringLiteral("|"), QStringLiteral("Close (off)")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(videoDock->setProperty("options", 0));
 
@@ -6829,7 +6929,7 @@ private slots:
         }
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QCOMPARE(panelMenuItems(),
-                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("|"), QStringLiteral("Close")}));
         {
             QQuickItem *floatingHeader = dockHeader(QStringLiteral("Video"));
             // A native popup (Popup.Window, Wayland's xdg_popup) belongs to its parent's window.
@@ -6900,8 +7000,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioDock"), "setAsCurrentTab"));
         QVERIFY(openPanelMenu(QStringLiteral("Audio")));
         QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left"),
-                                                QStringLiteral("Move tab right"), QStringLiteral("Undock"),
-                                                QStringLiteral("Close")}));
+                                                QStringLiteral("Move tab right"), QStringLiteral("Float"),
+                                                QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabLeft"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_COMPARE(order(), (QStringList{QStringLiteral("Audio"), QStringLiteral("Video"), QStringLiteral("Editor")}));
@@ -6918,8 +7018,8 @@ private slots:
 
         QVERIFY(openPanelMenu(QStringLiteral("Audio")));
         QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left (off)"),
-                                                QStringLiteral("Move tab right"), QStringLiteral("Undock"),
-                                                QStringLiteral("Close")}));
+                                                QStringLiteral("Move tab right"), QStringLiteral("Float"),
+                                                QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabRight"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_COMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor")}));
@@ -6930,8 +7030,8 @@ private slots:
         QTRY_VERIFY(item("audioPanel")->hasActiveFocus());
         QVERIFY(openPanelMenu(QStringLiteral("Audio")));
         QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left"),
-                                                QStringLiteral("Move tab right (off)"), QStringLiteral("Undock"),
-                                                QStringLiteral("Close")}));
+                                                QStringLiteral("Move tab right (off)"), QStringLiteral("Float"),
+                                                QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(!docking.moveTab(QStringLiteral("Audio"), 1));
         QCOMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Audio")}));
@@ -7070,7 +7170,7 @@ private slots:
                 QTRY_VERIFY(!dock->property("isOpen").toBool());
             }
         }
-        QVERIFY2(withOwnItems.contains(QStringLiteral("Grid")) && withOwnItems.contains(QStringLiteral("Video")),
+        QVERIFY2(withOwnItems.contains(QStringLiteral("Grid")) && withOwnItems.contains(QStringLiteral("Editor")),
                  qPrintable(withOwnItems.join(QLatin1Char(','))));
 
         auto *gridDock = item<QObject>("gridDock");
@@ -7162,7 +7262,7 @@ private slots:
         for (QQuickItem *target : {static_cast<QQuickItem *>(status), item("referenceNextMatch")}) {
             QTest::mouseClick(window, Qt::RightButton, {}, target == status ? statusPoint : centreOf(target));
             QTRY_VERIFY2(menu->property("visible").toBool(), qPrintable(target->objectName()));
-            QCOMPARE(panelMenuItems().last(), QStringLiteral("Close reference"));
+            QCOMPARE(panelMenuItems().last(), QStringLiteral("Close"));
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(!menu->property("visible").toBool());
         }
@@ -8604,6 +8704,51 @@ private slots:
         }
         application->setAskForBadResolution(false);
         QVERIFY(!application->askForBadResolution());
+        application->editor().discard();
+    }
+
+    void resampleAdjustsThreeDRotations()
+    {
+        const QString path = dir.filePath(QStringLiteral("resample-3d.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(320,180)\\frx30}Sign\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto lineText = [session] {
+            const auto &t = session->document().lines()[0]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QObject *resample = nullptr;
+        const auto resampleTo = [&](int width, int height, bool adjust) {
+            QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+            QTRY_VERIFY((resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"))) &&
+                        resample->property("visible").toBool());
+            QQuickItem *check = dialogItem("resampleDialog", "resampleAdjustRotations");
+            QVERIFY(check->isVisible());
+            QVERIFY(check->property("checked").toBool());
+            check->setProperty("checked", adjust);
+            dialogItem("resampleDialog", "resampleWidth")->setProperty("value", width);
+            dialogItem("resampleDialog", "resampleHeight")->setProperty("value", height);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
+            QTRY_VERIFY(!resample->property("visible").toBool());
+        };
+        resampleTo(1280, 720, false);
+        QCOMPARE(lineText(), QStringLiteral("{\\pos(640,360)\\frx30}Sign"));
+        resampleTo(1920, 1080, true);
+        QVERIFY2(lineText().startsWith(QStringLiteral("{\\pos(960,540)\\org(960,540)")), qPrintable(lineText()));
+        QVERIFY2(!lineText().contains(QStringLiteral("\\frx30}")), qPrintable(lineText()));
+        QCOMPARE(session->history().back().name, std::string("Changing subtitles resolution"));
         application->editor().discard();
     }
 
@@ -16594,14 +16739,18 @@ private slots:
         QVERIFY(openPanelMenu(dock));
         const QStringList rows = panelMenuItems();
         QCOMPARE(rows.first(), QStringLiteral("Clear"));
-        QCOMPARE(rows.mid(rows.size() - 2), (QStringList{QStringLiteral("About Notes helper…"), QStringLiteral("Close")}));
+        QCOMPARE(rows.mid(rows.size() - 3),
+                 (QStringList{QStringLiteral("About Notes helper…"), QStringLiteral("|"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptions_pluginMenu_clear"), "triggered"));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
         QTRY_COMPARE(findItem(body, QStringLiteral("pluginWidget_said"))->property("text").toString(), QStringLiteral("cleared"));
 
+        QCOMPARE(menu_rows::shown(named(at("panelMenu").constData())),
+                 (QStringList{QString::fromUtf8(at("panelShow")), QString::fromUtf8(at("panelFloat")), QStringLiteral("|"),
+                              QString::fromUtf8(at("panelClose"))}));
         QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat").constData()), "triggered"));
         QTRY_VERIFY(notes->property("isFloating").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named(at("panelDock").constData()), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat").constData()), "triggered"));
         QTRY_VERIFY(!notes->property("isFloating").toBool());
         QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("With notes")));
 
@@ -28180,10 +28329,9 @@ private slots:
         auto *menu = named("panelOptionsMenu");
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         const QStringList items = panelMenuItems();
-        QVERIFY2(items.indexOf(QStringLiteral("Seek on")) == items.indexOf(QStringLiteral("Show frames (off)")) + 1,
-                 qPrintable(items.join(u", ")));
-        QVERIFY2(items.indexOf(QStringLiteral("Then play")) == items.indexOf(QStringLiteral("Seek on")) + 1,
-                 qPrintable(items.join(u", ")));
+        QVERIFY2(items.indexOf(QStringLiteral("Move video to the selected line")) == 0, qPrintable(items.join(u", ")));
+        QVERIFY2(items.indexOf(QStringLiteral("After moving, play")) == 1, qPrintable(items.join(u", ")));
+        QVERIFY2(!items.contains(QStringLiteral("Show frames (off)")), qPrintable(items.join(u", ")));
         QCOMPARE(choices("panelOptions_videoSeekOn"), marked(seekChoices, 3));
         QCOMPARE(choices("panelOptions_videoThenPlay"), marked(playChoices, 0));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptions_videoThenPlay_2"), "triggered"));
@@ -28206,8 +28354,8 @@ private slots:
             QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(o);
             return iface ? iface->text(QAccessible::Name) : QString();
         };
-        QCOMPARE(name(seek), QStringLiteral("Seek on"));
-        QCOMPARE(name(play), QStringLiteral("Then play"));
+        QCOMPARE(name(seek), QStringLiteral("Move video to the selected line"));
+        QCOMPARE(name(play), QStringLiteral("After moving, play"));
         QVERIFY(QMetaObject::invokeMethod(seek, "activated", Q_ARG(int, 5)));
         QCOMPARE(settings.integer("video.moveToActiveLine"), 3);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
@@ -30022,7 +30170,7 @@ private slots:
         QVERIFY(!item("showTimes"));
         auto *menu = named("panelOptionsMenu");
         const auto choose = [&](const char *name) {
-            QVERIFY(openPanelMenu(QStringLiteral("Video")));
+            QVERIFY(openPanelMenu(QStringLiteral("Editor")));
             QVERIFY(panelMenuItems().mid(0, 2).join(QLatin1Char(',')).contains(QStringLiteral("(on)")));
             auto *entry = qobject_cast<QQuickItem *>(named(name));
             QVERIFY(entry && entry->isEnabled());
@@ -30032,7 +30180,7 @@ private slots:
         };
         choose("panelOptions_showFrames");
         QTRY_VERIFY(application->editor().showFrames());
-        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(openPanelMenu(QStringLiteral("Editor")));
         QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times"), QStringLiteral("Show frames (on)")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());
@@ -30064,7 +30212,7 @@ private slots:
         QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(),
                  QString::fromUtf8(reinterpret_cast<const char *>(core::legacy::assTimeText(typedStartMs).c_str())));
         QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), false);
-        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(openPanelMenu(QStringLiteral("Editor")));
         QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times (on)"), QStringLiteral("Show frames")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());
@@ -30082,7 +30230,7 @@ private slots:
         QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), true);
         QVERIFY(!model->index(0, ui::LineTableModel::StartColumn).data().toString().contains(QLatin1Char(':')));
         QVERIFY(!item<QObject>("startField")->property("text").toString().contains(QLatin1Char(':')));
-        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(openPanelMenu(QStringLiteral("Editor")));
         QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times"), QStringLiteral("Show frames (on)")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());

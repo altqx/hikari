@@ -401,6 +401,7 @@ Item {
         id: moreMenu
         objectName: "stylesMoreMenu"
         ShellMenuItem {
+            objectName: "stylesMoreApply"
             iconRole: "style-apply"
             text: qsTr("Apply to the selected lines")
             enabled: panel.canApply
@@ -408,34 +409,40 @@ Item {
         }
         MenuSeparator {}
         ShellMenuItem {
+            objectName: "stylesMoreNew"
             iconRole: "add"
-            text: qsTr("New style")
+            text: qsTr("New style…")
             enabled: panel.available && panel.canChange
             onTriggered: panel.manager.newDocumentStyle()
         }
         ShellMenuItem {
+            objectName: "stylesMoreEdit"
             iconRole: "edit"
-            text: qsTr("Edit style")
+            text: qsTr("Edit style…")
             enabled: panel.canChangeChosen
             onTriggered: panel.manager.editStyleAt(panel.chosenAt)
         }
         ShellMenuItem {
+            objectName: "stylesMoreDuplicate"
             iconRole: "duplicate"
             text: qsTr("Duplicate")
             enabled: panel.canChangeChosen
             onTriggered: panel.manager.duplicateDocumentStyle(panel.chosenAt)
         }
+        MenuSeparator {}
         ShellMenuItem {
+            objectName: "stylesMoreManager"
+            iconRole: "styles"
+            text: qsTr("Style manager")
+            onTriggered: panel.manager.showAt(panel.chosenRow ? panel.chosenAt : -1)
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "stylesMoreDelete"
             iconRole: "delete"
             text: qsTr("Delete")
             enabled: panel.canChangeChosen
             onTriggered: panel.remove(panel.chosenAt)
-        }
-        MenuSeparator {}
-        ShellMenuItem {
-            iconRole: "styles"
-            text: qsTr("Style manager")
-            onTriggered: panel.manager.showAt(panel.chosenRow ? panel.chosenAt : -1)
         }
     }
 
@@ -457,12 +464,25 @@ Item {
             enabled: rowMenu.name.length > 0 && panel.editor.editable && panel.editor.assFields
             onTriggered: panel.apply(rowMenu.name)
         }
+        ShellMenuItem {
+            objectName: "stylesMenuSelectLines"
+            iconRole: "select-lines"
+            text: qsTr("Select lines with this style")
+            onTriggered: panel.app.selectLinesWithStyle(rowMenu.name)
+        }
         MenuSeparator {}
+        ShellMenuItem {
+            objectName: "stylesMenuNew"
+            iconRole: "add"
+            text: qsTr("New style…")
+            enabled: panel.available && panel.canChange
+            onTriggered: panel.manager.newDocumentStyle()
+        }
         ShellMenuItem {
             objectName: "stylesMenuEdit"
             enabled: panel.canChange
             iconRole: "edit"
-            text: qsTr("Edit…")
+            text: qsTr("Edit style…")
             onTriggered: panel.manager.editStyleAt(rowMenu.row)
         }
         ShellMenuItem {
@@ -471,21 +491,6 @@ Item {
             iconRole: "duplicate"
             text: qsTr("Duplicate")
             onTriggered: panel.manager.duplicateDocumentStyle(rowMenu.row)
-        }
-        ShellMenuItem {
-            objectName: "stylesMenuDelete"
-            enabled: panel.canChange
-            iconRole: "delete"
-            text: qsTr("Delete")
-            shortcutText: ShellMenus.keyText("Del")
-            onTriggered: panel.remove(rowMenu.row)
-        }
-        MenuSeparator {}
-        ShellMenuItem {
-            objectName: "stylesMenuSelectLines"
-            iconRole: "select-lines"
-            text: qsTr("Select lines with this style")
-            onTriggered: panel.app.selectLinesWithStyle(rowMenu.name)
         }
         ShellMenuItem {
             objectName: "stylesMenuCopyToCatalog"
@@ -498,8 +503,17 @@ Item {
         ShellMenuItem {
             objectName: "stylesMenuManager"
             iconRole: "styles"
-            text: qsTr("Open in Style manager")
+            text: qsTr("Style manager")
             onTriggered: panel.manager.showAt(rowMenu.row)
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "stylesMenuDelete"
+            enabled: panel.canChange
+            iconRole: "delete"
+            text: qsTr("Delete")
+            shortcutText: ShellMenus.keyText("Del")
+            onTriggered: panel.remove(rowMenu.row)
         }
     }
 }
