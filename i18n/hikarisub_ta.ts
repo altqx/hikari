@@ -2044,6 +2044,14 @@ Output device: %2</source>
         <translation>தோற்ற விகிதம் %1 இலிருந்து %2 ஆக மாறும்.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>3D சுழற்சிகளைச் சரிசெய்</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>சுழற்றப்பட்ட வரிகள் திரையில் தங்கள் வடிவத்தைத் தக்கவைக்கும்.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>நீட்டு</translation>
     </message>
@@ -2056,6 +2064,17 @@ Output device: %2</source>
         <translation>
             <numerusform>%n மதிப்பை அளவிட முடியவில்லை.</numerusform>
             <numerusform>%n மதிப்புகளை அளவிட முடியவில்லை.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>வரி %1 அளவிடப்பட்டது மட்டுமே: அது நகர்கிறது, காலப்போக்கில் வடிவம் மாறுகிறது அல்லது அதை அளக்க முடியவில்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n சுழற்றப்பட்ட வரி தன் வடிவத்தைத் தக்கவைக்க முடியவில்லை.</numerusform>
+            <numerusform>%n சுழற்றப்பட்ட வரிகள் தங்கள் வடிவத்தைத் தக்கவைக்க முடியவில்லை.</numerusform>
         </translation>
     </message>
     <message>
@@ -3031,6 +3050,10 @@ Output device: %2</source>
         <translation>நிலை அல்லது சீரமைப்பு நீக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>நிலை அருகிலுள்ள பகுதிக்குத் தோராயமாக்கப்பட்டது</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>கரோக்கி நேரமிடல் நீக்கப்பட்டது</translation>
     </message>
@@ -3053,6 +3076,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1” ஒரு கோப்புறை.</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>en அல்லது pt-BR போன்ற மொழிக் குறியீட்டை உள்ளிடு, அல்லது காலியாக விடு.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -3159,6 +3186,18 @@ Output device: %2</source>
         <translation>நடிகர் பெயர்கள்</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Netflix நேரக்குறி உரை பாணி</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>நேரங்கள் சட்டகங்களில்</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>மொழி</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகளை ஒரே வசனமாக ஒன்றிணை</translation>
     </message>
@@ -3173,6 +3212,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>காணொளியின் சட்டக வீதத்தைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>உரை வெள்ளையாக, மேலே அல்லது கீழே நடுவில் இருக்கும்; சாய்வு மட்டும் வைக்கப்படும்; நேரங்கள் சட்டகங்களில் இருக்கும்.</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -7139,10 +7182,6 @@ Failed to copy %2 fonts.</source>
         <translation>காட்டு</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>மறை</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>மிதக்கவிடு</translation>
     </message>
@@ -10128,8 +10167,24 @@ Failed to copy %2 fonts.</source>
         <translation>மேற்கோள் வரிகள் (பாதுகாக்கப்பட்டவை, படிக்க மட்டும்)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>இதிலும் உள்ளது</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>வேறு இடங்களில் இல்லை</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>மேற்கோள் ஆவணம் பாதுகாக்கப்பட்டுள்ளது (படிக்க மட்டும்).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, வரி %2</translation>
     </message>
 </context>
 <context>
@@ -13034,8 +13089,12 @@ Styles deleted:
         <translation>தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து: அவற்றின் பாணியை அமைக்கும் (Enter, அல்லது ஒரு பாணியை இருமுறை சொடுக்கவும்)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>திருத்து…</translation>
+        <source>New style…</source>
+        <translation>புதிய பாணி…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>பாணியைத் திருத்து…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -13044,10 +13103,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>பாணி மேலாளரில் திற</translation>
     </message>
 </context>
 <context>
@@ -13077,6 +13132,26 @@ Styles deleted:
         <translation>புதிய தாவலைத் திறக்கவும்</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>வீடியோ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>ஆடியோ</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>முக்கியச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>புதிய தாவல்</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>சேமி</translation>
     </message>
@@ -13085,24 +13160,32 @@ Styles deleted:
         <translation>அனைத்தையும் சேமி</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>கோப்புறையில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>பாதையை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>இதற்கு மாறு</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>மற்ற தாவல்களை மூடு</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>வலப்பக்கத் தாவல்களை மூடு</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>எல்லா தாவல்களையும் மூடு</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>வசன வரிகளைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>வீடியோவைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>ஆடியோவைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>கீஃப்ரேம்களைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15431,8 +15514,12 @@ Styles deleted:
         <translation>வடிப்பான்கள்</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>நகர்த்தும் தருணம்</translation>
+        <source>Move video to the selected line</source>
+        <translation>தேர்ந்தெடுத்த வரிக்கு வீடியோவை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>நகர்த்திய பின் இயக்கு</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15457,10 +15544,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>திருத்துதல்</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>பிறகு இயக்கு</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16751,14 +16834,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>தாவலை வலப்புறம் நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>பிரித்தெடு</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>மேற்கோளை மூடு</translation>
     </message>
     <message>
         <source>Move panel</source>

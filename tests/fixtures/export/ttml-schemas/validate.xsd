@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:hikari:ttml-validation">
+  <xs:import namespace="http://www.w3.org/ns/ttml" schemaLocation="ttml1/ttml1.xsd"/>
+  <xs:import namespace="http://www.w3.org/ns/ttml/profile/imsc1#parameter" schemaLocation="imsc1-parameters.xsd"/>
+  <xs:import namespace="http://www.w3.org/ns/ttml/profile/imsc1#styling" schemaLocation="imsc1-styling.xsd"/>
+  <xs:import namespace="http://www.w3.org/ns/ttml/profile/imsc1#metadata" schemaLocation="imsc1-metadata.xsd"/>
+</xs:schema>

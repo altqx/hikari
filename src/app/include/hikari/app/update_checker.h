@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/app/update_installer.h"
+#include "hikari/minisign/minisign.h"
 #include "settings_store.h"
 
 #include <QNetworkAccessManager>
@@ -21,9 +22,11 @@ struct UpdateFeed {
     QString downloadBase; // + "v<V>/<asset>"
     QString pageBase;     // + "v<V>": the release page
     bool paginate = false;
+    // The keys a release's hikarisub-update.json.minisig must verify with.
+    std::vector<minisign::PublicKey> keys;
     static UpdateFeed github();
     // <base>releases.json, <base>download/v<V>/<asset>, <base>releases/tag/v<V>.
-    static UpdateFeed local(const QUrl &base);
+    static UpdateFeed local(const QUrl &base, std::vector<minisign::PublicKey> keys = {});
 };
 
 class UpdateChecker : public QObject {
@@ -116,6 +119,9 @@ private:
     void pageFinished();
     void walk();
     void manifestFinished();
+    void signatureFinished();
+    // The walk goes on past `release`, and the log says why.
+    void skip(const application::ReleaseEntry &release, std::string_view why);
     void offer(const application::ReleaseEntry &release, const application::ReleasePackages &packages);
     void end(const QString &outcome);
     QNetworkReply *get(const QUrl &url, bool api);
