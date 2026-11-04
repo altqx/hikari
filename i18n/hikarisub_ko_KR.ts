@@ -1982,6 +1982,10 @@ Output device: %2</source>
         <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>자막이 포함된 영상 (*.mkv *.ogm)</translation>
     </message>
@@ -2008,6 +2012,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>새 자막</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>%1(을)를 YouTube 시간 지정 텍스트로 가져올 수 없습니다. %2 아무것도 가져오지 않았습니다.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>

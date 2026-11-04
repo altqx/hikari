@@ -2024,6 +2024,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>Napisy czasowe YouTube (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>Wideo z osadzonymi napisami (*.mkv *.ogm)</translation>
     </message>
@@ -2050,6 +2054,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Untitled</source>
         <translation>Bez nazwy</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>Nie można zaimportować %1 jako napisów czasowych YouTube. %2 Nic nie zaimportowano.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>

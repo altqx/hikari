@@ -2003,6 +2003,10 @@ Output device: %2</source>
         <translation>சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>YouTube நேரக் குறியிட்ட உரை (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>உள்பொதிந்த வசன வரிகளுடன் கூடிய வீடியோக்கள் (*.mkv *.ogm)</translation>
     </message>
@@ -2029,6 +2033,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>தலைப்பிடப்படாத</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>%1 ஐ YouTube நேரக் குறியிட்ட உரையாக இறக்குமதி செய்ய முடியவில்லை. %2 எதுவும் இறக்குமதி செய்யப்படவில்லை.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
