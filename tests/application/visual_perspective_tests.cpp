@@ -792,14 +792,14 @@ TEST(PerspectiveTags, TheStylesAreDecodedOnceARevision)
 {
     Host host({"{\\pos(320,200)}Text"});
     StyleCache cache;
-    const auto first = cache.get(host);
-    EXPECT_EQ(cache.get(host).get(), first.get());
+    const auto first = cache.get(reader(host));
+    EXPECT_EQ(cache.get(reader(host)).get(), first.get());
     ASSERT_TRUE(readLine(host, lineWith(host), cache));
-    EXPECT_EQ(cache.get(host).get(), first.get());
+    EXPECT_EQ(cache.get(reader(host)).get(), first.get());
     ASSERT_TRUE(host.beginGesture(host.targets, "edit"));
     host.gesture()->stage(host.line(0), u8"{\\pos(10,10)}Text", false);
     ASSERT_TRUE(host.commitGesture());
-    EXPECT_NE(cache.get(host).get(), first.get());
+    EXPECT_NE(cache.get(reader(host)).get(), first.get());
 }
 
 TEST(PerspectiveTags, ScalesOutlinesAndShadowsAreHeldAsLibassHoldsThem)

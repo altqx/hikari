@@ -8607,6 +8607,51 @@ private slots:
         application->editor().discard();
     }
 
+    void resampleAdjustsThreeDRotations()
+    {
+        const QString path = dir.filePath(QStringLiteral("resample-3d.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(320,180)\\frx30}Sign\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto lineText = [session] {
+            const auto &t = session->document().lines()[0]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QObject *resample = nullptr;
+        const auto resampleTo = [&](int width, int height, bool adjust) {
+            QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+            QTRY_VERIFY((resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"))) &&
+                        resample->property("visible").toBool());
+            QQuickItem *check = dialogItem("resampleDialog", "resampleAdjustRotations");
+            QVERIFY(check->isVisible());
+            QVERIFY(check->property("checked").toBool());
+            check->setProperty("checked", adjust);
+            dialogItem("resampleDialog", "resampleWidth")->setProperty("value", width);
+            dialogItem("resampleDialog", "resampleHeight")->setProperty("value", height);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
+            QTRY_VERIFY(!resample->property("visible").toBool());
+        };
+        resampleTo(1280, 720, false);
+        QCOMPARE(lineText(), QStringLiteral("{\\pos(640,360)\\frx30}Sign"));
+        resampleTo(1920, 1080, true);
+        QVERIFY2(lineText().startsWith(QStringLiteral("{\\pos(960,540)\\org(960,540)")), qPrintable(lineText()));
+        QVERIFY2(!lineText().contains(QStringLiteral("\\frx30}")), qPrintable(lineText()));
+        QCOMPARE(session->history().back().name, std::string("Changing subtitles resolution"));
+        application->editor().discard();
+    }
+
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();

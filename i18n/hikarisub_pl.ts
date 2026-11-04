@@ -1798,6 +1798,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Proporcje obrazu zmieniają się z %1 na %2.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>Dostosuj obroty 3D</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>Obrócone linijki zachowują swój kształt na ekranie.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>Rozciągnij</translation>
     </message>
@@ -1811,6 +1819,18 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>Linijka %1 została tylko przeskalowana: porusza się, zmienia kształt w czasie lub nie da się jej zmierzyć.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n obrócona linijka nie mogła zachować kształtu.</numerusform>
+            <numerusform>%n obrócone linijki nie mogły zachować kształtu.</numerusform>
+            <numerusform>%n obróconych linijek nie mogło zachować kształtu.</numerusform>
         </translation>
     </message>
     <message>
