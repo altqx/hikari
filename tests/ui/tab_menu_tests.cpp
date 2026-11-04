@@ -4,8 +4,10 @@
 #include "hikari/application/session_file.h"
 #include "docking.h"
 #include "line_table_model.h"
+#include "menu_rows.h"
 #include "settings_store.h"
 
+#include <QClipboard>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -234,50 +236,115 @@ private slots:
         restoreThreeTabs();
         QObject *menu = openTabMenu(0);
         QVERIFY(menu);
+        QCOMPARE(menu_rows::shown(menu),
+                 (QStringList{"tabMenuSave", "tabMenuSaveAll", "|", "tabMenuFolders", "tabMenuCopyPaths",
+                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuClose", "tabMenuCloseOthers",
+                              "tabMenuCloseRight", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab0")->property("text").toString(), QStringLiteral("a.ass"));
         QCOMPARE(named("tabMenuTab2")->property("text").toString(), QStringLiteral("c.ass"));
         QVERIFY(!named("tabMenuTab0")->property("checked").toBool());
         QVERIFY(named("tabMenuTab2")->property("checked").toBool());
         QVERIFY(!named("tabMenuSave")->property("enabled").toBool());
         QVERIFY(named("tabMenuSaveAll")->property("enabled").toBool());
-        QCOMPARE(named("tabMenuSave")->property("text").toString(), QStringLiteral("Save"));
-        QCOMPARE(named("tabMenuCloseAll")->property("text").toString(), QStringLiteral("Close all tabs"));
-        QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(),
-                 QStringLiteral("Show subtitles in folder"));
-        QCOMPARE(named("tabMenuFolder_video")->property("text").toString(), QStringLiteral("Show video in folder"));
-        QCOMPARE(named("tabMenuFolder_audio")->property("text").toString(), QStringLiteral("Show audio in folder"));
-        QCOMPARE(named("tabMenuFolder_keyframes")->property("text").toString(),
-                 QStringLiteral("Show keyframes in folder"));
-        QStringList order;
-        const int count = menu->property("count").toInt();
-        for (int i = 0; i < count; ++i) {
-            QQuickItem *item = nullptr;
-            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
-            order << (item ? item->objectName() : QString());
-        }
-        QCOMPARE(order.mid(0, 3), (QStringList{QStringLiteral("tabMenuTab0"), QStringLiteral("tabMenuTab1"),
-                                              QStringLiteral("tabMenuTab2")}));
-        QCOMPARE(order.mid(4, 7), (QStringList{QStringLiteral("tabMenuSave"), QStringLiteral("tabMenuSaveAll"),
-                                              QStringLiteral("tabMenuCloseAll"), QStringLiteral("tabMenuFolder_subtitles"),
-                                              QStringLiteral("tabMenuFolder_video"), QStringLiteral("tabMenuFolder_audio"),
-                                              QStringLiteral("tabMenuFolder_keyframes")}));
-        QCOMPARE(order.size(), 12);
+        QVERIFY(named("tabMenuCloseRight")->property("enabled").toBool());
+        QCOMPARE(menu_rows::shown(named("tabMenuFolders")),
+                 (QStringList{"tabMenuFolder_subtitles", "tabMenuFolder_video", "tabMenuFolder_audio",
+                              "tabMenuFolder_keyframes"}));
+        QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(), QStringLiteral("Subtitles"));
+        QCOMPARE(named("tabMenuFolder_keyframes")->property("text").toString(), QStringLiteral("Keyframes"));
+        QCOMPARE(menu_rows::shown(named("tabMenuCopyPaths")),
+                 (QStringList{"tabMenuCopyPath_subtitles", "tabMenuCopyPath_video", "tabMenuCopyPath_audio",
+                              "tabMenuCopyPath_keyframes"}));
         trigger("tabMenuFolder_video");
         trigger("tabMenuFolder_subtitles");
         QCOMPARE(revealed, (QStringList{QDir::toNativeSeparators(dir.filePath(QStringLiteral("media/a video.mkv"))),
                                         QDir::toNativeSeparators(dir.filePath(QStringLiteral("tabs/a.ass")))}));
+        trigger("tabMenuCopyPath_audio");
+        QCOMPARE(QGuiApplication::clipboard()->text(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("sound/a.wav"))));
         closeTabMenu();
         edit(1, "b2");
         openTabMenu(1);
+        QCOMPARE(menu_rows::shown(menu),
+                 (QStringList{"tabMenuSave", "tabMenuSaveAll", "|", "tabMenuFolder_subtitles", "tabMenuCopyPath_subtitles",
+                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuClose", "tabMenuCloseOthers",
+                              "tabMenuCloseRight", "tabMenuCloseAll"}));
         QVERIFY(named("tabMenuSave")->property("enabled").toBool());
-        QVERIFY(named("tabMenuFolder_subtitles"));
+        QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(), QStringLiteral("Show in folder"));
+        QCOMPARE(named("tabMenuCopyPath_subtitles")->property("text").toString(), QStringLiteral("Copy path"));
         QVERIFY(!named("tabMenuFolder_video"));
-        QVERIFY(!named("tabMenuFolder_keyframes"));
+        trigger("tabMenuCopyPath_subtitles");
+        QCOMPARE(QGuiApplication::clipboard()->text(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("tabs/b.ass"))));
+        closeTabMenu();
+        openTabMenu(2);
+        QVERIFY(!named("tabMenuCloseRight")->property("enabled").toBool());
         closeTabMenu();
         openTabMenu(-1);
-        QVERIFY(!named("tabMenuSave")->property("enabled").toBool());
-        QVERIFY(!named("tabMenuFolder_subtitles"));
+        QCOMPARE(menu_rows::shown(menu), (QStringList{"tabMenuNewTab", "tabMenuSaveAll", "tabMenuSwitchTo", "|", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab1")->property("text").toString(), QStringLiteral("b.ass"));
+    }
+
+    void closeFromATabsMenu()
+    {
+        restoreThreeTabs();
+        openTabMenu(0);
+        trigger("tabMenuClose");
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
+        QCOMPARE(application->currentTab(), 1);
+        closeTabMenu();
+        openTabMenu(-1);
+        trigger("tabMenuNewTab");
+        QTRY_COMPARE(titles().size(), 3);
+    }
+
+    void closeOtherTabsAndTabsToTheRight()
+    {
+        restoreThreeTabs();
+        edit(0, "a changed");
+        openTabMenu(1);
+        trigger("tabMenuCloseRight");
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass")}));
+        QCOMPARE(application->currentTab(), 1);
+        closeTabMenu();
+        openTabMenu(1);
+        QVERIFY(!named("tabMenuCloseRight")->property("enabled").toBool());
+        trigger("tabMenuCloseOthers");
+        QObject *review = named("unsavedChanges");
+        QTRY_VERIFY(review->property("opened").toBool());
+        const QVariantList rows = review->property("rows").toList();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("a.ass"));
+        QSignalSpy finished(application, &app::Application::closeFinished);
+        application->resolveClose({QVariantMap{{QStringLiteral("id"), rows[0].toMap().value(QStringLiteral("id"))},
+                                               {QStringLiteral("save"), false},
+                                               {QStringLiteral("path"), QString()}}});
+        QTRY_COMPARE(finished.size(), 1);
+        QCOMPARE(titles(), QStringList{QStringLiteral("b.ass")});
+        QCOMPARE(application->currentTab(), 0);
+        QMetaObject::invokeMethod(review, "close");
+    }
+
+    void theMenuKeyOpensTheFocusedTabsMenu()
+    {
+        restoreThreeTabs();
+        auto *current = visualItem(QStringLiteral("documentTab2"));
+        QVERIFY(current);
+        QVERIFY(current->activeFocusOnTab());
+        QVERIFY(!visualItem(QStringLiteral("documentTab1"))->activeFocusOnTab());
+        current->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(current->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Left);
+        QTRY_VERIFY(visualItem(QStringLiteral("documentTab1"))->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Menu);
+        QObject *menu = named("documentTabMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(menu->property("tabIndex").toInt(), 1);
+        QMetaObject::invokeMethod(menu, "close");
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        visualItem(QStringLiteral("documentTab1"))->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_F10, Qt::ShiftModifier);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(menu->property("tabIndex").toInt(), 1);
+        QCOMPARE(application->currentTab(), 2);
     }
 
     void choosingATabMovesItToTheFirstVisiblePlace()

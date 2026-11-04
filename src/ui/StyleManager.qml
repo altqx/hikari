@@ -1234,23 +1234,31 @@ DialogWindow {
             id: moreMenu
             objectName: tools.prefix + "MoreMenu"
             ShellMenuItem {
+                objectName: tools.prefix + "MoveToTop"
                 iconRole: "move-to-top"
                 text: qsTr("Move to top")
                 enabled: tools.selected.length > 0
                 onTriggered: manager.moveSelected(tools.store, 0)
             }
             ShellMenuItem {
+                objectName: tools.prefix + "MoveToBottom"
                 iconRole: "move-to-bottom"
                 text: qsTr("Move to bottom")
                 enabled: tools.selected.length > 0
                 onTriggered: manager.moveSelected(tools.store, 3)
             }
-            MenuSeparator {}
-            Component.onCompleted: if (tools.store) removeItem(cleanItem)
             ShellMenuItem {
+                objectName: tools.prefix + "SortByName"
                 iconRole: "sort"
                 text: qsTr("Sort by name")
                 onTriggered: manager.sortList(tools.store)
+            }
+            Component.onCompleted: if (tools.store) {
+                removeItem(cleanItem)
+                removeItem(cleanSeparator)
+            }
+            MenuSeparator {
+                id: cleanSeparator
             }
             ShellMenuItem {
                 id: cleanItem

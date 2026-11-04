@@ -6902,10 +6902,6 @@ Failed to copy %2 fonts.</source>
         <translation>காட்டு</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>மறை</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>மிதக்கவிடு</translation>
     </message>
@@ -9943,8 +9939,24 @@ Failed to copy %2 fonts.</source>
         <translation>மேற்கோள் வரிகள் (பாதுகாக்கப்பட்டவை, படிக்க மட்டும்)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>இதிலும் உள்ளது</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>வேறு இடங்களில் இல்லை</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>மேற்கோள் ஆவணம் பாதுகாக்கப்பட்டுள்ளது (படிக்க மட்டும்).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, வரி %2</translation>
     </message>
 </context>
 <context>
@@ -12849,8 +12861,12 @@ Styles deleted:
         <translation>தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து: அவற்றின் பாணியை அமைக்கும் (Enter, அல்லது ஒரு பாணியை இருமுறை சொடுக்கவும்)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>திருத்து…</translation>
+        <source>New style…</source>
+        <translation>புதிய பாணி…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>பாணியைத் திருத்து…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12859,10 +12875,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>பாணி மேலாளரில் திற</translation>
     </message>
 </context>
 <context>
@@ -12892,6 +12904,26 @@ Styles deleted:
         <translation>புதிய தாவலைத் திறக்கவும்</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>வீடியோ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>ஆடியோ</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>முக்கியச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>புதிய தாவல்</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>சேமி</translation>
     </message>
@@ -12900,24 +12932,32 @@ Styles deleted:
         <translation>அனைத்தையும் சேமி</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>கோப்புறையில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>பாதையை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>இதற்கு மாறு</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>மற்ற தாவல்களை மூடு</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>வலப்பக்கத் தாவல்களை மூடு</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>எல்லா தாவல்களையும் மூடு</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>வசன வரிகளைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>வீடியோவைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>ஆடியோவைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>கீஃப்ரேம்களைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15246,8 +15286,12 @@ Styles deleted:
         <translation>வடிப்பான்கள்</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>நகர்த்தும் தருணம்</translation>
+        <source>Move video to the selected line</source>
+        <translation>தேர்ந்தெடுத்த வரிக்கு வீடியோவை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>நகர்த்திய பின் இயக்கு</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15272,10 +15316,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>திருத்துதல்</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>பிறகு இயக்கு</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16566,14 +16606,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>தாவலை வலப்புறம் நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>பிரித்தெடு</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>மேற்கோளை மூடு</translation>
     </message>
     <message>
         <source>Move panel</source>
