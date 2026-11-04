@@ -166,21 +166,36 @@ bool AiFeatures::sandboxed() const
     return backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete();
 }
 
+backends::ai::AiSidecarHost *AiFeatures::sidecarForMcp()
+{
+    if (!m_live)
+        return nullptr;
+    if (!m_live->host)
+        startSidecar();
+    return m_live->host.get();
+}
+
 backends::ai::AiSidecarHost *AiFeatures::sidecarForAction()
 {
     if (!m_live)
         return nullptr;
-    if (!m_live->host && (m_live->providers->enabled() || m_live->drafting)) {
-        m_live->host = m_ports.sidecarHost();
-        if (m_live->host) {
-            m_live->relay->attach(*m_live->host);
-            m_live->agents = std::make_unique<backends::ai::AgentBroker>();
-            if (m_ports.agents)
-                m_ports.agents(*m_live->agents);
-            m_live->agents->attach(*m_live->host);
-        }
-    }
+    if (!m_live->host && (m_live->providers->enabled() || m_live->drafting))
+        startSidecar();
     return m_live->host.get();
+}
+
+void AiFeatures::startSidecar()
+{
+    if (!m_ports.sidecarHost)
+        return;
+    m_live->host = m_ports.sidecarHost();
+    if (!m_live->host)
+        return;
+    m_live->relay->attach(*m_live->host);
+    m_live->agents = std::make_unique<backends::ai::AgentBroker>();
+    if (m_ports.agents)
+        m_ports.agents(*m_live->agents);
+    m_live->agents->attach(*m_live->host);
 }
 
 }

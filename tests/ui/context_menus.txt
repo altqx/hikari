@@ -233,6 +233,11 @@ Automation macro > Run
 Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
+Automation recommended script
+Automation recommended script > Show in Scripts
+Automation recommended script > Open project page
+Automation recommended script > -
+Automation recommended script > Uninstall…
 Home row
 Home row > Open
 Home row > Show in folder

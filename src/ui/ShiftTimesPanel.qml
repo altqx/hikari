@@ -150,6 +150,7 @@ FocusScope {
                         objectName: "shiftBy"
                         Accessible.name: qsTr("Shift by")
                         Layout.fillWidth: true
+                        wrapsLabels: true
                         choices: [{text: qsTr("Amount"), name: "shiftByAmount"},
                                   {text: qsTr("To video"), name: "shiftByVideo", enabled: panel.hasVideo || panel.shiftBy === 1,
                                    tip: qsTr("Moves the active line to the video’s frame")},

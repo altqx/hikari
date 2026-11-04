@@ -58,6 +58,8 @@ public:
     /// The sidecar for an AI action: built on the first one once a provider exists. Null with AI off, without a
     /// provider, or without an installed sidecar.
     backends::ai::AiSidecarHost *sidecarForAction();
+    /// The sidecar for the MCP server, which needs no provider. Null with AI off or without an installed sidecar.
+    backends::ai::AiSidecarHost *sidecarForMcp();
     /// While the user adds their first provider, its Test connection may start the sidecar too.
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
@@ -71,6 +73,7 @@ signals:
 
 private:
     void apply();
+    void startSidecar();
 
     struct Live;
     ui::SettingsStore &m_settings;

@@ -94,3 +94,5 @@ A soft cap per thread, a daily cap, a cost meter, and an estimate before every b
 - **The site** gets an AI guide with a "What is sent" section.
 
 Amended by [ADR 0026](0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md): providers, agents, the MCP server and client, and the agent loop run in a TypeScript sidecar on Bun; the Claude Agent SDK drives the user's own `claude`, fetched from npm and never shipped.
+
+Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): Honya's project folder is the Project (`PROJECT.md` and `GLOSSARY.md` at its root, or the subfolder `[translation] glossary` names), and the Script Info pointer stays only for files outside a Project. The always-prompt rule covers deleting or overwriting files outside the Project, the subtitle's folder and the user folder.

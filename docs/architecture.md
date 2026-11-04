@@ -45,6 +45,7 @@ The pieces in C++:
   - `handle(method, handler)` lets other objects answer the sidecar's requests.
 - **`HttpRelay`** (`src/backends/ai_http_relay.*`) answers `_hikari/http.request`. It sends the request only to a known target (today a provider's base URL), puts the keychain key where the request has the `hikari-key` placeholder, and streams the answer back with the key masked.
 - **`AgentBroker`** (`src/backends/ai_agent_broker.*`) answers `_hikari/agent.*`. It starts the `claude` or `codex` Qt found on `PATH`, each in its own sandbox, checks Claude's arguments, guards Codex's JSON-RPC, and relays their stdio.
+- **`AiMcp`** (`src/app/ai_mcp.*`) runs the [MCP server](ai-mcp.md) while AI is on and `ai.mcp.server` is on. It starts the sidecar on the first MCP message, with or without a provider.
 - **`AiSidecarDownload`** (`src/backends/ai_sidecar_download.*`) fetches `hikari-ai-<version>-<platform>.gz` from the app's own release into `<user folder>/ai/sidecar/<version>/`. It checks the size and SHA-256 that release's `hikarisub-update.json` gives, and deletes a file that fails.
 
 **The link** is JSON-RPC 2.0, one message per line on the sidecar's stdin and stdout, with requests both ways:
@@ -55,6 +56,7 @@ The pieces in C++:
 - `_hikari/tools.list` and `_hikari/tools.call` list and run Hikari's AI tools, which the sidecar builds from HA1's operations ([AI tools](ai-tools.md)).
 - `_hikari/http.request {stream, target, method, url, headers, body}` is every request the sidecar sends out. Qt answers with `_hikari/http.response` and `_hikari/http.data` notifications, then `{}`.
 - `_hikari/agent.start {process, agent, args, env}`, `.write`, `.closeInput` and `.kill` run an agent CLI through Qt, which sends `_hikari/agent.output` and `_hikari/agent.exit` back.
+- `_hikari/mcp.message` and `_hikari/mcp.closed` relay HikariSub's MCP server: Qt listens, the sidecar speaks MCP, and an `_hikari/api.call` marked `mcp` runs as that connection's caller ([MCP server](ai-mcp.md)).
 - The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
 
 The ACP session methods and the other `_hikari/*` methods in the ADR are declared in `src/ai-sidecar/src/protocol.ts`. Until their cards land they answer "not implemented".

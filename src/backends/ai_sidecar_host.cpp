@@ -42,6 +42,14 @@ api::Json errorBody(int code, std::string message, api::Json data = {})
     return api::Json::object({{"error", std::move(error)}});
 }
 
+void failApi(SidecarRequest &request, api::Error error)
+{
+    auto data = api::Json::object({{"code", std::move(error.code)}});
+    if (!error.data.isNull())
+        data["data"] = std::move(error.data);
+    request.fail(rpc::kHikariApiError, std::move(error.message), std::move(data));
+}
+
 SidecarFailure failure(SidecarError error, std::string message = {})
 {
     return SidecarFailure{error, 0, std::move(message), {}};
@@ -417,17 +425,22 @@ void AiSidecarHost::callApi(const api::Json &params, std::shared_ptr<SidecarRequ
     if (!operation || !operation->isString())
         return request->fail(rpc::kInvalidParams, "_hikari/api.call needs an operation");
     if (!m_hikari)
-        return request->fail(rpc::kHikariApiError, "Hikari's API isn't available",
-                             api::Json::object({{"code", api::errors::kUnavailable}}));
+        return failApi(*request, {std::string(api::errors::kUnavailable), "Hikari's API isn't available", {}});
+    api::Caller caller = m_caller;
+    if (const api::Json *mcp = params.find("mcp")) {
+        if (!m_mcpGate)
+            return failApi(*request, {std::string(api::errors::kUnavailable), "No MCP server is on", {}});
+        auto gated = m_mcpGate(*mcp, operation->asString());
+        if (!gated)
+            return failApi(*request, std::move(gated.error()));
+        caller = std::move(*gated);
+    }
     const api::Json *operationParams = params.find("params");
-    m_hikari->call(m_caller, operation->asString(), operationParams ? *operationParams : api::Json(),
+    m_hikari->call(caller, operation->asString(), operationParams ? *operationParams : api::Json(),
                    [request = std::move(request)](api::Result result) {
                        if (result)
                            return request->respond(std::move(*result));
-                       auto data = api::Json::object({{"code", result.error().code}});
-                       if (!result.error().data.isNull())
-                           data["data"] = std::move(result.error().data);
-                       request->fail(rpc::kHikariApiError, result.error().message, std::move(data));
+                       failApi(*request, std::move(result.error()));
                    });
 }
 

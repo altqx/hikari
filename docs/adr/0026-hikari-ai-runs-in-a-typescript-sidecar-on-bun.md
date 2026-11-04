@@ -216,3 +216,5 @@ Tests use mock servers only. No test calls a real provider or a real vendor CLI,
 7. **AI20's UI**, after its design gate.
 
 **The C++ reference.** #637 and #641 merge on green and stay as the reference until the TypeScript port passes the same cases; the port PR then deletes them. AI19's paused C++ branch isn't merged, and its cases move to the port.
+
+Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): the AI reaches the window's Project only through Hikari API folder grants. The sidecar's working directory stays its private folder, and Claude's and Codex's built-in file tools stay off.
