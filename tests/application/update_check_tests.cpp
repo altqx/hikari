@@ -394,6 +394,9 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_EQ(parseStartupArguments({"--export-docs=out/docs"}).exportDocs, "out/docs");
     EXPECT_EQ(parseStartupArguments({"--export-docs"}).exportDocs, "");
     EXPECT_TRUE(parseStartupArguments({"--export-docs", "out/docs"}).rest.empty());
+    EXPECT_FALSE(a.mcp);
+    EXPECT_TRUE(parseStartupArguments({"--mcp"}).mcp);
+    EXPECT_TRUE(parseStartupArguments({"--mcp"}).rest.empty());
 }
 
 TEST(UpdateVerify, releaseVersionsOnly)

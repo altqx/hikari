@@ -38,6 +38,7 @@ void Application::trackVideoSources()
 {
     m_recentVideo.set(m_settings->settings().list("recent.video"));
     m_recentKeyframes.set(m_settings->settings().list("recent.keyframes"));
+    m_recentTimecodes.set(m_settings->settings().list("recent.timecodes"));
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         if (video.state() != application::VideoSession::State::Ready) {
@@ -211,13 +212,16 @@ QVariantMap Application::dummyVideoDefaults() const
                          QStringLiteral("640x360 (SD widescreen)"), QStringLiteral("704x396 (SD widescreen)"),
                          QStringLiteral("640x352 (SD widescreen MOD16)"), QStringLiteral("704x400 (SD widescreen MOD16)"),
                          QStringLiteral("1024x576 (SuperPAL widescreen)"), QStringLiteral("1280x720 (HD 720p)"),
-                         QStringLiteral("1920x1080 (HD 1080p)"), QStringLiteral("3840x2160 (4K)")}},
+                         QStringLiteral("1920x1080 (HD 1080p)"), QStringLiteral("3840x2160 (4K)"),
+                         QStringLiteral("1080x1920 (HD 1080p vertical)")}},
             {QStringLiteral("resolution"), 8},
             {QStringLiteral("width"), 1920},
             {QStringLiteral("height"), 1080},
             {QStringLiteral("colour"), QStringLiteral("&HFEA32F&")},
             {QStringLiteral("fpsChoices"), QStringList{QStringLiteral("23.976"), QStringLiteral("24"), QStringLiteral("25"),
-                                                       QStringLiteral("29.97"), QStringLiteral("30"), QStringLiteral("60")}},
+                                                       QStringLiteral("29.97"), QStringLiteral("30"), QStringLiteral("60"),
+                                                       QStringLiteral("24000/1001"), QStringLiteral("30000/1001"),
+                                                       QStringLiteral("60000/1001")}},
             {QStringLiteral("fps"), QStringLiteral("23.976")},
             {QStringLiteral("duration"), QStringLiteral("0:25:00.00")},
             {QStringLiteral("frames"), *application::dummyVideoFrames("23.976", 1500000)}};

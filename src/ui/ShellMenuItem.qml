@@ -36,6 +36,9 @@ MenuItem {
     readonly property string columnText: keysText || detailText
         || (subMenu && typeof subMenu.detailText === "string" ? subMenu.detailText : "")
     property string help
+    // Shown under the row: a disabled row gets no hover, so a tooltip would never show.
+    property string reason
+    Accessible.description: reason
     readonly property string shownHelp: help.length > 0 ? help
         : subMenu && typeof subMenu.help === "string" ? subMenu.help
         : action && typeof action.help === "string" ? action.help : ""
@@ -76,10 +79,11 @@ MenuItem {
         implicitWidth: (control.plainLabel ? textStart + plainText.implicitWidth + textEnd : label.implicitWidth)
             + (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
         implicitHeight: Math.max(label.implicitHeight, plainText.implicitHeight, keys.implicitHeight)
+                        + (reasonText.visible ? reasonText.implicitHeight : 0)
         IconLabel {
             id: label
             width: parent.width - (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
-            height: parent.height
+            height: parent.height - (reasonText.visible ? reasonText.implicitHeight : 0)
             x: control.mirrored ? parent.width - width : 0
             leftPadding: parent.leadPadding
             rightPadding: parent.trailPadding
@@ -100,11 +104,26 @@ MenuItem {
             textFormat: Text.PlainText
             x: label.x + parent.textStart
             width: Math.max(0, label.width - parent.textStart - parent.textEnd)
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: label.verticalCenter
             horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
             elide: Text.ElideRight
             font: control.font
             color: parent.textColour
+        }
+        Text {
+            id: reasonText
+            objectName: "menuItemReason"
+            visible: control.reason.length > 0
+            text: control.reason
+            textFormat: Text.PlainText
+            x: control.mirrored ? parent.textEnd : parent.textStart
+            width: Math.max(0, parent.width - parent.textStart - parent.textEnd)
+            anchors.bottom: parent.bottom
+            horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
+            wrapMode: Text.Wrap
+            font.family: control.font.family
+            font.pointSize: control.font.pointSize * 0.85
+            color: Theme.muted
         }
         Text {
             id: keys
@@ -113,7 +132,7 @@ MenuItem {
             text: control.columnText
             visible: text.length > 0
             x: control.mirrored ? parent.arrowPadding : parent.width - width - parent.arrowPadding
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: label.verticalCenter
             font.family: control.font.family
             font.pointSize: control.font.pointSize
             font.italic: detail

@@ -42,6 +42,15 @@ Owner-approved design for [#696](https://github.com/altqx/hikari/issues/696) ([g
 - **G56 at every depth.** An edit is refused when it orphans a Line or moves a Line into another group without rewriting its markers. Only the group commands rewrite markers, so only they can regroup Lines.
 - **Grid.** The Text column is indented 12 px per depth level; the ⊞/⊟ box stays in the number column and shows that description's own group.
 
+## Aegisub folds to line groups
+
+Owner-approved design for [#562](https://github.com/altqx/hikari/issues/562) ([gate](https://github.com/altqx/hikari/issues/562#issuecomment-6594431237)).
+
+- **Offer.** Opening a file (not a reference) whose `[Aegisub Extradata]` has convertible `_aegi_folddata` folds posts the notice "This file has N Aegisub folds." with a **Convert to line groups** button. The grid's right-click menu (after Make line group), a group row's right-click menu and Convert Aegisub folds to line groups (`GLOBAL_CONVERT_FOLDS_TO_GROUPS`, no default key) run the same conversion; the menu items are disabled while nothing converts.
+- **Pairing.** Delimiters pair as arch1t3cht's Aegisub FoldController does: an ender closes the innermost open fold with its id, an ender past an inner opener drops the inner fold, and delimiters that do not pair are dropped.
+- **Conversion.** Each fold becomes a line group, nested as the folds are, in one Undo step ("Converting folds to line groups"). A Comment description goes before the opener, holding the opener's text without override blocks, in the opener's style. Both delimiters and the Lines between become members; a collapsed fold closes its group. Converted delimiters drop `_aegi_folddata` from their values, so their blocks no longer name it; the section's `Data:` line stays, as unused entries do ([document-model.md](../document-model.md)), and Aegisub finds no fold there.
+- **Skipped.** A fold with any Line already in a line group is left as it is, entries kept. The result notice counts the folds converted and the skipped ones, dropped delimiters included.
+
 ## Shared decisions and qualification
 
 [Edit drafts, commands and undo](https://github.com/altqx/hikari/issues/43) owns remaining draft navigation/reconciliation, command/typing/gesture grouping, Save inclusion, restored editing context, and filter/view-history/dirty treatment. Its [partial decisions](../proposals/edit-transactions.md) already accept C07 and C43. This Grid resolution does not approve the sample's view-history policy, mandatory draft-commit/rebuild sequence, silent redo truncation, or a new Lua transaction policy. Keep characterized legacy behavior where compatible; expose destructive History consequences, and resolve shared boundaries there rather than inventing per-surface defaults.

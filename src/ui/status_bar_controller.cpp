@@ -118,13 +118,24 @@ QStringList StatusBarController::fields() const
     return QStringList(m_fields.text.begin(), m_fields.text.end());
 }
 
-QStringList StatusBarController::tooltips()
+void StatusBarController::setTimecodesFile(const QString &path)
+{
+    if (path == m_timecodesFile)
+        return;
+    m_timecodesFile = path;
+    emit tooltipsChanged();
+}
+
+QStringList StatusBarController::tooltipsFor(const QString &timecodesFile)
 {
     return {QString(),
             QCoreApplication::translate("HikariSub.StatusBar", "Video scale"),
             QCoreApplication::translate("HikariSub.StatusBar", "Video zoom"),
             QCoreApplication::translate("HikariSub.StatusBar", "Video duration"),
-            QCoreApplication::translate("HikariSub.StatusBar", "Frames per second"),
+            timecodesFile.isEmpty()
+                ? QCoreApplication::translate("HikariSub.StatusBar", "Frames per second")
+                : QCoreApplication::translate("HikariSub.StatusBar", "Frames per second, average of the timecodes file %1")
+                      .arg(QFileInfo(timecodesFile).fileName()),
             QCoreApplication::translate("HikariSub.StatusBar", "Video resolution"),
             QCoreApplication::translate("HikariSub.StatusBar", "Video aspect ratio"),
             QCoreApplication::translate("HikariSub.StatusBar", "Subtitles resolution"),

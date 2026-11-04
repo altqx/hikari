@@ -234,6 +234,22 @@ TEST(VideoSnapshot, ImageIsTheFrameWithTheOverlayComposited)
     EXPECT_EQ(snapshotImage(f, &o).rgb, plain.rgb);
 }
 
+TEST(VideoSnapshot, SubtitlesAloneAreStraightAlphaOnTransparency)
+{
+    OverlayFrame o;
+    o.width = 3;
+    o.height = 1;
+    o.stride = 16;
+    o.empty = false;
+    o.pixels = {64, 32, 128, 128, 0, 0, 0, 0, 255, 255, 255, 255, 9, 9, 9, 9};
+    const auto image = subtitlesImage(o);
+    EXPECT_EQ(image.width, 3);
+    EXPECT_EQ(image.height, 1);
+    EXPECT_EQ(image.rgba, (std::vector<std::uint8_t>{255, 64, 128, 128, 0, 0, 0, 0, 255, 255, 255, 255}));
+    o.empty = true;
+    EXPECT_EQ(subtitlesImage(o).rgba, std::vector<std::uint8_t>(12, 0));
+}
+
 TEST(VideoSnapshot, CompositeOverlayLaysItAsTheSnapshotDoes)
 {
     constexpr int kW = 37, kH = 11, kStride = kW * 4 + 12;

@@ -40,6 +40,14 @@ api::Json errorBody(int code, std::string message, api::Json data = {})
     return api::Json::object({{"error", std::move(error)}});
 }
 
+api::Json apiErrorBody(api::Error error)
+{
+    auto data = api::Json::object({{"code", std::move(error.code)}});
+    if (!error.data.isNull())
+        data["data"] = std::move(error.data);
+    return errorBody(rpc::kHikariApiError, std::move(error.message), std::move(data));
+}
+
 SidecarFailure failure(SidecarError error, std::string message = {})
 {
     return SidecarFailure{error, 0, std::move(message), {}};
@@ -344,21 +352,26 @@ void AiSidecarHost::receiveRequest(const api::Json &id, const std::string &metho
     if (!operation || !operation->isString())
         return respond(id, errorBody(rpc::kInvalidParams, "_hikari/api.call needs an operation"));
     if (!m_hikari)
-        return respond(id, errorBody(rpc::kHikariApiError, "Hikari's API isn't available",
-                                     api::Json::object({{"code", api::errors::kUnavailable}})));
+        return respond(id, apiErrorBody({std::string(api::errors::kUnavailable), "Hikari's API isn't available", {}}));
+    api::Caller caller = m_caller;
+    if (const api::Json *mcp = params->find("mcp")) {
+        if (!m_mcpGate)
+            return respond(id, apiErrorBody({std::string(api::errors::kUnavailable), "No MCP server is on", {}}));
+        auto gated = m_mcpGate(*mcp, operation->asString());
+        if (!gated)
+            return respond(id, apiErrorBody(std::move(gated.error())));
+        caller = std::move(*gated);
+    }
     ++m_incoming;
     const api::Json *operationParams = params->find("params");
-    m_hikari->call(m_caller, operation->asString(), operationParams ? *operationParams : api::Json(),
+    m_hikari->call(caller, operation->asString(), operationParams ? *operationParams : api::Json(),
                    [this, alive = std::weak_ptr(m_alive), generation = m_generation, id](api::Result result) {
                        if (alive.expired() || generation != m_generation)
                            return;
                        --m_incoming;
                        if (result)
                            return respond(id, api::Json::object({{"result", std::move(*result)}}));
-                       auto data = api::Json::object({{"code", result.error().code}});
-                       if (!result.error().data.isNull())
-                           data["data"] = std::move(result.error().data);
-                       respond(id, errorBody(rpc::kHikariApiError, result.error().message, std::move(data)));
+                       respond(id, apiErrorBody(std::move(result.error())));
                    });
 }
 
