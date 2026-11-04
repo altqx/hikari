@@ -23,6 +23,7 @@
 // "layout" when the tab has none. A file not starting with "{" is read as a legacy .kls.
 // Tabs are listed window by window; "window" indexes "windows" and is left out for the first.
 // The version stays 1: a reader that skips "windows", "window" and "current" opens one window.
+// A window's other keys are kept and written back as they were.
 
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"

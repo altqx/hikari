@@ -633,7 +633,8 @@ bool Application::saveLastSession(bool closing, const QString &path)
         }
         session.windows.push_back(window);
     }
-    if (session.windows.size() == 1 && !session.windows.front().geometry)
+    if (const auto &only = session.windows.front();
+        session.windows.size() == 1 && !only.geometry && !only.maximized && only.unknown.empty())
         session.windows.clear();
     const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath());
@@ -902,6 +903,8 @@ void Application::applySession()
         if (pending.activeTab == i)
             active = id;
     }
+    for (std::size_t k = 0; k < windows.size(); ++k)
+        m_windowPlaces[windows[k]].unknown = k < pending.windows.size() ? pending.windows[k].unknown : std::string();
     for (std::size_t k = 0; k < windows.size() && k < pending.windows.size(); ++k) {
         std::optional<application::DocumentId> current, saved;
         for (std::size_t i = 0; i < pending.tabs.size(); ++i) {

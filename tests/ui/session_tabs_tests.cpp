@@ -689,6 +689,37 @@ private slots:
         QCOMPARE(session->tabs[3].active, 2);
     }
 
+    void aWindowKeepsTheKeysThisBuildDoesNotKnow()
+    {
+        const auto session = app::readSession(
+            R"({"version": 1, "windows": [{"x": 1, "y": 2, "width": 300, "height": 200, "project": "/p", "pinned": {"a": [1]}}],
+                "tabs": [{"subtitles": "a.ass"}]})");
+        QVERIFY(session);
+        QCOMPARE(session->windows.size(), std::size_t(1));
+        QCOMPARE(session->windows[0].unknown, std::string(R"({"pinned":{"a":[1]},"project":"/p"})"));
+        const QByteArray written = app::writeSessionJson(*session);
+        const QJsonObject window = QJsonDocument::fromJson(written).object().value(QStringLiteral("windows")).toArray().first().toObject();
+        QCOMPARE(window.value(QStringLiteral("project")).toString(), QStringLiteral("/p"));
+        QCOMPARE(window.value(QStringLiteral("width")).toInt(), 300);
+        const auto again = app::readSession(std::string_view(written.constData(), written.size()));
+        QVERIFY(again);
+        QCOMPARE(again->windows, session->windows);
+
+        QTemporaryDir home;
+        app::Application a(options(home));
+        const QString file = home.filePath(QStringLiteral("project.hksession"));
+        writeSession(file, QStringLiteral(R"({"version": 1, "windows": [{"project": "/p"}], "tabs": [{"subtitles": "%1"}]})")
+                               .arg(writeSubtitles(dir.filePath(QStringLiteral("p1.ass")), "p1"))
+                               .toUtf8());
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(file)));
+        QCOMPARE(titles(a), (QStringList{"p1.ass"}));
+        const QString saved = home.filePath(QStringLiteral("saved.hksession"));
+        QCOMPARE(a.saveSessionTo(QUrl::fromLocalFile(saved)), QString());
+        const QJsonArray windows = QJsonDocument::fromJson(readAll(saved)).object().value(QStringLiteral("windows")).toArray();
+        QCOMPARE(windows.size(), 1);
+        QCOMPARE(windows.first().toObject().value(QStringLiteral("project")).toString(), QStringLiteral("/p"));
+    }
+
     void brokenWindowsAreNamed()
     {
         const std::pair<const char *, const char *> cases[] = {

@@ -112,6 +112,11 @@ std::optional<application::Session> readJson(std::string_view bytes, application
             if (!maximized.isBool() && !maximized.isUndefined())
                 return wrongType("maximized");
             window.maximized = maximized.toBool();
+            QJsonObject unknown = w;
+            for (const char *key : {"x", "y", "width", "height", "maximized"})
+                unknown.remove(QLatin1String(key));
+            if (!unknown.isEmpty())
+                window.unknown = QJsonDocument(unknown).toJson(QJsonDocument::Compact).toStdString();
             session.windows.push_back(window);
         }
     }
@@ -187,7 +192,7 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
     if (!session.windows.empty()) {
         QJsonArray windows;
         for (const auto &window : session.windows) {
-            QJsonObject w;
+            QJsonObject w = QJsonDocument::fromJson(QByteArray::fromStdString(window.unknown)).object();
             if (const auto &g = window.geometry) {
                 w.insert(QStringLiteral("x"), g->x);
                 w.insert(QStringLiteral("y"), g->y);
