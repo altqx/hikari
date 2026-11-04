@@ -44,6 +44,18 @@ TEST(Schema, ObjectsRequiredAndAdditional)
     EXPECT_EQ(failurePath(R"({"additionalProperties": {"type": "integer"}})", R"({"k": "v"})"), "/k");
 }
 
+TEST(Schema, PatternPropertiesCheckMatchingNamesBeforeAdditional)
+{
+    const auto schema = R"({"type": "object", "patternProperties": {"^[1-9][0-9]*$": {"type": "string"}},
+        "additionalProperties": false})";
+    EXPECT_EQ(failurePath(schema, R"({"1": "0.2.0", "12": "1.0.0"})"), "none");
+    EXPECT_EQ(failurePath(schema, R"({"1": 2})"), "/1");
+    EXPECT_EQ(failurePath(schema, R"({"01": "x"})"), "/01");
+    EXPECT_EQ(checkSchema(j(schema), kDefs), std::nullopt);
+    EXPECT_NE(checkSchema(j(R"({"patternProperties": {"(": {}}})"), kDefs), std::nullopt);
+    EXPECT_NE(checkSchema(j(R"({"patternProperties": []})"), kDefs), std::nullopt);
+}
+
 TEST(Schema, ArraysAndBounds)
 {
     const auto schema = R"({"type": "array", "items": {"$ref": "#/$defs/Id"}, "minItems": 1, "maxItems": 2})";

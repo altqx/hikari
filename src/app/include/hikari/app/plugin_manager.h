@@ -11,6 +11,9 @@
 
 namespace hikari::app {
 
+// The plugin manager's permission lines, as the install question lists them.
+QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions);
+
 class PluginManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantList plugins READ plugins NOTIFY pluginsChanged)
@@ -28,9 +31,9 @@ public:
     explicit PluginManager(Folders folders, QObject *parent = nullptr);
 
     bool available() const { return m_installer.has_value(); }
-    // Rows {id, name, version, description, enabled, keyId ("" when unsigned), unrestricted, icon (a file URL, or
-    // empty), authors, homepage, permissions: [text], adds: [text], settings: [the manifest's setting with its value]},
-    // by name.
+    // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file" or "marketplace"),
+    // unrestricted, icon (a file URL, or empty), authors, homepage, permissions: [text], adds: [text], settings: [the
+    // manifest's setting with its value]}, by name.
     QVariantList plugins() const { return m_rows; }
     // Why plugins.json cannot be read; "" when it can.
     QString problem() const { return m_problem; }
@@ -38,8 +41,13 @@ public:
     // Reads a .hikariplugin and the .minisig beside it, and keeps the result for install().
     // Refused: {ok: false, message}. Otherwise {ok: true, id, name, version, change ("install",
     // "update", "reinstall", "downgrade"), installedVersion, keyId, pinnedKeyId, needsRetrust,
-    // unrestricted, permissions: [text]}.
+    // unrestricted, permissions: [text], marketplace (false)}.
     Q_INVOKABLE QVariantMap review(const QUrl &file);
+    // review() for a marketplace download: checks it against the listing, which then vouches for the
+    // author key. Adds {marketplace: true, signedBy: the listing's authorName}.
+    QVariantMap reviewListed(const QByteArray &package, const plugins::Listing &listing,
+                             const plugins::ListedVersion &listed);
+    std::expected<plugins::Registry, std::string> registry() const;
     // Installs what review() last accepted; "" on success, else the problem.
     Q_INVOKABLE QString install(bool retrusted);
     Q_INVOKABLE void cancelReview() { m_review.reset(); }
@@ -60,6 +68,7 @@ signals:
 
 private:
     void refresh();
+    QVariantMap reviewed(std::expected<plugins::InstallReview, plugins::InstallRefusal> result);
 
     std::optional<plugins::Installer> m_installer;
     std::optional<plugins::InstallReview> m_review;

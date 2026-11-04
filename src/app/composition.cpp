@@ -260,6 +260,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.crashReports.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));
+    options.marketplace = MarketplaceFeed::hikarisub();
 #ifdef HIKARI_UPDATE_TEST_FEED
     if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
         std::vector<minisign::PublicKey> keys;
@@ -333,6 +334,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         application.updates().checkOnStartup();
         // MUST KILL: after checkOnStartup(), whose list it shares.
         application.whatsNew().start();
+        application.pluginMarketplace()->start();
     });
     if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()))
         QObject::connect(

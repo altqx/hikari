@@ -6372,6 +6372,7 @@ ApplicationWindow {
     PluginManagerDialog {
         id: pluginManagerDialog
         manager: root.app.pluginManager
+        market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
         onCopyRequested: text => root.app.copyText(text)

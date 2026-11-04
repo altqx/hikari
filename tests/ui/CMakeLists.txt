@@ -343,6 +343,12 @@ hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_test
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+hikari_add_qttest(hikari_ui_plugin_marketplace_tests SOURCES plugin_marketplace_tests.cpp
+    ${PROJECT_SOURCE_DIR}/tests/plugins/test_signer.cpp LIBRARIES hikari_composition Hikari::sodium)
+target_include_directories(hikari_ui_plugin_marketplace_tests PRIVATE ${PROJECT_SOURCE_DIR}/tests/plugins)
+target_compile_definitions(hikari_ui_plugin_marketplace_tests PRIVATE
+    HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures"
+    HIKARI_MINISIGN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/minisign/fixtures")
 hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_runtime_tests.cpp LIBRARIES hikari_composition hikari_translations)
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")

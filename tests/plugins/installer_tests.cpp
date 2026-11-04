@@ -323,6 +323,65 @@ TEST_F(PluginInstaller, TheRegistryRoundTripsAndRefusesIdsThatAreNotIds)
     std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"..": {"version": "1.0.0", "enabled": true}}})";
     EXPECT_FALSE(loadRegistry(folders().registry));
     EXPECT_TRUE(loadRegistry(m_root / "missing.json"));
+
+    std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"com.example.hello": {"version": "1.0.0", "enabled": true, "source": "web"}}})";
+    EXPECT_FALSE(loadRegistry(folders().registry));
+}
+
+Listing listing(const Signer &author, std::string_view version)
+{
+    Listing out;
+    out.id = "com.example.hello";
+    out.publicKey = author.key;
+    ListedVersion listed;
+    listed.version = version;
+    out.versions.push_back(listed);
+    return out;
+}
+
+TEST_F(PluginInstaller, AMarketplacePackageInstallsUnderItsListedKey)
+{
+    const Listing l = listing(a, "1.0.0");
+    const auto r = installer.reviewListed(plugin("1.0.0", &a), l, l.versions.front());
+    ASSERT_TRUE(r) << r.error().detail;
+    EXPECT_EQ(r->signer, a.key);
+    EXPECT_EQ(r->source, Source::Marketplace);
+    EXPECT_FALSE(r->needsRetrust);
+    ASSERT_TRUE(installer.install(*r, false));
+    EXPECT_EQ(installed().key, a.key);
+    EXPECT_EQ(installed().source, Source::Marketplace);
+
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    EXPECT_EQ(installed().source, Source::File);
+}
+
+TEST_F(PluginInstaller, AMarketplacePackageMustBeTheListedOne)
+{
+    const auto refusal = [&](std::vector<PackageFile> files, const Listing &l) {
+        const auto r = installer.reviewListed(std::move(files), l, l.versions.front());
+        EXPECT_FALSE(r);
+        return r ? Refusal::Package : r.error().kind;
+    };
+    EXPECT_EQ(refusal(plugin("1.0.0", &a), listing(b, "1.0.0")), Refusal::Listing);
+    EXPECT_EQ(refusal(plugin("1.0.0"), listing(a, "1.0.0")), Refusal::Listing);
+    EXPECT_EQ(refusal(plugin("1.0.1", &a), listing(a, "1.0.0")), Refusal::Listing);
+    EXPECT_EQ(refusal(plugin("1.0.0", &a, R"(, "tier": "unrestricted")"), listing(a, "1.0.0")), Refusal::Listing);
+    EXPECT_FALSE(fs::exists(folder()));
+}
+
+TEST_F(PluginInstaller, TheMarketplaceCannotMoveAPinnedKeyOrDowngrade)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    const Listing otherKey = listing(b, "1.2.0");
+    const auto moved = installer.reviewListed(plugin("1.2.0", &b), otherKey, otherKey.versions.front());
+    ASSERT_FALSE(moved);
+    EXPECT_EQ(moved.error().kind, Refusal::Listing);
+
+    const Listing older = listing(a, "1.0.0");
+    const auto downgrade = installer.reviewListed(plugin("1.0.0", &a), older, older.versions.front());
+    ASSERT_FALSE(downgrade);
+    EXPECT_EQ(downgrade.error().kind, Refusal::Listing);
+    EXPECT_EQ(installed().version, "1.1.0");
 }
 
 }

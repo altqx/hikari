@@ -43,6 +43,9 @@ struct Verified {
     bool prehashed = true; // "ED"; false for the legacy "Ed"
 };
 
+// Lower-case hex, as `sha256sum` prints it.
+std::string sha256Hex(std::span<const std::byte> bytes);
+
 // `signature` is a `.minisig` file's text.
 std::expected<Verified, Refusal> verify(std::span<const std::byte> message, std::string_view signature,
                                         std::span<const PublicKey> trusted);

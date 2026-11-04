@@ -92,9 +92,7 @@ std::expected<Registry, std::string> Installer::registry() const
     return loadRegistry(m_folders.registry);
 }
 
-std::expected<InstallReview, InstallRefusal> Installer::review(std::span<const std::byte> packageBytes,
-                                                               std::vector<PackageFile> files,
-                                                               std::optional<std::string_view> signature) const
+std::expected<InstallReview, InstallRefusal> Installer::open(std::vector<PackageFile> files) const
 {
     using Kind = InstallRefusal::Kind;
     auto package = openPackage(std::move(files), m_apiVersion);
@@ -105,15 +103,26 @@ std::expected<InstallReview, InstallRefusal> Installer::review(std::span<const s
         return std::unexpected(InstallRefusal{Kind::Registry, {}, {}, registry.error()});
 
     InstallReview review{std::move(*package), Change::Install, {}, std::nullopt, std::nullopt, false};
-    const Manifest &manifest = review.package.manifest;
     std::optional<InstalledPlugin> installed;
-    if (const auto it = registry->find(manifest.id); it != registry->end()) {
+    if (const auto it = registry->find(review.package.manifest.id); it != registry->end()) {
         installed = it->second;
         review.installedVersion = installed->version;
         review.pinned = installed->key;
     }
-    review.change = changeFrom(installed, manifest.version);
+    review.change = changeFrom(installed, review.package.manifest.version);
+    return review;
+}
 
+std::expected<InstallReview, InstallRefusal> Installer::review(std::span<const std::byte> packageBytes,
+                                                               std::vector<PackageFile> files,
+                                                               std::optional<std::string_view> signature) const
+{
+    using Kind = InstallRefusal::Kind;
+    auto opened = open(std::move(files));
+    if (!opened)
+        return opened;
+    InstallReview &review = *opened;
+    const Manifest &manifest = review.package.manifest;
     if (signature) {
         std::optional<minisign::Refusal> refusal;
         for (const auto &candidate : {review.pinned, manifest.publicKey}) {
@@ -135,7 +144,26 @@ std::expected<InstallReview, InstallRefusal> Installer::review(std::span<const s
         }
     }
     review.needsRetrust = needsRetrust(review.signer, review.pinned);
-    return review;
+    return opened;
+}
+
+std::expected<InstallReview, InstallRefusal> Installer::reviewListed(std::vector<PackageFile> files, const Listing &listing,
+                                                                     const ListedVersion &listed) const
+{
+    auto opened = open(std::move(files));
+    if (!opened)
+        return opened;
+    InstallReview &review = *opened;
+    const auto refused = [](std::string detail) {
+        return std::unexpected(InstallRefusal{InstallRefusal::Kind::Listing, {}, {}, std::move(detail)});
+    };
+    if (auto problem = listedManifestProblem(listing, listed, review.package.manifest, review.pinned))
+        return refused(std::move(*problem));
+    if (review.change == Change::Downgrade)
+        return refused("version " + listed.version + " is older than the installed " + review.installedVersion);
+    review.signer = listing.publicKey;
+    review.source = Source::Marketplace;
+    return opened;
 }
 
 std::expected<void, std::string> Installer::install(const InstallReview &review, bool retrusted)
@@ -170,7 +198,7 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
     if (error)
         return failed("cannot create", m_folders.data / manifest.id, error);
 
-    InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object()};
+    InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object(), review.source};
     if (existing != registry->end()) {
         entry.enabled = existing->second.enabled;
         for (const Setting &setting : manifest.settings)

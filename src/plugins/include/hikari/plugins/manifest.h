@@ -87,6 +87,8 @@ struct ManifestProblem {
 };
 
 std::expected<Manifest, ManifestProblem> parseManifest(std::string_view text, std::int64_t apiVersion);
+// A manifest's permissions object; parts of the wrong shape are left out.
+Permissions readPermissions(const api::Json &permissions);
 
 // Why `value` doesn't fit the setting's type, options or bounds (English), or nothing when it does.
 std::optional<std::string> settingRefusal(const Setting &setting, const api::Json &value);
