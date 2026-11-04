@@ -79,6 +79,17 @@ protected:
     QTemporaryDir m_root;
 };
 
+TEST_F(Sandbox, TheSystemsCoverageIsWhatALauncherGets)
+{
+    for (Network network : {Network::None, Network::Any}) {
+        Launcher launcher(profile(network));
+        const Coverage system = systemCoverage(network);
+        EXPECT_EQ(system.files, launcher.coverage().files);
+        EXPECT_EQ(system.network, launcher.coverage().network);
+        EXPECT_EQ(system.missing, launcher.coverage().missing);
+    }
+}
+
 TEST_F(Sandbox, FilesOutsideTheProfileAreRefused)
 {
     Launcher launcher(profile());

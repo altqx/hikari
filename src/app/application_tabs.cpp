@@ -185,7 +185,22 @@ QVariantList Application::reviewCloseTab(int index)
     const auto tabs = m_workspace.tabs();
     if (index < 0 || index >= static_cast<int>(tabs.size()))
         return {};
-    m_closingTab = tabs[static_cast<std::size_t>(index)];
+    m_closingTabs = {tabs[static_cast<std::size_t>(index)]};
+    m_tabAfterClose.reset();
+    return reviewClose(QStringLiteral("tab"));
+}
+
+QVariantList Application::reviewCloseTabs(int index, bool toTheRight)
+{
+    const auto tabs = m_workspace.tabs();
+    if (index < 0 || index >= static_cast<int>(tabs.size()))
+        return {};
+    const auto kept = tabs[static_cast<std::size_t>(index)];
+    m_closingTabs.clear();
+    for (std::size_t i = toTheRight ? static_cast<std::size_t>(index) + 1 : 0; i < tabs.size(); ++i)
+        if (tabs[i] != kept)
+            m_closingTabs.push_back(tabs[i]);
+    m_tabAfterClose = kept;
     return reviewClose(QStringLiteral("tab"));
 }
 
@@ -211,8 +226,8 @@ void Application::forgetTab(application::DocumentId document)
     m_originalColumns.erase(document.value);
     m_translationDeclined.erase(document.value);
     m_offers.erase(document.value);
-    if (m_kanjiTimer)
-        m_kanjiTimer->forget(document.value);
+    for (auto *views : allViews())
+        views->kanjiTimer->forget(document.value);
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });
     if (m_unresolved.size() != before)

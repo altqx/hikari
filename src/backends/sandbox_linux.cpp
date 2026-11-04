@@ -275,6 +275,34 @@ struct Launcher::Impl {
     }
 };
 
+namespace {
+
+bool seccompAvailable()
+{
+    return kSeccomp && ::prctl(PR_GET_SECCOMP, 0, 0, 0, 0) >= 0;
+}
+
+Coverage coverageOf(int abi, bool seccomp, Network network)
+{
+    Coverage c;
+    c.files = abi >= 1;
+    c.network = network == Network::Any || seccomp;
+    QStringList missing;
+    if (!c.files)
+        missing << QStringLiteral("Landlock isn't available in this kernel, so files aren't confined");
+    if (!c.network)
+        missing << QStringLiteral("seccomp isn't available, so the network isn't confined");
+    c.missing = missing.join(QStringLiteral("; "));
+    return c;
+}
+
+}
+
+Coverage systemCoverage(Network network)
+{
+    return coverageOf(ll::abi(), seccompAvailable(), network);
+}
+
 Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
 {
     m->profile = std::move(profile);
@@ -284,7 +312,7 @@ Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
     }
     const Profile &p = *m->profile;
     m->abi = ll::abi();
-    m->seccomp = kSeccomp && ::prctl(PR_GET_SECCOMP, 0, 0, 0, 0) >= 0;
+    m->seccomp = seccompAvailable();
     if (m->abi >= 1) {
         m->add(kLibraries, kReadExecute);
         m->add(kSystemReads, kRead);
@@ -296,15 +324,7 @@ Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
     if (m->seccomp)
         m->filter = filterFor(p.network);
 
-    Coverage &c = m->coverage;
-    c.files = m->abi >= 1;
-    c.network = p.network == Network::Any || m->seccomp;
-    QStringList missing;
-    if (!c.files)
-        missing << QStringLiteral("Landlock isn't available in this kernel, so files aren't confined");
-    if (!c.network)
-        missing << QStringLiteral("seccomp isn't available, so the network isn't confined");
-    c.missing = missing.join(QStringLiteral("; "));
+    m->coverage = coverageOf(m->abi, m->seccomp, p.network);
 }
 
 Launcher::~Launcher() = default;

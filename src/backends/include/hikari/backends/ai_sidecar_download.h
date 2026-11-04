@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/minisign/minisign.h"
+
 #include <QCryptographicHash>
 #include <QFile>
 #include <QNetworkAccessManager>
@@ -9,6 +11,7 @@
 #include <QUrl>
 
 #include <optional>
+#include <vector>
 
 class QNetworkReply;
 
@@ -26,7 +29,7 @@ QString sidecarAssetName(const QString &version, const QString &platform);
 QString sidecarExecutableName();
 
 enum class SidecarDownloadError {
-    Manifest,  // the release manifest couldn't be fetched
+    Manifest,  // the release manifest couldn't be fetched, or its signature was refused
     NoAsset,   // the manifest names no sidecar for this version and platform
     Network,   // the asset couldn't be fetched
     Mismatch,  // its size or SHA-256 differs from the manifest's
@@ -49,8 +52,10 @@ std::optional<SidecarAsset> sidecarAssetIn(const QByteArray &manifest, const QSt
 struct SidecarSource {
     QString downloadBase; // ends with "/"; a release's files are under v<version>/
     bool github = true;
+    // The keys the manifest's .minisig must verify with.
+    std::vector<minisign::PublicKey> keys;
     static SidecarSource gitHub();
-    static SidecarSource local(const QUrl &base);
+    static SidecarSource local(const QUrl &base, std::vector<minisign::PublicKey> keys = {});
 };
 
 /// Fetches the sidecar of this app's release into <root>/<version>/ and checks it against the release manifest.
@@ -82,6 +87,7 @@ signals:
 private:
     QNetworkReply *get(const QUrl &url, qint64 cap);
     void fetchManifest(bool thenDownload);
+    void fetchSignature(QByteArray manifest, bool thenDownload);
     void download(const SidecarAsset &asset);
     void finishDownload();
     void fail(SidecarDownloadError error, const QString &detail = {});

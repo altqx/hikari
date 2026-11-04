@@ -297,3 +297,63 @@ TEST_F(AiRequestsTest, EndingAConversationAsksTheSidecarToDropItsCache)
                                                {"params", Json::object({{"providerId", "or"},
                                                                         {"cacheKey", "thread-1"}})}}));
 }
+
+TEST_F(AiRequestsTest, TestingAProviderBeforeItIsAddedListsItsModelsAndStoresNothing)
+{
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    app::Provider draft = app::presetProvider(app::Preset::Gemini, "gemini", "Google Gemini");
+    std::optional<AiRequests::Probed> probed;
+    requests.probe(draft, "AIza-typed", [&](AiRequests::Probed p) { probed = std::move(p); });
+    const auto lookUp = [&] {
+        std::optional<RelayTargetResult> found;
+        requests.relayTargets()(Json::object({{"kind", "provider"}, {"id", "gemini"}}),
+                                [&](RelayTargetResult r) { found = std::move(r); });
+        return found;
+    };
+    const auto during = lookUp();
+    ASSERT_TRUE(during && *during);
+    EXPECT_EQ((*during)->key, "AIza-typed");
+    EXPECT_EQ((*during)->base, QUrl(QString::fromStdString(draft.baseUrl)));
+    ASSERT_TRUE(waitFor([&] { return probed.has_value(); }));
+    const auto after = lookUp();
+    ASSERT_TRUE(after && !*after);
+    EXPECT_EQ(after->error().kind, app::ErrorKind::NoProvider);
+    ASSERT_TRUE(std::holds_alternative<std::vector<app::Model>>(*probed));
+    EXPECT_EQ(std::get<std::vector<app::Model>>(*probed), (std::vector<app::Model>{{.id = "b/model", .name = "B"}}));
+    EXPECT_FALSE(providers.enabled());
+    EXPECT_TRUE(keys.keys.empty());
+    EXPECT_TRUE(configs.stored.providers.empty());
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 2u);
+    const Json &set = *sent.asArray()[0].find("params")->find("providers");
+    ASSERT_EQ(set.asArray().size(), 1u);
+    EXPECT_EQ(*set.asArray()[0].find("id"), Json("gemini"));
+    EXPECT_EQ(*set.asArray()[0].find("wire"), Json("gemini"));
+    EXPECT_EQ(sent.asArray()[1], Json::object({{"method", "_hikari/models.list"},
+                                               {"params", Json::object({{"providerId", "gemini"}})}}));
+
+    std::optional<AiRequests::Probed> offline;
+    AiRequests none(providers, [] { return nullptr; });
+    none.probe(draft, "AIza-typed", [&](AiRequests::Probed p) { offline = std::move(p); });
+    ASSERT_TRUE(offline.has_value());
+    EXPECT_EQ(std::get<app::Error>(*offline).kind, app::ErrorKind::Network);
+}
+
+TEST_F(AiRequestsTest, WithCachingOffRequestsAskTheSidecarForNoCache)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    Stream cached;
+    requests.complete(app::Role::Chat, chat(), cached.sink());
+    ASSERT_TRUE(waitFor([&] { return cached.done(); }));
+    requests.setCaching(false);
+    Stream plain;
+    requests.complete(app::Role::Chat, chat(), plain.sink());
+    ASSERT_TRUE(waitFor([&] { return plain.done(); }));
+    const Json sent = received();
+    EXPECT_EQ(sent.asArray()[1].find("params")->find("request")->find("caching"), nullptr);
+    EXPECT_EQ(*sent.asArray()[3].find("params")->find("request")->find("caching"), Json(false));
+}

@@ -31,6 +31,9 @@ struct Coverage {
     bool complete() const { return files && network; }
 };
 
+/// What this machine can enforce of a profile with `network`, without creating or starting anything.
+Coverage systemCoverage(Network network);
+
 /// Starts processes confined to a profile, plus what any process needs to run here: on Linux the runtime
 /// libraries, TLS roots, a few devices and its own /proc entry; on Windows what Windows grants every AppContainer.
 /// Without a profile nothing is confined. On Windows each process runs in a kill-on-close job it joins before its

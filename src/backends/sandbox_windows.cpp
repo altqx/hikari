@@ -140,6 +140,11 @@ struct Launcher::Impl {
     }
 };
 
+Coverage systemCoverage(Network)
+{
+    return {.files = true, .network = true, .missing = {}};
+}
+
 Launcher::Launcher(std::optional<Profile> profile) : m(std::make_unique<Impl>())
 {
     if (!profile) {

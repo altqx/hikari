@@ -2818,6 +2818,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Usunięto położenie lub wyrównanie</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>Położenie przybliżone najbliższym regionem</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>Usunięto timing karaoke</translation>
     </message>
@@ -2840,6 +2844,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>“%1” is a folder.</source>
         <translation>„%1” jest folderem.</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>Wpisz kod języka, np. en lub pt-BR, albo zostaw puste.</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2946,6 +2954,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nazwy aktorów</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Styl napisów Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>Czas w klatkach</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Język</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>Scal nakładające się linijki w jeden napis</translation>
     </message>
@@ -2960,6 +2980,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Use video frame rate</source>
         <translation>Użyj liczby klatek wideo</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>Tekst pozostaje biały i wyśrodkowany u góry lub u dołu, zachowywana jest tylko kursywa, a czas jest w klatkach.</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -6948,10 +6972,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Ukryj</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>Odepnij</translation>
     </message>
@@ -9178,6 +9198,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Importuj skróty ze starej wersji…</translation>
     </message>
     <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
         <source>Legacy</source>
         <translation>Starsza wersja</translation>
     </message>
@@ -9457,6 +9481,370 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>Słowa w innych językach są sprawdzane innymi zainstalowanymi słownikami dla ich pisma. Słowa w piśmie, dla którego nie ma słownika, nie są oznaczane.</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>Czat</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation>Tłumacz</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation>Recenzent</translation>
+    </message>
+    <message>
+        <source>Vision</source>
+        <translation>Obraz</translation>
+    </message>
+    <message>
+        <source>Judge</source>
+        <translation>Sędzia</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Własny punkt końcowy…</translation>
+    </message>
+    <message>
+        <source>Delete provider</source>
+        <translation>Usuń dostawcę</translation>
+    </message>
+    <message>
+        <source>Delete the provider “%1”?</source>
+        <translation>Usunąć dostawcę “%1”?</translation>
+    </message>
+    <message>
+        <source>Its key is removed from the keychain. Roles that use its models go back to the chat model.</source>
+        <translation>Jego klucz zostanie usunięty z magazynu kluczy. Role korzystające z jego modeli wrócą do modelu czatu.</translation>
+    </message>
+    <message>
+        <source>Roles that use its models go back to the chat model.</source>
+        <translation>Role korzystające z jego modeli wrócą do modelu czatu.</translation>
+    </message>
+    <message>
+        <source>Chat Completions</source>
+        <translation>Chat Completions</translation>
+    </message>
+    <message>
+        <source>Responses</source>
+        <translation>Responses</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation>Messages</translation>
+    </message>
+    <message>
+        <source>Gemini API</source>
+        <translation>Gemini API</translation>
+    </message>
+    <message>
+        <source>Key rejected (%1)</source>
+        <translation>Klucz odrzucony (%1)</translation>
+    </message>
+    <message>
+        <source>Too many requests (%1)</source>
+        <translation>Zbyt wiele żądań (%1)</translation>
+    </message>
+    <message>
+        <source>Request refused (%1)</source>
+        <translation>Żądanie odrzucone (%1)</translation>
+    </message>
+    <message>
+        <source>Provider error (%1)</source>
+        <translation>Błąd dostawcy (%1)</translation>
+    </message>
+    <message>
+        <source>Can’t reach the provider</source>
+        <translation>Nie można połączyć się z dostawcą</translation>
+    </message>
+    <message>
+        <source>No answer from the provider</source>
+        <translation>Brak odpowiedzi od dostawcy</translation>
+    </message>
+    <message>
+        <source>Unexpected answer</source>
+        <translation>Nieoczekiwana odpowiedź</translation>
+    </message>
+    <message>
+        <source>A key goes only over HTTPS, to this computer or to a Tailscale peer</source>
+        <translation>Klucz jest wysyłany tylko przez HTTPS, do tego komputera lub do węzła Tailscale</translation>
+    </message>
+    <message>
+        <source>Enter a key</source>
+        <translation>Wpisz klucz</translation>
+    </message>
+    <message>
+        <source>No system keychain is available</source>
+        <translation>Brak dostępnego systemowego magazynu kluczy</translation>
+    </message>
+    <message>
+        <source>Access to the keychain was refused</source>
+        <translation>Magazyn kluczy odmówił dostępu</translation>
+    </message>
+    <message>
+        <source>Can’t save the provider list</source>
+        <translation>Nie można zapisać listy dostawców</translation>
+    </message>
+    <message>
+        <source>Fill in the name and a valid address</source>
+        <translation>Wpisz nazwę i poprawny adres</translation>
+    </message>
+    <message>
+        <source>Can’t download the AI component</source>
+        <translation>Nie można pobrać komponentu AI</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component is damaged</source>
+        <translation>Pobrany komponent AI jest uszkodzony</translation>
+    </message>
+    <message>
+        <source>Can’t save the AI component</source>
+        <translation>Nie można zapisać komponentu AI</translation>
+    </message>
+    <message>
+        <source>Test failed</source>
+        <translation>Test nie powiódł się</translation>
+    </message>
+    <message>
+        <source>Edit “%1”</source>
+        <translation>Edytuj “%1”</translation>
+    </message>
+    <message>
+        <source>Add a custom endpoint</source>
+        <translation>Dodaj własny punkt końcowy</translation>
+    </message>
+    <message>
+        <source>Add %1</source>
+        <translation>Dodaj %1</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nazwa</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Bazowy URL</translation>
+    </message>
+    <message>
+        <source>Gemini API key</source>
+        <translation>Klucz API Gemini</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>Klucz API (opcjonalnie)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>Klucz API</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. Type a new key to replace it</source>
+        <translation>Zapisany w magazynie kluczy. Wpisz nowy klucz, aby go zastąpić</translation>
+    </message>
+    <message>
+        <source>Hide key</source>
+        <translation>Ukryj klucz</translation>
+    </message>
+    <message>
+        <source>Show key</source>
+        <translation>Pokaż klucz</translation>
+    </message>
+    <message>
+        <source>Get a key in Google AI Studio</source>
+        <translation>Uzyskaj klucz w Google AI Studio</translation>
+    </message>
+    <message>
+        <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
+        <translation>Klucz z Google AI Studio. Vertex AI i logowanie przez Google Cloud nie są obsługiwane.</translation>
+    </message>
+    <message>
+        <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
+        <translation>Lokalny serwer, taki jak Ollama lub LM Studio, nie potrzebuje klucza. Klucz jest wysyłany tylko przez HTTPS, do tego komputera lub do węzła Tailscale.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once: %1 MB.</source>
+        <translation>Pierwszy dostawca jednorazowo pobiera komponent AI: %1 MB.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once.</source>
+        <translation>Pierwszy dostawca jednorazowo pobiera komponent AI.</translation>
+    </message>
+    <message>
+        <source>Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.</source>
+        <translation>Pobierają go przyciski Testuj połączenie i Dodaj. Działa tylko wtedy, gdy używasz funkcji AI, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>%1 of %2 MB</source>
+        <translation>%1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>Tests when the download finishes</source>
+        <translation>Test po zakończeniu pobierania</translation>
+    </message>
+    <message>
+        <source>Testing…</source>
+        <translation>Testowanie…</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>Zapisywanie…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>Połączono · %n model</numerusform>
+            <numerusform>Połączono · %n modele</numerusform>
+            <numerusform>Połączono · %n modeli</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>Testuj połączenie</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Dodaj</translation>
+    </message>
+    <message>
+        <source>AI features</source>
+        <translation>Funkcje AI</translation>
+    </message>
+    <message>
+        <source>Turn off all AI features</source>
+        <translation>Wyłącz wszystkie funkcje AI</translation>
+    </message>
+    <message>
+        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>Nic związanego z AI nie jest wyświetlane, pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
+    </message>
+    <message>
+        <source>Kept while AI is off</source>
+        <translation>Zachowane, gdy AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>Your providers, and their keys in the keychain</source>
+        <translation>Twoi dostawcy i ich klucze w magazynie kluczy</translation>
+    </message>
+    <message>
+        <source>Your agent threads</source>
+        <translation>Twoje wątki agenta</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component</source>
+        <translation>Pobrany komponent AI</translation>
+    </message>
+    <message>
+        <source>Hidden while AI is off</source>
+        <translation>Ukryte, gdy AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>The agent panel, inline AI actions and AI rows in every menu</source>
+        <translation>Panel agenta, akcje AI w tekście i pozycje AI we wszystkich menu</translation>
+    </message>
+    <message>
+        <source>AI commands in command search, their shortcuts and toolbar buttons</source>
+        <translation>Polecenia AI w wyszukiwarce poleceń, ich skróty i przyciski paska narzędzi</translation>
+    </message>
+    <message>
+        <source>AI in Getting started and What’s new</source>
+        <translation>AI w Pierwszych krokach i w Co nowego</translation>
+    </message>
+    <message>
+        <source>MCP server, which stops listening</source>
+        <translation>Serwer MCP, który przestaje nasłuchiwać</translation>
+    </message>
+    <message>
+        <source>Press OK or Apply to turn AI back on.</source>
+        <translation>Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>Dostawcy</translation>
+    </message>
+    <message>
+        <source>No providers yet. AI sends nothing until you add one.</source>
+        <translation>Nie ma jeszcze dostawców. AI nic nie wysyła, dopóki nie dodasz dostawcy.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>Nie testowano · %n model</numerusform>
+            <numerusform>Nie testowano · %n modele</numerusform>
+            <numerusform>Nie testowano · %n modeli</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the key with Edit</source>
+        <translation>Zastąp klucz przyciskiem Edytuj</translation>
+    </message>
+    <message>
+        <source>Key in keychain</source>
+        <translation>Klucz w magazynie kluczy</translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation>Brak klucza</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edytuj</translation>
+    </message>
+    <message>
+        <source>Add provider</source>
+        <translation>Dodaj dostawcę</translation>
+    </message>
+    <message>
+        <source>Changes to providers and keys apply at once.</source>
+        <translation>Zmiany dostawców i kluczy są stosowane od razu.</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Modele</translation>
+    </message>
+    <message>
+        <source>Refresh models</source>
+        <translation>Odśwież modele</translation>
+    </message>
+    <message>
+        <source>Same as chat</source>
+        <translation>Jak czat</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>Najpierw dodaj dostawcę</translation>
+    </message>
+    <message>
+        <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
+        <translation>Rola bez własnego modelu używa modelu czatu. Obraz wymienia tylko modele, które czytają obrazy.</translation>
+    </message>
+    <message>
+        <source>Use prompt caching</source>
+        <translation>Używaj buforowania promptów</translation>
+    </message>
+    <message>
+        <source>The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</source>
+        <translation>Dostawca przechowuje początek rozmowy przez kilka minut, więc kolejna tura kosztuje mniej. Na tym komputerze nic nie jest zapisywane.</translation>
+    </message>
+    <message>
+        <source>What is sent to providers</source>
+        <translation>Co jest wysyłane do dostawców</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
+        <translation type="vanished">Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
     </message>
 </context>
 <context>
@@ -9949,8 +10337,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>Również w</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>Brak innych wystąpień</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>Dokument referencyjny jest chroniony (tylko do odczytu).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, linijka %2</translation>
     </message>
 </context>
 <context>
@@ -12882,8 +13286,12 @@ Usunięte style:
         <translation>Zastosuj do zaznaczonych linijek: ustawia ich styl (Enter lub dwukrotne kliknięcie stylu)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>Edytuj…</translation>
+        <source>New style…</source>
+        <translation>Nowy styl…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>Edytuj styl…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12892,10 +13300,6 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>Otwórz w menedżerze stylów</translation>
     </message>
 </context>
 <context>
@@ -12925,6 +13329,26 @@ Usunięte style:
         <translation>Otwórz nową zakładkę</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>Napisy</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>Klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Nowa zakładka</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
@@ -12933,24 +13357,32 @@ Usunięte style:
         <translation>Zapisz wszystko</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>Pokaż w folderze</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>Kopiuj ścieżkę</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>Przełącz na</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>Zamknij pozostałe zakładki</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>Zamknij zakładki po prawej</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>Zamknij wszystkie zakładki</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>Pokaż napisy w folderze</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>Pokaż wideo w folderze</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>Pokaż audio w folderze</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>Pokaż klatki kluczowe w folderze</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15297,8 +15729,12 @@ Usunięte style:
         <translation>Filtry</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>Przewijaj przy</translation>
+        <source>Move video to the selected line</source>
+        <translation>Przesuń wideo do zaznaczonej linijki</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>Po przesunięciu odtwórz</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15323,10 +15759,6 @@ Usunięte style:
     <message>
         <source>Editing</source>
         <translation>Edycja</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>Potem odtwórz</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16624,14 +17056,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Move tab right</source>
         <translation>Przesuń zakładkę w prawo</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>Odłącz</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>Zamknij dokument referencyjny</translation>
     </message>
     <message>
         <source>Move panel</source>

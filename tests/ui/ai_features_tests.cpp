@@ -2,6 +2,7 @@
 
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/sandbox.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -151,8 +152,10 @@ TEST_F(AiFeaturesTest, StartupAndOpeningSettingsDontBuildTheSidecar)
 TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsOnDemand)
 {
     app::AiFeatures features(settings, ports(true));
+    EXPECT_EQ(features.sandboxed(), backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete());
     auto *host = features.sidecarForAction();
     ASSERT_NE(host, nullptr);
+    EXPECT_FALSE(features.sandboxed()) << "the test host starts its sidecar without a profile";
     bool answered = false;
     host->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
     ASSERT_TRUE(waitFor([&] { return answered; }));

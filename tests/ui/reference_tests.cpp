@@ -125,19 +125,21 @@ class ReferenceTest : public QObject {
         const QPoint at = item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
         QTest::mouseClick(item->window(), button, mods, at);
     }
-    QPoint rowPoint(const char *grid, int row) const
+    int rowTop(const char *grid, int row) const
     {
         QQuickItem *g = item(grid);
-        int found = -1;
         for (int y = 0; g && y < int(g->height()); ++y) {
             int r = -1;
             QMetaObject::invokeMethod(g, "rowAt", Q_RETURN_ARG(int, r), Q_ARG(qreal, qreal(y)));
-            if (r == row) {
-                found = y;
-                break;
-            }
+            if (r == row)
+                return y;
         }
-        return g ? g->mapToScene(QPointF(g->width() / 2, found + 3)).toPoint() : QPoint();
+        return -1;
+    }
+    QPoint rowPoint(const char *grid, int row) const
+    {
+        QQuickItem *g = item(grid);
+        return g ? g->mapToScene(QPointF(g->width() / 2, rowTop(grid, row) + 3)).toPoint() : QPoint();
     }
     void clickRow(const char *grid, int row, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
@@ -190,7 +192,7 @@ class ReferenceTest : public QObject {
                                     {{QStringLiteral("scope"), QStringLiteral("openDocuments")},
                                      {QStringLiteral("find"), QStringLiteral("r")}});
         bool listed = false;
-        for (const QVariant &row : application->findResults())
+        for (const QVariant &row : application->findResults(0))
             listed = listed || (row.toMap().value(QStringLiteral("header")).toBool() &&
                                 row.toMap().value(QStringLiteral("text")).toString() == QFileInfo(path).fileName());
         QCOMPARE(listed, searched);
@@ -492,7 +494,7 @@ private slots:
         click(item("referenceMatchStatus"), Qt::RightButton);
         QTRY_VERIFY(menu->property("visible").toBool());
         QObject *close = named("panelOptionsClose");
-        QCOMPARE(close->property("text").toString(), QStringLiteral("Close reference"));
+        QCOMPARE(close->property("text").toString(), QStringLiteral("Close"));
         QVERIFY(QMetaObject::invokeMethod(close, "triggered"));
         QVERIFY(!application->workspace().reference());
         QVERIFY(!shell().referenceLinked());
@@ -543,7 +545,7 @@ private slots:
         QCOMPARE(hash(ref), before);
     }
 
-    void theMenuListsTheOccurrencesInEveryOtherTab()
+    void theMenuListsTheClickedRowsOccurrencesInEveryOtherTab()
     {
         showPreviewByKey();
         auto texts = [](const QVariantList &rows) {
@@ -553,27 +555,45 @@ private slots:
                            (r.toMap().value(QStringLiteral("checked")).toBool() ? QStringLiteral("*") : QString());
             return out;
         };
-        QCOMPARE(texts(application->referenceOccurrences()),
-                 (QStringList{"ref.ass (0 1)*", "ref.ass (2 1)", "third.ass (0 1)"}));
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
+        QCOMPARE(referenceRow(), 0);
+        QCOMPARE(texts(application->referenceOccurrences()), (QStringList{"edit.ass, line 1*", "third.ass, line 1"}));
+        auto *menu = named("referenceOccurrenceMenu");
+        auto shown = [&](const char *name) { return named(name)->property("height").toReal() > 0; };
+        QVERIFY(QMetaObject::invokeMethod(item("referenceGrid"), "scrollToTopRow", Q_ARG(int, 4)));
+        QTRY_VERIFY(rowTop("referenceGrid", 4) >= 0);
+        QTest::mouseClick(window, Qt::RightButton, {}, rowPoint("referenceGrid", 4));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(referenceRow(), 4);
+        QVERIFY(shown("referenceNoOccurrences"));
+        QVERIFY(!named("referenceNoOccurrences")->property("enabled").toBool());
+        QVERIFY(!shown("referenceOccurrencesHeading"));
+        QVERIFY(QMetaObject::invokeMethod(named("referenceCopy"), "triggered"));
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral("r4")));
+        QMetaObject::invokeMethod(menu, "close");
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("referenceGrid"), "scrollToTopRow", Q_ARG(int, 0)));
+        QTRY_VERIFY(rowTop("referenceGrid", 0) >= 0);
         QTest::mouseClick(window, Qt::RightButton, {}, rowPoint("referenceGrid", 0));
-        QTRY_VERIFY(named("referenceOccurrenceMenu")->property("visible").toBool());
-        QObject *thirdItem = named("referenceOccurrence2");
-        QVERIFY(thirdItem);
-        QCOMPARE(thirdItem->property("text").toString(), QStringLiteral("third.ass (0 1)"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(shown("referenceOccurrencesHeading"));
+        QVERIFY(!shown("referenceNoOccurrences"));
+        QCOMPARE(named("referenceOccurrence0")->property("text").toString(), QStringLiteral("edit.ass, line 1"));
+        QVERIFY(named("referenceOccurrence0")->property("checked").toBool());
+        QObject *thirdItem = named("referenceOccurrence1");
+        QCOMPARE(thirdItem->property("text").toString(), QStringLiteral("third.ass, line 1"));
         QVERIFY(QMetaObject::invokeMethod(thirdItem, "triggered"));
         QCOMPARE(application->workspace().reference(), tab(2));
         QVERIFY(application->workspace().referenceIsTab());
         QCOMPARE(referenceRow(), 0);
-        QCOMPARE(shell().referenceMatchCount(), 1);
         QCOMPARE(application->workspace().tabs().size(), std::size_t(3));
-        QVERIFY(application->workspace().checkContentCommand(tab(1)).error() ==
-                application::TargetRefusal::NotEditingTarget);
         clickRow("editingGrid", 2);
-        QCOMPARE(texts(application->referenceOccurrences()), (QStringList{"ref.ass (4 0)", "third.ass (0 0)*"}));
+        QCOMPARE(activeRow(session(tab(0))), 2);
+        QCOMPARE(texts(application->referenceOccurrences()),
+                 (QStringList{"edit.ass, line 1", "ref.ass, line 1", "ref.ass, line 3"}));
         QVERIFY(application->chooseReferenceOccurrence(0));
-        QCOMPARE(application->workspace().reference(), tab(1));
-        QCOMPARE(referenceRow(), 4);
+        QCOMPARE(activeRow(session(tab(0))), 0);
+        QCOMPARE(application->workspace().reference(), tab(2));
     }
 
     void aComparedGridPreviewsItsPartner()

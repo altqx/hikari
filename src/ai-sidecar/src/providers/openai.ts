@@ -1,6 +1,6 @@
 import OpenAI, { APIError } from "openai";
 
-import { cacheControl, markLast, prefixTexts, sortedTools, usage } from "./cache";
+import { cacheControl, markLast, marksCache, prefixTexts, sortedTools, usage } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { type Collector, schemaObject } from "./collector";
@@ -85,7 +85,7 @@ function chatClient(options: ClientOptions): Client {
         async complete(request, out, signal) {
             const body: Json = {
                 model: request.model,
-                messages: chatMessages(request, takesCacheMarks(options.config, request.model)),
+                messages: chatMessages(request, marksCache(request) && takesCacheMarks(options.config, request.model)),
                 stream: true,
                 stream_options: { include_usage: true },
             };

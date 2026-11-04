@@ -43,6 +43,7 @@ export const kRequestSchema = object({
     cacheKey: string,
     cacheLifetime: { type: "string", enum: ["minutes", "hour"] },
     explicitCache: boolean,
+    caching: boolean,
     maxOutputTokens: integer,
 }, ["model", "messages"]);
 

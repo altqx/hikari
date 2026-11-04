@@ -931,7 +931,8 @@
    "surfaces": [
     "audio-box",
     "visual-tools",
-    "script-properties"
+    "script-properties",
+    "settings-dialog"
    ]
   },
   {
@@ -1554,7 +1555,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "dialogs"
+    "dialogs",
+    "status-bar"
    ]
   },
   {
@@ -2320,12 +2322,15 @@
   {
    "role": "menu-more",
    "file": "menu-more.svg",
-   "label": "Layouts",
+   "label": "More",
    "accent": false,
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "status-bar"
+    "audio-box",
+    "line-editor",
+    "visual-tools",
+    "title-bar"
    ]
   },
   {
@@ -3195,8 +3200,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "tab-close-others",
@@ -3207,8 +3211,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "tab-close-right",
@@ -3219,8 +3222,7 @@
    "legacy": [],
    "surfaces": [
     "tab-menu"
-   ],
-   "pending": "CX6 #582"
+   ]
   },
   {
    "role": "fonts-from-subtitles",
@@ -4134,9 +4136,9 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "agent-panel"
-   ],
-   "pending": "AI7 #435"
+    "agent-panel",
+    "settings-dialog"
+   ]
   },
   {
    "role": "ai-send",

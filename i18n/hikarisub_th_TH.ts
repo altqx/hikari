@@ -2770,6 +2770,10 @@ Output device: %2</source>
         <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>ประมาณตำแหน่งเป็นพื้นที่ที่ใกล้ที่สุดแล้ว</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>ลบการจัดเวลาคาราโอเกะแล้ว</translation>
     </message>
@@ -2792,6 +2796,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1” เป็นโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>ป้อนรหัสภาษา เช่น en หรือ pt-BR หรือเว้นว่างไว้</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2898,6 +2906,18 @@ Output device: %2</source>
         <translation>ชื่อผู้พูด</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>สไตล์ข้อความตามเวลาของ Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>เวลาเป็นเฟรม</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
     </message>
@@ -2912,6 +2932,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>ข้อความเป็นสีขาวและอยู่กึ่งกลางด้านบนหรือด้านล่าง คงไว้เฉพาะตัวเอียง และเวลาเป็นเฟรม</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
@@ -6856,10 +6880,6 @@ Failed to copy %2 fonts.</source>
         <translation>แสดง</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>ซ่อน</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>ลอย</translation>
     </message>
@@ -9072,6 +9092,10 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม…</translation>
     </message>
     <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
         <source>Legacy</source>
         <translation>รุ่นเดิม</translation>
     </message>
@@ -9345,6 +9369,366 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>คำในภาษาอื่นจะตรวจด้วยพจนานุกรมอื่นที่ติดตั้งไว้สำหรับระบบอักษรของคำนั้น คำในระบบอักษรที่ไม่มีพจนานุกรมจะไม่ถูกทำเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation>แชต</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation>ผู้แปล</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation>ผู้ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Vision</source>
+        <translation>การมองเห็น</translation>
+    </message>
+    <message>
+        <source>Judge</source>
+        <translation>ผู้ตัดสิน</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>เอนด์พอยต์ที่กำหนดเอง…</translation>
+    </message>
+    <message>
+        <source>Delete provider</source>
+        <translation>ลบผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Delete the provider “%1”?</source>
+        <translation>ลบผู้ให้บริการ “%1” หรือไม่?</translation>
+    </message>
+    <message>
+        <source>Its key is removed from the keychain. Roles that use its models go back to the chat model.</source>
+        <translation>คีย์ของผู้ให้บริการนี้จะถูกลบออกจากพวงกุญแจ บทบาทที่ใช้โมเดลของผู้ให้บริการนี้จะกลับไปใช้โมเดลแชต</translation>
+    </message>
+    <message>
+        <source>Roles that use its models go back to the chat model.</source>
+        <translation>บทบาทที่ใช้โมเดลของผู้ให้บริการนี้จะกลับไปใช้โมเดลแชต</translation>
+    </message>
+    <message>
+        <source>Chat Completions</source>
+        <translation>Chat Completions</translation>
+    </message>
+    <message>
+        <source>Responses</source>
+        <translation>Responses</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation>Messages</translation>
+    </message>
+    <message>
+        <source>Gemini API</source>
+        <translation>Gemini API</translation>
+    </message>
+    <message>
+        <source>Key rejected (%1)</source>
+        <translation>คีย์ถูกปฏิเสธ (%1)</translation>
+    </message>
+    <message>
+        <source>Too many requests (%1)</source>
+        <translation>คำขอมากเกินไป (%1)</translation>
+    </message>
+    <message>
+        <source>Request refused (%1)</source>
+        <translation>คำขอถูกปฏิเสธ (%1)</translation>
+    </message>
+    <message>
+        <source>Provider error (%1)</source>
+        <translation>ข้อผิดพลาดของผู้ให้บริการ (%1)</translation>
+    </message>
+    <message>
+        <source>Can’t reach the provider</source>
+        <translation>ติดต่อผู้ให้บริการไม่ได้</translation>
+    </message>
+    <message>
+        <source>No answer from the provider</source>
+        <translation>ผู้ให้บริการไม่ตอบกลับ</translation>
+    </message>
+    <message>
+        <source>Unexpected answer</source>
+        <translation>คำตอบที่ไม่คาดคิด</translation>
+    </message>
+    <message>
+        <source>A key goes only over HTTPS, to this computer or to a Tailscale peer</source>
+        <translation>คีย์จะส่งผ่าน HTTPS ไปยังคอมพิวเตอร์เครื่องนี้ หรือไปยังเพียร์ Tailscale เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Enter a key</source>
+        <translation>ป้อนคีย์</translation>
+    </message>
+    <message>
+        <source>No system keychain is available</source>
+        <translation>ไม่มีพวงกุญแจของระบบให้ใช้</translation>
+    </message>
+    <message>
+        <source>Access to the keychain was refused</source>
+        <translation>พวงกุญแจปฏิเสธการเข้าถึง</translation>
+    </message>
+    <message>
+        <source>Can’t save the provider list</source>
+        <translation>บันทึกรายการผู้ให้บริการไม่ได้</translation>
+    </message>
+    <message>
+        <source>Fill in the name and a valid address</source>
+        <translation>กรอกชื่อและที่อยู่ที่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Can’t download the AI component</source>
+        <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component is damaged</source>
+        <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดมาเสียหาย</translation>
+    </message>
+    <message>
+        <source>Can’t save the AI component</source>
+        <translation>บันทึกคอมโพเนนต์ AI ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Test failed</source>
+        <translation>ทดสอบไม่ผ่าน</translation>
+    </message>
+    <message>
+        <source>Edit “%1”</source>
+        <translation>แก้ไข “%1”</translation>
+    </message>
+    <message>
+        <source>Add a custom endpoint</source>
+        <translation>เพิ่มเอนด์พอยต์ที่กำหนดเอง</translation>
+    </message>
+    <message>
+        <source>Add %1</source>
+        <translation>เพิ่ม %1</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>ชื่อ</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>URL ฐาน</translation>
+    </message>
+    <message>
+        <source>Gemini API key</source>
+        <translation>คีย์ API ของ Gemini</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>คีย์ API (ไม่บังคับ)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>คีย์ API</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. Type a new key to replace it</source>
+        <translation>บันทึกไว้ในพวงกุญแจแล้ว พิมพ์คีย์ใหม่เพื่อแทนที่</translation>
+    </message>
+    <message>
+        <source>Hide key</source>
+        <translation>ซ่อนคีย์</translation>
+    </message>
+    <message>
+        <source>Show key</source>
+        <translation>แสดงคีย์</translation>
+    </message>
+    <message>
+        <source>Get a key in Google AI Studio</source>
+        <translation>รับคีย์ใน Google AI Studio</translation>
+    </message>
+    <message>
+        <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
+        <translation>คีย์จาก Google AI Studio ไม่รองรับ Vertex AI และการลงชื่อเข้าใช้ Google Cloud</translation>
+    </message>
+    <message>
+        <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
+        <translation>เซิร์ฟเวอร์ภายในเครื่องอย่าง Ollama หรือ LM Studio ไม่ต้องใช้คีย์ คีย์จะส่งผ่าน HTTPS ไปยังคอมพิวเตอร์เครื่องนี้ หรือไปยังเพียร์ Tailscale เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once: %1 MB.</source>
+        <translation>ผู้ให้บริการรายแรกจะดาวน์โหลดคอมโพเนนต์ AI ครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once.</source>
+        <translation>ผู้ให้บริการรายแรกจะดาวน์โหลดคอมโพเนนต์ AI ครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.</source>
+        <translation>ทดสอบการเชื่อมต่อ และ เพิ่ม จะดาวน์โหลดคอมโพเนนต์นี้ คอมโพเนนต์ทำงานเฉพาะเมื่อคุณใช้ฟีเจอร์ AI และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>%1 of %2 MB</source>
+        <translation>%1 จาก %2 MB</translation>
+    </message>
+    <message>
+        <source>Tests when the download finishes</source>
+        <translation>จะทดสอบเมื่อดาวน์โหลดเสร็จ</translation>
+    </message>
+    <message>
+        <source>Testing…</source>
+        <translation>กำลังทดสอบ…</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>กำลังบันทึก…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>เชื่อมต่อแล้ว · %n โมเดล</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>ทดสอบการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>เพิ่ม</translation>
+    </message>
+    <message>
+        <source>AI features</source>
+        <translation>ฟีเจอร์ AI</translation>
+    </message>
+    <message>
+        <source>Turn off all AI features</source>
+        <translation>ปิดฟีเจอร์ AI ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>จะไม่มีสิ่งใดที่เกี่ยวกับ AI แสดง ดาวน์โหลด เริ่มทำงาน หรืออ่านพวงกุญแจของคุณ ผู้ให้บริการ คีย์ และเธรดจะยังเก็บไว้ และเมื่อเปิด AI อีกครั้งทุกอย่างจะกลับมาโดยไม่ต้องรีสตาร์ต</translation>
+    </message>
+    <message>
+        <source>Kept while AI is off</source>
+        <translation>สิ่งที่เก็บไว้ขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Your providers, and their keys in the keychain</source>
+        <translation>ผู้ให้บริการของคุณและคีย์ในพวงกุญแจ</translation>
+    </message>
+    <message>
+        <source>Your agent threads</source>
+        <translation>เธรดเอเจนต์ของคุณ</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component</source>
+        <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดไว้</translation>
+    </message>
+    <message>
+        <source>Hidden while AI is off</source>
+        <translation>สิ่งที่ซ่อนขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>The agent panel, inline AI actions and AI rows in every menu</source>
+        <translation>แผงเอเจนต์ การทำงาน AI ในบรรทัด และรายการ AI ในทุกเมนู</translation>
+    </message>
+    <message>
+        <source>AI commands in command search, their shortcuts and toolbar buttons</source>
+        <translation>คำสั่ง AI ในการค้นหาคำสั่ง ปุ่มลัด และปุ่มบนแถบเครื่องมือ</translation>
+    </message>
+    <message>
+        <source>AI in Getting started and What’s new</source>
+        <translation>AI ใน เริ่มต้นใช้งาน และ มีอะไรใหม่</translation>
+    </message>
+    <message>
+        <source>MCP server, which stops listening</source>
+        <translation>เซิร์ฟเวอร์ MCP ซึ่งจะหยุดรอรับการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>Press OK or Apply to turn AI back on.</source>
+        <translation>กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>ผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>No providers yet. AI sends nothing until you add one.</source>
+        <translation>ยังไม่มีผู้ให้บริการ AI จะไม่ส่งอะไรเลยจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>ยังไม่ได้ทดสอบ · %n โมเดล</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the key with Edit</source>
+        <translation>แทนที่คีย์ด้วย แก้ไข</translation>
+    </message>
+    <message>
+        <source>Key in keychain</source>
+        <translation>มีคีย์ในพวงกุญแจ</translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation>ไม่มีคีย์</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Add provider</source>
+        <translation>เพิ่มผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Changes to providers and keys apply at once.</source>
+        <translation>การเปลี่ยนแปลงผู้ให้บริการและคีย์มีผลทันที</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>โมเดล</translation>
+    </message>
+    <message>
+        <source>Refresh models</source>
+        <translation>รีเฟรชโมเดล</translation>
+    </message>
+    <message>
+        <source>Same as chat</source>
+        <translation>เหมือนแชต</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>เพิ่มผู้ให้บริการก่อน</translation>
+    </message>
+    <message>
+        <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
+        <translation>บทบาทที่ไม่มีโมเดลของตัวเองจะใช้โมเดลแชต การมองเห็นแสดงเฉพาะโมเดลที่อ่านภาพได้</translation>
+    </message>
+    <message>
+        <source>Use prompt caching</source>
+        <translation>ใช้การแคชพรอมต์</translation>
+    </message>
+    <message>
+        <source>The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</source>
+        <translation>ผู้ให้บริการจะเก็บช่วงต้นของบทสนทนาไว้สองสามนาที รอบถัดไปจึงมีค่าใช้จ่ายน้อยลง ไม่มีสิ่งใดถูกเก็บไว้ในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>What is sent to providers</source>
+        <translation>สิ่งที่ส่งไปยังผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
+        <translation type="vanished">คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
 </context>
 <context>
@@ -9833,8 +10217,24 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดอ้างอิง (ป้องกันไว้ อ่านอย่างเดียว)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>พบใน</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>ไม่พบที่อื่น</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>คำบรรยายอ้างอิงถูกป้องกันไว้ (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1 บรรทัด %2</translation>
     </message>
 </context>
 <context>
@@ -12712,8 +13112,12 @@ Styles deleted:
         <translation>นำไปใช้กับบรรทัดที่เลือก: กำหนดสไตล์ของบรรทัดเหล่านั้น (Enter หรือดับเบิลคลิกที่สไตล์)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>แก้ไข…</translation>
+        <source>New style…</source>
+        <translation>สไตล์ใหม่…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>แก้ไขสไตล์…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12722,10 +13126,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>เปิดในตัวจัดการสไตล์</translation>
     </message>
 </context>
 <context>
@@ -12755,6 +13155,26 @@ Styles deleted:
         <translation>เปิดแท็บใหม่</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>เสียง</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>คีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>แท็บใหม่</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>บันทึก</translation>
     </message>
@@ -12763,24 +13183,32 @@ Styles deleted:
         <translation>บันทึกทั้งหมด</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>แสดงในโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>คัดลอกเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>สลับไปที่</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>ปิดแท็บอื่น</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>ปิดแท็บทางขวา</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>ปิดแท็บทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>แสดงไฟล์คำบรรยายในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>แสดงวิดีโอในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>แสดงเสียงในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>แสดงคีย์เฟรมในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15091,8 +15519,12 @@ Styles deleted:
         <translation>ตัวกรอง</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>เลื่อนวิดีโอเมื่อ</translation>
+        <source>Move video to the selected line</source>
+        <translation>เลื่อนวิดีโอไปยังบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>หลังเลื่อนแล้วเล่น</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15117,10 +15549,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>จากนั้นเล่น</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16404,14 +16832,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>ย้ายแท็บไปทางขวา</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>เลิกยึดติด</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>ปิดเอกสารอ้างอิง</translation>
     </message>
     <message>
         <source>Move panel</source>
