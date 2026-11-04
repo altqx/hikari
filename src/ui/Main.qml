@@ -175,7 +175,8 @@ ApplicationWindow {
     }
     onClosing: close => {
         if (root.shellWindow !== 0) {
-            root.app.shellWindowClosed(root.shellWindow)
+            if (!root.app.quitApproved)
+                root.app.shellWindowClosed(root.shellWindow)
             return
         }
         if (!root.app.quitApproved) {

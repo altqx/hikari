@@ -5816,6 +5816,8 @@ namespace {
 
 void notePlace(const QWindow &window, application::SessionWindow &place)
 {
+    if (!window.isVisible())
+        return;
     place.maximized = window.windowStates().testFlag(Qt::WindowMaximized);
     if (const QRect g = window.geometry(); window.windowStates() == Qt::WindowNoState && !g.isEmpty())
         place.geometry = application::SessionGeometry{g.x(), g.y(), g.width(), g.height()};
@@ -5857,11 +5859,9 @@ std::vector<int> Application::sessionWindows() const
     return out;
 }
 
-application::SessionWindow Application::sessionWindow(int shellWindow) const
+application::SessionWindow Application::sessionWindow(int shellWindow)
 {
-    application::SessionWindow place;
-    if (const auto kept = m_windowPlaces.find(shellWindow); kept != m_windowPlaces.end())
-        place = kept->second;
+    auto &place = m_windowPlaces[shellWindow];
     if (const QQuickWindow *window = shellQuickWindow(shellWindow))
         notePlace(*window, place);
     return place;

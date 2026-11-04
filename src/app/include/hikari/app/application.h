@@ -1073,7 +1073,7 @@ private:
     std::map<int, application::SessionWindow> m_windowPlaces;
     QQuickWindow *shellQuickWindow(int shellWindow) const;
     std::vector<int> sessionWindows() const;
-    application::SessionWindow sessionWindow(int shellWindow) const;
+    application::SessionWindow sessionWindow(int shellWindow);
     void placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved);
     bool eventFilter(QObject *watched, QEvent *event) override;
     static std::optional<int> shellWindowOf(const QWindow *window);

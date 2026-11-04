@@ -249,6 +249,10 @@ class ShellWindowsTest : public QObject {
         engine.reset();
         application.reset();
         writeJson(last, lastSession);
+        relaunch();
+    }
+    void relaunch()
+    {
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
@@ -632,6 +636,27 @@ private slots:
         QCOMPARE(application->workspace().activeWindow(), shellId(second));
         QCOMPARE(application->workspace().title(*target()) ? *application->workspace().title(*target()) : std::string(),
                  std::string("second.ass"));
+    }
+
+    void quittingBringsEveryWindowBack()
+    {
+        const QRect secondPlace(100, 120, 900, 650);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        application->setSessionRestore(2);
+        QVERIFY(application->reviewClose(QStringLiteral("quit")).isEmpty());
+        application->finishClose();
+        QVERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+        engine.reset();
+        application.reset();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
     }
 
     void aCrashRestoreReopensEveryWindow()
