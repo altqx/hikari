@@ -133,23 +133,54 @@ describe("Sidecar", () => {
         const { peer, sent, feed } = link();
         const sidecar = new Sidecar(peer, build);
         const read = sidecar.api.call("documents.get");
-        const write = sidecar.api.call("document.apply", { revision: "r1", name: "Fix",
+        const write = sidecar.api.call("document.apply", { revision: 4, name: "Fix",
             edits: [{ op: "set_line", line: 1, fields: { text: "Hi" } }] });
         expect(sent).toEqual([
             { jsonrpc: "2.0", id: 1, method: Method.apiCall, params: { operation: "documents.get" } },
             { jsonrpc: "2.0", id: 2, method: Method.apiCall, params: { operation: "document.apply", params: {
-                revision: "r1", name: "Fix", edits: [{ op: "set_line", line: 1, fields: { text: "Hi" } }] } } },
+                revision: 4, name: "Fix", edits: [{ op: "set_line", line: 1, fields: { text: "Hi" } }] } } },
         ]);
         feed({ jsonrpc: "2.0", id: 2, result: { inserted: [], changed: true } });
-        feed({ jsonrpc: "2.0", id: 1, result: { document: 1, revision: "r1" } });
-        expect(await read).toEqual({ document: 1, revision: "r1" });
+        feed({ jsonrpc: "2.0", id: 1, result: { document: 1, revision: 4 } });
+        expect(await read).toEqual({ document: 1, revision: 4 });
         expect(await write).toEqual({ inserted: [], changed: true });
     });
 
     test("an HA1 error arrives as an RpcError carrying HA1's code", async () => {
         const { peer, feed } = link();
-        const call = new Sidecar(peer, build).api.call("document.apply", { revision: "old", edits: [] });
+        const call = new Sidecar(peer, build).api.call("document.apply", { revision: 1, edits: [] });
         feed({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "stale", data: { code: "stale_revision" } } });
         expect(call).rejects.toMatchObject({ code: -32000, data: { code: "stale_revision" } });
+    });
+
+    test("_hikari/tools.list offers the core tools, and every tool when asked", async () => {
+        const { peer, sent, feed } = link();
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.toolsList });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.toolsList, params: { all: true } });
+        await settle();
+        const names = (id: number) => ((sent.find((m) => m.id === id)!.result as { tools: { name: string }[] }).tools)
+            .map((t) => t.name);
+        expect(names(2)).toContain("lines_find");
+        expect(names(2)).not.toContain("audio_peaks");
+        expect(names(3)).toContain("audio_peaks");
+    });
+
+    test("_hikari/tools.call runs a tool through _hikari/api.call and answers MCP's result", async () => {
+        const { peer, sent, feed } = link();
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.toolsCall, params: { name: "documents_get", arguments: { document: 2 } } });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.toolsCall, params: { arguments: {} } });
+        await settle();
+        const relayed = sent.find((m) => m.method === Method.apiCall)!;
+        expect(relayed.params).toEqual({ operation: "documents.get", params: { document: 2 } });
+        feed({ jsonrpc: "2.0", id: relayed.id, error: { code: -32000, message: "No open Document has id 2.",
+            data: { code: "not_found", data: { document: 2 } } } });
+        await settle();
+        expect(sent.find((m) => m.id === 2 && !m.method)!.result).toEqual({ isError: true, content: [{ type: "text",
+            text: "No open Document has id 2. Look the id up again, with documents_list, lines_find or lines_list." }] });
+        expect((sent.find((m) => m.id === 3)!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
     });
 });
