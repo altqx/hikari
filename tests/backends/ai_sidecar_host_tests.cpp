@@ -310,7 +310,6 @@ TEST_F(AiSidecarHostTest, ASandboxedSidecarAnswersKeepsItsTemporaryFilesInItsWor
     profile.name = QStringLiteral("HikariSub.Test.Sidecar");
     profile.readExecute = {QFileInfo(QStringLiteral(HIKARI_FAKE_AI_SIDECAR)).absolutePath()};
     profile.readWrite = {o.workingDirectory};
-    QDir().mkpath(o.workingDirectory);
     o.sandbox = profile;
     auto h = host(o);
     const auto result = call(*h, "environment");

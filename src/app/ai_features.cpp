@@ -2,6 +2,7 @@
 
 #include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_config_store.h"
+#include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "settings_store.h"
@@ -23,6 +24,8 @@ public:
 struct AiFeatures::Live {
     std::unique_ptr<application::ai::KeyStore> keys;
     std::unique_ptr<application::ai::ConfigStore> configs;
+    std::unique_ptr<application::ai::Providers> providers;
+    std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
 };
 
@@ -49,6 +52,11 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         backends::ai::AiSidecarHost::Options options;
         options.program = program;
         options.workingDirectory = ai + QStringLiteral("/work");
+        options.sandbox = backends::sandbox::Profile{
+            .name = QStringLiteral("HikariSub.AI.Sidecar"),
+            .readExecute = {QFileInfo(program).absolutePath()},
+            .readWrite = {options.workingDirectory},
+        };
         options.buildId = HIKARI_AI_BUILD_ID;
         return std::make_unique<backends::ai::AiSidecarHost>(std::move(options), api,
                                                              api::Caller{"ai", "Hikari AI", false});
@@ -77,6 +85,8 @@ void AiFeatures::apply()
         m_live = std::make_unique<Live>();
         m_live->keys = m_ports.keyStore();
         m_live->configs = m_ports.configStore();
+        m_live->providers = std::make_unique<application::ai::Providers>(*m_live->configs, *m_live->keys);
+        m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::providerTargets(*m_live->providers));
     } else {
         m_live.reset();
     }
@@ -102,8 +112,11 @@ backends::ai::AiSidecarHost *AiFeatures::sidecarForAction()
 {
     if (!m_live)
         return nullptr;
-    if (!m_live->host && m_live->configs && m_live->configs->load().enabled())
+    if (!m_live->host && m_live->configs && m_live->configs->load().enabled()) {
         m_live->host = m_ports.sidecarHost();
+        if (m_live->host)
+            m_live->relay->attach(*m_live->host);
+    }
     return m_live->host.get();
 }
 

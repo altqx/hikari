@@ -140,7 +140,7 @@ public:
     std::size_t outstanding() const { return m_pending.size(); }
     QByteArray diagnostics() const { return m_diagnostics; }
     qint64 processId() const { return m_process ? m_process->processId() : 0; }
-    const sandbox::Coverage &sandboxCoverage() const { return m_launcher.coverage(); }
+    const sandbox::Coverage &sandboxCoverage() const { return m_launcher->coverage(); }
 
 signals:
     void ready();
@@ -161,6 +161,7 @@ private:
 
     void start();
     void startProcess();
+    void preparePrivateFolder();
     void handshake();
     void readOutput();
     void readDiagnostics();
@@ -204,7 +205,7 @@ private:
     QElapsedTimer m_clock;
     NotificationHandler m_onNotification;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
-    sandbox::Launcher m_launcher;
+    std::unique_ptr<sandbox::Launcher> m_launcher;
 };
 
 }

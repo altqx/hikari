@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QLoggingCategory>
 
 #include <algorithm>
 #include <array>
@@ -19,6 +20,8 @@
 namespace hikari::backends::ai {
 
 namespace {
+
+Q_LOGGING_CATEGORY(lcSandbox, "hikari.ai.sandbox")
 
 constexpr std::array kInherited = {
     "PATH", "HOME", "USER", "LOGNAME", "LANG", "LANGUAGE", "LC_ALL", "LC_CTYPE", "LC_MESSAGES", "TZ", "TMPDIR",
@@ -102,12 +105,15 @@ void SidecarRequest::cancel()
 }
 
 AiSidecarHost::AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent)
-    : QObject(parent), m_options(std::move(options)), m_hikari(hikari), m_caller(std::move(caller)),
-      m_launcher(m_options.sandbox)
+    : QObject(parent), m_options(std::move(options)), m_hikari(hikari), m_caller(std::move(caller))
 {
+    preparePrivateFolder();
+    m_launcher = std::make_unique<sandbox::Launcher>(m_options.sandbox);
     handle(std::string(kApiCall), [this](const api::Json &params, std::shared_ptr<SidecarRequest> request) {
         callApi(params, std::move(request));
     });
+    if (m_options.sandbox && !m_launcher->coverage().missing.isEmpty())
+        qCWarning(lcSandbox) << "the AI sidecar's sandbox is incomplete:" << m_launcher->coverage().missing;
     m_clock.start();
     m_handshakeTimer.setSingleShot(true);
     m_startTimer.setSingleShot(true);
@@ -213,11 +219,7 @@ void AiSidecarHost::startProcess()
     m_diagnostics.clear();
     ++m_generation;
     dropIncoming();
-    if (!m_options.workingDirectory.isEmpty()) {
-        QDir().mkpath(m_options.workingDirectory);
-        QFile::setPermissions(m_options.workingDirectory,
-                              QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
-    }
+    preparePrivateFolder();
     QProcessEnvironment environment = sidecarEnvironment(m_options.environment);
     if (m_options.sandbox && !m_options.workingDirectory.isEmpty()) {
         const QString temporary = QDir::toNativeSeparators(m_options.workingDirectory + QStringLiteral("/tmp"));
@@ -237,9 +239,9 @@ void AiSidecarHost::startProcess()
                                         QProcess::UnixProcessFlag::ResetSignalHandlers);
 #endif
 #ifdef Q_OS_LINUX
-    m_launcher.prepare(*m_process, [] { ::prctl(PR_SET_PDEATHSIG, SIGKILL); });
+    m_launcher->prepare(*m_process, [] { ::prctl(PR_SET_PDEATHSIG, SIGKILL); });
 #else
-    m_launcher.prepare(*m_process);
+    m_launcher->prepare(*m_process);
 #endif
     connect(m_process.get(), &QProcess::readyReadStandardOutput, this, &AiSidecarHost::readOutput);
     connect(m_process.get(), &QProcess::readyReadStandardError, this, &AiSidecarHost::readDiagnostics);
@@ -251,6 +253,14 @@ void AiSidecarHost::startProcess()
     });
     m_handshakeTimer.start(m_options.handshakeMs);
     m_process->start();
+}
+
+void AiSidecarHost::preparePrivateFolder()
+{
+    if (m_options.workingDirectory.isEmpty())
+        return;
+    QDir().mkpath(m_options.workingDirectory);
+    QFile::setPermissions(m_options.workingDirectory, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
 }
 
 void AiSidecarHost::handshake()
@@ -537,7 +547,7 @@ void AiSidecarHost::killTree()
     ++m_generation;
     dropIncoming();
 #ifdef Q_OS_WIN
-    m_launcher.killTree();
+    m_launcher->killTree();
 #else
     if (m_pid > 0)
         ::kill(-static_cast<pid_t>(m_pid), SIGKILL);
