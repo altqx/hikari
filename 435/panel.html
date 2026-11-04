@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent panel mockup</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+  --addbg:rgba(77,186,77,.24); --addfg:#B8EBB8; --delbg:rgba(255,173,173,.18); --delfg:#FFC2C2; --dangerbg:#5C2328; --ondanger:#FFE3E3;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+  --addbg:#D3EFD3; --addfg:#0B4F0B; --delbg:#F8D7DA; --delfg:#8B1A2B; --dangerbg:#A51F31; --ondanger:#FFFFFF;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+  --addbg:#CCF2CC; --addfg:#003A00; --delbg:#FFD6D6; --delfg:#7A0000; --dangerbg:#A00000; --ondanger:#FFFFFF;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+  --addbg:#003A00; --addfg:#9CFF9C; --delbg:#3A0000; --delfg:#FFC0C0; --dangerbg:#FFADAD; --ondanger:#000000;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:repeat(4, 446px); gap:22px 18px; align-items:start; width:1880px; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+.band { grid-column:1 / -1; font-size:13px; font-weight:700; border-bottom:1px solid var(--line); padding-bottom:4px; margin-top:4px; display:flex; gap:10px; align-items:baseline; }
+.band span { font-weight:400; font-size:12px; color:var(--muted); }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; min-height:50px; }
+.cap b { color:var(--text); font-weight:600; }
+.mut { color:var(--muted); }
+.warn { color:var(--warning); }
+.ok { color:var(--success); }
+.bad { color:var(--danger); }
+.sp { flex:1; }
+
+.ap { width:446px; height:720px; background:var(--panel); border:1px solid var(--line); border-radius:3px; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+.dh { height:30px; display:flex; align-items:center; gap:8px; padding:0 4px 0 0; flex:none; }
+.dh .tabs { display:flex; align-self:stretch; }
+.dh .tabs span { display:flex; align-items:center; gap:6px; padding:0 12px; color:var(--muted); border-bottom:2px solid transparent; }
+.dh .tabs span.on { color:var(--text); font-weight:700; border-bottom-color:var(--accent); }
+.th { height:34px; display:flex; align-items:center; gap:4px; padding:0 4px 0 6px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); flex:none; }
+.th .t { flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:2px; }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.ib.sm { width:22px; height:22px; }
+.ib.on { background:var(--select); }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.sm { height:22px; padding:0 8px; font-size:12px; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.primary svg path, .btn.primary svg .acc { stroke:var(--onaccent); }
+.btn.danger { background:var(--dangerbg); color:var(--ondanger); border-color:var(--dangerbg); font-weight:600; }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.chip { display:inline-flex; align-items:center; gap:4px; height:20px; padding:0 7px; border:1px solid var(--line); border-radius:10px; font-size:11.5px; color:var(--muted); white-space:nowrap; }
+.chip svg { width:13px; height:13px; }
+.chip.acc { color:var(--accent); border-color:var(--accent); }
+.chip.warn { color:var(--warning); border-color:var(--warning); }
+.redbadge { display:inline-flex; align-items:center; gap:4px; height:20px; padding:0 7px; border-radius:10px; background:var(--dangerbg); color:var(--ondanger); font-size:11.5px; font-weight:700; white-space:nowrap; }
+.redbadge svg { width:13px; height:13px; }
+.redbadge svg path { stroke:var(--ondanger); }
+
+.tl { flex:1; min-height:0; overflow:hidden; padding:10px 10px 6px; display:flex; flex-direction:column; gap:8px; }
+.um { align-self:flex-end; max-width:88%; background:var(--raised); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+.um .att { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:4px; }
+.umf { align-self:flex-end; display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); margin-top:-5px; }
+.cpl { display:inline-flex; align-items:center; gap:3px; color:var(--accent); text-decoration:underline; text-underline-offset:2px; }
+.cpl svg { width:13px; height:13px; }
+.am { font-size:13px; }
+.am p { margin:0 0 6px; }
+.am p:last-child { margin:0; }
+.caret { display:inline-block; width:7px; height:14px; background:var(--accent); vertical-align:-2px; margin-left:2px; }
+.tc { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); min-height:22px; }
+.tc .x { color:var(--text); }
+.tc .r { margin-left:auto; display:flex; gap:6px; align-items:center; }
+.edits { display:flex; align-items:center; gap:7px; font-size:12px; padding:5px 6px 5px 8px; border:1px solid var(--accent); border-left-width:3px; border-radius:2px; background:var(--select); }
+.edits.pend { border-style:dashed; border-left-style:solid; }
+.edits .lnk { color:var(--accent); text-decoration:underline; text-underline-offset:2px; margin-left:auto; white-space:nowrap; }
+.plan { border:1px solid var(--line); border-radius:3px; padding:6px 8px; font-size:12px; }
+.plan .h { font-weight:600; margin-bottom:3px; display:flex; gap:6px; align-items:center; }
+.plan .s { display:flex; align-items:center; gap:7px; min-height:20px; }
+.plan .s.done { color:var(--muted); text-decoration:line-through; }
+.plan .s .b { width:12px; height:12px; border:1px solid var(--control); border-radius:2px; flex:none; }
+.plan .s.done .b { background:var(--success); border-color:var(--success); }
+.plan .s.now .b { border-color:var(--accent); box-shadow:inset 0 0 0 2px var(--accent); }
+
+.ask { border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:2px; background:var(--raised); padding:8px 10px; font-size:12.5px; }
+.ask.w { border-left-color:var(--warning); }
+.ask.b { border-left-color:var(--danger); }
+.ask .h { display:flex; align-items:center; gap:7px; font-weight:700; margin-bottom:4px; }
+.ask .h .chip { font-weight:400; margin-left:auto; }
+.ask .why { color:var(--muted); font-size:12px; margin:4px 0 0; }
+.ask .act { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.ask .what { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:11.5px; background:var(--field); border:1px solid var(--line); border-radius:2px; padding:4px 6px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.meter { display:flex; align-items:center; gap:8px; padding:4px 10px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--line); flex:none; }
+.tm { width:64px; height:6px; border:1px solid var(--control); border-radius:3px; overflow:hidden; flex:none; }
+.tm i { display:block; height:100%; background:var(--accent); }
+.meter.hot .tm { border-color:var(--warning); }
+.meter.hot .tm i { background:var(--warning); }
+.meter.hot .tk { color:var(--warning); font-weight:600; display:inline-flex; gap:4px; align-items:center; }
+.meter .cost { margin-left:auto; }
+.queued { display:flex; align-items:center; gap:6px; margin:0 8px 6px; padding:4px 4px 4px 8px; border:1px dashed var(--control); border-radius:3px; font-size:12px; flex:none; }
+.queued .q { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.comp { margin:0 8px 8px; border:1px solid var(--control); border-radius:3px; background:var(--field); flex:none; }
+.comp.focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.comp .att { display:flex; gap:4px; flex-wrap:wrap; padding:6px 6px 0; }
+.comp .txt { min-height:40px; padding:6px 8px; }
+.comp .txt .ph { color:var(--muted); }
+.comp .bar { display:flex; align-items:center; gap:4px; padding:2px 4px 4px; }
+.cb { height:24px; display:inline-flex; align-items:center; gap:4px; padding:0 4px 0 7px; border-radius:2px; font-size:12px; white-space:nowrap; }
+.cb:hover, .cb.open { background:var(--raised); }
+.cb.open { outline:1px solid var(--accent); }
+.cb svg { width:14px; height:14px; }
+.cb.full { color:var(--danger); font-weight:600; }
+.send { width:28px; height:26px; border-radius:2px; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; }
+.send svg path, .send svg .acc { stroke:var(--onaccent); }
+.send.stop { background:var(--raised); border:1px solid var(--control); }
+.send.stop svg path, .send.stop svg .acc { stroke:var(--text); }
+.send.dis { background:transparent; border:1px solid var(--disabled); }
+.send.dis svg path, .send.dis svg .acc { stroke:var(--disabled); }
+.cursor { display:inline-block; width:1px; height:15px; background:var(--text); vertical-align:-3px; }
+
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:290px; }
+.menu .mi { min-height:28px; display:flex; align-items:center; gap:10px; padding:0 12px; white-space:nowrap; }
+.menu .mi.two { align-items:flex-start; padding:5px 12px; white-space:normal; }
+.menu .mi.two .d { font-size:11.5px; color:var(--muted); }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .mi .tick { width:16px; flex:none; color:var(--accent); font-weight:700; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+.menu .grp { font-size:11px; color:var(--muted); padding:4px 12px 2px; }
+
+.dvd { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11.5px; }
+.dvd::before, .dvd::after { content:""; flex:1; border-top:1px solid var(--line); }
+.dvd .in { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); border-radius:10px; padding:1px 8px; white-space:nowrap; }
+.sumbox { border:1px solid var(--line); border-radius:3px; background:var(--raised); padding:6px 10px; font-size:12px; }
+.sumbox h5 { margin:6px 0 2px; font-size:11.5px; color:var(--muted); font-weight:600; }
+.sumbox h5:first-child { margin-top:0; }
+.sumbox ul { margin:0; padding-left:16px; }
+
+.kids { border:1px solid var(--line); border-radius:3px; }
+.kids .gh { display:flex; align-items:center; gap:7px; padding:5px 8px; font-size:12px; font-weight:600; border-bottom:1px solid var(--line); }
+.kid { padding:6px 8px; display:grid; grid-template-columns:18px 1fr auto; gap:2px 8px; align-items:center; font-size:12px; }
+.kid + .kid { border-top:1px solid var(--line); }
+.kid .nm { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kid .sub { grid-column:2; color:var(--muted); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kid .acts { grid-column:3; grid-row:1 / 3; display:flex; gap:4px; align-items:center; }
+.kid.need { background:var(--raised); box-shadow:inset 3px 0 0 var(--warning); }
+.st { font-size:11.5px; white-space:nowrap; }
+
+.banner { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--raised); border-bottom:1px solid var(--line); font-size:12px; flex:none; }
+.brief { border:1px dashed var(--control); border-radius:4px; padding:6px 10px; font-size:12.5px; }
+.brief .lab { font-size:11px; color:var(--muted); display:flex; gap:5px; align-items:center; margin-bottom:2px; }
+
+.rv { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+.rvsum { display:flex; align-items:center; gap:6px; padding:6px 8px 8px; border-bottom:1px solid var(--line); flex:none; }
+.rvsum .t { flex:1; min-width:0; font-size:12px; }
+.rvsum .t b { display:block; font-size:13px; }
+.turn { padding:6px 8px 4px; }
+.turn .h { display:flex; align-items:center; gap:7px; }
+.turn .h .q { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chh { display:flex; align-items:center; gap:6px; margin:8px 0 2px 16px; font-size:12px; font-weight:600; }
+.chh .n { font-weight:400; color:var(--muted); white-space:nowrap; }
+.lr { display:flex; align-items:center; gap:8px; margin-left:16px; padding:0 2px 0 8px; height:24px; border-left:3px solid var(--accent); font-size:12px; }
+.lr .no { width:26px; color:var(--muted); text-align:right; flex:none; }
+.lr .tx { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lr.more { color:var(--muted); border-left-style:dotted; }
+
+.tlist .row { display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid var(--line); }
+.tlist .row .w { flex:1; min-width:0; }
+.tlist .row .w b { display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tlist .row .w span { font-size:11.5px; color:var(--muted); }
+.tlist .row.on { background:var(--select); box-shadow:inset 3px 0 0 var(--accent); }
+.tlist .grp { font-size:11px; color:var(--muted); padding:8px 10px 2px; }
+.search { margin:8px; height:26px; display:flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--field); padding:0 8px; color:var(--muted); }
+
+.empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:24px; text-align:center; }
+.empty .big svg { width:36px; height:36px; }
+.empty p { margin:0; color:var(--muted); font-size:12.5px; max-width:320px; }
+
+.dlg { position:absolute; z-index:5; left:18px; right:18px; top:170px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 12px 36px rgba(0,0,0,.5); }
+.dlg .title { height:32px; display:flex; align-items:center; gap:8px; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); }
+.dlg .title .x { width:36px; height:32px; display:flex; align-items:center; justify-content:center; margin-left:auto; }
+.dlg .body { padding:12px 14px 4px; font-size:12.5px; }
+.dlg .body p { margin:0 0 8px; }
+.dlg .body ul { margin:0 0 8px; padding-left:18px; }
+.dlg .foot { display:flex; gap:8px; padding:8px 14px 12px; }
+.scrim { position:absolute; inset:0; background:rgba(0,0,0,.35); z-index:4; }
+.check { display:flex; align-items:flex-start; gap:8px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; flex:none; margin-top:1px; }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>Agent panel</h1><span>#435 design gate, with the #725 compaction parts and the #730 sub-agent addendum · <span id="tn">Dark</span> · the panel at 446 × 720, its default width beside the Grid</span></div>
+
+  <div class="band">The thread and the modes <span>AI7 #435</span></div>
+
+  <div>
+    <p class="cap"><b>1 · A turn running in Auto.</b> Text streams in. Read tools show as quiet rows, and edits as one row per change linking to the review. A message typed meanwhile waits in the queue: Steer sends it into the running turn.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Tighten Ep01 and use honorifics</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um"><div class="att"><span class="chip"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep01.ass</span></div>Tighten anything over 18 CPS and use honorifics for the family names.</div>
+        <div class="umf">14:32 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="plan"><div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Plan</div>
+          <div class="s done"><span class="b"></span>Find Lines over 18 CPS</div>
+          <div class="s now"><span class="b"></span>Shorten them without losing meaning</div>
+          <div class="s"><span class="b"></span>Switch Mr./Ms. to -san, -kun, -senpai</div>
+        </div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></svg><span>Found <span class="x">Lines over 18 CPS</span> · 2 Lines</span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">Lines 1–80</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Shortened 2 Lines</b> · Ep01.ass</span><span class="chip acc">judge approved</span><span class="lnk">Review</span></div>
+        <div class="am"><p>Lines 12 and 16 now read at 14 and 17 CPS. Next I'm switching the family names to honorifics, starting with Tanaka in Line 14 and<span class="caret"></span></p></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 6.5 6.5"/></g></svg><span>Finding <span class="x">“Mr.”, “Ms.”</span>…</span></div>
+      </div>
+      <div class="queued"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg><span class="q"><b>Queued</b> · Also do Ep02 when you're done</span><span class="btn sm">Steer now</span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></svg></span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+      <div class="meter"><span class="tm"><i style="width:31%"></i></span><span class="tk">62K of 200K tokens</span><span class="cost">$0.18 of $2.00</span></div>
+      <div class="comp focus">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep01.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send stop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>2 · Auto: the judge passes an action to you, and an always-ask action.</b> The judge saw only the action and your messages. Running an external program asks in every mode, so it has no "always" button.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Retime the OP karaoke</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um">Retime the OP karaoke to the vocals and clean up the romaji.</div>
+        <div class="umf">15:02 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">the OP, Lines 1–22</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Fixed the romaji</b> · 6 Lines</span><span class="chip acc">judge approved</span><span class="lnk">Review</span></div>
+        <div class="ask w">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>The judge asks you<span class="chip">Auto</span></div>
+          <div>Delete 22 Lines and insert 24 in Ep01.ass.</div>
+          <div class="why"><b>Why:</b> you asked to retime and clean up, not to replace the OP. This rewrites every Line of it.</div>
+          <div class="act"><span class="btn sm primary">Allow</span><span class="btn sm">Deny</span><span class="btn sm">Deny and tell the agent…</span></div>
+        </div>
+        <div class="ask b">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><path d="M6.5 6.5L5 8.25 6.5 10"/><g class="acc"><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></g></svg>Run an external program?<span class="chip">asks in every mode</span></div>
+          <div class="what">whisperx Ep01-op.flac --language ja --align_model …</div>
+          <div class="why">WhisperX is installed on this computer. It reads the audio file and writes to the AI's scratch folder.</div>
+          <div class="act"><span class="btn sm">Allow once</span><span class="btn sm">Deny</span></div>
+        </div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:22%"></i></span><span class="tk">44K of 200K tokens</span><span class="cost">$0.09 of $2.00</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep01.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Waiting for you to answer</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send stop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>3 · Manual, with the mode menu open.</b> A non-subtitle write asks first. Subtitle edits don't ask: they wait in the review for Keep (AI2), and the agent carries on.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Sort and tidy Signs.ass</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um">Sort the signs by time and merge the duplicates.</div>
+        <div class="umf">15:20 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="edits pend"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Merged 4 duplicate signs</b> · waits for Keep</span><span class="lnk">Review</span></div>
+        <div class="ask">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h5M1.5 11.5h3"/><g class="acc"><path d="M12 2.5v11M9.5 11l2.5 2.5 2.5-2.5"/></g></svg>Run a command?<span class="chip">Manual</span></div>
+          <div><b>Sort all Lines by start time</b> in Signs.ass</div>
+          <div class="act"><span class="btn sm primary">Allow once</span><span class="btn sm">Allow in this thread</span><span class="btn sm">Deny</span></div>
+        </div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:9%"></i></span><span class="tk">18K of 200K tokens</span><span class="cost">$0.03 of $2.00</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Signs.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb open">Manual<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send stop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></div>
+      </div>
+      <div class="menu" style="left:96px; bottom:44px; width:320px">
+        <div class="grp">Mode for this thread</div>
+        <div class="mi two hot"><span class="tick">✓</span><span><b>Manual</b><br><span class="d">You approve every change. Reading never asks.</span></span></div>
+        <div class="mi two"><span class="tick"></span><span><b>Auto</b><br><span class="d">The judge model approves each action, or asks you. It sees the action and your messages, never your files.</span></span></div>
+        <div class="mi two"><span class="tick"></span><span><b class="bad">Full access</b><br><span class="d">Nothing asks except the always-ask list. Edits apply at once and stay undoable.</span></span></div>
+        <div class="sepr"></div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>Default for new threads…</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>4 · Full access, the first time.</b> A one-time warning. After it, the thread carries a red badge in its header and in the mode button, and edits apply at once.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Split the long Lines in the cold open</span><span class="redbadge"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>Full access</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um">Split anything longer than two lines in the cold open.</div>
+        <div class="umf">14:51 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Split Line 5 in two</b> · applied</span><span class="lnk">Review</span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Removed a duplicate</b> · applied</span><span class="lnk">Review</span></div>
+        <div class="am"><p>Done. Line 5 is now two Lines, and I removed the copy of it at 0:00:41.</p></div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:12%"></i></span><span class="tk">24K of 200K tokens</span><span class="cost">$0.05 of $2.00</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep01.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb full"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>Full access<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div>
+      </div>
+      <div class="scrim"></div>
+      <div class="dlg">
+        <div class="title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>Turn on Full access?<span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="body">
+          <p>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</p>
+          <p><b>These still ask, in every mode:</b></p>
+          <ul>
+            <li>deleting or overwriting files outside the subtitle's folder</li>
+            <li>running external programs and installing plugins</li>
+            <li>sending local files to the network</li>
+            <li>changing AI permissions, keys or budgets</li>
+          </ul>
+          <div class="check"><span class="box"></span><span class="mut">Don't warn me again</span></div>
+        </div>
+        <div class="foot"><span class="sp"></span><span class="btn danger ring">Turn on Full access</span><span class="btn">Cancel</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>5 · Cost and failures.</b> An estimate before a bulk run, the thread's soft cap, and the AI component stopping mid-turn: the turn isn't rerun and staged edits stay in the review.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Translate Ep03 to English</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um">Translate Ep03 with the project glossary.</div>
+        <div class="umf">16:10 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="ask">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="5.5"/><path d="M8 3.5V1.5M6.5 1.5h3M12.5 3.5l1 1"/><g class="acc"><path d="M8 9l2.5-2.5"/><circle cx="8" cy="9" r="1" fill="currentColor" stroke="none"/></g></svg>Estimate before a bulk run</div>
+          <div>Translate <b>312 Lines</b> with Gemini 4 Argon: about 180K tokens, <b>$0.65</b>.</div>
+          <div class="why">This thread has used $1.20 of its $2.00 cap; today, $3.40 of $10.00.</div>
+          <div class="act"><span class="btn sm primary">Run</span><span class="btn sm">Cancel</span></div>
+        </div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Translated 140 Lines</b> · Ep03.ass</span><span class="chip acc">judge approved</span><span class="lnk">Review</span></div>
+        <div class="ask w">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>This thread reached its $2.00 cap</div>
+          <div class="why">The turn stopped after its last change. Raise the cap for this thread to go on.</div>
+          <div class="act"><span class="btn sm primary">Raise to $4.00 and continue</span><span class="btn sm">Stop here</span></div>
+        </div>
+        <div class="ask b">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r="0.75" fill="currentColor" stroke="none"/></g></svg>The AI component stopped</div>
+          <div class="why">The turn was interrupted and won't rerun by itself. The 140 Lines already translated stay in the review.</div>
+          <div class="act"><span class="btn sm primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M6.5 5.5v5l4-2.5z" fill="currentColor"/></g></svg>Retry the turn</span><span class="btn sm">Show the log</span></div>
+        </div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:48%"></i></span><span class="tk">96K of 200K tokens</span><span class="cost bad">$2.00 of $2.00</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep03.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Gemini 4 Argon<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>6 · Attaching with @ and picking the model.</b> @ attaches other tabs, the selected Lines, a style or the frame at the playhead. The model menu lists the providers from Settings › AI.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">New thread</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="menu" style="position:relative; width:100%; box-shadow:none">
+          <div class="grp">Model</div>
+          <div class="mi"><span class="tick">✓</span>Claude Sonnet 5.5<span class="k">Anthropic</span></div>
+          <div class="mi"><span class="tick"></span>Claude Haiku 5.5<span class="k">Anthropic</span></div>
+          <div class="mi"><span class="tick"></span>Gemini 4 Argon<span class="k">Google Gemini</span></div>
+          <div class="mi"><span class="tick"></span>qwen3:32b<span class="k">Ollama on this computer</span></div>
+          <div class="sepr"></div>
+          <div class="grp">Agents</div>
+          <div class="mi"><span class="tick"></span>Claude Code<span class="k">your claude 2.4.1</span></div>
+          <div class="mi"><span class="tick"></span>Codex<span class="k">signed in</span></div>
+          <div class="sepr"></div>
+          <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>Settings › AI…</div>
+        </div>
+      </div>
+      <div class="menu" style="left:8px; bottom:150px; width:300px">
+        <div class="grp">Attach</div>
+        <div class="mi hot"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep02.ass<span class="k">tab</span></div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Signs.ass<span class="k">tab</span></div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg>Selected Lines 12–16<span class="k">Ep01.ass</span></div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></svg>Style…</div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.5a1 1 0 0 1 1-1h2l1.5-2h4l1.5 2h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z"/><g class="acc"><circle cx="8" cy="8.5" r="2.5"/></g></svg>Frame at 0:02:14.05</div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:0%"></i></span><span class="tk">0 of 200K tokens</span><span class="cost">$0.00 of $2.00</span></div>
+      <div class="comp focus">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep01.ass · active tab</span><span class="chip"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg>Lines 12–16</span></div>
+        <div class="txt">Compare these with the same scene in @Ep<span class="cursor"></span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb open">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>7 · Threads.</b> The history button lists saved threads with the files they touched. Threads live in the user folder; opening one never opens its files.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Threads</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="search"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></svg>Search threads</div>
+      <div class="tlist">
+        <div class="grp">Today</div>
+        <div class="row on"><div class="w"><b>Tighten Ep01 and use honorifics</b><span>Ep01.ass, Ep02.ass · Claude Sonnet 5.5 · $0.42</span></div><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 6.5 6.5"/></g></svg>running</span></div>
+        <div class="row"><div class="w"><b>Translate Ep03 to English</b><span>Ep03.ass · Gemini 4 Argon · $2.00</span></div><span class="chip warn">at cap</span></div>
+        <div class="row"><div class="w"><b>Split the long Lines in the cold open</b><span>Ep01.ass · Claude Sonnet 5.5 · $0.05</span></div><span class="redbadge">Full access</span></div>
+        <div class="row"><div class="w"><b>Retime the OP karaoke</b><span>Ep01.ass · Claude Code · cost not reported</span></div></div>
+        <div class="grp">Yesterday</div>
+        <div class="row"><div class="w"><b>Sort and tidy Signs.ass</b><span>Signs.ass · Claude Haiku 5.5 · $0.03</span></div></div>
+        <div class="row"><div class="w"><b>Glossary pass for Ep02</b><span>Ep02.ass · Gemini 4 Argon · $0.31</span></div></div>
+        <div class="grp">Last week</div>
+        <div class="row"><div class="w"><b>Fix the typos in the first half</b><span>Ep01.ass · Claude Sonnet 5.5 · $0.12</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>8 · First open, before any provider.</b> The panel sends nothing and starts nothing; it points to Settings › AI. With "Turn off all AI features" on, the panel doesn't exist.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="empty">
+        <span class="big"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg></span>
+        <b>Add a provider to use the agent</b>
+        <p>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</p>
+        <span class="btn primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>Open Settings › AI</span>
+        <p style="font-size:12px">Nothing is sent or downloaded until you add one.</p>
+      </div>
+      <div class="comp" style="opacity:.6">
+        <div class="txt"><span class="ph">Add a provider first</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">No model<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send dis"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="band">Compaction <span>AI21 #725, drawn here</span></div>
+
+  <div>
+    <p class="cap"><b>9 · The token meter at 90%, and the ⋯ menu.</b> The meter turns amber with a warning glyph. "Compact conversation" waits for the running turn to end.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Season QC pass</span><span class="ib on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="menu" style="right:30px; top:96px; width:270px">
+        <div class="mi hot"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.75-3.5"/><path d="M12.5 1.5v3h-3"/><path d="M13.5 8a5.5 5.5 0 0 1-9.75 3.5"/><path d="M3.5 14.5v-3h3"/></svg>Compact conversation</div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></svg>Rename thread</div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/><g class="acc"><path d="M6.5 7.5v4M4.5 9.5h4"/></g></svg>New thread from summary</div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M9.5 12h5M12.5 10l2 2-2 2"/></g></svg>Export as Markdown…</div>
+        <div class="sepr"></div>
+        <div class="mi"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></svg>Delete thread</div>
+      </div>
+      <div class="tl">
+        <div class="am"><p>…and Ep05 has 14 Lines over 20 CPS. I've listed them below with a shorter version for each.</p></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">Ep05.ass, Lines 1–420</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="um">Good. Do Ep06 next, same rules.</div>
+        <div class="umf">17:44 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">Ep06.ass, Lines 1–388</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="am"><p>Ep06 is cleaner: 6 Lines over 20 CPS<span class="caret"></span></p></div>
+      </div>
+      <div class="meter hot"><span class="tm"><i style="width:92%"></i></span><span class="tk"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>184K of 200K tokens · compacts at the next tool call</span><span class="cost">$1.14</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep06.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send stop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>10 · After compacting, divider open.</b> The same divider for both stages. Open, it shows the summary the model now sees; the full history stays above it.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Season QC pass</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">Ep06.ass, Lines 1–388</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="dvd"><span class="in"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg>Context compacted 313K → 21.2K tokens</span></div>
+        <div class="sumbox">
+          <h5>Goal</h5><ul><li>QC Ep01–Ep12: CPS ≤ 20, honorifics, glossary terms.</li></ul>
+          <h5>Decisions</h5><ul><li>Keep “-senpai”; “Kitamachi” stays untranslated.</li><li>Split rather than cut when a Line has two speakers.</li></ul>
+          <h5>Files and Lines touched</h5><ul><li>Ep01–Ep05: 61 Lines kept · Ep06: 6 Lines in review</li></ul>
+          <h5>Open work</h5><ul><li>Ep06 Lines 201–388, then Ep07–Ep12.</li></ul>
+          <h5>Your preferences</h5><ul><li>Ask before touching signs.</li></ul>
+        </div>
+        <div class="am"><p>Picking up at Ep06 Line 201.</p></div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:11%"></i></span><span class="tk">22K of 200K tokens</span><span class="cost">$1.17</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep06.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send stop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>11 · /compact in the composer, and the 97% offer.</b> Typing / lists the commands. With automatic compaction off, the panel offers it at 97%; a failed summary shows Retry and New thread from summary.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Season QC pass</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="am"><p>Ep08 done: 9 Lines shortened, all in the review.</p></div>
+        <div class="ask w">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>This conversation is nearly full</div>
+          <div class="why">194K of 200K tokens. Automatic compaction is off in Settings › AI.</div>
+          <div class="act"><span class="btn sm primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.75-3.5"/><path d="M12.5 1.5v3h-3"/><path d="M13.5 8a5.5 5.5 0 0 1-9.75 3.5"/><path d="M3.5 14.5v-3h3"/></svg>Compact conversation</span><span class="btn sm">New thread from summary</span></div>
+        </div>
+        <div class="dvd"><span class="in"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg>Context compacted 132K → 18.4K tokens</span></div>
+        <div class="ask b">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r="0.75" fill="currentColor" stroke="none"/></g></svg>Couldn't compact the conversation</div>
+          <div class="why">The summary request failed twice (provider timeout). Nothing was removed.</div>
+          <div class="act"><span class="btn sm primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M6.5 5.5v5l4-2.5z" fill="currentColor"/></g></svg>Retry</span><span class="btn sm">New thread from summary</span></div>
+        </div>
+      </div>
+      <div class="menu" style="left:8px; bottom:142px; width:340px">
+        <div class="grp">Commands</div>
+        <div class="mi hot"><b>/compact</b><span class="mut">[instruction]</span><span class="k">Compact conversation</span></div>
+        <div class="mi"><b>/new</b><span class="k">New thread</span></div>
+        <div class="mi"><b>/mode</b><span class="k">Change mode</span></div>
+      </div>
+      <div class="meter hot"><span class="tm"><i style="width:97%"></i></span><span class="tk"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>194K of 200K tokens</span><span class="cost">$1.62</span></div>
+      <div class="comp focus">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep08.ass · active tab</span></div>
+        <div class="txt">/compact keep the glossary decisions word for word<span class="cursor"></span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div></div>
+
+  <div class="band">Sub-agents <span>AI22 #730 addendum</span></div>
+
+  <div>
+    <p class="cap"><b>12 · Children in the parent's timeline.</b> A card per child, grouped per turn: title, harness and model, state, cost, Open and Stop. A child's permission request shows here with its name; only you answer it.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></svg></span><span class="t">Translate Ep02 in parallel</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um">Translate Ep02 in three parts in parallel, then do a coherence pass.</div>
+        <div class="umf">18:02 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Restore checkpoint</span></div>
+        <div class="ask">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="5.5"/><path d="M8 3.5V1.5M6.5 1.5h3M12.5 3.5l1 1"/><g class="acc"><path d="M8 9l2.5-2.5"/><circle cx="8" cy="9" r="1" fill="currentColor" stroke="none"/></g></svg>Estimate for 3 sub-agents</div>
+          <div>About 410K tokens across three models, <b>$1.10</b>.</div>
+          <div class="act"><span class="btn sm primary">Run</span><span class="btn sm">Cancel</span></div>
+        </div>
+        <div class="kids">
+          <div class="gh"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>3 sub-agents · 2 running · 1 needs you<span class="sp"></span><span class="btn sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg>Stop all</span></div>
+          <div class="kid"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 6.5 6.5"/></g></svg></span><span class="nm">Part 1 · Lines 1–150</span><span class="acts"><span class="mut st">$0.21</span><span class="btn sm">Open</span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></span><span class="sub">Hikari · Gemini 4 Argon · running · 96 of 150</span></div>
+          <div class="kid need"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg></span><span class="nm">Part 2 · Lines 151–300</span><span class="acts"><span class="mut st">$0.18</span><span class="btn sm">Open</span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></span><span class="sub"><span class="warn">needs you</span> · Claude Code · Sonnet 5.5</span></div>
+          <div class="kid"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M5 8.25l2 2 4-4.5"/></g></svg></span><span class="nm">Part 3 · Lines 301–412</span><span class="acts"><span class="mut st">$0.24</span><span class="btn sm">Open</span></span><span class="sub"><span class="ok">done</span> · Codex · GPT-5.5 · 112 Lines in the review</span></div>
+        </div>
+        <div class="ask b">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><path d="M6.5 6.5L5 8.25 6.5 10"/><g class="acc"><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></g></svg>Part 2 asks you<span class="chip">sub-agent · asks in every mode</span></div>
+          <div>Run an external program?</div>
+          <div class="what">mecab -Owakati Ep02-part2.txt</div>
+          <div class="why">Only you can answer; the parent agent can't. A write outside Part 2's scope would be refused, not asked.</div>
+          <div class="act"><span class="btn sm">Allow once</span><span class="btn sm primary">Deny</span></div>
+        </div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:18%"></i></span><span class="tk">36K of 200K tokens</span><span class="cost">$0.71 of $2.00 · with sub-agents</span></div>
+      <div class="comp">
+        <div class="att"><span class="chip acc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep02.ass · active tab</span></div>
+        <div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div>
+        <div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send stop"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>13 · A child, opened.</b> Read-only: no composer. Only Stop and permission answers work. The brief comes first, marked as written by the agent; follow-ups go through the parent.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5L6 8l3.5 3.5"/></svg></span><span class="t">Part 1 · Lines 1–150</span><span class="chip">Hikari · Gemini 4 Argon</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="banner"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7l-3 3v-3H2.5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"/><g class="acc"><path d="M8 6.5v3"/><circle cx="8" cy="4.75" r="0.75" fill="currentColor" stroke="none"/></g></svg><span>Sub-agent of <b>Translate Ep02 in parallel</b>. Read-only; talk to it through the parent.</span></div>
+      <div class="tl">
+        <div class="brief"><div class="lab"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Brief, written by the agent</div>Translate Ep02 Lines 1–150 into English. Use the project glossary and keep honorifics. Write only Lines 1–150 of Ep02.ass; leave the Unconfirmed mark on anything unsure.</div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></svg><span>Read <span class="x">the glossary (42 terms)</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">Ep02.ass, Lines 1–150</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Translated Lines 1–60</b> · Ep02.ass</span><span class="chip acc">judge approved</span><span class="lnk">Review</span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Translated Lines 61–96</b> · 4 Unconfirmed</span><span class="chip acc">judge approved</span><span class="lnk">Review</span></div>
+        <div class="am"><p>Lines 97–150 next. “Kitamachi” stays as in the glossary<span class="caret"></span></p></div>
+      </div>
+      <div class="meter"><span class="tm"><i style="width:28%"></i></span><span class="tk">290K of 1M tokens</span><span class="cost">$0.21</span></div>
+      <div style="display:flex; align-items:center; gap:8px; padding:8px; border-top:1px solid var(--line)"><span class="chip">Auto · capped by the parent</span><span class="chip">scope: Ep02 Lines 1–150</span><span class="sp"></span><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor" stroke="none"/></svg>Stop</span></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>14 · The review, grouped by child.</b> Under the parent's turn, each child's edits are their own change set, with Undo and Keep for the whole set. Undo steps name the child.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div>
+      <div class="rv">
+        <div class="rvsum"><span class="t"><b>Ep02.ass</b>208 Lines to review</span><span class="btn sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5l-3 3 3 3"/><path d="M2.5 6.5h7a3.5 3.5 0 0 1 0 7h-3"/></svg>Undo all</span><span class="btn sm primary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Keep all</span></div>
+        <div class="turn">
+          <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg><span class="q"><b>Turn 1</b> · Translate Ep02 in three parts…</span><span class="mut" style="font-size:11.5px">18:02</span></div>
+          <div class="chh"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 6.5 6.5"/></g></svg>Part 1<span class="n">· Hikari · Gemini 4 Argon · 96 Lines</span><span class="sp"></span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5l-3 3 3 3"/><path d="M2.5 6.5h7a3.5 3.5 0 0 1 0 7h-3"/></svg></span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg></span></div>
+          <div class="lr"><span class="no">1</span><span class="tx">Wait, you're actually coming with us?</span></div>
+          <div class="lr"><span class="no">2</span><span class="tx">I said I would, didn't I?</span></div>
+          <div class="lr more"><span class="no"></span><span class="tx">94 more Lines</span></div>
+          <div class="chh"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>Part 2<span class="n">· Claude Code · Sonnet 5.5 · 0 Lines</span><span class="sp"></span></div>
+          <div class="lr more"><span class="no"></span><span class="tx">Waiting for your answer in the thread</span></div>
+          <div class="chh"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M5 8.25l2 2 4-4.5"/></g></svg>Part 3<span class="n">· Codex · GPT-5.5 · 112 Lines</span><span class="sp"></span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5l-3 3 3 3"/><path d="M2.5 6.5h7a3.5 3.5 0 0 1 0 7h-3"/></svg></span><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg></span></div>
+          <div class="lr"><span class="no">301</span><span class="tx">Platform 3. Don't be late.</span></div>
+          <div class="lr"><span class="no">302</span><span class="tx">You're one to talk.</span></div>
+          <div class="lr more"><span class="no"></span><span class="tx">110 more Lines</span></div>
+          <div class="chh"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Parent<span class="n">· coherence pass · not started</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>Tab badge and History with children.</b> The badge counts every child's Lines; the tooltip splits them. History names each child's steps.</p>
+    <div class="ap" style="height:auto; padding:10px; gap:12px">
+      <div style="display:flex; gap:2px; align-items:flex-end; border-bottom:1px solid var(--line); padding:0 4px">
+        <span class="chip" style="border-radius:3px 3px 0 0; height:26px; color:var(--text)">Ep01.ass</span>
+        <span class="chip acc" style="border-radius:3px 3px 0 0; height:26px; color:var(--text)">Ep02.ass <span class="chip acc" style="height:17px; padding:0 5px; background:var(--accent); color:var(--onaccent); border:0; font-weight:700">208</span></span>
+      </div>
+      <div class="menu" style="position:relative; width:auto; padding:6px 10px; font-size:12px">208 changes from the AI to review<br><span class="mut">Part 1: 96 · Part 3: 112</span></div>
+      <div style="border:1px solid var(--line); border-radius:2px; background:var(--field); font-size:12.5px">
+        <div style="display:flex; gap:8px; padding:4px 8px; color:var(--muted); font-size:11.5px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h3.5M11 8h3.5"/><g class="acc"><path d="M8 5l3 3-3 3-3-3z"/></g></svg>Before turn 1</div>
+        <div style="display:flex; gap:8px; padding:4px 8px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Part 1: translated Lines 1–60</div>
+        <div style="display:flex; gap:8px; padding:4px 8px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Part 3: translated Lines 301–412</div>
+        <div style="display:flex; gap:8px; padding:4px 8px; background:var(--select); font-weight:600"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Part 1: translated Lines 61–96</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app's own set: ai-assistant, ai-send, review-keep, checkpoint, history, run-busy, run-applied, media-stop, notice-*, render-cost, pick-lines, open-subtitles, frame-snapshot. No new glyph.</span>
+    <span><b>Colours</b> are theme.cpp's roles for this theme, default accent; Full access uses the danger role.</span>
+    <span><b>Models, prices, counts and token figures</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
