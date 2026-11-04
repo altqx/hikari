@@ -2329,7 +2329,9 @@
     "audio-box",
     "line-editor",
     "visual-tools",
-    "title-bar"
+    "title-bar",
+    "styles-panel",
+    "original-panel"
    ]
   },
   {
