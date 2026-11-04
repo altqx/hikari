@@ -275,6 +275,7 @@ TEST(UpdateOffer, ByPackageKind)
 {
     ReleasePackages p;
     p.offerTo = {Codebase::Qt};
+    p.fromManifest = true;
     p.packages["nsis"] = {assetNameFor("nsis", "0.2.0"), 10, kHash, "10.0.17763", ""};
     p.packages["appimage"] = {assetNameFor("appimage", "0.2.0"), 10, kHash, "", "2.34"};
     p.packages["deb"] = {assetNameFor("deb", "0.2.0"), 10, kHash, "", "2.34"};
@@ -298,6 +299,26 @@ TEST(UpdateOffer, ByPackageKind)
     ReleasePackages none;
     EXPECT_EQ(chooseOffer(PackageKind::Deb, false, none, "", "2.39").kind, OfferKind::Notify);
     EXPECT_EQ(chooseOffer(PackageKind::Arch, false, none, "", "").kind, OfferKind::Aur);
+}
+
+TEST(UpdateOffer, AReleaseWithoutASignedManifestIsOnlyNamed)
+{
+    const std::string deb = assetNameFor("deb", "0.2.0"), appImage = assetNameFor("appimage", "0.2.0");
+    const std::string setup = assetNameFor("nsis", "0.2.0"), rpm = assetNameFor("rpm", "0.2.0");
+    const auto p = fallbackPackages(release("v0.2.0", {{deb, 10, "sha256:" + kHash},
+                                                       {appImage, 10, "sha256:" + kHash},
+                                                       {setup, 10, "sha256:" + kHash},
+                                                       {rpm, 10, "sha256:" + kHash}}));
+    ASSERT_EQ(p.packages.size(), 4u);
+    ASSERT_TRUE(offeredTo(p, Codebase::Qt));
+    for (const auto kind : {PackageKind::Deb, PackageKind::Rpm, PackageKind::AppImage}) {
+        const auto offer = chooseOffer(kind, false, p, "", "2.39");
+        EXPECT_EQ(offer.kind, OfferKind::Notify) << int(kind);
+        EXPECT_TRUE(offer.package.name.empty()) << int(kind);
+    }
+    EXPECT_EQ(chooseOffer(PackageKind::NsisUser, true, p, "10.0.19045", "").kind, OfferKind::Notify);
+    EXPECT_EQ(chooseOffer(PackageKind::NsisMachine, true, p, "10.0.19045", "").kind, OfferKind::Notify);
+    EXPECT_EQ(chooseOffer(PackageKind::Arch, false, p, "", "2.39").kind, OfferKind::Aur);
 }
 
 TEST(UpdateOffer, DottedVersions)

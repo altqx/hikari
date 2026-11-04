@@ -450,4 +450,5 @@ if(HIKARI_AI_SIDECAR)
     add_dependencies(hikari_backends_ai_mcp_tests hikari_ai_sidecar)
 endif()
 hikari_add_gtest(hikari_backends_ai_sidecar_download_tests SOURCES ai_sidecar_download_tests.cpp
-    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB LABELS backends)
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
+target_include_directories(hikari_backends_ai_sidecar_download_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

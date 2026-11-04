@@ -268,7 +268,10 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));
 #ifdef HIKARI_UPDATE_TEST_FEED
     if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
-        options.updateFeed = UpdateFeed::local(QUrl(feed));
+        std::vector<minisign::PublicKey> keys;
+        if (const auto key = minisign::parsePublicKey(qEnvironmentVariable("HIKARISUB_UPDATE_KEY").toStdString()))
+            keys.push_back(*key);
+        options.updateFeed = UpdateFeed::local(QUrl(feed), std::move(keys));
         const QString feedOrigin = originOf(QUrl(feed));
         options.updateEnvironment.allowRedirect = [feedOrigin](const QUrl &to) { return originOf(to) == feedOrigin; };
     }
