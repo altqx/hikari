@@ -5541,6 +5541,14 @@ ApplicationWindow {
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description…")
                             onTriggered: groupDescriptionPopover.edit(groupMenu.description, grid, groupMenu.at)
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
+                            iconRole: "convert-folds"
+                            objectName: "groupConvertFolds"
+                            text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
+                            enabled: groupMenu.visible && root.app.canConvertFolds()
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
                         MenuSeparator {}
                         ShellMenuItem { iconRole: "remove"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Ungroup"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
@@ -5723,6 +5731,14 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem {
+                            command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
+                            iconRole: "convert-folds"
+                            objectName: "convertFolds"
+                            text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
+                            enabled: gridMenu.visible && root.app.canConvertFolds()
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
                         MenuSeparator {}
                         ShellMenuItem {
                             command: "GRID_SELECT_VISIBLE_LINES"
@@ -7341,6 +7357,22 @@ ApplicationWindow {
 
     Connections {
         target: root.app
+        function onAegisubFoldsFound(document, folds) {
+            root.notices.post("info", qsTranslate("HikariSub.Grid", "Aegisub folds"),
+                              qsTranslate("HikariSub.Grid", "This file has %n Aegisub folds.", "", folds), {
+                actions: [{ text: qsTranslate("HikariSub.Grid", "Convert to line groups"), run: () => {
+                    const tab = root.app.tabs.findIndex(t => t.id === document)
+                    if (tab >= 0)
+                        root.app.selectTab(tab)
+                    root.app.convertFoldsToGroups()
+                } }]
+            })
+        }
+        function onFoldsConverted(converted, skipped) {
+            const done = qsTranslate("HikariSub.Grid", "%n Aegisub folds became line groups.", "", converted)
+            root.notices.post("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
+                              : done + " " + qsTranslate("HikariSub.Grid", "%n folds were skipped: they overlap a line group or do not pair.", "", skipped))
+        }
         function onGroupBreakRefused(description, title) {
             if (!description) {
                 root.notices.post("warning", qsTranslate("HikariSub.Grid", "This would leave lines outside their line group"),
@@ -7676,6 +7708,7 @@ ApplicationWindow {
         switch (symbol) {
         case "GLOBAL_QUIT": root.close(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
+        case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

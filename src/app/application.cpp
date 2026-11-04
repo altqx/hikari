@@ -15,6 +15,7 @@
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
+#include "hikari/application/fold_groups.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/grid_translation.h"
@@ -1960,6 +1961,9 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     recordFileTime(*id);
     if (!asReference)
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
+    if (const auto *session = m_files->session(*id); session && !asReference)
+        if (const auto folds = application::foldConversion(session->document()).converted)
+            emit aegisubFoldsFound(id->value, static_cast<int>(folds));
     return *id;
 }
 
@@ -5416,6 +5420,27 @@ bool Application::makeGroups()
 {
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) { return application::makeGroups(s, shown); });
+}
+
+bool Application::canConvertFolds() const
+{
+    const auto *session = targetSession();
+    return session && application::foldConversion(session->document()).converted > 0;
+}
+
+bool Application::convertFoldsToGroups()
+{
+    std::optional<application::FoldConversion> result;
+    const bool done = runFilter([&](application::EditSession &s) -> std::expected<void, application::CommandRefusal> {
+        auto converted = application::convertFoldsToGroups(s);
+        if (!converted)
+            return std::unexpected(converted.error());
+        result = *converted;
+        return {};
+    });
+    if (result)
+        emit foldsConverted(static_cast<int>(result->converted), static_cast<int>(result->skipped));
+    return done;
 }
 
 bool Application::toggleGroup(qulonglong description)

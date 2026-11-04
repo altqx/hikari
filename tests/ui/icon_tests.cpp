@@ -807,7 +807,7 @@ Rectangle {
             QStringLiteral("settings-grid"), QStringLiteral("notices"),
             QStringLiteral("select-all"), QStringLiteral("tags-insert"), QStringLiteral("preview-text"),
             QStringLiteral("dialog-memory"), QStringLiteral("getting-started"), QStringLiteral("ai-send"),
-            QStringLiteral("review-keep"), QStringLiteral("tab-close-right")};
+            QStringLiteral("review-keep"), QStringLiteral("tab-close-right"), QStringLiteral("convert-folds")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

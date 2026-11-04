@@ -13447,6 +13447,64 @@ private slots:
         QTRY_VERIFY(!groupMenu->property("visible").toBool());
     }
 
+    void aegisubFoldsAreOfferedAndConvertedFromTheNotice()
+    {
+        const QString path = writeFile(dir, "fa5.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{=0}{\\i1}Signs{\\i0}\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,inside\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{=1}end\n"
+                                       "\n[Aegisub Extradata]\n"
+                                       "Data: 0,_aegi_folddata,e0;1;1\n"
+                                       "Data: 1,_aegi_folddata,e1;1;1\n");
+        auto *toasts = item<QObject>("toastStack");
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QVERIFY(application->openFile(path));
+        QTRY_VERIFY(toastWith(QStringLiteral("This file has 1 Aegisub fold")));
+        QVERIFY(application->canConvertFolds());
+        QQuickItem *toast = toastWith(QStringLiteral("This file has 1 Aegisub fold"));
+        QQuickItem *convert = nullptr;
+        const std::function<void(QQuickItem *)> findButton = [&](QQuickItem *from) {
+            if (from->inherits("QQuickAbstractButton") && from->property("text").toString() == QLatin1String("Convert to line groups"))
+                convert = from;
+            for (QQuickItem *child : from->childItems())
+                findButton(child);
+        };
+        findButton(toast);
+        QVERIFY(convert);
+        QTRY_VERIFY(convert->isVisible() && convert->width() > 0);
+        QTest::mouseClick(window, Qt::LeftButton, {},
+                          convert->mapToScene(QPointF(convert->width() / 2, convert->height() / 2)).toPoint());
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(4));
+        const auto lines = session->document().lines();
+        QCOMPARE(lines[0]->group, core::GroupMarker::Description);
+        QCOMPARE(lines[0]->text, std::u8string(u8"Signs"));
+        QCOMPARE(lines[1]->group, core::GroupMarker::Closed);
+        QTRY_VERIFY(toastWith(QStringLiteral("became")));
+        QVERIFY(!application->canConvertFolds());
+        auto *table = QAccessible::queryAccessibleInterface(item("editingGrid"))->tableInterface();
+        QTRY_COMPARE(table->rowCount(), 1);
+        QVERIFY(named("convertFolds"));
+        QCOMPARE(named("convertFolds")->property("text").toString(), QStringLiteral("Convert Aegisub folds to line groups"));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *groupMenu = named("groupMenu");
+        emit grid->groupMenuRequested(lines[0]->id.value, 120, grid->property("rowHeight").toDouble() / 2);
+        QTRY_VERIFY(groupMenu->property("visible").toBool());
+        QCOMPARE(named("groupConvertFolds")->property("text").toString(), QStringLiteral("Convert Aegisub folds to line groups"));
+        QVERIFY(!named("groupConvertFolds")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(groupMenu, "close"));
+        QTRY_VERIFY(!groupMenu->property("visible").toBool());
+        QVERIFY(application->editor().undo());
+        QCOMPARE(session->document().lines().size(), std::size_t(3));
+        QVERIFY(application->canConvertFolds());
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_CONVERT_FOLDS_TO_GROUPS"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(4));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+    }
+
     void groupDescriptionsOpenCloseAndBreaksAreRefused()
     {
         const QString path = writeFile(dir, "g9.ass",
@@ -19188,7 +19246,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 268);
+        QCOMPARE(hotkeyRows().size(), 269);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

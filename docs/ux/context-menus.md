@@ -46,6 +46,7 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 11 | Make line group | GRID_TREE_MAKE | | make-tree |
+| 11.1 | Convert Aegisub folds to line groups (FA5) | GLOBAL_CONVERT_FOLDS_TO_GROUPS | `canConvertFolds()` | convert-folds |
 | 12 | Show subtitles preview | GRID_SHOW_PREVIEW | `canShowPreview()`; key bound | reference |
 | 13 | Paste translation text | GRID_PASTE_TRANSLATION | `canPasteTranslation()`; opens a file dialog | paste-translation |
 | 14 | Dialogue shifting window | GRID_TRANSLATION_DIALOG | `canShiftTranslation()` | translation-shift |
@@ -100,6 +101,7 @@ Opens on a right press on a group's description row (`GroupRole == 1`, `line_gri
 1. Add lines (tree-add-lines)
 2. Copy line group (edit-copy)
 3. Change description (edit)
+3.1. Convert Aegisub folds to line groups (FA5, GLOBAL_CONVERT_FOLDS_TO_GROUPS, `canConvertFolds()`) (convert-folds)
 4. Select the group's lines (tree-select)
 5. Delete (delete)
 

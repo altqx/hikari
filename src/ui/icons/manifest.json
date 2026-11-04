@@ -3204,6 +3204,17 @@
    ]
   },
   {
+   "role": "convert-folds",
+   "file": "convert-folds.svg",
+   "label": "Convert Aegisub folds to line groups",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
    "role": "tree-add-lines",
    "file": "tree-add-lines.svg",
    "label": "Add lines",
