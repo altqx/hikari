@@ -760,7 +760,7 @@ ApplicationWindow {
 
     // Item flags are functions: a new model list makes the Instantiator remake every entry, the open one too.
     function panelOwnItems(dock) {
-        if (dock === videoDock)
+        if (dock === editorDock)
             return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), checkable: true, radio: true,
                       checked: () => !root.editor.showFrames, enabled: () => root.editor.framesAvailable,
                       run: () => root.editor.showFrames = false },
@@ -777,10 +777,7 @@ ApplicationWindow {
                       iconRole: "refresh", enabled: () => reloadAutoloadAction.enabled && !root.automation.running,
                       run: () => reloadAutoloadAction.trigger() },
                     { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
-                      iconRole: "hotkeys", run: () => root.openSettings("hotkeys", 7) },
-                    { name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
-                      iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
-                      run: () => root.automation.runs.clear() }]
+                      iconRole: "hotkeys", run: () => root.openSettings("hotkeys", 7) }]
         if (dock === spellDock)
             return [{ name: "spellIgnoreComments", text: qsTranslate("HikariSub.Spelling", "Ignore comments"), checkable: true,
                       checked: () => spellTool.ignoreComments, run: () => spellTool.setIgnoreComments(!spellTool.ignoreComments) },
@@ -799,6 +796,13 @@ ApplicationWindow {
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
         if (root.isPluginDock(dock))
             return root.pluginPanelItems(dock)
+        return []
+    }
+    function panelOwnTail(dock) {
+        if (dock === automationDock)
+            return [{ name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
+                      iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
+                      run: () => root.automation.runs.clear() }]
         return []
     }
     function pluginPanelItems(dock) {
@@ -845,6 +849,7 @@ ApplicationWindow {
         property var dock: null
         readonly property var ownItems: dock ? root.panelOwnItems(dock) : []
         readonly property var ownMenus: dock ? root.panelOwnMenus(dock) : []
+        readonly property var ownTail: dock ? root.panelOwnTail(dock) : []
         readonly property bool closable: dock !== null
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotClosable) === 0
         readonly property bool dockable: dock !== null
@@ -868,8 +873,15 @@ ApplicationWindow {
         onAboutToShow: Docking.openMenu = dock ? dock.uniqueName : ""
         onAboutToHide: Docking.openMenu = ""
         Instantiator {
+            id: panelOwnItemsInstantiator
             model: panelOptionsMenu.ownItems
-            delegate: ShellMenuItem {
+            delegate: panelOwnItem
+            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
+        }
+        Component {
+            id: panelOwnItem
+            ShellMenuItem {
                 required property var modelData
                 objectName: "panelOptions_" + modelData.name
                 iconRole: modelData.iconRole ?? ""
@@ -887,10 +899,9 @@ ApplicationWindow {
                         checked = Qt.binding(() => modelData.checked())
                 }
             }
-            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
-            onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
         Instantiator {
+            id: panelOwnMenusInstantiator
             model: panelOptionsMenu.ownMenus
             delegate: ShellMenu {
                 id: ownMenu
@@ -917,8 +928,20 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => ownMenu.removeItem(object)
                 }
             }
-            onObjectAdded: (index, object) => panelOptionsMenu.insertMenu(panelOptionsMenu.ownItems.length + index, object)
+            onObjectAdded: (index, object) => panelOptionsMenu.insertMenu(panelOwnItemsInstantiator.count + index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeMenu(object)
+        }
+        MenuSeparator {
+            id: panelOwnTailSeparator
+            visible: panelOptionsMenu.ownTail.length > 0
+            height: panelOptionsMenu.ownTail.length > 0 ? implicitHeight : 0
+        }
+        Instantiator {
+            model: panelOptionsMenu.ownTail
+            delegate: panelOwnItem
+            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(
+                               panelOwnItemsInstantiator.count + panelOwnMenusInstantiator.count + 1 + index, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
         MenuSeparator {
             objectName: "panelOptionsSeparator"
@@ -956,7 +979,7 @@ ApplicationWindow {
         ShellMenuItem {
             iconRole: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? "panel-dock" : "panel-float"
             objectName: "panelOptionsFloat"
-            text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Undock")
+            text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Float")
             enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
@@ -970,13 +993,14 @@ ApplicationWindow {
                 text: qsTranslate("HikariSub.Plugins", "About %1…").arg(panelOptionsMenu.dock?.pluginName ?? "")
                 onTriggered: pluginManagerDialog.showPlugin(modelData.pluginId)
             }
-            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 1, object)
+            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(panelOptionsMenu.count - 2, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
+        MenuSeparator {}
         ShellMenuItem {
             iconRole: "tab-close"
             objectName: "panelOptionsClose"
-            text: panelOptionsMenu.dock === referenceDock ? qsTranslate("HikariSub.Workspace", "Close reference") : qsTranslate("HikariSub.Workspace", "Close")
+            text: qsTranslate("HikariSub.Workspace", "Close")
             enabled: panelOptionsMenu.closable
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
@@ -1333,6 +1357,13 @@ ApplicationWindow {
             return
         }
         const rows = root.app.reviewCloseTab(index)
+        if (rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(rows)
+    }
+    function closeTabs(index, toTheRight) {
+        const rows = root.app.reviewCloseTabs(index, toTheRight)
         if (rows.length === 0)
             root.app.finishClose()
         else
@@ -2552,25 +2583,19 @@ ApplicationWindow {
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
-                            iconRole: "hide"
-                            objectName: "panelHide" + modelData.uniqueName
-                            text: qsTr("Hide")
-                            enabled: modelData.isOpen
-                            onTriggered: modelData.close()
-                        }
-                        ShellMenuItem {
-                            iconRole: "panel-float"
+                            iconRole: modelData.isFloating ? "panel-dock" : "panel-float"
                             objectName: "panelFloat" + modelData.uniqueName
-                            text: qsTr("Float")
-                            enabled: modelData.isOpen && !modelData.isFloating
-                            onTriggered: root.setPanelFloating(modelData, true)
+                            text: modelData.isFloating ? qsTr("Dock") : qsTr("Float")
+                            enabled: modelData.isOpen
+                            onTriggered: root.setPanelFloating(modelData, !modelData.isFloating)
                         }
+                        MenuSeparator {}
                         ShellMenuItem {
-                            iconRole: "panel-dock"
-                            objectName: "panelDock" + modelData.uniqueName
-                            text: qsTr("Dock")
-                            enabled: modelData.isOpen && modelData.isFloating
-                            onTriggered: root.setPanelFloating(modelData, false)
+                            iconRole: "tab-close"
+                            objectName: "panelClose" + modelData.uniqueName
+                            text: qsTr("Close")
+                            enabled: modelData.isOpen
+                            onTriggered: root.closePanel(modelData)
                         }
                     }
                     onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
@@ -2578,7 +2603,7 @@ ApplicationWindow {
                 }
                 MenuSeparator {
                     visible: root.pluginPanelRows.length > 0
-                    height: visible ? implicitHeight : 0
+                    height: root.pluginPanelRows.length > 0 ? implicitHeight : 0
                 }
                 Instantiator {
                     model: root.pluginPanelRows
@@ -2599,34 +2624,26 @@ ApplicationWindow {
                             onTriggered: root.showPluginPanel(pluginPanelMenu.modelData.dock)
                         }
                         ShellMenuItem {
-                            iconRole: "hide"
-                            objectName: "panelHide" + pluginPanelMenu.modelData.dock
-                            text: qsTr("Hide")
-                            enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
-                            onTriggered: pluginPanelMenu.dock.close()
-                        }
-                        ShellMenuItem {
-                            iconRole: "panel-float"
+                            iconRole: pluginPanelMenu.dock?.isFloating ? "panel-dock" : "panel-float"
                             objectName: "panelFloat" + pluginPanelMenu.modelData.dock
-                            text: qsTr("Float")
+                            text: pluginPanelMenu.dock?.isFloating ? qsTr("Dock") : qsTr("Float")
                             enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
-                                     && !pluginPanelMenu.dock.isFloating
-                            onTriggered: root.setPanelFloating(pluginPanelMenu.dock, true)
+                            onTriggered: root.setPanelFloating(pluginPanelMenu.dock, !pluginPanelMenu.dock.isFloating)
                         }
+                        MenuSeparator {}
                         ShellMenuItem {
-                            iconRole: "panel-dock"
-                            objectName: "panelDock" + pluginPanelMenu.modelData.dock
-                            text: qsTr("Dock")
+                            iconRole: "tab-close"
+                            objectName: "panelClose" + pluginPanelMenu.modelData.dock
+                            text: qsTr("Close")
                             enabled: pluginPanelMenu.dock !== null && pluginPanelMenu.dock.isOpen
-                                     && pluginPanelMenu.dock.isFloating
-                            onTriggered: root.setPanelFloating(pluginPanelMenu.dock, false)
+                            onTriggered: root.closePanel(pluginPanelMenu.dock)
                         }
                         ShellMenuItem {
                             iconRole: "remove"
                             objectName: "panelForget" + pluginPanelMenu.modelData.dock
                             text: qsTr("Remove from the layout")
                             visible: pluginPanelMenu.kept
-                            height: visible ? implicitHeight : 0
+                            height: pluginPanelMenu.kept ? implicitHeight : 0
                             onTriggered: root.forgetPluginDock(pluginPanelMenu.dock)
                         }
                     }
@@ -6182,6 +6199,7 @@ ApplicationWindow {
             shellWindow: root.shellWindow
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
+            onCloseTabsRequested: (index, toTheRight) => root.closeTabs(index, toTheRight)
             onSaveRequested: id => root.saveSubtitles(id)
             onSaveAllRequested: root.saveAllTabs()
             onCloseAllRequested: tabCommands.confirmCloseAll()

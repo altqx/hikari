@@ -988,7 +988,6 @@ Menus	MainWindow	Go to previous frame		src/ui/Main.qml
 Menus	MainWindow	Go to previous keyframe		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	Go to start time of line		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	Help		Automation/automation/Autoload/l0.DependencyControl.Toolbox.moon src/application/settings_import_tables.cpp src/ui/DialogTitleBar.qml
-Menus	MainWindow	Hide		src/ui/Main.qml
 Menus	MainWindow	Hide tags		src/application/hotkeys.cpp src/ui/Main.qml src/ui/SettingsDialog.qml …
 Menus	MainWindow	Hide tags in the line editor		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	MainWindow	History		src/application/hotkeys.cpp src/application/settings_import_tables.cpp src/ui/HistoryWindow.qml …
@@ -1112,7 +1111,11 @@ Menus	Options	ms		src/application/visual_all_tags.cpp src/application/visual_pos
 Menus	Options	Settings		src/app/application.cpp src/app/crash_report.cpp src/application/hotkeys.cpp …
 Menus	Options	Translation mode		src/application/hotkeys.cpp src/ui/Main.qml src/ui/SettingsDialog.qml …
 Menus	Options	Video		src/app/analytics.cpp src/app/application.cpp src/application/guide_links.cpp …
+Menus	Reference	%1, line %2		src/ui/ReferenceTray.qml
+Menus	Reference	Also in		src/ui/ReferenceTray.qml
 Menus	Reference	Compare with reference		src/ui/Main.qml
+Menus	Reference	Copy		src/ui/ReferenceTray.qml
+Menus	Reference	No other occurrences		src/ui/ReferenceTray.qml
 Menus	Reference	Reference (protected, read-only): %1		src/ui/Main.qml
 Menus	Reference	Reference: %1		src/ui/Main.qml
 Menus	Reports	Close		Automation/automation/Autoload/l0.DependencyControl.Toolbox.moon src/ui/AllTagsEditionDialog.qml src/ui/AutomationProgress.qml …
@@ -1181,28 +1184,35 @@ Menus	Styles	Strikethrough		src/application/hotkeys.cpp src/ui/FontPicker.qml sr
 Menus	Styles	Style manager		src/application/hotkeys.cpp src/ui/StyleManager.qml src/ui/StylesPanel.qml …
 Menus	Styles	Styles: %1		src/ui/Main.qml
 Menus	Styles	Underline		src/application/hotkeys.cpp src/ui/FontPicker.qml src/ui/LineEditorStrip.qml …
+Menus	Tabs	Audio		src/ui/DocumentTabMenu.qml
+Menus	Tabs	Close		src/ui/DocumentTabMenu.qml
 Menus	Tabs	Close %1		src/ui/DocumentTabBar.qml
 Menus	Tabs	Close all tabs		src/ui/DocumentTabMenu.qml src/ui/TabCommands.qml src/ui/UnsavedChanges.qml
+Menus	Tabs	Close other tabs		src/ui/DocumentTabMenu.qml
+Menus	Tabs	Close tabs to the right		src/ui/DocumentTabMenu.qml
 Menus	Tabs	Compare		src/ui/Main.qml src/ui/SubtitleComparisonMenu.qml
 Menus	Tabs	Compare by selected styles		src/app/include/hikari/app/application.h src/ui/SubtitleComparisonMenu.qml
 Menus	Tabs	Compare by selections		src/ui/SubtitleComparisonMenu.qml
 Menus	Tabs	Compare by styles		src/ui/SubtitleComparisonMenu.qml
 Menus	Tabs	Compare by times		src/ui/SubtitleComparisonMenu.qml
 Menus	Tabs	Compare by visible lines		src/ui/SubtitleComparisonMenu.qml
+Menus	Tabs	Copy path		src/ui/DocumentTabMenu.qml
+Menus	Tabs	Keyframes		src/ui/DocumentTabMenu.qml
 Menus	Tabs	Modified		src/application/audio_display.cpp src/ui/DocumentTabBar.qml
 Menus	Tabs	Modified (history step %1)		src/ui/DocumentTabBar.qml
-Menus	Tabs	Open audio containing folder	term:Show-in-folder	src/ui/DocumentTabMenu.qml
+Menus	Tabs	New tab		src/ui/DocumentTabMenu.qml
 Menus	Tabs	Open documents		src/ui/DocumentTabBar.qml
-Menus	Tabs	Open keyframes containing folder	term:Show-in-folder	src/ui/DocumentTabMenu.qml
 Menus	Tabs	Open new tab		src/application/hotkeys.cpp src/ui/DocumentTabBar.qml src/ui/command_names.cpp
-Menus	Tabs	Open the folder containing the subtitles	term:Show-in-folder	src/ui/DocumentTabMenu.qml
 Menus	Tabs	Open video		src/app/application_directshow.cpp src/app/application_video.cpp src/application/hotkeys.cpp …
-Menus	Tabs	Open video containing folder	term:Show-in-folder	src/ui/DocumentTabMenu.qml
 Menus	Tabs	Protected reference		src/ui/DocumentTabBar.qml
 Menus	Tabs	Save		Automation/automation/Autoload/l0.DependencyControl.Toolbox.moon src/app/application.cpp src/application/hotkeys.cpp …
 Menus	Tabs	Save all		src/ui/DocumentTabMenu.qml
+Menus	Tabs	Show in folder		src/ui/DocumentTabMenu.qml
 Menus	Tabs	Subtitle comparison		src/ui/SubtitleComparisonMenu.qml
+Menus	Tabs	Subtitles		src/ui/DocumentTabMenu.qml
+Menus	Tabs	Switch to		src/ui/DocumentTabMenu.qml
 Menus	Tabs	Turn off comparison		src/ui/SubtitleComparisonMenu.qml
+Menus	Tabs	Video		src/ui/DocumentTabMenu.qml
 Menus	TagList	Border color	spelling:colour	src/application/hotkeys.cpp src/ui/LineEditorStrip.qml src/ui/command_names.cpp …
 Menus	TagList	Primary color	spelling:colour	src/application/hotkeys.cpp src/ui/LineEditorStrip.qml src/ui/command_names.cpp …
 Menus	TagList	Shadow color	spelling:colour	src/application/hotkeys.cpp src/ui/LineEditorStrip.qml src/ui/command_names.cpp …
@@ -1392,7 +1402,6 @@ Menus	VisualTools	Your tags		src/application/visual_all_tags.cpp src/ui/AllTagsE
 Menus	Workspace	Above		src/ui/Main.qml
 Menus	Workspace	Below		src/ui/Main.qml
 Menus	Workspace	Close		Automation/automation/Autoload/l0.DependencyControl.Toolbox.moon src/ui/AllTagsEditionDialog.qml src/ui/AutomationProgress.qml …
-Menus	Workspace	Close reference		src/ui/Main.qml
 Menus	Workspace	Dismiss		src/ui/HomePage.qml src/ui/Main.qml src/ui/ToastStack.qml
 Menus	Workspace	Dock		src/ui/DockTitleBar.qml src/ui/Main.qml
 Menus	Workspace	Float		src/ui/Main.qml
@@ -1415,7 +1424,6 @@ Menus	Workspace	Right of		src/ui/Main.qml
 Menus	Workspace	Save		Automation/automation/Autoload/l0.DependencyControl.Toolbox.moon src/app/application.cpp src/application/hotkeys.cpp …
 Menus	Workspace	Save layout as…		src/ui/LayoutMenu.qml
 Menus	Workspace	Tab with		src/ui/Main.qml
-Menus	Workspace	Undock	term:Float	src/ui/Main.qml
 Dialogs	Audio	%1 of 16 beeps		src/ui/TapCalibrationWindow.qml
 Dialogs	Audio	16 beeps at 100 BPM; the first four are practice.		src/ui/TapCalibrationWindow.qml
 Dialogs	Audio	Calibrate tap latency		src/ui/TapCalibrationWindow.qml
@@ -3081,16 +3089,16 @@ Panels	Styles	Apply to the selected lines: sets their style (Enter, or double-cl
 Panels	Styles	border		Automation/automation/Autoload/a-mo.Aegisub-Motion.moon src/application/all_tags.cpp src/ui/StyleManager.qml …
 Panels	Styles	Copy to the catalog…	spelling:catalogue	src/ui/StylesPanel.qml
 Panels	Styles	Duplicate		src/application/settings_import_tables.cpp src/ui/AllTagsEditionDialog.qml src/ui/ShapesEditionDialog.qml …
-Panels	Styles	Edit…		src/ui/StylesPanel.qml
+Panels	Styles	Edit style…		src/ui/StylesPanel.qml
 Panels	Styles	Filter styles		src/ui/StyleManager.qml src/ui/StylesPanel.qml
 Panels	Styles	Lines		Automation/automation/Include/moonscript.lua src/ui/FixMinorErrors.qml src/ui/SearchTool.qml …
 Panels	Styles	Lines: %1		src/ui/StylesPanel.qml
 Panels	Styles	Load		src/ui/AutomationManager.qml src/ui/AutomationNotices.qml src/ui/StyleManager.qml
 Panels	Styles	New style		src/ui/StyleManager.qml src/ui/StylesPanel.qml
+Panels	Styles	New style…		src/ui/StylesPanel.qml
 Panels	Styles	No matching styles		src/ui/StylesPanel.qml
 Panels	Styles	No styles		src/ui/ChooseStyles.qml src/ui/StylesPanel.qml
 Panels	Styles	No styles: the file has no ASS styles		src/ui/StylesPanel.qml
-Panels	Styles	Open in Style manager		src/ui/StylesPanel.qml
 Panels	Styles	scale		Automation/automation/Include/a-mo/Tags.moon Automation/automation/Include/l0/ASSFoundation/Draw/DrawingBase.moon Automation/automation/Include/l0/ASSFoundation/Section/Drawing.moon …
 Panels	Styles	Select lines with this style		src/ui/StylesPanel.qml
 Panels	Styles	Text encoding		src/ui/StyleManager.qml src/ui/tag_list_controller.cpp
@@ -3271,9 +3279,9 @@ Panels	Video	Open the previous video in this folder?		src/ui/VideoFileQuestion.q
 Panels	Video	Play the current line		src/ui/Main.qml src/ui/VideoFullscreen.qml
 Panels	Video	Press Esc to exit full screen		src/ui/VideoFullscreen.qml
 Panels	Video	Previous video file		src/ui/VideoFullscreen.qml
-Panels	Video	Seek on		src/ui/VideoFollowChoices.qml
+Panels	Video	Move video to the selected line		src/ui/VideoFollowChoices.qml
 Panels	Video	Subtitles drawn in %1 ms		src/ui/VideoRenderCost.qml
-Panels	Video	Then play		src/ui/VideoFollowChoices.qml
+Panels	Video	After moving, play		src/ui/VideoFollowChoices.qml
 Panels	Video	This gives %1 frames		src/ui/DummyVideoDialog.qml
 Panels	Video	Type a time such as 0:25:00.00.		src/ui/DummyVideoDialog.qml
 Panels	Video	Unmute		src/ui/VideoFullscreen.qml

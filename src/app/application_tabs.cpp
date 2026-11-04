@@ -186,7 +186,22 @@ QVariantList Application::reviewCloseTab(int index)
     const auto tabs = m_workspace.tabs();
     if (index < 0 || index >= static_cast<int>(tabs.size()))
         return {};
-    m_closingTab = tabs[static_cast<std::size_t>(index)];
+    m_closingTabs = {tabs[static_cast<std::size_t>(index)]};
+    m_tabAfterClose.reset();
+    return reviewClose(QStringLiteral("tab"));
+}
+
+QVariantList Application::reviewCloseTabs(int index, bool toTheRight)
+{
+    const auto tabs = m_workspace.tabs();
+    if (index < 0 || index >= static_cast<int>(tabs.size()))
+        return {};
+    const auto kept = tabs[static_cast<std::size_t>(index)];
+    m_closingTabs.clear();
+    for (std::size_t i = toTheRight ? static_cast<std::size_t>(index) + 1 : 0; i < tabs.size(); ++i)
+        if (tabs[i] != kept)
+            m_closingTabs.push_back(tabs[i]);
+    m_tabAfterClose = kept;
     return reviewClose(QStringLiteral("tab"));
 }
 
