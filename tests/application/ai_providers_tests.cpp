@@ -228,6 +228,64 @@ TEST_F(AiProvidersTest, RemovingAProviderDropsItsKeyAndRoles)
     EXPECT_FALSE(keys.keys.contains("or"));
 }
 
+TEST_F(AiProvidersTest, EditingAProviderKeepsItsPlaceRolesAndKeyUnlessGivenANewOne)
+{
+    Providers providers(configs, keys);
+    ASSERT_EQ(add(providers, openRouter(), "sk-old"), std::nullopt);
+    Provider local = presetProvider(Preset::Custom, "ollama", "Ollama");
+    local.baseUrl = "http://127.0.0.1:11434/v1";
+    ASSERT_EQ(add(providers, local, ""), std::nullopt);
+    ASSERT_TRUE(providers.assign(Role::Judge, {"or", "a/model"}));
+
+    Provider renamed = *providers.config().provider("or");
+    renamed.name = "My OpenRouter";
+    std::optional<std::optional<SaveError>> result;
+    providers.update(renamed, std::nullopt, [&](std::optional<SaveError> e) { result = e; });
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(*result, std::nullopt);
+    EXPECT_EQ(providers.config().providers[0].name, "My OpenRouter");
+    EXPECT_EQ(providers.config().providers[1].id, "ollama");
+    EXPECT_EQ(keys.keys.at("or"), "sk-old");
+    EXPECT_EQ(configs.stored.roles.at(Role::Judge), (ModelRef{"or", "a/model"}));
+
+    result.reset();
+    providers.update(renamed, std::string("sk-new"), [&](std::optional<SaveError> e) { result = e; });
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(*result, std::nullopt);
+    EXPECT_EQ(keys.keys.at("or"), "sk-new");
+    EXPECT_EQ(readKey(providers, "or"), "sk-new");
+    EXPECT_EQ(providers.config().providers[0].id, "or");
+
+    result.reset();
+    providers.update(presetProvider(Preset::OpenAI, "nobody", "Nobody"), std::string("sk"),
+                     [&](std::optional<SaveError> e) { result = e; });
+    EXPECT_EQ(result, std::optional<std::optional<SaveError>>(SaveError::Config));
+    EXPECT_FALSE(keys.keys.contains("nobody"));
+}
+
+TEST_F(AiProvidersTest, UnassigningARoleFallsBackToTheChatModel)
+{
+    Providers providers(configs, keys);
+    ASSERT_EQ(add(providers, openRouter(), "sk"), std::nullopt);
+    ASSERT_TRUE(providers.assign(Role::Reviewer, {"or", "b/model"}));
+    ASSERT_TRUE(providers.unassign(Role::Reviewer));
+    EXPECT_FALSE(configs.stored.roles.contains(Role::Reviewer));
+    EXPECT_EQ(providers.config().modelFor(Role::Reviewer), (ModelRef{"or", "a/model"}));
+}
+
+TEST_F(AiProvidersTest, TheFirstCatalogueFillsAnEmptyChatRole)
+{
+    Providers providers(configs, keys);
+    Provider bare = presetProvider(Preset::Anthropic, "anthropic", "Anthropic");
+    ASSERT_EQ(add(providers, bare, "sk"), std::nullopt);
+    EXPECT_FALSE(providers.config().roles.contains(Role::Chat));
+    ASSERT_TRUE(providers.setModels("anthropic", {{.id = "claude", .name = "Claude"}}));
+    EXPECT_EQ(configs.stored.roles.at(Role::Chat), (ModelRef{"anthropic", "claude"}));
+    ASSERT_TRUE(providers.assign(Role::Chat, {"anthropic", "other"}));
+    ASSERT_TRUE(providers.setModels("anthropic", {{.id = "claude", .name = "Claude"}}));
+    EXPECT_EQ(configs.stored.roles.at(Role::Chat), (ModelRef{"anthropic", "other"}));
+}
+
 TEST_F(AiProvidersTest, ANewCatalogueKeepsTheUsersCorrections)
 {
     Providers providers(configs, keys);

@@ -931,7 +931,8 @@
    "surfaces": [
     "audio-box",
     "visual-tools",
-    "script-properties"
+    "script-properties",
+    "settings-dialog"
    ]
   },
   {
@@ -4135,9 +4136,9 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "agent-panel"
-   ],
-   "pending": "AI7 #435"
+    "agent-panel",
+    "settings-dialog"
+   ]
   },
   {
    "role": "ai-send",

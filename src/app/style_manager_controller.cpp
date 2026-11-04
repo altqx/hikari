@@ -270,10 +270,10 @@ QStringList StyleManagerController::documentStyles() const
     return out;
 }
 
-QVariantList StyleManagerController::panelRows() const
+QVariantList StyleManagerController::panelRows(int shellWindow) const
 {
     QVariantList out;
-    auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    auto *session = m_hooks.windowTarget ? m_hooks.windowTarget(shellWindow) : nullptr;
     const auto styles = session ? application::documentStyles(*session) : std::nullopt;
     if (!styles)
         return out;
@@ -301,6 +301,12 @@ QVariantList StyleManagerController::panelRows() const
 bool StyleManagerController::available() const
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    return session && application::documentStyles(*session).has_value();
+}
+
+bool StyleManagerController::availableIn(int shellWindow) const
+{
+    auto *session = m_hooks.windowTarget ? m_hooks.windowTarget(shellWindow) : nullptr;
     return session && application::documentStyles(*session).has_value();
 }
 

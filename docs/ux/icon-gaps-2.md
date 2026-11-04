@@ -117,7 +117,7 @@ The manifest marks these `pending` until their card places them (#410).
 | plugin-install | PL4 #416 | Install a plugin |
 | plugin-unverified | PL6 #418 | an unverified plugin's warning |
 | node-editor | NE2 #424 | the node-editor mode in the toolbar and View menu |
-| ai-assistant | AI7 #435 | the agent panel |
+| ai-assistant | AI20 #649 (placed) | Settings › AI and the hosted providers in its Add provider menu; the agent panel with AI7 #435 |
 | ai-send | AI7 #435 | Send a message |
 | review-keep | AI2 #430 | Keep a change (Undo takes undo) |
 | checkpoint | AI2 #430 | a turn checkpoint |

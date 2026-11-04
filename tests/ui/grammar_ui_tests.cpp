@@ -229,7 +229,7 @@ private slots:
         QVERIFY(!QFileInfo::exists(grammarDir()));
         if (harperChildren() >= 0)
             QCOMPARE(harperChildren(), 0);
-        const QVariantMap state = application->startGrammarWalk();
+        const QVariantMap state = application->startGrammarWalk(0);
         QCOMPARE(state.value(QStringLiteral("on")).toBool(), false);
         QVERIFY(!state.value(QStringLiteral("found")).toBool());
         QVERIFY(!QFileInfo::exists(grammarDir()));
@@ -430,14 +430,14 @@ private slots:
             events += dialogue(i % 20 == 5 ? "I has a apple." : "This line is fine.", i % 59);
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/first.ass"), events)));
         QTRY_VERIFY(target());
-        QVERIFY(application->startGrammarWalk().value(QStringLiteral("walking")).toBool());
+        QVERIFY(application->startGrammarWalk(0).value(QStringLiteral("walking")).toBool());
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/second.ass"),
                                                dialogue("One.") + dialogue("Two.", 2) + dialogue("Three.", 3))));
         application->selectTab(1);
         QTRY_COMPARE(lineText(), QStringLiteral("One."));
         const auto active = target()->selection().active;
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("cancelled")).toBool(), kHarperWait);
-        const QVariantMap state = application->grammarWalkState();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("cancelled")).toBool(), kHarperWait);
+        const QVariantMap state = application->grammarWalkState(0);
         QCOMPARE(state.value(QStringLiteral("problem")).toString(), QStringLiteral("Another file is open in the editor."));
         QVERIFY(!state.value(QStringLiteral("found")).toBool());
         QTest::qWait(500);
@@ -454,9 +454,9 @@ private slots:
             events += dialogue(i % 4 == 1 ? "I has a apple." : "This line is fine.", i + 1);
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/follow.ass"), events)));
         QTRY_VERIFY(target());
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        QVariantMap state = application->grammarWalkState();
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState(0);
         QVERIFY(state.value(QStringLiteral("found")).toBool());
         const QString group = state.value(QStringLiteral("groupName")).toString();
         const int count = state.value(QStringLiteral("count")).toInt();
@@ -468,16 +468,16 @@ private slots:
                 index = i;
         QVERIFY(index >= 0);
         application->setGrammarGroup(index, false);
-        QTRY_VERIFY(application->grammarWalkState().value(QStringLiteral("groupName")).toString() != group);
-        state = application->grammarWalkState();
+        QTRY_VERIFY(application->grammarWalkState(0).value(QStringLiteral("groupName")).toString() != group);
+        state = application->grammarWalkState(0);
         QVERIFY(state.value(QStringLiteral("done")).toBool());
         QCOMPARE(state.value(QStringLiteral("count")).toInt(), count);
         application->setGrammarGroup(index, true);
         grammarOn(2);
-        QTRY_VERIFY(!application->grammarWalkState().value(QStringLiteral("done")).toBool()
-                    || application->grammarWalkState().value(QStringLiteral("count")).toInt() != count);
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        state = application->grammarWalkState();
+        QTRY_VERIFY(!application->grammarWalkState(0).value(QStringLiteral("done")).toBool()
+                    || application->grammarWalkState(0).value(QStringLiteral("count")).toInt() != count);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        state = application->grammarWalkState(0);
         QCOMPARE(state.value(QStringLiteral("checked")).toInt(), 12);
         QVERIFY(state.value(QStringLiteral("found")).toBool());
         QCOMPARE(state.value(QStringLiteral("index")).toInt(), 1);
@@ -528,12 +528,12 @@ private slots:
         QTRY_VERIFY(target());
         QElapsedTimer started;
         started.start();
-        QVariantMap state = application->startGrammarWalk();
+        QVariantMap state = application->startGrammarWalk(0);
         QVERIFY(started.elapsed() < 500);
         QVERIFY(state.value(QStringLiteral("walking")).toBool());
         QCOMPARE(state.value(QStringLiteral("total")).toInt(), 120);
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        state = application->grammarWalkState();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        state = application->grammarWalkState(0);
         QCOMPARE(state.value(QStringLiteral("checked")).toInt(), 120);
         QVERIFY(state.value(QStringLiteral("found")).toBool());
         QCOMPARE(state.value(QStringLiteral("line")).toInt(), 6);
@@ -569,7 +569,7 @@ private slots:
         QVERIFY(cancel);
         QTRY_VERIFY(cancel->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "click"));
-        state = application->grammarWalkState();
+        state = application->grammarWalkState(0);
         QVERIFY(state.value(QStringLiteral("cancelled")).toBool());
         QVERIFY(!state.value(QStringLiteral("walking")).toBool());
         QVERIFY(QMetaObject::invokeMethod(panel, "start"));
@@ -578,7 +578,7 @@ private slots:
         QVERIFY(item("grammarIgnoreRule")->isVisible());
         QVERIFY(!item("spellReplaceAll")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
-        QVERIFY(!application->grammarWalkState().contains(QStringLiteral("walking")));
+        QVERIFY(!application->grammarWalkState(0).contains(QStringLiteral("walking")));
     }
 
     void srtTagsAreLeftOut()
@@ -625,14 +625,14 @@ private slots:
         events += dialogue("I has a apple.", 2);
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/comments.ass"), events)));
         QTRY_VERIFY(target());
-        QVariantMap state = application->startGrammarWalk();
+        QVariantMap state = application->startGrammarWalk(0);
         QCOMPARE(state.value(QStringLiteral("total")).toInt(), 3001);
         QVERIFY(state.value(QStringLiteral("checked")).toInt() < 3000);
         state = application->cancelGrammarWalk();
         QVERIFY(state.value(QStringLiteral("cancelled")).toBool());
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        QVERIFY(application->grammarWalkState().value(QStringLiteral("found")).toBool());
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVERIFY(application->grammarWalkState(0).value(QStringLiteral("found")).toBool());
     }
 
     void outsizedLinesAreNotChecked()
@@ -645,9 +645,9 @@ private slots:
         QTRY_COMPARE(item("lineText")->property("text").toString(), QString::fromUtf8(outsized.trimmed()));
         QTest::qWait(1500);
         QVERIFY(marks().isEmpty());
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        const QVariantMap state = application->grammarWalkState();
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        const QVariantMap state = application->grammarWalkState(0);
         QVERIFY(state.value(QStringLiteral("found")).toBool());
         QCOMPARE(state.value(QStringLiteral("line")).toInt(), 2);
     }
@@ -666,9 +666,9 @@ private slots:
         QTRY_VERIFY(target());
         // MUST KILL: fixed 500 ms wait so a late settings change doesn't restart the walk
         QTest::qWait(500);
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        QCOMPARE(application->grammarWalkState().value(QStringLiteral("line")).toInt(), 301);
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        QCOMPARE(application->grammarWalkState(0).value(QStringLiteral("line")).toInt(), 301);
     }
 
     void walkSelectsTheFindingsLine()
@@ -683,8 +683,8 @@ private slots:
         const auto lines = target()->document().lines();
         target()->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id, lines[2]->id},
                                                       lines[0]->id, {}});
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("found")).toBool(), kHarperWait);
         const auto &selection = target()->selection();
         QCOMPARE(selection.active, std::optional(lines[4]->id));
         QCOMPARE(selection.selected, (std::set<core::LineId>{lines[4]->id}));
@@ -710,8 +710,8 @@ private slots:
         QVERIFY(target()->draftProblem());
         application->editor().reloadFromSession();
         QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Not yet sent"));
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("found")).toBool(), kHarperWait);
         QCOMPARE(target()->draftLine(), std::optional(first));
         QCOMPARE(target()->selection().active, std::optional(first));
         QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("Not yet sent"));
@@ -728,14 +728,14 @@ private slots:
         QTRY_VERIFY(target());
         // MUST KILL: fixed 500 ms wait so a late settings change doesn't restart the walk
         QTest::qWait(500);
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("found")).toBool(), kHarperWait);
-        QVariantMap state = application->grammarWalkState();
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("found")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState(0);
         QVERIFY(state.value(QStringLiteral("word")).toBool());
         QCOMPARE(state.value(QStringLiteral("text")).toString(), QStringLiteral("tomorow"));
         state = application->grammarWalkAddWord();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        state = application->grammarWalkState();
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        state = application->grammarWalkState(0);
         QVERIFY2(!state.value(QStringLiteral("found")).toBool(),
                  qPrintable(state.value(QStringLiteral("text")).toString()));
     }
@@ -770,9 +770,9 @@ private slots:
             events += dialogue(i == 1 || i == 3 ? "I has a apple." : "This line is fine.", i + 1);
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/gone.ass"), events)));
         QTRY_VERIFY(target());
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        QVariantMap state = application->grammarWalkState();
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState(0);
         QCOMPARE(state.value(QStringLiteral("line")).toInt(), 2);
         const auto gone = target()->document().lines()[3]->id;
         target()->setSelection(application::Selection{gone, {gone}, gone, {}});
@@ -792,9 +792,9 @@ private slots:
         grammarOn();
         QVERIFY(application->openFile(writeAss(home() + QStringLiteral("/last.ass"), dialogue("I has a apple."))));
         QTRY_VERIFY(target());
-        application->startGrammarWalk();
-        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
-        QVariantMap state = application->grammarWalkState();
+        application->startGrammarWalk(0);
+        QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
+        QVariantMap state = application->grammarWalkState(0);
         const int count = state.value(QStringLiteral("count")).toInt();
         for (int i = 0; i < count && state.value(QStringLiteral("rule")).toString() != QLatin1String("AnA"); ++i)
             state = application->grammarWalkIgnore();
@@ -860,7 +860,7 @@ private slots:
             QTRY_VERIFY((panel = item("spellCheckerPanel")));
             QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("grammar"))));
             QVERIFY(QMetaObject::invokeMethod(panel, "start"));
-            QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState().value(QStringLiteral("done")).toBool(), kHarperWait);
+            QTRY_VERIFY_WITH_TIMEOUT(application->grammarWalkState(0).value(QStringLiteral("done")).toBool(), kHarperWait);
             QTRY_VERIFY(item("grammarMessage") && item("grammarMessage")->isVisible());
             save(window, QStringLiteral("panel-") + code);
             QVERIFY(QMetaObject::invokeMethod(panel, "setMode", Q_ARG(QVariant, QStringLiteral("spelling"))));
