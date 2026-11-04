@@ -1798,6 +1798,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Proporcje obrazu zmieniają się z %1 na %2.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>Dostosuj obroty 3D</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>Obrócone linijki zachowują swój kształt na ekranie.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>Rozciągnij</translation>
     </message>
@@ -1811,6 +1819,18 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
             <numerusform>Nie udało się przeskalować %n wartości.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>Linijka %1 została tylko przeskalowana: porusza się, zmienia kształt w czasie lub nie da się jej zmierzyć.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n obrócona linijka nie mogła zachować kształtu.</numerusform>
+            <numerusform>%n obrócone linijki nie mogły zachować kształtu.</numerusform>
+            <numerusform>%n obróconych linijek nie mogło zachować kształtu.</numerusform>
         </translation>
     </message>
     <message>
@@ -6928,10 +6948,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Ukryj</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>Odepnij</translation>
     </message>
@@ -7034,6 +7050,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Pl&amp;ugins…</source>
         <translation>W&amp;tyczki…</translation>
+    </message>
+    <message>
+        <source>Remove from the layout</source>
+        <translation>Usuń z układu</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -9526,6 +9546,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>Polecenie: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>Panel: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub nie mógł dokończyć operacji: %1</translation>
     </message>
@@ -9538,12 +9566,28 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>HikariSub nie może odczytać pliku %1.</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>Ten pakiet to „%1”, a nie aktualizacja „%2”.</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>Najpierw wybierz pakiet wtyczki.</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>Wyłączona</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>Nie uruchomiła się</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>Zatrzymana</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9646,8 +9690,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie odinstalowano wtyczki</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>Filtr</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>Filtruj wtyczki</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>Brak zainstalowanych wtyczek. Zainstaluj wtyczkę z pliku .hikariplugin.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>Żadna wtyczka nie pasuje do filtru.</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9655,7 +9711,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>Włączona</translation>
+        <translation type="vanished">Włączona</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9668,6 +9724,58 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Full trust</source>
         <translation>Pełne zaufanie</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączona</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>Nie zmieniono wtyczki</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>Nie uruchomiła się.</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>Zatrzymała się.</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>Uruchom ponownie</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>Uprawnienia</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>Co dodaje</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>Aktualizuj z pliku…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>Otwórz folder danych</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>Odinstaluj…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>Nie zachowano ustawienia</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9688,6 +9796,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>Działała dłużej niż %n sekundę.</numerusform>
+            <numerusform>Działała dłużej niż %n sekundy.</numerusform>
+            <numerusform>Działała dłużej niż %n sekund.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>Nieoczekiwanie się zatrzymała.</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>Wymuszono jej zatrzymanie.</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9724,6 +9848,50 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>Wtyczka nie działa.</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1, z %2</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>O wtyczce %1…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>%1 nie jest zainstalowana.</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>Wtyczka panelu</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 nie uruchomiła się.</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 zatrzymała się.</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>Układ zachowuje to miejsce dla jej panelu „%1”.</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>Otwórz wtyczki…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
     </message>
 </context>
 <context>
@@ -9777,8 +9945,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>Również w</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>Brak innych wystąpień</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>Dokument referencyjny jest chroniony (tylko do odczytu).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, linijka %2</translation>
     </message>
 </context>
 <context>
@@ -12710,8 +12894,12 @@ Usunięte style:
         <translation>Zastosuj do zaznaczonych linijek: ustawia ich styl (Enter lub dwukrotne kliknięcie stylu)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>Edytuj…</translation>
+        <source>New style…</source>
+        <translation>Nowy styl…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>Edytuj styl…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12720,10 +12908,6 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>Otwórz w menedżerze stylów</translation>
     </message>
 </context>
 <context>
@@ -12753,6 +12937,26 @@ Usunięte style:
         <translation>Otwórz nową zakładkę</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>Napisy</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>Klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Nowa zakładka</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
@@ -12761,24 +12965,32 @@ Usunięte style:
         <translation>Zapisz wszystko</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>Pokaż w folderze</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>Kopiuj ścieżkę</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>Przełącz na</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>Zamknij pozostałe zakładki</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>Zamknij zakładki po prawej</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>Zamknij wszystkie zakładki</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>Pokaż napisy w folderze</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>Pokaż wideo w folderze</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>Pokaż audio w folderze</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>Pokaż klatki kluczowe w folderze</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15125,8 +15337,12 @@ Usunięte style:
         <translation>Filtry</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>Przewijaj przy</translation>
+        <source>Move video to the selected line</source>
+        <translation>Przesuń wideo do zaznaczonej linijki</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>Po przesunięciu odtwórz</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15151,10 +15367,6 @@ Usunięte style:
     <message>
         <source>Editing</source>
         <translation>Edycja</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>Potem odtwórz</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16452,14 +16664,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Move tab right</source>
         <translation>Przesuń zakładkę w prawo</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>Odłącz</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>Zamknij dokument referencyjny</translation>
     </message>
     <message>
         <source>Move panel</source>

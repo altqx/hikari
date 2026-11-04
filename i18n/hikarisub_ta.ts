@@ -1788,6 +1788,14 @@ Output device: %2</source>
         <translation>தோற்ற விகிதம் %1 இலிருந்து %2 ஆக மாறும்.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>3D சுழற்சிகளைச் சரிசெய்</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>சுழற்றப்பட்ட வரிகள் திரையில் தங்கள் வடிவத்தைத் தக்கவைக்கும்.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>நீட்டு</translation>
     </message>
@@ -1800,6 +1808,17 @@ Output device: %2</source>
         <translation>
             <numerusform>%n மதிப்பை அளவிட முடியவில்லை.</numerusform>
             <numerusform>%n மதிப்புகளை அளவிட முடியவில்லை.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>வரி %1 அளவிடப்பட்டது மட்டுமே: அது நகர்கிறது, காலப்போக்கில் வடிவம் மாறுகிறது அல்லது அதை அளக்க முடியவில்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n சுழற்றப்பட்ட வரி தன் வடிவத்தைத் தக்கவைக்க முடியவில்லை.</numerusform>
+            <numerusform>%n சுழற்றப்பட்ட வரிகள் தங்கள் வடிவத்தைத் தக்கவைக்க முடியவில்லை.</numerusform>
         </translation>
     </message>
     <message>
@@ -6883,10 +6902,6 @@ Failed to copy %2 fonts.</source>
         <translation>காட்டு</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>மறை</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>மிதக்கவிடு</translation>
     </message>
@@ -6989,6 +7004,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Pl&amp;ugins…</source>
         <translation>செருகுநிரல்கள்… (&amp;u)</translation>
+    </message>
+    <message>
+        <source>Remove from the layout</source>
+        <translation>தளவமைப்பிலிருந்து அகற்று</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -9471,6 +9490,14 @@ Failed to copy %2 fonts.</source>
         <translation>படிக்க ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>கட்டளை: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>பலகம்: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub ஆல் முடிக்க முடியவில்லை: %1</translation>
     </message>
@@ -9483,12 +9510,28 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>இந்தத் தொகுப்பு “%1”, “%2” இன் புதுப்பிப்பு அல்ல.</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>முதலில் ஒரு செருகுநிரல் தொகுப்பைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>முடக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>தொடங்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>நிறுத்தப்பட்டது</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9591,8 +9634,20 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>வடிகட்டி</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>செருகுநிரல்களை வடிகட்டு</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>செருகுநிரல்கள் எதுவும் நிறுவப்படவில்லை. ஒரு .hikariplugin கோப்பிலிருந்து ஒன்றை நிறுவவும்.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>வடிகட்டிக்குப் பொருந்தும் செருகுநிரல் இல்லை.</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9600,7 +9655,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>இயக்கத்தில்</translation>
+        <translation type="vanished">இயக்கத்தில்</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9613,6 +9668,58 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>இயக்கு</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>செருகுநிரல் மாற்றப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>அது தொடங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>அது நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>மீண்டும் தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>அனுமதிகள்</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>இது சேர்ப்பவை</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>கோப்பிலிருந்து புதுப்பி…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>தரவுக் கோப்புறையைத் திற</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>நிறுவலை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>அமைப்பு வைக்கப்படவில்லை</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9633,6 +9740,21 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>செருகுநிரல் நிறுவப்படவில்லை, அணைக்கப்பட்டுள்ளது, அல்லது இந்தக் கட்டளை இனி அதில் இல்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>அது %n வினாடிக்கு மேல் இயங்கியது.</numerusform>
+            <numerusform>அது %n வினாடிகளுக்கு மேல் இயங்கியது.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>அது எதிர்பாராமல் நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>அது கட்டாயமாக நிறுத்தப்பட்டது.</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9668,6 +9790,50 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>செருகுநிரல் இயங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1, %2 இலிருந்து</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>%1 பற்றி…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>%1 நிறுவப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>அதன் செருகுநிரல்</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 முடக்கப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 தொடங்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 நின்றுவிட்டது.</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>தளவமைப்பு அதன் பலகம் “%1” க்காக இந்த இடத்தை வைத்திருக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>செருகுநிரல்களைத் திற…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>இயக்கு</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>விவரங்கள்</translation>
     </message>
 </context>
 <context>
@@ -9721,8 +9887,24 @@ Failed to copy %2 fonts.</source>
         <translation>மேற்கோள் வரிகள் (பாதுகாக்கப்பட்டவை, படிக்க மட்டும்)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>இதிலும் உள்ளது</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>வேறு இடங்களில் இல்லை</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>மேற்கோள் ஆவணம் பாதுகாக்கப்பட்டுள்ளது (படிக்க மட்டும்).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, வரி %2</translation>
     </message>
 </context>
 <context>
@@ -12627,8 +12809,12 @@ Styles deleted:
         <translation>தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்து: அவற்றின் பாணியை அமைக்கும் (Enter, அல்லது ஒரு பாணியை இருமுறை சொடுக்கவும்)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>திருத்து…</translation>
+        <source>New style…</source>
+        <translation>புதிய பாணி…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>பாணியைத் திருத்து…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12637,10 +12823,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>பாணி மேலாளரில் திற</translation>
     </message>
 </context>
 <context>
@@ -12670,6 +12852,26 @@ Styles deleted:
         <translation>புதிய தாவலைத் திறக்கவும்</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>வீடியோ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>ஆடியோ</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>முக்கியச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>புதிய தாவல்</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>சேமி</translation>
     </message>
@@ -12678,24 +12880,32 @@ Styles deleted:
         <translation>அனைத்தையும் சேமி</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>கோப்புறையில் காட்டு</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>பாதையை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>இதற்கு மாறு</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>மற்ற தாவல்களை மூடு</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>வலப்பக்கத் தாவல்களை மூடு</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>எல்லா தாவல்களையும் மூடு</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>வசன வரிகளைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>வீடியோவைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>ஆடியோவைக் கோப்புறையில் காட்டு</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>கீஃப்ரேம்களைக் கோப்புறையில் காட்டு</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15024,8 +15234,12 @@ Styles deleted:
         <translation>வடிப்பான்கள்</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>நகர்த்தும் தருணம்</translation>
+        <source>Move video to the selected line</source>
+        <translation>தேர்ந்தெடுத்த வரிக்கு வீடியோவை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>நகர்த்திய பின் இயக்கு</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15050,10 +15264,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>திருத்துதல்</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>பிறகு இயக்கு</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16344,14 +16554,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>தாவலை வலப்புறம் நகர்த்து</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>பிரித்தெடு</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>மேற்கோளை மூடு</translation>
     </message>
     <message>
         <source>Move panel</source>

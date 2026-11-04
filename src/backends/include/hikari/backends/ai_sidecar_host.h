@@ -95,6 +95,8 @@ public:
     void cancel(std::uint64_t request);
     void notify(const std::string &method, api::Json params);
     void onNotification(NotificationHandler handler) { m_onNotification = std::move(handler); }
+    /// The Documents the user attached with @; the sidecar's tools see them besides the editing target.
+    void setAttachedDocuments(std::vector<application::DocumentId> documents) { m_caller.attached = std::move(documents); }
 
     /// Closes stdin, waits, then kills the sidecar's process tree. Pending requests fail with SidecarLost.
     void shutdown();

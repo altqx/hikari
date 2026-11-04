@@ -87,6 +87,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n rotated line could not keep its shape.</numerusform>
+            <numerusform>%n rotated lines could not keep their shape.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>%n comment line removed.</numerusform>
@@ -421,6 +428,13 @@
 </context>
 <context>
     <name>HikariSub.Plugins</name>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>It ran for more than %n second.</numerusform>
+            <numerusform>It ran for more than %n seconds.</numerusform>
+        </translation>
+    </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
         <translation>

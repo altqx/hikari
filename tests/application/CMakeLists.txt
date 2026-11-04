@@ -61,6 +61,10 @@ hikari_add_gtest(hikari_application_select_lines_tests SOURCES select_lines_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_update_check_tests SOURCES update_check_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_update_signature_tests SOURCES update_signature_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_update_signature_tests PRIVATE
+    HIKARI_MINISIGN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/minisign/fixtures")
 hikari_add_gtest(hikari_application_whats_new_tests SOURCES whats_new_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp

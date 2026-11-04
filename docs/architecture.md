@@ -49,6 +49,7 @@ The pieces in C++:
 - `initialize` carries the protocol major (`kSidecarProtocolVersion`, 1), HA1's `kApiVersion` and the build id (`<version>+<commit>`). Qt refuses a sidecar whose answer differs, and it isn't restarted until it is downloaded again.
 - `$/cancel_request {requestId}` cancels a request, which still gets exactly one response, with code -32800.
 - `_hikari/api.call {operation, params}` runs `Api::call` under the sidecar's `Caller`. An HA1 error comes back as code -32000, with HA1's code in `data.code`.
+- `_hikari/tools.list` and `_hikari/tools.call` list and run Hikari's AI tools, which the sidecar builds from HA1's operations ([AI tools](ai-tools.md)).
 - The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
 
 The ACP session methods and the other `_hikari/*` methods in the ADR are declared in `src/ai-sidecar/src/protocol.ts`. Until their cards land they answer "not implemented".

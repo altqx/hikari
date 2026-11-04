@@ -1778,6 +1778,14 @@ Output device: %2</source>
         <translation>อัตราส่วนภาพเปลี่ยนจาก %1 เป็น %2</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>ปรับการหมุนแบบ 3D</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>บรรทัดที่หมุนจะคงรูปร่างบนหน้าจอไว้</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>ยืด</translation>
     </message>
@@ -1789,6 +1797,16 @@ Output device: %2</source>
         <source>%n value(s) could not be scaled.</source>
         <translation>
             <numerusform>ไม่สามารถปรับขนาดค่า %n ค่า</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>บรรทัด %1 ถูกปรับขนาดเท่านั้น: บรรทัดนี้เคลื่อนที่ เปลี่ยนรูปร่างตามเวลา หรือวัดขนาดไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>บรรทัดที่หมุน %n บรรทัดไม่สามารถคงรูปร่างไว้ได้</numerusform>
         </translation>
     </message>
     <message>
@@ -6838,10 +6856,6 @@ Failed to copy %2 fonts.</source>
         <translation>แสดง</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>ซ่อน</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>ลอย</translation>
     </message>
@@ -6944,6 +6958,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Pl&amp;ugins…</source>
         <translation>&amp;ปลั๊กอิน…</translation>
+    </message>
+    <message>
+        <source>Remove from the layout</source>
+        <translation>นำออกจากเค้าโครง</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -9416,6 +9434,14 @@ Failed to copy %2 fonts.</source>
         <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
     </message>
     <message>
+        <source>Command: %1</source>
+        <translation>คำสั่ง: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>แผง: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub ทำงานไม่เสร็จ: %1</translation>
     </message>
@@ -9428,12 +9454,28 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub อ่าน %1 ไม่ได้</translation>
     </message>
     <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>แพ็กเกจนี้คือ “%1” ไม่ใช่การอัปเดตของ “%2”</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>เลือกแพ็กเกจปลั๊กอินก่อน</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>หยุดแล้ว</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9536,8 +9578,20 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
     </message>
     <message>
+        <source>Filter</source>
+        <translation>ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>กรองปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>ไม่มีปลั๊กอินที่ติดตั้งไว้ ติดตั้งได้จากไฟล์ .hikariplugin</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>ไม่มีปลั๊กอินที่ตรงกับตัวกรอง</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9545,7 +9599,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>เปิดใช้งาน</translation>
+        <translation type="vanished">เปิดใช้งาน</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9558,6 +9612,58 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>เชื่อถือเต็มที่</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>ไม่ได้เปลี่ยนปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>หยุดทำงานแล้ว</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>เริ่มใหม่</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>สิทธิ์</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>สิ่งที่เพิ่ม</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>อัปเดตจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>เปิดโฟลเดอร์ข้อมูล</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>ถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>ไม่ได้เก็บการตั้งค่า</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -9578,6 +9684,20 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>ทำงานนานกว่า %n วินาที</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>หยุดทำงานโดยไม่คาดคิด</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>ถูกบังคับหยุด</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9612,6 +9732,50 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>ปลั๊กอินไม่ได้ทำงานอยู่</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>เกี่ยวกับ %1…</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>ไม่ได้ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>ปลั๊กอินของแผงนี้</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 หยุดทำงานแล้ว</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>เค้าโครงเก็บตำแหน่งนี้ไว้ให้แผง “%1”</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>เปิดปลั๊กอิน…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
     </message>
 </context>
 <context>
@@ -9665,8 +9829,24 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดอ้างอิง (ป้องกันไว้ อ่านอย่างเดียว)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>พบใน</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>ไม่พบที่อื่น</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>คำบรรยายอ้างอิงถูกป้องกันไว้ (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1 บรรทัด %2</translation>
     </message>
 </context>
 <context>
@@ -12544,8 +12724,12 @@ Styles deleted:
         <translation>นำไปใช้กับบรรทัดที่เลือก: กำหนดสไตล์ของบรรทัดเหล่านั้น (Enter หรือดับเบิลคลิกที่สไตล์)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>แก้ไข…</translation>
+        <source>New style…</source>
+        <translation>สไตล์ใหม่…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>แก้ไขสไตล์…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12554,10 +12738,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>เปิดในตัวจัดการสไตล์</translation>
     </message>
 </context>
 <context>
@@ -12587,6 +12767,26 @@ Styles deleted:
         <translation>เปิดแท็บใหม่</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>เสียง</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>คีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>แท็บใหม่</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>บันทึก</translation>
     </message>
@@ -12595,24 +12795,32 @@ Styles deleted:
         <translation>บันทึกทั้งหมด</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>แสดงในโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>คัดลอกเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>สลับไปที่</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>ปิดแท็บอื่น</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>ปิดแท็บทางขวา</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>ปิดแท็บทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>แสดงไฟล์คำบรรยายในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>แสดงวิดีโอในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>แสดงเสียงในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>แสดงคีย์เฟรมในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -14923,8 +15131,12 @@ Styles deleted:
         <translation>ตัวกรอง</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>เลื่อนวิดีโอเมื่อ</translation>
+        <source>Move video to the selected line</source>
+        <translation>เลื่อนวิดีโอไปยังบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>หลังเลื่อนแล้วเล่น</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -14949,10 +15161,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>จากนั้นเล่น</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16236,14 +16444,6 @@ do not work on comments</source>
     <message>
         <source>Move tab right</source>
         <translation>ย้ายแท็บไปทางขวา</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>เลิกยึดติด</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>ปิดเอกสารอ้างอิง</translation>
     </message>
     <message>
         <source>Move panel</source>
