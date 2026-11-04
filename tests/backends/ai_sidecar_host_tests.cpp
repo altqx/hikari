@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 #include <optional>
+#include <string_view>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -318,7 +319,15 @@ TEST_F(AiSidecarHostTest, ASandboxedSidecarAnswersKeepsItsTemporaryFilesInItsWor
     const QString temporary = QDir::toNativeSeparators(o.workingDirectory + QStringLiteral("/tmp"));
     for (const char *name : {"TMPDIR", "TEMP", "TMP"}) {
         ASSERT_TRUE(env.find(name)) << name;
-        EXPECT_EQ(QString::fromStdString(env.find(name)->asString()), temporary) << name;
+        const QString value = QString::fromStdString(env.find(name)->asString());
+#ifdef _WIN32
+        // Windows gives every AppContainer process its own TEMP and TMP in the container's profile.
+        if (std::string_view(name) != "TMPDIR") {
+            EXPECT_TRUE(value.endsWith(QStringLiteral("\\AC\\Temp"), Qt::CaseInsensitive)) << name << ' ' << value.toStdString();
+            continue;
+        }
+#endif
+        EXPECT_EQ(value, temporary) << name;
     }
     EXPECT_TRUE(QFileInfo(temporary).isDir());
     const auto spawned = call(*h, "spawn");

@@ -60,7 +60,7 @@ protected:
         launcher.prepare(process);
         process.start();
         EXPECT_TRUE(process.waitForFinished(20'000)) << process.errorString().toStdString();
-        const QString out = QString::fromLocal8Bit(process.readAllStandardOutput());
+        const QString out = QString::fromLocal8Bit(process.readAllStandardOutput()).remove(QLatin1Char('\r'));
         return out.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     }
 
@@ -92,12 +92,13 @@ TEST_F(Sandbox, FilesOutsideTheProfileAreRefused)
     const QStringList lines = run(launcher, {QStringLiteral("read"), secret, QStringLiteral("read"), note,
                                              QStringLiteral("write"), fresh, QStringLiteral("read"), mine,
                                              QStringLiteral("write"), made});
-    ASSERT_EQ(lines.size(), 5) << lines.join(QLatin1Char('\n')).toStdString();
-    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + secret));
-    EXPECT_TRUE(ok(lines, QStringLiteral("read ") + note));
-    EXPECT_TRUE(denied(lines, QStringLiteral("write ") + fresh));
-    EXPECT_TRUE(ok(lines, QStringLiteral("read ") + mine));
-    EXPECT_TRUE(ok(lines, QStringLiteral("write ") + made));
+    const std::string report = (lines + QStringList{launcher.coverage().missing}).join(QLatin1Char('\n')).toStdString();
+    ASSERT_EQ(lines.size(), 5) << report;
+    EXPECT_TRUE(denied(lines, QStringLiteral("read ") + secret)) << report;
+    EXPECT_TRUE(ok(lines, QStringLiteral("read ") + note)) << report;
+    EXPECT_TRUE(denied(lines, QStringLiteral("write ") + fresh)) << report;
+    EXPECT_TRUE(ok(lines, QStringLiteral("read ") + mine)) << report;
+    EXPECT_TRUE(ok(lines, QStringLiteral("write ") + made)) << report;
 }
 
 TEST_F(Sandbox, ChildrenStayConfined)
