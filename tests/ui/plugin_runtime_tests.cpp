@@ -170,7 +170,9 @@ class PluginRuntimeTests : public QObject {
 private slots:
     void init()
     {
-        QDir(m_dir.path()).removeRecursively();
+        std::error_code error;
+        std::filesystem::remove_all(m_dir.path().toStdU16String(), error);
+        QVERIFY2(!error, error.message().c_str());
         QDir().mkpath(m_dir.path());
         m_registry = {};
     }
