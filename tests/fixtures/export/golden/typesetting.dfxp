@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:tts="http://www.w3.org/ns/ttml#styling" xml:lang="en" ttp:frameRate="24" ttp:frameRateMultiplier="1000 1001">
+  <head>
+    <styling>
+      <style xml:id="Sign__Main_" tts:fontFamily="Georgia,proportionalSansSerif" tts:fontSize="88.89%" tts:color="#B41E1EC3" tts:fontWeight="bold" tts:textOutline="#FFFFFFFF 0.06em"/>
+      <style xml:id="Default" tts:fontFamily="Arial,proportionalSansSerif" tts:fontSize="100%" tts:color="#FFFFFFFF" tts:textOutline="#000000FF 0.04em"/>
+    </styling>
+    <layout>
+      <region xml:id="top" tts:origin="3.12% 4.62%" tts:extent="93.75% 30.24%" tts:displayAlign="before"/>
+      <region xml:id="middle" tts:origin="3.12% 34.87%" tts:extent="93.75% 30.24%" tts:displayAlign="center"/>
+      <region xml:id="bottom" tts:origin="3.12% 65.12%" tts:extent="93.75% 30.24%" tts:displayAlign="after"/>
+    </layout>
+  </head>
+  <body>
+    <div>
+      <p begin="480f" end="575f" region="top" style="Sign__Main_" tts:textAlign="center">SHIBUYA STATION</p>
+      <p begin="480f" end="575f" region="top" style="Default" tts:textAlign="left">Exit A3<br/>West gate</p>
+      <p begin="503f" end="551f" region="bottom" style="Default" tts:textAlign="center"><span tts:color="#FF0000">Moving </span><span tts:color="#00FF00">sign</span></p>
+      <p begin="527f" end="599f" region="bottom" style="Default" tts:textAlign="center">Clipped half</p>
+      <p begin="551f" end="623f" region="top" style="Default" tts:textAlign="right">Top right note</p>
+      <p begin="575f" end="671f" region="bottom" style="Default" tts:textAlign="center">Ticker news</p>
+      <p begin="623f" end="671f" region="middle" style="Default" tts:textAlign="center">Centre <span tts:fontStyle="italic">reset</span><span tts:fontWeight="bold" tts:color="#B41E1E"> styled</span></p>
+      <p begin="695f" end="719f" region="bottom" style="Default" tts:textAlign="center">Unclosed {brace<br/>stays</p>
+    </div>
+  </body>
+</tt>
