@@ -1,9 +1,11 @@
 import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallParams, type InitializeParams,
-    type InitializeResult } from "./protocol";
+    type InitializeResult, type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
 import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
 import type { UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
+import type { OperationName, Operations } from "./tools/api.gen";
+import { ToolSet, type HikariCalls } from "./tools/toolset";
 
 export interface Build {
     buildId: string;
@@ -11,12 +13,12 @@ export interface Build {
 }
 
 /** Hikari's tools: every call goes into HA1's `Api::call` in Qt. */
-export class HikariApi {
+export class HikariApi implements HikariCalls {
     constructor(private readonly peer: Peer) {}
 
-    call(operation: string, params?: unknown): Promise<unknown> {
+    call<O extends OperationName>(operation: O, params?: Operations[O]["params"]): Promise<Operations[O]["result"]> {
         const body: ApiCallParams = params === undefined ? { operation } : { operation, params };
-        return this.peer.request(Method.apiCall, body);
+        return this.peer.request(Method.apiCall, body) as Promise<Operations[O]["result"]>;
     }
 }
 
@@ -36,11 +38,13 @@ async function wire<T>(work: () => T | Promise<T>): Promise<T> {
 export class Sidecar {
     readonly api: HikariApi;
     readonly providers: ProviderService;
+    readonly tools: ToolSet;
     private initialized = false;
 
     constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}) {
         this.api = new HikariApi(peer);
         this.providers = new ProviderService(providers);
+        this.tools = new ToolSet(this.api);
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         for (const method of kDeclaredMethods)
             this.handle(method, () => {
@@ -51,6 +55,13 @@ export class Sidecar {
         this.handle(Method.conversationEnd, (params, signal) => wire(() => this.providers.endConversation(params, signal)));
         this.handle(Method.complete, (params, signal) => wire(() => this.providers.complete(params, signal,
             (stream, update) => peer.notify(Method.sessionUpdate, { stream, update } satisfies UpdateParams))));
+        this.handle(Method.toolsList, (params) => ({ tools: this.tools.list((params as ToolsListParams | null)?.all === true) }));
+        this.handle(Method.toolsCall, (params) => {
+            const p = (params ?? {}) as Partial<ToolsCallParams>;
+            if (typeof p.name !== "string")
+                throw new RpcError(ErrorCode.invalidParams, "_hikari/tools.call needs a tool name");
+            return this.tools.call(p.name, p.arguments);
+        });
     }
 
     /** Registers a Qt request that only runs after `initialize`. */

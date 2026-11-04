@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Draws the icon set into src/ui/icons/ (SVGs and manifest.json) under docs/ux/icons.md's rules."""
+"""Draws the icon set into src/ui/icons/ (SVGs and manifest.json) under docs/ux/icons.md's rules.
+
+  python3 tools/icons/draw_icons.py [out-dir]
+"""
 
 import json
 import math
@@ -7,7 +10,7 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, "src", "ui", "icons")
+ICONS_DIR = os.path.join(ROOT, "src", "ui", "icons")
 
 
 def q(v):
@@ -287,9 +290,9 @@ icon("keyframe-previous", "Go to previous keyframe", ["PrevKeyframe.png"], [VIDE
      diamond(10.5, 8, 4) + accent(stroke("M4 5.5L1.5 8 4 10.5")))
 icon("keyframe-next", "Go to next keyframe", ["NextKeyframe.png"], [VIDEO, TRANSPORT],
      diamond(5.5, 8, 4) + accent(stroke("M12 5.5L14.5 8 12 10.5")))
-icon("video-to-start-time", "Go to start time", ["videoonstime.png"], [VIDEO],
+icon("video-to-start-time", "Go to start time", ["videoonstime.png"], [VIDEO, AUDIOBOX],
      stroke("M5.5 2.5h-2v11h2") + accent(stroke("M14.5 8h-8M9 5.5L6.5 8 9 10.5")))
-icon("video-to-end-time", "Go to end time of line", ["videoonetime.png"], [VIDEO],
+icon("video-to-end-time", "Go to end time of line", ["videoonetime.png"], [VIDEO, AUDIOBOX],
      stroke("M10.5 2.5h2v11h-2") + accent(stroke("M1.5 8h8M7 5.5L9.5 8 7 10.5")))
 icon("audio-to-video-time", "Set audio position to video time", ["SetVideoTimeOnAudio.png"], [VIDEO],
      waveform(1.5, 4.5, 11.5) + accent(stroke("M8 1.5v13")))
@@ -420,7 +423,7 @@ icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-t
      + accent(dot(4.75, 7.5, 1), dot(6.75, 4.5, 1), dot(10, 4.5, 1)))
 icon("convert", "Convert", ["Convert.png"], ["settings-dialog"],
      stroke("M2.5 5.5h10M10 3l2.5 2.5L10 8") + stroke("M13.5 10.5h-10M6 8l-2.5 2.5L6 13"))
-icon("shift-times", "Shift times", ["Time.png"], [TIMING, SUBS],
+icon("shift-times", "Shift times", ["Time.png"], [TIMING, SUBS, VIDEO],
      circle(6.5, 6.5, 5) + stroke("M6.5 4v2.5l2 1.5") + accent(stroke("M9.5 12.5h5M12.5 10.5l2 2-2 2")))
 icon("resample", "Resample subtitles", ["subsResample.png"], [SUBS, VISUAL, "resample"],
      rect(1.5, 8.5, 6, 6, 1) + stroke("M1.5 5.5v-3a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-3")
@@ -665,7 +668,7 @@ icon("fullscreen-exit", "Exit full screen", [], [VIDEOMENU, FULLSCREEN],
 icon("frame-snapshot", "Save frame as PNG", [], [VIDEOMENU],
      stroke("M1.5 5.5a1 1 0 0 1 1-1h2l1.5-2h4l1.5 2h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z")
      + accent(circle(8, 8.5, 2.5)))
-icon("zoom-reset", "Turn off video zoom", [], [VIDEO],
+icon("zoom-reset", "Reset zoom and pan", [], [VIDEO],
      magnifier(6.5, 6.5, 4.5, 4) + accent(stroke("M5 5l3 3M8 5L5 8")))
 icon("volume", "Volume", [], [TRANSPORT, FULLSCREEN, AUDIOBOX],
      stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10 5.5a3.5 3.5 0 0 1 0 5M12 3.5a6.25 6.25 0 0 1 0 9")))
@@ -765,9 +768,9 @@ icon("copy-position", "Copy video position", [], [VIDEOMENU],
 icon("monitor", "Open in full screen on another monitor", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
      + accent(stroke("M3.5 6v-1.5h2M12.5 6v-1.5h-2M3.5 8v1.5h2M12.5 8v1.5h-2")))
-icon("progress-bar", "Show / hide progress bar", [], [VIDEOMENU, FULLSCREEN],
+icon("progress-bar", "Progress bar", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M9.5 10.5h3") + accent(stroke("M3.5 10.5h4"), dot(8.5, 10.5, 1.25)))
-icon("render-cost", "Show / hide render cost", [], [VIDEO, VIDEOMENU, FULLSCREEN],
+icon("render-cost", "Render cost", [], [VIDEO, VIDEOMENU, FULLSCREEN],
      circle(8, 9, 5.5) + stroke("M8 3.5V1.5M6.5 1.5h3M12.5 3.5l1 1") + accent(stroke("M8 9l2.5-2.5"), dot(8, 9, 1)))
 icon("aspect-ratio", "Change aspect ratio", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 3.5, 13, 9, 1) + accent(stroke("M4 8h8M5.5 6.5L4 8l1.5 1.5M10.5 6.5L12 8l-1.5 1.5")))
@@ -821,7 +824,7 @@ icon("insert-before", "Insert before", [], [GRIDMENU],
 icon("insert-after", "Insert after", [], [GRIDMENU],
      stroke("M1.5 3.5h13M1.5 7.5h13") + accent(stroke("M1.5 12.5h7M12.5 10.5v4M10.5 12.5h4")), mirror=True)
 icon("swap-lines", "Swap", [], [GRIDMENU], stroke("M1.5 4h6M1.5 12h6") + SWAP, mirror=True)
-icon("join-lines", "Join lines", [], [GRIDMENU],
+icon("join-lines", "Join lines", [], [GRIDMENU, AUDIO],
      stroke("M1.5 3.5h3l3.5 4.5M1.5 12.5h3L8 8") + accent(stroke("M8 8h6.5")), mirror=True)
 icon("join-keep-first", "Join lines and keep first", [], [GRIDMENU],
      stroke("M1.5 12.5h3L8 8") + accent(stroke("M1.5 3.5h3l3.5 4.5h6.5")), mirror=True)
@@ -834,13 +837,15 @@ icon("continuous-next", "Set times as a continuous (next line)", [], [GRIDMENU],
 icon("split-lines", "Split lines", [], [GRIDMENU], stroke(LINE_BARS) + accent(stroke("M7.75 2v12")))
 icon("split-at-video", "Split line at video time", [], [GRIDMENU],
      stroke(LINE_BARS) + accent(stroke("M7.75 4v10"), solid("M6.25 1.5h3L7.75 3z")))
-icon("split-frames", "Split lines into frames", [], [GRIDMENU],
+icon("split-frames", "Split lines into frames", [], [GRIDMENU, VIDEO],
      stroke("M1.5 2.5h13M1.5 13.5h13") + rect(1.5, 4.5, 3, 7, 1) + rect(6.5, 4.5, 3, 7, 1) + rect(11.5, 4.5, 3, 7, 1)
      + accent(stroke("M5.5 2.5v11M10.5 2.5v11")))
 icon("split-characters", "Split lines into characters", [], [GRIDMENU],
      letters("A", 2, 5) + letters("S", 10, 5) + accent(stroke("M7.5 2.5v11")))
 icon("split-words", "Split lines into words", [], [GRIDMENU],
      stroke("M1.5 5.5h4M9.5 5.5h5M1.5 10.5h4M9.5 10.5h3") + accent(stroke("M7.5 2.5v11")), mirror=True)
+icon("hard-space", "Insert hard space", [], [EDIT],
+     stroke("M2.5 3.5v6M13.5 3.5v6") + accent(stroke("M4.5 9.5v2h7v-2")))
 icon("split-wraps", "Split lines by wraps", [], [GRIDMENU],
      stroke("M1.5 3.5h9M1.5 12.5h7") + accent(stroke("M10.5 3.5H12a2.5 2.5 0 0 1 0 5H6.5M8 7L6.5 8.5 8 10")), mirror=True)
 icon("select-visible", "Select all lines visible on video", [], [GRIDMENU],
@@ -951,9 +956,9 @@ icon("skip-version", "Skip this version", [], ["updates", "settings-dialog"],
 icon("tab-name-length", "Tab name length", [], ["settings-dialog"],
      stroke("M1.5 10.5h1v-5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v5h1") + stroke("M5 7.5h6")
      + accent(stroke("M3.5 13.5h9M5 12l-1.5 1.5L5 15M11 12l1.5 1.5L11 15")))
-icon("time-offset-start", "Start frame offset", [], ["settings-dialog"],
+icon("time-offset-start", "Start frame offset", [], ["settings-dialog", VIDEO],
      rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M2.5 4.5h6M4 3L2.5 4.5 4 6M7 3l1.5 1.5L7 6")))
-icon("time-offset-end", "End frame offset", [], ["settings-dialog"],
+icon("time-offset-end", "End frame offset", [], ["settings-dialog", VIDEO],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M9 3L7.5 4.5 9 6M12 3l1.5 1.5L12 6")))
 icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
@@ -980,7 +985,7 @@ icon("select-all", "Select all", [], ["choose-styles", "columns", SEARCH, "setti
 
 PUZZLE_CUT = stroke("M8.5 13.5h-6v-9h3a1.5 1.5 0 1 1 3 0h3v4")
 icon("export", "Export as", [], [FILE], page(True) + accent(stroke("M9.5 12h5M12.5 10l2 2-2 2")))
-icon("plugins", "Plugins", [], ["plugin-manager"], stroke("M2.5 4.5h3a1.5 1.5 0 1 1 3 0h3v3a1.5 1.5 0 1 1 0 3v3h-9z"))
+icon("plugins", "Plugins", [], [AUTO, "plugin-manager"], stroke("M2.5 4.5h3a1.5 1.5 0 1 1 3 0h3v3a1.5 1.5 0 1 1 0 3v3h-9z"))
 icon("plugin-install", "Install plugin", [], ["plugin-manager"], PUZZLE_CUT + plus_badge())
 icon("plugin-unverified", "Unverified plugin", [], ["plugin-manager"],
      PUZZLE_CUT + accent(stroke("M12 9.5v2.5"), dot(12, 14, 0.75)))
@@ -1016,8 +1021,6 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "PL4 #416": ["plugins", "plugin-install"],
-    "PL6 #418": ["plugin-unverified"],
     "NE2 #424": ["node-editor"],
     "AI7 #435": ["ai-assistant", "ai-send"],
     "AI2 #430": ["review-keep", "checkpoint"],
@@ -1033,8 +1036,8 @@ def svg(body):
             'stroke-linejoin="round">' + body + "</svg>\n")
 
 
-def main():
-    os.makedirs(OUT, exist_ok=True)
+def main(out):
+    os.makedirs(out, exist_ok=True)
     roles = set()
     manifest = []
     keep = {"manifest.json"}
@@ -1044,7 +1047,7 @@ def main():
         roles.add(item["role"])
         name = item["role"] + ".svg"
         keep.add(name)
-        with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
+        with open(os.path.join(out, name), "w", encoding="utf-8", newline="\n") as f:
             f.write(svg(item["body"]))
         manifest.append({
             "role": item["role"],
@@ -1059,10 +1062,10 @@ def main():
             manifest[-1]["pending"] = PENDING.pop(item["role"])
     if PENDING:
         sys.exit("pending roles not in the set: " + ", ".join(PENDING))
-    for name in os.listdir(OUT):
+    for name in os.listdir(out):
         if name not in keep:
-            os.remove(os.path.join(OUT, name))
-    with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8") as f:
+            os.remove(os.path.join(out, name))
+    with open(os.path.join(out, "manifest.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump({"grid": 16, "strokeWidth": 1, "icons": manifest, "notReplaced": NOT_REPLACED}, f, indent=1,
                   ensure_ascii=False)
         f.write("\n")
@@ -1070,4 +1073,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1] if len(sys.argv) > 1 else ICONS_DIR)

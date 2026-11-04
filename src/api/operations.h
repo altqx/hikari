@@ -34,9 +34,10 @@ struct Target {
     application::EditSession *session = nullptr;
 };
 // The Document a call names, else the editing target; a caller without
-// documents.all reaches the editing target alone.
+// documents.all reaches the editing target and its attached Documents alone.
 std::expected<Target, Error> target(const Context &context, const Json &params);
 bool visible(const Context &context, application::DocumentId document);
+bool sees(const Caller &caller, std::optional<application::DocumentId> editingTarget, application::DocumentId document);
 
 std::string narrow(std::u8string_view s);
 Json selectionJson(const application::EditSession &session);

@@ -4,6 +4,7 @@
 appimagetool   1.9.1     ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
 type2-runtime  20251108  2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
 nfpm           2.47.0    0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783  https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz
+minisign       0.12      9a599b48ba6eb7b1e80f12f36b94ceca7c00b7a5173c95c3efc88d9822957e73  https://github.com/jedisct1/minisign/releases/download/0.12/minisign-0.12-linux.tar.gz
 #
 # Test images: image  name  reference
 image  ubuntu-22.04  docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401

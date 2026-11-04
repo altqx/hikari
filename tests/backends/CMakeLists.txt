@@ -435,5 +435,14 @@ hikari_add_gtest(hikari_backends_ai_requests_tests SOURCES ai_requests_tests.cpp
 target_compile_definitions(hikari_backends_ai_requests_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_backends_ai_requests_tests hikari_fake_ai_sidecar)
+if(HIKARI_AI_SIDECAR)
+    hikari_add_gtest(hikari_backends_ai_tools_tests SOURCES ai_tools_tests.cpp
+        LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends ai-sidecar)
+    target_include_directories(hikari_backends_ai_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
+    target_compile_definitions(hikari_backends_ai_tools_tests PRIVATE
+        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+    add_dependencies(hikari_backends_ai_tools_tests hikari_ai_sidecar)
+endif()
 hikari_add_gtest(hikari_backends_ai_sidecar_download_tests SOURCES ai_sidecar_download_tests.cpp
-    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB LABELS backends)
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
+target_include_directories(hikari_backends_ai_sidecar_download_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

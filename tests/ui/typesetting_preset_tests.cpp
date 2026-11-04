@@ -3,6 +3,7 @@
 
 #include "docking.h"
 #include "line_editor_controller.h"
+#include "menu_rows.h"
 #include "settings_store.h"
 #include "theme.h"
 #include "workspace_layout.h"
@@ -635,7 +636,16 @@ private slots:
         QTRY_VERIFY(item("stylesMore")->isVisible());
         QVERIFY(!buttons->isVisible());
         auto *more = item<QObject>("stylesMoreMenu");
-        QCOMPARE(more->property("count").toInt(), 8);
+        QCOMPARE(menu_rows::shown(more),
+                 (QStringList{QStringLiteral("stylesMoreApply"), QStringLiteral("|"), QStringLiteral("stylesMoreNew"),
+                              QStringLiteral("stylesMoreEdit"), QStringLiteral("stylesMoreDuplicate"), QStringLiteral("|"),
+                              QStringLiteral("stylesMoreManager"), QStringLiteral("|"), QStringLiteral("stylesMoreDelete")}));
+        QCOMPARE(menu_rows::shown(item<QObject>("stylesRowMenu")),
+                 (QStringList{QStringLiteral("stylesMenuApply"), QStringLiteral("stylesMenuSelectLines"), QStringLiteral("|"),
+                              QStringLiteral("stylesMenuNew"), QStringLiteral("stylesMenuEdit"),
+                              QStringLiteral("stylesMenuDuplicate"), QStringLiteral("stylesMenuCopyToCatalog"),
+                              QStringLiteral("|"), QStringLiteral("stylesMenuManager"), QStringLiteral("|"),
+                              QStringLiteral("stylesMenuDelete")}));
         QVERIFY(docking()->resizeInLayout(QStringLiteral("Styles"), 200, 0, 0, 0));
         QTRY_VERIFY(buttons->isVisible());
         panel->setProperty("chosen", QStringLiteral("Unused"));
