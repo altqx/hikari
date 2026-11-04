@@ -9,6 +9,7 @@ Item {
     objectName: "documentTabBar"
     required property var app
     property int shellWindow: 0
+    property QtObject review: null
     signal closeRequested(int index)
     signal saveRequested(var id)
     signal saveAllRequested()
@@ -51,7 +52,7 @@ Item {
     }
     function tabEntry(row) {
         return { tabId: String(row.id), tabLabel: row.label, tabTitle: row.title, tabModified: row.modified,
-                 tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference }
+                 tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference, tabReview: row.review ?? 0 }
     }
     function syncTabs() {
         const rows = bar.app.windowTabs(bar.shellWindow)
@@ -80,6 +81,10 @@ Item {
     Connections {
         target: bar.app
         function onTabsChanged() { bar.syncTabs() }
+    }
+    Connections {
+        target: bar.review
+        function onChanged() { bar.syncTabs() }
     }
     Component.onCompleted: syncTabs()
 
@@ -171,6 +176,7 @@ Item {
                     required property bool tabCurrent
                     required property string tabTip
                     required property bool tabReference
+                    required property int tabReview
                     objectName: "documentTab" + index
                     checkable: false
                     checked: tabCurrent
@@ -187,9 +193,12 @@ Item {
                     implicitHeight: label.implicitHeight + 10
                     implicitWidth: label.implicitWidth + 12 + closeMark.implicitWidth
                                    + (mark >= 0 ? modifiedMark.width + 4 : 0)
+                                   + (reviewBadge.visible ? reviewBadge.implicitWidth + 2 : 0)
                     ToolTip.visible: hovered
-                    ToolTip.text: stepText.length > 0
-                                  ? tabTip + "\n" + qsTr("Modified (history step %1)").arg(stepText) : tabTip
+                    ToolTip.text: [tabTip,
+                                   stepText.length > 0 ? qsTr("Modified (history step %1)").arg(stepText) : "",
+                                   tabReview > 0 ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tabReview) : ""]
+                                  .filter(s => s.length > 0).join("\n")
                     background: Rectangle {
                         color: tab.checked ? palette.base : (tab.hovered ? palette.midlight : palette.button)
                         border.color: tab.checked ? palette.highlight : palette.mid
@@ -208,6 +217,35 @@ Item {
                             id: label
                             text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
                             leftPadding: tab.mark >= 0 ? 0 : 4
+                        }
+                        Rectangle {
+                            id: reviewBadge
+                            objectName: "documentTabReview" + tab.index
+                            visible: tab.tabReview > 0
+                            implicitWidth: badgeRow.implicitWidth + 8
+                            implicitHeight: badgeRow.implicitHeight + 2
+                            radius: implicitHeight / 2
+                            color: tab.checked ? Theme.accent : "transparent"
+                            border.color: Theme.accent
+                            Accessible.role: Accessible.StaticText
+                            Accessible.name: qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tab.tabReview)
+                            Row {
+                                id: badgeRow
+                                anchors.centerIn: parent
+                                spacing: 2
+                                Icon {
+                                    iconRole: "review-keep"
+                                    size: 12
+                                    color: tab.checked ? Theme.onAccent : IconTheme.normal
+                                    accentColor: tab.checked ? Theme.onAccent : IconTheme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Label {
+                                    text: tab.tabReview
+                                    font.pixelSize: 11
+                                    color: tab.checked ? Theme.onAccent : Theme.text
+                                }
+                            }
                         }
                         IconToolButton {
                             id: closeMark

@@ -16,7 +16,7 @@ QString qs(std::string_view s)
 }
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
-    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this})
+    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review})
 {
 }
 

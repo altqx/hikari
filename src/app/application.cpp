@@ -91,6 +91,8 @@ namespace hikari::app {
 
 namespace {
 
+QString refusalText(application::CommandRefusal refusal);
+
 // QString::toCaseFolded is simple case folding (one code point to one), so offsets carry over.
 std::u16string unicodeFold(std::u16string_view s)
 {
@@ -786,6 +788,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                 options.appVersion.isEmpty()
                                                                     ? QStringLiteral(HIKARI_VERSION)
                                                                     : options.appVersion));
+    m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
+        m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
+        [this](application::Selection next) { return applySelection(std::move(next)); },
+        [this](application::DocumentId document) { m_apiHost->committed(document); },
+        [this](application::CommandRefusal refusal) {
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Review", "Review"),
+                          refusalText(refusal));
+        },
+        [this] { refreshViews(); }});
+    const auto hideAiCommands = [this] {
+        m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
+    };
+    hideAiCommands();
+    connect(m_ai.get(), &AiFeatures::switched, this, [this, hideAiCommands] {
+        hideAiCommands();
+        refreshViews();
+    });
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
         pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
@@ -1692,6 +1711,18 @@ void Application::makeViews(WindowViews &v, int shellWindow)
             const auto *session = reference ? m_files->session(*reference) : nullptr;
             return session ? session->changeState(line) : 0;
         });
+    const auto reviewOf = [this](std::optional<application::DocumentId> document) {
+        return [this, document](core::LineId line) -> std::optional<ui::LineTableModel::ReviewMark> {
+            const ReviewController::Mark *mark = document ? m_review->mark(*document, line) : nullptr;
+            if (!mark)
+                return std::nullopt;
+            return ui::LineTableModel::ReviewMark{mark->editedSince, mark->before};
+        };
+    };
+    v.shell->setReview(
+        [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
+        [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
+    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -2046,6 +2077,8 @@ void Application::refreshViews()
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     refreshComparison();
+    if (m_review)
+        m_review->refreshed();
     shell().setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
     shell().refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
@@ -5759,6 +5792,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
+            {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

@@ -153,6 +153,11 @@ std::optional<DraftProblem> problemOf(const core::LineRecord &line)
 
 }
 
+bool sameLineFields(const core::LineRecord &a, const core::LineRecord &b)
+{
+    return sameFields(a, b);
+}
+
 EditSession::EditSession(core::Document document, bool protectedReference) : m_protected(protectedReference)
 {
     static std::atomic<std::uint64_t> nextSerial{1};
@@ -480,7 +485,7 @@ std::vector<EditSession::HistoryStep> EditSession::history() const
 {
     std::vector<HistoryStep> out;
     for (std::size_t i = 0; i < m_states.size(); ++i) {
-        HistoryStep step{m_states[i].name, m_states[i].selection.active, 0};
+        HistoryStep step{m_states[i].name, m_states[i].selection.active, 0, m_states[i].content};
         if (step.active) {
             const auto lines = m_states[i].document.lines();
             for (std::size_t row = 0; row < lines.size(); ++row)

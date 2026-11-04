@@ -67,6 +67,8 @@ std::span<const HotkeyAction> hotkeyActions();
 int hotkeyIdOf(std::string_view symbol);
 // "" for an id without a symbol.
 std::string_view hotkeySymbol(int id);
+// Its symbol has an AI token: "Turn off all AI features" unregisters it.
+bool aiCommand(int id);
 // The English names the Options list shows, by id.
 const std::map<int, std::string> &hotkeyNames();
 // "" when the id has no name (scripts, GLOBAL_QUIT...).

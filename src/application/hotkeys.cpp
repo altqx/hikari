@@ -310,6 +310,13 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_PLUGINS", 5231},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
+        {"GLOBAL_KEEP_AI_CHANGE", 5245},
+        {"GLOBAL_UNDO_AI_CHANGE", 5246},
+        {"GLOBAL_NEXT_AI_CHANGE", 5247},
+        {"GLOBAL_PREVIOUS_AI_CHANGE", 5248},
+        {"GLOBAL_KEEP_ALL_AI_CHANGES", 5249},
+        {"GLOBAL_UNDO_ALL_AI_CHANGES", 5250},
+        {"GLOBAL_SHOW_AI_REVIEW", 5251},
 };
 
 struct NameRow {
@@ -590,6 +597,13 @@ constexpr NameRow kNames[] = {
         {5231, "Plugins"},
         {5229, "Centre times within frames"},
         {5223, "Import legacy settings…"},
+        {5245, "Keep AI change"},
+        {5246, "Undo AI change"},
+        {5247, "Next AI change"},
+        {5248, "Previous AI change"},
+        {5249, "Keep all AI changes"},
+        {5250, "Undo all AI changes"},
+        {5251, "Review panel"},
 };
 
 struct DefaultRow {
@@ -637,6 +651,10 @@ constexpr DefaultRow kMainDefaults[] = {
         {5155, GlobalHotkey, "Previous tab", "Ctrl-PgUp"},
         {5166, GlobalHotkey, "Select line at current video position", "F2"},
         {5228, GlobalHotkey, "Insert hard space", "Ctrl-Shift-Space"},
+        {5245, GlobalHotkey, "Keep AI change", "Ctrl-Shift-Enter"},
+        {5246, GlobalHotkey, "Undo AI change", "Ctrl-Shift-Backspace"},
+        {5247, GlobalHotkey, "Next AI change", "Ctrl-Alt-Down"},
+        {5248, GlobalHotkey, "Previous AI change", "Ctrl-Alt-Up"},
         {5112, GlobalHotkey, "User guide", "F1"},
         {4527, GridHotkey, "Duplicate lines", "Ctrl-D"},
         {4554, GridHotkey, "Copy columns", "Ctrl-Shift-C"},
@@ -850,6 +868,12 @@ int hotkeyIdOf(std::string_view symbol)
         if (a.symbol == symbol)
             return a.id;
     return 0;
+}
+
+bool aiCommand(int id)
+{
+    const std::string_view symbol = hotkeySymbol(id);
+    return symbol.ends_with("_AI") || symbol.find("_AI_") != std::string_view::npos;
 }
 
 std::string_view hotkeySymbol(int id)

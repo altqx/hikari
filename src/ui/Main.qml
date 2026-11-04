@@ -53,6 +53,7 @@ ApplicationWindow {
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
+    required property var review
     required property var hotkeys
     required property var settingsImport
     required property VisualToolsController visualTools
@@ -391,10 +392,10 @@ ApplicationWindow {
 
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel]
+                                                 logPanel, stylesPanel, templatePanel, reviewPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
-                                         templateDock]
+                                         templateDock].concat(root.review.on ? [reviewDock] : [])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -1676,6 +1677,7 @@ ApplicationWindow {
             }
         }
         ShellMenu {
+            id: editMenu
             title: qsTr("&Edit")
             ShellMenuItem {
                 command: "GLOBAL_UNDO"
@@ -1754,6 +1756,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                id: historyMenuItem
                 command: "GLOBAL_HISTORY"
                 help: qsTr("History")
                 iconRole: "history"
@@ -1764,6 +1767,25 @@ ApplicationWindow {
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.open()
                 }
+            }
+            Instantiator {
+                model: root.review.on ? 1 : 0
+                delegate: ShellMenu {
+                    objectName: "reviewMenu"
+                    iconRole: "review-keep"
+                    title: qsTranslate("HikariSub.Review", "Re&view")
+                    ShellMenuItem { command: "GLOBAL_KEEP_AI_CHANGE"; iconRole: "review-keep"; objectName: "keepAiChangeMenuItem"; action: keepAiChangeAction }
+                    ShellMenuItem { command: "GLOBAL_UNDO_AI_CHANGE"; iconRole: "undo"; objectName: "undoAiChangeMenuItem"; action: undoAiChangeAction }
+                    ShellMenuItem { command: "GLOBAL_NEXT_AI_CHANGE"; iconRole: "chevron-down"; objectName: "nextAiChangeMenuItem"; action: nextAiChangeAction }
+                    ShellMenuItem { command: "GLOBAL_PREVIOUS_AI_CHANGE"; iconRole: "chevron-left"; objectName: "previousAiChangeMenuItem"; action: previousAiChangeAction }
+                    MenuSeparator {}
+                    ShellMenuItem { command: "GLOBAL_KEEP_ALL_AI_CHANGES"; iconRole: "review-keep"; objectName: "keepAllAiChangesMenuItem"; action: keepAllAiChangesAction }
+                    ShellMenuItem { command: "GLOBAL_UNDO_ALL_AI_CHANGES"; iconRole: "undo"; objectName: "undoAllAiChangesMenuItem"; action: undoAllAiChangesAction }
+                    MenuSeparator {}
+                    ShellMenuItem { command: "GLOBAL_SHOW_AI_REVIEW"; iconRole: "show"; objectName: "showAiReviewMenuItem"; action: showAiReviewAction }
+                }
+                onObjectAdded: (index, object) => editMenu.insertMenu(root.menuIndexOf(editMenu, historyMenuItem) + 1, object)
+                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_SELECT_LINES"
@@ -5244,6 +5266,7 @@ ApplicationWindow {
                 minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
                                          + 2 * (editorColumn.x - 4),
                                          editorStrip.implicitHeight
+                                         + (reviewStrip.visible ? editorColumn.spacing + reviewStrip.implicitHeight : 0)
                                          + (lineTextSlot.visible ? editorColumn.spacing + lineText.Layout.minimumHeight : 0)
                                          + (translationText.visible ? editorColumn.spacing
                                             + translationText.Layout.minimumHeight : 0))
@@ -5364,6 +5387,14 @@ ApplicationWindow {
                             translationTools: root.editor.translationMode && !root.originalShown
                             Layout.fillWidth: true
                             Layout.minimumWidth: minimumWidth
+                        }
+
+                        ReviewStrip {
+                            id: reviewStrip
+                            review: root.review
+                            Layout.fillWidth: true
+                            onUndoRequested: root.undoAiLine()
+                            onKeepRequested: root.review.keepLine()
                         }
 
                         Label {
@@ -5573,9 +5604,35 @@ ApplicationWindow {
                         property bool canPasteTranslation: false
                         property bool canShiftTranslation: false
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
+                        property bool reviewShown: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
                             canShiftTranslation = root.app.canShiftTranslation()
+                            reviewShown = root.review.on && root.review.current.count !== undefined
+                        }
+                        Instantiator {
+                            model: gridMenu.reviewShown ? [
+                                { command: "GLOBAL_KEEP_AI_CHANGE", icon: "review-keep", action: keepAiChangeAction },
+                                { command: "GLOBAL_UNDO_AI_CHANGE", icon: "undo", action: undoAiChangeAction },
+                                { command: "GLOBAL_NEXT_AI_CHANGE", icon: "chevron-down", action: nextAiChangeAction },
+                                { command: "GLOBAL_SHOW_AI_REVIEW", icon: "show", action: showAiReviewAction,
+                                  text: qsTranslate("HikariSub.Review", "Show in Review panel") }
+                            ] : []
+                            delegate: ShellMenuItem {
+                                required property var modelData
+                                objectName: "gridReview_" + modelData.command
+                                command: modelData.command
+                                iconRole: modelData.icon
+                                action: modelData.action
+                                text: modelData.text ?? modelData.action.text
+                            }
+                            onObjectAdded: (index, object) => gridMenu.insertItem(index, object)
+                            onObjectRemoved: (index, object) => gridMenu.removeItem(object)
+                        }
+                        MenuSeparator {
+                            objectName: "gridReviewSeparator"
+                            visible: gridMenu.reviewShown
+                            height: visible ? implicitHeight : 0
                         }
                         ShellMenu {
                             objectName: "gridInsertMenu"
@@ -5871,6 +5928,46 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: reviewDock
+            objectName: "reviewDock"
+            uniqueName: root.engineName("Review")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.Review", "Review")
+            Panel {
+                id: reviewPanel
+                objectName: "reviewPanel"
+                dockName: root.engineName("Review")
+                minimumBodySize: Qt.size(240, 160)
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Review", "Review")
+                Loader {
+                    id: reviewLoader
+                    anchors.fill: parent
+                    active: root.review.on
+                    focus: true
+                    sourceComponent: ReviewPanel {
+                        review: root.review
+                        targetTitle: root.shell.hasEditingTarget ? root.shell.editingTitle : ""
+                        onGoToTab: document => {
+                            const tabs = root.app.windowTabs(root.shellWindow)
+                            const index = tabs.findIndex(t => t.id === document)
+                            if (index >= 0)
+                                root.app.selectTab(index)
+                        }
+                        onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
+                    }
+                }
+                Connections {
+                    target: root.review
+                    function onChanged() {
+                        if (!root.review.on && reviewDock.isOpen)
+                            reviewDock.close()
+                    }
+                }
+            }
+        }
+
+        PanelDock {
             id: searchDock
             objectName: "searchDock"
             uniqueName: root.engineName("Search")
@@ -6081,6 +6178,7 @@ ApplicationWindow {
         DocumentTabBar {
             id: documentTabBar
             app: root.app
+            review: root.review
             shellWindow: root.shellWindow
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
@@ -6259,6 +6357,9 @@ ApplicationWindow {
         fieldsController: root.statusBar
         selectionText: root.shell.selectionStatus
         saveText: root.editor.saveStatus
+        reviewText: root.review.on && root.review.waiting > 0
+                    ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
+        onReviewClicked: root.showPanel(reviewDock)
     }
     function currentTab() {
         const tabs = root.app.tabs
@@ -6367,6 +6468,7 @@ ApplicationWindow {
     HistoryWindow {
         id: historyWindow
         editor: root.editor
+        review: root.review
         documentName: root.shell.editingTitle
         target: {
             const tab = root.app.tabs[root.app.currentTab]
@@ -6835,6 +6937,82 @@ ApplicationWindow {
                 text: qsTranslate("HikariSub.Workspace", "Close")
                 DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                 onClicked: placementWindow.close()
+            }
+        ]
+    }
+
+    DialogWindow {
+        id: restoreCheckpointDialog
+        objectName: "restoreCheckpointDialog"
+        title: qsTranslate("HikariSub.Review", "Restore checkpoint")
+        dialogId: "restoreCheckpoint"
+        settings: root.app.settings
+        modal: true
+        defaultButton: restoreCheckpointButton
+        property var turn: 0
+        property var documents: []
+        readonly property int editedSince: documents.reduce((n, d) => n + d.editedSince, 0)
+        function openFor(turn) {
+            restoreCheckpointDialog.turn = turn
+            documents = root.review.checkpoint(turn)
+            alsoMyEdits.checked = false
+            open()
+        }
+        Label {
+            Layout.preferredWidth: 420
+            wrapMode: Text.WordWrap
+            text: qsTranslate("HikariSub.Review", "Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.")
+        }
+        Repeater {
+            model: restoreCheckpointDialog.documents
+            delegate: RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                Label {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                    text: modelData.title
+                }
+                Label {
+                    color: Theme.muted
+                    text: modelData.others > 0
+                          ? qsTranslate("HikariSub.Review", "%n Line(s)", "", modelData.lines) + ", "
+                            + qsTranslate("HikariSub.Review", "%n other change(s)", "", modelData.others)
+                          : qsTranslate("HikariSub.Review", "%n Line(s)", "", modelData.lines)
+                }
+            }
+        }
+        CheckBox {
+            id: alsoMyEdits
+            objectName: "restoreAlsoMyEdits"
+            visible: restoreCheckpointDialog.editedSince > 0
+            text: qsTranslate("HikariSub.Review", "Also undo my edits to %n Line(s) I changed after the AI", "",
+                              restoreCheckpointDialog.editedSince)
+        }
+        Label {
+            Layout.preferredWidth: 420
+            wrapMode: Text.WordWrap
+            color: Theme.muted
+            text: qsTranslate("HikariSub.Review", "Your other edits stay. Undo brings the AI's changes back.")
+        }
+        buttons: [
+            PrimaryButton {
+                id: restoreCheckpointButton
+                objectName: "restoreCheckpointButton"
+                text: qsTranslate("HikariSub.Review", "Restore")
+                enabled: restoreCheckpointDialog.documents.length > 0
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                onClicked: {
+                    root.review.restore(restoreCheckpointDialog.turn, alsoMyEdits.checked)
+                    restoreCheckpointDialog.close()
+                }
+            },
+            Button {
+                objectName: "restoreCheckpointCancel"
+                text: qsTranslate("HikariSub.Review", "Cancel")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                onClicked: restoreCheckpointDialog.close()
             }
         ]
     }
@@ -7454,6 +7632,71 @@ ApplicationWindow {
         if (item.enabled)
             item.triggered()
     }
+    function menuIndexOf(menu, item) {
+        for (let i = 0; i < menu.count; ++i)
+            if (menu.itemAt(i) === item)
+                return i
+        return menu.count - 1
+    }
+    function undoAiLine() {
+        if (root.review.lineEditedSince() > 0) {
+            reviewStrip.confirming = true
+            root.focusPanel(editorPanel, Qt.OtherFocusReason)
+            return
+        }
+        root.review.undoLine(false)
+    }
+    function undoAllAiChanges() {
+        if (root.review.editedSince(0, -1) > 0) {
+            root.showPanel(reviewDock)
+            if (reviewLoader.item)
+                reviewLoader.item.confirming = { change: 0, item: -1 }
+            return
+        }
+        root.review.undo(0, -1, false)
+    }
+    Action {
+        id: keepAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Keep AI change")
+        enabled: root.review.on && root.review.current.count !== undefined
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_KEEP_AI_CHANGE")) root.review.keepLine()
+    }
+    Action {
+        id: undoAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Undo AI change")
+        enabled: root.review.on && root.review.current.count !== undefined
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_AI_CHANGE")) root.undoAiLine()
+    }
+    Action {
+        id: nextAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Next AI change")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_AI_CHANGE")) root.review.step(1)
+    }
+    Action {
+        id: previousAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Previous AI change")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_AI_CHANGE")) root.review.step(-1)
+    }
+    Action {
+        id: keepAllAiChangesAction
+        text: qsTranslate("HikariSub.Review", "Keep all")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_KEEP_ALL_AI_CHANGES")) root.review.keep(0, -1)
+    }
+    Action {
+        id: undoAllAiChangesAction
+        text: qsTranslate("HikariSub.Review", "Undo all")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_ALL_AI_CHANGES")) root.undoAllAiChanges()
+    }
+    Action {
+        id: showAiReviewAction
+        text: qsTranslate("HikariSub.Review", "Show panel")
+        enabled: root.review.on
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_AI_REVIEW")) root.showPanel(reviewDock)
+    }
     function globalActions() {
         return {
         GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
@@ -7492,6 +7735,10 @@ ApplicationWindow {
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
+        GLOBAL_KEEP_AI_CHANGE: keepAiChangeAction, GLOBAL_UNDO_AI_CHANGE: undoAiChangeAction,
+        GLOBAL_NEXT_AI_CHANGE: nextAiChangeAction, GLOBAL_PREVIOUS_AI_CHANGE: previousAiChangeAction,
+        GLOBAL_KEEP_ALL_AI_CHANGES: keepAllAiChangesAction, GLOBAL_UNDO_ALL_AI_CHANGES: undoAllAiChangesAction,
+        GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }

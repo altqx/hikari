@@ -169,6 +169,7 @@ private:
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
     void drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
+    void drawReviewMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
                              const QColor &outline) const;
     int modelColumn(int column) const;

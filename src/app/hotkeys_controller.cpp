@@ -299,9 +299,17 @@ void HotkeysController::saveAudio()
     m_settings.set(kAudioSetting, qLines(application::hotkeyLines(m_live, true)));
 }
 
+void HotkeysController::setHidden(std::function<bool(int id)> hidden)
+{
+    m_hidden = std::move(hidden);
+    setAccels();
+}
+
 void HotkeysController::setAccels()
 {
     m_installed = m_live;
+    if (m_hidden)
+        std::erase_if(m_installed, [this](const auto &binding) { return m_hidden(binding.first.id); });
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     m_scripts.install();
     logInvalid();
@@ -541,6 +549,8 @@ HotkeyMap HotkeysController::listed() const
             next = std::max(next, key.id + 1);
     for (const auto &name : m_scripts.unboundMacros())
         out[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
+    if (m_hidden)
+        std::erase_if(out, [this](const auto &binding) { return m_hidden(binding.first.id); });
     return out;
 }
 
@@ -770,9 +780,13 @@ void HotkeysController::commitOptions()
         if (r.keyModified && r.key.id >= application::kFirstScriptHotkey && !r.accel.empty())
             mapped.push_back(qs(r.name));
     }
-    const auto committed = m_list->commit();
+    auto committed = m_list->commit();
     if (!committed)
         return;
+    if (m_hidden)
+        for (const auto &[key, hotkey] : m_live)
+            if (m_hidden(key.id))
+                (*committed)[key] = hotkey;
     split(*committed);
     saveMain();
     saveAudio();

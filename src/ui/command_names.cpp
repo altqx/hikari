@@ -282,6 +282,13 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Plugins"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Centre times within frames"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import legacy settings…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep AI change"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo AI change"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next AI change"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous AI change"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep all AI changes"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo all AI changes"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Review panel"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
