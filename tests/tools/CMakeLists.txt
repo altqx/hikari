@@ -12,3 +12,6 @@ set_tests_properties(tools.desktop-dependencies PROPERTIES LABELS "tools;packagi
 add_test(NAME tools.make-update-manifest
     COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/make_update_manifest_tests.py")
 set_tests_properties(tools.make-update-manifest PROPERTIES LABELS "tools" TIMEOUT 60)
+add_test(NAME tools.draw-icons
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/draw_icons_tests.py")
+set_tests_properties(tools.draw-icons PROPERTIES LABELS "tools" TIMEOUT 60)
