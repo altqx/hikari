@@ -1296,6 +1296,7 @@ Pane {
             readonly property string entryState: entry.state ?? ""
             readonly property bool installed: entryState === "installed" || entryState === "manual"
             readonly property bool busy: entryState === "installing" || entryState === "uninstalling"
+            readonly property bool failed: entryState === "failed"
             objectName: "recommended_" + entry.nameSpace
             highlighted: current
             leftPadding: 20
@@ -1352,9 +1353,9 @@ Pane {
                     }
                     IconTextButton {
                         objectName: "install_" + entryItem.entry.nameSpace
-                        visible: entryItem.entryState === "install" || entryItem.entryState === "failed"
-                        iconRole: entryItem.entryState === "failed" ? "restart" : "plugin-install"
-                        text: entryItem.entryState === "failed" ? qsTr("Try again") : qsTr("Install")
+                        visible: entryItem.entryState === "install" || entryItem.failed
+                        iconRole: entryItem.failed ? "restart" : "plugin-install"
+                        text: entryItem.failed ? qsTr("Try again") : qsTr("Install")
                         tip: qsTr("Install %1").arg(entryItem.entry.name)
                         onClicked: {
                             root.chosen = entryItem.entry.nameSpace
