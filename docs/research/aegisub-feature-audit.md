@@ -291,6 +291,9 @@ How each column was found:
 | **XAudio2** and the fork's audio-player rework | HikariSub's editor output is PortAudio ([ADR 0010](../adr/0010-portaudio-editor-output.md)). Dropped from the migration releases. | [feature_04][f04], [feature_05][f05] |
 | **AegisubChain** | It is a Lua VM inside a script that loads other scripts and swaps their globals. That is untested under the one-helper-per-script host (ADR 0006), and it would need the dialog hooks to behave identically. AD2 already gives "Repeat last run" and dialog presets for one macro. **Later idea:** native macro chains over the Hikari API (HA1 [#411](https://github.com/altqx/hikari/issues/411)): record a sequence of commands and macros with their dialog answers, and replay it with one merged dialog. That fits the node effect editor (NE1 [#423](https://github.com/altqx/hikari/issues/423)) or plugins better than a Lua VM. | [README][scr-readme] "AegisubChain"; `doc/aegisubchain.md` |
 
+
+**Plugin first (2026-11-04):** the later ideas in this section become official plugins once PL6 ships, under [ADR 0022](../adr/0022-hikarisub-plugins.md#plugin-first): native macro chains (AegisubChain), a keyframe generator, and Git Signs' line marks. Every other open FA card stays native.
+
 ---
 
 ## 6. Audit later

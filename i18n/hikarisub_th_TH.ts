@@ -2770,6 +2770,10 @@ Output device: %2</source>
         <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
     </message>
     <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>ประมาณตำแหน่งเป็นพื้นที่ที่ใกล้ที่สุดแล้ว</translation>
+    </message>
+    <message>
         <source>Karaoke timing removed</source>
         <translation>ลบการจัดเวลาคาราโอเกะแล้ว</translation>
     </message>
@@ -2792,6 +2796,10 @@ Output device: %2</source>
     <message>
         <source>“%1” is a folder.</source>
         <translation>“%1” เป็นโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>ป้อนรหัสภาษา เช่น en หรือ pt-BR หรือเว้นว่างไว้</translation>
     </message>
     <message>
         <source>Enter a frame rate between 1 and 1000.</source>
@@ -2898,6 +2906,18 @@ Output device: %2</source>
         <translation>ชื่อผู้พูด</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>สไตล์ข้อความตามเวลาของ Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>เวลาเป็นเฟรม</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
     </message>
@@ -2912,6 +2932,10 @@ Output device: %2</source>
     <message>
         <source>Use video frame rate</source>
         <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>ข้อความเป็นสีขาวและอยู่กึ่งกลางด้านบนหรือด้านล่าง คงไว้เฉพาะตัวเอียง และเวลาเป็นเฟรม</translation>
     </message>
     <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
