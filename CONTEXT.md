@@ -135,6 +135,13 @@ A plugin sideloaded from a `.hikariplugin` file rather than installed from the P
 One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
 _Avoid_: Command, which names a menu, toolbar or shortcut action.
 
+**AI tool**:
+A function a model can call: an Operation offered under a model-safe name, or a search the AI sidecar answers itself. The core tools are always offered; the others are in groups that `search_tools` finds.
+_Avoid_: Operation as a synonym; tool target, which names a tool's Document.
+
+**Attached Document**:
+A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
+
 ### Files
 
 **User folder**:

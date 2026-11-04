@@ -4202,6 +4202,23 @@ void noticeUnscaled(ui::LogController &log, const QStringList &values)
                values.join(QLatin1Char('\n')));
 }
 
+QString unadjustedRotation(int row)
+{
+    return QCoreApplication::translate("HikariSub.Conversion",
+                                       "Line %1 was only scaled: it moves, changes shape over time or cannot be measured.")
+        .arg(row);
+}
+
+void noticeUnadjusted(ui::LogController &log, const QStringList &rows)
+{
+    if (rows.isEmpty())
+        return;
+    log.notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Conversion", "Resample subtitles"),
+               QCoreApplication::translate("HikariSub.Conversion", "%n rotated line(s) could not keep their shape.",
+                                           nullptr, int(rows.size())),
+               rows.join(QLatin1Char('\n')));
+}
+
 QString regexMatchError(const std::u16string &error)
 {
     return QCoreApplication::translate("HikariSub.SelectLines", "Failed to find match for regular expression: %1")
@@ -5058,37 +5075,52 @@ QVariantMap Application::resampleValues() const
             {QStringLiteral("hasVideo"), hasVideo}};
 }
 
-bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch)
+bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations)
 {
-    auto *session = targetSession();
-    if (!session || (subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
+    if ((subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
-    QStringList unscaled;
-    const auto warn = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
-        unscaled << unscaledValue(row, value, tag);
-    };
-    const bool done = application::changeResolution(*session, {subsWidth, subsHeight}, {width, height}, true, stretch, warn)
-                          .has_value();
-    noticeUnscaled(*m_log, unscaled);
-    editor().reloadFromSession();
-    refreshViews();
-    return done;
+    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations);
 }
 
 bool Application::matchVideoResolution(int option)
 {
-    auto *session = targetSession();
     const auto values = resampleValues();
-    if (!session || values.isEmpty())
+    if (values.isEmpty())
         return false;
-    const application::Resolution subs{values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt()};
-    const application::Resolution video{values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt()};
-    QStringList unscaled;
-    const auto warn = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
+    return changeResolution(values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt(),
+                            values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt(),
+                            option != 0, option == 2, true);
+}
+
+bool Application::changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
+                                   bool adjustRotations)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    QStringList unscaled, unadjusted;
+    application::ResampleOptions options;
+    options.stretch = stretch;
+    options.adjustRotations = adjustRotations;
+    const auto &video = m_video->session();
+    if (video.state() == application::VideoSession::State::Ready && video.lastFrame())
+        options.frameHeight = video.lastFrame()->height;
+    if (const ui::VisualToolsController *tools = activeViews().visualTools.get()) {
+        options.measure.port = tools->textMeasure();
+        options.measure.leased = [tools](const std::string &name) { return tools->fontLeased(name); };
+        options.measure.fallsBackToLeased = [tools](const std::string &font, bool bold, bool italic,
+                                                    std::u16string_view text) {
+            return tools->fallsBackToLeased(font, bold, italic, text);
+        };
+    }
+    options.unscaled = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
         unscaled << unscaledValue(row, value, tag);
     };
-    const bool done = application::changeResolution(*session, subs, video, option != 0, option == 2, warn).has_value();
+    options.unadjusted = [&unadjusted](int row) { unadjusted << unadjustedRotation(row); };
+    const bool done =
+        application::changeResolution(*session, {fromWidth, fromHeight}, {width, height}, resample, options).has_value();
     noticeUnscaled(*m_log, unscaled);
+    noticeUnadjusted(*m_log, unadjusted);
     editor().reloadFromSession();
     refreshViews();
     return done;
