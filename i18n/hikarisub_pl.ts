@@ -6948,10 +6948,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Ukryj</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>Odepnij</translation>
     </message>
@@ -9949,8 +9945,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>Również w</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>Brak innych wystąpień</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>Dokument referencyjny jest chroniony (tylko do odczytu).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, linijka %2</translation>
     </message>
 </context>
 <context>
@@ -12882,8 +12894,12 @@ Usunięte style:
         <translation>Zastosuj do zaznaczonych linijek: ustawia ich styl (Enter lub dwukrotne kliknięcie stylu)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>Edytuj…</translation>
+        <source>New style…</source>
+        <translation>Nowy styl…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>Edytuj styl…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12892,10 +12908,6 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>Otwórz w menedżerze stylów</translation>
     </message>
 </context>
 <context>
@@ -12925,6 +12937,26 @@ Usunięte style:
         <translation>Otwórz nową zakładkę</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>Napisy</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>Klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Nowa zakładka</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
@@ -12933,24 +12965,32 @@ Usunięte style:
         <translation>Zapisz wszystko</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>Pokaż w folderze</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>Kopiuj ścieżkę</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>Przełącz na</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>Zamknij pozostałe zakładki</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>Zamknij zakładki po prawej</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>Zamknij wszystkie zakładki</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>Pokaż napisy w folderze</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>Pokaż wideo w folderze</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>Pokaż audio w folderze</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>Pokaż klatki kluczowe w folderze</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -15297,8 +15337,12 @@ Usunięte style:
         <translation>Filtry</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>Przewijaj przy</translation>
+        <source>Move video to the selected line</source>
+        <translation>Przesuń wideo do zaznaczonej linijki</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>Po przesunięciu odtwórz</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15323,10 +15367,6 @@ Usunięte style:
     <message>
         <source>Editing</source>
         <translation>Edycja</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>Potem odtwórz</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -16624,14 +16664,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Move tab right</source>
         <translation>Przesuń zakładkę w prawo</translation>
-    </message>
-    <message>
-        <source>Undock</source>
-        <translation>Odłącz</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>Zamknij dokument referencyjny</translation>
     </message>
     <message>
         <source>Move panel</source>

@@ -1,5 +1,6 @@
 #include "automation_dialog_controller.h"
 #include "colour_picker_controller.h"
+#include "menu_rows.h"
 #include "settings_store.h"
 #include "theme.h"
 #include "hikari/backends/lua_script_host.h"
@@ -1051,6 +1052,12 @@ private slots:
         QCOMPARE(controller->presets().size(), 2);
         QVERIFY(QMetaObject::invokeMethod(window, "askDelete", Q_ARG(QVariant, QStringLiteral("Twenty"))));
         QCOMPARE(controller->presets(), QStringList{QStringLiteral("Mine")});
+        QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("automationDialogMenu"))),
+                 (QStringList{QStringLiteral("dialogLastUsed"), QStringLiteral("dialogPresetsMenu"), QStringLiteral("|"),
+                              QStringLiteral("dialogReset")}));
+        QCOMPARE(menu_rows::shown(window->findChild<QObject *>(QStringLiteral("dialogPresetsMenu"))),
+                 (QStringList{QStringLiteral("dialogPreset_Mine"), QStringLiteral("|"), QStringLiteral("dialogSavePreset"),
+                              QStringLiteral("|"), QStringLiteral("dialogDeletePresetMenu")}));
 
         auto *reset = window->findChild<QObject *>(QStringLiteral("dialogReset"));
         QVERIFY(QMetaObject::invokeMethod(reset, "triggered"));
