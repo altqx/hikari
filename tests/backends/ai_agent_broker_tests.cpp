@@ -149,9 +149,11 @@ protected:
 
     std::uint64_t start(const std::string &agent, Json args = Json::array(), Json env = Json::object())
     {
-        const auto started = call(kAgentStart, Json::object({{"agent", agent}, {"args", std::move(args)}, {"env", std::move(env)}}));
+        const std::uint64_t process = next++;
+        const auto started = call(kAgentStart, Json::object({{"process", process}, {"agent", agent},
+                                                             {"args", std::move(args)}, {"env", std::move(env)}}));
         EXPECT_TRUE(started && *started);
-        return started && *started ? static_cast<std::uint64_t>((*started)->find("process")->asInt()) : 0;
+        return process;
     }
 
     void send(std::uint64_t process, const std::string &text)
@@ -206,20 +208,22 @@ protected:
     QTemporaryDir dir;
     AgentBroker broker;
     std::vector<std::pair<std::string, Json>> notes;
+    std::uint64_t next = 1;
 };
 
 TEST_F(AgentBrokerTest, QtPicksTheProgramAndOnlyListedVariablesComeFromTheSidecar)
 {
     broker.add("fake", spec());
-    EXPECT_FALSE(*call(kAgentStart, Json::object({{"agent", "bash"}})));
+    EXPECT_FALSE(*call(kAgentStart, Json::object({{"process", 50}, {"agent", "bash"}})));
+    EXPECT_FALSE(*call(kAgentStart, Json::object({{"agent", "fake"}})));
     const std::uint64_t process = start("fake", Json::array({"--x"}),
                                         Json::object({{"CLAUDE_CODE_ENTRYPOINT", "sdk-ts"}, {"HIKARI_TEST_SECRET", "s"}}));
-    ASSERT_TRUE(waitFor([&] { return !lines(process).empty(); }));
+    EXPECT_FALSE(*call(kAgentStart, Json::object({{"process", process}, {"agent", "fake"}})));
+    send(process, R"({"hello":1})");
+    ASSERT_TRUE(waitFor([&] { return lines(process).size() == 2; }));
     EXPECT_EQ(lines(process)[0], Json::object({{"started", Json::object({{"args", Json::array({"app-server", "--x"})},
                                                                          {"entry", "sdk-ts"},
                                                                          {"secret", ""}})}}));
-    send(process, R"({"hello":1})");
-    ASSERT_TRUE(waitFor([&] { return lines(process).size() == 2; }));
     EXPECT_EQ(lines(process)[1], Json::object({{"hello", 1}}));
     ASSERT_TRUE(*call(kAgentCloseInput, Json::object({{"process", process}})));
     ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));
@@ -232,9 +236,10 @@ TEST_F(AgentBrokerTest, RefusedArgumentsStartNothing)
     AgentSpec s = spec();
     s.refuse = refusedClaudeArguments;
     broker.add("claude", s);
-    const auto refused = call(kAgentStart, Json::object({{"agent", "claude"}, {"args", Json::array({"--add-dir=/"})}}));
+    const auto refused = call(kAgentStart, Json::object({{"process", 1}, {"agent", "claude"},
+                                                         {"args", Json::array({"--add-dir=/"})}}));
     ASSERT_FALSE(*refused);
-    EXPECT_EQ(refused->error().first, rpc::kInvalidParams);
+    EXPECT_EQ(refused->error(), (std::pair<int, std::string>{rpc::kInvalidParams, "--add-dir isn't allowed"}));
     EXPECT_EQ(broker.running(), 0u);
 }
 

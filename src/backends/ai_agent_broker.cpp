@@ -387,6 +387,12 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
     const auto spec = agent && agent->isString() ? m_specs.find(agent->asString()) : m_specs.end();
     if (spec == m_specs.end())
         return refuse(rpc::kInvalidParams, "Hikari doesn't know that agent");
+    const api::Json *number = params.find("process");
+    if (!number || !number->isInt() || number->asInt() <= 0)
+        return refuse(rpc::kInvalidParams, "process must be a positive number");
+    const auto id = static_cast<std::uint64_t>(number->asInt());
+    if (m_running.contains(id))
+        return refuse(rpc::kInvalidParams, "that process is already running");
     if (m_running.size() >= kMaxRunning)
         return refuse(rpc::kBusy, "too many agents are running");
     QStringList arguments;
@@ -411,7 +417,7 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
                 environment.insert(QString::fromStdString(name), QString::fromStdString(value.asString()));
 
     auto running = std::make_unique<Running>();
-    running->id = m_next++;
+    running->id = id;
     running->process = std::make_unique<QProcess>();
     running->launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
     if (spec->second.guard)
@@ -432,7 +438,6 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
 #else
     running->launcher->prepare(process);
 #endif
-    const std::uint64_t id = running->id;
     connect(&process, &QProcess::readyReadStandardOutput, this,
             [this, id, &process] { output(id, process.readAllStandardOutput(), false); });
     connect(&process, &QProcess::readyReadStandardError, this,
@@ -445,7 +450,7 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
             exited(id, -1);
     });
     m_running.emplace(id, std::move(running));
-    answer(api::Json::object({{"process", id}}));
+    answer(api::Json::object());
     process.start();
 }
 

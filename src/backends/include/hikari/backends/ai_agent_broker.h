@@ -72,9 +72,9 @@ AgentSpec claudeAgent(const QString &program, const QString &home, const QString
 /// native binary is found.
 std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work);
 
-/// Answers the sidecar's `_hikari/agent.*` requests: starts the agents Qt knows, each in its own sandbox, and relays
-/// their stdio as `_hikari/agent.output` and `_hikari/agent.exit` notifications. Every agent ends with the sidecar
-/// that started it.
+/// Answers the sidecar's `_hikari/agent.*` requests: starts the agents Qt knows, each in its own sandbox and under
+/// the process number the sidecar picked, and relays their stdio as `_hikari/agent.output` and `_hikari/agent.exit`
+/// notifications. Every agent ends with the sidecar that started it.
 class AgentBroker final : public QObject {
     Q_OBJECT
 public:
@@ -104,7 +104,6 @@ private:
 
     std::map<std::string, AgentSpec> m_specs;
     std::map<std::uint64_t, std::unique_ptr<Running>> m_running;
-    std::uint64_t m_next = 1;
     Notify m_notify;
 };
 
