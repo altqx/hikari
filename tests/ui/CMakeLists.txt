@@ -341,8 +341,9 @@ target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
     HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
 add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
 hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
-    LIBRARIES hikari_composition Qt6::Test ZLIB::ZLIB LABELS ui)
-target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends")
+    LIBRARIES hikari_composition Qt6::Test ZLIB::ZLIB Hikari::sodium LABELS ui)
+target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
+    "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_ai_settings_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_ai_settings_tests hikari_fake_ai_sidecar)

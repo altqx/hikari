@@ -1,10 +1,13 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/application/update_check.h"
+#include "hikari/application/update_signature.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "local_release.h"
+#include "minisign_signer.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -105,7 +108,7 @@ protected:
             p.sidecarDownload = [this]() -> std::unique_ptr<backends::ai::AiSidecarDownload> {
                 auto d = std::make_unique<backends::ai::AiSidecarDownload>(
                     dir.filePath(QStringLiteral("ai/sidecar")), kVersion,
-                    backends::ai::SidecarSource::local(release.base()));
+                    backends::ai::SidecarSource::local(release.base(), {signer.publicKey()}));
                 return d->installedProgram() ? nullptr : std::move(d);
             };
         return p;
@@ -117,8 +120,17 @@ protected:
         const QByteArray asset = test::gzip(executable);
         const QString name = backends::ai::sidecarAssetName(kVersion, backends::ai::sidecarPlatform());
         release.files["/download/v0.1.0/" + name.toLatin1()] = asset;
-        release.files["/download/v0.1.0/hikarisub-update.json"] = test::manifest(
+        const QByteArray manifest = test::manifest(
             kVersion, name, asset.size(), QCryptographicHash::hash(asset, QCryptographicHash::Sha256).toHex());
+        release.files["/download/v0.1.0/hikarisub-update.json"] = manifest;
+        signManifest(signer);
+    }
+
+    void signManifest(const test::MinisignSigner &by)
+    {
+        release.files["/download/v0.1.0/hikarisub-update.json.minisig"] = QByteArray::fromStdString(
+            by.sign(release.files.at("/download/v0.1.0/hikarisub-update.json").toStdString(),
+                    application::releaseTrustedComment("v0.1.0", application::kManifestAsset)));
     }
 
     static QVariantMap form(const QString &preset, const QString &name, const QString &key, const QString &id = {},
@@ -137,6 +149,7 @@ protected:
     Keychain chain;
     ai::Config stored;
     test::LocalRelease release;
+    test::MinisignSigner signer;
     int hostsBuilt = 0;
 };
 
@@ -285,19 +298,19 @@ TEST_F(AiSettingsTest, TheFirstProviderDownloadsTheComponentOnceItsSizeIsShown)
     ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
     EXPECT_TRUE(page.download().value(QStringLiteral("needed")).toBool());
     EXPECT_FALSE(page.download().value(QStringLiteral("active")).toBool());
-    ASSERT_EQ(release.requested.size(), 1u);
+    ASSERT_EQ(release.requested.size(), 2u);
     EXPECT_EQ(hostsBuilt, 0);
 
     page.testDraft(form(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), QStringLiteral("sk-ant")));
     ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("ok"); }));
     EXPECT_FALSE(page.download().value(QStringLiteral("needed")).toBool());
-    EXPECT_EQ(release.requested.size(), 3u);
+    EXPECT_EQ(release.requested.size(), 5u);
     EXPECT_EQ(hostsBuilt, 1);
 
     page.closeDraft();
     page.openDraft();
     EXPECT_FALSE(page.download().value(QStringLiteral("needed")).toBool());
-    EXPECT_EQ(release.requested.size(), 3u);
+    EXPECT_EQ(release.requested.size(), 5u);
 }
 
 TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
@@ -309,6 +322,22 @@ TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
     ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("failed"); }));
     EXPECT_EQ(draftError(page), QStringLiteral("downloadManifest"));
     EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AManifestSignedByAnotherKeyFailsTheTestAndInstallsNothing)
+{
+    serveSidecar();
+    signManifest(test::MinisignSigner());
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    page.openDraft();
+    page.testDraft(form(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), QStringLiteral("sk-ant")));
+    ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("failed"); }));
+    EXPECT_EQ(draftError(page), QStringLiteral("downloadManifest"));
+    EXPECT_TRUE(page.download().value(QStringLiteral("needed")).toBool());
+    EXPECT_EQ(hostsBuilt, 0);
+    for (const QByteArray &path : release.requested)
+        EXPECT_FALSE(path.endsWith(".gz")) << path.constData();
 }
 
 TEST_F(AiSettingsTest, TurningAiOffEmptiesThePageAndBuildsNothing)
