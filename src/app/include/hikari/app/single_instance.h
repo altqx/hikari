@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hikari/application/project.h"
+
 #include <QElapsedTimer>
 #include <QObject>
 #include <QString>
@@ -37,6 +39,7 @@ public:
     struct Request {
         QStringList files;
         QString activationToken; // XDG_ACTIVATION_TOKEN on Wayland
+        application::WindowRequest window = application::WindowRequest::Default;
     };
 
     enum class Role {

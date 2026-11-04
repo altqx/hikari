@@ -569,17 +569,14 @@ void Application::setSessionRestore(int value)
     emit sessionRestoreChanged();
 }
 
-bool Application::saveLastSession(bool closing, const QString &path)
+application::Session Application::sessionOf(std::optional<int> shellWindow)
 {
-    const QString file = path.isEmpty() ? lastSessionPath() : path;
-    if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
-        return false;
-    const auto target = m_workspace.editingTarget();
+    const auto target = shellWindow ? m_workspace.currentTab(*shellWindow) : m_workspace.editingTarget();
     registerTabArrangements();
     application::Session session;
     session.header = "HikariSub " HIKARI_VERSION;
     auto &tabs = session.tabs;
-    for (const auto id : m_workspace.allTabs()) {
+    for (const auto id : shellWindow ? m_workspace.tabs(*shellWindow) : m_workspace.allTabs()) {
         if (id == target)
             session.activeTab = tabs.size();
         application::SessionTab tab;
@@ -623,6 +620,21 @@ bool Application::saveLastSession(bool closing, const QString &path)
             tab.layout = arrangement->serialise().toStdString();
         tabs.push_back(std::move(tab));
     }
+    return session;
+}
+
+void Application::keepProjectTabs(int shellWindow)
+{
+    if (const QString root = m_projects->root(shellWindow); !root.isEmpty())
+        m_projects->keepTabs(root, sessionOf(shellWindow));
+}
+
+bool Application::saveLastSession(bool closing, const QString &path)
+{
+    const QString file = path.isEmpty() ? lastSessionPath() : path;
+    if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
+        return false;
+    const application::Session session = sessionOf(std::nullopt);
     const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath());
     QSaveFile out(file);
@@ -634,6 +646,9 @@ bool Application::saveLastSession(bool closing, const QString &path)
 
 void Application::endSession()
 {
+    for (const auto &[window, shell] : m_shellWindows)
+        keepProjectTabs(window);
+    keepProjectTabs(0);
     saveLastSession(true);
 }
 
@@ -767,8 +782,16 @@ QVariantMap Application::reviewSessionRead(std::optional<application::Session> s
     };
     if (!session)
         return result(false, problem);
+    PendingSession pending = stageSession(std::move(*session));
+    const QVariantList rows = reviewClose(QStringLiteral("session"));
+    m_pendingSession = std::move(pending);
+    return result(true, QString(), rows);
+}
+
+Application::PendingSession Application::stageSession(application::Session session)
+{
     PendingSession pending;
-    for (const auto &tab : session->tabs) {
+    for (const auto &tab : session.tabs) {
         std::optional<application::StagedOpen> staged;
         const QString subtitles = qs(tab.subtitles);
         const QFileInfo info(subtitles);
@@ -778,11 +801,9 @@ QVariantMap Application::reviewSessionRead(std::optional<application::Session> s
         pending.stamps.emplace_back(staged ? info.lastModified() : QDateTime(), staged ? info.size() : -1);
         pending.staged.push_back(std::move(staged));
     }
-    pending.tabs = std::move(session->tabs);
-    pending.activeTab = session->activeTab;
-    const QVariantList rows = reviewClose(QStringLiteral("session"));
-    m_pendingSession = std::move(pending);
-    return result(true, QString(), rows);
+    pending.tabs = std::move(session.tabs);
+    pending.activeTab = session.activeTab;
+    return pending;
 }
 
 void Application::selectRow(application::DocumentId document, int row)
@@ -803,18 +824,20 @@ void Application::applySession()
         return;
     PendingSession pending = std::move(*m_pendingSession);
     m_pendingSession.reset();
-    m_comparison.remove();
-    for (const auto id : m_workspace.documents()) {
-        discardRecovery(id);
-        m_files->close(id);
-        m_workspace.remove(id);
+    if (!pending.intoWindow) {
+        m_comparison.remove();
+        for (const auto id : m_workspace.documents()) {
+            discardRecovery(id);
+            m_files->close(id);
+            m_workspace.remove(id);
+        }
+        m_tabMedia.clear();
+        for (auto *layout : layouts())
+            layout->forgetTabs();
+        m_layoutDocuments.clear();
+        m_originalColumns.clear();
+        m_unresolved.clear();
     }
-    m_tabMedia.clear();
-    for (auto *layout : layouts())
-        layout->forgetTabs();
-    m_layoutDocuments.clear();
-    m_originalColumns.clear();
-    m_unresolved.clear();
     std::optional<application::DocumentId> last, active;
     for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
         const auto &tab = pending.tabs[i];
@@ -877,7 +900,7 @@ void Application::applySession()
     }
     if (active || last)
         m_workspace.setEditingTarget(active ? *active : *last);
-    else
+    else if (!pending.intoWindow)
         newDocument();
     refreshViews();
     trimAudioCache();

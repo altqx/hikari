@@ -23,7 +23,7 @@ qt_add_qml_module(hikari_ui
         DocumentTabBar.qml SessionWindows.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml TimingPostprocessorPanel.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
-qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
+qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml RecentList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagButton.qml TagButtonEditor.qml)

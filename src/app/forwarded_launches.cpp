@@ -68,6 +68,8 @@ void ForwardedLaunches::setWindow(QWindow *window)
 void ForwardedLaunches::take(const SingleInstance::Request &request)
 {
     m_files += request.files;
+    if (!request.files.isEmpty())
+        m_request = request.window;
     QString token = request.activationToken;
     if (m_application.quitting() && !token.isEmpty()) {
         m_quitToken = std::exchange(token, QString());
@@ -114,7 +116,8 @@ void ForwardedLaunches::open()
         m_timer.start(kBusyRetryMs);
         return;
     }
-    const QVariantMap result = m_application.openForwarded(std::exchange(m_files, QStringList()));
+    const QVariantMap result =
+        m_application.openForwarded(std::exchange(m_files, QStringList()), static_cast<int>(std::exchange(m_request, application::WindowRequest::Default)));
     const QString kind = result.value(QStringLiteral("kind")).toString();
     if (kind == QLatin1String("video"))
         openStartVideo(m_window, result.value(QStringLiteral("path")).toString());

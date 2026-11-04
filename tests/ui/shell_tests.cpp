@@ -949,8 +949,8 @@ private slots:
         press(Qt::Key_Escape);
         QTRY_VERIFY(!item<QObject>("homeRowMenu")->property("visible").toBool());
         list->forceActiveFocus(Qt::TabFocusReason);
-        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpen"),
-                                QStringLiteral("homeNew")};
+        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpenFolder"),
+                                QStringLiteral("homeOpen"), QStringLiteral("homeNew")};
         for (const QString &name : order) {
             press(Qt::Key_Tab, Qt::ShiftModifier);
             QQuickItem *focused = window->activeFocusItem();
@@ -6194,6 +6194,7 @@ private slots:
             {QStringLiteral("Automation macro"), named("automationMacroMenu")},
             {QStringLiteral("Automation recommended script"), named("recommendedMenu")},
             {QStringLiteral("Home row"), named("homeRowMenu")},
+            {QStringLiteral("Home project row"), named("homeProjectsRowMenu")},
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
             {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
@@ -19329,7 +19330,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 272);
+        QCOMPARE(hotkeyRows().size(), 274);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

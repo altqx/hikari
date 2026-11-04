@@ -800,6 +800,10 @@ StartupArguments parseStartupArguments(const std::vector<std::string> &arguments
             out.healthFile = argument.substr(health.size());
         else if (argument.starts_with(from))
             out.updatedFrom = argument.substr(from.size());
+        else if (argument == "-n" || argument == "--new-window")
+            out.window = WindowRequest::New;
+        else if (argument == "-r" || argument == "--reuse-window")
+            out.window = WindowRequest::Reuse;
         else
             out.rest.push_back(argument);
     }

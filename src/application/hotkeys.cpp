@@ -310,6 +310,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_PLUGINS", 5231},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
+        {"GLOBAL_OPEN_FOLDER", 5255},
+        {"GLOBAL_CLOSE_PROJECT", 5256},
 };
 
 struct NameRow {
@@ -590,6 +592,8 @@ constexpr NameRow kNames[] = {
         {5231, "Plugins"},
         {5229, "Centre times within frames"},
         {5223, "Import legacy settings…"},
+        {5255, "Open folder…"},
+        {5256, "Close project"},
 };
 
 struct DefaultRow {

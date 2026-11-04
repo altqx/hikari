@@ -30,6 +30,7 @@ struct Session {
     std::vector<SessionTab> tabs;
     // Only the JSON session file marks it; nullopt: the last tab.
     std::optional<std::size_t> activeTab;
+    std::string project; // JSON only: the window's Project folder; "" for none
 };
 
 // A UTF-8, UTF-16 or UTF-32 BOM decides (and is dropped); otherwise CRLF becomes

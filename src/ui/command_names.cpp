@@ -282,6 +282,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Plugins"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Centre times within frames"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import legacy settings…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open folder…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close project"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

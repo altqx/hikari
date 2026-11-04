@@ -1,0 +1,343 @@
+#include "hikari/app/application.h"
+#include "hikari/app/forwarded_launches.h"
+#include "hikari/app/project_windows.h"
+#include "hikari/app/session_json.h"
+#include "hikari/application/owned_file.h"
+#include "hikari/application/session_file.h"
+#include "docking.h"
+#include "settings_store.h"
+
+#include <QDir>
+#include <QFile>
+#include <QGuiApplication>
+#include <QPointer>
+#include <QQmlApplicationEngine>
+#include <QQuickItem>
+#include <QQuickWindow>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QtQml/qqmlextensionplugin.h>
+#include <QtTest>
+
+Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+
+using namespace hikari;
+
+namespace {
+
+QString writeAss(const QString &path, const char *text)
+{
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly))
+        return {};
+    f.write("[Script Info]\nScriptType: v4.00+\n"
+            "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,," +
+            QByteArray(text) + "\n");
+    return path;
+}
+
+QVariantList discardAll(const QVariantList &rows)
+{
+    QVariantList out;
+    for (const QVariant &r : rows)
+        out << QVariantMap{{QStringLiteral("id"), r.toMap().value(QStringLiteral("id"))},
+                           {QStringLiteral("save"), false},
+                           {QStringLiteral("path"), QString()}};
+    return out;
+}
+
+}
+
+class ProjectWindowsTests : public QObject {
+    Q_OBJECT
+
+    QTemporaryDir home;
+    QTemporaryDir dir;
+    app::Application *application = nullptr;
+    app::ForwardedLaunches *forwarded = nullptr;
+    QQmlApplicationEngine *engine = nullptr;
+    QQuickWindow *window = nullptr;
+
+    void start()
+    {
+        app::Application::Options o;
+        o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.spellingBackend = {};
+        application = new app::Application(o);
+        forwarded = new app::ForwardedLaunches(*application);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        forwarded->setWindow(window);
+    }
+    static QObject *named(QQuickWindow *in, const char *name) { return in->findChild<QObject *>(QLatin1String(name)); }
+    QObject *named(const char *name) const { return named(window, name); }
+    static QQuickWindow *shell(int id)
+    {
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (w->objectName() == QLatin1String("mainWindow") && w->property("shellWindow").toInt() == id)
+                return qobject_cast<QQuickWindow *>(w);
+        return nullptr;
+    }
+    QString folder(const char *name, bool project = false) const
+    {
+        const QString path = dir.filePath(QLatin1String(name));
+        QDir().mkpath(project ? path + QStringLiteral("/.hikari") : path);
+        return path;
+    }
+    static QString canonical(const QString &path) { return app::ProjectWindows::canonicalFolder(path); }
+    QStringList titles(int shellWindow) const
+    {
+        QStringList out;
+        for (const QVariant &tab : application->windowTabs(shellWindow))
+            out << tab.toMap().value(QStringLiteral("title")).toString();
+        return out;
+    }
+    void edit(const char *text)
+    {
+        auto *s = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(s);
+        const auto line = s->document().lines().front()->id;
+        QVERIFY(s->editDraftText(line, std::u8string(reinterpret_cast<const char8_t *>(text))));
+        QVERIFY(s->commitDraft());
+    }
+    static void closeShell(int id)
+    {
+        QPointer<QQuickWindow> opened = shell(id);
+        if (!opened)
+            return;
+        opened->close();
+        QTRY_VERIFY(!opened || !opened->isVisible());
+    }
+
+private slots:
+    void initTestCase() { QVERIFY(home.isValid() && dir.isValid()); }
+    void cleanup()
+    {
+        for (int id = 1; id < 4; ++id)
+            closeShell(id);
+        delete engine;
+        engine = nullptr;
+        delete forwarded;
+        forwarded = nullptr;
+        delete application;
+        application = nullptr;
+        for (const char *name : {"settings.toml", "hotkeys.toml", "state.json", "last-session.json"})
+            QFile::remove(home.filePath(QLatin1String(name)));
+        QDir(home.filePath(QStringLiteral("projects"))).removeRecursively();
+        QDir(dir.path()).removeRecursively();
+        QDir().mkpath(dir.path());
+    }
+
+    void theSessionKeepsTheProject()
+    {
+        application::Session session{"HikariSub", true, {}, 0};
+        session.project = "/subs/Show S01";
+        const QByteArray bytes = app::writeSessionJson(session);
+        QVERIFY(bytes.contains("\"project\""));
+        const auto read = app::readSession(std::string_view(bytes.constData(), std::size_t(bytes.size())));
+        QVERIFY(read);
+        QCOMPARE(read->project, session.project);
+        QVERIFY(!app::writeSessionJson(application::Session{"HikariSub", true, {}, 0}).contains("\"project\""));
+        application::ParseFailure failure;
+        QVERIFY(!app::readSession(R"({"version":1,"program":"HikariSub","project":5,"tabs":[]})", &failure));
+        QCOMPARE(failure.message, std::string("“project” is not text."));
+    }
+
+    void anEmptyWindowTakesTheFolder()
+    {
+        start();
+        const QString show = folder("Show S01");
+        const QVariantMap opened = application->openFolder(show, 0);
+        QVERIFY(opened.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(opened.value(QStringLiteral("window")).toInt(), 0);
+        QCOMPARE(application->projectRoot(0), canonical(show));
+        QCOMPARE(application->projectOf(0), canonical(show));
+        QTRY_COMPARE(window->title(), QStringLiteral("Show S01 - HikariSub"));
+        QTRY_COMPARE(named("homeProjectName")->property("text").toString(), QStringLiteral("Show S01"));
+        QVERIFY(named("closeProjectMenuItem")->property("enabled").toBool());
+        const QVariantList recent = application->homeRecentProjects();
+        QCOMPARE(recent.size(), 1);
+        QCOMPARE(recent.first().toMap().value(QStringLiteral("path")).toString(), canonical(show));
+        QTRY_VERIFY(qobject_cast<QQuickItem *>(named("homeProjectsRecent"))->isVisible());
+
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        QTRY_COMPARE(window->title(), QStringLiteral("ep01.ass - Show S01 - HikariSub"));
+    }
+
+    void anOpenProjectComesToTheFrontAndABusyWindowOpensANewOne()
+    {
+        start();
+        QVERIFY(application->openFile(writeAss(dir.filePath(QStringLiteral("loose.ass")), "loose")));
+        const QString show = folder("show");
+        const QVariantMap opened = application->openFolder(show, 0);
+        QVERIFY(opened.value(QStringLiteral("ok")).toBool());
+        const int other = opened.value(QStringLiteral("window")).toInt();
+        QVERIFY(other != 0);
+        QTRY_VERIFY(shell(other) && shell(other)->isVisible());
+        QCOMPARE(application->projectRoot(other), canonical(show));
+        QVERIFY(application->projectRoot(0).isEmpty());
+        QCOMPARE(titles(0), QStringList{QStringLiteral("loose.ass")});
+
+        const QVariantMap again = application->openFolder(show, 0, 1);
+        QCOMPARE(again.value(QStringLiteral("window")).toInt(), other);
+        QVERIFY(!shell(other + 1));
+
+        const QString extras = folder("extras");
+        QCOMPARE(application->openFolder(extras, 0, 2).value(QStringLiteral("window")).toInt(), 0);
+        QCOMPARE(application->projectRoot(0), canonical(extras));
+        QCOMPARE(titles(0), QStringList{QStringLiteral("loose.ass")});
+    }
+
+    void aFileOrAMissingFolderIsNoProject()
+    {
+        start();
+        QSignalSpy changed(application, &app::Application::projectsChanged);
+        const QString file = writeAss(dir.filePath(QStringLiteral("a.ass")), "a");
+        QVERIFY(!application->openFolder(file, 0).value(QStringLiteral("ok")).toBool());
+        QVERIFY(!application->openFolder(dir.filePath(QStringLiteral("gone")), 0).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(changed.size(), 0);
+        QVERIFY(application->homeRecentProjects().isEmpty());
+    }
+
+    void aFileInAProjectOffersIt()
+    {
+        start();
+        const QString show = folder("show", true);
+        QSignalSpy offered(application, &app::Application::projectOffered);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/sub/ep01.ass"), "one")));
+        QTRY_COMPARE(offered.size(), 1);
+        QCOMPARE(offered.first().at(0).toInt(), 0);
+        QCOMPARE(offered.first().at(1).toString(), canonical(show));
+        QCOMPARE(offered.first().at(2).toString(), QStringLiteral("show"));
+        QVERIFY(application->projectRoot(0).isEmpty());
+        auto *bar = qobject_cast<QQuickItem *>(named("projectOfferBar"));
+        QTRY_VERIFY(bar->isVisible());
+        QCOMPARE(bar->property("text").toString(), QStringLiteral("This file is in the project show."));
+        QVERIFY(QMetaObject::invokeMethod(named("projectOfferOpen"), "clicked"));
+        QCOMPARE(application->projectRoot(0), canonical(show));
+        QTRY_VERIFY(!bar->isVisible());
+        QCOMPARE(titles(0), QStringList{QStringLiteral("ep01.ass")});
+
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep02.ass"), "two")));
+        QCOMPARE(offered.size(), 1);
+    }
+
+    void aTrustedFolderTakesItsProjectWithoutAsking()
+    {
+        start();
+        const QString show = folder("show", true);
+        application->settingsStore()->setValue(QStringLiteral("automation.trustedFolders"),
+                                               QStringList{QFileInfo(dir.path()).canonicalFilePath()});
+        QSignalSpy offered(application, &app::Application::projectOffered);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        QTRY_COMPARE(application->projectRoot(0), canonical(show));
+        QCOMPARE(offered.size(), 0);
+    }
+
+    void closeProjectReviewsClosesAndKeepsTheTabs()
+    {
+        start();
+        const QString show = folder("show");
+        application->openFolder(show, 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        edit("changed");
+
+        QVariantList rows = application->reviewCloseProject(0);
+        QCOMPARE(rows.size(), 1);
+        application->cancelClose();
+        QCOMPARE(application->projectRoot(0), canonical(show));
+        QCOMPARE(titles(0), QStringList{QStringLiteral("ep01.ass")});
+
+        rows = application->reviewCloseProject(0);
+        QCOMPARE(rows.size(), 1);
+        application->resolveClose(discardAll(rows));
+        QTRY_VERIFY(titles(0).isEmpty());
+        QVERIFY(application->projectRoot(0).isEmpty());
+        QTRY_VERIFY(qobject_cast<QQuickItem *>(named("homePage"))->isVisible());
+        QTRY_COMPARE(window->title(), QStringLiteral("HikariSub"));
+        QVERIFY(!named("closeProjectMenuItem")->property("enabled").toBool());
+        QCOMPARE(application->projectLastTabs(0).value(QStringLiteral("count")).toInt(), 0);
+
+        application->openFolder(show, 0);
+        const QVariantMap last = application->projectLastTabs(0);
+        QCOMPARE(last.value(QStringLiteral("count")).toInt(), 1);
+        QCOMPARE(last.value(QStringLiteral("names")).toStringList(), QStringList{QStringLiteral("ep01.ass")});
+        auto *reopen = qobject_cast<QQuickItem *>(named("homeReopenTabs"));
+        QTRY_VERIFY(reopen->isVisible());
+        QCOMPARE(reopen->property("text").toString(), QStringLiteral("Reopen last tabs (1)"));
+        QVERIFY(QMetaObject::invokeMethod(reopen, "clicked"));
+        QTRY_COMPARE(titles(0), QStringList{QStringLiteral("ep01.ass")});
+        QCOMPARE(application->projectRoot(0), canonical(show));
+    }
+
+    void closeProjectWithNothingToSaveNeedsNoReview()
+    {
+        start();
+        const QString show = folder("show");
+        application->openFolder(show, 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        QVERIFY(application->reviewCloseProject(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(titles(0).isEmpty());
+        QVERIFY(application->projectRoot(0).isEmpty());
+
+        application->openFolder(show, 0);
+        QVERIFY(application->reviewCloseProject(0).isEmpty());
+        application->finishClose();
+        application->openFolder(show, 0);
+        QCOMPARE(application->projectLastTabs(0).value(QStringLiteral("count")).toInt(), 1);
+    }
+
+    void aForwardedFolderOpensAsAProject()
+    {
+        start();
+        const QString show = folder("show");
+        forwarded->take({{show}, {}, application::WindowRequest::Default});
+        QTRY_COMPARE(application->projectRoot(0), canonical(show));
+        QVERIFY(titles(0).isEmpty());
+
+        const QString loose = writeAss(dir.filePath(QStringLiteral("loose.ass")), "loose");
+        forwarded->take({{loose}, {}, application::WindowRequest::New});
+        QTRY_VERIFY(shell(1) && shell(1)->isVisible());
+        QTRY_COMPARE(titles(1), QStringList{QStringLiteral("loose.ass")});
+        QVERIFY(titles(0).isEmpty());
+
+        const QString extras = folder("extras");
+        const QString ncop = writeAss(extras + QStringLiteral("/ncop.ass"), "ncop");
+        forwarded->take({{extras, ncop}, {}, application::WindowRequest::Default});
+        QTRY_VERIFY(shell(2) && shell(2)->isVisible());
+        QTRY_COMPARE(titles(2), QStringList{QStringLiteral("ncop.ass")});
+        QCOMPARE(application->projectRoot(2), canonical(extras));
+        QCOMPARE(titles(1), QStringList{QStringLiteral("loose.ass")});
+    }
+
+    void recentProjectsDropMissingFolders()
+    {
+        start();
+        const QString kept = folder("kept");
+        const QString gone = folder("gone");
+        application->openFolder(gone, 0);
+        application->openFolder(kept, 0, 2);
+        QCOMPARE(application->homeRecentProjects().size(), 2);
+        QVERIFY(QDir(gone).removeRecursively());
+        const QVariantList rows = application->homeRecentProjects();
+        QCOMPARE(rows.first().toMap().value(QStringLiteral("path")).toString(), canonical(kept));
+        QVERIFY(rows.last().toMap().value(QStringLiteral("missing")).toBool());
+        application->removeMissingRecentProjects();
+        QCOMPARE(application->homeRecentProjects().size(), 1);
+        application->removeRecentProject(canonical(kept));
+        QVERIFY(application->homeRecentProjects().isEmpty());
+    }
+};
+
+QTEST_MAIN(ProjectWindowsTests)
+#include "project_windows_tests.moc"

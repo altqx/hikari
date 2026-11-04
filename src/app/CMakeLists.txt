@@ -1,6 +1,8 @@
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
     application_tabs.cpp
     session_json.cpp include/hikari/app/session_json.h
+    project_windows.cpp include/hikari/app/project_windows.h
+    application_projects.cpp
     application_comparison.cpp
     application_video.cpp
     application_reference.cpp

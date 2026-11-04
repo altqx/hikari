@@ -6,6 +6,7 @@
 //     "version": 1,
 //     "program": "HikariSub 0.1.0",
 //     "closed": true,              <- last-session.json only
+//     "project": "<folder>",       <- the window's Project, when it has one
 //     "tabs": [
 //       { "subtitles": "<path>", "video": "<path>", "position": <ms>,
 //         "audio": "<path>", "keyframes": "<path>",

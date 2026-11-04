@@ -49,8 +49,9 @@ int child(int argc, char **argv)
     QCoreApplication core(argc, argv);
     const QString mode = qEnvironmentVariable(kChild);
     app::SingleInstance instance({qEnvironmentVariable(kServer), qEnvironmentVariable(kLock)});
-    const app::SingleInstance::Request request{QCoreApplication::arguments().mid(1),
-                                               qEnvironmentVariable("HIKARI_SINGLE_INSTANCE_TOKEN")};
+    const app::SingleInstance::Request request{
+        QCoreApplication::arguments().mid(1), qEnvironmentVariable("HIKARI_SINGLE_INSTANCE_TOKEN"),
+        static_cast<application::WindowRequest>(qEnvironmentVariableIntValue("HIKARI_SINGLE_INSTANCE_WINDOW"))};
     const Role role = instance.claim(request, true, 3000);
     if (mode == QLatin1String("send"))
         return code(role);
@@ -72,7 +73,8 @@ class SingleInstanceTests : public QObject {
     QTemporaryDir dir;
     app::SingleInstance::Location location;
 
-    QProcess *start(const char *mode, const QStringList &files = {}, const QString &token = {})
+    QProcess *start(const char *mode, const QStringList &files = {}, const QString &token = {},
+                    application::WindowRequest window = application::WindowRequest::Default)
     {
         auto *process = new QProcess(this);
         QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -80,14 +82,16 @@ class SingleInstanceTests : public QObject {
         env.insert(QLatin1String(kServer), location.server);
         env.insert(QLatin1String(kLock), location.lock);
         env.insert(QStringLiteral("HIKARI_SINGLE_INSTANCE_TOKEN"), token);
+        env.insert(QStringLiteral("HIKARI_SINGLE_INSTANCE_WINDOW"), QString::number(static_cast<int>(window)));
         process->setProcessEnvironment(env);
         process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
         process->start(QCoreApplication::applicationFilePath(), files);
         return process;
     }
-    int run(const QStringList &files = {}, const QString &token = {})
+    int run(const QStringList &files = {}, const QString &token = {},
+            application::WindowRequest window = application::WindowRequest::Default)
     {
-        QProcess *process = start("send", files, token);
+        QProcess *process = start("send", files, token, window);
         QElapsedTimer waited;
         waited.start();
         while (process->state() != QProcess::NotRunning && waited.elapsed() < 15000)
@@ -157,6 +161,21 @@ private slots:
         const auto request = requested.at(0).at(0).value<app::SingleInstance::Request>();
         QCOMPARE(request.files, files);
         QCOMPARE(request.activationToken, QStringLiteral("token-1"));
+        QCOMPARE(request.window, application::WindowRequest::Default);
+    }
+
+    void aWindowFlagTravelsWithTheFiles()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        const QStringList folder{dir.filePath(QStringLiteral("show"))};
+        for (const auto window : {application::WindowRequest::New, application::WindowRequest::Reuse})
+            QCOMPARE(run(folder, {}, window), code(Role::Forwarded));
+        QTRY_COMPARE(requested.size(), 2);
+        QCOMPARE(requested.at(0).at(0).value<app::SingleInstance::Request>().window, application::WindowRequest::New);
+        QCOMPARE(requested.at(1).at(0).value<app::SingleInstance::Request>().window, application::WindowRequest::Reuse);
+        QCOMPARE(requested.at(1).at(0).value<app::SingleInstance::Request>().files, folder);
     }
 
     void aStartWithoutFilesHandsOverToo()

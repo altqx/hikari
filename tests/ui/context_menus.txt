@@ -245,6 +245,13 @@ Home row > Copy path
 Home row > -
 Home row > Remove from list
 Home row > Remove missing files
+Home project row
+Home project row > Open
+Home project row > Show in folder
+Home project row > Copy path
+Home project row > -
+Home project row > Remove from list
+Home project row > Remove missing folders
 Reference tray
 Reference tray > Copy
 Reference tray > -

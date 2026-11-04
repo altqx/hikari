@@ -396,6 +396,19 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_TRUE(parseStartupArguments({"--export-docs", "out/docs"}).rest.empty());
 }
 
+TEST(StartupArguments, WindowFlagsLeaveTheFiles)
+{
+    EXPECT_EQ(parseStartupArguments({"show"}).window, WindowRequest::Default);
+    for (const char *flag : {"-n", "--new-window"}) {
+        const auto a = parseStartupArguments({flag, "show", "show/ep01.ass"});
+        EXPECT_EQ(a.window, WindowRequest::New) << flag;
+        EXPECT_EQ(a.rest, (std::vector<std::string>{"show", "show/ep01.ass"}));
+    }
+    for (const char *flag : {"-r", "--reuse-window"})
+        EXPECT_EQ(parseStartupArguments({"show", flag}).window, WindowRequest::Reuse) << flag;
+    EXPECT_EQ(parseStartupArguments({"-n", "-r"}).window, WindowRequest::Reuse);
+}
+
 TEST(UpdateVerify, releaseVersionsOnly)
 {
     EXPECT_TRUE(isReleaseVersion("0.2.0"));

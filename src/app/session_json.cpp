@@ -77,6 +77,10 @@ std::optional<application::Session> readJson(std::string_view bytes, application
     if (!closed.isBool() && !closed.isUndefined())
         return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“closed” is not true or false."))});
     session.closed = closed.toBool(true);
+    const QJsonValue project = o.value(QStringLiteral("project"));
+    if (!project.isString() && !project.isUndefined())
+        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“project” is not text."))});
+    session.project = project.toString().toStdString();
     const QJsonArray tabs = o.value(QStringLiteral("tabs")).toArray();
     for (qsizetype i = 0; i < tabs.size(); ++i) {
         const QString where = QString::number(i + 1);
@@ -133,6 +137,8 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
     o.insert(QStringLiteral("program"), qs(session.header));
     if (closed)
         o.insert(QStringLiteral("closed"), *closed);
+    if (!session.project.empty())
+        o.insert(QStringLiteral("project"), qs(session.project));
     QJsonArray tabs;
     for (std::size_t i = 0; i < session.tabs.size(); ++i) {
         const auto &tab = session.tabs[i];
