@@ -775,6 +775,9 @@ icon("video-streams", "Streams", [], [VIDEO, VIDEOMENU],
      stroke("M1.5 3.5h6M1.5 7h6M1.5 10.5h3") + accent(note(10.5)))
 icon("chapters", "Chapters", [], [VIDEO, VIDEOMENU],
      stroke("M1.5 13.5h13M3.5 13.5v-2M12.5 13.5v-2") + accent(stroke("M6.5 13.5v-10h5l-1.5 2 1.5 2h-5")))
+icon("video-details", "Video details", [], ["menu:video"],
+     stroke("M9 10.5H2.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1V8") + stroke("M6 4.5v4l3-2z")
+     + accent(circle(12.5, 12.5, 3), stroke("M12.5 12v2"), dot(12.5, 10.75, 0.5)))
 icon("copy-position", "Copy video position", [], [VIDEOMENU],
      COPY_BACK + rect(2.5, 4.5, 8, 10, 1)
      + accent(circle(6.5, 9.5, 1.5), stroke("M6.5 6.5v1.5M6.5 11v1.5M3.5 9.5H5M8 9.5h1.5")))
@@ -828,6 +831,9 @@ icon("dictionary-add", "Add word to dictionary", [], [TEXTMENU],
      + stroke("M6.5 4.5h3.5M6.5 6.5h2") + plus_badge())
 
 icon("make-tree", "Make tree", [], [GRIDMENU], TREE_ROWS + accent(TREE_LINKS), mirror=True)
+icon("convert-folds", "Convert Aegisub folds to line groups", [], ["grid-menu"],
+     stroke("M3.5 1.5h-2v5h2M8.5 3.5h6M10.5 8h4M10.5 12.5h4M8.5 5.5v7h2M8.5 8h2")
+     + accent(stroke("M2.5 9v3.5h3.5M4.5 11l1.5 1.5L4.5 14")), mirror=True)
 icon("tree-add-lines", "Add lines", [], [GRIDMENU],
      stroke("M1.5 3.5h8M7 8h7.5M7 12.5h1") + TREE_LINKS + plus_badge(), mirror=True)
 icon("tree-select", "Select tree lines", [], [GRIDMENU],
@@ -853,6 +859,9 @@ icon("split-at-video", "Split line at video time", [], [GRIDMENU],
 icon("split-frames", "Split lines into frames", [], [GRIDMENU, VIDEO],
      stroke("M1.5 2.5h13M1.5 13.5h13") + rect(1.5, 4.5, 3, 7, 1) + rect(6.5, 4.5, 3, 7, 1) + rect(11.5, 4.5, 3, 7, 1)
      + accent(stroke("M5.5 2.5v11M10.5 2.5v11")))
+icon("align-to-video", "Align to video", [], ["menu:video"],
+     rect(1.5, 1.5, 13, 9, 1) + stroke("M3.5 13.5h9M3.5 12.5v2M12.5 12.5v2")
+     + accent(circle(8, 6, 2), stroke("M8 3v1M8 8v1M5 6h1M10 6h1")))
 icon("split-characters", "Split lines into characters", [], [GRIDMENU],
      letters("A", 2, 5) + letters("S", 10, 5) + accent(stroke("M7.5 2.5v11")))
 icon("split-words", "Split lines into words", [], [GRIDMENU],
@@ -943,6 +952,20 @@ icon("frame-snapshot-subtitles", "Save frame with subtitles as PNG", [], [VIDEOM
 icon("frame-copy", "Copy frame to clipboard", [], [VIDEOMENU], COPY_BACK + COPY_FRONT + accent(circle(6.5, 9.5, 2)))
 icon("frame-copy-subtitles", "Copy frame with subtitles to clipboard", [], [VIDEOMENU],
      COPY_BACK + COPY_FRONT + circle(6.5, 7.5, 1.5) + accent(stroke("M4.5 10.5h4M5.5 12.5h2")))
+icon("subtitles-snapshot", "Save subtitles as PNG", [], ["video-context-menu"],
+     stroke("M1.5 5.5v-1a1 1 0 0 1 1-1h1.5M12 3.5h1.5a1 1 0 0 1 1 1v1M14.5 11.5v1a1 1 0 0 1-1 1H12M4 13.5H2.5a1 1 0 0 1-1-1v-1")
+     + accent(stroke("M4.5 7.5h7M6 9.5h4")))
+icon("subtitles-copy", "Copy subtitles to clipboard", [], ["video-context-menu"],
+     stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2")
+     + stroke("M2.5 6.5v-1a1 1 0 0 1 1-1h1M8.5 4.5h1a1 1 0 0 1 1 1v1M10.5 12.5v1a1 1 0 0 1-1 1h-1M4.5 14.5h-1a1 1 0 0 1-1-1v-1")
+     + accent(stroke("M4.5 9.5h4M5.5 11.5h2")))
+icon("reload-video", "Reload video", [], ["menu:video"],
+     stroke("M11.5 7V3.5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1V9a1 1 0 0 0 1 1H8") + stroke("M4.5 2.5V10M8.5 2.5V7")
+     + stroke("M1.5 5h3M1.5 7.5h3M11.5 5h-3")
+     + accent(stroke("M14.5 12a2.5 2.5 0 1 1-2.5-2.5"), stroke("M11 8.5l1 1-1 1")))
+icon("reload-audio", "Reload audio", [], ["menu:audio"],
+     stroke("M6.5 11.5V2.5l4 1.5") + dot(4.5, 11.5, 2)
+     + accent(stroke("M14.5 12a2.5 2.5 0 1 1-2.5-2.5"), stroke("M11 8.5l1 1-1 1")))
 icon("screenshot", "Add the screenshot", [], ["report-issue"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13")
      + accent(stroke("M4.5 9V7.5H6M11.5 9V7.5H10M4.5 10v1.5H6M11.5 10v1.5H10")))
