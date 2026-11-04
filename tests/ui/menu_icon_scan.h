@@ -185,10 +185,23 @@ inline QStringList itemsWithoutIcons(const QString &dir, const QList<Exemption> 
     }
     QStringList problems;
     QList<bool> used(exemptions.size(), false);
+    static const QRegularExpression component(QStringLiteral(R"re(^component\s+(\w+)\s*:$)re"));
     for (const QmlFile &file : files) {
+        QSet<QString> itemTypes{QStringLiteral("ShellMenuItem")};
+        QSet<int> bases;
+        for (int i = 0; i < file.blocks.size(); ++i) {
+            const auto match = component.match(file.lead(i));
+            if (match.hasMatch() && file.blocks[i].type == QLatin1String("ShellMenuItem")
+                && !hasProperty(file.own(i), QStringLiteral("iconRole")) && !isCheckable(file.own(i))) {
+                itemTypes.insert(match.captured(1));
+                bases.insert(i);
+            }
+        }
         for (int i = 0; i < file.blocks.size(); ++i) {
             const Block &b = file.blocks[i];
-            const bool item = b.type == QLatin1String("ShellMenuItem");
+            if (bases.contains(i))
+                continue;
+            const bool item = itemTypes.contains(b.type);
             const bool menu = menuTypes.contains(b.type);
             if (!item && !menu)
                 continue;

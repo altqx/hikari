@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <boost/dynamic_bitset.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -14,6 +15,7 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <initializer_list>
 #include <optional>
 #include <thread>
 
@@ -25,6 +27,14 @@ using namespace hikari::application;
 using hikari::backends::LibassFontService;
 
 namespace {
+
+boost::dynamic_bitset<> bits(std::initializer_list<bool> values)
+{
+    boost::dynamic_bitset<> out;
+    for (const bool v : values)
+        out.push_back(v);
+    return out;
+}
 
 #ifndef _WIN32
 // Set before fontconfig initializes: ctest's ENVIRONMENT did not reach these tests on the Fedora runner.
@@ -372,10 +382,10 @@ TEST(FontPickerFaces, CoverageIsEveryCharacter)
     LibassFontService service;
     const auto faces = service.pickerFaces(env);
     ASSERT_EQ(faces.size(), 2u);
-    EXPECT_EQ(service.facesCover(faces, env, U"AB"), (std::vector<bool>{true, false}));
-    EXPECT_EQ(service.facesCover(faces, env, U"中"), (std::vector<bool>{false, true}));
-    EXPECT_EQ(service.facesCover(faces, env, U"A中"), (std::vector<bool>{false, false}));
-    EXPECT_EQ(service.facesCover(faces, env, std::u32string(1, U'\0')), (std::vector<bool>{false, false}));
+    EXPECT_EQ(service.facesCover(faces, env, U"AB"), bits({true, false}));
+    EXPECT_EQ(service.facesCover(faces, env, U"中"), bits({false, true}));
+    EXPECT_EQ(service.facesCover(faces, env, U"A中"), bits({false, false}));
+    EXPECT_EQ(service.facesCover(faces, env, std::u32string(1, U'\0')), bits({false, false}));
 }
 
 TEST(FontPickerFaces, ExternalFontsRenderAndAreNamedByTheirFile)
@@ -524,8 +534,8 @@ TEST(FontPickerFacesInstalled, AnInstalledFontIsListedUntilItIsRemoved)
     EXPECT_EQ(listedFamily(*face), u"HikariProbeRefresh");
     EXPECT_TRUE(hasFamily(*face, "HikariProbeRefresh"));
     EXPECT_EQ(face->postscriptName, "HikariProbeRefresh-Regular");
-    EXPECT_EQ(service.facesCover({*face}, FontEnvironment{}, U"A"), std::vector<bool>{true});
-    EXPECT_EQ(service.facesCover({*face}, FontEnvironment{}, U"中"), std::vector<bool>{false});
+    EXPECT_EQ(service.facesCover({*face}, FontEnvironment{}, U"A"), bits({true}));
+    EXPECT_EQ(service.facesCover({*face}, FontEnvironment{}, U"中"), bits({false}));
     EXPECT_TRUE(lists(pickerFamilies(service), u"HikariProbeRefresh"));
     const auto dirs = service.fontDirectories();
     EXPECT_TRUE(std::any_of(dirs.begin(), dirs.end(),
@@ -599,8 +609,8 @@ TEST(FontPickerFacesFontconfig, InstalledFacesCoverWhatTheirCharsetHolds)
     ASSERT_EQ(chosen.size(), 2u);
     EXPECT_EQ(listedFamily(chosen[0]), u"HikariProbeBase");
     EXPECT_EQ(listedFamily(chosen[1]), u"HikariProbeFallback");
-    EXPECT_EQ(service.facesCover(chosen, env, U"A"), (std::vector<bool>{true, false}));
-    EXPECT_EQ(service.facesCover(chosen, env, U"中"), (std::vector<bool>{false, true}));
+    EXPECT_EQ(service.facesCover(chosen, env, U"A"), bits({true, false}));
+    EXPECT_EQ(service.facesCover(chosen, env, U"中"), bits({false, true}));
     const auto dirs = service.fontDirectories();
     EXPECT_NE(std::find(dirs.begin(), dirs.end(), std::string(HIKARI_FONT_FIXTURES)), dirs.end());
     EXPECT_NE(std::find(dirs.begin(), dirs.end(), std::string(HIKARI_FONT_REFRESH_DIR)), dirs.end());
@@ -698,8 +708,8 @@ TEST_F(FontPickerFacesDirectWrite, SystemAndUserFontsAreListedByTheirGdiFamilyNa
         EXPECT_TRUE(lists(families, name)) << QString::fromStdU16String(name).toStdString();
     EXPECT_FALSE(lists(families, u"HikariProbeModern"));
 
-    EXPECT_EQ(service.facesCover({*base, *fallback}, FontEnvironment{}, U"A"), (std::vector<bool>{true, false}));
-    EXPECT_EQ(service.facesCover({*base, *fallback}, FontEnvironment{}, U"中"), (std::vector<bool>{false, true}));
+    EXPECT_EQ(service.facesCover({*base, *fallback}, FontEnvironment{}, U"A"), bits({true, false}));
+    EXPECT_EQ(service.facesCover({*base, *fallback}, FontEnvironment{}, U"中"), bits({false, true}));
 
     const auto dirs = service.fontDirectories();
     for (const auto &folder : {windows / L"Fonts", hikari::testing::WindowsUserFonts::userFontFolder()})

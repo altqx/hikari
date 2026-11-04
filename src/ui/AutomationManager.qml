@@ -605,7 +605,7 @@ Pane {
                     selectByMouse: true
                     rightPadding: matchCount.visible ? matchCount.implicitWidth + 16 : leftPadding
                     Layout.fillWidth: true
-                    Accessible.name: qsTr("Filter the run's log")
+                    Accessible.name: qsTr("Filter the run’s log")
                     onTextEdited: runLines.filterText = text
                     Keys.onEscapePressed: event => {
                         if (text.length === 0) {
@@ -722,13 +722,13 @@ Pane {
     Dialogs.FileDialog {
         id: saveDialog
         objectName: "runLogSaveDialog"
-        title: qsTr("Save the run's log")
+        title: qsTr("Save the run’s log")
         fileMode: Dialogs.FileDialog.SaveFile
         nameFilters: [qsTr("Log files (*.log *.txt)"), qsTr("All files (*)")]
         onAccepted: {
             const error = runLines.saveShown(selectedFile)
             if (error.length > 0 && root.notices)
-                root.notices.post("error", qsTr("Save the run's log"), error)
+                root.notices.post("error", qsTr("Save the run’s log"), error)
         }
     }
 
@@ -797,6 +797,10 @@ Pane {
             spacing: 0
             Accessible.role: Accessible.Grouping
             Accessible.name: root.scriptTitle(script)
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                onTapped: eventPoint => scriptMenu.openAt(scriptItem.script, scriptItem, eventPoint.position.x, eventPoint.position.y)
+            }
             RowLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: scriptItem.script.inDocument ? 28 : 20
@@ -849,6 +853,7 @@ Pane {
                     iconRole: "panel-menu"
                     text: qsTr("%1 options").arg(root.scriptTitle(scriptItem.script))
                     onClicked: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
+                    MenuKey.onRequested: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
                 }
             }
             Label {
@@ -858,7 +863,7 @@ Pane {
                 Layout.leftMargin: 28
                 Layout.rightMargin: 12
                 text: scriptItem.state === "unavailable" && (scriptItem.script.error ?? "") === ""
-                      ? qsTr("The script's process ended. Reload to start it again; its macro is not rerun.")
+                      ? qsTr("The script’s process ended. Reload to start it again; its macro is not rerun.")
                       : root.shownError(scriptItem.script)
                 wrapMode: Text.Wrap
                 maximumLineCount: scriptItem.fullError ? 1000 : 2
@@ -1154,8 +1159,11 @@ Pane {
         objectName: "automationScriptMenu"
         property var script: null
         function openFor(script, anchor) {
+            openAt(script, anchor, 0, anchor.height)
+        }
+        function openAt(script, anchor, x, y) {
             scriptMenu.script = script
-            popup(anchor, 0, anchor.height)
+            popup(anchor, x, y)
         }
         ShellMenuItem {
             objectName: "scriptMenuReload"
@@ -1192,18 +1200,23 @@ Pane {
             popup(anchor, 40, anchor.height)
         }
         ShellMenuItem {
-            iconRole: "media-play"
+            objectName: "macroMenuRun"
+            iconRole: "run-script"
             text: qsTr("Run")
+            shortcutText: macroMenu.row !== null ? root.keysOf(macroMenu.row.legacyName) : ""
             enabled: macroMenu.row !== null && macroMenu.row.script.state === "ready" && !root.controller.busy
             onTriggered: root.controller.run(macroMenu.row.script.path, macroMenu.row.macro.ordinal)
         }
+        MenuSeparator {}
         ShellMenuItem {
+            objectName: "macroMenuSetShortcut"
             iconRole: "hotkeys"
             text: qsTr("Set shortcut…")
             enabled: root.hotkeys !== null
             onTriggered: root.record(macroMenu.row.legacyName)
         }
         ShellMenuItem {
+            objectName: "macroMenuClearShortcut"
             iconRole: "clear"
             text: qsTr("Clear shortcut")
             enabled: macroMenu.row !== null && root.keysOf(macroMenu.row.legacyName).length > 0

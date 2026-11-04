@@ -50,6 +50,11 @@ def asset_names(version):
     }
 
 
+def sidecar_names(version):
+    """The AI sidecar's platforms and their asset names (ADR 0026)."""
+    return {platform: f"hikari-ai-{version}-{platform}.gz" for platform in ("linux-x64", "windows-x64")}
+
+
 def codebase_of(version):
     major, minor = (int(part) for part in version.split(".")[:2])
     return "legacy" if (major, minor) == (0, 0) else "qt"
@@ -153,6 +158,23 @@ def verify(path, version):
         check_offer(codebase, manifest["offer"])
 
 
+def released_file(name, path, by_name):
+    """A file's name, size and SHA-256, checked against its asset on the release."""
+    size = os.path.getsize(path)
+    if not 0 < size <= MAX_PACKAGE:
+        fail(f"{name} is {size} bytes; a package is 1 byte to 1 GiB")
+    digest = sha256_of(path)
+    asset = by_name.get(name)
+    if asset is None:
+        fail(f"{name} is not on the release")
+    if asset.get("size") != size:
+        fail(f"{name} is {asset.get('size')} bytes on GitHub and {size} here")
+    github = (asset.get("digest") or "").lower()
+    if github != f"sha256:{digest}":
+        fail(f"{name}: GitHub's digest {github or '(none)'} differs from sha256:{digest}")
+    return {"name": name, "size": size, "sha256": digest}
+
+
 def build_manifest(version, offer_to, offer, directory, assets, published):
     codebase = codebase_of(version)
     if not offer_to:
@@ -166,19 +188,7 @@ def build_manifest(version, offer_to, offer, directory, assets, published):
             continue
         if not ASSET_NAME.match(name):
             fail(f"{name} is not a valid asset name")
-        size = os.path.getsize(path)
-        if not 0 < size <= MAX_PACKAGE:
-            fail(f"{name} is {size} bytes; a package is 1 byte to 1 GiB")
-        digest = sha256_of(path)
-        asset = by_name.get(name)
-        if asset is None:
-            fail(f"{name} is not on the release")
-        if asset.get("size") != size:
-            fail(f"{name} is {asset.get('size')} bytes on GitHub and {size} here")
-        github = (asset.get("digest") or "").lower()
-        if github != f"sha256:{digest}":
-            fail(f"{name}: GitHub's digest {github or '(none)'} differs from sha256:{digest}")
-        package = {"name": name, "size": size, "sha256": digest}
+        package = released_file(name, path, by_name)
         if key in ("nsis", "portable-windows"):
             package["min_os"] = MIN_OS
         else:
@@ -186,6 +196,11 @@ def build_manifest(version, offer_to, offer, directory, assets, published):
         packages[key] = package
     if not packages:
         fail(f"no package of {version} is in {directory}")
+    sidecars = {}
+    for platform, name in sidecar_names(version).items():
+        path = os.path.join(directory, name)
+        if os.path.isfile(path):
+            sidecars[platform] = released_file(name, path, by_name)
     manifest = {
         "schema": 1,
         "product": "HikariSub",
@@ -195,6 +210,8 @@ def build_manifest(version, offer_to, offer, directory, assets, published):
         "published": published,
         "packages": packages,
     }
+    if sidecars:
+        manifest["ai_sidecar"] = sidecars
     if offer:
         manifest["offer"] = offer
     return manifest

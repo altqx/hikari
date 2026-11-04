@@ -649,6 +649,7 @@ DialogWindow {
                         title: qsTr("Editing")
                         SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit"; text: qsTr("Stay on the line when editing times") }
                         SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
+                        SettingCheck { setting: "editor.softLineBreak"; text: qsTr("Shift+Enter inserts a soft line break (%1)").arg("\\n") }
                     }
                     SettingsSection {
                         title: qsTr("Translation mode")
@@ -915,6 +916,10 @@ DialogWindow {
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
                     }
                     SettingsSection {
+                        title: qsTr("Splitting")
+                        SettingCheck { setting: "grid.splitFramesBakeAnimations"; text: qsTr("Bake animations when splitting into frames") }
+                    }
+                    SettingsSection {
                         title: qsTr("New lines")
                         SettingsRow {
                             iconRole: "time-offset-start"
@@ -948,7 +953,7 @@ DialogWindow {
                             SettingChoice {
                                 setting: "video.moveToActiveLine"
                                 model: dialog.follow.seekChoices
-                                Accessible.name: dialog.follow.seekLabel
+                                Accessible.name: dialog.follow.seekName
                             }
                         }
                         SettingsRow {
@@ -957,7 +962,7 @@ DialogWindow {
                             SettingChoice {
                                 setting: "video.playAfterSelection"
                                 model: dialog.follow.playChoices
-                                Accessible.name: dialog.follow.playLabel
+                                Accessible.name: dialog.follow.playName
                             }
                         }
                         Loader {

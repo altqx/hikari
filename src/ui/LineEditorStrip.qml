@@ -101,7 +101,7 @@ RowLayout {
         IconToolButton {
             objectName: "changeFont"
             iconRole: "tag-font"
-            text: qsTr("Font selection")
+            text: qsTr("Choose font…")
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable
             tip: strip.shellRoot.mappedTip(text, "EDITBOX_CHANGE_FONT", 2)
@@ -110,10 +110,10 @@ RowLayout {
         Repeater {
             id: colourButtons
             model: [
-                { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
-                { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
-                { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
-                { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
+                { number: 1, name: qsTr("Primary colour"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
+                { number: 2, name: qsTr("Secondary colour for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
+                { number: 3, name: qsTr("Border colour"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
+                { number: 4, name: qsTr("Shadow colour"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
             ]
             IconToolButton {
                 required property var modelData
@@ -178,8 +178,8 @@ RowLayout {
         IconToolButton {
             objectName: "notConfirmed"
             iconRole: "unconfirmed"
-            text: qsTranslate("HikariSub.Translation", "Not confirmed")
-            tip: qsTranslate("HikariSub.Translation", "Not confirmed: marks the selected lines for review")
+            text: qsTranslate("HikariSub.Translation", "Unconfirmed")
+            tip: qsTranslate("HikariSub.Translation", "Unconfirmed: marks the selected lines for review")
             checkable: true
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable
@@ -195,7 +195,7 @@ RowLayout {
             objectName: "movingTags"
             iconRole: "moving-tags"
             text: qsTranslate("HikariSub.Translation", "Tags from original")
-            tip: qsTranslate("HikariSub.Translation", "Tags from original: the translation gets the Original text's tags")
+            tip: qsTranslate("HikariSub.Translation", "Tags from original: the translation gets the original text’s tags")
             checkable: true
             focusPolicy: Qt.NoFocus
             checked: strip.editor.moveTags
@@ -369,7 +369,7 @@ RowLayout {
             objectName: "foldedFont"
             visible: moreMenu.look
             iconRole: "tag-font"
-            text: qsTr("Font selection")
+            text: qsTr("Choose font…")
             shortcutText: strip.shellRoot.boundKeys("EDITBOX_CHANGE_FONT", 2)
             enabled: strip.editor.editable
             onTriggered: strip.chooseFont(moreMenu.field)
@@ -426,7 +426,7 @@ RowLayout {
             objectName: "foldedNotConfirmed"
             visible: moreMenu.translation
             iconRole: "unconfirmed"
-            text: qsTranslate("HikariSub.Translation", "Not confirmed")
+            text: qsTranslate("HikariSub.Translation", "Unconfirmed")
             checkable: true
             checked: strip.editor.unconfirmed
             enabled: strip.editor.editable

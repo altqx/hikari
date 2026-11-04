@@ -118,6 +118,20 @@ TEST(ClipboardPaste, CopiedRowsPasteBackUnchanged)
     }
 }
 
+TEST(ClipboardPaste, StackedTreeMarkersPasteAsNestedGroups)
+{
+    const auto lines = parseClipboardRows(u8"Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_opened][tree_description],0,0,0,,C\r\n"
+                                          u8"Dialogue: 0,0:00:01.00,0:00:02.00,Default,[tree_opened][tree_closed]Ann,0,0,0,,c\r\n",
+                                          SubtitleFormat::Ass);
+    ASSERT_EQ(lines.size(), 2u);
+    EXPECT_EQ(lines[0].group, GroupMarker::Description);
+    EXPECT_EQ(lines[0].outerGroups, std::vector{GroupMarker::Opened});
+    EXPECT_EQ(lines[1].group, GroupMarker::Closed);
+    EXPECT_EQ(lines[1].outerGroups, std::vector{GroupMarker::Opened});
+    EXPECT_EQ(lines[1].visibility, LineVisibility::Hidden);
+    EXPECT_EQ(lines[1].actor, u8"Ann");
+}
+
 TEST(ClipboardPaste, SrtBlocksConvertToAss)
 {
     PasteConversion conversion;

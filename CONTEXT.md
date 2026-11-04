@@ -23,7 +23,7 @@ The navigation entry for an open Document.
 _Avoid_: Tab as a synonym for the Document's content or Workspace.
 
 **Session**:
-A restorable set of open Documents and associated media, view positions and each tab's Workspace.
+A restorable set of open Documents and associated media, view positions and each tab's Workspace. Every tab belongs to a shell window; the Session does not yet record which ([MW4 #628](https://github.com/altqx/hikari/issues/628)).
 _Avoid_: Project file, Workspace layout or complete undo archive.
 
 **Script properties**:
@@ -31,8 +31,8 @@ Document-level subtitle information, including title, credits, resolutions and A
 _Avoid_: Script configuration when referring to these properties rather than automation.
 
 **Line group**:
-A description followed by contiguous member Lines, with expand/collapse behavior.
-_Avoid_: Tree when naming this feature; arbitrary nested group as an implied capability.
+A description followed by contiguous member Lines, with expand/collapse behavior. Groups nest: a member can be the description of a group inside it ([#696](https://github.com/altqx/hikari/issues/696)).
+_Avoid_: Tree when naming this feature.
 
 **Grid filter**:
 Criteria controlling which Lines are shown or exposed to a scoped operation. Hidden Lines still belong to the Document.
@@ -41,11 +41,11 @@ _Avoid_: Filter without qualification where automation or presentation is also d
 ### Workspace and targeting
 
 **Workspace**:
-The arrangement of subtitle-editing panels and tools in the main window and its floating panels. Each Document tab has its own, and switching tabs shows that tab's ([ADR 0020](docs/adr/0020-per-document-tab-layouts.md)); it places panels and never changes which Document is the editing target.
+The arrangement of subtitle-editing panels and tools in a shell window and its floating panels. Each Document tab has its own, in its own window, and switching tabs shows that tab's ([ADR 0020](docs/adr/0020-per-document-tab-layouts.md)); it places panels and never changes which Document is the editing target.
 _Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents.
 
 **Editing target**:
-The subtitle document to which ordinary editing commands apply. A tool with an explicit pinned target may name a different unprotected document. It is distinct from the control or panel that currently has keyboard focus.
+The subtitle document to which ordinary editing commands apply: the current tab of the shell window that was active last ([ADR 0025](docs/adr/0025-multiple-windows.md)). A tool with an explicit pinned target may name a different unprotected document. Within a window it is distinct from the control or panel that currently has keyboard focus; focus moving to another window makes that window's current tab the editing target.
 _Avoid_: Focused panel as a synonym for the document receiving edits.
 
 **Protected reference**:
@@ -134,6 +134,13 @@ A plugin sideloaded from a `.hikariplugin` file rather than installed from the P
 **Operation**:
 One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
 _Avoid_: Command, which names a menu, toolbar or shortcut action.
+
+**AI tool**:
+A function a model can call: an Operation offered under a model-safe name, or a search the AI sidecar answers itself. The core tools are always offered; the others are in groups that `search_tools` finds.
+_Avoid_: Operation as a synonym; tool target, which names a tool's Document.
+
+**Attached Document**:
+A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
 
 ### Files
 

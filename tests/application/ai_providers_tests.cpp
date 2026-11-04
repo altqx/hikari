@@ -61,33 +61,6 @@ struct FakeKeys final : KeyStore {
     }
 };
 
-struct FakePort final : ProviderPort {
-    struct Call {
-        Provider provider;
-        std::string key;
-        Request request;
-        EventSink sink;
-    };
-    std::vector<Call> calls;
-    std::vector<StreamId> cancelled;
-    ModelsResult models = std::vector<Model>{};
-
-    StreamId stream(const Provider &provider, const std::string &key, const Request &request, EventSink sink) override
-    {
-        calls.push_back({provider, key, request, std::move(sink)});
-        return calls.size();
-    }
-    void cancel(StreamId id) override
-    {
-        cancelled.push_back(id);
-        calls[id - 1].sink(Failed{{.kind = ErrorKind::Cancelled}});
-    }
-    void listModels(const Provider &, const std::string &, std::function<void(ModelsResult)> done) override
-    {
-        done(models);
-    }
-};
-
 Provider openRouter()
 {
     Provider p = presetProvider(Preset::OpenRouter, "or", "OpenRouter");
@@ -98,7 +71,6 @@ Provider openRouter()
 struct AiProvidersTest : ::testing::Test {
     MemoryConfigs configs;
     FakeKeys keys;
-    FakePort port;
 
     std::optional<SaveError> add(Providers &providers, Provider p, std::string key)
     {
@@ -106,6 +78,14 @@ struct AiProvidersTest : ::testing::Test {
         providers.add(std::move(p), std::move(key), [&](std::optional<SaveError> e) { result = e; });
         EXPECT_TRUE(result.has_value());
         return result.value_or(SaveError::Config);
+    }
+
+    static std::optional<std::string> readKey(Providers &providers, const std::string &id)
+    {
+        std::optional<std::optional<std::string>> result;
+        providers.readKey(id, [&](std::optional<std::string> key) { result = std::move(key); });
+        EXPECT_TRUE(result.has_value());
+        return result.value_or(std::nullopt);
     }
 };
 
@@ -154,6 +134,19 @@ TEST(AiConfig, CostIsTheProvidersFigureElseThePriceTimesTheTokens)
     EXPECT_DOUBLE_EQ(*costOf(reported, price), 0.0123);
 }
 
+TEST(AiConfig, CacheWritesCostTheWritePriceAndReadsTheCachedPrice)
+{
+    const Usage usage{.inputTokens = 1'000'000, .outputTokens = 0, .cachedInputTokens = 500'000,
+                      .cacheWriteTokens = 300'000, .cacheWriteHourTokens = 100'000};
+    const Price price{.input = 3.0, .output = 15.0, .cachedInput = 0.3, .cacheWrite = 3.75, .cacheWriteHour = 6.0};
+    EXPECT_DOUBLE_EQ(*costOf(usage, price), 0.2 * 3.0 + 0.5 * 0.3 + 0.2 * 3.75 + 0.1 * 6.0);
+    const Price noWritePrice{.input = 3.0, .output = 15.0, .cachedInput = 0.3};
+    EXPECT_DOUBLE_EQ(*costOf(usage, noWritePrice), 0.5 * 3.0 + 0.5 * 0.3);
+    Price minutesOnly = price;
+    minutesOnly.cacheWriteHour.reset();
+    EXPECT_DOUBLE_EQ(*costOf(usage, minutesOnly), 0.2 * 3.0 + 0.5 * 0.3 + 0.3 * 3.75);
+}
+
 TEST(AiConfig, IdsRoundTrip)
 {
     for (const Role role : kRoles)
@@ -162,23 +155,16 @@ TEST(AiConfig, IdsRoundTrip)
         EXPECT_EQ(wireFromId(wireId(wire)), wire);
     for (const Preset preset : {Preset::OpenRouter, Preset::OpenAI, Preset::Anthropic, Preset::Gemini, Preset::Custom})
         EXPECT_EQ(presetFromId(presetId(preset)), preset);
+    for (int k = 0; k <= static_cast<int>(ErrorKind::Cancelled); ++k)
+        EXPECT_EQ(errorKindFromId(errorKindId(static_cast<ErrorKind>(k))), static_cast<ErrorKind>(k));
+    EXPECT_EQ(errorKindId(ErrorKind::RateLimited), "rateLimited");
+    EXPECT_EQ(stopReasonFromId("toolUse"), StopReason::ToolUse);
     EXPECT_EQ(roleFromId("nope"), std::nullopt);
-}
-
-TEST_F(AiProvidersTest, WithoutAProviderNothingIsSent)
-{
-    Providers providers(configs, keys, port);
-    std::vector<Event> events;
-    providers.stream(Role::Chat, Request{}, [&](const Event &e) { events.push_back(e); });
-    ASSERT_EQ(events.size(), 1u);
-    EXPECT_EQ(std::get<Failed>(events[0]).error.kind, ErrorKind::NoProvider);
-    EXPECT_TRUE(port.calls.empty());
-    EXPECT_EQ(keys.reads, 0);
 }
 
 TEST_F(AiProvidersTest, AProviderIsAddedOnlyOnceItsKeyIsInTheKeychain)
 {
-    Providers providers(configs, keys, port);
+    Providers providers(configs, keys);
     keys.failWith = KeyError::Unavailable;
     EXPECT_EQ(add(providers, openRouter(), "sk-secret"), SaveError::KeychainUnavailable);
     EXPECT_FALSE(providers.enabled());
@@ -199,87 +185,37 @@ TEST_F(AiProvidersTest, AProviderIsAddedOnlyOnceItsKeyIsInTheKeychain)
 
 TEST_F(AiProvidersTest, AKeylessLocalServerNeedsNoKeychain)
 {
-    Providers providers(configs, keys, port);
+    Providers providers(configs, keys);
     keys.failWith = KeyError::Unavailable;
     Provider local = presetProvider(Preset::Custom, "ollama", "Ollama");
     local.baseUrl = "http://127.0.0.1:11434/v1";
     EXPECT_EQ(add(providers, local, ""), std::nullopt);
     ASSERT_TRUE(providers.assign(Role::Chat, {"ollama", "llama"}));
-    providers.stream(Role::Chat, Request{}, [](const Event &) {});
-    ASSERT_EQ(port.calls.size(), 1u);
-    EXPECT_EQ(port.calls[0].key, "");
+    EXPECT_EQ(readKey(providers, "ollama"), "");
     EXPECT_EQ(keys.reads, 0);
 }
 
-TEST_F(AiProvidersTest, RequestsUseTheRolesModelAndTheStoredKey)
+TEST_F(AiProvidersTest, AKeyIsReadFromTheKeychainOnce)
 {
     keys.keys["or"] = "sk-stored";
     configs.stored.providers.push_back(openRouter());
-    configs.stored.roles[Role::Chat] = {"or", "a/model"};
-    configs.stored.roles[Role::Translator] = {"or", "t/model"};
-    Providers providers(configs, keys, port);
-
-    std::vector<Event> events;
-    providers.stream(Role::Translator, Request{.system = "s"}, [&](const Event &e) { events.push_back(e); });
-    ASSERT_EQ(port.calls.size(), 1u);
-    EXPECT_EQ(port.calls[0].key, "sk-stored");
-    EXPECT_EQ(port.calls[0].request.model, "t/model");
-    EXPECT_EQ(port.calls[0].request.system, "s");
-    port.calls[0].sink(TextDelta{"hi"});
-    port.calls[0].sink(Finished{});
-    EXPECT_EQ(events.size(), 2u);
-
-    providers.stream(Role::Judge, Request{}, [](const Event &) {});
-    EXPECT_EQ(port.calls.at(1).request.model, "a/model");
+    Providers providers(configs, keys);
+    EXPECT_EQ(readKey(providers, "or"), "sk-stored");
+    EXPECT_EQ(readKey(providers, "or"), "sk-stored");
     EXPECT_EQ(keys.reads, 1);
+    EXPECT_EQ(readKey(providers, "nobody"), std::nullopt);
 }
 
-TEST_F(AiProvidersTest, AMissingKeyFailsTheRequestWithoutSendingIt)
+TEST_F(AiProvidersTest, AMissingKeyReadsAsNone)
 {
     configs.stored.providers.push_back(openRouter());
-    configs.stored.roles[Role::Chat] = {"or", "a/model"};
-    Providers providers(configs, keys, port);
-    std::vector<Event> events;
-    providers.stream(Role::Chat, Request{}, [&](const Event &e) { events.push_back(e); });
-    ASSERT_EQ(events.size(), 1u);
-    EXPECT_EQ(std::get<Failed>(events[0]).error.kind, ErrorKind::Key);
-    EXPECT_TRUE(port.calls.empty());
-}
-
-TEST_F(AiProvidersTest, CancelBeforeTheKeyArrivesSendsNothing)
-{
-    keys.keys["or"] = "sk";
-    keys.deferReads = true;
-    configs.stored.providers.push_back(openRouter());
-    configs.stored.roles[Role::Chat] = {"or", "a/model"};
-    Providers providers(configs, keys, port);
-    std::vector<Event> events;
-    const StreamId id = providers.stream(Role::Chat, Request{}, [&](const Event &e) { events.push_back(e); });
-    providers.cancel(id);
-    ASSERT_EQ(events.size(), 1u);
-    EXPECT_EQ(std::get<Failed>(events[0]).error.kind, ErrorKind::Cancelled);
-    keys.deferred.front()();
-    EXPECT_TRUE(port.calls.empty());
-    EXPECT_EQ(events.size(), 1u);
-}
-
-TEST_F(AiProvidersTest, CancelAfterSendingCancelsTheNetworkStream)
-{
-    keys.keys["or"] = "sk";
-    configs.stored.providers.push_back(openRouter());
-    configs.stored.roles[Role::Chat] = {"or", "a/model"};
-    Providers providers(configs, keys, port);
-    std::vector<Event> events;
-    const StreamId id = providers.stream(Role::Chat, Request{}, [&](const Event &e) { events.push_back(e); });
-    providers.cancel(id);
-    EXPECT_EQ(port.cancelled, std::vector<StreamId>{1});
-    ASSERT_EQ(events.size(), 1u);
-    EXPECT_EQ(std::get<Failed>(events[0]).error.kind, ErrorKind::Cancelled);
+    Providers providers(configs, keys);
+    EXPECT_EQ(readKey(providers, "or"), std::nullopt);
 }
 
 TEST_F(AiProvidersTest, RemovingAProviderDropsItsKeyAndRoles)
 {
-    Providers providers(configs, keys, port);
+    Providers providers(configs, keys);
     ASSERT_EQ(add(providers, openRouter(), "sk"), std::nullopt);
     ASSERT_TRUE(providers.assign(Role::Vision, {"or", "v"}));
     EXPECT_FALSE(providers.assign(Role::Vision, {"nobody", "v"}));
@@ -292,56 +228,42 @@ TEST_F(AiProvidersTest, RemovingAProviderDropsItsKeyAndRoles)
     EXPECT_FALSE(keys.keys.contains("or"));
 }
 
-TEST_F(AiProvidersTest, RefreshingTheCatalogueKeepsTheUsersCorrections)
+TEST_F(AiProvidersTest, ANewCatalogueKeepsTheUsersCorrections)
 {
-    Providers providers(configs, keys, port);
+    Providers providers(configs, keys);
     ASSERT_EQ(add(providers, openRouter(), "sk"), std::nullopt);
     ASSERT_TRUE(providers.setCapabilities("or", "b/model", {.tools = true, .vision = true}));
-    port.models = std::vector<Model>{{.id = "b/model", .name = "B"}};
-    std::optional<std::optional<Error>> done;
-    providers.refreshModels("or", [&](std::optional<Error> e) { done = e; });
-    ASSERT_TRUE(done.has_value());
-    EXPECT_EQ(*done, std::nullopt);
+    ASSERT_TRUE(providers.setModels("or", {{.id = "b/model", .name = "B"}}));
     const Provider &p = *providers.config().provider("or");
     ASSERT_EQ(p.models.size(), 1u);
     EXPECT_EQ(p.models[0].id, "b/model");
     EXPECT_EQ(capabilitiesOf(p, "b/model"), (Capabilities{.tools = true, .vision = true}));
-
-    port.models = Error{.kind = ErrorKind::Unauthorized, .httpStatus = 401};
-    providers.refreshModels("or", [&](std::optional<Error> e) { done = e; });
-    EXPECT_EQ((*done)->kind, ErrorKind::Unauthorized);
-    EXPECT_EQ(providers.config().provider("or")->models.size(), 1u);
+    EXPECT_EQ(configs.stored, providers.config());
+    EXPECT_FALSE(providers.setModels("nobody", {}));
 }
 
 TEST_F(AiProvidersTest, AGeminiModelCanFillEveryRole)
 {
-    Providers providers(configs, keys, port);
+    Providers providers(configs, keys);
     const Provider google = presetProvider(Preset::Gemini, "google", "Google");
     EXPECT_EQ(google.wire, Wire::Gemini);
     EXPECT_EQ(google.baseUrl, "https://generativelanguage.googleapis.com/v1beta");
     EXPECT_TRUE(google.needsKey);
     ASSERT_EQ(add(providers, google, "AIza-secret"), std::nullopt);
-    port.models = std::vector<Model>{{.id = "gemini-x-flash", .name = "Gemini X Flash"}};
-    std::optional<std::optional<Error>> refreshed;
-    providers.refreshModels("google", [&](std::optional<Error> e) { refreshed = e; });
-    ASSERT_TRUE(refreshed.has_value());
-    EXPECT_EQ(*refreshed, std::nullopt);
+    ASSERT_TRUE(providers.setModels("google", {{.id = "gemini-x-flash", .name = "Gemini X Flash"}}));
     const Provider &stored = *providers.config().provider("google");
     EXPECT_EQ(capabilitiesOf(stored, "gemini-x-flash"), (Capabilities{.tools = true, .vision = true, .video = true}));
 
     for (const Role role : kRoles) {
         ASSERT_TRUE(providers.assign(role, {"google", "gemini-x-flash"}));
-        providers.stream(role, Request{}, [](const Event &) {});
-        EXPECT_EQ(port.calls.back().provider.wire, Wire::Gemini);
-        EXPECT_EQ(port.calls.back().request.model, "gemini-x-flash");
-        EXPECT_EQ(port.calls.back().key, "AIza-secret");
+        EXPECT_EQ(providers.config().modelFor(role), (ModelRef{"google", "gemini-x-flash"}));
     }
-    EXPECT_EQ(port.calls.size(), std::size(kRoles));
+    EXPECT_EQ(readKey(providers, "google"), "AIza-secret");
 }
 
 TEST_F(AiProvidersTest, AConfigThatCannotBeSavedChangesNothing)
 {
-    Providers providers(configs, keys, port);
+    Providers providers(configs, keys);
     configs.failSave = true;
     EXPECT_EQ(add(providers, openRouter(), "sk"), SaveError::Config);
     EXPECT_FALSE(providers.enabled());

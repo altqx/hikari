@@ -1,7 +1,10 @@
 #include "hikari/application/grid_clipboard.h"
 
 #include "hikari/core/extradata.h"
+#include "hikari/core/line_groups.h"
 
+#include <algorithm>
+#include <ranges>
 #include <vector>
 
 namespace hikari::application {
@@ -15,11 +18,6 @@ std::vector<const core::LineRecord *> shownSelected(const EditSession &session, 
         if (session.selection().selected.contains(line->id) && (!visible || visible(line->id)))
             out.push_back(line);
     return out;
-}
-
-bool inGroup(core::GroupMarker marker)
-{
-    return marker == core::GroupMarker::Opened || marker == core::GroupMarker::Closed;
 }
 
 }
@@ -76,15 +74,19 @@ std::expected<void, CommandRefusal> pasteRows(EditSession &session, std::u8strin
     while (lines[row]->id != selected.front()->id)
         ++row;
     const core::LineRecord *after = lines[row];
-    const core::LineRecord *before = row > 0 ? lines[row - 1] : nullptr;
-    const core::GroupMarker group = before && inGroup(before->group) && inGroup(after->group) ? before->group
-                                    : inGroup(after->group)                                   ? after->group
-                                                                                              : core::GroupMarker::None;
+    const auto context = core::groupMemberships(*after);
+    const auto base = std::ranges::min(pasted | std::views::transform([](const core::LineRecord &l) {
+                                           return core::groupDepth(l);
+                                       }));
     // MUST KILL: only the Line after the paste position sets visibility
     const core::LineVisibility visibility = after->visibility;
     for (auto &line : pasted) {
-        if (group != core::GroupMarker::None)
-            line.group = group;
+        if (!context.empty() || base > 0) {
+            const auto own = core::groupMemberships(line);
+            auto markers = context;
+            markers.insert(markers.end(), own.begin() + static_cast<std::ptrdiff_t>(base), own.end());
+            core::setGroupMarkers(line, std::move(markers), line.group == core::GroupMarker::Description);
+        }
         if (visibility != core::LineVisibility::Visible)
             line.visibility = visibility;
     }

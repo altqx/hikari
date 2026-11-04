@@ -16,7 +16,7 @@
 #include <numeric>
 #include <ranges>
 #include <string_view>
-#include <unordered_set>
+#include <absl/container/flat_hash_set.h>
 
 namespace hikari::app {
 
@@ -205,21 +205,21 @@ private:
 
 class EditorAdapter : public application::EditorPort {
 public:
-    EditorAdapter(ui::LineEditorController &editor, ui::ShellController &shell, application::DocumentFiles &files,
-                  application::Workspace &workspace)
-        : m_editor(editor), m_shell(shell), m_files(files), m_workspace(workspace)
+    EditorAdapter(AutomationShell::EditorSource editor, AutomationShell::ShellSource shell,
+                  application::DocumentFiles &files, application::Workspace &workspace)
+        : m_editor(std::move(editor)), m_shell(std::move(shell)), m_files(files), m_workspace(workspace)
     {
     }
     std::optional<std::pair<std::int64_t, std::int64_t>> selection() const override
     {
-        if (!m_editor.hasLine())
+        if (!m_editor().hasLine())
             return std::nullopt;
-        const auto [start, end] = m_editor.fieldSelection();
+        const auto [start, end] = m_editor().fieldSelection();
         return std::pair<std::int64_t, std::int64_t>{start, end};
     }
     void setSelection(std::int64_t start, std::int64_t end) override
     {
-        m_editor.selectInField(static_cast<int>(start), static_cast<int>(end));
+        m_editor().selectInField(static_cast<int>(start), static_cast<int>(end));
     }
     bool modified() const override
     {
@@ -227,11 +227,11 @@ public:
         auto *session = target ? m_files.session(*target) : nullptr;
         return session && session->draftLine().has_value();
     }
-    void setStatusText(const std::string &text) override { m_shell.setStatusText(QString::fromStdString(text)); }
+    void setStatusText(const std::string &text) override { m_shell().setStatusText(QString::fromStdString(text)); }
 
 private:
-    ui::LineEditorController &m_editor;
-    ui::ShellController &m_shell;
+    AutomationShell::EditorSource m_editor;
+    AutomationShell::ShellSource m_shell;
     application::DocumentFiles &m_files;
     application::Workspace &m_workspace;
 };
@@ -269,16 +269,16 @@ QString refusalText(const application::MacroApplyFailure &failure)
 }
 
 AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
-                                 ui::LineEditorController &editor, ui::VideoController &video,
-                                 ui::ShellController &shell, application::IndexedSourcePort &, QObject *parent)
-    : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(editor),
-      m_video(video), m_shell(shell),
+                                 EditorSource editor, ui::VideoController &video, ShellSource shell,
+                                 application::IndexedSourcePort &, QObject *parent)
+    : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(std::move(editor)),
+      m_video(video), m_shell(std::move(shell)),
       m_manager(m_paths.helper, sharedIncludes(m_paths))
 {
     for (const auto &dir : folders(m_paths).made)
         QDir().mkpath(QDir::fromNativeSeparators(QString::fromStdString(dir)));
     m_media = std::make_unique<MediaAdapter>(video, files, workspace);
-    m_editorPort = std::make_unique<EditorAdapter>(editor, shell, files, workspace);
+    m_editorPort = std::make_unique<EditorAdapter>(m_editor, m_shell, files, workspace);
     m_router.setMedia(m_media.get());
     m_router.setEditor(m_editorPort.get());
     m_router.setClipboard(&m_clipboard);
@@ -761,8 +761,8 @@ QStringList AutomationShell::documentScriptsToLoad()
     };
     // No file check: checking a UNC path contacts its server.
     const auto &listed = m_documentScripts.scripts();
-    const std::unordered_set<std::string_view> loaded(listed.begin(), listed.end());
-    std::unordered_set<std::string> offered;
+    const absl::flat_hash_set<std::string_view> loaded(listed.begin(), listed.end());
+    absl::flat_hash_set<std::string> offered;
     for (std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
         if (!path.empty() && !loaded.contains(path) && (!read || declined(path)) && offered.insert(path).second)
             out << QString::fromStdString(path);
@@ -816,10 +816,8 @@ void AutomationShell::continueLastScript()
     if (!host)
         return;
     if (host->state() == State::LoadFailed) {
-        // MUST KILL: an empty %2 only keeps the existing translations of this two-line text
         emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
-                    QCoreApplication::translate("HikariSub.Automation", "Error loading Lua script: %1\n%2")
-                        .arg(prettyName(path), QString()).trimmed(),
+                    QCoreApplication::translate("HikariSub.Automation", "%1 did not load. Its error is in Details.").arg(prettyName(path)),
                     host->lastError());
         editScript(QString::fromStdString(path));
         return;
@@ -1095,7 +1093,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     if (m_beforeRun)
         m_beforeRun();
     auto snapshot = application::snapshotForMacro(*s);
-    m_editor.reloadFromSession();
+    m_editor().reloadFromSession();
     if (!snapshot) {
         m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
                                                     "The line being edited can’t be committed, so the macro can’t start.");
@@ -1128,7 +1126,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_progressKnown = false;
     m_cardState = QStringLiteral("notice");
     m_cardText.clear();
-    m_runId = m_runs.begin(m_title, prettyName(path), m_shell.editingTitle());
+    m_runId = m_runs.begin(m_title, prettyName(path), m_shell().editingTitle());
     updateCardTimer();
     if (m_documentChanged)
         m_documentChanged();
@@ -1191,10 +1189,10 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
 void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
 {
     const QString summary = ui::karaokeReportSummary(report);
-    m_shell.setStatusText(summary);
+    m_shell().setStatusText(summary);
     QTimer::singleShot(10'000, Qt::PreciseTimer, this, [this, summary, serial = ++m_statusSerial] {
-        if (serial == m_statusSerial && m_shell.statusText() == summary)
-            m_shell.setStatusText(QString());
+        if (serial == m_statusSerial && m_shell().statusText() == summary)
+            m_shell().setStatusText(QString());
     });
     const QString details = ui::karaokeReportDetails(report);
     if (m_logLine)
@@ -1310,7 +1308,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     m_lastMessage = text;
     m_lastOutcome = ended;
     finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());
-    m_editor.reloadFromSession();
+    m_editor().reloadFromSession();
     if (m_documentChanged)
         m_documentChanged();
     emit progressChanged();

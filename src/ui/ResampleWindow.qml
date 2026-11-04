@@ -47,6 +47,7 @@ DialogWindow {
         targetWidth.value = v.videoWidth
         targetHeight.value = v.videoHeight
         stretch = false
+        adjustRotations.checked = true
         document = app.editingDocument()
         open()
     }
@@ -71,7 +72,8 @@ DialogWindow {
                 return
             }
         }
-        app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value, aspectChanges && stretch)
+        app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value, aspectChanges && stretch,
+                     adjustRotations.checked)
         close()
     }
 
@@ -206,6 +208,20 @@ DialogWindow {
                 text: qsTr("The aspect ratio changes from %1 to %2.").arg(dialog.ratio(subsWidth.value, subsHeight.value),
                                                                            dialog.ratio(targetWidth.value, targetHeight.value))
             }
+        }
+    }
+    ColumnLayout {
+        spacing: 2
+        Layout.fillWidth: true
+        CheckBox {
+            id: adjustRotations
+            objectName: "resampleAdjustRotations"
+            text: qsTr("Adjust 3D rotations")
+            checked: true
+        }
+        Hint {
+            Layout.leftMargin: adjustRotations.indicator.width + adjustRotations.spacing
+            text: qsTr("Rotated lines keep their shape on screen.")
         }
     }
 

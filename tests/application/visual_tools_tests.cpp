@@ -4,6 +4,7 @@
 #include "hikari/application/visual_view.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
+#include "hikari/regex/regex.h"
 
 #include <gtest/gtest.h>
 
@@ -18,7 +19,6 @@
 #include <fstream>
 #include <map>
 #include <optional>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <string>
@@ -603,11 +603,11 @@ TEST(VisualCrosshair, PutsThePositionUnderThePointerWhilePannedAndZoomed)
     const PointF unquirked = host.v.viewToScript({320, 180});
     EXPECT_NEAR(expected.x, unquirked.x * 640 / 639, 0.01f);
     EXPECT_NEAR(expected.y, unquirked.y * 360 / 359, 0.01f);
-    std::cmatch m;
     const std::string text(reinterpret_cast<const char *>(line(*host.s, id)->text.c_str()));
-    ASSERT_TRUE(std::regex_search(text.c_str(), m, std::regex(R"(\\pos\(([-0-9.]+),([-0-9.]+)\))"))) << text;
-    EXPECT_NEAR(std::stof(m[1].str()), expected.x, 0.01f);
-    EXPECT_NEAR(std::stof(m[2].str()), expected.y, 0.01f);
+    const auto m = hikari::regex::Pattern::compile(R"(\\pos\(([-0-9.]+),([-0-9.]+)\))")->search(text);
+    ASSERT_TRUE(m) << text;
+    EXPECT_NEAR(std::stof(std::string((*m)[1])), expected.x, 0.01f);
+    EXPECT_NEAR(std::stof(std::string((*m)[2])), expected.y, 0.01f);
 }
 
 TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)

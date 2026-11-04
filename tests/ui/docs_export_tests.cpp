@@ -230,7 +230,7 @@ private slots:
         QCOMPARE(byKey.value(QStringLiteral("appearance.lightAccent")).value(QStringLiteral("label")).toString(),
                  QStringLiteral("Accent (Light)"));
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("label")).toString(),
-                 QStringLiteral("Border color (High contrast black)"));
+                 QStringLiteral("Border colour (High contrast black)"));
         QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
                  QStringLiteral("UI colours"));
         QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());

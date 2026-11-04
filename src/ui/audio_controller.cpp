@@ -459,11 +459,11 @@ void AudioController::setKeyframes(std::vector<int> keyframesMs)
     redraw();
 }
 
-void AudioController::setVideoTime(std::optional<int> pausedMs)
+void AudioController::setVideoFrame(std::optional<application::AudioVideoFrame> paused)
 {
-    if (pausedMs == m_videoMs)
+    if (paused == m_videoFrame)
         return;
-    m_videoMs = pausedMs;
+    m_videoFrame = paused;
     redraw();
 }
 
@@ -510,7 +510,7 @@ application::AudioMarks AudioController::marks() const
     marks.endMs = m_endMs;
     marks.inactive = application::legacyInactiveLines(m_options.inactiveLines, m_lines, m_active);
     marks.keyframesMs = m_keyframes;
-    marks.videoMs = m_videoMs;
+    marks.videoFrame = m_videoFrame;
     marks.focused = m_focused;
     marks.modified = m_needCommit;
     if (m_timing.hasMark())
@@ -950,6 +950,8 @@ bool AudioController::runHotkey(const QString &symbol)
         {QStringLiteral("AUDIO_PLAY_TO_END"), [](AudioController &c) { c.focusAndPlay(PlayMode::ToEnd); }},
         {QStringLiteral("AUDIO_COMMIT"), [](AudioController &c) { c.commit(); }},
         {QStringLiteral("AUDIO_GOTO"), [](AudioController &c) { c.goToSelection(); }},
+        {QStringLiteral("AUDIO_GOTO_START"), [](AudioController &c) { c.goToSelectionStart(); }},
+        {QStringLiteral("AUDIO_GOTO_END"), [](AudioController &c) { c.goToSelectionEnd(); }},
         {QStringLiteral("AUDIO_LEAD_IN"), [](AudioController &c) { c.leadIn(); }},
         {QStringLiteral("AUDIO_LEAD_OUT"), [](AudioController &c) { c.leadOut(); }},
         {QStringLiteral("AUDIO_KARAOKE_SPLIT"), [](AudioController &c) { c.splitSyllableAtCursor(); }},
@@ -1061,6 +1063,8 @@ application::AudioSnapContext AudioController::snapContext() const
     snap.keyframeSnapMs = m_keyframeSnap;
     snap.lines = m_lines;
     snap.active = m_active;
+    if (m_options.drawVideoPosition)
+        snap.videoFrame = m_videoFrame;
     return snap;
 }
 
@@ -1177,6 +1181,24 @@ void AudioController::goToSelection()
     if (!m_view.hasSource())
         return;
     makeDialogueVisible(true, false);
+    redraw();
+}
+
+void AudioController::goToSelectionStart()
+{
+    emit focusRequested();
+    if (!m_view.hasSource())
+        return;
+    m_view.centreOn(m_startMs, m_scrollbarThickness);
+    redraw();
+}
+
+void AudioController::goToSelectionEnd()
+{
+    emit focusRequested();
+    if (!m_view.hasSource())
+        return;
+    m_view.centreOn(m_endMs, m_scrollbarThickness);
     redraw();
 }
 

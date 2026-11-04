@@ -38,6 +38,18 @@ constexpr std::pair<Preset, std::string_view> kPresets[] = {
     {Preset::Gemini, "gemini"},
     {Preset::Custom, "custom"},
 };
+constexpr std::pair<StopReason, std::string_view> kStopReasons[] = {
+    {StopReason::End, "end"}, {StopReason::ToolUse, "toolUse"}, {StopReason::MaxTokens, "maxTokens"},
+    {StopReason::Refused, "refused"},
+};
+constexpr std::pair<ErrorKind, std::string_view> kErrorKinds[] = {
+    {ErrorKind::NoProvider, "noProvider"}, {ErrorKind::NoModel, "noModel"},
+    {ErrorKind::Key, "key"}, {ErrorKind::InsecureKey, "insecureKey"},
+    {ErrorKind::Network, "network"}, {ErrorKind::Timeout, "timeout"},
+    {ErrorKind::Unauthorized, "unauthorized"}, {ErrorKind::RateLimited, "rateLimited"},
+    {ErrorKind::Rejected, "rejected"}, {ErrorKind::Server, "server"},
+    {ErrorKind::Malformed, "malformed"}, {ErrorKind::Cancelled, "cancelled"},
+};
 constexpr std::pair<Role, std::string_view> kRoleIds[] = {
     {Role::Chat, "chat"}, {Role::Translator, "translator"}, {Role::Reviewer, "reviewer"},
     {Role::Vision, "vision"}, {Role::Judge, "judge"},
@@ -65,6 +77,9 @@ std::string_view presetId(Preset preset) { return toId(kPresets, preset); }
 std::optional<Preset> presetFromId(std::string_view id) { return fromId(kPresets, id); }
 std::string_view roleId(Role role) { return toId(kRoleIds, role); }
 std::optional<Role> roleFromId(std::string_view id) { return fromId(kRoleIds, id); }
+std::optional<StopReason> stopReasonFromId(std::string_view id) { return fromId(kStopReasons, id); }
+std::string_view errorKindId(ErrorKind kind) { return toId(kErrorKinds, kind); }
+std::optional<ErrorKind> errorKindFromId(std::string_view id) { return fromId(kErrorKinds, id); }
 
 Provider presetProvider(Preset preset, std::string id, std::string name)
 {
@@ -133,21 +148,19 @@ std::optional<double> costOf(const Usage &usage, const std::optional<Price> &pri
         return usage.reportedCost;
     if (!price)
         return std::nullopt;
-    const double cached = static_cast<double>(usage.cachedInputTokens);
-    const double uncached = static_cast<double>(usage.inputTokens - usage.cachedInputTokens);
-    return (uncached * price->input + cached * price->cachedInput.value_or(price->input) +
+    const auto tokens = [](std::int64_t n) { return static_cast<double>(n); };
+    const double hourWrites = tokens(usage.cacheWriteHourTokens);
+    const double minuteWrites = tokens(usage.cacheWriteTokens - usage.cacheWriteHourTokens);
+    const double uncached = tokens(usage.inputTokens - usage.cachedInputTokens - usage.cacheWriteTokens);
+    const double write = price->cacheWrite.value_or(price->input);
+    return (uncached * price->input + tokens(usage.cachedInputTokens) * price->cachedInput.value_or(price->input) +
+            minuteWrites * write + hourWrites * price->cacheWriteHour.value_or(write) +
             static_cast<double>(usage.outputTokens) * price->output) /
            1'000'000.0;
 }
 
-struct Providers::Pending {
-    EventSink sink;
-    std::optional<StreamId> portId;
-    bool cancelled = false;
-};
-
-Providers::Providers(ConfigStore &configs, KeyStore &keys, ProviderPort &port)
-    : m_configs(configs), m_keys(keys), m_port(port), m_config(configs.load())
+Providers::Providers(ConfigStore &configs, KeyStore &keys)
+    : m_configs(configs), m_keys(keys), m_config(configs.load())
 {
 }
 
@@ -227,114 +240,43 @@ bool Providers::setCapabilities(const std::string &providerId, const std::string
     return true;
 }
 
-void Providers::withKey(const Provider &provider,
-                        std::function<void(std::optional<std::string>, std::optional<KeyError>)> next)
+bool Providers::setModels(const std::string &providerId, std::vector<Model> models)
 {
-    if (!provider.needsKey) {
-        next(std::string(), std::nullopt);
-        return;
-    }
-    if (const auto it = m_keyCache.find(provider.id); it != m_keyCache.end()) {
-        next(it->second, std::nullopt);
-        return;
-    }
-    m_keys.read(provider.id, [this, id = provider.id, next = std::move(next)](KeyResult result) {
-        if (const auto *error = std::get_if<KeyError>(&result)) {
-            next(std::nullopt, *error);
-            return;
-        }
-        m_keyCache[id] = std::get<std::string>(result);
-        next(std::get<std::string>(result), std::nullopt);
-    });
+    Config next = m_config;
+    const auto it = std::ranges::find(next.providers, providerId, &Provider::id);
+    if (it == next.providers.end())
+        return false;
+    it->models = std::move(models);
+    if (!m_configs.save(next))
+        return false;
+    m_config = std::move(next);
+    return true;
 }
 
-void Providers::refreshModels(const std::string &providerId, std::function<void(std::optional<Error>)> done)
+void Providers::readKey(const std::string &providerId, std::function<void(std::optional<std::string>)> done)
 {
     const Provider *provider = m_config.provider(providerId);
     if (!provider) {
-        done(Error{.kind = ErrorKind::NoProvider});
+        done(std::nullopt);
         return;
     }
-    withKey(*provider, [this, providerId, done](std::optional<std::string> key, std::optional<KeyError>) {
-        const Provider *current = m_config.provider(providerId);
-        if (!current) {
-            done(Error{.kind = ErrorKind::NoProvider});
-            return;
-        }
+    if (!provider->needsKey) {
+        done(std::string());
+        return;
+    }
+    if (const auto it = m_keyCache.find(providerId); it != m_keyCache.end()) {
+        done(it->second);
+        return;
+    }
+    m_keys.read(providerId, [this, providerId, done = std::move(done)](KeyResult result) {
+        auto *key = std::get_if<std::string>(&result);
         if (!key) {
-            done(Error{.kind = ErrorKind::Key});
-            return;
-        }
-        m_port.listModels(*current, *key, [this, providerId, done](ProviderPort::ModelsResult result) {
-            if (const auto *error = std::get_if<Error>(&result)) {
-                done(*error);
-                return;
-            }
-            Config next = m_config;
-            const auto it = std::ranges::find(next.providers, providerId, &Provider::id);
-            if (it == next.providers.end()) {
-                done(Error{.kind = ErrorKind::NoProvider});
-                return;
-            }
-            it->models = std::move(std::get<std::vector<Model>>(result));
-            if (!m_configs.save(next)) {
-                done(Error{.kind = ErrorKind::Rejected, .detail = "config"});
-                return;
-            }
-            m_config = std::move(next);
             done(std::nullopt);
-        });
-    });
-}
-
-StreamId Providers::stream(Role role, Request request, EventSink sink)
-{
-    const StreamId id = m_nextId++;
-    if (!enabled()) {
-        sink(Failed{{.kind = ErrorKind::NoProvider}});
-        return id;
-    }
-    const std::optional<ModelRef> ref = m_config.modelFor(role);
-    if (!ref) {
-        sink(Failed{{.kind = ErrorKind::NoModel}});
-        return id;
-    }
-    const Provider provider = *m_config.provider(ref->providerId);
-    request.model = ref->modelId;
-    auto pending = std::make_shared<Pending>();
-    pending->sink = std::move(sink);
-    m_pending[id] = pending;
-    withKey(provider, [this, id, provider, request = std::move(request), pending](std::optional<std::string> key,
-                                                                                   std::optional<KeyError>) {
-        if (pending->cancelled)
-            return;
-        if (!key) {
-            m_pending.erase(id);
-            pending->sink(Failed{{.kind = ErrorKind::Key}});
             return;
         }
-        pending->portId = m_port.stream(provider, *key, request, [this, id, pending](const Event &event) {
-            if (std::holds_alternative<Finished>(event) || std::holds_alternative<Failed>(event))
-                m_pending.erase(id);
-            pending->sink(event);
-        });
+        m_keyCache[providerId] = *key;
+        done(*key);
     });
-    return id;
-}
-
-void Providers::cancel(StreamId id)
-{
-    const auto it = m_pending.find(id);
-    if (it == m_pending.end())
-        return;
-    const std::shared_ptr<Pending> pending = it->second;
-    if (pending->portId) {
-        m_port.cancel(*pending->portId);
-        return;
-    }
-    pending->cancelled = true;
-    m_pending.erase(it);
-    pending->sink(Failed{{.kind = ErrorKind::Cancelled}});
 }
 
 }

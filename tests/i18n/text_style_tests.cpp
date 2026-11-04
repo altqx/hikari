@@ -115,7 +115,8 @@ QStringList textStyleProblems(const QString &source)
             while (bare.endsWith(u'.'))
                 bare.chop(1);
             const bool identifier = std::any_of(w.begin() + 1, w.end(), [](QChar c) { return c.isUpper(); });
-            if (w[0].isUpper() && w != w.toUpper() && !identifier && !properNames().contains(bare) &&
+            const QString key = bare.section(u'+', 0, 0);
+            if (w[0].isUpper() && w != w.toUpper() && !identifier && !properNames().contains(key) &&
                 !text.left(words[i].capturedStart()).contains(startsAnew)) {
                 rules << QStringLiteral("title-case");
                 break;
@@ -188,6 +189,7 @@ TEST(TextStyle, FindsEachRule)
     EXPECT_FALSE(has("Styles used:\n%1\nStyles deleted:\n%2", "title-case"));
     EXPECT_FALSE(has("Cannot change YCbCr matrix", "title-case"));
     EXPECT_FALSE(has("Scale on X and Y axes", "title-case"));
+    EXPECT_FALSE(has("Shift+wheel and Ctrl+wheel on the waveform zoom too", "title-case"));
     EXPECT_TRUE(has("Completed Successfully, %1 %2.", "title-case"));
 }
 

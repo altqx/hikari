@@ -113,7 +113,6 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDelay->setSingleShot(true);
     m_grammarDelay->setInterval(300);
     connect(m_grammarDelay, &QTimer::timeout, this, &Application::checkEditorGrammar);
-    connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::scheduleGrammar);
     connect(this, &Application::spellingChanged, this, &Application::syncGrammarWords);
 }
 
@@ -257,7 +256,7 @@ void Application::scheduleGrammar()
 void Application::checkEditorGrammar()
 {
     const int role = spellingRole();
-    auto raw = core::syntax::spellChecked(m_editor->syntaxState()) ? editorRaw(role) : std::nullopt;
+    auto raw = core::syntax::spellChecked(editor().syntaxState()) ? editorRaw(role) : std::nullopt;
     if (raw && raw->size() > kMaxCheckedUnits)
         raw.reset();
     if (!raw) {
@@ -376,7 +375,7 @@ void Application::syncGrammarWords()
 const Application::GrammarCheck *Application::editorGrammarCheck(int role) const
 {
     if (!grammarOn() || !m_grammarEditor || role != m_grammarEditorRole || role != spellingRole() ||
-        !core::syntax::spellChecked(m_editor->syntaxState()))
+        !core::syntax::spellChecked(editor().syntaxState()))
         return nullptr;
     const auto raw = editorRaw(role);
     return raw && *raw == m_grammarEditor->raw && m_grammarEditor->format == editorFormat() ? &*m_grammarEditor
@@ -395,7 +394,7 @@ std::optional<std::pair<int, int>> Application::fieldSpan(int role, const core::
     const auto raw = core::grammar::rawRange(text, std::size_t(start), std::size_t(end));
     if (!raw)
         return std::nullopt;
-    const auto span = m_editor->displaySpan(role, int(raw->first), int(raw->second));
+    const auto span = editor().displaySpan(role, int(raw->first), int(raw->second));
     if (span.first >= span.second)
         return std::nullopt;
     return span;
@@ -459,10 +458,10 @@ bool Application::replaceEditorGrammar(int role, int position, const QString &re
                                                    replacement.toStdU16String());
     if (!caret)
         return false;
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
-    const int shown = m_editor->displaySpan(role, int(*caret), int(*caret)).first;
-    m_editor->selectInField(shown, shown);
+    const int shown = editor().displaySpan(role, int(*caret), int(*caret)).first;
+    editor().selectInField(shown, shown);
     m_grammarEditor.reset();
     checkEditorGrammar();
     emit grammarChanged();
@@ -524,7 +523,7 @@ QVariantMap Application::startGrammarWalk()
     auto *session = targetSession();
     if (!grammarOn() || !session)
         return grammarWalkState();
-    m_editor->commit();
+    editor().commit();
     auto walk = std::make_unique<GrammarWalk>();
     walk->document = *m_workspace.editingTarget();
     walk->translation = application::spellsTranslation(session->document());
@@ -676,18 +675,18 @@ void Application::showGrammarFinding()
     const auto &found = walk.findings[*walk.current];
     const auto &check = walk.checks.at(found.line);
     const auto line = walk.lines[found.line];
-    m_editor->commit();
+    editor().commit();
     if (session->draftLine() && *session->draftLine() != line)
         return;
     session->setSelection(application::Selection{line, {line}, line, {}});
-    m_editor->reloadFromSession();
-    m_editor->showLine(line.value);
+    editor().reloadFromSession();
+    editor().showLine(line.value);
     refreshViews();
     const int role = walk.translation ? 1 : 0;
     if (editorRaw(role) != check.raw)
         return;
     if (const auto span = fieldSpan(role, check.text, found.finding.start, found.finding.end))
-        m_editor->selectInField(span->first, span->second, role);
+        editor().selectInField(span->first, span->second, role);
 }
 
 bool Application::grammarWalkStale()
@@ -787,7 +786,7 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
         return grammarWalkState();
     auto &walk = *m_grammarWalk;
     auto *session = targetSession();
-    m_editor->commit();
+    editor().commit();
     auto &found = walk.findings[*walk.current];
     auto &check = walk.checks.at(found.line);
     const int start = found.finding.start, end = found.finding.end;
@@ -817,7 +816,7 @@ QVariantMap Application::grammarWalkReplace(const QString &replacement)
         check.raw = core::toUtf16(walk.translation ? line->translation : line->text);
         check.text = core::grammar::checkedText(check.raw, session->document().format());
     }
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     nextGrammarFinding();
     showGrammarFinding();
@@ -875,7 +874,7 @@ QVariantMap Application::grammarWalkAddWord()
     };
     const std::u16string word = covered(found);
     if (!addGrammarWord(QString::fromStdU16String(word)))
-        return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "Error. Word \"%1\" was not added.")
+        return grammarWalkProblem(QCoreApplication::translate("HikariSub.Spelling", "“%1” was not added to the dictionary.")
                                       .arg(QString::fromStdU16String(word)));
     for (auto &other : walk.findings)
         if (other.finding.word && !other.handled && covered(other) == word)

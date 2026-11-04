@@ -9,6 +9,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <boost/dynamic_bitset.hpp>
 
 #include <functional>
 #include <map>
@@ -245,7 +246,7 @@ private:
     std::optional<std::uint64_t> m_ownersRevision, m_ownersAsked;
     std::optional<std::vector<core::LineRecord>> m_preview;
     std::vector<application::MacroStyleLine> m_previewStyles;
-    std::vector<bool> m_own;
+    boost::dynamic_bitset<> m_own;
     bool m_previewKept = false;
     double m_previewSeconds = 0;
     std::vector<Issue> m_issues;

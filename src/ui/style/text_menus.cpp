@@ -4,6 +4,7 @@
 #include <QQuickItem>
 #include <QtQml/qqmlcomponent.h>
 #include <QtQml/qqmlengine.h>
+#include <QtQuickTemplates2/private/qquickcontextmenu_p.h>
 
 namespace hikari::ui::style {
 
@@ -48,6 +49,16 @@ QObject *TextMenus::menuFor(QQuickItem *editor)
     menu->setObjectName(kMenuName);
     menu->setParent(editor);
     return menu;
+}
+
+QObject *TextMenus::adopt(QQuickItem *field)
+{
+    if (!field)
+        return nullptr;
+    auto *contextMenu = qobject_cast<QQuickContextMenu *>(qmlAttachedPropertiesObject<QQuickContextMenu>(field));
+    if (contextMenu)
+        contextMenu->setMenu(nullptr);
+    return contextMenu;
 }
 
 }

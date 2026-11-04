@@ -140,6 +140,8 @@ constexpr OptionsBinding kBindings[] = {
     {"video.scrollAction", IndexChoice, Video, 0, 0, 5},
     {"video.ctrlScrollAction", IndexChoice, Video, 0, 0, 5},
     {"video.shiftScrollAction", IndexChoice, Video, 0, 0, 5},
+    {"editor.softLineBreak", Check, LineEditor},
+    {"grid.splitFramesBakeAnimations", Check, Grid},
     {"video.handleSize", Number, Video, 50, 400},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
     {"video.matrixMismatch", IndexChoice, Video, 0, 0, 3},

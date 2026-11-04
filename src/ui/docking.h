@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QQuickWindow>
+#include <QRect>
 #include <QSize>
 #include <QtQml/qqmlregistration.h>
 
@@ -31,6 +32,9 @@ namespace dockchrome {
 inline constexpr int kHeaderHeight = 35;
 inline constexpr int kTabGap = 12;
 inline constexpr int kResizeGrip = 4;
+QRect resizedFrom(const QRect &from, Qt::Edges edges, QPoint delta, QSize minimum);
+// false refuses every window system resize, so the engine resizes.
+void overrideSystemResize(std::optional<bool> allowed);
 // 0 on X11 without a compositing manager, where the transparent margin would come out black.
 int floatingShadow();
 bool windowSystemComposites();
@@ -79,6 +83,9 @@ public:
     // MUST KILL: `horizontal` means "keeps a one-tab bar even when alone", not an orientation
     Q_INVOKABLE void setPanelHeader(const QString &uniqueName, bool horizontal, QQuickItem *toolbar);
     Q_INVOKABLE bool isHorizontal(const QString &uniqueName) const;
+    // The header's tooltip for a panel; "" shows none.
+    Q_INVOKABLE void setPanelTip(const QString &uniqueName, const QString &tip);
+    Q_INVOKABLE QString panelTip(const QString &uniqueName) const;
     Q_INVOKABLE bool hasPlace(const QString &uniqueName) const;
     Q_INVOKABLE QQuickItem *toolbar(const QString &uniqueName) const;
     Q_INVOKABLE void requestMenu(const QString &uniqueName, QQuickItem *anchor);
@@ -89,6 +96,8 @@ public:
     Q_INVOKABLE int tabCount(const QString &uniqueName) const;
     Q_INVOKABLE bool moveTab(const QString &uniqueName, int step);
     Q_INVOKABLE bool startSystemMove(QQuickItem *from);
+    // The window system's resize, else the engine's until the button is released.
+    Q_INVOKABLE void startResize(QWindow *window, int edges, QPointF globalPressPosition);
     // KDDW's main window closes every panel on QEvent::Close before the window's own handler runs.
     Q_INVOKABLE void guardClose(QQuickWindow *window, const QJSValue &admit);
     Q_INVOKABLE void requestKeyboardContextMenu();
@@ -106,6 +115,7 @@ private:
         QPointer<QQuickItem> toolbar;
     };
     QHash<QString, Header> m_headers;
+    QHash<QString, QString> m_tips;
     int m_revision = 0;
     QString m_openMenu;
     int m_windowTitleRevision = 0;

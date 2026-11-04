@@ -1084,7 +1084,7 @@ QVariantList VisualToolsController::overlay() const
 {
     QVariantList out;
     const auto *t = tool();
-    if (!t || !m_view.hasVideo() || m_view.zoomMode())
+    if (!t || !m_view.hasVideo() || m_view.zoomMode() || (m_pictureShown && !m_pictureShown()))
         return out;
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)
         return out;

@@ -273,7 +273,19 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(zoom[i].first), nullptr);
         EXPECT_EQ(std::get<std::int64_t>(findSetting(zoom[i].first)->defaultValue), zoom[i].second) << zoom[i].first;
     }
-    const auto &handleSize = all[std::size(kLegacy) + 43];
+    const auto &softBreak = all[std::size(kLegacy) + 43];
+    EXPECT_EQ(softBreak.setting, "editor.softLineBreak");
+    EXPECT_EQ(softBreak.control, OptionsControl::Check);
+    EXPECT_EQ(softBreak.page, OptionsPage::LineEditor);
+    ASSERT_NE(findSetting("editor.softLineBreak"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("editor.softLineBreak")->defaultValue), false);
+    const auto &bake = all[std::size(kLegacy) + 44];
+    EXPECT_EQ(bake.setting, "grid.splitFramesBakeAnimations");
+    EXPECT_EQ(bake.control, OptionsControl::Check);
+    EXPECT_EQ(bake.page, OptionsPage::Grid);
+    ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
+    const auto &handleSize = all[std::size(kLegacy) + 45];
     EXPECT_EQ(handleSize.setting, "video.handleSize");
     EXPECT_EQ(handleSize.control, OptionsControl::Number);
     EXPECT_EQ(handleSize.page, OptionsPage::Video);
@@ -284,7 +296,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
                                       {"video.matrixMismatch", 3},
                                       {"video.missingLayoutRes", 4},
                                       {"video.layoutResMismatch", 3}}) {
-        const auto &prompt = all[std::size(kLegacy) + 44 + i++];
+        const auto &prompt = all[std::size(kLegacy) + 46 + i++];
         EXPECT_EQ(prompt.setting, id);
         EXPECT_EQ(prompt.control, OptionsControl::IndexChoice);
         EXPECT_EQ(prompt.page, OptionsPage::Video);
@@ -292,15 +304,15 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), 1) << id;
     }
     for (std::size_t i = 0; const std::string_view id : {"video.untaggedMatrixWarning", "video.hdrWarning"}) {
-        const auto &warning = all[std::size(kLegacy) + 48 + i++];
+        const auto &warning = all[std::size(kLegacy) + 50 + i++];
         EXPECT_EQ(warning.setting, id);
         EXPECT_EQ(warning.control, OptionsControl::Check);
         EXPECT_EQ(warning.page, OptionsPage::Video);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), true) << id;
     }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 52);
-    const auto &hostApi = all[std::size(kLegacy) + 50];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 54);
+    const auto &hostApi = all[std::size(kLegacy) + 52];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -311,7 +323,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 50);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 52);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

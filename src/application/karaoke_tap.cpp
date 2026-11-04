@@ -1,6 +1,7 @@
 #include "hikari/application/karaoke_tap.h"
 
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 #include <cmath>
 
 namespace hikari::application {
@@ -51,7 +52,7 @@ LatencyCalibration calibrateLatency(std::span<const double> beatsMs, std::span<c
     double interval = kCalibrationIntervalMs;
     for (std::size_t i = 1; i < beatsMs.size(); i++)
         interval = std::min(interval, beatsMs[i] - beatsMs[i - 1]);
-    std::vector<bool> used(beatsMs.size(), false);
+    boost::dynamic_bitset<> used(beatsMs.size());
     std::vector<double> delays;
     for (const double press : pressesMs) {
         std::size_t nearest = 0;

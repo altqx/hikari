@@ -2,7 +2,7 @@
 ; A HikariSub karaoke effect preset (KE3, docs/karaoke-presets.md): original
 ; work under HikariSub's licence. Give the Comment Lines the karaoke Lines' Style.
 Title: Scale pop
-Description: Each syllable swells as it is sung and settles back to its Style's size in the sung colour.
+Description: Each syllable swells as it is sung and settles back to its style’s size in the sung colour.
 ScriptType: v4.00+
 WrapStyle: 0
 PlayResX: 1280
