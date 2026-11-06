@@ -22904,7 +22904,12 @@ private slots:
         key(Qt::Key_Space, false);
         key(Qt::Key_Space, true);
         QTest::qWait(150);
-        QCOMPARE(audio.tapSpans().size(), 3);
+        const QVariantList spans = audio.tapSpans();
+        QCOMPARE(spans.size(), 3);
+        const auto gapAfter = [&](qsizetype i) {
+            return spans[i].toMap().value(QStringLiteral("x2")).toFloat()
+                   < spans[i + 1].toMap().value(QStringLiteral("x1")).toFloat();
+        };
         QVERIFY(visualItem("audioTapSpan2"));
         for (const char *name : {"audioTapSyllable0", "audioTapNext", "audioTapSpanText"})
             QVERIFY2(visualItem(name)->property("textFormat").toInt() == int(Qt::PlainText), name);
@@ -22912,7 +22917,9 @@ private slots:
         QCOMPARE(editor.history().size(), steps + 1);
         QVERIFY2(editor.history().last().startsWith(QStringLiteral("Tap timing")), qPrintable(editor.history().last()));
         const QString tapped = documentLineText(targetSession(), 0);
-        static const QRegularExpression timed(QStringLiteral(R"(^\{\\k\d+\}ki\{\\k\d+\}\{\\k\d+\}mi\{\\k\d+\}no$)"));
+        const QString k = QStringLiteral(R"(\{\\k\d+\})");
+        const QRegularExpression timed(QStringLiteral("^%1ki%2%1mi%3%1no$")
+                                           .arg(k, gapAfter(0) ? k : QString(), gapAfter(1) ? k : QString()));
         QVERIFY2(timed.match(tapped).hasMatch(), qPrintable(tapped));
         QCOMPARE(editor.text(), QStringLiteral("{\\k50}ko{\\k50}ro"));
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
