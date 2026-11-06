@@ -29,6 +29,8 @@ PointF defaultPosition(VideoSize video, AnchorPoint anchor);
 // AssDocument(TextReader, styleOptions): the ASS script as lines ready for YttDocument.
 AssDocument readAss(u16v script, std::vector<AssStyleOptions> options);
 
+void applyStyle(Section &section, const AssDocument &doc, const AssStyle &style, const AssStyleOptions *options);
+
 // YTSubConverter's built-in options for its YT* and __yt* style names.
 std::vector<AssStyleOptions> builtInStyleOptions();
 

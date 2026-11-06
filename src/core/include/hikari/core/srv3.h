@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <expected>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -27,6 +28,12 @@ struct Srv3StyleOptions {
 // `options` override YTSubConverter's built-in options for its YT* style names. The error is YTSubConverter's
 // reason for refusing the script.
 std::expected<std::vector<std::byte>, std::string> srv3FromAss(std::u16string_view script, const std::vector<Srv3StyleOptions> &options = {});
+
+// The ASS script, UTF-8 with a byte order mark, that YTSubConverter 1.6.5 converts YouTube timed text (srv3) to.
+// The error is YTSubConverter's reason for refusing the file; document type declarations are refused too.
+std::expected<std::vector<std::byte>, std::string> assFromSrv3(std::span<const std::byte> ytt);
+// "ytt" or "srv3", lower-case without the dot.
+bool isSrv3Extension(std::u8string_view extension);
 
 // What YTSubConverter uses for a style without options: its built-in options for a YT* name, else a soft shadow.
 Srv3StyleOptions srv3DefaultOptions(std::u16string_view style);
