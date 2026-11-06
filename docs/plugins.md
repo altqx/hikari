@@ -85,7 +85,7 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 - **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
 - **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
 
-These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)).
+These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)), which reuses the AI sidecar's `hikari_sandbox` module ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
 
 ### The helper protocol
 

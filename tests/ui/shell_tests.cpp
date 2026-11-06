@@ -16430,6 +16430,9 @@ private slots:
         QVERIFY(application->ai()->on());
         QVERIFY(QMetaObject::invokeMethod(off, "click"));
         QTRY_VERIFY(dialogItem("settingsDialog", "aiProviders")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiSandboxNote")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiSandboxNote")->property("text").toString().contains(QStringLiteral("isn’t sandboxed")),
+                 !application->ai()->sandboxed());
 
         QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("gemini")), Q_ARG(QVariant, QVariant())));
         QQuickItem *key = nullptr;

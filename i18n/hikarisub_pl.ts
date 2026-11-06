@@ -10464,8 +10464,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Co jest wysyłane do dostawców</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
+        <translation type="vanished">Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
     </message>
 </context>
 <context>

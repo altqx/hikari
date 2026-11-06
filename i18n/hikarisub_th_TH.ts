@@ -10338,8 +10338,16 @@ Failed to copy %2 fonts.</source>
         <translation>สิ่งที่ส่งไปยังผู้ให้บริการ</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+        <translation type="vanished">คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
 </context>
 <context>

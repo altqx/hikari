@@ -4,7 +4,7 @@ import { prefixTexts, sortedTools, usage } from "./cache";
 import { geminiModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
-import { kNoKey } from "./egress";
+import { kKeyPlaceholder } from "./relay";
 import { kindOfStatus, ProviderError } from "./errors";
 import type { Request, StopReason } from "./types";
 
@@ -109,7 +109,7 @@ function failure(error: unknown): unknown {
     return status === undefined ? error : new ProviderError(kindOfStatus(status), messageInside((error as Error).message), status);
 }
 
-export function geminiClient({ config, key, fetch }: ClientOptions): Client {
+export function geminiClient({ config, fetch }: ClientOptions): Client {
     let finishMessage = "";
     // @google/genai drops a candidate's finishMessage, so it is read from the raw stream.
     const raw = tapped(fetch, (event) => {
@@ -118,7 +118,7 @@ export function geminiClient({ config, key, fetch }: ClientOptions): Client {
             finishMessage = message;
     });
     const ai = new GoogleGenAI({
-        apiKey: key || kNoKey,
+        apiKey: kKeyPlaceholder,
         vertexai: false,
         httpOptions: { ...httpBase(config.baseUrl), fetch: raw },
     });

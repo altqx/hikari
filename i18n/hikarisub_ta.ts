@@ -10401,8 +10401,16 @@ Failed to copy %2 fonts.</source>
         <translation>வழங்குநர்களுக்கு என்ன அனுப்பப்படுகிறது</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அணுகுகிறது.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
+        <translation type="vanished">கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
     </message>
 </context>
 <context>
