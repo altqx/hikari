@@ -10561,6 +10561,126 @@ Failed to copy %2 fonts.</source>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
+    <message>
+        <source>Web search</source>
+        <translation>การค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>ให้ AI ค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>เอเจนต์ค้นหาชื่อ คำศัพท์ เนื้อเพลง และข้อมูลอ้างอิงได้ และบอกว่าพบจากที่ใด ผู้ให้บริการหรือบริการค้นหาของคุณจะได้รับคำค้นทุกคำที่เอเจนต์เขียนและหน้าที่เอเจนต์เปิด</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google Search และอ่านหน้าเว็บได้</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>ค้นหาเอง และอ่านหน้าเว็บได้</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>ต้องใช้บริการค้นหา</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>คำตอบของ Gemini ที่มีการค้นหาจะแสดงคำแนะนำการค้นหาของ Google ตามข้อกำหนดของ Google</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>บริการค้นหา</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (ค้นหาอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search ค้นหาได้อย่างเดียว ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะใช้บริการนี้อ่านหน้าเว็บไม่ได้</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>สำหรับผู้ให้บริการที่ไม่มีการค้นหาของตัวเอง Anthropic, Google Gemini, OpenAI และ OpenRouter ค้นหาได้โดยไม่ต้องใช้</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>คีย์ %1</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>แทนที่คีย์…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>เพิ่มอยู่ดี</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>นำคีย์ออก</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>รับคีย์ %1</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>เชื่อมต่อแล้ว</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>ใช้การค้นหาหมดแล้ว (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>เพิ่มผู้ให้บริการเพื่อทดสอบคีย์</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>เชื่อมต่อ %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>บริการค้นหาผิดพลาด (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>ยังไม่ได้ทดสอบ</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>บันทึกในพวงกุญแจ HikariSub ส่งเฉพาะคำค้นที่เอเจนต์เขียน ไม่ส่งไฟล์ของคุณ ทดสอบการเชื่อมต่อจะค้นหาหนึ่งครั้ง ซึ่งนับรวมในแพ็กเกจ %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 ปฏิเสธคีย์ วางคีย์ใหม่จากแดชบอร์ด %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>แพ็กเกจ %1 ของคุณไม่มีการค้นหาเหลือแล้ว จนกว่าจะรีเซ็ต ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะตอบโดยไม่ค้นหาและแจ้งให้ทราบ</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>คีย์อยู่ในพวงกุญแจ ผู้ให้บริการคิดค่าการค้นหาของตัวเองเพิ่มจากโทเค็น %1 คิดค่าการค้นหาตามแพ็กเกจ %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>ลบคีย์ %1 ไหม</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>คีย์จะถูกลบออกจากพวงกุญแจ ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะหยุดค้นหาจนกว่าคุณจะเพิ่มคีย์</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

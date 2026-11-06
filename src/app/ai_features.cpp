@@ -21,6 +21,8 @@
 #include <QStandardPaths>
 #include <QTimer>
 
+#include <cstdint>
+
 namespace hikari::app {
 
 namespace {
@@ -55,12 +57,15 @@ struct AiFeatures::Live {
     std::unique_ptr<application::ai::ConfigStore> configs;
     std::unique_ptr<backends::ai::AiSidecarUpdater> updater;
     std::unique_ptr<application::ai::Providers> providers;
+    std::unique_ptr<application::ai::SearchKeys> searchKeys;
     std::unique_ptr<backends::ai::AiRequests> requests;
     std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
     std::unique_ptr<backends::ai::AgentBroker> agents;
     std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
+    std::uint64_t webSearchApplied = 0;
+    std::shared_ptr<bool> alive = std::make_shared<bool>(true);
     QString hostVersion;
     bool hostReady = false;
     std::deque<qint64> crashes;
@@ -134,6 +139,8 @@ AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent
             apply();
         else if (id == QLatin1String(kCachingSetting) && m_live)
             m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
+        else if (id == QLatin1String(kWebSearchSetting) || id == QLatin1String(kSearchServiceSetting))
+            applyWebSearch();
         else if (id == QLatin1String(kAutoUpdateSetting) && m_live) {
             emit componentsChanged();
             if (autoUpdate())
@@ -159,7 +166,13 @@ void AiFeatures::apply()
         m_live->requests =
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
-        m_live->relay = std::make_unique<backends::ai::HttpRelay>(m_live->requests->relayTargets());
+        m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
+        applyWebSearch();
+        m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
+            m_live->requests->relayTargets(), *m_live->searchKeys,
+            [requests = m_live->requests.get()](application::ai::SearchService service) {
+                return requests->searchAccess(service);
+            }));
         if (m_ports.signIn)
             m_live->signIn = m_ports.signIn(*m_live->keys);
         if (m_ports.sidecarUpdater)
@@ -169,6 +182,23 @@ void AiFeatures::apply()
         m_live.reset();
     }
     emit switched(wanted);
+}
+
+void AiFeatures::applyWebSearch()
+{
+    if (!m_live)
+        return;
+    const bool on = m_settings.boolean(kWebSearchSetting);
+    const auto service = application::ai::searchServiceFromId(m_settings.text(kSearchServiceSetting).toStdString());
+    const std::uint64_t applied = ++m_live->webSearchApplied;
+    m_live->requests->setWebSearch(on, std::nullopt);
+    if (!on || !service)
+        return;
+    m_live->searchKeys->read(*service, [this, alive = std::weak_ptr(m_live->alive), applied,
+                                        service](std::optional<std::string> key) {
+        if (alive.lock() && key && m_live->webSearchApplied == applied)
+            m_live->requests->setWebSearch(true, service);
+    });
 }
 
 void AiFeatures::startUpdates()
@@ -380,6 +410,11 @@ application::ai::ConfigStore *AiFeatures::configs() const
 application::ai::Providers *AiFeatures::providers() const
 {
     return m_live ? m_live->providers.get() : nullptr;
+}
+
+application::ai::SearchKeys *AiFeatures::searchKeys() const
+{
+    return m_live ? m_live->searchKeys.get() : nullptr;
 }
 
 backends::ai::AiRequests *AiFeatures::requests() const

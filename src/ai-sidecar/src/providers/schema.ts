@@ -1,4 +1,4 @@
-import { kErrorKinds, kPresets, kWires } from "./types";
+import { kErrorKinds, kPresets, kSearchServices, kWires } from "./types";
 
 /** The subset of JSON Schema the protocol uses; `validate` understands exactly this. */
 export type Schema =
@@ -18,6 +18,7 @@ function object(properties: Record<string, Schema>, required: readonly string[] 
     return { type: "object", properties, required };
 }
 
+const providerState = object({ type: { const: "providerState" }, wire: { type: "string", enum: kWires }, json: string });
 const toolCall = object({ type: { const: "toolCall" }, id: string, name: string, argumentsJson: string, signature: string },
     ["type", "id", "name", "argumentsJson"]);
 const part: Schema = {
@@ -27,6 +28,7 @@ const part: Schema = {
         toolCall,
         object({ type: { const: "toolResult" }, callId: string, content: string, isError: boolean },
             ["type", "callId", "content"]),
+        providerState,
     ],
 };
 const usage = object({
@@ -45,7 +47,10 @@ export const kRequestSchema = object({
     explicitCache: boolean,
     caching: boolean,
     maxOutputTokens: integer,
+    webSearch: boolean,
 }, ["model", "messages"]);
+
+const citation = object({ index: integer, url: string, title: string, quote: string }, ["index", "url", "title"]);
 
 export const kSchemas = {
     providersSetParams: object({
@@ -53,17 +58,22 @@ export const kSchemas = {
             type: "array",
             items: object({ id: string, preset: { type: "string", enum: kPresets }, wire: { type: "string", enum: kWires }, baseUrl: string }),
         },
-    }),
+        searchService: { type: "string", enum: kSearchServices },
+    }, ["providers"]),
     completeParams: object({ stream: integer, providerId: string, request: kRequestSchema },
         ["stream", "providerId", "request"]),
     modelsListParams: object({ providerId: string }, ["providerId"]),
     conversationEndParams: object({ providerId: string, cacheKey: string }, ["providerId", "cacheKey"]),
+    searchTestParams: object({ service: { type: "string", enum: kSearchServices } }),
     finished: object({
         reason: { type: "string", enum: ["end", "toolUse", "maxTokens", "refused"] },
         text: string,
         toolCalls: { type: "array", items: toolCall },
         usage,
-    }),
+        citations: { type: "array", items: citation },
+        searchSuggestions: string,
+        providerState,
+    }, ["reason", "text", "toolCalls", "usage"]),
     updateParams: object({
         stream: integer,
         update: {
@@ -72,6 +82,7 @@ export const kSchemas = {
                 object({ kind: { const: "toolCall" }, index: integer, id: string, name: string }),
                 object({ kind: { const: "toolArguments" }, index: integer, delta: string }),
                 object({ kind: { const: "usage" }, usage }),
+                object({ kind: { const: "citation" }, citation }),
             ],
         },
     }),

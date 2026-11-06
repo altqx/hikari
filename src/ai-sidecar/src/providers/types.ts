@@ -13,15 +13,32 @@ export interface ProviderConfig {
     baseUrl: string;
 }
 
+export const kSearchServices = ["brave", "tavily", "exa", "firecrawl"] as const;
+export type SearchService = typeof kSearchServices[number];
+
 export interface ProvidersSetParams {
     providers: ProviderConfig[];
+    /** The service that searches for providers without their own search; absent when web search is off or none is set. */
+    searchService?: SearchService;
 }
 
 export type Part =
     | { type: "text"; text: string }
     | { type: "image"; mediaType: string; base64: string }
     | ToolCall
-    | { type: "toolResult"; callId: string; content: string; isError?: boolean };
+    | { type: "toolResult"; callId: string; content: string; isError?: boolean }
+    | ProviderState;
+
+/**
+ * An assistant message's content as the provider sent it, which goes back in its place on the same wire: the server
+ * tool parts Gemini needs back as they were, and Anthropic's search results.
+ */
+export interface ProviderState {
+    type: "providerState";
+    wire: Wire;
+    /** A JSON array of the wire's own parts or content blocks. */
+    json: string;
+}
 
 export interface ToolCall {
     type: "toolCall";
@@ -71,6 +88,8 @@ export interface Request {
      */
     caching?: boolean;
     maxOutputTokens?: number;
+    /** Offers the provider's own web search and page reading, where it has them. */
+    webSearch?: boolean;
 }
 
 export interface CompleteParams {
@@ -105,18 +124,32 @@ export interface Usage {
 
 export type StopReason = "end" | "toolUse" | "maxTokens" | "refused";
 
+/** A source an answer cites; `index` numbers the sources of one completion from 1, in the order first cited. */
+export interface Citation {
+    index: number;
+    url: string;
+    title: string;
+    quote?: string;
+}
+
 export interface Finished {
     reason: StopReason;
     text: string;
     toolCalls: ToolCall[];
     usage: Usage;
+    citations?: Citation[];
+    /** Google's search suggestions as the HTML Gemini returned; its terms require showing them with the answer. */
+    searchSuggestions?: string;
+    /** Goes back in the assistant message's parts when the conversation continues. */
+    providerState?: ProviderState;
 }
 
 export type Update =
     | { kind: "text"; text: string }
     | { kind: "toolCall"; index: number; id: string; name: string }
     | { kind: "toolArguments"; index: number; delta: string }
-    | { kind: "usage"; usage: Usage };
+    | { kind: "usage"; usage: Usage }
+    | { kind: "citation"; citation: Citation };
 
 export interface UpdateParams {
     stream: number;
