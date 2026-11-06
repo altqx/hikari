@@ -17260,6 +17260,8 @@ private slots:
             {market + QStringLiteral("p/com.example.native/1.0.0.hikariplugin"),
              read(QStringLiteral("native-1.0.0-unrestricted.hikariplugin"))},
         };
+        for (const QString &name : QDir(fixtures + QStringLiteral("marketplace/m")).entryList(QDir::Files))
+            marketNetwork->files.insert(market + QStringLiteral("m/") + name, read(QStringLiteral("marketplace/m/") + name));
         app::Application::Options options;
         options.playbackAudio = false;
         options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
@@ -17267,6 +17269,7 @@ private slots:
         options.marketplace = {QUrl(market), {*hikari::minisign::parsePublicKey("RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X")}};
         options.marketplaceNetwork = marketNetwork.get();
         restartWith(options);
+        app::attachMarketplaceImages(*engine, *application->pluginMarketplace());
         if (sideloadHello) {
             QVERIFY(application->pluginManager()
                         ->review(QUrl::fromLocalFile(fixtures + QStringLiteral("hello-1.0.0.hikariplugin")))
@@ -17288,6 +17291,7 @@ private slots:
         QQuickItem *bar = nullptr;
         QTRY_VERIFY((bar = dialogItem("pluginManagerDialog", "pluginMoveBar")) && bar->isVisible());
         QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerView")->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginDetailsName")->property("truncated").toBool());
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginMove"), "click"));
         QQuickWindow *box = nullptr;
@@ -17303,8 +17307,24 @@ private slots:
         QCOMPARE(trust->property("text").toString(), QStringLiteral("From the marketplace"));
         QTRY_VERIFY(!dialogItem("pluginManagerDialog", "pluginMoveBar")->isVisible());
 
+        const auto mediaRequests = [&] {
+            return std::ranges::count_if(marketNetwork->requests, [](const QNetworkRequest &r) { return r.url().path().startsWith(QStringLiteral("/m/")); });
+        };
+        QCOMPARE(mediaRequests(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
         QCOMPARE(dialog->property("found").toList().size(), 3);
+        QTRY_VERIFY(std::ranges::none_of(dialogItem("pluginManagerDialog", "pluginManagerView")->findChildren<QQuickItem *>(),
+                                         [](QQuickItem *i) { return i->property("truncated").toBool(); }));
+        dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
+        QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketIcon")->property("shown").toBool());
+        QQuickItem *screenshot = nullptr;
+        QTRY_VERIFY((screenshot = dialogItem("pluginManagerDialog", "marketScreenshot")) &&
+                    screenshot->property("status").toInt() == 1);
+        QCOMPARE(screenshot->implicitWidth(), 398.0);
+        QVERIFY(std::ranges::all_of(marketNetwork->requests, [](const QNetworkRequest &r) {
+            return r.url().host() == QStringLiteral("marketplace.test") && r.rawHeaderList().size() == 1 && r.hasRawHeader("User-Agent");
+        }));
+        QVERIFY(mediaRequests() >= 2);
         dialog->setProperty("search", QStringLiteral("native"));
         QCOMPARE(dialog->property("found").toList().size(), 1);
         dialog->setProperty("chosenListingId", QStringLiteral("com.example.native"));
@@ -17403,6 +17423,10 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!box->isVisible());
         };
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         for (const auto code : ui::theme::kCodes) {
             settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(), ui::theme::current().roles.panel);
@@ -17417,6 +17441,8 @@ private slots:
 
             QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
             dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketIcon")->property("shown").toBool());
+            QTRY_COMPARE(dialogItem("pluginManagerDialog", "marketScreenshot")->property("status").toInt(), 1);
             QTest::qWait(400);
             QVERIFY(manager->grabWindow().save(out + QStringLiteral("/market-browse") + suffix));
             dialog->setProperty("chosenListingId", QStringLiteral("com.example.native"));
