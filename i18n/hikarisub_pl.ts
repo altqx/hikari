@@ -6709,6 +6709,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Dodaj notatkę QC</translation>
     </message>
     <message>
+        <source>Perspective tracking…</source>
+        <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7845,6 +7849,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Following lines, end at video</source>
         <translation>Następne linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>Stosuje dane śledzenia Power-Pin do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
         <source>Video details…</source>
@@ -16156,6 +16172,129 @@ Usunięte style:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>Czasy nie zostały wyśrodkowane w klatkach: nie otwarto wideo</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>Linijka %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>Linijki %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>Wklej dane Power-Pin wyeksportowane z After Effects lub Blendera. Zastosuj odczytuje cztery narożniki CC Power Pin.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>To nie są dane Power-Pin: nie znaleziono narożników CC Power Pin.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>Zaznacz linijki do śledzenia.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>Dane mają %n klatkę, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+            <numerusform>Dane mają %n klatki, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+            <numerusform>Dane mają %n klatek, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>Żadna zaznaczona linijka nie jest widoczna w klatce %1.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>Linijki nakładają się, ale linijka %1 nie jest widoczna w klatce %2. Wybierz klatkę, w której widać każdą linijkę, albo zastosuj je po jednej.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>Śledzono w rozdzielczości %1 × %2, ale wideo ma %3 × %4. Narożniki zostaną przeskalowane do wideo.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n klatka przy %1 fps, śledzona w %2 × %3. Obejmuje klatki zaznaczenia %4–%5.</numerusform>
+            <numerusform>%n klatki przy %1 fps, śledzone w %2 × %3. Obejmują klatki zaznaczenia %4–%5.</numerusform>
+            <numerusform>%n klatek przy %1 fps, śledzonych w %2 × %3. Obejmują klatki zaznaczenia %4–%5.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n klatka. Obejmuje klatki zaznaczenia %1–%2.</numerusform>
+            <numerusform>%n klatki. Obejmują klatki zaznaczenia %1–%2.</numerusform>
+            <numerusform>%n klatek. Obejmują klatki zaznaczenia %1–%2.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>Nie można śledzić jednej z linijek: nie da się zmierzyć jej tekstu albo płaszczyzna ją składa.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>Śledzenie perspektywy</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Dane Power-Pin</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>Względem klatki</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>z %1 · klatka wideo %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>Środek obrotu</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>Środek</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>Bez %1</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>Zachowaj</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>Najpierw dopasuj płaskie linijki do płaszczyzny</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>Przesuwaj wycinki razem z płaszczyzną</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>Skaluj obwódkę i cień</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>Płaszczyzna jest zapisywana w każdej linijce, dla narzędzia Perspektywa i skryptu Derive Perspective Track.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · klatki %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>
