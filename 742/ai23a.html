@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings AI web search</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.35 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:880px 880px; gap:18px 24px; align-items:start; width:1832px; }
+.col { display:flex; flex-direction:column; gap:18px; }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.cap b { color:var(--text); font-weight:600; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+
+.dlg { width:880px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:flex; flex-direction:column; overflow:hidden; }
+.dlg.fixed { height:592px; }
+.title { height:32px; display:flex; align-items:center; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); flex:none; }
+.title .sp { flex:1; }
+.title .x { width:40px; height:32px; display:flex; align-items:center; justify-content:center; }
+.main { display:flex; flex:1; min-height:0; }
+.side { width:220px; background:var(--bg); border-right:1px solid var(--line); padding-top:8px; flex:none; }
+.side .it { height:36px; display:flex; align-items:center; gap:12px; padding:0 12px 0 16px; position:relative; white-space:nowrap; }
+.side .it.on { background:var(--select); font-weight:700; }
+.side .it.on::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+.page { flex:1; min-width:0; padding:16px 24px 22px; overflow:hidden; position:relative; }
+.dlg.fixed .page::after { content:""; position:absolute; right:3px; top:8px; width:4px; height:120px; border-radius:2px; background:var(--control); opacity:.5; }
+.dlg.fixed .page.short::after { display:none; }
+.foot { height:52px; display:flex; align-items:center; gap:8px; padding:0 14px; border-top:1px solid var(--line); flex:none; }
+.foot .sp { flex:1; }
+
+.sec { border-top:1px solid var(--line); margin-top:12px; padding-top:12px; }
+.sec.first { border-top:0; margin-top:0; padding-top:0; }
+.sec > h3 { margin:0 0 10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.sec > h3 .sp { flex:1; }
+.sec > h3 .later { font-weight:400; font-size:11px; color:var(--muted); border:1px dashed var(--line); border-radius:9px; padding:0 7px; }
+.row { display:flex; align-items:center; gap:8px; min-height:28px; }
+.row + .row { margin-top:6px; }
+.row .lab { width:200px; flex:none; }
+.row .ctl { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+.note { color:var(--muted); font-size:12px; margin:3px 0 0 24px; max-width:600px; }
+.note.flush { margin-left:0; }
+.note.under { margin-left:208px; }
+.check { display:flex; align-items:center; gap:8px; min-height:24px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+.box.on { background:var(--accent); border-color:var(--accent); }
+.box.on::after { content:""; width:8px; height:4px; border-left:2px solid var(--onaccent); border-bottom:2px solid var(--onaccent); transform:rotate(-45deg) translate(1px,-1px); }
+.master { font-weight:600; }
+
+.btn { height:28px; padding:0 12px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.ib { width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.lnk { color:var(--accent); display:inline-flex; align-items:center; gap:4px; text-decoration:underline; text-underline-offset:2px; }
+.lnk svg .acc { stroke:var(--accent); }
+
+.field { height:28px; flex:1; min-width:0; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 8px; white-space:nowrap; overflow:hidden; }
+.field.focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.field .ph { color:var(--muted); }
+.field.mono, .mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+.field.dis { color:var(--disabled); border-color:var(--disabled); }
+.caret { display:inline-block; width:1px; height:15px; background:var(--text); margin-left:-4px; }
+.combo { height:28px; flex:1; min-width:0; max-width:420px; display:flex; align-items:center; gap:6px; background:var(--field); border:1px solid var(--control); border-radius:2px; padding:0 6px 0 8px; white-space:nowrap; }
+.combo .v { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.combo .via { color:var(--muted); }
+.combo.dis { color:var(--disabled); border-color:var(--disabled); }
+.combo.dis svg { opacity:.6; }
+.money { width:110px; flex:none; }
+.seg { display:inline-flex; border:1px solid var(--control); border-radius:2px; overflow:hidden; }
+.seg span { padding:0 12px; height:28px; display:inline-flex; align-items:center; border-right:1px solid var(--control); }
+.seg span:last-child { border-right:0; }
+.seg span.on { background:var(--select); font-weight:600; box-shadow:inset 0 -2px 0 var(--accent); }
+
+.plist { border:1px solid var(--line); border-radius:2px; }
+.prov { display:flex; align-items:center; gap:10px; padding:7px 6px 7px 10px; }
+.prov + .prov { border-top:1px solid var(--line); }
+.prov .who { flex:1; min-width:0; }
+.prov .nm { font-weight:600; }
+.prov .sub { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prov .st { font-size:12px; white-space:nowrap; text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
+.ok { color:var(--success); }
+.bad { color:var(--danger); }
+.warn { color:var(--warning); }
+.mut { color:var(--muted); }
+.dot { display:inline-block; width:8px; height:8px; border-radius:4px; margin-right:5px; vertical-align:0; }
+.dot.ok { background:var(--success); } .dot.bad { background:var(--danger); } .dot.mut { background:var(--muted); }
+.empty { padding:14px 12px; color:var(--muted); }
+.bar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.bar .sp { flex:1; }
+
+.form { border:1px solid var(--accent); border-radius:2px; padding:12px 12px 12px; background:var(--panel); }
+.form h4 { margin:0 0 10px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.form .row .lab { width:150px; }
+.form .note.under { margin-left:158px; }
+.notice { display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--raised); padding:8px 10px; margin-top:10px; font-size:12px; }
+.notice svg { margin-top:1px; }
+.prog { height:4px; background:var(--raised); border:1px solid var(--line); border-radius:2px; overflow:hidden; width:180px; }
+.prog i { display:block; height:100%; width:38%; background:var(--accent); }
+
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:320px; }
+.menu .mi { white-space:nowrap; }
+.menu .mi { height:30px; display:flex; align-items:center; gap:10px; padding:0 12px; }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+
+.kept { margin-top:14px; border:1px solid var(--line); border-radius:2px; padding:10px 12px; }
+.kept h4 { margin:0 0 6px; font-size:12px; color:var(--muted); font-weight:600; }
+.kept ul { margin:0; padding-left:18px; font-size:12px; }
+.kept li + li { margin-top:2px; }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+.agent + .agent { border-top:1px dashed var(--line); margin-top:10px; padding-top:10px; }
+.acct { display:flex; align-items:center; gap:8px; margin:6px 0 0 208px; min-height:28px; }
+.acct + .acct { margin-top:4px; }
+.form.sign { margin-top:10px; }
+.form p.lead { margin:0 0 10px; }
+.code { font:600 30px/1 "JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; letter-spacing:.14em; padding:9px 14px 9px 18px; border:1px solid var(--line); background:var(--field); border-radius:2px; }
+.busy svg { animation:none; }
+.busy { display:inline-flex; align-items:center; gap:6px; }
+.foot-line { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:12px; }
+.variant { border:1px dashed var(--line); border-radius:2px; padding:8px 10px; margin-top:12px; font-size:12px; }
+.variant h5 { margin:0 0 6px; font-size:11px; font-weight:600; color:var(--muted); }
+.notice.err { border-left-color:var(--danger); }
+.notice.wrn { border-left-color:var(--warning); }
+.notice .acts { display:flex; gap:8px; margin-top:8px; }
+.cut { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; margin:14px 0 10px; }
+.cut::before, .cut::after { content:""; flex:1; border-top:1px dashed var(--line); }
+.page.scr::after { top:330px !important; }
+code, .mono-i { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+.slist { border:1px solid var(--line); border-radius:2px; margin-top:10px; }
+.srow { display:flex; align-items:center; gap:8px; padding:6px 10px; font-size:12px; white-space:nowrap; }
+.srow + .srow { border-top:1px solid var(--line); }
+.srow .nm { width:190px; flex:none; font-weight:600; font-size:13px; }
+.dimt { color:var(--disabled); }
+.menu .mi .k { margin-left:auto; }
+.qs { grid-column:1 / -1; }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>Settings › AI · web search</h1><span>#742 AI23a design gate · <span id="tn">Dark</span> · Settings at its default size, 880 × 528 page area</span></div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>1 · Web search off.</b> The page is scrolled to the new Web search section, between Models and External agents. With the switch off, the rows below it are disabled.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5"/><path d="M8 1l2.5 1.5L8 4z" fill="currentColor"/><g class="acc"><path d="M8 5.5v5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page scr">
+            <div class="sec first">
+              <h3>Models<span class="sp"></span><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 0 1 9.25-3.75"/><path d="M12.75 3.25L13 5.5l-2.25-.25z" fill="currentColor"/><path d="M13.5 8a5.5 5.5 0 0 1-9.25 3.75"/><path d="M3.25 12.75L3 10.5l2.25.25z" fill="currentColor"/></svg>Refresh models</span></h3>
+              <div class="row"><span class="lab">Judge</span><span class="ctl"><span class="combo"><span class="v">Claude Haiku 5.5 <span class="via">· Anthropic</span></span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <p class="note flush">A role without its own model uses the chat model. Vision lists only models that read images.</p>
+            </div>
+            <div class="sec">
+              <h3>Web search</h3>
+              <div class="check ring-row"><span class="box ring"></span>Let AI search the web</div>
+              <p class="note">The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</p>
+              <div class="row" style="margin-top:10px"><span class="lab dimt">Search service</span><span class="ctl"><span class="combo dis"><span class="v">None</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <p class="note under dimt">For providers without their own search. Anthropic, Google Gemini and OpenRouter search without one.</p>
+            </div>
+            <div class="sec">
+              <h3>External agents</h3>
+              <div class="row"><span class="lab">Claude Code</span><span class="ctl"><span class="field mono">/home/you/.local/bin/claude</span><span class="btn">Choose…</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>2 · Turned on, no search service yet.</b> Each provider shows how it searches. Ollama has no search of its own, so it needs a service; the service menu is open.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5"/><path d="M8 1l2.5 1.5L8 4z" fill="currentColor"/><g class="acc"><path d="M8 5.5v5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page scr">
+            <div class="sec first">
+              <h3>Web search</h3>
+              <div class="check"><span class="box on"></span>Let AI search the web</div>
+              <p class="note">The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</p>
+              <div class="slist">
+                <div class="srow"><span class="nm">Anthropic</span><span class="ok">Its own search, and reads pages</span></div>
+                <div class="srow"><span class="nm">Google Gemini</span><span class="ok">Google Search, and reads pages</span></div>
+                <div class="srow"><span class="nm">OpenRouter</span><span class="ok">Its own search, and reads pages</span></div>
+                <div class="srow"><span class="nm">Ollama on this computer</span><span class="warn">Needs a search service</span></div>
+              </div>
+              <p class="note flush" style="margin-top:6px">Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</p>
+              <div class="row" style="margin-top:10px;position:relative"><span class="lab">Search service</span><span class="ctl"><span class="combo ring"><span class="v">None</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span>
+                <div class="menu" style="left:208px;top:32px;width:420px">
+                  <div class="mi hot">None<span class="k">Only providers with their own search</span></div>
+                  <div class="sepr"></div>
+                  <div class="mi">Brave Search<span class="k">Searches, reads pages it found</span></div>
+                  <div class="mi">Tavily<span class="k">Searches and reads pages</span></div>
+                  <div class="mi">Exa<span class="k">Searches and reads pages</span></div>
+                  <div class="mi">Firecrawl<span class="k">Searches and reads pages</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>3 · Brave Search chosen.</b> The key field opens under the menu. Test connection runs one search, which counts against the Brave plan.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5"/><path d="M8 1l2.5 1.5L8 4z" fill="currentColor"/><g class="acc"><path d="M8 5.5v5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page scr">
+            <div class="sec first">
+              <h3>Web search</h3>
+              <div class="check"><span class="box on"></span>Let AI search the web</div>
+              <div class="row" style="margin-top:10px"><span class="lab">Search service</span><span class="ctl"><span class="combo"><span class="v">Brave Search</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Brave Search key</span><span class="ctl"><span class="field mono focus"><span class="caret"></span><span class="ph">BSA…</span></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z"/><g class="acc"><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/></g></svg></span></span></div>
+              <p class="note under">Saved in the keychain. HikariSub sends only the search the agent writes, never your files. <span class="lnk">Get a key at brave.com<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg></span></p>
+              <div class="bar" style="margin-left:208px"><span class="mut"><span class="dot mut"></span>Not tested</span><span class="sp"></span><span class="btn dis">Test connection</span></div>
+              <div class="variant" style="margin-left:208px">
+                <h5>Tavily, Exa and Firecrawl show the same key row with their own name, key prefix and link.</h5>
+                <span class="mut">Brave returns page text only for its own results. The others can also read a page the agent names.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div>
+      <p class="cap"><b>4 · Brave Search connected.</b> Ollama now searches through Brave. Providers with their own search keep using it.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5"/><path d="M8 1l2.5 1.5L8 4z" fill="currentColor"/><g class="acc"><path d="M8 5.5v5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page scr">
+            <div class="sec first">
+              <h3>Web search</h3>
+              <div class="check"><span class="box on"></span>Let AI search the web</div>
+              <p class="note">The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</p>
+              <div class="slist">
+                <div class="srow"><span class="nm">Anthropic</span><span class="ok">Its own search, and reads pages</span></div>
+                <div class="srow"><span class="nm">Google Gemini</span><span class="ok">Google Search, and reads pages</span></div>
+                <div class="srow"><span class="nm">OpenRouter</span><span class="ok">Its own search, and reads pages</span></div>
+                <div class="srow"><span class="nm">Ollama on this computer</span><span class="ok">Brave Search</span></div>
+              </div>
+              <div class="row" style="margin-top:10px"><span class="lab">Search service</span><span class="ctl"><span class="combo"><span class="v">Brave Search</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Brave Search key</span><span class="ctl"><span class="ok" style="white-space:nowrap"><span class="dot ok"></span>Connected</span><span class="sp" style="flex:1"></span><span class="btn">Test connection</span><span class="btn">Remove key</span></span></div>
+              <p class="note under">The key is in the keychain. Providers charge for their own searches on top of tokens. Brave bills searches on your Brave plan.</p>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>5 · Errors on the key row,</b> each with its next step. Two states cut together: the key rejected, and the plan’s searches used up.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5"/><path d="M8 1l2.5 1.5L8 4z" fill="currentColor"/><g class="acc"><path d="M8 5.5v5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page scr">
+            <div class="sec first">
+              <h3>Web search</h3>
+              <div class="check"><span class="box on"></span>Let AI search the web</div>
+              <div class="row" style="margin-top:10px"><span class="lab">Search service</span><span class="ctl"><span class="combo"><span class="v">Brave Search</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span></span></div>
+              <div class="row"><span class="lab">Brave Search key</span><span class="ctl"><span class="bad"><span class="dot bad"></span>Key rejected (401)</span><span class="sp" style="flex:1"></span><span class="btn ring">Replace key…</span><span class="btn">Remove key</span></span></div>
+              <p class="note under">Brave refused the key. Paste a new one from your Brave dashboard.</p>
+              <div class="cut">Later, with a working key</div>
+              <div class="row"><span class="lab">Brave Search key</span><span class="ctl"><span class="warn"><span class="dot" style="background:var(--warning)"></span>Searches used up (429)</span><span class="sp" style="flex:1"></span><span class="btn">Test connection</span><span class="btn">Remove key</span></span></div>
+              <p class="note under">Your Brave plan has no searches left this month. Until it resets, Ollama answers without searching and says so in the panel.</p>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+
+    <div>
+      <p class="cap"><b>6 · Privacy,</b> at the end of the page. The line on where requests go names the search service once one is chosen.</p>
+      <div class="dlg fixed">
+        <div class="title">Settings<span class="sp"></span><span class="x"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></span></div>
+        <div class="main">
+          <div class="side"><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7 14.75 7.25 14.75 8.75 13 9 12.25 10.75 13.25 12.25 12.25 13.25 10.75 12.25 9 13 8.75 14.75 7.25 14.75 7 13 5.25 12.25 3.75 13.25 2.75 12.25 3.75 10.75 3 9 1.25 8.75 1.25 7.25 3 7 3.75 5.25 2.75 3.75 3.75 2.75 5.25 3.75 7 3 7.25 1.25 8.75 1.25 9 3 10.75 3.75 12.25 2.75 13.25 3.75 12.25 5.25z"/><circle cx="8" cy="8" r="2"/></svg>General</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><g class="acc"><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" stroke="none"/></g></svg>Appearance</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M4 6.5h5M4 9.5h7"/><g class="acc"><path d="M11.5 5v3"/></g></svg>Line editor</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></svg>Spelling and grammar</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 5.5h13M5.5 2.5v11"/><g class="acc"><path d="M7.5 8.25h5M7.5 10.75h3"/></g></svg>Grid</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="1"/><path d="M4.5 3v10 M11.5 3v10"/><path d="M1.5 6.25h3 M1.5 9.75h3 M14.5 6.25h-3 M14.5 9.75h-3"/></svg>Video</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7v2M4 5v6M6 6v4M8 4.5v7M10 6.5v3M12 5.5v5M14 7v2"/><path d="M14.5 6.5v3"/></svg>Audio</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8"/><path d="M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg>Conversion</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><path d="M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"/></svg>Script properties</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 14.5h-9V1.5h6l3 3z"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11"/></g></svg>Automation</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></svg>Shortcuts</div><div class="it on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>AI</div><div class="it"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5"/><path d="M8 1l2.5 1.5L8 4z" fill="currentColor"/><g class="acc"><path d="M8 5.5v5M6 8.5l2 2 2-2"/></g></svg>Updates and privacy</div></div>
+          <div class="page scr">
+            <div class="sec first">
+              <h3>Privacy</h3>
+              <div class="check"><span class="box on"></span>Use prompt caching</div>
+              <p class="note">The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</p>
+              <div class="row" style="margin-top:8px"><span class="lab">What is sent</span><span class="ctl"><span class="lnk">What is sent to providers<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg></span></span></div>
+              <p class="note under">Requests go only to the providers you add and to Brave Search. The AI component runs in a sandbox and reaches the network only through HikariSub.</p>
+              <div class="variant" style="margin-left:208px">
+                <h5>What is sent gains a Web search entry</h5>
+                <span class="mut">With web search on: the searches the agent writes and the addresses of pages it opens go to the provider, or to your search service for providers without their own. Results are kept only for that turn.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot"><span class="btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><g class="acc"><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></g></svg>Reset page</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="btn primary">OK</span><span class="btn">Cancel</span><span class="btn">Apply</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app’s own set: chevron-down, show, open-link, refresh. No new glyph.</span>
+    <span><b>Colours</b> are theme.cpp’s roles for this theme, default accent.</span>
+    <span><b>The providers, keys and states</b> are examples. The globe toggle, citations and Google’s suggestions in the agent panel are AI23b (#800).</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
