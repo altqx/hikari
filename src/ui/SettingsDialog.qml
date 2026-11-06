@@ -399,18 +399,16 @@ DialogWindow {
         required property string sizeSetting
         property string name
         spacing: 8
-        ComboBox {
+        FontFamilyBox {
             id: family
             objectName: "setting_" + fontRow.setting
-            editable: true
-            model: Qt.fontFamilies()
+            families: Qt.fontFamilies()
             Accessible.name: fontRow.name
             Layout.preferredWidth: 200
-            function refresh() { editText = dialog.values[fontRow.setting] ?? "" }
+            function refresh() { text = dialog.values[fontRow.setting] ?? "" }
             Component.onCompleted: refresh()
             Connections { target: dialog; function onReloaded() { family.refresh() } }
-            onActivated: dialog.put(fontRow.setting, currentText)
-            onAccepted: dialog.put(fontRow.setting, editText)
+            onPicked: name => dialog.put(fontRow.setting, name)
         }
         SpinBox {
             id: size

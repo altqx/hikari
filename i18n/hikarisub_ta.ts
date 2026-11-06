@@ -4331,6 +4331,14 @@ Failed to copy %2 fonts.</source>
         <source>Add fonts</source>
         <translation>எழுத்துருக்களைச் சேர்</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
