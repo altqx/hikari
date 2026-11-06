@@ -110,6 +110,7 @@ signals:
     // A changed program font closed the Select dialog.
     void selectLinesDestroyed();
     void quitApprovedChanged();
+    void lastUsedWindowChanged();
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
@@ -763,6 +764,8 @@ public:
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
+    // The window the API and forwarded launches act on: the one last used, never a hidden first window.
+    Q_PROPERTY(int lastUsedWindow READ lastUsedWindow NOTIFY lastUsedWindowChanged)
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
@@ -780,6 +783,17 @@ public:
     // The layout file keeps the active window's arrangement (ADR 0025).
     Q_INVOKABLE bool saveLayoutForQuit();
     Q_INVOKABLE void shellWindowClosed(int shellWindow);
+    // Rows as reviewClose's for the window's own tabs; finishClose() approves its close (ADR 0025).
+    Q_INVOKABLE QVariantList reviewCloseWindow(int shellWindow);
+    Q_INVOKABLE bool closeApproved(int shellWindow) const { return m_quitApproved || m_closeApproved == shellWindow; }
+    // Another shell window is open: closing this one closes only it, else it quits.
+    Q_INVOKABLE bool otherShellWindowOpen(int shellWindow) const;
+    // The first window closes for the user but stays the app-wide host (ADR 0025): its tabs close,
+    // it and its floating panels hide, and it leaves the Session until a Session opens it again.
+    Q_INVOKABLE void hideFirstWindow();
+    bool firstWindowHidden() const { return m_firstWindowHidden; }
+    int lastUsedWindow() const { return m_workspace.activeWindow(); }
+    QQuickWindow *lastUsedShellWindow() const { return shellQuickWindow(lastUsedWindow()); }
     // The window's current tab becomes the editing target.
     Q_INVOKABLE void activateShellWindow(int shellWindow);
     // tabs, currentTab and home of one shell window; the properties are the active window's.
@@ -1117,8 +1131,12 @@ private:
     void placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved);
     bool eventFilter(QObject *watched, QEvent *event) override;
     static std::optional<int> shellWindowOf(const QWindow *window);
-    // MUST KILL: closes a window's tabs without the close review until MW5 #629.
     void closeShellWindowDocuments(int shellWindow);
+    void forgetShellWindow(int shellWindow);
+    std::optional<int> otherUsableWindow(int besides) const;
+    void leaveShellWindow(int shellWindow);
+    void showFirstWindow();
+    void noteLastUsedWindow();
     ui::WorkspaceLayoutController &layoutOf(int shellWindow);
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();
@@ -1240,6 +1258,11 @@ private:
     std::vector<Closing> m_closing;
     int m_quitReviews = 0;
     bool m_quitApproved = false;
+    std::optional<int> m_closingWindow;
+    std::optional<int> m_closeApproved;
+    bool m_firstWindowHidden = false;
+    QList<QPointer<QWindow>> m_hiddenFloating;
+    int m_lastUsedWindow = 0;
     std::optional<application::StagedOpen> m_pendingOpen;
     QString m_pendingOpenPath;
     application::RecentFiles m_recent;

@@ -2433,6 +2433,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zamknij zakładkę</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>Usuń napisy z edytora</translation>
     </message>

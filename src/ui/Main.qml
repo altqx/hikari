@@ -154,17 +154,25 @@ ApplicationWindow {
             checkExternalChange()
     }
     // KDDW closes every panel before onClosing, so the close is reviewed here first (Docking.guardClose).
+    property bool admittingClose: false
     function admitClose() {
-        if (root.shellWindow !== 0)
-            return true
-        if (!root.app.quitApproved) {
-            const rows = root.app.reviewClose("quit")
+        if (!root.app.closeApproved(root.shellWindow)) {
+            const quits = !root.app.otherShellWindowOpen(root.shellWindow)
+            const rows = quits ? root.app.reviewClose("quit") : root.app.reviewCloseWindow(root.shellWindow)
             if (rows.length > 0) {
                 closeReview.review(rows)
                 return false
             }
+            root.admittingClose = true
+            root.app.finishClose()
+            root.admittingClose = false
+            if (!root.app.closeApproved(root.shellWindow))
+                return false
         }
-        root.app.saveLayoutForQuit()
+        if (root.shellWindow === 0 && !root.app.quitApproved) {
+            root.app.hideFirstWindow()
+            return false
+        }
         return true
     }
     onClosing: close => {
@@ -194,7 +202,7 @@ ApplicationWindow {
         function onCloseFinished(done, problem) {
             if (done) {
                 closeReview.close()
-                if (root.app.quitApproved)
+                if (root.app.closeApproved(root.shellWindow) && !root.admittingClose)
                     root.close()
             } else {
                 closeReview.fail(problem)
@@ -786,7 +794,7 @@ ApplicationWindow {
         objectName: "dialogUserGuide"
         sequences: root.hotkeys.globalShortcuts.filter(s => s.symbol === "GLOBAL_HELP").map(s => s.keys)
         context: Qt.ApplicationShortcut
-        enabled: !root.shellActive && root.workspaceLayout.focusWindow !== null
+        enabled: root.visible && !root.shellActive && root.workspaceLayout.focusWindow !== null
                  && root.workspaceLayout.focusWindow.guideId !== undefined
         onActivated: root.openUserGuide()
     }
@@ -1398,7 +1406,7 @@ ApplicationWindow {
     Shortcut {
         sequences: ["Shift+F10"]
         context: Qt.ApplicationShortcut
-        enabled: Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
+        enabled: root.visible && Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
         onActivated: Docking.requestKeyboardContextMenu()
     }
     function closeTab(index) {
@@ -1755,7 +1763,7 @@ ApplicationWindow {
                     objectName: "exitMenuItem"
                     action: Action {
                         text: qsTr("E&xit")
-                        onTriggered: root.close()
+                        onTriggered: root.beginClose("quit")
                     }
                 }
             }
@@ -6287,7 +6295,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             onRestartRequested: {
                 root.updates.installer.restartNow()
-                root.close()
+                root.beginClose("quit")
             }
         }
         InlineBar {
@@ -7720,24 +7728,29 @@ ApplicationWindow {
             return false
         return true
     }
+    readonly property bool servesApi: root.app.lastUsedWindow === root.shellWindow
+    onServesApiChanged: if (servesApi) root.serveApi()
+    function serveApi() {
+        root.app.apiHost.commandHandler = root.apiCommand
+        root.app.apiHost.panelHandler = root.apiPanels
+    }
     function connectApi() {
         const api = root.app.apiHost
-        api.commandHandler = root.apiCommand
-        api.panelHandler = root.apiPanels
+        if (root.servesApi)
+            root.serveApi()
         for (const symbols of [root.globalActions(), root.globalItems()])
             for (const symbol in symbols)
-                symbols[symbol].triggered.connect(() => api.commandRan(symbol, true))
+                symbols[symbol].triggered.connect(() => { if (root.servesApi) api.commandRan(symbol, true) })
         for (const dock of root.dockList) {
-            dock.isOpenChanged.connect(() => api.panelChanged(root.panelName(dock)))
-            dock.isFloatingChanged.connect(() => api.panelChanged(root.panelName(dock)))
+            dock.isOpenChanged.connect(() => { if (root.servesApi) api.panelChanged(root.panelName(dock)) })
+            dock.isFloatingChanged.connect(() => { if (root.servesApi) api.panelChanged(root.panelName(dock)) })
         }
     }
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
         root.applyMenuShortcuts()
-        if (root.shellWindow === 0)
-            root.connectApi()
+        root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
         root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
@@ -7989,7 +8002,7 @@ ApplicationWindow {
         }
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
-        case "GLOBAL_QUIT": root.close(); return true
+        case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
@@ -8200,7 +8213,7 @@ ApplicationWindow {
             Shortcut {
                 sequence: modelData.keys
                 context: Qt.ApplicationShortcut
-                enabled: !root.menuHasKeys && !root.workspaceLayout.modalOpen
+                enabled: root.visible && !root.menuHasKeys && !root.workspaceLayout.modalOpen
                          && !root.hotkeys.macroTakenSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }

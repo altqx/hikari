@@ -39,6 +39,8 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `settings.set` | write | One setting, type-checked. |
 | `files.write` | write | Replaces a file granted for writing. |
 
+Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
+
 Lines are addressed by their stable Line id, never by row ([document model](document-model.md)). Times are milliseconds. In Translation mode `text` is the original text and `translation` the translated text.
 
 ## Writes
