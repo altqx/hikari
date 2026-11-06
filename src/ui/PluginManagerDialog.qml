@@ -243,7 +243,7 @@ DialogWindow {
                 id: gearButton
                 objectName: "pluginUpdateOptions"
                 visible: dialog.marketAvailable
-                iconRole: "settings"
+                iconRole: "plugin-update"
                 text: qsTr("Plugin updates")
                 onClicked: updatesPopover.openAt(gearButton, dialog.contentItem)
             }
@@ -491,7 +491,7 @@ DialogWindow {
                                         }
                                         Badge {
                                             visible: listed.modelData.unrestricted
-                                            iconRole: "notice-warning"
+                                            iconRole: "plugin-full-access"
                                             text: qsTr("Unrestricted")
                                         }
                                     }
@@ -579,7 +579,7 @@ DialogWindow {
                     }
                     Badge {
                         visible: market.listing.unrestricted
-                        iconRole: "notice-warning"
+                        iconRole: "plugin-full-access"
                         text: qsTr("Unrestricted")
                     }
                 }
@@ -911,7 +911,7 @@ DialogWindow {
             IconTextButton {
                 objectName: "pluginUpdate"
                 visible: details.offer.update.length > 0
-                iconRole: "check-updates"
+                iconRole: "plugin-update"
                 text: dialog.market && dialog.market.downloading === details.row.id ? qsTr("Downloading…")
                                                                                       : qsTr("Update to %1").arg(details.offer.update)
                 enabled: dialog.market && dialog.market.downloading.length === 0

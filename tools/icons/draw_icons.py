@@ -1151,7 +1151,6 @@ for card, roles in {
     "PL5 #417": ["network"],
     "PL6 #418": ["marketplace", "plugin-installed"],
     "PL7 #419": ["plugin-sandbox"],
-    "PL8 #420": ["plugin-full-access"],
 }.items():
     for role in roles:
         PENDING[role] = card
