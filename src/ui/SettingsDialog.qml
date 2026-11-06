@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -400,18 +399,16 @@ DialogWindow {
         required property string sizeSetting
         property string name
         spacing: 8
-        ComboBox {
+        FontFamilyBox {
             id: family
             objectName: "setting_" + fontRow.setting
-            editable: true
-            model: Qt.fontFamilies()
+            families: Qt.fontFamilies()
             Accessible.name: fontRow.name
             Layout.preferredWidth: 200
-            function refresh() { editText = dialog.values[fontRow.setting] ?? "" }
+            function refresh() { text = dialog.values[fontRow.setting] ?? "" }
             Component.onCompleted: refresh()
             Connections { target: dialog; function onReloaded() { family.refresh() } }
-            onActivated: dialog.put(fontRow.setting, currentText)
-            onAccepted: dialog.put(fontRow.setting, editText)
+            onPicked: name => dialog.put(fontRow.setting, name)
         }
         SpinBox {
             id: size
@@ -1729,7 +1726,7 @@ DialogWindow {
                         SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
                         SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
                         SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
-                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.") }
+                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }
                 }
             }
@@ -1737,7 +1734,7 @@ DialogWindow {
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
     }
 
-    FolderDialog {
+    FolderChooser {
         id: fontsFolderDialog
         objectName: "fontsFolderDialog"
         title: qsTr("Choose external font folder")
@@ -1748,7 +1745,7 @@ DialogWindow {
         }
     }
 
-    FileDialog {
+    FileChooser {
         id: legacyHotkeysFile
         objectName: "legacyHotkeysFile"
         title: qsTr("Import legacy shortcuts")

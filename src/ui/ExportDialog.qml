@@ -716,7 +716,7 @@ DialogWindow {
                 dialog.srv3Set(index, key, before)
         }
     }
-    FileDialog {
+    FileChooser {
         id: picker
         objectName: "exportPicker"
         fileMode: FileDialog.SaveFile

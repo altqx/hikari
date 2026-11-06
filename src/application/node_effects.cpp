@@ -390,8 +390,8 @@ struct Generated {
 class Evaluator {
 public:
     Evaluator(const Compiled &c, const node_layout::Line &line, std::u8string_view name, std::int64_t seed,
-              LuaNodePort *lua, Problems &problems)
-        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_problems(problems),
+              LuaNodePort *lua, std::atomic<bool> &luaStopped, Problems &problems)
+        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_luaStopped(luaStopped), m_problems(problems),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
     }
@@ -543,6 +543,7 @@ private:
     std::u8string_view m_name;
     std::int64_t m_seed;
     LuaNodePort *m_lua;
+    std::atomic<bool> &m_luaStopped;
     Problems &m_problems;
     Memo m_lineMemo;
 };
@@ -874,8 +875,14 @@ bool Evaluator::luaBatch(int node, const std::vector<Element> &elements, std::ve
         call.rows.push_back(std::move(row));
     }
     auto result = m_lua->run(call);
-    if (!result || result->size() != elements.size()) {
-        m_problems.add(n.graph->id, result ? "gave a wrong number of rows" : result.error());
+    if (!result) {
+        m_problems.add(n.graph->id, result.error().message);
+        if (result.error().stopsRun)
+            m_luaStopped = true;
+        return false;
+    }
+    if (result->size() != elements.size()) {
+        m_problems.add(n.graph->id, "gave a wrong number of rows");
         return false;
     }
     for (std::size_t i = 0; i < elements.size(); ++i) {
@@ -1017,13 +1024,16 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     std::vector<LineResult> results(lines.size());
     std::vector<std::atomic<std::int64_t>> nanos(compiled.emits.size());
     std::vector<std::atomic<std::size_t>> counts(compiled.emits.size());
+    std::atomic<bool> luaStopped = false;
     const auto work = [&](std::size_t i) {
+        if (luaStopped)
+            return;
         LineResult &r = results[i];
         Problems problems{r.problems, lines[i].source->id};
         for (const std::string &p : layoutProblems[i])
             problems.add({}, p);
-        Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, problems);
-        for (std::size_t k = 0; k < compiled.emits.size(); ++k) {
+        Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, luaStopped, problems);
+        for (std::size_t k = 0; k < compiled.emits.size() && !luaStopped; ++k) {
             const auto t0 = std::chrono::steady_clock::now();
             std::vector<Generated> out;
             const std::string key = options.cache ? cacheKey(compiled, static_cast<int>(k), lines[i], name) : "";
@@ -1093,6 +1103,12 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     for (std::size_t k = 0; k < compiled.emits.size(); ++k)
         run.emits.push_back({compiled.nodes[compiled.emits[k]].graph->id, counts[k].load(),
                              static_cast<double>(nanos[k].load()) / 1e9});
+    if (luaStopped) {
+        run.ran = false;
+        run.applied.clear();
+        run.lines.clear();
+        run.styles.clear();
+    }
     return finish();
 }
 

@@ -3,6 +3,7 @@ import { Tiktoken } from "js-tiktoken/lite";
 import o200k from "js-tiktoken/ranks/o200k_base";
 
 import type { Request, ToolDefinition, Wire } from "../../src/providers/types";
+import { kCatalogue } from "../../src/tools/catalogue";
 import { ToolSet, type HikariCalls } from "../../src/tools/toolset";
 import { WebSearch } from "../../src/tools/web";
 import { Harness, TestRelay } from "../providers/harness";
@@ -20,7 +21,7 @@ const kEnd: Record<Wire, string> = {
 };
 
 function upFront(): ToolDefinition[] {
-    const tools = new ToolSet(kNoHa1, [new WebSearch(new TestRelay(), () => "exa")]);
+    const tools = new ToolSet(kNoHa1, kCatalogue, [new WebSearch(new TestRelay(), () => "exa")]);
     return tools.list().map((t) => ({ name: t.name, description: t.description ?? "", parametersJson: JSON.stringify(t.inputSchema) }));
 }
 

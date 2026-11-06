@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <thread>
@@ -25,6 +27,8 @@ namespace {
 
 std::string g_mode = "ok";
 std::string g_buildId;
+int g_requiredApi = 1;
+Json g_initialize;
 int g_apiVersion = 0;
 std::string g_self;
 
@@ -103,14 +107,21 @@ int main(int argc, char **argv)
     _setmode(_fileno(stdin), _O_BINARY);
 #endif
     g_self = argv[0];
-    for (int i = 1; i + 1 < argc; i += 2) {
-        const std::string flag = argv[i];
+    std::vector<std::string> args(argv + 1, argv + argc);
+    if (args.size() == 1 && !args[0].starts_with("--")) {
+        std::ifstream bundle(args[0]);
+        args.assign(std::istream_iterator<std::string>(bundle), std::istream_iterator<std::string>());
+    }
+    for (std::size_t i = 0; i + 1 < args.size(); i += 2) {
+        const std::string &flag = args[i];
         if (flag == "--mode")
-            g_mode = argv[i + 1];
+            g_mode = args[i + 1];
         else if (flag == "--build-id")
-            g_buildId = argv[i + 1];
+            g_buildId = args[i + 1];
         else if (flag == "--api-version")
-            g_apiVersion = std::atoi(argv[i + 1]);
+            g_apiVersion = std::atoi(args[i + 1].c_str());
+        else if (flag == "--required-api")
+            g_requiredApi = std::atoi(args[i + 1].c_str());
     }
     if (g_mode == "sleep")
         sleepForever();
@@ -160,9 +171,16 @@ int main(int argc, char **argv)
         if (name == "initialize") {
             if (g_mode == "silent")
                 continue;
+            g_initialize = params ? *params : Json();
             respond(*id, Json::object({{"protocolVersion", g_mode == "old-protocol" ? 0 : 1},
-                                       {"hikariApiVersion", g_apiVersion}, {"buildId", g_buildId},
+                                       {"hikariApiVersion", g_apiVersion}, {"requiredApiVersion", g_requiredApi},
+                                       {"version", "9.9.9"}, {"buildId", g_buildId},
+                                       {"versions", Json::object({{"bun", "1.4.4"}, {"openai", "7.45.0"}})},
                                        {"capabilities", Json::object()}}));
+            continue;
+        }
+        if (name == "initialized") {
+            respond(*id, g_initialize);
             continue;
         }
         const Json arg = params ? *params : Json();

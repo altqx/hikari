@@ -49,6 +49,7 @@
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
+#include "hikari/backends/lua_node_helper.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -719,6 +720,8 @@ public:
     Q_INVOKABLE bool showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y);
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
+    // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
+    application::LuaNodePort &luaNodes();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -772,6 +775,10 @@ public:
     QVariantMap qmlProperties(int shellWindow = 0);
     // A further shell window on the engine of the first (ADR 0025); MW2 gives it the user-facing moves.
     QQuickWindow *openShellWindow(QQmlEngine &engine);
+    // Each shell window reports itself once loaded, so the Session can keep its geometry.
+    Q_INVOKABLE void shellWindowLoaded(QQuickWindow *window);
+    // The layout file keeps the active window's arrangement (ADR 0025).
+    Q_INVOKABLE bool saveLayoutForQuit();
     Q_INVOKABLE void shellWindowClosed(int shellWindow);
     // The window's current tab becomes the editing target.
     Q_INVOKABLE void activateShellWindow(int shellWindow);
@@ -1043,6 +1050,8 @@ private:
     bool m_selectLinesOpened = false;
     application::OptionsLists m_optionsLists;
     std::unique_ptr<AutomationShell> m_automation;
+    QString m_luaHelper;
+    std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     bool m_videoShowsTemplate = false;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
@@ -1095,9 +1104,17 @@ private:
         std::unique_ptr<WindowViews> views;
         std::unique_ptr<ui::WorkspaceLayoutController> layout;
         QPointer<QQuickWindow> window;
+        bool closing = false;
     };
     std::map<int, ShellWindow> m_shellWindows;
     int m_nextShellWindow = 1;
+    QPointer<QQuickWindow> m_firstWindow;
+    // MUST KILL: ~Application saves the Session again after the QQuickWindows are gone
+    std::map<int, application::SessionWindow> m_windowPlaces;
+    QQuickWindow *shellQuickWindow(int shellWindow) const;
+    std::vector<int> sessionWindows() const;
+    application::SessionWindow sessionWindow(int shellWindow);
+    void placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved);
     bool eventFilter(QObject *watched, QEvent *event) override;
     static std::optional<int> shellWindowOf(const QWindow *window);
     // MUST KILL: closes a window's tabs without the close review until MW5 #629.
@@ -1408,6 +1425,7 @@ private:
         std::optional<std::size_t> activeTab;
         std::vector<std::optional<application::StagedOpen>> staged;
         std::vector<std::pair<QDateTime, qint64>> stamps;
+        std::vector<application::SessionWindow> windows;
     };
     std::map<std::uint64_t, TabMedia> m_tabMedia;
     void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);

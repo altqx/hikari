@@ -1,5 +1,5 @@
 import { McpServer } from "./mcp/server";
-import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallParams, type InitializeParams,
+import { ErrorCode, kDeclaredMethods, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
     type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
@@ -9,12 +9,24 @@ import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./
 import type { SearchService, UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
 import type { OperationName, Operations } from "./tools/api.gen";
+import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
 import { WebSearch } from "./tools/web";
 
 export interface Build {
     buildId: string;
     hikariApiVersion: number;
+    version: string;
+    /** The bundled packages' versions. */
+    packages: Record<string, string>;
+}
+
+function isReference(value: unknown): value is Reference {
+    if (typeof value !== "object" || value === null)
+        return false;
+    const { operations, $defs } = value as Partial<Reference>;
+    return Array.isArray(operations) && operations.every((op) => typeof op?.name === "string" && typeof op.params === "object")
+        && typeof $defs === "object" && $defs !== null;
 }
 
 /** Hikari's tools: every call goes into HA1's `Api::call` in Qt. */
@@ -45,8 +57,9 @@ async function wire<T>(work: () => T | Promise<T>): Promise<T> {
 export class Sidecar {
     readonly api: HikariApi;
     readonly providers: ProviderService;
-    readonly tools: ToolSet;
+    tools: ToolSet;
     readonly web: WebSearch;
+    catalogue: Catalogue = kCatalogue;
     readonly mcp: McpServer;
     private initialized = false;
 
@@ -55,9 +68,9 @@ export class Sidecar {
         const options = providers ?? { relay: new LinkRelay(peer) };
         this.providers = new ProviderService(options);
         this.web = new WebSearch(options.relay, () => this.providers.searchService);
-        this.tools = new ToolSet(this.api, [this.web]);
+        this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
-            { name: "hikarisub", title: "HikariSub", version: build.buildId });
+            { name: "hikarisub", title: "HikariSub", version: build.buildId }, () => this.catalogue);
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         for (const method of kDeclaredMethods)
             this.handle(method, () => {
@@ -103,11 +116,20 @@ export class Sidecar {
         const p = (params ?? {}) as Partial<InitializeParams>;
         if (typeof p.protocolVersion !== "number")
             throw new RpcError(ErrorCode.invalidParams, "initialize needs protocolVersion");
+        if (p.hikariApi !== undefined) {
+            if (!isReference(p.hikariApi))
+                throw new RpcError(ErrorCode.invalidParams, "initialize's hikariApi isn't an HA1 reference");
+            this.catalogue = new Catalogue(p.hikariApi);
+            this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
+        }
         this.initialized = true;
         return {
             protocolVersion: kProtocolVersion,
             hikariApiVersion: this.build.hikariApiVersion,
+            requiredApiVersion: kRequiredApiVersion,
+            version: this.build.version,
             buildId: this.build.buildId,
+            versions: { bun: Bun.version, ...this.build.packages },
             capabilities: {},
         };
     }

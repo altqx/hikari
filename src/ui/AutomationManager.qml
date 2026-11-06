@@ -896,7 +896,7 @@ Pane {
             return qsTr("%1 s").arg(s < 10 ? s.toFixed(1) : Math.round(s))
         return qsTr("%1 min %2 s").arg(Math.floor(s / 60), Math.round(s % 60))
     }
-    Dialogs.FileDialog {
+    FileChooser {
         id: saveDialog
         objectName: "runLogSaveDialog"
         title: qsTr("Save the run’s log")

@@ -3,6 +3,7 @@
 #include "hikari/api/json.h"
 #include "hikari/minisign/minisign.h"
 #include "hikari/plugins/manifest.h"
+#include "hikari/plugins/registry.h"
 
 #include <cstdint>
 #include <expected>
@@ -95,6 +96,11 @@ std::optional<std::string> listedPackageProblem(const ListedVersion &listed, std
 // another author key than the listing's or the one pinned at first install.
 std::optional<std::string> listedManifestProblem(const Listing &listing, const ListedVersion &listed, const Manifest &manifest,
                                                  const std::optional<minisign::PublicKey> &pinned);
+
+// Why the installed `version` of `listing` must be turned off, with the version to offer instead
+// (the newest one this HikariSub can run that isn't revoked; "" when there's none, or when the whole
+// plugin is revoked); nullopt when it may run.
+std::optional<Revoked> revocation(const Listing &listing, std::string_view version, std::int64_t apiVersion);
 
 // The highest index serial HikariSub has accepted, kept in <user folder>/marketplace.json; 0 when none.
 std::int64_t loadHighestSerial(const std::filesystem::path &file);

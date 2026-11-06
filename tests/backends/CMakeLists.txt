@@ -128,6 +128,16 @@ target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua")
 add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper hikari_automation_stage)
 
+add_executable(hikari_fake_lua_node_helper fake_lua_node_helper.cpp)
+target_link_libraries(hikari_fake_lua_node_helper PRIVATE hikari_lua_protocol)
+hikari_add_gtest(hikari_backends_lua_node_helper_tests SOURCES lua_node_helper_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_lua_node_helper_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_FAKE_LUA_NODE_HELPER="$<TARGET_FILE:hikari_fake_lua_node_helper>"
+    HIKARI_KARAOKE_PRESET_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-presets")
+add_dependencies(hikari_backends_lua_node_helper_tests hikari_lua_helper hikari_fake_lua_node_helper)
+
 hikari_add_gtest(hikari_backends_karaoke_templater_tests SOURCES karaoke_templater_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_karaoke_templater_tests PRIVATE
@@ -461,20 +471,24 @@ if(HIKARI_AI_SIDECAR)
         LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends ai-sidecar)
     target_include_directories(hikari_backends_ai_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
     target_compile_definitions(hikari_backends_ai_tools_tests PRIVATE
-        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+        HIKARI_AI_RUNTIME_FILE="${HIKARI_AI_RUNTIME_FILE}" HIKARI_AI_BUNDLE_FILE="${HIKARI_AI_BUNDLE_FILE}"
+        HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_backends_ai_tools_tests hikari_ai_sidecar)
     hikari_add_gtest(hikari_backends_ai_relay_sidecar_tests SOURCES ai_relay_sidecar_tests.cpp
         LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends ai-sidecar)
     target_compile_definitions(hikari_backends_ai_relay_sidecar_tests PRIVATE
-        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+        HIKARI_AI_RUNTIME_FILE="${HIKARI_AI_RUNTIME_FILE}" HIKARI_AI_BUNDLE_FILE="${HIKARI_AI_BUNDLE_FILE}"
+        HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_backends_ai_relay_sidecar_tests hikari_ai_sidecar)
     hikari_add_gtest(hikari_backends_ai_mcp_tests SOURCES ai_mcp_tests.cpp
         LIBRARIES hikari_ai hikari_core Qt6::Core Qt6::Network LABELS backends ai-sidecar)
     target_include_directories(hikari_backends_ai_mcp_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
     target_compile_definitions(hikari_backends_ai_mcp_tests PRIVATE
-        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+        HIKARI_AI_RUNTIME_FILE="${HIKARI_AI_RUNTIME_FILE}" HIKARI_AI_BUNDLE_FILE="${HIKARI_AI_BUNDLE_FILE}"
+        HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_backends_ai_mcp_tests hikari_ai_sidecar)
 endif()
-hikari_add_gtest(hikari_backends_ai_sidecar_download_tests SOURCES ai_sidecar_download_tests.cpp
-    LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
-target_include_directories(hikari_backends_ai_sidecar_download_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
+hikari_add_gtest(hikari_backends_ai_sidecar_updater_tests SOURCES ai_sidecar_updater_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::CorePrivate Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
+target_include_directories(hikari_backends_ai_sidecar_updater_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

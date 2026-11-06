@@ -11,6 +11,10 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <QSet>
+
+#include <functional>
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -61,6 +65,7 @@ public:
     // By installed id: {update: a newer listed version for a marketplace install, else "", move: true for a file
     // install the marketplace lists with the same author key}.
     QVariantMap offers() const { return m_offers; }
+    // Updates waiting for consent, plus newer versions that won't install automatically.
     int updates() const { return m_updates; }
     QString downloading() const { return m_downloading; }
 
@@ -70,14 +75,24 @@ public:
     void start();
     // Downloads the newest version `id` can run and reports the review through reviewed().
     Q_INVOKABLE void download(const QString &id);
+    // Drops the update that waits for consent; automatic updates pass over its version.
+    Q_INVOKABLE void keepCurrent(const QString &id);
+    // download() for the version the marketplace offers instead of a revoked one.
+    Q_INVOKABLE void installLastGood(const QString &id);
     // Opens the listing's source repository; only https links open.
     Q_INVOKABLE bool openSource(const QString &id) const;
+    // Updates wait while `busy` says the plugin is running a command or an event; pluginIdle() applies them.
+    void setBusy(std::function<bool(const QString &)> busy) { m_busy = std::move(busy); }
+    void pluginIdle(const QString &id);
 
 signals:
     void changed();
     void downloadingChanged();
     // PluginManager::reviewListed's answer; install with PluginManager::install.
     void reviewed(const QVariantMap &review);
+    // The marketplace revoked the installed version, or the whole plugin when `lastGood` is "", so it was turned off.
+    void revoked(const QString &id, const QString &name, const QString &version, const QString &reason,
+                 const QString &lastGood);
 
 private:
     QNetworkReply *get(const QUrl &url, qint64 limit);
@@ -86,6 +101,11 @@ private:
     void rebuild();
     void schedule();
     bool sameOrigin(const QUrl &url) const;
+    bool automaticUpdates() const;
+    void offer(const QString &id, const QString &version, bool allowDowngrade);
+    void revoke();
+    void queueUpdates();
+    void nextUpdate();
 
     PluginManager &m_manager;
     ui::SettingsStore *m_settings;
@@ -98,6 +118,11 @@ private:
     QPointer<QNetworkReply> m_indexReply;
     QPointer<QNetworkReply> m_signatureReply;
     QPointer<QNetworkReply> m_packageReply;
+    QPointer<QNetworkReply> m_updateReply;
+    std::function<bool(const QString &)> m_busy;
+    QStringList m_queue;
+    QSet<QString> m_triedThisIndex;
+    std::map<QString, plugins::InstallReview> m_waiting;
     std::optional<plugins::MarketIndex> m_index;
     QString m_status;
     QString m_problem;

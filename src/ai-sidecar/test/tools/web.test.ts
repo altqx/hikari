@@ -6,6 +6,7 @@ import { kKeyPlaceholder, type Relay, type RelayRequest, type RelayResponse } fr
 import type { SearchService } from "../../src/providers/types";
 import { Peer } from "../../src/rpc";
 import { Sidecar } from "../../src/sidecar";
+import { kCatalogue } from "../../src/tools/catalogue";
 import { ToolSet, type HikariCalls } from "../../src/tools/toolset";
 import { WebSearch } from "../../src/tools/web";
 import { waitFor } from "../providers/mock";
@@ -179,7 +180,7 @@ describe("WebSearch", () => {
 describe("ToolSet with web search", () => {
     test("search_tools finds the web group only while a service is chosen", async () => {
         const { search, choose } = web(undefined, { [kSearchAnswers.exa[0]]: kSearchAnswers.exa[1] });
-        const tools = new ToolSet(kNoHa1, [search]);
+        const tools = new ToolSet(kNoHa1, kCatalogue, [search]);
         const enumOf = () => (tools.list().find((t) => t.name === "search_tools")!.inputSchema as any).properties.group.enum;
         expect(enumOf()).not.toContain("web");
         expect(tools.list(true).map((t) => t.name)).not.toContain("web_search");
@@ -212,7 +213,7 @@ describe("the sidecar", () => {
             expect(await waitFor(() => sent.some((m) => m.id === mine))).toBe(true);
             return sent.find((m) => m.id === mine)!;
         };
-        new Sidecar(peer, { buildId: "test", hikariApiVersion: 1 }, { relay });
+        new Sidecar(peer, { buildId: "test", hikariApiVersion: 1, version: "0.0.0", packages: {} }, { relay });
         return { ask };
     }
 

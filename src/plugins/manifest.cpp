@@ -197,6 +197,22 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     return m;
 }
 
+PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next)
+{
+    PermissionIncrease more;
+    more.unrestricted = next.tier == Tier::Unrestricted && current.tier != Tier::Unrestricted;
+    more.allDocuments = next.permissions.allDocuments && !current.permissions.allDocuments;
+    for (const std::string &host : next.permissions.networkHosts)
+        if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
+            more.networkHosts.push_back(host);
+    for (const FileGrantRequest &request : next.permissions.files) {
+        const auto had = std::ranges::find(current.permissions.files, request.id, &FileGrantRequest::id);
+        if (had == current.permissions.files.end() || (request.writable && !had->writable))
+            more.files.push_back(request.id);
+    }
+    return more;
+}
+
 Permissions readPermissions(const Json &permissions)
 {
     const auto list = [](const Json *value) { return value && value->isArray() ? value->asArray() : Json::Array(); };

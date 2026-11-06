@@ -5,6 +5,7 @@
 #include "hikari/plugins/registry.h"
 
 #include <filesystem>
+#include <functional>
 #include <span>
 
 namespace hikari::plugins {
@@ -53,14 +54,20 @@ public:
                                                         std::optional<std::string_view> signature) const;
     // review() for a marketplace download, whose bytes already passed listedPackageProblem: the
     // marketplace's signed index vouches for the listing's author key, so no .minisig is needed.
-    // Refuses a package that isn't the listed one and any downgrade.
+    // Refuses a package that isn't the listed one, and a downgrade unless `allowDowngrade`.
     std::expected<InstallReview, InstallRefusal> reviewListed(std::vector<PackageFile> files, const Listing &listing,
-                                                              const ListedVersion &listed) const;
+                                                              const ListedVersion &listed, bool allowDowngrade = false) const;
 
     // Stages the files and swaps them in; pins the signer, keeps the enabled state and the
-    // grants the manifest still asks for, keeps plugin data and clears the cache. A review
-    // that needs re-trust is refused unless `retrusted`.
+    // grants the manifest still asks for, keeps plugin data and clears the cache. Another
+    // version's copy is kept in plugins/.previous/<id> for rollBack(). Installing over a
+    // revoked copy turns the plugin back on. A review that needs re-trust is refused unless `retrusted`.
     std::expected<void, std::string> install(const InstallReview &review, bool retrusted);
+    // Swaps the installed copy with the one kept by the last install; `skipLeft` makes automatic
+    // updates pass over the version left, otherwise the skip is cleared. Returns the version left.
+    std::expected<std::string, std::string> rollBack(std::string_view id, bool skipLeft);
+    // Changes the plugins.json entry only.
+    std::expected<void, std::string> edit(std::string_view id, const std::function<void(InstalledPlugin &)> &change);
     std::expected<void, std::string> setEnabled(std::string_view id, bool enabled);
     // The manifest of the installed copy.
     std::expected<Manifest, std::string> installedManifest(std::string_view id) const;
@@ -72,6 +79,7 @@ public:
 
 private:
     std::expected<InstallReview, InstallRefusal> open(std::vector<PackageFile> files) const;
+    std::filesystem::path previousFolder(std::string_view id) const;
 
     PluginFolders m_folders;
     std::int64_t m_apiVersion;

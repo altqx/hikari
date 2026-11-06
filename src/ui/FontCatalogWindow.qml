@@ -756,7 +756,7 @@ DialogWindow {
         }
     }
     // Qt reads the pattern from the filter's label.
-    Dialogs.FileDialog {
+    FileChooser {
         id: loadDialog
         objectName: "fontCatalogLoadDialog"
         title: qsTr("Choose font catalogue file")

@@ -44,6 +44,7 @@ private:
     QString m_endpointFile;
     backends::ai::McpEndpoint m_endpoint;
     std::unique_ptr<backends::ai::McpServer> m_server;
+    int m_busySource = 0;
 };
 
 }

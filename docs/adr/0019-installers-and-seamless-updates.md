@@ -18,3 +18,5 @@ Nothing is code-signed; SHA-256 from GitHub over HTTPS is the only integrity che
 Amended by [ADR-0021](0021-opt-in-offer-of-the-rewrite-to-legacy.md): no rewrite release names `legacy` in `offer_to`; legacy users are offered the rewrite opt-in through the manifest's `offer` member.
 
 Amended by [ADR-0027](0027-the-update-manifest-is-signed-with-minisign.md): `hikarisub-update.json` and `SHA256SUMS` are signed with minisign. HikariSub skips a release whose manifest signature is missing or bad, and installs no release without a manifest. The executables and installers stay unsigned.
+
+Amended by [ADR 0031](0031-the-ai-sidecar-updates-on-its-own.md): `hikarisub-update.json` no longer names the AI sidecar, which has its own signed manifest in the `ai-channel` release.

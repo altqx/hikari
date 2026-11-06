@@ -3,6 +3,7 @@
 #include "hikari/application/ai_providers.h"
 
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QUrl>
 #include <QVariantList>
@@ -16,7 +17,7 @@
 #include <vector>
 
 namespace hikari::backends::ai {
-class AiSidecarDownload;
+class AiSidecarUpdater;
 struct SignInFailure;
 struct SignInProgress;
 }
@@ -153,7 +154,7 @@ private:
         std::vector<application::ai::Model> models;
     };
     std::optional<Probed> m_probed;
-    std::unique_ptr<backends::ai::AiSidecarDownload> m_download;
+    QPointer<backends::ai::AiSidecarUpdater> m_download;
     bool m_describing = false;
     bool m_installing = false;
     bool m_installWanted = false;

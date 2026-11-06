@@ -98,4 +98,16 @@ api::Json settingValues(const Manifest &manifest, const api::Json &stored);
 // Semantic-version order; build metadata is ignored. Both must be valid versions.
 int compareVersions(std::string_view a, std::string_view b);
 
+// What `next` asks for that `current` doesn't: the unrestricted tier, every document, network
+// hosts, or folders (new ones, or ones that become writable).
+struct PermissionIncrease {
+    bool unrestricted = false;
+    bool allDocuments = false;
+    std::vector<std::string> networkHosts;
+    std::vector<std::string> files; // file request ids
+
+    bool any() const { return unrestricted || allDocuments || !networkHosts.empty() || !files.empty(); }
+};
+PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);
+
 }

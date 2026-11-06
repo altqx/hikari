@@ -4641,8 +4641,7 @@
    "legacy": [],
    "surfaces": [
     "plugin-manager"
-   ],
-   "pending": "PL6 #418"
+   ]
   },
   {
    "role": "plugin-installed",
@@ -4653,8 +4652,7 @@
    "legacy": [],
    "surfaces": [
     "plugin-manager"
-   ],
-   "pending": "PL6 #418"
+   ]
   },
   {
    "role": "plugin-full-access",

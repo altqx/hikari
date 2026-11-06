@@ -38,11 +38,15 @@ Item {
         dialog.open()
     }
 
+    property bool startsTheSession: true
+
     readonly property StartupOffer offer: StartupOffer {
         app: windows.app
         onRestoreRequested: windows.restoreStart()
     }
     Component.onCompleted: {
+        if (!windows.startsTheSession)
+            return
         const kind = windows.app.startupSession()
         if (kind === "load")
             Qt.callLater(() => {
@@ -54,7 +58,7 @@ Item {
         windows.offer.begin(kind === "load")
     }
 
-    FileDialog {
+    FileChooser {
         id: loadDialog
         objectName: "sessionLoadDialog"
         title: qsTr("Load session")
@@ -65,7 +69,7 @@ Item {
             windows.load(selectedFile)
         }
     }
-    FileDialog {
+    FileChooser {
         id: saveDialog
         objectName: "sessionSaveDialog"
         title: qsTr("Save session")
@@ -182,7 +186,7 @@ Item {
             relinkDialog.currentFolder = kept
         relinkDialog.open()
     }
-    FileDialog {
+    FileChooser {
         id: relinkDialog
         objectName: "relinkDialog"
         property int row: -1

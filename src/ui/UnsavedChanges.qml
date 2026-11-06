@@ -164,7 +164,7 @@ Item {
         settings: unsaved.settings
     }
 
-    FileDialog {
+    FileChooser {
         id: saveAs
         objectName: "closeSaveAs"
         property int row: -1
