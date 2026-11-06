@@ -6,6 +6,7 @@
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/regex/regex.h"
 #include "lua_native.h"
+#include "lua_nodes.h"
 
 extern "C" {
 #include <lauxlib.h>
@@ -2315,6 +2316,8 @@ int main()
             return run(in, r, request.payload.size(), RunMode::RunValidated);
         case lua::Command::Validate:
             return run(in, r, request.payload.size(), RunMode::Validate);
+        case lua::Command::RunNodes:
+            return hikari::lua_nodes::run(in, r, request.payload.size());
         }
         r.terminal(Outcome::Unsupported);
     });

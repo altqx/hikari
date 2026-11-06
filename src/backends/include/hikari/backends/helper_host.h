@@ -47,6 +47,8 @@ public:
                QObject *parent = nullptr);
     ~HelperHost() override;
 
+    // Called with the process just before it starts, e.g. to confine it with a sandbox::Launcher.
+    void setPrepare(std::function<void(QProcess &)> prepare) { m_prepare = std::move(prepare); }
     void start();
     State state() const { return m_state; }
     std::uint64_t session() const { return m_session; } // process-session generation
@@ -84,6 +86,7 @@ private:
 
     QString m_program;
     QStringList m_arguments;
+    std::function<void(QProcess &)> m_prepare;
     std::uint32_t m_version;
     Limits m_limits;
     QProcess m_process;

@@ -128,6 +128,16 @@ target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua")
 add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper hikari_automation_stage)
 
+add_executable(hikari_fake_lua_node_helper fake_lua_node_helper.cpp)
+target_link_libraries(hikari_fake_lua_node_helper PRIVATE hikari_lua_protocol)
+hikari_add_gtest(hikari_backends_lua_node_helper_tests SOURCES lua_node_helper_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_lua_node_helper_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_FAKE_LUA_NODE_HELPER="$<TARGET_FILE:hikari_fake_lua_node_helper>"
+    HIKARI_KARAOKE_PRESET_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-presets")
+add_dependencies(hikari_backends_lua_node_helper_tests hikari_lua_helper hikari_fake_lua_node_helper)
+
 hikari_add_gtest(hikari_backends_karaoke_templater_tests SOURCES karaoke_templater_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_karaoke_templater_tests PRIVATE

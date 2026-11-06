@@ -27,6 +27,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
     harper_client.cpp include/hikari/backends/harper_client.h
     plugin_process.cpp include/hikari/backends/plugin_process.h
+    lua_node_helper.cpp include/hikari/backends/lua_node_helper.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>
     $<$<PLATFORM_ID:Windows>:win_file_port.cpp> $<$<PLATFORM_ID:Windows>:win_file_reader.cpp>
@@ -37,13 +38,13 @@ target_sources(hikari_backends PRIVATE audio_box_player.cpp include/hikari/backe
     simulated_output.cpp include/hikari/backends/simulated_output.h)
 target_sources(hikari_backends PRIVATE qt_audio_devices.cpp include/hikari/backends/qt_audio_devices.h)
 target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol
-    hikari_plugin_protocol Qt6::Core
+    hikari_plugin_protocol hikari_sandbox Qt6::Core
     Qt6::Multimedia
     PRIVATE Hikari::media_deps Hikari::portaudio Hikari::soundtouch Hikari::uchardet Hikari::hunspell Hikari::mecab Boost::locale ICU::i18n ICU::uc ICU::data)
 # ICU and Boost.Locale link statically: no dllimport, no Boost auto-linking.
 target_compile_definitions(hikari_backends PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
 hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper_endpoint hikari_lua_protocol
-    hikari_plugin_protocol
+    hikari_plugin_protocol hikari_sandbox
     Hikari::media_deps
     Hikari::portaudio Hikari::soundtouch Hikari::uchardet Hikari::hunspell Hikari::mecab "Qt6::*")
 if(WIN32)

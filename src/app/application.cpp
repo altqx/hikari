@@ -624,8 +624,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 return made ? out : nullptr;
             });
     });
+    m_luaHelper = luaHelperPath(options.luaHelper);
     m_automation = std::make_unique<AutomationShell>(
-        AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir),
+        AutomationShell::Paths{m_luaHelper, automationPath(options.automationDir),
                                options.userAutomationDir},
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, *m_video,
@@ -1906,6 +1907,14 @@ Application::~Application()
     m_port->waitIdle();
     if (m_localisation)
         QGuiApplication::setFont(m_startFont);
+}
+
+application::LuaNodePort &Application::luaNodes()
+{
+    if (!m_luaNodes)
+        m_luaNodes = std::make_unique<backends::LuaNodeHelper>(
+            backends::LuaNodeHelper::Options{m_luaHelper, 10'000, backends::luaNodeProfile(m_luaHelper)});
+    return *m_luaNodes;
 }
 
 namespace {
