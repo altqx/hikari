@@ -72,7 +72,7 @@ qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.q
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml PluginWidget.qml PluginList.qml PluginCanvas.qml PluginPanelBody.qml
-    PluginDialog.qml)
+    PluginDialog.qml PluginFilePicker.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)

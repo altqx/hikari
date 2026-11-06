@@ -342,8 +342,9 @@ ScrollView {
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
-                Button {
+                IconTextButton {
                     objectName: "aiDraftTest"
+                    iconRole: "test-connection"
                     text: qsTr("Test connection")
                     enabled: !form.busy
                     onClicked: page.ai.testDraft(form.values())
@@ -523,8 +524,9 @@ ScrollView {
                                         color: Theme.muted
                                     }
                                 }
-                                Button {
+                                IconTextButton {
                                     objectName: "aiProviderTest"
+                                    iconRole: "test-connection"
                                     text: qsTr("Test connection")
                                     enabled: row.modelData.state !== "testing"
                                     onClicked: page.ai.test(row.modelData.id)
@@ -648,7 +650,12 @@ ScrollView {
                 Layout.leftMargin: 22
                 onClicked: page.ai.openWhatIsSent()
             }
-            Note { text: qsTr("Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.") }
+            Note {
+                objectName: "aiSandboxNote"
+                color: page.ai.sandboxed ? Theme.muted : Theme.warning
+                text: page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
+                                        : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+            }
         }
     }
 }

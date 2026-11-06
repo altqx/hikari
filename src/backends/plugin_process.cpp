@@ -206,6 +206,8 @@ void PluginProcess::onService(const helper::Event &event)
     switch (request.service) {
     case plugin::Service::Call:
     case plugin::Service::Ui:
+    case plugin::Service::Files:
+    case plugin::Service::Net:
     case plugin::Service::SetSetting:
         request.name = in.str();
         request.json = in.str();
@@ -252,7 +254,8 @@ void PluginProcess::onService(const helper::Event &event)
     };
     if (m_services)
         m_services(request, std::move(reply));
-    else if (request.service == plugin::Service::Call || request.service == plugin::Service::Ui)
+    else if (request.service == plugin::Service::Call || request.service == plugin::Service::Ui ||
+             request.service == plugin::Service::Files || request.service == plugin::Service::Net)
         reply(R"({"error": {"code": "unavailable", "message": "HikariSub offers no API here"}})");
     else
         reply({});

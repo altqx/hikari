@@ -2144,6 +2144,10 @@ Output device: %2</source>
         <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>ข้อความกำหนดเวลาของ YouTube (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>วิดีโอที่ฝังคำบรรยาย (*.mkv *.ogm)</translation>
     </message>
@@ -2170,6 +2174,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>นำเข้า %1 เป็นข้อความกำหนดเวลาของ YouTube ไม่ได้ %2 ไม่มีสิ่งใดถูกนำเข้า</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -9879,6 +9887,14 @@ Failed to copy %2 fonts.</source>
         <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: ปฏิเสธคำขอทุกรายการของปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>ปุ่มลัด (Hotkeys.txt)</translation>
     </message>
@@ -10366,8 +10382,16 @@ Failed to copy %2 fonts.</source>
         <translation>สิ่งที่ส่งไปยังผู้ให้บริการ</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+        <translation type="vanished">คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
 </context>
 <context>
@@ -10669,6 +10693,22 @@ Failed to copy %2 fonts.</source>
         <translation>สิทธิ์</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>โฟลเดอร์ที่จำไว้</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>ลืม</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>%1 จะถามอีกครั้งเมื่อต้องใช้โฟลเดอร์นี้ครั้งถัดไป</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>สิ่งที่เพิ่ม</translation>
     </message>
@@ -10803,6 +10843,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1 ขอโฟลเดอร์สำหรับอ่านและเขียน: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1 ขอโฟลเดอร์สำหรับอ่าน: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>จำโฟลเดอร์นี้ไว้สำหรับ %1</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>เลือกโฟลเดอร์…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: บันทึกไฟล์</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: เลือกไฟล์</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
 </context>
 <context>

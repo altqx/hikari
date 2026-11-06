@@ -2164,6 +2164,10 @@ Output device: %2</source>
         <translation>சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>YouTube நேரக் குறியிட்ட உரை (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>உள்பொதிந்த வசன வரிகளுடன் கூடிய வீடியோக்கள் (*.mkv *.ogm)</translation>
     </message>
@@ -2190,6 +2194,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>தலைப்பிடப்படாத</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>%1 ஐ YouTube நேரக் குறியிட்ட உரையாக இறக்குமதி செய்ய முடியவில்லை. %2 எதுவும் இறக்குமதி செய்யப்படவில்லை.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -9938,6 +9946,14 @@ Failed to copy %2 fonts.</source>
         <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: செருகுநிரலின் ஒவ்வொரு கோரிக்கையும் மறுக்கப்படும்.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>குறுக்குவிசைகள் (Hotkeys.txt)</translation>
     </message>
@@ -10430,8 +10446,16 @@ Failed to copy %2 fonts.</source>
         <translation>வழங்குநர்களுக்கு என்ன அனுப்பப்படுகிறது</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அணுகுகிறது.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
+        <translation type="vanished">கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -10733,6 +10757,22 @@ Failed to copy %2 fonts.</source>
         <translation>அனுமதிகள்</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>நினைவில் வைத்த கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>மற</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>அடுத்த முறை இந்தக் கோப்புறை தேவைப்படும்போது %1 மீண்டும் கேட்கும்</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>இது சேர்ப்பவை</translation>
     </message>
@@ -10869,6 +10909,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>படிக்கவும் எழுதவும் %1 ஒரு கோப்புறையைக் கேட்கிறது: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>படிக்க %1 ஒரு கோப்புறையைக் கேட்கிறது: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1-க்கு இந்தக் கோப்புறையை நினைவில் வை</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>கோப்புறையைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: கோப்பைச் சேமி</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: கோப்பைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
 </context>
 <context>

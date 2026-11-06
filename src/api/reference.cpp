@@ -2,6 +2,8 @@
 
 #include "hikari/api/nodes.h"
 #include "hikari/api/reference.h"
+#include "hikari/application/node_catalogue.h"
+#include "hikari/application/node_graph.h"
 
 #include <array>
 
@@ -16,9 +18,45 @@ bool NodeCatalogue::add(NodeType type)
     return true;
 }
 
+namespace {
+
+std::vector<NodePort> nodePorts(const std::vector<application::PortSpec> &ports)
+{
+    std::vector<NodePort> out;
+    for (const application::PortSpec &port : ports)
+        out.push_back({port.name, std::string(application::portTypeName(port.type))});
+    return out;
+}
+
+NodeCatalogue engineNodes()
+{
+    NodeCatalogue catalogue;
+    for (const application::NodeSpec &spec : application::nodeCatalogue())
+        catalogue.add({spec.id, spec.category, spec.summary, nodePorts(spec.inputs), nodePorts(spec.outputs),
+                       application::nodeFieldsSchema(spec), spec.since});
+    return catalogue;
+}
+
+Json problemsJson(const std::vector<application::GraphProblem> &problems)
+{
+    Json out = Json::array();
+    for (const application::GraphProblem &p : problems) {
+        Json entry = Json::object();
+        if (!p.node.empty())
+            entry["node"] = Json(p.node);
+        if (!p.port.empty())
+            entry["port"] = Json(p.port);
+        entry["message"] = Json(p.message);
+        out.push(std::move(entry));
+    }
+    return out;
+}
+
+}
+
 NodeCatalogue &nodeCatalogue()
 {
-    static NodeCatalogue catalogue;
+    static NodeCatalogue catalogue = engineNodes();
     return catalogue;
 }
 
@@ -148,6 +186,20 @@ void addNodeOperations(Registry &registry)
                          if (!category || *node.find("category") == *category)
                              nodes.push(node);
                      return Json::object({{"nodes", std::move(nodes)}});
+                 }));
+    addOperation(registry, Access::Read, "nodes.validate",
+                 "Checks a node-effect graph; each problem names its node and port or field.",
+                 R"({"type": "object", "properties": {"graph": {"type": "object"}}, "required": ["graph"],
+                     "additionalProperties": false})",
+                 R"({"type": "object", "properties": {"valid": {"type": "boolean"}, "problems": {"type": "array",
+                     "items": {"type": "object", "properties": {"node": {"type": "string"}, "port": {"type": "string"},
+                     "message": {"type": "string"}}, "required": ["message"], "additionalProperties": false}}},
+                     "required": ["valid", "problems"], "additionalProperties": false})",
+                 now([](const Context &, const Json &params) -> Result {
+                     const auto graph = application::graphFromJson(*params.find("graph"));
+                     const std::vector<application::GraphProblem> problems =
+                         graph ? application::validateGraph(*graph) : std::vector{graph.error()};
+                     return Json::object({{"valid", Json(problems.empty())}, {"problems", problemsJson(problems)}});
                  }));
 }
 

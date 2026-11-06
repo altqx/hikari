@@ -345,6 +345,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
+        {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.closedCompounds", "", Bool, Profile, Mapped, false, true},

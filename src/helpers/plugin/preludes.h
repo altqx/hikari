@@ -8,5 +8,7 @@ namespace hikari::plugin_helper {
 std::string_view documentPrelude();
 // ui.lua: hikari.panels and hikari.dialogs.
 std::string_view uiPrelude();
+// files.lua: hikari.files and hikari.net.
+std::string_view filesPrelude();
 
 }

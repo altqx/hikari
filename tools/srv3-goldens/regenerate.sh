@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Usage: tools/srv3-goldens/regenerate.sh [work-dir]. Rewrites tests/fixtures/export/srv3/golden with pinned
-# YTSubConverter on a pinned .NET 8 runtime. Needs curl, xz, xvfb-run and network access.
+# Usage: tools/srv3-goldens/regenerate.sh [work-dir]. Rewrites tests/fixtures/export/srv3/golden and
+# tests/fixtures/import/srv3/golden with pinned YTSubConverter on a pinned .NET 8 runtime. Needs curl, xz, xvfb-run
+# and network access.
 set -euo pipefail
 
 YTSC_VERSION=1.6.5
@@ -12,6 +13,7 @@ DOTNET_SHA512=639a17d84e4d52fecd62c7d4e528e7bc0ae3c9860de2530cb41a2ee7196b69ea18
 
 repo=$(cd "$(dirname "$0")/../.." && pwd)
 fixtures="$repo/tests/fixtures/export/srv3"
+imports="$repo/tests/fixtures/import/srv3"
 work=${1:-$(mktemp -d)}
 mkdir -p "$work"
 work=$(cd "$work" && pwd)
@@ -53,4 +55,9 @@ for input in "$work"/cases/*.ass; do
     convert "$work/ytsc-options" "$input" "$work/cases/$name.options.ytt"
     cmp -s "$fixtures/golden/$name.ytt" "$work/cases/$name.options.ytt" || cp "$work/cases/$name.options.ytt" "$fixtures/golden/$name.options.ytt"
 done
-echo "Goldens written to $fixtures/golden"
+rm -f "$imports"/golden/*.ass
+mkdir -p "$imports/golden"
+for input in "$fixtures"/golden/*.ytt "$imports"/inputs/*.ytt; do
+    convert "$work/ytsc" "$input" "$imports/golden/$(basename "$input" .ytt).ass"
+done
+echo "Goldens written to $fixtures/golden and $imports/golden"

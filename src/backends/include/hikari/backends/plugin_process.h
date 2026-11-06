@@ -34,11 +34,11 @@ public:
         plugin::Service service = plugin::Service::Notify;
         plugin::Level level = plugin::Level::Info; // Notify
         bool toast = false;                        // Notify
-        std::string name;                          // Call, Ui: operation; SetSetting: id; Subscribe: event
-        std::string json;                          // Call, Ui: params; SetSetting: value
+        std::string name;                          // Call, Ui, Files, Net: operation; SetSetting: id; Subscribe: event
+        std::string json;                          // Call, Ui, Files, Net: params; SetSetting: value
         std::string text;                          // Notify
     };
-    // Call and Ui answer the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
+    // Call, Ui, Files and Net answer the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
     // Unlock anything.
     using ServiceReply = std::function<void(std::string)>;
     using ServiceHandler = std::function<void(const ServiceRequest &, ServiceReply)>;
