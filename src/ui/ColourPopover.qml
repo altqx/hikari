@@ -14,6 +14,7 @@ Popup {
     property Item anchor: null
     property string title: ""
     property bool hasAlpha: true
+    property bool canClear: false
     property bool expanded: false
     // MUST KILL: mode is a magic int (0 RGB, 1 HSL, 2 HSV)
     property int mode: 0
@@ -47,6 +48,7 @@ Popup {
         target = owner
         title = o.title || ""
         hasAlpha = o.alpha !== false
+        canClear = o.clear === true
         returnFocus = o.focus || null
         anchor = anchorItem && anchorItem.visible ? anchorItem : null
         parent = anchor ? anchor : (anchorItem && anchorItem.Window.window ? anchorItem.Window.window.contentItem : anchorItem)
@@ -200,6 +202,11 @@ Popup {
             returnFocus.forceActiveFocus()
     }
     function accept() { finish(true) }
+    function clear() {
+        const owner = target
+        finish(true)
+        owner.clearColour()
+    }
     function reject() { finish(false) }
 
     modal: true
@@ -424,6 +431,13 @@ Popup {
                             ToolTip.text: qsTr("0 is opaque, 255 fully transparent")
                             onValueModified: popover.setAlpha(value)
                         }
+                    }
+                    Button {
+                        objectName: "colourNone"
+                        visible: popover.canClear
+                        Layout.alignment: Qt.AlignBottom
+                        text: qsTr("No colour")
+                        onClicked: popover.clear()
                     }
                 }
                 Button {
