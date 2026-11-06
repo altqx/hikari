@@ -36,7 +36,8 @@
           "published": "2026-11-01T10:00:00Z",
           "readme": "https://marketplace.test/readme.md",
           "description": "Says hello in the log, now in more languages.",
-          "changelog": "Greets in Polish and Korean."
+          "changelog": "Greets in Polish and Korean.",
+          "icon": "https://marketplace.test/m/hello.svg"
         },
         {
           "version": "1.0.0",
@@ -53,7 +54,8 @@
           "sha256": "6b4905c6166a99f21b6afd90536bd126ea0b29eb4cdfc16738bec4e8b2960892",
           "size": 426,
           "published": "2026-11-01T10:00:00Z",
-          "readme": "https://marketplace.test/readme.md"
+          "readme": "https://marketplace.test/readme.md",
+          "icon": "https://marketplace.test/m/hello.svg"
         }
       ]
     },
@@ -82,7 +84,8 @@
           "sha256": "903846244e451e6569f04587478a44f50a1d68906c64b722443cc100e2c76616",
           "size": 456,
           "published": "2026-11-01T10:00:00Z",
-          "readme": "https://marketplace.test/readme.md"
+          "readme": "https://marketplace.test/readme.md",
+          "icon": "https://marketplace.test/m/native.svg"
         }
       ]
     },
@@ -118,7 +121,16 @@
           "sha256": "6b4905c6166a99f21b6afd90536bd126ea0b29eb4cdfc16738bec4e8b2960892",
           "size": 426,
           "published": "2026-11-01T10:00:00Z",
-          "readme": "https://marketplace.test/readme.md"
+          "readme": "https://marketplace.test/readme.md",
+          "icon": "https://marketplace.test/m/glossary.svg",
+          "screenshots": [
+            {
+              "url": "https://marketplace.test/m/glossary-1.png",
+              "caption": "Definitions beside the grid",
+              "width": 1280,
+              "height": 720
+            }
+          ]
         }
       ]
     }
