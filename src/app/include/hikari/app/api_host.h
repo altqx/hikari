@@ -38,12 +38,13 @@ public:
         application::MacroMediaPort *media = nullptr;
         // The editing target's selection, as the Grid sets it.
         std::function<bool(application::Selection)> selectTarget;
-        std::function<void()> refresh;
+        std::function<void(application::DocumentId committed)> refresh;
         std::function<std::vector<std::string>(std::string_view command)> keys;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
 
     api::Api &api() { return m_api; }
+    application::AiReview &review() { return m_review; }
     void observe();
 
     QJSValue commandHandler() const { return m_commandHandler; }
@@ -77,6 +78,7 @@ private:
     QJSValue callPanels(std::string_view panel, const char *action) const;
 
     Wiring m_wiring;
+    application::AiReview m_review;
     api::Api m_api;
     QJSValue m_commandHandler;
     QJSValue m_panelHandler;

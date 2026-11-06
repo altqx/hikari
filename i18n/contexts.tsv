@@ -18,6 +18,7 @@ HikariSub.Matroska	Subtitles from Matroska files
 HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language
 HikariSub.Reports	Crash and freeze reports, their notices, and Report an issue (CR1)
 HikariSub.Reference	The protected reference panel and its tray
+HikariSub.Review	AI review: the Review panel, the Line editor strip, Keep, Undo, checkpoints and their commands (AI2)
 HikariSub.ScriptProperties	The script properties dialog
 HikariSub.Search	Find and replace: its panel, questions and results
 HikariSub.SelectLines	The Select lines dialog

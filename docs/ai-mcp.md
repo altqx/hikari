@@ -68,9 +68,10 @@ Replies are `application/json`, never SSE. A notification gets 202. The sidecar 
 
 `McpServer::callerFor` sets the caller for an MCP connection's calls:
 - the caller sees every open Document (`allDocuments`), as the user asked for when they turned the server on;
-- its label, which names undo steps, is the client's `title` or `name` from `clientInfo`.
+- its label, which names undo steps, is the client's `title` or `name` from `clientInfo`;
+- its edits wait in the review ([AI2 #430](https://github.com/altqx/hikari/issues/430), [AI review](ai-review.md)) as `reviewed`, in a turn of its own for each connection.
 
-**Writes are refused** with `refused`: "Edits through MCP arrive with the review." Until AI2's review ([#430](https://github.com/altqx/hikari/issues/430)) lands, MCP is read-only. Whichever of AI2 and AI3 merges second routes MCP writes into the review, under the mode for new threads.
+`document.apply` is the only write. Every other write is refused with `refused`: "Through MCP, only document.apply writes; its edits land in the review." The permission modes reach MCP with the agent panel ([AI7 #435](https://github.com/altqx/hikari/issues/435)).
 
 ## The link
 

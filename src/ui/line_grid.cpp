@@ -1046,6 +1046,30 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
     painter->restore();
 }
 
+void LineGrid::drawReviewMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const
+{
+    if (marks.size() < 2)
+        return;
+    text.replace(QLatin1Char('\t'), QLatin1Char(' '));
+    const QFontMetricsF metrics(painter->font());
+    const double top = cell.top() + (cell.height() - metrics.height()) / 2;
+    const QColor ink = theme::current().roles.success;
+    QColor fill = ink;
+    fill.setAlphaF(0.22F);
+    painter->save();
+    painter->setClipRect(cell, Qt::IntersectClip);
+    for (qsizetype m = 0; m + 1 < marks.size(); m += 2) {
+        const int start = marks[m].toInt(), end = marks[m + 1].toInt();
+        const double left = cell.x() + (start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0);
+        const double right = std::min(cell.x() + metrics.horizontalAdvance(text.left(end + 1)), cell.right());
+        if (left >= right)
+            continue;
+        painter->fillRect(QRectF(left, top, right - left, metrics.height()), fill);
+        painter->fillRect(QRectF(left, top + metrics.height() - 1, right - left, 1), ink);
+    }
+    painter->restore();
+}
+
 void LineGrid::paint(QPainter *painter)
 {
     const QRectF bounds = boundingRect();
@@ -1110,6 +1134,10 @@ void LineGrid::paint(QPainter *painter)
             drawLabel(painter, QRectF(columnLeft(widths, 0), top, widths[0], rh),
                       idx.data(LineTableModel::LineStateRole).toInt(), idx.data(LineTableModel::DraftRole).toBool(),
                       labelColours);
+        if (const int review = idx.data(LineTableModel::ReviewRole).toInt(); numberShown && review != 0)
+            painter->fillRect(QRectF(columnLeft(widths, 0), top, 3, rh),
+                              review == static_cast<int>(LineTableModel::ReviewState::EditedSince) ? roles.warning
+                                                                                                   : roles.accent);
         painter->setPen(comment ? commentInk(roles, compared.value_or(background)) : roles.text);
         if (fold == 1) {
             painter->save();
@@ -1142,6 +1170,8 @@ void LineGrid::paint(QPainter *painter)
                                   ? kGroupIndent * idx.data(LineTableModel::GroupDepthRole).toInt()
                                   : 0);
             if (mc == LineTableModel::TextColumn) {
+                drawReviewMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
+                                idx.data(LineTableModel::ReviewMarksRole).toList());
                 drawSpellMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                idx.data(LineTableModel::SpellMarksRole).toList());
                 if (comparison == 2 && !comparisonColours.isEmpty())

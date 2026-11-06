@@ -71,6 +71,7 @@
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
+#include "hikari/app/review_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 #include "audio_controller.h"
@@ -758,6 +759,7 @@ public:
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
+    ReviewController *review() const { return m_review.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
@@ -1045,6 +1047,7 @@ private:
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
+    std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;

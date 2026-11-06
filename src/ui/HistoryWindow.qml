@@ -9,6 +9,7 @@ DialogWindow {
     id: history
     objectName: "historyWindow"
     required property var editor
+    property QtObject review: null
     property string documentName: ""
     property var target: null
     property var selectedFor: null
@@ -67,33 +68,66 @@ DialogWindow {
                 required property string modelData
                 readonly property bool current: index === history.editor.historyCursor
                 readonly property bool undone: index > history.editor.historyCursor
+                readonly property bool reviewed: history.review !== null && history.review.on
+                readonly property bool ai: reviewed && history.review.isAiStep(index)
+                readonly property int turnBefore: reviewed ? history.review.turnBefore(index) : 0
                 width: ListView.view.width
                 highlighted: ListView.isCurrentItem
                 Accessible.name: current ? qsTr("%1, current").arg(modelData) : modelData
-                contentItem: RowLayout {
-                    spacing: 10
-                    Label {
-                        text: step.index + 1
-                        color: step.undone ? Theme.disabled : Theme.muted
-                        horizontalAlignment: Text.AlignRight
-                        Layout.preferredWidth: 22
-                    }
-                    Label {
-                        text: step.modelData
-                        font.bold: step.current
-                        color: step.undone ? Theme.disabled : Theme.text
-                        elide: Text.ElideRight
+                contentItem: ColumnLayout {
+                    spacing: 2
+                    RowLayout {
+                        objectName: "historyCheckpoint"
+                        visible: step.turnBefore > 0
+                        spacing: 6
                         Layout.fillWidth: true
+                        Icon {
+                            iconRole: "checkpoint"
+                            size: 12
+                            color: Theme.muted
+                            accentColor: Theme.muted
+                        }
+                        Label {
+                            text: qsTranslate("HikariSub.Review", "Before turn %1").arg(step.turnBefore)
+                            color: Theme.muted
+                            font: history.fontAt(11)
+                        }
+                        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
                     }
-                    Label {
-                        objectName: "historyCurrentTag"
-                        visible: step.current
-                        text: qsTr("Current")
-                        color: Theme.accent
-                        font: history.fontAt(11)
-                        leftPadding: 6
-                        rightPadding: 6
-                        background: Rectangle { color: "transparent"; border.color: Theme.accent; radius: 3 }
+                    RowLayout {
+                        spacing: 10
+                        Label {
+                            text: step.index + 1
+                            color: step.undone ? Theme.disabled : Theme.muted
+                            horizontalAlignment: Text.AlignRight
+                            Layout.preferredWidth: 22
+                        }
+                        Icon {
+                            objectName: "historyAiStep"
+                            visible: step.ai
+                            iconRole: "ai-assistant"
+                            size: 14
+                            color: step.undone ? Theme.disabled : IconTheme.normal
+                            accentColor: step.undone ? Theme.disabled : IconTheme.accent
+                            Accessible.name: qsTranslate("HikariSub.Review", "AI change")
+                        }
+                        Label {
+                            text: step.modelData
+                            font.bold: step.current
+                            color: step.undone ? Theme.disabled : Theme.text
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            objectName: "historyCurrentTag"
+                            visible: step.current
+                            text: qsTr("Current")
+                            color: Theme.accent
+                            font: history.fontAt(11)
+                            leftPadding: 6
+                            rightPadding: 6
+                            background: Rectangle { color: "transparent"; border.color: Theme.accent; radius: 3 }
+                        }
                     }
                 }
                 onClicked: historyList.currentIndex = index

@@ -139,6 +139,11 @@ public:
         m_lines.setChangeState(target);
         m_referenceLines.setChangeState(reference);
     }
+    void setReview(const LineTableModel::Review &target, const LineTableModel::Review &reference)
+    {
+        m_lines.setReview(target);
+        m_referenceLines.setReview(reference);
+    }
     void setSpelling(const LineTableModel::TagSpelling &spelling)
     {
         m_lines.setSpelling(spelling);
