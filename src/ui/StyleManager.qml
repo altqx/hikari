@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Styles"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -2019,7 +2018,7 @@ DialogWindow {
             onClicked: newCatalogPopover.create()
         }
     }
-    FileDialog {
+    FileChooser {
         id: loadDialog
         property bool toStore: false
         property Item anchor: null

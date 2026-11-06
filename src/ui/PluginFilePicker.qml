@@ -51,7 +51,7 @@ Item {
         })
     }
 
-    Dialogs.FileDialog {
+    FileChooser {
         id: files
         objectName: "pluginFileDialog"
         property var owner: null
@@ -67,7 +67,7 @@ Item {
         onRejected: if (owner) owner.reject()
     }
 
-    Dialogs.FolderDialog {
+    FolderChooser {
         id: folders
         objectName: "pluginFolderDialog"
         property var owner: null

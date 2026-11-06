@@ -54,7 +54,7 @@ Item {
         windows.offer.begin(kind === "load")
     }
 
-    FileDialog {
+    FileChooser {
         id: loadDialog
         objectName: "sessionLoadDialog"
         title: qsTr("Load session")
@@ -65,7 +65,7 @@ Item {
             windows.load(selectedFile)
         }
     }
-    FileDialog {
+    FileChooser {
         id: saveDialog
         objectName: "sessionSaveDialog"
         title: qsTr("Save session")
@@ -182,7 +182,7 @@ Item {
             relinkDialog.currentFolder = kept
         relinkDialog.open()
     }
-    FileDialog {
+    FileChooser {
         id: relinkDialog
         objectName: "relinkDialog"
         property int row: -1

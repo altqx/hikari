@@ -613,7 +613,7 @@ DialogWindow {
         }
     ]
     // Qt reads the pattern from the filter's label.
-    Dialogs.FileDialog {
+    FileChooser {
         id: installPicker
         objectName: "pluginInstallPicker"
         property string updating: ""
