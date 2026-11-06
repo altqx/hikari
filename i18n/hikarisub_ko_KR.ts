@@ -10499,6 +10499,10 @@ Failed to copy %2 fonts.</source>
         <translation>사용자 폴더의 plugins.json을 읽을 수 없습니다: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>다운로드한 파일이 마켓플레이스에 등록된 플러그인이 아닙니다: %1.</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>패키지가 매니페스트에 지정되지 않은 키로 서명되었습니다.</translation>
     </message>
@@ -10579,6 +10583,10 @@ Failed to copy %2 fonts.</source>
         <translation>중지됨</translation>
     </message>
     <message>
+        <source>From the marketplace</source>
+        <translation>마켓플레이스에서 설치</translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>확인</translation>
     </message>
@@ -10643,12 +10651,28 @@ Failed to copy %2 fonts.</source>
         <translation>활성 자막 파일 외에는 권한을 요청하지 않습니다.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>%1을(를) 신뢰할 때만 설치하세요. 이 플러그인은 컴퓨터에 대한 모든 권한을 갖습니다.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>%1이(가) 서명했고 마켓플레이스와 대조해 확인했습니다.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>신뢰하고 설치</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>모든 권한으로 설치</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>모든 플러그인은 작업 중인 문서를 읽고 편집할 수 있으며, 편집은 한 번에 실행 취소됩니다.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10677,6 +10701,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>플러그인 설치를 제거하지 못함</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>설치됨 %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>설치됨</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>마켓플레이스</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>업데이트 확인</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>플러그인 업데이트</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10713,6 +10757,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>전체 신뢰</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>플러그인 검색</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>모든 분류</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>분류</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>마켓플레이스를 불러오는 중…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>마켓플레이스에 아직 플러그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>검색과 일치하는 플러그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>마켓플레이스 플러그인</translation>
+    </message>
+    <message>
+        <source>Unrestricted</source>
+        <translation>제한 없음</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>%1(으)로 업데이트</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>설치</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>HikariSub %1 이상이 필요합니다. 설치하려면 HikariSub를 업데이트하세요.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>기본 권한 외에는 없음: 네트워크, 폴더, 다른 문서에 접근하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>%1의 새로운 점</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>필요</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 이상</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>라이선스</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>업데이트 날짜</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>소스</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1”이(가) 같은 키로 서명되어 마켓플레이스에 있습니다. 업데이트를 받으려면 마켓플레이스로 옮기세요.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>마켓플레이스로 옮기기</translation>
     </message>
     <message>
         <source>On</source>
@@ -10785,6 +10925,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install from file…</source>
         <translation>파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>플러그인 업데이트 확인</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>시작할 때와 하루에 한 번. HikariSub는 전체 목록을 내려받고, 어떤 플러그인이 있는지는 보내지 않습니다.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10893,6 +11041,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>마켓플레이스 목록이 마켓플레이스 키로 서명되지 않아 HikariSub가 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>마켓플레이스 서명이 다른 파일의 것이라 HikariSub가 목록을 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>마켓플레이스가 HikariSub가 이미 본 목록보다 오래된 목록을 보내 HikariSub가 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>마켓플레이스 목록을 읽지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub가 마켓플레이스에 연결하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1”은(는) 이 HikariSub용 마켓플레이스에 없습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>마켓플레이스가 자체 사이트 밖의 다운로드를 등록해 HikariSub가 가져오지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>플러그인을 다운로드하지 못했습니다: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>

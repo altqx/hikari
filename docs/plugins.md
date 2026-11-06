@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), and files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)).
+A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)), and browsing and installing from the marketplace (PL6, [#418](https://github.com/altqx/hikari/issues/418)). Automatic plugin updates follow.
 
 ## The package
 
@@ -53,7 +53,19 @@ An author signs the `.hikariplugin` file with minisign and ships the `.minisig` 
 - **First install.** A signature is checked against the manifest's `publicKey`, and that key is pinned in `plugins.json`. A package with a signature but no `publicKey` is refused.
 - **Update.** A signature is checked against the pinned key first. A signature by another key, valid against the new manifest's `publicKey`, needs the user to trust the new key; so does an unsigned package over a signed install. Re-trusting pins the new key, or none.
 - **Refused outright.** A signature that does not match the package or its trusted comment, whatever the user trusts.
-- **Unverified.** Every plugin installed from a file is a sideload and shows as unverified, signed or not; it never updates by itself. A signed one shows its key id, as minisign prints it (16 hex digits). Listed plugins, automatic updates, permission-increase consent, roll back and revocation come from the HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418)), which checks its signed index and then this same pinned author key.
+- **Unverified.** Every plugin installed from a file is a sideload and shows as unverified, signed or not; it never updates by itself. A signed one shows its key id, as minisign prints it (16 hex digits). Plugins from the [marketplace](#the-marketplace) are checked against its signed index instead, and then against this same pinned author key.
+
+## The marketplace
+
+The HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418)) lists plugins from [altqx/hikari-plugins](https://github.com/altqx/hikari-plugins). Its index is `https://marketplace.hikarisub.org/index.json`, signed by `index.json.minisig`. The index format is [docs/schemas/marketplace-index.schema.json](schemas/marketplace-index.schema.json), a copy of the registry's `schemas/index.schema.json`.
+
+- **The marketplace key.** The index must verify with the marketplace key, `EF622DD4D472E463`, compiled into HikariSub (`plugins::kMarketplaceKey`). It is not the release key that signs HikariSub's own updates.
+- **The trusted comment** must be `file:index.json serial:<serial> generated:<generated>`, matching the index's own fields, so a signature for another file or another index can't stand in.
+- **Rollback.** HikariSub keeps the highest serial it has accepted in `<user folder>/marketplace.json` and refuses a lower one.
+- **Privacy.** HikariSub downloads the whole index and never sends which plugins are installed: two GETs with no query string, no cookies and no cache. It shows icons and screenshots only from the marketplace's own origin.
+- **When.** At start and every 24 hours while "Check for plugin updates" (`plugins.checkUpdates`, on by default) is on, and whenever the Marketplace view or Check for updates asks.
+- **Install.** HikariSub downloads the listed version's `url`, which must be on the marketplace's origin and no larger than `size`. Then it checks `size` and `sha256`, runs the package checks, and checks that the manifest has the listed id, version, tier and API. The manifest's `publicKey` must be the listing's `publicKey` and, for an installed plugin, the pinned key. The marketplace packages carry no `.minisig`: the signed index vouches for the listing's author key. A downgrade is refused. The install question always opens first.
+- **Source.** `plugins.json` records `"source": "marketplace"` for a marketplace install; a missing `source` means a file. Installing from a file over a marketplace copy makes it a file install again.
 
 ## Folders and `plugins.json`
 
@@ -62,20 +74,23 @@ An author signs the `.hikariplugin` file with minisign and ships the `.minisig` 
 | `<user folder>/plugins/<id>/` | The installed files. An install stages them in `.staging-<id>` and swaps them in, so a failed install leaves the old copy. |
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
-| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants` and the `settings` a plugin or the user changed. |
+| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`. |
+| `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
 
 ## The plugin manager
 
-Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window: the installed plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu.
+Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu. Installed shows how many marketplace plugins have a newer version. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates".
 
-- **The list.** Each row shows the package icon, name, version and signer. It shows a state only when the plugin isn't simply running: Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
+- **The list.** Each row shows the package icon, name, version and signer (From the marketplace for a marketplace install). It shows a state only when the plugin isn't simply running: Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
 - **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off.
 - **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** A form built from `contributes.settings`: a check box for `boolean`, a field for `integer`, `number` and `string`, and a drop-down for `choice`. A change is kept at once, the same way `hikari.settings.set` keeps it, and a running plugin's `hikari.settings.get` sees it.
 - **Errors.** A plugin that didn't start, crashed or hit the time limit shows the error and its traceback, with Start again and Copy.
-- **Actions.** Install from file… for a new plugin, then per plugin Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
+- **Actions.** Install from file… for a new plugin, then per plugin Update to <version> (a marketplace install with a newer listed version), Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
+- **Move to the marketplace.** A file install whose id the marketplace lists, signed with the listing's author key and not newer than the listed version, offers "Move to the marketplace", which installs the listed version as a marketplace install, or "Not now".
+- **Marketplace.** Search matches name, summary and author, and the box narrows to one category. A listing shows the newest version this HikariSub can run, its description, screenshots, permissions, what it needs ("HikariSub <version> or later"), licence, last update and source. Install or Update to <version> downloads it and opens the install question, which says it was signed by the author and checked against the marketplace. A plugin with full access warns that it gets full access to the computer and asks for Install with full access.
 
 ## Running a plugin
 

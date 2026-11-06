@@ -4661,8 +4661,7 @@
    "legacy": [],
    "surfaces": [
     "plugin-manager"
-   ],
-   "pending": "PL8 #420"
+   ]
   },
   {
    "role": "plugin-sandbox",

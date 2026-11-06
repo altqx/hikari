@@ -1,0 +1,6 @@
+#include "hikari/plugins/marketplace.h"
+
+std::string_view hikari::plugins::marketplaceIndexSchema()
+{
+    return R"hikari-schema(@HIKARI_MARKETPLACE_SCHEMA@)hikari-schema";
+}

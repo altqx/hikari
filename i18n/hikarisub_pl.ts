@@ -10627,6 +10627,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie można odczytać pliku plugins.json w folderze użytkownika: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>Pobrany plik nie jest wtyczką z katalogu wtyczek: %1.</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>Pakiet jest podpisany kluczem, którego jego manifest nie podaje.</translation>
     </message>
@@ -10707,6 +10711,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zatrzymana</translation>
     </message>
     <message>
+        <source>From the marketplace</source>
+        <translation>Z katalogu wtyczek</translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>OK</translation>
     </message>
@@ -10771,12 +10779,28 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wtyczka nie prosi o uprawnienia wykraczające poza aktywny plik napisów.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>Zainstaluj ją tylko, jeśli ufasz: %1. Dostanie pełny dostęp do komputera.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>Podpisane przez: %1 i sprawdzone w katalogu wtyczek.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>Zaufaj i zainstaluj</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>Zainstaluj z pełnym dostępem</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>Każda wtyczka może czytać i zmieniać dokument, nad którym pracujesz, jako jeden krok cofania.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10805,6 +10829,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>Nie odinstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>Zainstalowane %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowane</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>Katalog wtyczek</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Sprawdź aktualizacje</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>Aktualizacje wtyczek</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10841,6 +10885,102 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Full trust</source>
         <translation>Pełne zaufanie</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>Szukaj wtyczek</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>Wszystkie kategorie</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategoria</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>Wczytywanie katalogu wtyczek…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>Katalog wtyczek nie zawiera jeszcze żadnych wtyczek.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>Żadna wtyczka nie pasuje do wyszukiwania.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>Wtyczki z katalogu</translation>
+    </message>
+    <message>
+        <source>Unrestricted</source>
+        <translation>Bez ograniczeń</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>Aktualizacja</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>Pobieranie…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>Zaktualizuj do %1</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>Wymaga HikariSub %1 lub nowszego. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>Nic ponad podstawy: bez sieci, folderów i innych dokumentów.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>Nowości w %1</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>Wymaga</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 lub nowszy</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>Licencja</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>Zaktualizowano</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>Źródło</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>„%1” jest w katalogu wtyczek, podpisana tym samym kluczem. Przenieś ją tam, aby dostawać aktualizacje.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>Przenieś do katalogu wtyczek</translation>
     </message>
     <message>
         <source>On</source>
@@ -10913,6 +11053,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Install from file…</source>
         <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>Sprawdzaj aktualizacje wtyczek</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>Przy uruchomieniu i raz dziennie. HikariSub pobiera całą listę i nigdy nie wysyła, jakie masz wtyczki.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -11025,6 +11173,38 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Details</source>
         <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>Lista katalogu wtyczek nie jest podpisana kluczem katalogu, więc HikariSub ją pominął.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>Podpis katalogu wtyczek dotyczy innego pliku, więc HikariSub pominął listę.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>Katalog wtyczek przysłał starszą listę niż ta, którą HikariSub już widział, więc HikariSub ją pominął.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>Nie można odczytać listy katalogu wtyczek: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub nie mógł połączyć się z katalogiem wtyczek: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>„%1” nie ma w katalogu wtyczek dla tej wersji HikariSub.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>Katalog wtyczek wskazuje plik spoza własnej witryny, więc HikariSub go nie pobierze.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>Nie można pobrać wtyczki: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>

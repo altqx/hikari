@@ -779,6 +779,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         refreshViews();
     });
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
+    m_pluginMarketplace = std::make_unique<PluginMarketplace>(
+        *m_pluginManager, m_settings.get(), options.marketplace,
+        options.plugins.registry.isEmpty() ? QString()
+                                           : QFileInfo(options.plugins.registry).dir().filePath(QStringLiteral("marketplace.json")),
+        options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.marketplaceNetwork);
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };

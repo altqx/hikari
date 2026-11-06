@@ -10499,6 +10499,10 @@ Failed to copy %2 fonts.</source>
         <translation>อ่าน plugins.json ในโฟลเดอร์ผู้ใช้ไม่ได้: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ใช่ปลั๊กอินที่มาร์เก็ตเพลสระบุไว้: %1</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>แพ็กเกจลงนามด้วยคีย์ที่แมนิเฟสต์ไม่ได้ระบุ</translation>
     </message>
@@ -10579,6 +10583,10 @@ Failed to copy %2 fonts.</source>
         <translation>หยุดแล้ว</translation>
     </message>
     <message>
+        <source>From the marketplace</source>
+        <translation>จากมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>ตกลง</translation>
     </message>
@@ -10643,12 +10651,28 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอินนี้ไม่ขอสิทธิ์ใดนอกเหนือจากไฟล์คำบรรยายที่ใช้งานอยู่</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>ติดตั้งเฉพาะเมื่อคุณเชื่อถือ %1 ปลั๊กอินนี้จะเข้าถึงคอมพิวเตอร์ของคุณได้เต็มที่</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>ลงนามโดย %1 และตรวจสอบกับมาร์เก็ตเพลสแล้ว</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>เชื่อถือและติดตั้ง</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>ติดตั้งพร้อมสิทธิ์เต็ม</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>ปลั๊กอินทุกตัวอ่านและแก้ไขเอกสารที่คุณทำงานอยู่ได้ โดยเลิกทำได้ในขั้นเดียว</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10677,6 +10701,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>ติดตั้งแล้ว %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>มาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>ตรวจหาอัปเดต</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>อัปเดตปลั๊กอิน</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10713,6 +10757,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>เชื่อถือเต็มที่</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>ค้นหาปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>ทุกหมวดหมู่</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>หมวดหมู่</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>กำลังโหลดมาร์เก็ตเพลส…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>มาร์เก็ตเพลสยังไม่มีปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>ไม่มีปลั๊กอินที่ตรงกับการค้นหา</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>ปลั๊กอินในมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Unrestricted</source>
+        <translation>ไม่จำกัดสิทธิ์</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>อัปเดต</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>กำลังดาวน์โหลด…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>อัปเดตเป็น %1</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>ต้องใช้ HikariSub %1 ขึ้นไป อัปเดต HikariSub เพื่อติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>ไม่มีสิทธิ์เกินพื้นฐาน: ไม่ใช้เครือข่าย ไม่ใช้โฟลเดอร์ ไม่ใช้เอกสารอื่น</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>มีอะไรใหม่ใน %1</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>ต้องใช้</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 ขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>สัญญาอนุญาต</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>อัปเดตเมื่อ</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>ซอร์ส</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1” อยู่ในมาร์เก็ตเพลส ลงนามด้วยคีย์เดียวกัน ย้ายไปที่นั่นเพื่อรับอัปเดต</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไม่ใช่ตอนนี้</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>ย้ายไปมาร์เก็ตเพลส</translation>
     </message>
     <message>
         <source>On</source>
@@ -10785,6 +10925,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install from file…</source>
         <translation>ติดตั้งจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>ตรวจหาอัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>ตอนเริ่มและวันละครั้ง HikariSub ดาวน์โหลดทั้งรายการ และไม่ส่งข้อมูลว่าคุณมีปลั๊กอินใดบ้าง</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10893,6 +11041,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>รายการของมาร์เก็ตเพลสไม่ได้ลงนามด้วยคีย์ของมาร์เก็ตเพลส HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>ลายเซ็นของมาร์เก็ตเพลสเป็นของไฟล์อื่น HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>มาร์เก็ตเพลสส่งรายการที่เก่ากว่ารายการที่ HikariSub เคยเห็นแล้ว HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>อ่านรายการของมาร์เก็ตเพลสไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub เชื่อมต่อมาร์เก็ตเพลสไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1” ไม่มีในมาร์เก็ตเพลสสำหรับ HikariSub รุ่นนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>มาร์เก็ตเพลสระบุไฟล์ดาวน์โหลดที่อยู่นอกเว็บไซต์ของตัวเอง HikariSub จึงจะไม่ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>ดาวน์โหลดปลั๊กอินไม่ได้: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>
