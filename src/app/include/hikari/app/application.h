@@ -49,6 +49,7 @@
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
+#include "hikari/backends/lua_node_helper.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -719,6 +720,8 @@ public:
     Q_INVOKABLE bool showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y);
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
+    // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
+    application::LuaNodePort &luaNodes();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -1047,6 +1050,8 @@ private:
     bool m_selectLinesOpened = false;
     application::OptionsLists m_optionsLists;
     std::unique_ptr<AutomationShell> m_automation;
+    QString m_luaHelper;
+    std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     bool m_videoShowsTemplate = false;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;

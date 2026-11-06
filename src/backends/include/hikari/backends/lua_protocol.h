@@ -14,6 +14,9 @@
 //         run: Terminal Ok carries a MacroResult with valid false (and the error text, if any).
 //   Validate: as RunValidated, but the macro never runs: Terminal Ok carries a MacroResult with
 //         no lists, valid true or false (and the error text). What validation staged is dropped.
+//   RunNodes (version 9): a Lua node's batch, a NodeCall. It needs no Load. Terminal Ok carries
+//         NodeRows, Failed the error text. A version 8 helper is refused at the handshake, so it
+//         never sees this command.
 // The ScriptInfo lists the files the script's top level loaded as Lua code (require and include).
 // Progress payloads start with an i32 ProgressEvent: Log (i32 level, -1 when aegisub.debug.out
 // was given none; str), Set (f64 percent), Task (str), Title (str).
@@ -22,6 +25,7 @@
 // side fills in) and is answered with a HostServiceReply.
 
 #include "hikari/application/automation.h"
+#include "hikari/application/node_effects.h"
 #include "hikari/backends/helper_protocol.h"
 
 #include <cstddef>
@@ -31,10 +35,10 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 8;
+inline constexpr std::uint32_t kProtocolVersion = 9;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4 };
+enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4, RunNodes = 5 };
 // Started: the macro itself begins, after its validation function.
 enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4, Started = 5 };
 enum class Service : std::int32_t { Dialog = 1, Host = 2 };
@@ -62,5 +66,16 @@ std::vector<std::byte> encodeDialogResult(const application::DialogResult &resul
 // type, or a button index out of range.
 std::optional<application::DialogResult> decodeDialogResult(const std::vector<std::byte> &payload,
                                                             const application::DialogRequest &request);
+
+using NodeRows = std::vector<std::vector<application::NodeValue>>;
+// A value is written by its port's type: Number, Time and Alpha f64, Text and Tags str, Bool u8,
+// Colour three i32, Point two f64. Other types have no Lua form and are refused.
+std::vector<std::byte> encodeNodeCall(const application::LuaNodePort::Call &call);
+// Without the leading Command field.
+std::optional<application::LuaNodePort::Call> decodeNodeCall(helper::Reader &in, std::size_t payloadSize);
+std::vector<std::byte> encodeNodeRows(const NodeRows &rows, const std::vector<application::PortSpec> &outputs);
+std::optional<NodeRows> decodeNodeRows(const std::vector<std::byte> &payload,
+                                       const std::vector<application::PortSpec> &outputs);
+bool isLuaNodeType(application::PortType type);
 
 }

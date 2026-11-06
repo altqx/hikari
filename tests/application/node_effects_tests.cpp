@@ -533,7 +533,7 @@ namespace {
 
 class FakeLua : public LuaNodePort {
 public:
-    std::expected<std::vector<std::vector<NodeValue>>, std::string> run(const Call &call) override
+    std::expected<std::vector<std::vector<NodeValue>>, Failure> run(const Call &call) override
     {
         calls.push_back(call.rows.size());
         std::vector<std::vector<NodeValue>> out;
@@ -579,6 +579,36 @@ TEST(NodeEffects, ALuaNodeRunsOnlyWithTheUsersTrustAndOncePerLine)
     ASSERT_EQ(run.lines.size(), 17u);
     EXPECT_EQ(run.lines[0].layer.value, 2);
     EXPECT_EQ(run.lines[1].layer.value, 4);
+}
+
+TEST(NodeEffects, ALuaHelperThatStopsEndsTheRunAndItWritesNothing)
+{
+    class StoppingLua : public LuaNodePort {
+    public:
+        std::expected<std::vector<std::vector<NodeValue>>, Failure> run(const Call &) override
+        {
+            ++calls;
+            return std::unexpected(Failure{"took longer than 10 seconds and was stopped", true});
+        }
+        int calls = 0;
+    };
+    const core::Document doc = fixtureWith(commentLine("graph doubled", graphText(graphOf(kLua))));
+    FakeMeasure measure;
+    StoppingLua lua;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    options.lua = &lua;
+    options.trustLua = true;
+    auto run = runDocumentGraph(doc, graphLineOf(doc, u8"doubled"), options);
+    ASSERT_TRUE(run);
+    EXPECT_EQ(lua.calls, 1);
+    EXPECT_FALSE(run->ran);
+    EXPECT_TRUE(run->lines.empty());
+    ASSERT_EQ(run->problems.size(), 1u);
+    EXPECT_EQ(run->problems[0].node, "double");
+    EXPECT_EQ(run->problems[0].message, "took longer than 10 seconds and was stopped");
+    core::Document unchanged = doc;
+    EXPECT_FALSE(applyNodeEffect(unchanged, *run));
 }
 
 TEST(NodeEffects, AGroupRunsAsItsNodesWould)
