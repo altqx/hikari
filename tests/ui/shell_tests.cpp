@@ -12627,8 +12627,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(time, "editingFinished"));
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 1500);
         const int lines = int(session->document().lines().size());
-        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), lines);
-        QCOMPARE(shiftPlan("shiftPreview").value(QStringLiteral("amount")).toInt(), 1500);
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("amount")).toInt(), 1500);
+        QCOMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), lines);
         QCOMPARE(item("shiftPreviewStatus")->property("text").toString(), QStringLiteral("Changes %1 line(s)").arg(lines));
         QCOMPARE(item("shiftApply")->property("text").toString(), QStringLiteral("Shift %1 line(s)").arg(lines));
         const auto rows = shiftPlan("shiftPreview").value(QStringLiteral("rows")).toList();
