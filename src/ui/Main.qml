@@ -6906,6 +6906,7 @@ ApplicationWindow {
         }
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
                       qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
+                      qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: {

@@ -1,6 +1,7 @@
 #include "hikari/application/document_files.h"
 
 #include "hikari/core/ass_load.h"
+#include "hikari/core/srv3.h"
 #include "hikari/core/subtitle_load.h"
 
 #include <algorithm>
@@ -55,6 +56,14 @@ std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKe
         if (!imported)
             return std::unexpected(StageFailure{OpenError::MalformedLyrics, imported.error()});
         StagedOpen staged{destination, std::move(*imported), std::nullopt, 0, 0};
+        staged.imported = true;
+        return staged;
+    }
+    if (core::isSrv3Extension(extension)) {
+        const auto ass = core::assFromSrv3(*bytes);
+        if (!ass)
+            return std::unexpected(StageFailure{OpenError::MalformedSrv3, std::nullopt, ass.error()});
+        StagedOpen staged{destination, core::loadAss(*ass), std::nullopt, 0, 0};
         staged.imported = true;
         return staged;
     }

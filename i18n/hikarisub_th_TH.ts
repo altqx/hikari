@@ -2144,6 +2144,10 @@ Output device: %2</source>
         <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>ข้อความกำหนดเวลาของ YouTube (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>วิดีโอที่ฝังคำบรรยาย (*.mkv *.ogm)</translation>
     </message>
@@ -2170,6 +2174,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>นำเข้า %1 เป็นข้อความกำหนดเวลาของ YouTube ไม่ได้ %2 ไม่มีสิ่งใดถูกนำเข้า</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>

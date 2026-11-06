@@ -1933,7 +1933,7 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
-        if (staged.error().lyrics)
+        if (staged.error().lyrics || staged.error().srv3)
             m_log->log(openProblem(path, staged.error()));
         return std::nullopt;
     }
@@ -1943,6 +1943,13 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
 QString Application::openProblem(const QString &path, const application::StageFailure &failure)
 {
     const QString name = QFileInfo(path).fileName();
+    if (failure.srv3) {
+        QString reason = QString::fromStdString(*failure.srv3);
+        if (!reason.endsWith(QLatin1Char('.')))
+            reason += QLatin1Char('.');
+        return QCoreApplication::translate("HikariSub.Documents", "Could not import %1 as YouTube timed text. %2 Nothing was imported.")
+            .arg(name, reason);
+    }
     if (!failure.lyrics)
         return QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.").arg(name);
     using Kind = core::LyricsProblem::Kind;

@@ -3,6 +3,7 @@
 #include "hikari/core/text_projection.h"
 
 #include "srv3_ass.h"
+#include "srv3_ytt.h"
 
 #include <algorithm>
 #include <climits>
@@ -40,6 +41,8 @@ int fontStyleId(const std::optional<u16> &font)
     return 0;
 }
 
+}
+
 u16 fontName(int id)
 {
     switch (id) {
@@ -64,6 +67,8 @@ float realFontScale(int yttScale)
 {
     return 1 + ((static_cast<float>(yttScale) / 100.0f) - 1) / 4;
 }
+
+namespace {
 
 int youTubeFontScale(float realScale)
 {
