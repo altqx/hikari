@@ -9855,8 +9855,8 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인의 인터넷 연결 허용</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 플러그인의 요청을 모두 거부합니다.</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 HikariSub를 거치는 플러그인 요청을 모두 거부합니다. 전체 신뢰 플러그인은 여전히 직접 연결할 수 있습니다.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>

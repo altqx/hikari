@@ -9855,8 +9855,8 @@ Failed to copy %2 fonts.</source>
         <translation>อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: ปฏิเสธคำขอทุกรายการของปลั๊กอิน</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: HikariSub ปฏิเสธคำขอทุกรายการที่ปลั๊กอินส่งผ่าน HikariSub แต่ปลั๊กอินแบบเชื่อถือเต็มที่ยังเชื่อมต่อเองได้</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>

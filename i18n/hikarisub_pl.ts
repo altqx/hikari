@@ -9971,8 +9971,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pozwól wtyczkom łączyć się z internetem</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: każde żądanie wtyczki jest odrzucane.</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: HikariSub odrzuca każde żądanie, które wtyczka wysyła przez niego. Wtyczka z pełnym zaufaniem nadal może łączyć się sama.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>

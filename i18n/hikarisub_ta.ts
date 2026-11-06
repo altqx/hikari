@@ -9913,8 +9913,8 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: செருகுநிரலின் ஒவ்வொரு கோரிக்கையும் மறுக்கப்படும்.</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: HikariSub வழியாக செருகுநிரல் அனுப்பும் ஒவ்வொரு கோரிக்கையையும் அது மறுக்கும். முழு நம்பிக்கை உள்ள செருகுநிரல் இன்னும் தானாக இணைய முடியும்.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>

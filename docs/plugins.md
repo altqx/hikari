@@ -280,7 +280,7 @@ A request is a URL, or `{url, method, headers, body, encoding}`. `method` is `GE
 
 HikariSub refuses the request, with the error `refused` and its `reason`, or `not_granted`:
 
-- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off every plugin's network at once.
+- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because nothing sandboxes it yet (PL7 [#419](https://github.com/altqx/hikari/issues/419)).
 - **`not_https`.** The URL isn't `https://`. **`port`.** It names a port other than 443.
 - **`not_granted`**, with `host`. The host isn't one of the manifest's `permissions.network.hosts`, matched exactly. The plugin manager shows those hosts, and so does the install.
 - **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).
