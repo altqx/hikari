@@ -8,6 +8,7 @@
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
+#include "fake_auth_server.h"
 #include "local_release.h"
 #include "minisign_signer.h"
 #include "settings_store.h"
@@ -117,6 +118,9 @@ protected:
                     backends::ai::SidecarSource::local(release.base(), {signer.publicKey()}));
                 return d->installedProgram() ? nullptr : std::move(d);
             };
+        p.signIn = [this](ai::KeyStore &keys) {
+            return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(browserPort), time.clock());
+        };
         p.findCodex = [this](std::function<void(std::optional<backends::ai::CodexCli>)> done) { done(codexCli); };
         p.codexAuthPath = dir.filePath(QStringLiteral("codex/auth.json"));
         return p;
@@ -155,6 +159,7 @@ protected:
 
     void SetUp() override
     {
+        auth.script("ok");
         previousRoutes = backends::desktop::replaceRoutes({.openUrl = [this](const QUrl &url) {
             opened.push_back(url);
             return true;
@@ -162,16 +167,11 @@ protected:
     }
     void TearDown() override { backends::desktop::replaceRoutes(previousRoutes); }
 
-    /// The fake sidecar's next sign-ins end with `outcome`: ok, hang, store-other or a failure's kind.
-    void fakeSignIns(app::AiFeatures &features, const char *outcome)
+    /// The OpenRouter page the sign-in opened, approved as the user would in the browser.
+    void approveOpenRouter()
     {
-        features.setDrafting(true);
-        backends::ai::AiSidecarHost *host = features.sidecarForAction();
-        features.setDrafting(false);
-        ASSERT_TRUE(host);
-        bool answered = false;
-        host->request("fake.signin", api::Json(outcome), [&](backends::ai::SidecarResult) { answered = true; });
-        ASSERT_TRUE(waitFor([&] { return answered; }));
+        ASSERT_TRUE(waitFor([&] { return !opened.empty() && opened.back().host() == QLatin1String("openrouter.ai"); }));
+        EXPECT_EQ(test::browse(test::approval(opened.back())), 200);
     }
 
     QTemporaryDir dir;
@@ -184,6 +184,9 @@ protected:
     std::optional<backends::ai::CodexCli> codexCli;
     std::vector<QUrl> opened;
     backends::desktop::Routes previousRoutes;
+    test::FakeAuthServer auth;
+    quint16 browserPort = test::freePort();
+    test::FakeSignInClock time{.realMs = 20};
 };
 
 }
@@ -448,7 +451,7 @@ TEST_F(AiSettingsTest, ACodexSignInShowsTheCodeOpensItsPageOnlyWhenAskedAndCance
 {
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
-    fakeSignIns(features, "hang");
+    auth.script("hang");
     page.signInCodex(false);
     ASSERT_TRUE(waitFor([&] { return codex(page, "state").toString() == QLatin1String("code"); }));
     EXPECT_EQ(codex(page, "userCode").toString(), QStringLiteral("FAKE-1234"));
@@ -470,7 +473,7 @@ TEST_F(AiSettingsTest, TheBrowserSignInOpensAuthOpenaiComAtOnce)
 {
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
-    fakeSignIns(features, "hang");
+    auth.script("hang");
     page.signInCodex(true);
     ASSERT_TRUE(waitFor([&] { return codex(page, "state").toString() == QLatin1String("browser"); }));
     ASSERT_EQ(opened.size(), 1u);
@@ -499,7 +502,7 @@ TEST_F(AiSettingsTest, AWorkspaceWithoutCodesSaysSoAndNothingIsStored)
 {
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
-    fakeSignIns(features, "codesOff");
+    auth.script("codesOff");
     page.signInCodex(false);
     ASSERT_TRUE(waitFor([&] { return codex(page, "error").toString() == QLatin1String("codesOff"); }));
     EXPECT_EQ(codex(page, "host").toString(), QStringLiteral("auth.openai.com"));
@@ -543,15 +546,15 @@ TEST_F(AiSettingsTest, AnExpiredSessionIsRefreshedAndARefusedRefreshAsksToSignIn
     chain.keys[backends::ai::kCodexSecret] = backends::ai::sessionJson(old);
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
-    fakeSignIns(features, "ok");
+    auth.script("ok");
     page.checkCodex();
     ASSERT_TRUE(waitFor([&] {
-        return backends::ai::sessionFromJson(chain.keys.at(backends::ai::kCodexSecret))->access == "fake-access-2";
+        return backends::ai::sessionFromJson(chain.keys.at(backends::ai::kCodexSecret))->refresh == "fake-refresh";
     }));
     EXPECT_TRUE(codex(page, "signedIn").toBool());
 
     chain.keys[backends::ai::kCodexSecret] = backends::ai::sessionJson(old);
-    fakeSignIns(features, "expired");
+    auth.script("expired");
     page.checkCodex();
     ASSERT_TRUE(waitFor([&] { return codex(page, "error").toString() == QLatin1String("expired"); }));
     EXPECT_FALSE(codex(page, "signedIn").toBool());
@@ -562,7 +565,7 @@ TEST_F(AiSettingsTest, SigningInToOpenRouterAddsTheProviderWithItsNewKey)
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
     page.openDraft();
-    fakeSignIns(features, "hang");
+    auth.script("hang");
     page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
     EXPECT_EQ(draftState(page), QStringLiteral("signingIn"));
     ASSERT_TRUE(waitFor([&] { return !opened.empty(); }));
@@ -571,9 +574,11 @@ TEST_F(AiSettingsTest, SigningInToOpenRouterAddsTheProviderWithItsNewKey)
     EXPECT_EQ(draftState(page), QString());
     EXPECT_TRUE(page.providers().isEmpty());
 
-    fakeSignIns(features, "ok");
+    auth.script("ok");
     QSignalSpy saved(&page, &app::AiSettings::draftSaved);
+    opened.clear();
     page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
+    approveOpenRouter();
     ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
     EXPECT_EQ(chain.keys.at("openrouter"), "sk-or-v1-fake");
     EXPECT_FALSE(chain.keys.contains("openrouter-key"));
@@ -588,8 +593,9 @@ TEST_F(AiSettingsTest, ARefusedOpenRouterSignInSaysSoAndAddsNothing)
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
     page.openDraft();
-    fakeSignIns(features, "denied");
+    auth.script("denied");
     page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
+    approveOpenRouter();
     ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("failed"); }));
     EXPECT_EQ(draftError(page), QStringLiteral("signIn"));
     EXPECT_EQ(page.draft().value(QStringLiteral("detail")).toString(), QStringLiteral("denied"));

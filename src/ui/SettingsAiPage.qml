@@ -107,7 +107,6 @@ ScrollView {
         case "network": return qsTr("Couldn’t reach %1. Check the connection.").arg(host)
         case "keychain": return failureText("keychainDenied", 0)
         case "import": return qsTr("~/.codex has no ChatGPT sign-in to import.")
-        case "sidecar":
         case "invalid": return qsTr("Sign-in failed. Try again.")
         }
         return failureText(kind, 0)

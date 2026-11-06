@@ -439,37 +439,27 @@ void AiSettings::signInDraft(const QVariantMap &form)
     m_probed.reset();
     setDraft(QStringLiteral("signingIn"));
     m_features.setDrafting(true);
-    withSidecar([this, alive = std::weak_ptr(m_alive), provider = *provider](bool ready) {
-        if (!alive.lock() || m_draft.value(QStringLiteral("state")) != QLatin1String("signingIn"))
-            return;
-        if (!ready) {
-            setDraft(QStringLiteral("failed"), m_downloadError);
-            return;
-        }
-        backends::ai::AiSignIn *signIn = m_features.signIn();
-        if (!signIn)
-            return;
-        signIn->start(
-            backends::ai::SignInFlow::OpenRouter,
-            [this, alive](const backends::ai::SignInProgress &progress) {
-                if (alive.lock())
-                    signInProgress(progress);
-            },
-            [this, alive, provider](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) mutable {
-                if (!alive.lock())
-                    return;
-                m_signInPage.clear();
-                if (!result) {
-                    if (result.error().kind == "cancelled")
-                        setDraft({});
-                    else
-                        setDraft(QStringLiteral("failed"), QStringLiteral("signIn"), 0, qs(result.error().kind));
-                    return;
-                }
-                provider.signedIn = true;
-                saveProvider(std::move(provider), result->key);
-            });
-    });
+    const auto alive = std::weak_ptr(m_alive);
+    m_features.signIn()->start(
+        backends::ai::SignInFlow::OpenRouter,
+        [this, alive](const backends::ai::SignInProgress &progress) {
+            if (alive.lock())
+                signInProgress(progress);
+        },
+        [this, alive, provider = *provider](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) mutable {
+            if (!alive.lock())
+                return;
+            m_signInPage.clear();
+            if (!result) {
+                if (result.error().kind == "cancelled")
+                    setDraft({});
+                else
+                    setDraft(QStringLiteral("failed"), QStringLiteral("signIn"), 0, qs(result.error().kind));
+                return;
+            }
+            provider.signedIn = true;
+            saveProvider(std::move(provider), result->key);
+        });
 }
 
 void AiSettings::signOutProvider(const QString &providerId)
@@ -548,43 +538,33 @@ void AiSettings::signInCodex(bool browser)
     m_codex.error.clear();
     m_codex.host.clear();
     emit codexChanged();
-    withSidecar([this, alive = std::weak_ptr(m_alive), browser](bool ready) {
-        if (!alive.lock() || m_codex.state != QLatin1String("starting"))
-            return;
-        backends::ai::AiSignIn *signIn = m_features.signIn();
-        if (!ready || !signIn) {
-            m_codex.state.clear();
-            m_codex.error = ready ? QStringLiteral("sidecar") : m_downloadError;
+    const auto alive = std::weak_ptr(m_alive);
+    m_features.signIn()->start(
+        browser ? backends::ai::SignInFlow::CodexBrowser : backends::ai::SignInFlow::CodexDevice,
+        [this, alive](const backends::ai::SignInProgress &progress) {
+            if (!alive.lock())
+                return;
+            m_codex.state = qs(progress.step);
+            m_codex.userCode = qs(progress.userCode);
+            m_codex.expiresAt = progress.expiresAt;
+            m_codex.browserAvailable = progress.browserAvailable;
+            signInProgress(progress);
             emit codexChanged();
-            return;
-        }
-        signIn->start(
-            browser ? backends::ai::SignInFlow::CodexBrowser : backends::ai::SignInFlow::CodexDevice,
-            [this, alive](const backends::ai::SignInProgress &progress) {
-                if (!alive.lock())
-                    return;
-                m_codex.state = qs(progress.step);
-                m_codex.userCode = qs(progress.userCode);
-                m_codex.expiresAt = progress.expiresAt;
-                m_codex.browserAvailable = progress.browserAvailable;
-                signInProgress(progress);
-                emit codexChanged();
-            },
-            [this, alive](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) {
-                if (!alive.lock())
-                    return;
-                m_signInPage.clear();
-                m_codex.state.clear();
-                m_codex.userCode.clear();
-                if (result) {
-                    m_codex.signedIn = true;
-                    m_codex.email = qs(result->email);
-                } else if (result.error().kind != "cancelled") {
-                    setCodexFailure(result.error());
-                }
-                emit codexChanged();
-            });
-    });
+        },
+        [this, alive](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) {
+            if (!alive.lock())
+                return;
+            m_signInPage.clear();
+            m_codex.state.clear();
+            m_codex.userCode.clear();
+            if (result) {
+                m_codex.signedIn = true;
+                m_codex.email = qs(result->email);
+            } else if (result.error().kind != "cancelled") {
+                setCodexFailure(result.error());
+            }
+            emit codexChanged();
+        });
 }
 
 void AiSettings::signInProgress(const backends::ai::SignInProgress &progress)

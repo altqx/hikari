@@ -3,8 +3,10 @@
 #include "hikari/api/json.h"
 #include "hikari/application/ai_providers.h"
 
+#include <QNetworkAccessManager>
 #include <QString>
 #include <QUrl>
+#include <QUrlQuery>
 
 #include <cstdint>
 #include <expected>
@@ -15,8 +17,6 @@
 #include <string_view>
 
 namespace hikari::backends::ai {
-
-class AiSidecarHost;
 
 /// The keychain entry with HikariSub's own ChatGPT sign-in for Codex.
 inline constexpr const char *kCodexSecret = "codex-chatgpt";
@@ -51,8 +51,8 @@ struct SignInProgress {
     bool browserAvailable = true;
 };
 
-/// `kind` is the sidecar's (denied, codeExpired, codesOff, portBusy, network, expired, timedOut, invalid) or
-/// cancelled, sidecar or keychain.
+/// `kind` is denied, codeExpired, codesOff, portBusy, network, expired, timedOut, invalid, cancelled, keychain or
+/// import.
 struct SignInFailure {
     std::string kind;
     std::string host;
@@ -65,16 +65,36 @@ struct SignedIn {
     std::string key;
 };
 
-/// Sign-ins run in the sidecar, one at a time. Tokens come back only through `_hikari/secret.store` under the name
-/// the running sign-in expects, and reach the keychain only from here.
+/// The sites the user sees, and where Qt sends its requests: the same sites unless a test points them at a fake.
+struct SignInEndpoints {
+    QUrl codexIssuer{QStringLiteral("https://auth.openai.com")};
+    QString codexClientId = QStringLiteral("app_EMoamEEZ73f0CkXaXp7hrann");
+    /// Codex's client id accepts only this redirect port.
+    quint16 codexBrowserPort = 1455;
+    QUrl openRouter{QStringLiteral("https://openrouter.ai")};
+    QUrl codexApi = codexIssuer;
+    QUrl openRouterApi = openRouter;
+};
+
+/// Milliseconds since the epoch, and a wait that calls back once unless the sign-in has moved on.
+struct SignInClock {
+    std::function<std::int64_t()> now;
+    std::function<void(int ms, std::function<void()> then)> wait;
+    static SignInClock system();
+};
+
+/// Sign-ins run here in Qt, one at a time: the HTTP calls, the 127.0.0.1 listener for the browser's redirect and the
+/// Codex refresh. Tokens go straight to the keychain; the sidecar never sees them (ADR 0029).
 class AiSignIn {
 public:
-    /// Builds the sidecar if needed; null when none is installed.
-    using HostFor = std::function<AiSidecarHost *()>;
     using Progress = std::function<void(const SignInProgress &)>;
     using Done = std::function<void(std::expected<SignedIn, SignInFailure>)>;
 
-    AiSignIn(application::ai::KeyStore &keys, HostFor host);
+    static constexpr std::int64_t kCodeLifetimeMs = 15 * 60'000;
+    static constexpr int kBrowserWaitMs = 10 * 60'000;
+
+    explicit AiSignIn(application::ai::KeyStore &keys, SignInEndpoints endpoints = {},
+                      SignInClock clock = SignInClock::system());
     ~AiSignIn();
     AiSignIn(const AiSignIn &) = delete;
     AiSignIn &operator=(const AiSignIn &) = delete;
@@ -83,6 +103,8 @@ public:
     static bool openable(const QUrl &url);
 
     bool running() const { return m_running != nullptr; }
+    /// The page the running sign-in asks the user to open; empty when none runs.
+    QUrl page() const;
     /// Ends a running sign-in, if any, first. `done` comes once.
     void start(SignInFlow flow, Progress progress, Done done);
     /// `done` gets the cancelled failure.
@@ -98,13 +120,32 @@ public:
 
 private:
     struct Running;
-    AiSidecarHost *connect();
-    void run(const std::string &method, api::Json params, std::string secret, Done done);
-    void store(const api::Json &params, std::function<void(std::optional<SignInFailure>)> respond);
+    class Loopback;
+    struct Reply;
+    using Then = std::function<void(Reply)>;
+
+    std::uint64_t begin(Progress progress, Done done);
+    bool live(std::uint64_t serial) const;
+    void report(SignInProgress progress);
+    void post(std::uint64_t serial, const QUrl &url, const QByteArray &contentType, QByteArray body, Then then);
+    void wait(std::uint64_t serial, int ms, std::function<void()> then);
+    bool listen(std::uint64_t serial, quint16 port, QString path, std::function<void(QUrlQuery)> callback);
+
+    void requestCode(std::uint64_t serial, std::int64_t started);
+    void poll(std::uint64_t serial);
+    void askToken(std::uint64_t serial);
+    void codexBrowser(std::uint64_t serial);
+    void openRouter(std::uint64_t serial);
+    void exchange(std::uint64_t serial, QByteArray form, std::optional<CodexSession> refreshed = std::nullopt);
+    void store(std::uint64_t serial, CodexSession session);
+
+    void fail(std::string kind, std::string detail = {}, std::string host = {});
     void finish(std::expected<SignedIn, SignInFailure> result);
 
     application::ai::KeyStore &m_keys;
-    HostFor m_host;
+    SignInEndpoints m_endpoints;
+    SignInClock m_clock;
+    QNetworkAccessManager m_nam;
     std::unique_ptr<Running> m_running;
     std::uint64_t m_serial = 0;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);

@@ -455,6 +455,7 @@ target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
 add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent)
 hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
+target_include_directories(hikari_backends_ai_signin_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 if(HIKARI_AI_SIDECAR)
     hikari_add_gtest(hikari_backends_ai_tools_tests SOURCES ai_tools_tests.cpp
         LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends ai-sidecar)

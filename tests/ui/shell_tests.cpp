@@ -25,6 +25,7 @@
 #include "list_files.h"
 #include "toml_file.h"
 #include "audio_display_item.h"
+#include "fake_auth_server.h"
 #include "fake_font_service.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
@@ -16396,8 +16397,14 @@ private slots:
             std::shared_ptr<Stored> m;
         };
         auto stored = std::make_shared<Stored>();
+        test::FakeAuthServer auth;
+        auth.script("ok");
+        test::FakeSignInClock signInTime{.realMs = 20};
         app::AiFeatures::Ports ports;
         ports.keyStore = [stored] { return std::make_unique<Keys>(stored); };
+        ports.signIn = [&auth, &signInTime, port = test::freePort()](ai::KeyStore &keys) {
+            return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(port), signInTime.clock());
+        };
         ports.configStore = [stored] { return std::make_unique<Configs>(stored); };
         ports.sidecarHost = [this] {
             backends::ai::AiSidecarHost::Options o;
@@ -16488,17 +16495,7 @@ private slots:
         QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
         QVERIFY(!stored->keys.contains("codex-chatgpt"));
 
-        const auto fakeSignIns = [&](const char *outcome) {
-            app::AiFeatures *features = application->ai();
-            features->setDrafting(true);
-            backends::ai::AiSidecarHost *host = features->sidecarForAction();
-            features->setDrafting(false);
-            QVERIFY(host);
-            bool answered = false;
-            host->request("fake.signin", api::Json(outcome), [&](backends::ai::SidecarResult) { answered = true; });
-            QTRY_VERIFY(answered);
-        };
-        fakeSignIns("hang");
+        auth.script("hang");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
         QQuickItem *code = nullptr;
         QTRY_VERIFY((code = dialogItem("settingsDialog", "aiCodexCode")) && code->isVisible());
@@ -16518,13 +16515,16 @@ private slots:
         QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(page, "closeForm"));
         QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
-        fakeSignIns("ok");
+        auth.script("ok");
 
         QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
         QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("OpenRouter key"));
         QVERIFY(signIn->isVisible());
+        opened.clear();
         QVERIFY(QMetaObject::invokeMethod(signIn, "click"));
+        QTRY_VERIFY(!opened.empty() && opened.back().host() == QLatin1String("openrouter.ai"));
+        QCOMPARE(test::browse(test::approval(opened.back())), 200);
         QTRY_VERIFY(dialogItem("settingsDialog", "aiProvider_openrouter"));
         QCOMPARE(stored->keys.at("openrouter"), "sk-or-v1-fake");
         QVERIFY(std::ranges::any_of(opened, [](const QUrl &url) { return url.host() == QLatin1String("openrouter.ai"); }));
