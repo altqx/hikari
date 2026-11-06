@@ -47,7 +47,7 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
                              "info.list", "selection.get", "commands.list", "panels.list", "settings.list",
                              "settings.get", "api.version", "video.info", "video.frame_at_time",
                              "video.time_of_frame", "video.frame", "audio.info", "audio.peaks", "files.list",
-                             "files.read", "nodes.catalogue"}) {
+                             "files.read", "nodes.catalogue", "nodes.validate"}) {
         const Operation *op = Api::registry().find(name);
         ASSERT_TRUE(op) << name;
         EXPECT_EQ(op->access, Access::Read) << name;

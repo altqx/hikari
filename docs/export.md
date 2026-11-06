@@ -69,6 +69,14 @@ When srv3 is the format, Options shows one row per style that the chosen Lines u
 - **When they're saved:** Export saves changed options as one undo step ("Set srv3 style options") and marks the file as changed. The done view says how many styles changed. Cancel discards the changes.
 - **Following the styles:** renaming a style in the Style manager or the Styles panel renames its key in the same undo step. Deleting a style removes its key (Clean up too), and duplicating a style copies it.
 
+### Opening srv3 files
+Open subtitles accepts `.ytt` and `.srv3` files (filter **YouTube timed text**). They're converted to ASS the way YTSubConverter converts them back, byte for byte (`core::assFromSrv3`, `src/core/srv3_import.cpp`). The file opens as an untitled ASS document with unsaved work, like imported lyrics; saving asks where to put the `.ass`.
+- **What comes back:** YTSubConverter's ten `YT*` styles at 1280×720, with pens as `\fn` `\fs` `\b` `\i` `\u` colours and alphas, window positions as `\an` and `\pos`, text direction as `\ytdir` and `\ytvert`, ruby as `\ytruby`, offsets as `\ytsub` and `\ytsup`, packed text as `\ytpack`, and section times as `\k`.
+- **The reader:** XML as .NET's `XmlDocument` reads it with whitespace kept (`src/core/srv3_xml.cpp`): whitespace-only text, CDATA and comments directly inside a `<p>` aren't sections; a `<timedtext>` in a namespace has no Lines. The encoding comes from the byte order mark, else UTF-8 with bad bytes replaced. Document type declarations are refused, where YTSubConverter would read them.
+- **Refusals:** when YTSubConverter would refuse the file (broken XML, an unknown edge or offset type, a bad colour, a broken ruby sequence), nothing opens and the log says "Could not import … as YouTube timed text", with its reason.
+- **Round trip:** exporting the fixtures and opening the result keeps every Line's text, its times to within a frame, and its italic, bold, underline and colours. Times move to frame boundaries and overlapping Lines come back split, as YTSubConverter writes them.
+- **Goldens:** `tests/fixtures/import/srv3/golden` holds YTSubConverter's ASS for every export golden and for the files in `inputs/`; `regenerate.sh` writes them too.
+
 ## The report
 After writing, the window lists every Line that lost or had something approximated, with its grid row; choosing a row selects that Line. The kinds (`core::ExportLoss`):
 
@@ -102,7 +110,8 @@ The last format and options are kept per document file in `export.choices` (at m
 ## Tests
 - `hikari_core_export_tests`: goldens for every format on `tests/fixtures/export/{plain,karaoke,typesetting}.ass`, TTML in three variants (`.ttml`, `.dfxp` in frames, `.netflix.ttml`) (`HIKARI_WRITE_EXPORT_GOLDENS=1` rewrites them); read-back through the SRT and line-format loaders; every option; the report; and the TTML layout rules.
 - `Export.TtmlGoldensMatchTheImsc1Schema` (Linux): the TTML and DFXP goldens against the W3C schemas.
-- `hikari_core_srv3_tests`: byte-identical output on 21 inputs, plain and with 38 style options, the Hikari fixtures, refusals, and the style-option keys (read, write, defaults). The srv3 cases in `hikari_core_export_tests` cover the Lines choice, attachments, the report and the saved options.
+- `hikari_core_srv3_tests`: byte-identical output on 21 inputs, plain and with 38 style options, the Hikari fixtures, refusals, and the style-option keys (read, write, defaults). The srv3 cases in `hikari_core_export_tests` cover the Lines choice, attachments, the report and the saved options. `Srv3Import.*` in the same binary: byte-identical ASS for 35 files, refusals, and the round trip on the fixtures.
+- `hikari_application_document_files_tests` and `hikari_ui_open_reload_tests`: a `.ytt` opens as an untitled import, and a refused one names YTSubConverter's reason and changes nothing.
 - `hikari_application_style_manager_tests`: srv3 options follow renames, deletions and copies.
 - `hikari_ui_export_dialog_tests`: the window, the unchanged Document, replacing a file, the report's links, the Lines choice, the memory, the TTML options (language, frames, Netflix style), and srv3: the conversion and its report, the style table, saving as one undo step, Reset, and Cancel.
 - `hikari_ui_shell_tests`: `saveAsOffersAssForADocumentOfAnotherFormat`, `anAssFileNameConvertsWithTheDocumentsOwnFilter` and `storedConversionShortcutsAreDroppedWithANotice`; `hikari_application_hotkeys_tests` and `hikari_application_settings_import_tests` cover the retired commands.

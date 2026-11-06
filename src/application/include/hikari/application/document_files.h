@@ -33,6 +33,7 @@ enum class OpenError {
     ReadFailed,
     InvalidFormat, // no reader found a Line
     MalformedLyrics,
+    MalformedSrv3,
     UnknownDocument,
     StaleTarget,   // the Document changed or was replaced after staging
 };
@@ -47,10 +48,11 @@ enum class SaveRefusal {
     InvalidDraft,   // the pending draft can't be committed
 };
 
-// For MalformedLyrics, `lyrics` says what is wrong and where.
+// For MalformedLyrics, `lyrics` says what is wrong and where; for MalformedSrv3, `srv3` is YTSubConverter's reason.
 struct StageFailure {
     OpenError reason = OpenError::ReadFailed;
     std::optional<core::LyricsProblem> lyrics;
+    std::optional<std::string> srv3;
 };
 
 // A prepared replacement. Nothing is published until activate().
@@ -60,7 +62,7 @@ struct StagedOpen {
     std::optional<DocumentId> replaces;
     std::uint64_t expectedGeneration = 0;
     std::uint64_t expectedRevision = 0;
-    // Lyrics turned into ASS: opens Untitled with unsaved work.
+    // Lyrics or YouTube timed text turned into ASS: opens Untitled with unsaved work.
     bool imported = false;
 };
 

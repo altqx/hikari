@@ -72,7 +72,7 @@ const std::map<QString, QString> kPanels{
 const QStringList kDialogs{
     QStringLiteral("about"),          QStringLiteral("alignToVideo"),   QStringLiteral("allTagsEdition"),
     QStringLiteral("aspectRatio"),
-    QStringLiteral("autosaves"),      QStringLiteral("columns"),        QStringLiteral("conversion"),
+    QStringLiteral("autosaves"),      QStringLiteral("columns"),
     QStringLiteral("crashReport"),    QStringLiteral("credits"),        QStringLiteral("dummyVideo"),
     QStringLiteral("fontCatalogClashes"),
     QStringLiteral("fontCatalogs"),   QStringLiteral("fontCollector"),  QStringLiteral("fontPicker"),
