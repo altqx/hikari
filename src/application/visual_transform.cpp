@@ -335,12 +335,12 @@ bool isInRect(PointF pos, PointF pos1, PointF second, PointF second1)
 }
 
 template <typename Move>
-void writeClip(TagFind &find, u16 &text, u16 newclip, int vectorScale, const std::vector<ClipPoint> &points, Move move)
+void writeClip(TagFind &find, u16 &text, u16 newclip, int vectorScale, const std::vector<ClipPoint> &points, Move move,
+               std::string_view format = "5.0f")
 {
     const std::size_t psize = points.size();
     if (!psize)
         return;
-    const std::string_view format = "5.0f";
     u16 lasttype;
     int countB = 0;
     bool spline = false;
@@ -407,6 +407,24 @@ bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, const Cont
     points.push_back({xy[2], xy[3], u"l", true});
     points.push_back({xy[0], xy[3], u"l", true});
     return true;
+}
+
+std::vector<ClipPoint> clipPoints(u16 clip, int &vectorScale)
+{
+    std::vector<ClipPoint> points;
+    const std::size_t clipFreq = freq(clip, u',');
+    if (clipFreq >= 3) {
+        (void)rectanglePoints(clip, points);
+        return points;
+    }
+    if (clipFreq >= 1) {
+        u16 rest;
+        const int scale = atoi(beforeFirst(clip, u',', &rest));
+        if (scale > 0)
+            vectorScale = scale;
+        clip = rest;
+    }
+    return vectorPoints(clip);
 }
 
 }
@@ -1185,21 +1203,7 @@ void changeClipScale(TagFind &find, u16 &text, PointF pivot, float scalex, float
     (void)find.getTextResult(clip1);
     u16 newclip = u"\\" + beforeFirst(clip1, u'(', &clip) + u"(";
     int vectorScale = 1;
-    const std::size_t clipFreq = freq(clip, u',');
-    std::vector<ClipPoint> points;
-    if (clipFreq >= 3) {
-        (void)rectanglePoints(clip, points);
-    } else {
-        if (clipFreq >= 1) {
-            u16 rest;
-            const u16 vscale = beforeFirst(clip, u',', &rest);
-            const int vscaleint = atoi(vscale);
-            if (vscaleint > 0)
-                vectorScale = vscaleint;
-            clip = rest;
-        }
-        points = vectorPoints(clip);
-    }
+    const std::vector<ClipPoint> points = clipPoints(clip, vectorScale);
     // A scaled vector's points are in units of 1 / 2^(scale - 1) pixels.
     const float units = std::ldexp(1.f, vectorScale - 1);
     const PointF p{pivot.x * units, pivot.y * units};
@@ -1217,25 +1221,32 @@ void changeClipRotationZ(TagFind &find, u16 &text, PointF pivot, float sinus, fl
     (void)find.getTextResult(clip1);
     u16 newclip = u"\\" + beforeFirst(clip1, u'(', &clip) + u"(";
     int vectorScale = 1;
-    const std::size_t clipFreq = freq(clip, u',');
-    std::vector<ClipPoint> points;
-    if (clipFreq >= 3) {
-        (void)rectanglePoints(clip, points);
-    } else {
-        if (clipFreq >= 1) {
-            const u16 vscale = beforeFirst(clip, u',', &clip1);
-            const int vscaleint = atoi(vscale);
-            if (vscaleint > 0)
-                vectorScale = vscaleint;
-            clip = clip1;
-        }
-        points = vectorPoints(clip);
-    }
+    const std::vector<ClipPoint> points = clipPoints(clip, vectorScale);
     writeClip(find, text, newclip, vectorScale, points, [&](const ClipPoint &pos, float &x, float &y) {
         const PointF posxy = rotateZ({pos.x, pos.y}, sinus, cosinus, pivot);
         x = static_cast<float>(posxy.x + 0.5);
         y = static_cast<float>(posxy.y + 0.5);
     });
+}
+
+void mapClip(TagFind &find, u16 &text, const std::function<PointF(PointF)> &map)
+{
+    if (!find.findTag(u"(i?clip[^)]+\\))", text, 1))
+        return;
+    u16 clip1, clip;
+    (void)find.getTextResult(clip1);
+    u16 newclip = u"\\" + beforeFirst(clip1, u'(', &clip) + u"(";
+    int vectorScale = 1;
+    const std::vector<ClipPoint> points = clipPoints(clip, vectorScale);
+    const float units = std::ldexp(1.f, vectorScale - 1);
+    writeClip(
+        find, text, newclip, vectorScale, points,
+        [&](const ClipPoint &pos, float &x, float &y) {
+            const PointF to = map({pos.x / units, pos.y / units});
+            x = to.x * units;
+            y = to.y * units;
+        },
+        "5.2f");
 }
 
 u16 moveText(PointF pos, const double *tbl, int lineStartMs)

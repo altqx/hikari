@@ -12,7 +12,9 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -85,7 +87,9 @@
                 "Original",
                 "Log",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
                 {
@@ -188,7 +192,9 @@
                 "Log",
                 "Styles",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -263,7 +269,9 @@
                 "Log",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -328,7 +336,9 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -391,7 +401,9 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -453,7 +465,9 @@
                 "Log",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -528,7 +542,9 @@
                 "Original",
                 "Log",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
                 {
@@ -631,7 +647,9 @@
                 "Log",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -695,7 +713,9 @@
             "Log",
             "Template",
             "Spellchecker",
-            "Postprocessor"
+            "Postprocessor",
+            "QcNotes",
+            "Review"
         ],
         "floatingWindows": [
             {
@@ -768,7 +788,9 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
             ],
@@ -828,7 +850,9 @@
                 "Original",
                 "Log",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "QcNotes",
+                "Review"
             ],
             "floatingWindows": [
                 {

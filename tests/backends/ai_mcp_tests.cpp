@@ -145,7 +145,7 @@ protected:
     std::unique_ptr<McpServer> server;
 };
 
-TEST_F(AiMcpTest, AnAgentOnTheBridgeReadsEveryDocumentAndIsRefusedWritesUntilTheReview)
+TEST_F(AiMcpTest, AnAgentOnTheBridgeReadsEveryDocumentAndItsEditWaitsInTheReview)
 {
     auto b = bridge();
     const Json initialized = ask(*b, R"({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
@@ -168,13 +168,15 @@ TEST_F(AiMcpTest, AnAgentOnTheBridgeReadsEveryDocumentAndIsRefusedWritesUntilThe
 
     const Json revision = *Json::parse(toolText(ask(*b, R"({"jsonrpc": "2.0", "id": 4, "method": "tools/call",
         "params": {"name": "documents_get"}})")))->find("revision");
-    const Json refused = ask(*b, R"({"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {
+    const Json applied = ask(*b, R"({"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {
         "name": "document_apply", "arguments": {"revision": )" + revision.dump() + R"(, "name": "Fix",
         "edits": [{"op": "set_line", "line": 1, "fields": {"text": "x"}}]}}})");
-    ASSERT_TRUE(refused.find("isError"));
-    EXPECT_TRUE(refused.find("isError")->asBool());
-    EXPECT_EQ(toolText(refused), "Edits through MCP arrive with the review.");
-    EXPECT_EQ(fake.commits, 0);
+    EXPECT_FALSE(applied.find("isError") && applied.find("isError")->asBool()) << toolText(applied);
+    EXPECT_EQ(fake.commits, 1);
+    const auto changes = fake.review.changes(*fake.workspace().editingTarget());
+    ASSERT_EQ(changes.size(), 1u);
+    EXPECT_EQ(changes[0]->caller, "codex");
+    EXPECT_EQ(changes[0]->name, "Fix");
 }
 
 TEST_F(AiMcpTest, TheLocalSocketDropsAClientWithoutTheToken)
@@ -226,14 +228,18 @@ TEST_F(AiMcpTest, StreamableHttpRefusesAnotherHost)
     EXPECT_TRUE(raw.startsWith("HTTP/1.1 403")) << raw.toStdString();
 }
 
-TEST_F(AiMcpTest, CallsForAConnectionSeeEveryDocumentUnderTheClientsNameAndWritesAreRefused)
+TEST_F(AiMcpTest, CallsForAConnectionSeeEveryDocumentUnderTheClientsNameAndOnlyApplyWrites)
 {
     const auto caller = server->callerFor(*Json::parse(R"({"connection": "local-1", "client": "Claude Code"})"),
                                           "lines.list");
     ASSERT_TRUE(caller);
     EXPECT_EQ(caller->label, "Claude Code");
     EXPECT_TRUE(caller->allDocuments);
-    const auto write = server->callerFor(*Json::parse(R"({"connection": "local-1"})"), "document.apply");
+    EXPECT_TRUE(caller->reviewed);
+    const auto apply = server->callerFor(*Json::parse(R"({"connection": "local-2"})"), "document.apply");
+    ASSERT_TRUE(apply);
+    EXPECT_NE(apply->id, caller->id);
+    const auto write = server->callerFor(*Json::parse(R"({"connection": "local-1"})"), "settings.set");
     ASSERT_FALSE(write);
     EXPECT_EQ(write.error().code, hikari::api::errors::kRefused);
     EXPECT_FALSE(server->callerFor(Json::object(), "lines.list"));
