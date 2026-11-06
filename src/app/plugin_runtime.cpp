@@ -73,6 +73,7 @@ struct PluginRuntime::Running {
     std::string id;
     plugins::Manifest manifest;
     api::Caller caller;
+    PluginFiles::Plugin files;
     std::unique_ptr<PluginProcess> process;
     std::vector<std::uint64_t> subscriptions;
 };
@@ -89,13 +90,26 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
     if (!f.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(f.plugins), path(f.data), path(f.cache), path(f.registry)},
                             api::kApiVersion);
+    if (!m_wiring.network) {
+        m_ownNetwork = std::make_unique<QNetworkAccessManager>();
+        m_wiring.network = m_ownNetwork.get();
+    }
+    m_network = new PluginNetwork(*m_wiring.network, m_wiring.networkAllowed, this);
+    m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui);
+    m_ui->setGrantDrop([this](const std::string &plugin, const QString &file) {
+        const auto it = m_plugins.find(plugin);
+        return it == m_plugins.end() ? api::Json() : m_files->grantDropped(it->second->files, file);
+    });
 }
 
 PluginRuntime::~PluginRuntime()
 {
     m_lockWaiters.clear();
-    for (auto &[id, plugin] : m_plugins)
+    for (auto &[id, plugin] : m_plugins) {
         unsubscribe(*plugin);
+        endAccess(*plugin);
+    }
+    delete m_network;
 }
 
 void PluginRuntime::sync()
@@ -127,6 +141,7 @@ void PluginRuntime::sync()
         }
         unsubscribe(*it->second);
         releaseLock(*it->second);
+        endAccess(*it->second);
         PluginProcess *process = it->second->process.get();
         disconnect(process, nullptr, this, nullptr);
         process->forceStop();
@@ -146,6 +161,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     raw->id = id;
     raw->manifest = std::move(manifest);
     raw->caller = api::Caller{"plugin:" + id, raw->manifest.name, raw->manifest.permissions.allDocuments.has_value()};
+    raw->files = PluginFiles::Plugin{id, raw->caller.id, raw->manifest.permissions.files};
     auto load = [this, raw] {
         protocol::LoadRequest request;
         const plugins::Manifest &m = raw->manifest;
@@ -176,6 +192,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     connect(process, &PluginProcess::loadFailed, this, [this, raw, name, log](const QString &message) {
         unsubscribe(*raw);
         releaseLock(*raw);
+        endAccess(*raw);
         m_ui->stopped(raw->id, QStringLiteral("failed"), message);
         if (log())
             log()->notice(ui::LogController::Error, name, QCoreApplication::translate("HikariSub.Plugins", "The plugin didn’t start."), message);
@@ -195,6 +212,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     connect(process, &PluginProcess::stopped, this, [this, raw, name, log](PluginProcess::StopReason reason) {
         unsubscribe(*raw);
         releaseLock(*raw);
+        endAccess(*raw);
         m_ui->stopped(raw->id, QStringLiteral("stopped"), stopReason(reason, m_wiring.limits.timeLimitMs));
         if (!log())
             return;
@@ -287,6 +305,22 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         m_ui->serve(plugin.id, request.name, *params, std::move(reply));
         return;
     }
+    case protocol::Service::Files:
+    case protocol::Service::Net: {
+        auto params = api::Json::parse(request.json);
+        if (!params || !params->isObject()) {
+            reply(envelope(api::fail(api::errors::kInvalidParams, "the parameters must be a JSON object")));
+            return;
+        }
+        auto answer = [reply](api::Result result) { reply(envelope(result)); };
+        if (request.service == protocol::Service::Files)
+            m_files->serve(plugin.files, request.name, *params, std::move(answer));
+        else if (request.name == "net.fetch")
+            m_network->fetch(plugin.id, plugin.manifest.permissions.networkHosts, *params, std::move(answer));
+        else
+            answer(api::fail(api::errors::kUnknownOperation, "there is no operation \xE2\x80\x9C" + request.name + "\xE2\x80\x9D"));
+        return;
+    }
     }
     reply({});
 }
@@ -331,6 +365,18 @@ void PluginRuntime::releaseLock(Running &plugin)
 {
     std::erase_if(m_lockWaiters, [&plugin](const LockWaiter &w) { return w.plugin == &plugin; });
     unlock(plugin);
+}
+
+void PluginRuntime::endAccess(Running &plugin)
+{
+    m_network->cancel(plugin.id);
+    m_files->end(plugin.id, plugin.caller.id);
+}
+
+void PluginRuntime::endFileAccess(const QString &pluginId)
+{
+    if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())
+        m_files->end(it->first, it->second->caller.id);
 }
 
 void PluginRuntime::unsubscribe(Running &plugin)

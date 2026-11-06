@@ -178,7 +178,7 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
                 entry.settings[setting.id] = *value;
         for (const FileGrantRequest &request : manifest.permissions.files)
             if (const auto grant = existing->second.grants.find(request.id); grant != existing->second.grants.end())
-                entry.grants.insert(*grant);
+                entry.grants[request.id] = {grant->second.path, grant->second.writable && request.writable};
     }
     (*registry)[manifest.id] = std::move(entry);
     if (!saveRegistry(m_folders.registry, *registry))
@@ -232,6 +232,32 @@ std::expected<void, std::string> Installer::setSetting(std::string_view id, std:
     if (it == registry->end())
         return std::unexpected("not installed: " + std::string(id));
     it->second.settings[setting] = value;
+    if (!saveRegistry(m_folders.registry, *registry))
+        return failed("cannot write", m_folders.registry);
+    return {};
+}
+
+std::expected<void, std::string> Installer::setGrant(std::string_view id, std::string_view request, std::optional<FileGrant> grant)
+{
+    auto manifest = installedManifest(id);
+    if (!manifest)
+        return std::unexpected(manifest.error());
+    const auto &requests = manifest->permissions.files;
+    const auto asked = std::ranges::find(requests, request, &FileGrantRequest::id);
+    if (asked == requests.end())
+        return std::unexpected("\xE2\x80\x9C" + std::string(request) + "\xE2\x80\x9D isn't a folder " + std::string(id) + " asks for");
+    auto registry = loadRegistry(m_folders.registry);
+    if (!registry)
+        return std::unexpected(registry.error());
+    const auto it = registry->find(std::string(id));
+    if (it == registry->end())
+        return std::unexpected("not installed: " + std::string(id));
+    if (grant) {
+        grant->writable = grant->writable && asked->writable;
+        it->second.grants[std::string(request)] = std::move(*grant);
+    } else {
+        it->second.grants.erase(std::string(request));
+    }
     if (!saveRegistry(m_folders.registry, *registry))
         return failed("cannot write", m_folders.registry);
     return {};

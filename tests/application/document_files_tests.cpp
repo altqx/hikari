@@ -150,6 +150,35 @@ TEST_F(Files, MalformedLyricsSayWhereAndChangeNothing)
     EXPECT_EQ(service.session(doc)->draftText(), u8"work");
 }
 
+TEST_F(Files, YouTubeTimedTextOpensAsAnUntitledImport)
+{
+    disk.files["/clip.ytt"] = bytesOf(R"(<timedtext format="3"><body><p t="1000" d="2000">Hello <s t="500">there</s></p></body></timedtext>)");
+    auto staged = service.stageOpen({"/clip.ytt"});
+    ASSERT_TRUE(staged);
+    EXPECT_TRUE(staged->imported);
+    const auto doc = service.activate(std::move(*staged));
+    ASSERT_TRUE(doc);
+    EXPECT_TRUE(service.destination(*doc)->value.empty());
+    EXPECT_TRUE(service.session(*doc)->isDirty());
+    ASSERT_EQ(service.session(*doc)->document().lines().size(), 1u);
+    EXPECT_EQ(service.session(*doc)->document().lines()[0]->style, u8"YTPlainBox");
+    EXPECT_EQ(service.session(*doc)->document().lines()[0]->text,
+              u8"{\\c&HFFFFFF&\\1a&H0&\\3c&H080808&\\3a&H3F&\\k50}Hello {\\k150}there");
+}
+
+TEST_F(Files, RefusedYouTubeTimedTextSaysWhyAndChangesNothing)
+{
+    const auto doc = open("/a.ass");
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"work"));
+    disk.files["/bad.srv3"] = bytesOf("<timedtext><body><p>x</s></body></timedtext>");
+    const auto failed = service.stageOpen({"/bad.srv3"});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().reason, OpenError::MalformedSrv3);
+    ASSERT_TRUE(failed.error().srv3);
+    EXPECT_TRUE(failed.error().srv3->starts_with("The 'p' start tag does not match the end tag of 's'.")) << *failed.error().srv3;
+    EXPECT_EQ(service.session(doc)->draftText(), u8"work");
+}
+
 TEST_F(Files, ReloadIsStagedAndRejectedWhenStale)
 {
     const auto doc = open("/a.ass");

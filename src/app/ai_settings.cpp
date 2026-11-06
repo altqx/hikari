@@ -84,6 +84,11 @@ AiSettings::~AiSettings()
     *m_alive = false;
 }
 
+bool AiSettings::sandboxed() const
+{
+    return m_features.sandboxed();
+}
+
 bool AiSettings::on() const
 {
     return m_features.on();

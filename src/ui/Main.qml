@@ -1946,7 +1946,7 @@ ApplicationWindow {
                 command: "GLOBAL_SHOW_TIMING_POSTPROCESSOR"
                 help: qsTr("Moves line times by the lead-in, lead-out, gap and keyframe rules")
                 id: showPostprocessorItem
-                iconRole: "shift-times"
+                iconRole: "timing-postprocessor"
                 objectName: "showTimingPostprocessor"
                 text: qsTr("Timing &postprocessor…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
@@ -2169,7 +2169,7 @@ ApplicationWindow {
             ShellMenuItem {
                 command: "GLOBAL_CENTER_TIMES_IN_FRAMES"
                 help: qsTr("Moves the selected lines’ start and end times to the middle of their frames, so a later shift by time keeps them on whole frames")
-                iconRole: "split-frames"
+                iconRole: "center-times"
                 objectName: "centerTimesInFramesMenuItem"
                 action: Action {
                     id: centerTimesInFramesAction
@@ -2220,7 +2220,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"
                     help: qsTr("Shifts the selected lines by whole frames so the active line starts on the video frame")
-                    iconRole: "time-offset-start"
+                    iconRole: "shift-start-to-video"
                     objectName: "shiftFramesToVideoStartMenuItem"
                     action: Action {
                         id: shiftFramesToVideoStartAction
@@ -2232,7 +2232,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"
                     help: qsTr("Shifts the selected lines by whole frames so the active line ends on the video frame")
-                    iconRole: "time-offset-end"
+                    iconRole: "shift-end-to-video"
                     objectName: "shiftFramesToVideoEndMenuItem"
                     action: Action {
                         id: shiftFramesToVideoEndAction
@@ -2244,7 +2244,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START"
                     help: qsTr("Shifts the active line and every line after it by whole frames so the active line starts on the video frame")
-                    iconRole: "time-offset-start"
+                    iconRole: "shift-start-to-video"
                     objectName: "shiftFollowingFramesToVideoStartMenuItem"
                     action: Action {
                         id: shiftFollowingFramesToVideoStartAction
@@ -2256,7 +2256,7 @@ ApplicationWindow {
                 ShellMenuItem {
                     command: "GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"
                     help: qsTr("Shifts the active line and every line after it by whole frames so the active line ends on the video frame")
-                    iconRole: "time-offset-end"
+                    iconRole: "shift-end-to-video"
                     objectName: "shiftFollowingFramesToVideoEndMenuItem"
                     action: Action {
                         id: shiftFollowingFramesToVideoEndAction
@@ -2855,7 +2855,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 help: qsTr("Opens the folder that holds your settings, scripts, dictionaries and presets")
-                iconRole: "folder-open"
+                iconRole: "show-in-folder"
                 objectName: "openUserFolderMenuItem"
                 visible: root.app.userFolder.length > 0
                 height: visible ? implicitHeight : 0
@@ -6767,6 +6767,10 @@ ApplicationWindow {
     AutomationFilePicker {
         picker: root.automationPicker
     }
+    PluginFilePicker {
+        ui: root.pluginUi
+        messages: root.messages
+    }
     ScriptResolutionDialog {
         prompt: root.automationResolution
     }
@@ -6904,6 +6908,7 @@ ApplicationWindow {
         }
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
                       qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
+                      qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: {

@@ -187,6 +187,18 @@ QStringList permissionLines(const plugins::Manifest &manifest)
     return lines;
 }
 
+QVariantList folderRows(const plugins::Manifest &manifest, const std::map<std::string, plugins::FileGrant> &grants)
+{
+    QVariantList rows;
+    for (const plugins::FileGrantRequest &request : manifest.permissions.files)
+        if (const auto grant = grants.find(request.id); grant != grants.end())
+            rows << QVariantMap{{QStringLiteral("id"), text(request.id)},
+                                {QStringLiteral("title"), text(request.title)},
+                                {QStringLiteral("path"), QDir::toNativeSeparators(text(grant->second.path))},
+                                {QStringLiteral("writable"), grant->second.writable && request.writable}};
+    return rows;
+}
+
 QVariant variantOf(const api::Json &json)
 {
     const QByteArray wrapped = QByteArray("[") + QByteArray::fromStdString(json.dump()) + "]";
@@ -292,6 +304,7 @@ void PluginManager::refresh()
                     {QStringLiteral("permissions"), manifest ? permissionLines(*manifest) : QStringList()},
                     {QStringLiteral("adds"), manifest ? contributionLines(*manifest) : QStringList()},
                     {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings) : QVariantList()},
+                    {QStringLiteral("folders"), manifest ? folderRows(*manifest, entry.grants) : QVariantList()},
                 });
             }
         }
@@ -428,6 +441,18 @@ QString PluginManager::uninstall(const QString &id, bool removeData)
     const auto done = m_installer->uninstall(id.toStdString(), removeData);
     refresh();
     return done ? QString() : problemText(done.error());
+}
+
+QString PluginManager::forgetFolder(const QString &id, const QString &folder)
+{
+    if (!m_installer)
+        return {};
+    const auto done = m_installer->setGrant(id.toStdString(), folder.toStdString(), std::nullopt);
+    refresh();
+    if (!done)
+        return problemText(done.error());
+    emit folderForgotten(id);
+    return {};
 }
 
 }

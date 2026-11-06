@@ -179,8 +179,10 @@ public:
         m_depth = depth;
         Fields fields = commonFields();
         fields.insert(fields.end(), spec->second.begin(), spec->second.end());
-        if (root)
+        if (root) {
             fields.push_back({"menu", T::Menu});
+            fields.push_back({"drop", T::Bool});
+        }
         if (auto problem = object(value, fields, at, withArticle(spec->first)))
             return problem;
         if (const Json *id = value.find("id"); id && !m_ids.insert(id->asString()).second)

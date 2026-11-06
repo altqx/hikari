@@ -103,7 +103,7 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: tabMenu.singleFile ? "tabMenuCopyPath_" + tabMenu.singleFile.kind : "tabMenuCopyPath"
-        iconRole: "edit-copy"
+        iconRole: "copy-path"
         text: qsTr("Copy path")
         visible: tabMenu.singleFile !== null
         height: tabMenu.singleFile !== null ? implicitHeight : 0
@@ -112,7 +112,7 @@ ShellMenu {
     ShellMenu {
         id: pathMenu
         objectName: "tabMenuCopyPaths"
-        iconRole: "edit-copy"
+        iconRole: "copy-path"
         title: qsTr("Copy path")
         shown: tabMenu.files.length > 1
         Instantiator {

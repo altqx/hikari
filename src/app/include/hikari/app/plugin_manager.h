@@ -29,8 +29,8 @@ public:
 
     bool available() const { return m_installer.has_value(); }
     // Rows {id, name, version, description, enabled, keyId ("" when unsigned), unrestricted, icon (a file URL, or
-    // empty), authors, homepage, permissions: [text], adds: [text], settings: [the manifest's setting with its value]},
-    // by name.
+    // empty), authors, homepage, permissions: [text], adds: [text], settings: [the manifest's setting with its value],
+    // folders: [{id, title, path, writable}] remembered for it}, by name.
     QVariantList plugins() const { return m_rows; }
     // Why plugins.json cannot be read; "" when it can.
     QString problem() const { return m_problem; }
@@ -53,9 +53,12 @@ public:
     QUrl dataFolder(const QString &id) const;
     Q_INVOKABLE bool openDataFolder(const QString &id) const;
     Q_INVOKABLE QString uninstall(const QString &id, bool removeData);
+    // "" when the plugin no longer has the folder, else why not.
+    Q_INVOKABLE QString forgetFolder(const QString &id, const QString &folder);
 
 signals:
     void pluginsChanged();
+    void folderForgotten(const QString &id);
     void settingChanged(const QString &id, const QString &setting, const QString &json);
 
 private:

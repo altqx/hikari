@@ -757,9 +757,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_aiSettings = std::make_unique<AiSettings>(*m_ai);
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
-    m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
-        pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
-        [this] { return m_localisation ? m_localisation->language() : QString(); }});
+    PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
+                                       [this] { return m_localisation ? m_localisation->language() : QString(); }};
+    pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
     m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
@@ -1934,7 +1936,7 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
-        if (staged.error().lyrics)
+        if (staged.error().lyrics || staged.error().srv3)
             m_log->log(openProblem(path, staged.error()));
         return std::nullopt;
     }
@@ -1944,6 +1946,13 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
 QString Application::openProblem(const QString &path, const application::StageFailure &failure)
 {
     const QString name = QFileInfo(path).fileName();
+    if (failure.srv3) {
+        QString reason = QString::fromStdString(*failure.srv3);
+        if (!reason.endsWith(QLatin1Char('.')))
+            reason += QLatin1Char('.');
+        return QCoreApplication::translate("HikariSub.Documents", "Could not import %1 as YouTube timed text. %2 Nothing was imported.")
+            .arg(name, reason);
+    }
     if (!failure.lyrics)
         return QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.").arg(name);
     using Kind = core::LyricsProblem::Kind;
