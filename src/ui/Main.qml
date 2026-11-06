@@ -6518,6 +6518,7 @@ ApplicationWindow {
     PluginManagerDialog {
         id: pluginManagerDialog
         manager: root.app.pluginManager
+        market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
         onCopyRequested: text => root.app.copyText(text)
@@ -6818,6 +6819,7 @@ ApplicationWindow {
         active: false
         sourceComponent: VideoDetailsDialog {
             video: root.video
+            timecodesFile: root.app.timecodesFile
             settings: root.app.settings
         }
     }

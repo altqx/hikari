@@ -10123,6 +10123,42 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai உள்நுழைவை மறுத்தது.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com உள்நுழைவை மறுத்தது. நீங்கள் விரும்பும் ChatGPT கணக்கில் HikariSub-இன் கோரிக்கையை அனுமதித்து, மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>உங்கள் ChatGPT பணியிடம் உள்நுழைவுக் குறியீடுகளை அணைத்துள்ளது. அதற்குப் பதிலாக உலாவி வழியாக உள்நுழையவும்.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>குறியீடு உள்ளிடப்படுவதற்கு முன் காலாவதியானது.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>உலாவிக்காகக் காத்திருந்து உள்நுழைவு நேரம் கடந்துவிட்டது.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>வேறொரு செயலி போர்ட் 1455-ஐப் பயன்படுத்தும்போது உலாவி உள்நுழைவு கிடைக்காது. இதைப் பயன்படுத்த அந்தச் செயலியின் உள்நுழைவை மூடவும்.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>%1-ஐ அணுக முடியவில்லை. இணைப்பைச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex-இல் இறக்குமதி செய்ய ChatGPT உள்நுழைவு இல்லை.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>உள்நுழைவு தோல்வியடைந்தது. மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>விசை நிராகரிக்கப்பட்டது (%1)</translation>
     </message>
@@ -10215,12 +10251,32 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API விசை</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>OpenRouter விசை</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API விசை (விருப்பத்தேர்வு)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>API விசை</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>OpenRouter மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>உள்நுழைந்துள்ளது (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>வெளியேறு</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>அல்லது விசையை ஒட்டவும்</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -10241,6 +10297,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Google AI Studio இலிருந்து பெற்ற விசை. Vertex AI மற்றும் Google Cloud உள்நுழைவு ஆதரிக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>உள்நுழைவு உங்கள் உலாவியில் openrouter.ai-ஐத் திறந்து HikariSub-க்கு ஒரு விசையை உருவாக்கும். ஒட்டிய விசையைப் போலவே அது விசைக்கொத்தில் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>வெளியேறுவது இந்தக் கணினியிலிருந்து விசையை நீக்கும். நீங்கள் அங்கே நீக்கும் வரை அது %1-இல் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>உங்கள் OpenRouter விசைகள்</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>உலாவியில் openrouter.ai-க்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>பக்கத்தை மீண்டும் திற</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -10365,6 +10441,10 @@ Failed to copy %2 fonts.</source>
         <translation>திருத்து மூலம் விசையை மாற்றவும்</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>திருத்து மூலம் மீண்டும் உள்நுழையவும்</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>விசைக்கொத்தில் விசை உள்ளது</translation>
     </message>
@@ -10403,6 +10483,114 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>சொந்த மாதிரி இல்லாத பங்கு அரட்டை மாதிரியைப் பயன்படுத்தும். பார்வை படங்களைப் படிக்கும் மாதிரிகளை மட்டுமே பட்டியலிடும்.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>வெளிப்புற முகவர்கள்</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>PATH-இல் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>PATH-இல் கிடைத்தது · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>PATH-இல் கிடைத்தது.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>உள்நுழையவில்லை</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ChatGPT மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>~/.codex-இலிருந்து இறக்குமதி (படிக்க மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>ChatGPT உள்நுழைவை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>~/.codex-இலிருந்து ChatGPT உள்நுழைவை இறக்குமதி செய்யவா? அதன்பின் HikariSub-உம் உங்கள் முனையத்திலுள்ள Codex-உம் ஒரே உள்நுழைவைப் பகிரும்; ஒன்று அதைப் புதுப்பித்தால், மற்றொன்று மீண்டும் உள்நுழைய வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>இறக்குமதி</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub, ~/.codex-இல் உள்ளதிலிருந்து தனியாக, Codex-க்குத் தனக்கென ChatGPT உள்நுழைவை வைத்திருக்கிறது; எனவே ஒன்று மற்றொன்றை வெளியேற்றாது.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 ஆக உள்நுழைந்துள்ளது</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex இந்த உள்நுழைவுடன் இயங்கும். இங்கே வெளியேறினாலும் உங்கள் முனையத்திலுள்ள Codex உள்நுழைந்தபடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>உள்நுழைவு காலாவதியானது</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>மீண்டும் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>கடவுச்சொல் மாற்றம் அல்லது எல்லாச் சாதனங்களிலும் வெளியேறியது போன்றவற்றுக்குப் பின் ChatGPT, HikariSub-இன் அமர்வை முடித்துவிட்டது. Codex-ஐத் தொடர்ந்து பயன்படுத்த மீண்டும் உள்நுழையவும்.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ChatGPT மூலம் உள்நுழை</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>auth.openai.com-ஐத் திறந்து, ChatGPT-இல் உள்நுழைந்து, இந்தக் குறியீட்டை உள்ளிடவும்.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>auth.openai.com-ஐத் திற</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com உங்கள் உலாவியில் திறந்துள்ளது. அங்கே உள்நுழையவும்; பக்கத்தை மூடலாம் என்று அது சொன்னதும் HikariSub முடிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>குறியீட்டுக்காகக் காத்திருக்கிறது · %1-இல் காலாவதியாகும்</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>உலாவிக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>குறியீட்டைப் பயன்படுத்த முடியவில்லையா? உலாவி வழியாக உள்நுழை</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>உலாவி வழியாக உள்நுழை</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>புதிய குறியீட்டைப் பெறு</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -10482,6 +10670,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>plugins.json in the user folder can’t be read: %1</source>
         <translation>பயனர் கோப்புறையில் உள்ள plugins.json ஐப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>பதிவிறக்கம் சந்தை பட்டியலிடும் செருகுநிரல் அல்ல: %1.</translation>
     </message>
     <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
@@ -10564,6 +10756,10 @@ Failed to copy %2 fonts.</source>
         <translation>நிறுத்தப்பட்டது</translation>
     </message>
     <message>
+        <source>From the marketplace</source>
+        <translation>சந்தையிலிருந்து</translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>சரி</translation>
     </message>
@@ -10628,12 +10824,28 @@ Failed to copy %2 fonts.</source>
         <translation>செயலில் உள்ள வசனக் கோப்பைத் தவிர வேறு எந்த அனுமதியையும் இது கேட்கவில்லை.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>%1 மீது நம்பிக்கை இருந்தால் மட்டுமே நிறுவவும். இது உங்கள் கணினியை முழுமையாக அணுகும்.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>%1 கையொப்பமிட்டது, சந்தையுடன் சரிபார்க்கப்பட்டது.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>நம்பி நிறுவு</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>முழு அணுகலுடன் நிறுவு</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>ஒவ்வொரு செருகுநிரலும் நீங்கள் வேலை செய்யும் ஆவணத்தைப் படித்துத் திருத்தலாம், ஒரே செயல்தவிர் படியாக.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10662,6 +10874,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>நிறுவப்பட்டவை %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>சந்தை</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>புதுப்பிப்புகளைச் சரிபார்</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகள்</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10698,6 +10930,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>செருகுநிரல்களைத் தேடு</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>அனைத்து வகைகள்</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>வகை</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>சந்தையை ஏற்றுகிறது…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>சந்தையில் இன்னும் செருகுநிரல்கள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>தேடலுக்குப் பொருந்தும் செருகுநிரல் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>சந்தைச் செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Unrestricted</source>
+        <translation>கட்டுப்பாடற்றது</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>புதுப்பிப்பு</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>பதிவிறக்குகிறது…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>%1-க்குப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>நிறுவு</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>இதற்கு HikariSub %1 அல்லது புதியது தேவை. நிறுவ HikariSub-ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>அடிப்படைக்கு மேல் எதுவும் இல்லை: பிணையம், கோப்புறைகள், பிற ஆவணங்கள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>%1-இல் புதியவை</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>தேவை</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 அல்லது புதியது</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>உரிமம்</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>புதுப்பிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>மூலம்</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1” அதே விசையால் கையொப்பமிடப்பட்டுச் சந்தையில் உள்ளது. புதுப்பிப்புகளைப் பெற அங்கு நகர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>இப்போது வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>சந்தைக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>On</source>
@@ -10770,6 +11098,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install from file…</source>
         <translation>கோப்பிலிருந்து நிறுவு…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகளைச் சரிபார்</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>தொடக்கத்திலும் நாளுக்கு ஒருமுறையும். HikariSub முழுப் பட்டியலையும் பதிவிறக்கும், உங்களிடம் உள்ள செருகுநிரல்களை ஒருபோதும் அனுப்பாது.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10880,6 +11216,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>சந்தையின் பட்டியல் சந்தை விசையால் கையொப்பமிடப்படவில்லை, எனவே HikariSub அதைப் புறக்கணித்தது.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>சந்தையின் கையொப்பம் வேறொரு கோப்புக்கானது, எனவே HikariSub பட்டியலைப் புறக்கணித்தது.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>HikariSub ஏற்கெனவே பார்த்ததை விடப் பழைய பட்டியலைச் சந்தை அனுப்பியது, எனவே HikariSub அதைப் புறக்கணித்தது.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>சந்தையின் பட்டியலைப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub சந்தையை அடைய முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1” இந்த HikariSub-க்கான சந்தையில் இல்லை.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>சந்தை தன் தளத்துக்கு வெளியே உள்ள பதிவிறக்கத்தைப் பட்டியலிடுகிறது, எனவே HikariSub அதைப் பெறாது.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>செருகுநிரலைப் பதிவிறக்க முடியவில்லை: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>
@@ -16783,7 +17151,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
+        <translation type="vanished">நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -16800,6 +17168,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>வீடியோ ஓடையின் சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>சட்டக நேரங்களின் மூலம்</translation>
     </message>
     <message>
         <source>Length</source>

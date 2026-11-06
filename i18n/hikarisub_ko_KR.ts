@@ -10062,6 +10062,42 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai에서 로그인을 거부했습니다.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com에서 로그인을 거부했습니다. 사용할 ChatGPT 계정으로 HikariSub의 요청을 승인한 뒤 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>ChatGPT 워크스페이스에서 로그인 코드를 껐습니다. 대신 브라우저로 로그인하세요.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>코드를 입력하기 전에 만료되었습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>브라우저를 기다리다 로그인 시간이 초과되었습니다.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>다른 앱이 포트 1455를 쓰는 동안에는 브라우저 로그인을 사용할 수 없습니다. 사용하려면 그 앱의 로그인을 닫으세요.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>%1에 연결할 수 없습니다. 연결을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex에 가져올 ChatGPT 로그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>로그인하지 못했습니다. 다시 시도하세요.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>키가 거부됨(%1)</translation>
     </message>
@@ -10154,12 +10190,32 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API 키</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>OpenRouter 키</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API 키(선택 사항)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>API 키</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>OpenRouter로 로그인…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>로그인됨(OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>로그아웃</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>또는 키 붙여넣기</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -10180,6 +10236,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Google AI Studio에서 받은 키입니다. Vertex AI와 Google Cloud 로그인은 지원하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>로그인하면 브라우저에서 openrouter.ai가 열리고 HikariSub용 키가 만들어집니다. 이 키는 붙여넣은 키처럼 키체인에 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>로그아웃하면 이 컴퓨터에서 키가 삭제됩니다. 키는 %1에서 직접 삭제할 때까지 그곳에 남아 있습니다.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>내 OpenRouter 키</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>브라우저에서 openrouter.ai를 기다리는 중</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>페이지 다시 열기</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -10302,6 +10378,10 @@ Failed to copy %2 fonts.</source>
         <translation>편집에서 키를 바꾸세요</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>편집에서 다시 로그인하세요</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>키체인에 키 있음</translation>
     </message>
@@ -10340,6 +10420,114 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>자체 모델이 없는 역할은 채팅 모델을 사용합니다. 비전에는 이미지를 읽는 모델만 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>외부 에이전트</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>PATH에서 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>PATH에서 찾음 · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>PATH에서 찾음.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>로그인하지 않음</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ChatGPT로 로그인…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>~/.codex에서 가져오기(읽기 전용)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>ChatGPT 로그인 가져오기</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>~/.codex에서 ChatGPT 로그인을 가져올까요? 그러면 HikariSub와 터미널의 Codex가 로그인 하나를 함께 쓰게 되며, 한쪽이 로그인을 새로 고치면 다른 쪽은 다시 로그인해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub는 ~/.codex의 로그인과 별도로 Codex용 ChatGPT 로그인을 따로 유지하므로 서로 로그아웃시키지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1(으)로 로그인됨</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex는 이 로그인으로 실행됩니다. 여기서 로그아웃해도 터미널의 Codex는 로그인된 상태로 남습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>로그인이 만료됨</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>다시 로그인…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>비밀번호 변경이나 모든 기기에서 로그아웃한 경우 등으로 ChatGPT가 HikariSub의 세션을 끝냈습니다. Codex를 계속 쓰려면 다시 로그인하세요.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ChatGPT로 로그인</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>auth.openai.com을 열고 ChatGPT에 로그인한 뒤 이 코드를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>auth.openai.com 열기</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>브라우저에 auth.openai.com이 열려 있습니다. 거기서 로그인하세요. 페이지에 닫아도 된다고 나오면 HikariSub가 마무리합니다.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>코드를 기다리는 중 · %1 후 만료</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>브라우저를 기다리는 중</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>코드를 쓸 수 없나요? 브라우저로 로그인</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>브라우저로 로그인</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>새 코드 받기</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -10419,6 +10607,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>plugins.json in the user folder can’t be read: %1</source>
         <translation>사용자 폴더의 plugins.json을 읽을 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>다운로드한 파일이 마켓플레이스에 등록된 플러그인이 아닙니다: %1.</translation>
     </message>
     <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
@@ -10501,6 +10693,10 @@ Failed to copy %2 fonts.</source>
         <translation>중지됨</translation>
     </message>
     <message>
+        <source>From the marketplace</source>
+        <translation>마켓플레이스에서 설치</translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>확인</translation>
     </message>
@@ -10565,12 +10761,28 @@ Failed to copy %2 fonts.</source>
         <translation>활성 자막 파일 외에는 권한을 요청하지 않습니다.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>%1을(를) 신뢰할 때만 설치하세요. 이 플러그인은 컴퓨터에 대한 모든 권한을 갖습니다.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>%1이(가) 서명했고 마켓플레이스와 대조해 확인했습니다.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>신뢰하고 설치</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>모든 권한으로 설치</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>모든 플러그인은 작업 중인 문서를 읽고 편집할 수 있으며, 편집은 한 번에 실행 취소됩니다.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10599,6 +10811,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>플러그인 설치를 제거하지 못함</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>설치됨 %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>설치됨</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>마켓플레이스</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>업데이트 확인</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>플러그인 업데이트</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10635,6 +10867,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>전체 신뢰</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>플러그인 검색</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>모든 분류</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>분류</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>마켓플레이스를 불러오는 중…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>마켓플레이스에 아직 플러그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>검색과 일치하는 플러그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>마켓플레이스 플러그인</translation>
+    </message>
+    <message>
+        <source>Unrestricted</source>
+        <translation>제한 없음</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>%1(으)로 업데이트</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>설치</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>HikariSub %1 이상이 필요합니다. 설치하려면 HikariSub를 업데이트하세요.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>기본 권한 외에는 없음: 네트워크, 폴더, 다른 문서에 접근하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>%1의 새로운 점</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>필요</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 이상</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>라이선스</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>업데이트 날짜</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>소스</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1”이(가) 같은 키로 서명되어 마켓플레이스에 있습니다. 업데이트를 받으려면 마켓플레이스로 옮기세요.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>마켓플레이스로 옮기기</translation>
     </message>
     <message>
         <source>On</source>
@@ -10707,6 +11035,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install from file…</source>
         <translation>파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>플러그인 업데이트 확인</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>시작할 때와 하루에 한 번. HikariSub는 전체 목록을 내려받고, 어떤 플러그인이 있는지는 보내지 않습니다.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10815,6 +11151,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>마켓플레이스 목록이 마켓플레이스 키로 서명되지 않아 HikariSub가 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>마켓플레이스 서명이 다른 파일의 것이라 HikariSub가 목록을 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>마켓플레이스가 HikariSub가 이미 본 목록보다 오래된 목록을 보내 HikariSub가 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>마켓플레이스 목록을 읽지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub가 마켓플레이스에 연결하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1”은(는) 이 HikariSub용 마켓플레이스에 없습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>마켓플레이스가 자체 사이트 밖의 다운로드를 등록해 HikariSub가 가져오지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>플러그인을 다운로드하지 못했습니다: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>
@@ -16671,7 +17039,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>타임코드 파일을 찾을 수 없습니다: %1</translation>
+        <translation type="vanished">타임코드 파일을 찾을 수 없습니다: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -16688,6 +17056,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>영상 스트림 프레임 속도</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>프레임 시간 출처</translation>
     </message>
     <message>
         <source>Length</source>

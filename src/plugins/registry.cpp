@@ -48,6 +48,11 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
             return std::nullopt;
         plugin.settings = *settings;
     }
+    if (const Json *source = json.find("source")) {
+        if (!source->isString() || (source->asString() != "file" && source->asString() != "marketplace"))
+            return std::nullopt;
+        plugin.source = source->asString() == "marketplace" ? Source::Marketplace : Source::File;
+    }
     return plugin;
 }
 
@@ -95,6 +100,8 @@ bool saveRegistry(const std::filesystem::path &file, const Registry &registry)
         }
         if (!plugin.settings.asObject().empty())
             entry["settings"] = plugin.settings;
+        if (plugin.source == Source::Marketplace)
+            entry["source"] = "marketplace";
         plugins[id] = std::move(entry);
     }
     const std::string text = Json::object({{"format", kFormat}, {"plugins", std::move(plugins)}}).dump(2) + "\n";

@@ -5,6 +5,7 @@
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
 
+#include <algorithm>
 #include <clocale>
 #include <cmath>
 #include <cstdlib>
@@ -181,21 +182,11 @@ Resolution scriptResolution(const core::Document &document)
 
 void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool stretch, const ResampleWarning &warn)
 {
-    float val = xnsize, val1 = ynsize, valFscx = 1.f, vectorXScale = xnsize;
-    bool resizeScale = false;
-    if (ynsize != xnsize) {
-        if (ynsize > xnsize) {
-            resizeScale = stretch;
-            valFscx = stretch ? ynsize / xnsize : 1.f;
-        } else {
-            val = ynsize;
-            val1 = xnsize;
-            resizeScale = stretch;
-            valFscx = stretch ? xnsize / ynsize : 1.f;
-        }
-        if (stretch)
-            vectorXScale /= valFscx;
-    }
+    const float val = std::min(xnsize, ynsize), val1 = std::max(xnsize, ynsize);
+    const float stretched = stretch ? val1 / val : 1.f;
+    const bool taller = ynsize > xnsize;
+    const float valFscx = taller ? 1.f : stretched, valFscy = taller ? stretched : 1.f;
+    const float vectorXScale = xnsize / valFscx, vectorYScale = ynsize / valFscy;
 
     const auto styles = core::decodeStyles(document);
     for (std::size_t i = 0; i < styles.size(); ++i) {
@@ -209,12 +200,15 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
         int mv = atoi8(s.marginVertical);
         mv = static_cast<int>(mv * ynsize);
         s.marginVertical = number(mv);
-        if (resizeScale) {
-            double fscx = 100;
-            toCDouble(s.scaleX, fscx);
-            fscx *= valFscx;
-            s.scaleX = getfloat8(fscx);
-        }
+        const auto stretchScale = [](u8 &field, float by) {
+            if (by == 1.f)
+                return;
+            double scale = 100;
+            toCDouble(field, scale);
+            field = getfloat8(scale * by);
+        };
+        stretchScale(s.scaleX, valFscx);
+        stretchScale(s.scaleY, valFscy);
         double fs = 0;
         if (!toCDouble(s.fontsize, fs))
             fs = atoi8(s.fontsize);
@@ -232,7 +226,7 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
         document.editStyle(i, core::legacy::styleRawFields(s));
     }
 
-    static const std::vector<u16v> names{u"pos", u"move", u"bord", u"shad", u"org", u"fsp", u"fscx", u"fs",
+    static const std::vector<u16v> names{u"pos", u"move", u"bord", u"shad", u"org", u"fsp", u"fscx", u"fscy", u"fs",
                                          u"clip", u"iclip", u"p", u"xbord", u"ybord", u"xshad", u"yshad"};
     int row = 0;
     for (const auto *line : document.lines()) {
@@ -262,13 +256,16 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
         };
         for (auto it = tags.rbegin(); it != tags.rend(); ++it) {
             const TagData &tag = *it;
+            if (tag.name == u"fscy" && valFscy == 1.f)
+                continue;
             u16 resized;
             double value = 0;
             const bool clipLike = tag.name.ends_with(u"clip") || tag.name == u"pvector";
             if (clipLike && tag.value.find(u'm') != u16::npos) {
                 const auto mPos = tag.value.find(u'm');
                 resized = tag.value.substr(0, mPos) + u"m ";
-                const float xscale = tag.name == u"pvector" ? vectorXScale : xnsize;
+                const bool drawing = tag.name == u"pvector";
+                const float xscale = drawing ? vectorXScale : xnsize, yscale = drawing ? vectorYScale : ynsize;
                 int ii = 0;
                 for (u16 tkn : tokens(u16v(tag.value).substr(mPos + 1), u' ')) {
                     if (tkn != u"m" && tkn != u"l" && tkn != u"b" && tkn != u"s" && tkn != u"c") {
@@ -278,7 +275,7 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
                             lastC = u"c";
                         }
                         if (toCDouble(tkn, value)) {
-                            value *= (ii % 2 == 0) ? xscale : ynsize;
+                            value *= (ii % 2 == 0) ? xscale : yscale;
                             resized += getfloat(value) + lastC + u" ";
                         } else {
                             log(tkn, tag.name);
@@ -310,6 +307,7 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
             } else if (tag.name != u"p") {
                 if (toCDouble(tag.value, value)) {
                     value *= tag.name == u"fscx"         ? valFscx
+                             : tag.name == u"fscy"       ? valFscy
                              : tag.name == u"fs"         ? val1
                              : tag.name.starts_with(u'x') ? xnsize
                              : tag.name.starts_with(u'y') ? ynsize

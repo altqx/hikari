@@ -556,6 +556,7 @@ QVariantMap VideoController::details() const
                                                .arg(d->fps.den);
     else
         out[QStringLiteral("frameRate")] = QCoreApplication::translate("HikariSub.Video", "%1 fps").arg(decimal);
+    out[QStringLiteral("frameTimesReplaced")] = d->frameTimesReplaced;
     out[QStringLiteral("length")] = QCoreApplication::translate("HikariSub.Video", "%n frames (%1)", "", d->frames)
                                         .arg(QString::fromStdString(application::lengthText(d->lastFrameMs)));
     const auto &format = d->pixelFormat;

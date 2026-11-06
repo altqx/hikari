@@ -4,6 +4,7 @@
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/desktop_handoff.h"
 #include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
@@ -24,6 +25,7 @@
 #include "list_files.h"
 #include "toml_file.h"
 #include "audio_display_item.h"
+#include "fake_auth_server.h"
 #include "fake_font_service.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
@@ -57,6 +59,7 @@
 #include "video_presenter.h"
 #include "hikari/app/composition.h"
 #include "next_file_folder.h"
+#include "fake_network.h"
 #include "menu_icon_scan.h"
 #include "menu_rows.h"
 
@@ -542,6 +545,7 @@ class ShellTest : public QObject {
     QString episode, original;
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
+    std::unique_ptr<hikari::test::FakeNetwork> marketNetwork;
     QQuickWindow *window = nullptr;
     // Windows cannot remove an open file: these are removed in cleanup(), after the application.
     std::vector<std::unique_ptr<QTemporaryDir>> testFolders;
@@ -16395,8 +16399,14 @@ private slots:
             std::shared_ptr<Stored> m;
         };
         auto stored = std::make_shared<Stored>();
+        test::FakeAuthServer auth;
+        auth.script("ok");
+        test::FakeSignInClock signInTime{.realMs = 20};
         app::AiFeatures::Ports ports;
         ports.keyStore = [stored] { return std::make_unique<Keys>(stored); };
+        ports.signIn = [&auth, &signInTime, port = test::freePort()](ai::KeyStore &keys) {
+            return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(port), signInTime.clock());
+        };
         ports.configStore = [stored] { return std::make_unique<Configs>(stored); };
         ports.sidecarHost = [this](const backends::ai::SidecarInstall &) {
             backends::ai::AiSidecarHost::Options o;
@@ -16463,6 +16473,78 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
+
+        std::vector<QUrl> opened;
+        const auto routes = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened.push_back(url);
+            return true;
+        }});
+        auto restoreRoutes = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiExternalAgents")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiCodexFound")->property("text").toString(), QStringLiteral("Not found on PATH."));
+        QVERIFY(!dialogItem("settingsDialog", "aiCodexImport")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedIn")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiCodexEmail")->property("text").toString(),
+                 QStringLiteral("Signed in as owner@example.com"));
+        QVERIFY(stored->keys.contains("codex-chatgpt"));
+        QVERIFY(opened.empty());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignOut"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
+        QVERIFY(!stored->keys.contains("codex-chatgpt"));
+
+        auth.script("hang");
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
+        QQuickItem *code = nullptr;
+        QTRY_VERIFY((code = dialogItem("settingsDialog", "aiCodexCode")) && code->isVisible());
+        QCOMPARE(code->property("text").toString(), QStringLiteral("FAKE-1234"));
+        QCOMPARE(code->property("font").value<QFont>().featureValue(QFont::Tag("zero")), 1u);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexCancel"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
+        QQuickItem *signIn = nullptr;
+        QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
+        QVERIFY(QMetaObject::invokeMethod(signIn, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiDraftDot")->isVisible());
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaitingText")->property("truncated").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiOpenRouterCancel"), "click"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(page, "closeForm"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
+        auth.script("ok");
+
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("OpenRouter key"));
+        QVERIFY(signIn->isVisible());
+        opened.clear();
+        QVERIFY(QMetaObject::invokeMethod(signIn, "click"));
+        QTRY_VERIFY(!opened.empty() && opened.back().host() == QLatin1String("openrouter.ai"));
+        QCOMPARE(test::browse(test::approval(opened.back())), 200);
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProvider_openrouter"));
+        QCOMPARE(stored->keys.at("openrouter"), "sk-or-v1-fake");
+        QVERIFY(std::ranges::any_of(opened, [](const QUrl &url) { return url.host() == QLatin1String("openrouter.ai"); }));
+        QQuickItem *note = nullptr;
+        QTRY_VERIFY((note = dialogItem("settingsDialog", "aiProvider_openrouter")->findChild<QQuickItem *>(QStringLiteral("aiProviderKeyNote"))));
+        QCOMPARE(note->property("text").toString(), QStringLiteral("Signed in (OpenRouter)"));
+        QVERIFY(QMetaObject::invokeMethod(
+            dialogItem("settingsDialog", "aiProvider_openrouter")->findChild<QQuickItem *>(QStringLiteral("aiProviderEdit")), "click"));
+        QQuickItem *signOut = nullptr;
+        QTRY_VERIFY((signOut = dialogItem("settingsDialog", "aiOpenRouterSignOut")) && signOut->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(signOut, "click"));
+        QTRY_VERIFY(!stored->keys.contains("openrouter"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiProvider_openrouter")
+                         ->findChild<QQuickItem *>(QStringLiteral("aiProviderKeyNote"))
+                         ->property("text")
+                         .toString(),
+                     QStringLiteral("No key"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()
@@ -16928,6 +17010,142 @@ private slots:
                       QStringLiteral("remove"));
         QTRY_VERIFY(rows().isEmpty());
         QVERIFY(!QDir(home.filePath(QStringLiteral("plugins/com.example.hello"))).exists());
+    }
+    void startMarketplace(const QTemporaryDir &home, bool sideloadHello)
+    {
+        if (!marketNetwork)
+            marketNetwork = std::make_unique<hikari::test::FakeNetwork>();
+        const QString fixtures = QStringLiteral(HIKARI_PLUGIN_FIXTURES "/");
+        const auto read = [&](const QString &name) {
+            QFile f(fixtures + name);
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        };
+        const QString market = QStringLiteral("https://marketplace.test/");
+        marketNetwork->files = {
+            {market + QStringLiteral("index.json"), read(QStringLiteral("marketplace/index.json"))},
+            {market + QStringLiteral("index.json.minisig"), read(QStringLiteral("marketplace/index.json.minisig"))},
+            {market + QStringLiteral("p/com.example.hello/1.1.0.hikariplugin"), read(QStringLiteral("hello-1.1.0.hikariplugin"))},
+            {market + QStringLiteral("p/com.example.native/1.0.0.hikariplugin"),
+             read(QStringLiteral("native-1.0.0-unrestricted.hikariplugin"))},
+        };
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.marketplace = {QUrl(market), {*hikari::minisign::parsePublicKey("RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X")}};
+        options.marketplaceNetwork = marketNetwork.get();
+        restartWith(options);
+        if (sideloadHello) {
+            QVERIFY(application->pluginManager()
+                        ->review(QUrl::fromLocalFile(fixtures + QStringLiteral("hello-1.0.0.hikariplugin")))
+                        .value(QStringLiteral("ok"))
+                        .toBool());
+            QCOMPARE(application->pluginManager()->install(false), QString());
+        }
+        application->pluginMarketplace()->start();
+        QTRY_COMPARE(application->pluginMarketplace()->status(), QStringLiteral("ready"));
+    }
+    void theMarketplaceInstallsAndMovesListedPlugins()
+    {
+        QTemporaryDir home;
+        startMarketplace(home, true);
+        QCOMPARE(marketNetwork->requests.size(), 2);
+        QObject *dialog = named("pluginManagerDialog");
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = dialogItem("pluginManagerDialog", "pluginMoveBar")) && bar->isVisible());
+        QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerView")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginMove"), "click"));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("pluginManagerMessages")) && box->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Update “Hello” from 1.0.0 to 1.1.0?"));
+        QVERIFY(box->property("detail").toString().startsWith(QStringLiteral("Signed by Ana Fansubs and checked against the marketplace.")));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("install"))));
+        QTRY_VERIFY(!box->isVisible());
+        QTRY_COMPARE(application->pluginManager()->plugins().first().toMap().value(QStringLiteral("source")).toString(),
+                     QStringLiteral("marketplace"));
+        QQuickItem *trust = nullptr;
+        QTRY_VERIFY((trust = dialogItem("pluginManagerDialog", "pluginTrust_com.example.hello")));
+        QCOMPARE(trust->property("text").toString(), QStringLiteral("From the marketplace"));
+        QTRY_VERIFY(!dialogItem("pluginManagerDialog", "pluginMoveBar")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
+        QCOMPARE(dialog->property("found").toList().size(), 3);
+        dialog->setProperty("search", QStringLiteral("native"));
+        QCOMPARE(dialog->property("found").toList().size(), 1);
+        dialog->setProperty("chosenListingId", QStringLiteral("com.example.native"));
+        QQuickItem *install = nullptr;
+        QTRY_VERIFY((install = dialogItem("pluginManagerDialog", "marketInstall")) && install->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(install, "click"));
+        QTRY_VERIFY((box = messageBox("pluginManagerMessages")) && box->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Install “Native Tools” 1.0.0?"));
+        QVERIFY(box->property("detail").toString().startsWith(
+            QStringLiteral("Install it only if you trust Ana Fansubs. It gets full access to your computer.")));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QCOMPARE(application->pluginManager()->plugins().size(), 1);
+        restartWith(app::Application::Options());
+        marketNetwork.reset();
+    }
+    void pluginMarketplaceScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir home;
+        startMarketplace(home, true);
+        window->resize(1600, 900);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto *dialog = named("pluginManagerDialog");
+        auto *manager = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(manager);
+        const auto question = [&](const char *button, const QString &file) {
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", button), "click"));
+            QQuickWindow *box = nullptr;
+            QTRY_VERIFY((box = messageBox("pluginManagerMessages")) && box->isVisible());
+            QTest::qWait(400);
+            QVERIFY(box->grabWindow().save(file));
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!box->isVisible());
+        };
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+
+            QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "pluginMoveBar")->isVisible());
+            QTest::qWait(400);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/market-move") + suffix));
+            question("pluginMove", out + QStringLiteral("/market-install") + suffix);
+
+            QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
+            dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
+            QTest::qWait(400);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/market-browse") + suffix));
+            dialog->setProperty("chosenListingId", QStringLiteral("com.example.native"));
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketInstall")->isVisible());
+            question("marketInstall", out + QStringLiteral("/market-install-full") + suffix);
+
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginUpdateOptions"), "click"));
+            auto *popover = dialog->findChild<QObject *>(QStringLiteral("pluginUpdatesPopover"));
+            QVERIFY(popover);
+            QTRY_VERIFY(popover->property("opened").toBool());
+            QTest::qWait(400);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/market-updates-popover") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(popover, "keep"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+        restartWith(app::Application::Options());
+        marketNetwork.reset();
     }
     void aPluginPanelDocksFloatsPersistsAndKeepsItsPlace()
     {

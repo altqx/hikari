@@ -54,7 +54,6 @@ export const Method = {
     toolsCall: "_hikari/tools.call",
     mcpMessage: "_hikari/mcp.message",
     mcpClosed: "_hikari/mcp.closed",
-    secretStore: "_hikari/secret.store",
 } as const;
 
 /** Qt's requests that later cards implement. */

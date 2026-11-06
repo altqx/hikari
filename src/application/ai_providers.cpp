@@ -239,6 +239,34 @@ void Providers::remove(const std::string &providerId, std::function<void(std::op
     });
 }
 
+void Providers::signOut(const std::string &providerId, std::function<void(std::optional<SaveError>)> done)
+{
+    if (!m_config.provider(providerId)) {
+        done(std::nullopt);
+        return;
+    }
+    m_keys.remove(providerId, [this, providerId, done = std::move(done)](std::optional<KeyError> error) {
+        if (error && *error != KeyError::NotFound) {
+            done(saveErrorOf(*error));
+            return;
+        }
+        m_keyCache.erase(providerId);
+        Config next = m_config;
+        const auto it = std::ranges::find(next.providers, providerId, &Provider::id);
+        if (it == next.providers.end()) {
+            done(std::nullopt);
+            return;
+        }
+        it->signedIn = false;
+        if (!m_configs.save(next)) {
+            done(SaveError::Config);
+            return;
+        }
+        m_config = std::move(next);
+        done(std::nullopt);
+    });
+}
+
 bool Providers::assign(Role role, ModelRef model)
 {
     if (!m_config.provider(model.providerId) || model.modelId.empty())

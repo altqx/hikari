@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/plugins/marketplace.h"
 #include "hikari/plugins/package.h"
 #include "hikari/plugins/registry.h"
 
@@ -18,7 +19,7 @@ struct PluginFolders {
 enum class Change { Install, Update, Reinstall, Downgrade };
 
 struct InstallRefusal {
-    enum class Kind { Package, Signature, SignedWithoutKey, Registry };
+    enum class Kind { Package, Signature, SignedWithoutKey, Registry, Listing };
     Kind kind = Kind::Package;
     PackageProblem package;
     minisign::Refusal signature = minisign::Refusal::Malformed;
@@ -33,6 +34,7 @@ struct InstallReview {
     std::optional<minisign::PublicKey> pinned;
     // Signed by another key than the pinned one, or unsigned over a signed install.
     bool needsRetrust = false;
+    Source source = Source::File;
 };
 
 class Installer {
@@ -49,6 +51,11 @@ public:
     std::expected<InstallReview, InstallRefusal> review(std::span<const std::byte> packageBytes,
                                                         std::vector<PackageFile> files,
                                                         std::optional<std::string_view> signature) const;
+    // review() for a marketplace download, whose bytes already passed listedPackageProblem: the
+    // marketplace's signed index vouches for the listing's author key, so no .minisig is needed.
+    // Refuses a package that isn't the listed one and any downgrade.
+    std::expected<InstallReview, InstallRefusal> reviewListed(std::vector<PackageFile> files, const Listing &listing,
+                                                              const ListedVersion &listed) const;
 
     // Stages the files and swaps them in; pins the signer, keeps the enabled state and the
     // grants the manifest still asks for, keeps plugin data and clears the cache. A review
@@ -64,6 +71,8 @@ public:
     std::expected<void, std::string> uninstall(std::string_view id, bool removeData);
 
 private:
+    std::expected<InstallReview, InstallRefusal> open(std::vector<PackageFile> files) const;
+
     PluginFolders m_folders;
     std::int64_t m_apiVersion;
 };

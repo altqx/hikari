@@ -16,6 +16,13 @@ ScrollView {
     property string adding: ""
     property string editing: ""
     property var stagedRoles: ({})
+    readonly property var codex: ai ? ai.codex : ({})
+    property bool codexBrowser: false
+    readonly property string codeFontFamily: {
+        const marked = ["Cascadia Mono", "Consolas", "Menlo", "JetBrains Mono", "Noto Sans Mono"]
+        const installed = Qt.fontFamilies()
+        return marked.find(family => installed.includes(family)) ?? "monospace"
+    }
     readonly property var roleNames: [
         {id: "chat", name: qsTr("Chat")},
         {id: "translator", name: qsTr("Translator")},
@@ -36,6 +43,12 @@ ScrollView {
     function reload() {
         stagedRoles = ai ? Object.assign({}, ai.roles) : {}
         closeForm()
+        if (ai && ai.on)
+            ai.checkCodex()
+    }
+    function signInCodex(browser) {
+        codexBrowser = browser
+        ai.signInCodex(browser)
     }
     function commit() {
         if (ai && ai.on)
@@ -83,8 +96,28 @@ ScrollView {
         const host = row.baseUrl.replace(/^[a-z]+:\/\//, "").replace(/\/.*$/, "")
         return host
     }
-    function failureText(error, httpStatus) {
+    function signInText(kind, host) {
+        switch (kind) {
+        case "denied": return host === "openrouter.ai" ? qsTr("openrouter.ai refused the sign-in.")
+                                                       : qsTr("auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.")
+        case "codesOff": return qsTr("Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.")
+        case "codeExpired": return qsTr("The code expired before it was entered.")
+        case "timedOut": return qsTr("Sign-in timed out waiting for the browser.")
+        case "portBusy": return qsTr("Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.")
+        case "network": return qsTr("Couldn’t reach %1. Check the connection.").arg(host)
+        case "keychain": return failureText("keychainDenied", 0)
+        case "import": return qsTr("~/.codex has no ChatGPT sign-in to import.")
+        case "invalid": return qsTr("Sign-in failed. Try again.")
+        }
+        return failureText(kind, 0)
+    }
+    function countdown(expiresAt, now) {
+        const left = Math.max(0, Math.floor((expiresAt - now) / 1000))
+        return Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0")
+    }
+    function failureText(error, httpStatus, detail) {
         switch (error) {
+        case "signIn": return signInText(detail, "openrouter.ai")
         case "unauthorized": return qsTr("Key rejected (%1)").arg(httpStatus)
         case "rateLimited": return qsTr("Too many requests (%1)").arg(httpStatus)
         case "rejected": return qsTr("Request refused (%1)").arg(httpStatus)
@@ -141,6 +174,17 @@ ScrollView {
         Layout.topMargin: -5
         Layout.fillWidth: true
     }
+    component BusyIcon: Icon {
+        id: busyIcon
+        iconRole: "run-busy"
+        RotationAnimator on rotation {
+            running: busyIcon.visible
+            from: 0
+            to: 360
+            duration: 1200
+            loops: Animation.Infinite
+        }
+    }
     component StatusDot: Rectangle {
         property string status
         implicitWidth: 8
@@ -158,7 +202,9 @@ ScrollView {
         readonly property bool custom: preset === "custom"
         readonly property var draft: page.ai.draft
         readonly property var download: page.ai.download
-        readonly property bool busy: draft.state === "testing" || draft.state === "saving"
+        readonly property bool busy: draft.state === "testing" || draft.state === "saving" || draft.state === "signingIn"
+        readonly property bool openRouter: preset === "openrouter"
+        readonly property bool signedIn: editingOne && existing.signedIn === true
         objectName: "aiProviderForm"
         color: Theme.panel
         border.color: Theme.accent
@@ -227,13 +273,42 @@ ScrollView {
                 id: keyRow
                 objectName: "aiProviderKeyRow"
                 text: form.preset === "gemini" ? qsTr("Gemini API key")
-                                               : form.custom ? qsTr("API key (optional)") : qsTr("API key")
+                                               : form.openRouter ? qsTr("OpenRouter key")
+                                                                 : form.custom ? qsTr("API key (optional)") : qsTr("API key")
                 labelWidth: 150
+                Button {
+                    objectName: "aiOpenRouterSignIn"
+                    visible: form.openRouter && !form.signedIn
+                    text: qsTr("Sign in with OpenRouter…")
+                    enabled: !form.busy && nameField.text.trim().length > 0
+                    onClicked: page.ai.signInDraft(form.values())
+                }
+                Label {
+                    objectName: "aiOpenRouterSignedIn"
+                    visible: form.signedIn
+                    text: qsTr("Signed in (OpenRouter)")
+                }
+                Button {
+                    objectName: "aiOpenRouterSignOut"
+                    visible: form.signedIn
+                    text: qsTr("Sign out")
+                    enabled: !form.busy
+                    onClicked: {
+                        page.ai.signOutProvider(form.providerId)
+                        page.closeForm()
+                    }
+                }
+                Label {
+                    visible: form.openRouter
+                    text: qsTr("or paste a key")
+                    color: Theme.muted
+                }
                 TextField {
                     id: keyField
                     objectName: "aiProviderKey"
                     echoMode: showKey.checked ? TextInput.Normal : TextInput.Password
-                    placeholderText: form.editingOne && form.existing.needsKey ? qsTr("Saved in the keychain. Type a new key to replace it") : ""
+                    placeholderText: form.editingOne && form.existing.needsKey ? qsTr("Saved in the keychain. Type a new key to replace it")
+                                                                                 : form.openRouter ? "sk-or-v1-…" : ""
                     Layout.fillWidth: true
                     Accessible.name: keyRow.text
                     onAccepted: if (!form.busy) page.ai.testDraft(form.values())
@@ -264,6 +339,62 @@ ScrollView {
                 wrapMode: Text.Wrap
                 Layout.leftMargin: 182
                 Layout.fillWidth: true
+            }
+            Label {
+                visible: form.openRouter && !form.signedIn
+                text: qsTr("Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.leftMargin: 182
+                Layout.fillWidth: true
+            }
+            Label {
+                objectName: "aiOpenRouterSignOutNote"
+                visible: form.signedIn
+                textFormat: Text.StyledText
+                linkColor: Theme.accent
+                text: qsTr("Sign out deletes the key from this computer. It stays in %1 until you delete it there.")
+                      .arg("<a href=\"keys\">" + qsTr("your OpenRouter keys") + "</a>")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.leftMargin: 182
+                Layout.fillWidth: true
+                onLinkActivated: page.ai.openOpenRouterKeys()
+                HoverHandler { cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor }
+            }
+            Rectangle {
+                objectName: "aiOpenRouterWaiting"
+                visible: form.draft.state === "signingIn"
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: waitingRow.implicitHeight + 16
+                Layout.leftMargin: 182
+                Layout.fillWidth: true
+                RowLayout {
+                    id: waitingRow
+                    x: 10
+                    y: 8
+                    width: parent.width - 20
+                    spacing: 8
+                    BusyIcon {}
+                    Label {
+                        objectName: "aiOpenRouterWaitingText"
+                        text: qsTr("Waiting for openrouter.ai in your browser")
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    Button {
+                        objectName: "aiOpenRouterOpenAgain"
+                        text: qsTr("Open the page again")
+                        onClicked: page.ai.openSignInPage()
+                    }
+                    Button {
+                        objectName: "aiOpenRouterCancel"
+                        text: qsTr("Cancel")
+                        onClicked: page.ai.cancelSignIn()
+                    }
+                }
             }
             Label {
                 visible: form.custom
@@ -326,15 +457,20 @@ ScrollView {
                 spacing: 8
                 Layout.fillWidth: true
                 Layout.topMargin: 4
-                StatusDot { status: form.draft.state ?? ""; visible: (form.draft.state ?? "") !== "" }
+                StatusDot {
+                    objectName: "aiDraftDot"
+                    status: form.draft.state ?? ""
+                    visible: draftStatus.text !== ""
+                }
                 Label {
+                    id: draftStatus
                     objectName: "aiDraftStatus"
                     text: {
                         switch (form.draft.state) {
                         case "testing": return form.download.active ? qsTr("Tests when the download finishes") : qsTr("Testing…")
                         case "saving": return qsTr("Saving…")
                         case "ok": return qsTr("Connected · %n model(s)", "", form.draft.models)
-                        case "failed": return page.failureText(form.draft.error, form.draft.httpStatus)
+                        case "failed": return page.failureText(form.draft.error, form.draft.httpStatus, form.draft.detail)
                         }
                         return ""
                     }
@@ -518,9 +654,12 @@ ScrollView {
                                     }
                                     Label {
                                         Layout.alignment: Qt.AlignRight
+                                        objectName: "aiProviderKeyNote"
                                         text: row.modelData.state === "failed" && row.modelData.error === "unauthorized"
-                                              ? qsTr("Replace the key with Edit")
-                                              : row.modelData.needsKey ? qsTr("Key in keychain") : qsTr("No key")
+                                              ? (row.modelData.signedIn ? qsTr("Sign in again with Edit") : qsTr("Replace the key with Edit"))
+                                              : row.modelData.signedIn ? qsTr("Signed in (OpenRouter)")
+                                              : row.modelData.needsKey && row.modelData.error !== "key" ? qsTr("Key in keychain")
+                                                                                                         : qsTr("No key")
                                         color: Theme.muted
                                     }
                                 }
@@ -634,6 +773,266 @@ ScrollView {
                 text: qsTr("A role without its own model uses the chat model. Vision lists only models that read images.")
                 Layout.leftMargin: 0
                 Layout.topMargin: 0
+            }
+        }
+
+        SettingsSection {
+            objectName: "aiExternalAgents"
+            visible: page.live
+            title: qsTr("External agents")
+            Rectangle {
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: codexColumn.implicitHeight + 20
+                Layout.fillWidth: true
+                ColumnLayout {
+                    id: codexColumn
+                    objectName: "aiCodex"
+                    readonly property string state: page.codex.state ?? ""
+                    readonly property string error: page.codex.error ?? ""
+                    readonly property bool panel: state !== "" || (error !== "" && error !== "expired")
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                    spacing: 6
+                    RowLayout {
+                        spacing: 8
+                        Layout.fillWidth: true
+                        Label { text: "Codex"; font.bold: true }
+                        Label {
+                            text: page.codex.path ?? ""
+                            textFormat: Text.PlainText
+                            color: Theme.muted
+                            elide: Text.ElideMiddle
+                            Layout.fillWidth: true
+                        }
+                    }
+                    Label {
+                        objectName: "aiCodexFound"
+                        textFormat: Text.PlainText
+                        text: !page.codex.found ? qsTr("Not found on PATH.")
+                                                : page.codex.version ? qsTr("Found on PATH · %1.").arg(page.codex.version)
+                                                                     : qsTr("Found on PATH.")
+                        color: Theme.muted
+                        Layout.fillWidth: true
+                    }
+                    ColumnLayout {
+                        objectName: "aiCodexSignedOut"
+                        visible: !codexColumn.panel && !page.codex.signedIn && codexColumn.error === ""
+                        spacing: 6
+                        Layout.fillWidth: true
+                        Label { text: qsTr("Not signed in") }
+                        RowLayout {
+                            spacing: 8
+                            Button {
+                                objectName: "aiCodexSignIn"
+                                text: qsTr("Sign in with ChatGPT…")
+                                onClicked: page.signInCodex(false)
+                            }
+                            Button {
+                                objectName: "aiCodexImport"
+                                visible: page.codex.canImport === true
+                                text: qsTr("Import from ~/.codex (read-only)")
+                                onClicked: page.dialog.ask({
+                                    title: qsTr("Import the ChatGPT sign-in"),
+                                    text: qsTr("Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again."),
+                                    severity: "warning",
+                                    choices: [{ id: "import", text: qsTr("Import"), role: "accept" },
+                                              { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+                                }, answer => { if (answer === "import") page.ai.importCodex() })
+                            }
+                        }
+                        Note {
+                            text: qsTr("HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.")
+                            Layout.leftMargin: 0
+                            Layout.topMargin: 0
+                        }
+                    }
+                    ColumnLayout {
+                        objectName: "aiCodexSignedIn"
+                        visible: !codexColumn.panel && page.codex.signedIn === true
+                        spacing: 6
+                        Layout.fillWidth: true
+                        RowLayout {
+                            spacing: 6
+                            Label {
+                                objectName: "aiCodexEmail"
+                                text: qsTr("Signed in as %1").arg(page.codex.email ?? "")
+                                textFormat: Text.PlainText
+                            }
+                            Button {
+                                objectName: "aiCodexSignOut"
+                                text: qsTr("Sign out")
+                                onClicked: page.ai.signOutCodex()
+                            }
+                        }
+                        Note {
+                            text: qsTr("Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.")
+                            Layout.leftMargin: 0
+                            Layout.topMargin: 0
+                        }
+                    }
+                    ColumnLayout {
+                        objectName: "aiCodexExpired"
+                        visible: !codexColumn.panel && codexColumn.error === "expired"
+                        spacing: 6
+                        Layout.fillWidth: true
+                        RowLayout {
+                            spacing: 8
+                            Icon { iconRole: "notice-warning" }
+                            Label { text: qsTr("Sign-in expired"); color: Theme.warning }
+                            Button {
+                                objectName: "aiCodexSignInAgain"
+                                text: qsTr("Sign in again…")
+                                onClicked: page.signInCodex(false)
+                            }
+                        }
+                        Note {
+                            text: qsTr("ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.")
+                            Layout.leftMargin: 0
+                            Layout.topMargin: 0
+                        }
+                    }
+                    Rectangle {
+                        objectName: "aiCodexPanel"
+                        visible: codexColumn.panel
+                        color: Theme.panel
+                        border.color: Theme.accent
+                        radius: 2
+                        implicitHeight: panelColumn.implicitHeight + 24
+                        Layout.fillWidth: true
+                        Timer {
+                            id: clock
+                            property double now: Date.now()
+                            interval: 1000
+                            repeat: true
+                            running: codexColumn.state === "code"
+                            triggeredOnStart: true
+                            onTriggered: now = Date.now()
+                        }
+                        ColumnLayout {
+                            id: panelColumn
+                            x: 12
+                            y: 12
+                            width: parent.width - 24
+                            spacing: 8
+                            Label { text: qsTr("Sign in with ChatGPT"); font.bold: true }
+                            Label {
+                                visible: codexColumn.state === "code"
+                                text: qsTr("Open auth.openai.com, sign in to ChatGPT and enter this code.")
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: true
+                            }
+                            RowLayout {
+                                visible: codexColumn.state === "code"
+                                spacing: 10
+                                Label {
+                                    objectName: "aiCodexCode"
+                                    text: page.codex.userCode ?? ""
+                                    textFormat: Text.PlainText
+                                    font.family: page.codeFontFamily
+                                    font.features: { "zero": 1 }
+                                    font.pixelSize: 22
+                                    font.bold: true
+                                    font.letterSpacing: 2
+                                }
+                                IconTextButton {
+                                    objectName: "aiCodexCopy"
+                                    iconRole: "edit-copy"
+                                    text: qsTr("Copy")
+                                    onClicked: page.dialog.app.copyText(page.codex.userCode)
+                                }
+                                LinkButton {
+                                    objectName: "aiCodexOpen"
+                                    iconRole: "open-link"
+                                    text: qsTr("Open auth.openai.com")
+                                    onClicked: page.ai.openSignInPage()
+                                }
+                            }
+                            Label {
+                                visible: codexColumn.state === "browser"
+                                text: qsTr("auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.")
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: true
+                            }
+                            RowLayout {
+                                visible: codexColumn.state !== ""
+                                spacing: 8
+                                Layout.fillWidth: true
+                                BusyIcon {}
+                                Label {
+                                    objectName: "aiCodexWaiting"
+                                    text: codexColumn.state === "code"
+                                          ? qsTr("Waiting for the code · it expires in %1").arg(page.countdown(page.codex.expiresAt, clock.now))
+                                          : codexColumn.state === "browser" ? qsTr("Waiting for the browser") : ""
+                                    color: Theme.muted
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                                Button {
+                                    objectName: "aiCodexOpenAgain"
+                                    visible: codexColumn.state === "browser"
+                                    text: qsTr("Open the page again")
+                                    onClicked: page.ai.openSignInPage()
+                                }
+                                Button {
+                                    objectName: "aiCodexCancel"
+                                    text: qsTr("Cancel")
+                                    onClicked: page.ai.cancelSignIn()
+                                }
+                            }
+                            LinkButton {
+                                objectName: "aiCodexUseBrowser"
+                                iconRole: "open-link"
+                                visible: codexColumn.state === "code" && page.codex.browserAvailable === true
+                                text: qsTr("Can’t use a code? Sign in through the browser")
+                                onClicked: page.signInCodex(true)
+                            }
+                            Label {
+                                objectName: "aiCodexPortBusy"
+                                visible: codexColumn.state === "code" && page.codex.browserAvailable === false
+                                text: page.signInText("portBusy", "")
+                                color: Theme.muted
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: true
+                            }
+                            RowLayout {
+                                visible: codexColumn.state === "" && codexColumn.error !== ""
+                                spacing: 8
+                                Layout.fillWidth: true
+                                Icon {
+                                    readonly property bool warns: codexColumn.error === "codesOff"
+                                    iconRole: warns ? "notice-warning" : "notice-error"
+                                    Layout.alignment: Qt.AlignTop
+                                }
+                                Label {
+                                    objectName: "aiCodexError"
+                                    text: page.signInText(codexColumn.error, page.codex.host || "auth.openai.com")
+                                    textFormat: Text.PlainText
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                }
+                            }
+                            RowLayout {
+                                visible: codexColumn.state === "" && codexColumn.error !== ""
+                                spacing: 8
+                                PrimaryButton {
+                                    objectName: "aiCodexRetry"
+                                    visible: codexColumn.error !== "portBusy"
+                                    text: codexColumn.error === "codesOff" ? qsTr("Sign in through the browser")
+                                        : codexColumn.error === "codeExpired" ? qsTr("Get a new code") : qsTr("Try again")
+                                    onClicked: page.signInCodex(codexColumn.error === "codesOff" || (page.codexBrowser && codexColumn.error !== "codeExpired"))
+                                }
+                                Button {
+                                    objectName: "aiCodexDismiss"
+                                    text: qsTr("Cancel")
+                                    onClicked: page.ai.cancelSignIn()
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

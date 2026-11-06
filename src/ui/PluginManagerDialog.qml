@@ -11,6 +11,8 @@ DialogWindow {
     objectName: "pluginManagerDialog"
     required property var manager
     property var runtime: null
+    property var market: null
+    property string view: "installed"
     title: qsTr("Plugins")
     dialogId: "plugins"
     resizable: true
@@ -28,6 +30,32 @@ DialogWindow {
     }
     property string chosenId: ""
     readonly property var chosen: rows.find(r => r.id === chosenId) ?? null
+    readonly property bool marketAvailable: market !== null && market.available
+    readonly property var offers: market ? market.offers : ({})
+    property var notNow: []
+    readonly property var listings: market ? market.listings : []
+    property string search: ""
+    property string category: ""
+    readonly property var found: {
+        const words = dialog.search.trim().toLocaleLowerCase()
+        return listings.filter(l => (dialog.category.length === 0 || l.categories.includes(dialog.category))
+                                    && (words.length === 0 || [l.name, l.summary, l.authorName]
+                                        .some(t => String(t).toLocaleLowerCase().includes(words))))
+    }
+    property string chosenListingId: ""
+    readonly property var chosenListing: listings.find(l => l.id === chosenListingId) ?? null
+    function showView(next) {
+        view = next
+        if (next === "market") {
+            if (market.status === "" || market.status === "failed")
+                market.refresh()
+            if (!chosenListing && found.length > 0)
+                chosenListingId = found[0].id
+            marketList.forceActiveFocus()
+        } else {
+            list.forceActiveFocus()
+        }
+    }
     property int statesVersion: 0
     Connections {
         target: dialog.ui
@@ -48,6 +76,8 @@ DialogWindow {
         return row.unrestricted ? qsTr("Full trust") : ""
     }
     function signedText(row) {
+        if (row.source === "marketplace")
+            return qsTr("From the marketplace")
         return row.keyId.length > 0 ? qsTr("Unverified, signed by key %1").arg(row.keyId) : qsTr("Unverified, unsigned")
     }
     function choose(id) {
@@ -58,6 +88,7 @@ DialogWindow {
     function show() { showPlugin(chosenId.length > 0 ? chosenId : (rows.length > 0 ? rows[0].id : "")) }
     function showPlugin(id) {
         filter = ""
+        view = "installed"
         choose(rows.some(r => r.id === id) ? id : (rows.length > 0 ? rows[0].id : ""))
         open()
         list.forceActiveFocus()
@@ -83,7 +114,9 @@ DialogWindow {
     }
     function reviewFile(url) { reviewPackage(url, "") }
     function reviewPackage(url, updating) {
-        const review = updating ? manager.reviewUpdate(url, updating) : manager.review(url)
+        confirm(updating ? manager.reviewUpdate(url, updating) : manager.review(url))
+    }
+    function confirm(review) {
         if (!review.ok) {
             tell(qsTr("Plugin not installed"), review.message)
             return
@@ -103,15 +136,22 @@ DialogWindow {
         const asks = review.permissions.length > 0
                 ? qsTr("It asks for these permissions") + "\n• " + review.permissions.join("\n• ")
                 : qsTr("It asks for no permissions beyond the active subtitle file.")
+        const fullAccess = review.marketplace && review.unrestricted
+        const trust = review.marketplace
+                ? (fullAccess ? qsTr("Install it only if you trust %1. It gets full access to your computer.").arg(review.signedBy) + "\n\n" : "")
+                  + qsTr("Signed by %1 and checked against the marketplace.").arg(review.signedBy)
+                : trustText(review)
+        const warn = review.needsRetrust || fullAccess
         messages.ask({
             title: titles[review.change],
             text: questions[review.change],
-            detail: trustText(review) + "\n\n" + asks,
-            severity: review.needsRetrust || review.unrestricted ? "warning" : "question",
+            detail: trust + "\n\n" + asks + "\n\n" + dialog.basics,
+            severity: warn || review.unrestricted ? "warning" : "question",
             choices: [
-                { id: "install", text: review.needsRetrust ? qsTr("Trust and install") : titles[review.change],
-                  role: review.needsRetrust ? "destructive" : "accept", isDefault: !review.needsRetrust },
-                { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: review.needsRetrust }
+                { id: "install", text: review.needsRetrust ? qsTr("Trust and install")
+                                     : fullAccess ? qsTr("Install with full access") : titles[review.change],
+                  role: warn ? "destructive" : "accept", isDefault: !warn },
+                { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: warn }
             ]
         }, answer => {
             if (answer !== "install") {
@@ -121,9 +161,14 @@ DialogWindow {
             const problem = dialog.manager.install(review.needsRetrust)
             if (problem.length > 0)
                 dialog.tell(qsTr("Plugin not installed"), problem)
-            else
+            else if (dialog.view === "installed")
                 dialog.choose(review.id)
         })
+    }
+    readonly property string basics: qsTr("Every plugin can read and edit the document you’re working on, as one undo step.")
+    Connections {
+        target: dialog.market
+        function onReviewed(review) { dialog.confirm(review) }
     }
     function askUninstall(row) {
         const keep = { id: "keep", text: qsTr("Uninstall, keep its data"), role: "accept" }
@@ -158,10 +203,51 @@ DialogWindow {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredWidth: 760
-        Layout.preferredHeight: 520
+        Layout.preferredWidth: 860
+        Layout.preferredHeight: 560
         Layout.minimumWidth: 600
         spacing: 8
+        RowLayout {
+            spacing: 4
+            Layout.fillWidth: true
+            SegmentedButtons {
+                objectName: "pluginManagerView"
+                visible: dialog.marketAvailable
+                choices: [{ text: dialog.market && dialog.market.updates > 0 ? qsTr("Installed %1").arg(dialog.market.updates)
+                                                                             : qsTr("Installed"),
+                            name: "pluginViewInstalled" },
+                          { text: qsTr("Marketplace"), name: "pluginViewMarketplace" }]
+                currentIndex: dialog.view === "market" ? 1 : 0
+                onActivated: index => dialog.showView(index === 1 ? "market" : "installed")
+            }
+            Item { Layout.fillWidth: true }
+            IconToolButton {
+                objectName: "pluginInstallFromFile"
+                iconRole: "plugin-install"
+                text: qsTr("Install from file…")
+                enabled: dialog.manager && dialog.manager.available
+                onClicked: {
+                    installPicker.updating = ""
+                    installPicker.open()
+                }
+            }
+            IconToolButton {
+                objectName: "pluginCheckUpdates"
+                visible: dialog.marketAvailable
+                iconRole: "check-updates"
+                text: qsTr("Check for updates")
+                enabled: dialog.market && dialog.market.status !== "loading"
+                onClicked: dialog.market.refresh()
+            }
+            IconToolButton {
+                id: gearButton
+                objectName: "pluginUpdateOptions"
+                visible: dialog.marketAvailable
+                iconRole: "plugin-update"
+                text: qsTr("Plugin updates")
+                onClicked: updatesPopover.openAt(gearButton, dialog.contentItem)
+            }
+        }
         Label {
             objectName: "pluginManagerProblem"
             text: !dialog.manager || !dialog.manager.available ? qsTr("Plugins need a user folder, and this copy has none.")
@@ -173,6 +259,7 @@ DialogWindow {
             Accessible.role: Accessible.AlertMessage
         }
         RowLayout {
+            visible: dialog.view === "installed"
             spacing: 12
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -294,6 +381,315 @@ DialogWindow {
                 Layout.fillHeight: true
             }
         }
+        RowLayout {
+            visible: dialog.view === "market"
+            spacing: 12
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            ColumnLayout {
+                spacing: 6
+                Layout.preferredWidth: 300
+                Layout.fillHeight: true
+                RowLayout {
+                    spacing: 6
+                    Layout.fillWidth: true
+                    TextField {
+                        objectName: "marketSearch"
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Search plugins")
+                        text: dialog.search
+                        selectByMouse: true
+                        Accessible.name: qsTr("Search plugins")
+                        onTextEdited: dialog.search = text
+                        Keys.onDownPressed: marketList.forceActiveFocus()
+                    }
+                    ComboBox {
+                        objectName: "marketCategory"
+                        model: [qsTr("All categories")].concat(dialog.market ? dialog.market.categories : [])
+                        currentIndex: Math.max(0, model.indexOf(dialog.category))
+                        Accessible.name: qsTr("Category")
+                        onActivated: index => dialog.category = index === 0 ? "" : model[index]
+                    }
+                }
+                Frame {
+                    padding: 1
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    background: Rectangle { color: Theme.field; border.color: Theme.line }
+                    ColumnLayout {
+                        objectName: "marketStatus"
+                        visible: dialog.found.length === 0
+                        anchors.centerIn: parent
+                        width: parent.width - 32
+                        spacing: 8
+                        Label {
+                            objectName: "marketStatusText"
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
+                            color: dialog.market && dialog.market.status === "failed" ? Theme.danger : Theme.muted
+                            text: !dialog.market ? ""
+                                : dialog.market.status === "failed" ? dialog.market.problem
+                                : dialog.market.status === "loading" ? qsTr("Loading the marketplace…")
+                                : dialog.listings.length === 0 ? qsTr("The marketplace lists no plugins yet.")
+                                : qsTr("No plugin matches the search.")
+                        }
+                        IconTextButton {
+                            objectName: "marketRetry"
+                            visible: dialog.market && dialog.market.status === "failed"
+                            Layout.alignment: Qt.AlignHCenter
+                            iconRole: "restart"
+                            text: qsTr("Try again")
+                            onClicked: dialog.market.refresh()
+                        }
+                    }
+                    ListView {
+                        id: marketList
+                        objectName: "marketList"
+                        anchors.fill: parent
+                        clip: true
+                        model: dialog.found
+                        currentIndex: dialog.found.findIndex(l => l.id === dialog.chosenListingId)
+                        activeFocusOnTab: true
+                        highlightMoveDuration: 0
+                        boundsBehavior: Flickable.StopAtBounds
+                        ScrollBar.vertical: ScrollBar {}
+                        Accessible.role: Accessible.List
+                        Accessible.name: qsTr("Marketplace plugins")
+                        Keys.onUpPressed: if (currentIndex > 0) dialog.chosenListingId = dialog.found[currentIndex - 1].id
+                        Keys.onDownPressed: if (currentIndex < dialog.found.length - 1) dialog.chosenListingId = dialog.found[currentIndex + 1].id
+                        delegate: ItemDelegate {
+                            id: listed
+                            required property var modelData
+                            width: ListView.view.width
+                            height: 52
+                            highlighted: modelData.id === dialog.chosenListingId
+                            focusPolicy: Qt.NoFocus
+                            onClicked: dialog.chosenListingId = modelData.id
+                            Accessible.role: Accessible.ListItem
+                            Accessible.name: modelData.name
+                            Accessible.description: modelData.summary
+                            Accessible.selected: highlighted
+                            background: Rectangle {
+                                color: listed.highlighted ? Theme.select : "transparent"
+                                Rectangle { visible: listed.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                            }
+                            contentItem: RowLayout {
+                                spacing: 8
+                                PluginIcon { row: listed.modelData; size: 32 }
+                                ColumnLayout {
+                                    spacing: 0
+                                    Layout.fillWidth: true
+                                    RowLayout {
+                                        spacing: 6
+                                        Layout.fillWidth: true
+                                        Label {
+                                            text: listed.modelData.name
+                                            textFormat: Text.PlainText
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+                                        Badge {
+                                            visible: listed.modelData.unrestricted
+                                            iconRole: "plugin-full-access"
+                                            text: qsTr("Unrestricted")
+                                        }
+                                    }
+                                    Label {
+                                        text: listed.modelData.summary
+                                        textFormat: Text.PlainText
+                                        elide: Text.ElideRight
+                                        font: dialog.fontAt(12)
+                                        color: Theme.muted
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                                Label {
+                                    objectName: "marketRowState_" + listed.modelData.id
+                                    visible: text.length > 0
+                                    text: listed.modelData.action === "installed" ? qsTr("Installed")
+                                        : listed.modelData.action === "update" ? qsTr("Update")
+                                        : ""
+                                    font: dialog.fontAt(12)
+                                    color: Theme.muted
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ScrollView {
+                id: listingScroll
+                objectName: "marketDetails"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: availableWidth
+                visible: dialog.chosenListing !== null
+                Loader {
+                    width: listingScroll.availableWidth
+                    active: dialog.chosenListing !== null
+                    sourceComponent: ListingDetails { listing: dialog.chosenListing }
+                }
+            }
+            Item {
+                visible: dialog.chosenListing === null
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+        }
+    }
+
+    component Badge: RowLayout {
+        id: badge
+        property string iconRole
+        property string text
+        spacing: 3
+        Icon { iconRole: badge.iconRole; size: 12 }
+        Label {
+            text: badge.text
+            font: dialog.fontAt(11)
+            color: Theme.warning
+        }
+    }
+
+    component Fact: Label {
+        color: Theme.muted
+    }
+
+    component ListingDetails: ColumnLayout {
+        id: market
+        required property var listing
+        spacing: 8
+        RowLayout {
+            spacing: 10
+            Layout.fillWidth: true
+            PluginIcon { row: market.listing; size: 48 }
+            ColumnLayout {
+                spacing: 0
+                Layout.fillWidth: true
+                RowLayout {
+                    spacing: 6
+                    Label {
+                        objectName: "marketDetailsName"
+                        text: market.listing.name
+                        textFormat: Text.PlainText
+                        font: dialog.fontAt(15, Font.DemiBold)
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                    Badge {
+                        visible: market.listing.unrestricted
+                        iconRole: "plugin-full-access"
+                        text: qsTr("Unrestricted")
+                    }
+                }
+                Label {
+                    text: market.listing.authorName + " · " + market.listing.version
+                    textFormat: Text.PlainText
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+            }
+            Label {
+                objectName: "marketInstalled"
+                visible: market.listing.action === "installed"
+                text: qsTr("Installed")
+                color: Theme.muted
+            }
+            PrimaryButton {
+                objectName: "marketInstall"
+                visible: market.listing.action === "install" || market.listing.action === "update"
+                enabled: dialog.market.downloading.length === 0
+                text: dialog.market.downloading === market.listing.id ? qsTr("Downloading…")
+                    : market.listing.action === "update" ? qsTr("Update to %1").arg(market.listing.version)
+                    : qsTr("Install")
+                onClicked: dialog.market.download(market.listing.id)
+            }
+        }
+        Label {
+            objectName: "marketNeedsNewer"
+            visible: market.listing.action === "incompatible"
+            text: qsTr("It needs HikariSub %1 or later. Update HikariSub to install it.").arg(market.listing.needs)
+            color: Theme.danger
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Label {
+            text: market.listing.description.length > 0 ? market.listing.description : market.listing.summary
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Flow {
+            visible: market.listing.screenshots.length > 0
+            spacing: 8
+            Layout.fillWidth: true
+            Repeater {
+                model: market.listing.screenshots
+                Image {
+                    required property var modelData
+                    source: modelData.url
+                    width: 200
+                    height: 112
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    Accessible.role: Accessible.Graphic
+                    Accessible.name: modelData.caption
+                }
+            }
+        }
+        Heading { text: qsTr("Permissions") }
+        Repeater {
+            model: market.listing.permissions.length > 0 ? market.listing.permissions
+                                                         : [qsTr("Nothing beyond the basics: no network, no folders, no other documents.")]
+            Label {
+                required property string modelData
+                text: "• " + modelData
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+        }
+        Label {
+            text: dialog.basics
+            color: Theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Heading {
+            visible: market.listing.changelog.length > 0
+            text: qsTr("What’s new in %1").arg(market.listing.version)
+        }
+        Label {
+            visible: market.listing.changelog.length > 0
+            text: market.listing.changelog
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        GridLayout {
+            columns: 2
+            columnSpacing: 16
+            rowSpacing: 4
+            Layout.topMargin: 6
+            Fact { visible: market.listing.needs.length > 0; text: qsTr("Needs") }
+            Label {
+                visible: market.listing.needs.length > 0
+                text: qsTr("HikariSub %1 or later").arg(market.listing.needs)
+            }
+            Fact { text: qsTr("Licence") }
+            Label { text: market.listing.license; textFormat: Text.PlainText }
+            Fact { text: qsTr("Updated") }
+            Label { text: market.listing.published }
+            Fact { text: qsTr("Source") }
+            LinkButton {
+                objectName: "marketSource"
+                iconRole: "open-link"
+                text: market.listing.repo.replace(/^https:\/\//, "")
+                onClicked: dialog.market.openSource(market.listing.id)
+            }
+        }
     }
 
     component PluginIcon: Item {
@@ -328,7 +724,28 @@ DialogWindow {
         id: details
         required property var row
         readonly property var runState: dialog.stateOf(row)
+        readonly property var offer: dialog.offers[row.id] ?? ({ update: "", move: false })
         spacing: 6
+        InlineBar {
+            objectName: "pluginMoveBar"
+            visible: details.offer.move && !dialog.notNow.includes(details.row.id)
+            iconRole: "plugins"
+            closable: false
+            text: qsTr("“%1” is in the marketplace, signed with the same key. Move it there to get updates.").arg(details.row.name)
+            Layout.fillWidth: true
+            Button {
+                objectName: "pluginMoveNotNow"
+                text: qsTr("Not now")
+                onClicked: dialog.notNow = dialog.notNow.concat([details.row.id])
+            }
+            Button {
+                objectName: "pluginMove"
+                text: qsTr("Move to the marketplace")
+                font.bold: true
+                enabled: dialog.market.downloading.length === 0
+                onClicked: dialog.market.download(details.row.id)
+            }
+        }
         RowLayout {
             spacing: 10
             Layout.fillWidth: true
@@ -492,6 +909,15 @@ DialogWindow {
             Layout.topMargin: 12
             Layout.fillWidth: true
             IconTextButton {
+                objectName: "pluginUpdate"
+                visible: details.offer.update.length > 0
+                iconRole: "plugin-update"
+                text: dialog.market && dialog.market.downloading === details.row.id ? qsTr("Downloading…")
+                                                                                      : qsTr("Update to %1").arg(details.offer.update)
+                enabled: dialog.market && dialog.market.downloading.length === 0
+                onClicked: dialog.market.download(details.row.id)
+            }
+            IconTextButton {
                 objectName: "pluginUpdateFromFile"
                 iconRole: "plugin-update"
                 text: qsTr("Update from file…")
@@ -591,18 +1017,29 @@ DialogWindow {
         }
     }
 
-    leadingActions: [
-        IconTextButton {
-            objectName: "pluginInstallFromFile"
-            iconRole: "plugin-install"
-            text: qsTr("Install from file…")
-            enabled: dialog.manager && dialog.manager.available
-            onClicked: {
-                installPicker.updating = ""
-                installPicker.open()
+    Popover {
+        id: updatesPopover
+        objectName: "pluginUpdatesPopover"
+        title: qsTr("Plugin updates")
+        showTitle: true
+        CheckBox {
+            id: checkUpdates
+            objectName: "pluginCheckUpdatesSetting"
+            text: qsTr("Check for plugin updates")
+            checked: dialog.settings ? dialog.settings.value("plugins.checkUpdates") === true : false
+            onToggled: {
+                dialog.settings.setValue("plugins.checkUpdates", checked)
+                checked = Qt.binding(() => dialog.settings.value("plugins.checkUpdates") === true)
             }
         }
-    ]
+        Label {
+            text: qsTr("At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.")
+            color: Theme.muted
+            wrapMode: Text.Wrap
+            Layout.maximumWidth: 300
+            Layout.leftMargin: checkUpdates.indicator ? checkUpdates.indicator.width + checkUpdates.spacing : 0
+        }
+    }
     buttons: [
         PrimaryButton {
             id: closeButton

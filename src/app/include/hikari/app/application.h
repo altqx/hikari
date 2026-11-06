@@ -20,6 +20,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
@@ -220,6 +221,10 @@ public:
         UserFolder::SeedReport userFolderSeed;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
+        // Empty: no marketplace.
+        MarketplaceFeed marketplace;
+        // Null: the marketplace's own; tests serve it from a fake.
+        QNetworkAccessManager *marketplaceNetwork = nullptr;
         // Empty: beside the settings file.
         QString presetsDir;
         // The default has no key: nothing is queued or sent.
@@ -760,6 +765,8 @@ public:
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
+    Q_PROPERTY(hikari::app::PluginMarketplace *pluginMarketplace READ pluginMarketplace CONSTANT)
+    PluginMarketplace *pluginMarketplace() const { return m_pluginMarketplace.get(); }
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
     PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
     QVariantMap qmlProperties(int shellWindow = 0);
@@ -1046,6 +1053,7 @@ private:
     std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<PluginManager> m_pluginManager;
+    std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;

@@ -147,6 +147,9 @@ QString refusalMessage(const InstallRefusal &refusal)
     case InstallRefusal::Kind::Registry:
         return QCoreApplication::translate("HikariSub.Plugins", "plugins.json in the user folder can’t be read: %1")
             .arg(text(refusal.detail));
+    case InstallRefusal::Kind::Listing:
+        return QCoreApplication::translate("HikariSub.Plugins", "The download isn’t the plugin the marketplace lists: %1.")
+            .arg(text(refusal.detail));
     case InstallRefusal::Kind::Signature:
         break;
     }
@@ -168,23 +171,7 @@ QString refusalMessage(const InstallRefusal &refusal)
 
 QStringList permissionLines(const plugins::Manifest &manifest)
 {
-    QStringList lines;
-    if (manifest.tier == plugins::Tier::Unrestricted)
-        lines << QCoreApplication::translate("HikariSub.Plugins", "Full trust: it may run native code outside HikariSub’s limits.");
-    const plugins::Permissions &p = manifest.permissions;
-    if (p.allDocuments)
-        lines << QCoreApplication::translate("HikariSub.Plugins", "Read and edit every open subtitle file: %1").arg(text(*p.allDocuments));
-    if (!p.networkHosts.empty()) {
-        QStringList hosts;
-        for (const std::string &host : p.networkHosts)
-            hosts << text(host);
-        lines << QCoreApplication::translate("HikariSub.Plugins", "Connect to %1: %2").arg(hosts.join(QStringLiteral(", ")), text(p.networkReason));
-    }
-    for (const plugins::FileGrantRequest &f : p.files)
-        lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
-                             : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))
-                     .arg(text(f.title), text(f.reason));
-    return lines;
+    return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions);
 }
 
 QVariantList folderRows(const plugins::Manifest &manifest, const std::map<std::string, plugins::FileGrant> &grants)
@@ -259,6 +246,26 @@ QString problemText(const std::string &problem)
 
 }
 
+QStringList permissionLines(bool unrestricted, const plugins::Permissions &p)
+{
+    QStringList lines;
+    if (unrestricted)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Full trust: it may run native code outside HikariSub’s limits.");
+    if (p.allDocuments)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Read and edit every open subtitle file: %1").arg(text(*p.allDocuments));
+    if (!p.networkHosts.empty()) {
+        QStringList hosts;
+        for (const std::string &host : p.networkHosts)
+            hosts << text(host);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Connect to %1: %2").arg(hosts.join(QStringLiteral(", ")), text(p.networkReason));
+    }
+    for (const plugins::FileGrantRequest &f : p.files)
+        lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
+                             : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))
+                     .arg(text(f.title), text(f.reason));
+    return lines;
+}
+
 PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
 {
     if (!folders.plugins.isEmpty())
@@ -295,6 +302,8 @@ void PluginManager::refresh()
                     {QStringLiteral("description"), manifest ? text(manifest->description) : QString()},
                     {QStringLiteral("enabled"), entry.enabled},
                     {QStringLiteral("keyId"), keyId(entry.key)},
+                    {QStringLiteral("source"), entry.source == plugins::Source::Marketplace ? QStringLiteral("marketplace")
+                                                                                            : QStringLiteral("file")},
                     {QStringLiteral("unrestricted"), manifest && manifest->tier == plugins::Tier::Unrestricted},
                     {QStringLiteral("icon"), manifest && !manifest->icon.empty()
                                                  ? QUrl::fromLocalFile(QFileInfo(file).dir().filePath(text(manifest->icon)))
@@ -342,9 +351,40 @@ QVariantMap PluginManager::review(const QUrl &url)
     if (signatureFile.open(QIODevice::ReadOnly))
         signature = signatureFile.read(qint64(minisign::kMaxSignatureBytes) + 1).toStdString();
 
-    auto result = m_installer->review(bytes(data), std::move(unpacked.files), signature);
+    return reviewed(m_installer->review(bytes(data), std::move(unpacked.files), signature));
+}
+
+QVariantMap PluginManager::reviewListed(const QByteArray &package, const plugins::Listing &listing,
+                                        const plugins::ListedVersion &listed)
+{
+    m_review.reset();
+    const auto refused = [](const QString &message) {
+        return QVariantMap{{QStringLiteral("ok"), false}, {QStringLiteral("message"), message}};
+    };
+    if (!m_installer)
+        return refused(QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none."));
+    if (const auto problem = plugins::listedPackageProblem(listed, bytes(package)))
+        return refused(refusalMessage({InstallRefusal::Kind::Listing, {}, {}, *problem}));
+    Unpacked unpacked = unpack(package);
+    if (!unpacked.problem.isEmpty())
+        return refused(unpacked.problem);
+    QVariantMap review = reviewed(m_installer->reviewListed(std::move(unpacked.files), listing, listed));
+    if (review.value(QStringLiteral("ok")).toBool())
+        review.insert(QStringLiteral("signedBy"), text(listing.authorName));
+    return review;
+}
+
+std::expected<plugins::Registry, std::string> PluginManager::registry() const
+{
+    if (!m_installer)
+        return plugins::Registry{};
+    return m_installer->registry();
+}
+
+QVariantMap PluginManager::reviewed(std::expected<plugins::InstallReview, plugins::InstallRefusal> result)
+{
     if (!result)
-        return refused(refusalMessage(result.error()));
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), refusalMessage(result.error())}};
     m_review = std::move(*result);
     const plugins::Manifest &m = m_review->package.manifest;
     return {
@@ -359,6 +399,7 @@ QVariantMap PluginManager::review(const QUrl &url)
         {QStringLiteral("needsRetrust"), m_review->needsRetrust},
         {QStringLiteral("unrestricted"), m.tier == plugins::Tier::Unrestricted},
         {QStringLiteral("permissions"), permissionLines(m)},
+        {QStringLiteral("marketplace"), m_review->source == plugins::Source::Marketplace},
     };
 }
 

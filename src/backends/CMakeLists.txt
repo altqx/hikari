@@ -79,10 +79,11 @@ target_link_libraries(hikari_sandbox PUBLIC Qt6::Core)
 hikari_module(hikari_sandbox ALLOW "Qt6::*")
 
 add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_config_store.h ai_requests.cpp
-    include/hikari/backends/ai_requests.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
-    include/hikari/backends/ai_sidecar_host.h ai_channel.cpp include/hikari/backends/ai_channel.h
-    ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h ai_http_relay.cpp
-    include/hikari/backends/ai_http_relay.h ai_agent_broker.cpp include/hikari/backends/ai_agent_broker.h
+    include/hikari/backends/ai_requests.h ai_signin.cpp include/hikari/backends/ai_signin.h ai_keychain.cpp
+    include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp include/hikari/backends/ai_sidecar_host.h ai_channel.cpp
+    include/hikari/backends/ai_channel.h ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h
+    ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent_broker.cpp
+    include/hikari/backends/ai_agent_broker.h
     ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)

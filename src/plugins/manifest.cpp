@@ -39,7 +39,7 @@ const Schema &schema()
 std::string text(const Json &object, std::string_view key)
 {
     const Json *value = object.find(key);
-    return value ? value->asString() : std::string();
+    return value && value->isString() ? value->asString() : std::string();
 }
 
 std::vector<Contribution> contributions(const Json *list)
@@ -170,21 +170,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         if (!m.publicKey)
             return std::unexpected(ManifestProblem{Kind::Schema, "/publicKey", "not a minisign public key", 0});
     }
-    if (const Json *permissions = json.find("permissions")) {
-        if (const Json *all = permissions->find("documents.all"))
-            m.permissions.allDocuments = all->asString();
-        if (const Json *network = permissions->find("network")) {
-            for (const Json &host : network->find("hosts")->asArray())
-                m.permissions.networkHosts.push_back(host.asString());
-            m.permissions.networkReason = text(*network, "reason");
-        }
-        if (const Json *files = permissions->find("files"))
-            for (const Json &f : files->asArray()) {
-                const Json *writable = f.find("writable");
-                m.permissions.files.push_back(
-                    {text(f, "id"), text(f, "title"), writable && writable->asBool(), text(f, "reason")});
-            }
-    }
+    if (const Json *permissions = json.find("permissions"))
+        m.permissions = readPermissions(*permissions);
     if (const Json *contributes = json.find("contributes")) {
         m.commands = contributions(contributes->find("commands"));
         m.panels = panels(contributes->find("panels"));
@@ -208,6 +195,26 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
+}
+
+Permissions readPermissions(const Json &permissions)
+{
+    const auto list = [](const Json *value) { return value && value->isArray() ? value->asArray() : Json::Array(); };
+    Permissions out;
+    if (const Json *all = permissions.find("documents.all"); all && all->isString())
+        out.allDocuments = all->asString();
+    if (const Json *network = permissions.find("network")) {
+        for (const Json &host : list(network->find("hosts")))
+            if (host.isString())
+                out.networkHosts.push_back(host.asString());
+        out.networkReason = text(*network, "reason");
+    }
+    for (const Json &f : list(permissions.find("files"))) {
+        const Json *writable = f.find("writable");
+        out.files.push_back({text(f, "id"), text(f, "title"), writable && writable->isBool() && writable->asBool(),
+                             text(f, "reason")});
+    }
+    return out;
 }
 
 int compareVersions(std::string_view a, std::string_view b)

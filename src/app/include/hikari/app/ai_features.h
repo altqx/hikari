@@ -19,6 +19,8 @@ class Api;
 namespace hikari::backends::ai {
 class AgentBroker;
 class AiRequests;
+class AiSignIn;
+struct CodexCli;
 class AiSidecarHost;
 }
 namespace hikari::ui {
@@ -58,6 +60,10 @@ public:
         std::function<bool()> autoUpdateOffByPolicy;
         /// Adds the agent CLIs the sidecar may ask Qt to start.
         std::function<void(backends::ai::AgentBroker &)> agents;
+        std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
+        std::function<void(std::function<void(std::optional<backends::ai::CodexCli>)>)> findCodex;
+        /// The Codex CLI's sign-in, which Import reads and never writes.
+        QString codexAuthPath;
         Timing timing;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
@@ -74,6 +80,8 @@ public:
     backends::ai::AiRequests *requests() const;
     /// Null with AI off, or in builds that run their own sidecar.
     backends::ai::AiSidecarUpdater *updater() const;
+    backends::ai::AiSignIn *signIn() const;
+    const Ports &ports() const { return m_ports; }
     /// The sidecar for an AI action: built on the first one once a provider exists. Null with AI off, without a
     /// provider, or without an installed sidecar.
     backends::ai::AiSidecarHost *sidecarForAction();

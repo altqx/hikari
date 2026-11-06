@@ -302,6 +302,7 @@ const std::vector<SettingDefinition> &definitions()
         // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        {"plugins.checkUpdates", "", Bool, Profile, Mapped, false, true},
         // Without a "v"; empty: none.
         {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
         {"shiftTimes.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
