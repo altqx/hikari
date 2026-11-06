@@ -1080,6 +1080,21 @@ void TemplateEditorController::trustDocument()
     emit changed();
     updateSource();
     schedulePreview();
+    emit documentTrusted(documentKey());
+}
+
+void TemplateEditorController::trustedElsewhere(const DocumentKey &document)
+{
+    auto *s = m_sessionOf ? m_sessionOf(document) : nullptr;
+    if (!s || trustedIn(*s, document))
+        return;
+    trust(*s, document);
+    if (document != documentKey())
+        return;
+    m_previewSnapshotKey.clear();
+    emit changed();
+    updateSource();
+    schedulePreview();
 }
 
 int TemplateEditorController::changedNumber() const

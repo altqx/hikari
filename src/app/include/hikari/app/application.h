@@ -56,6 +56,7 @@
 #endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "node_effects_controller.h"
 #include "template_editor_controller.h"
 #include "log_controller.h"
 #include "colour_picker_controller.h"
@@ -698,6 +699,7 @@ public:
     ui::ShellController &shell() const { return *activeViews().shell; }
     ui::LineEditorController &editor() const { return *activeViews().editor; }
     ui::TemplateEditorController &templateEditor() const { return *activeViews().templateEditor; }
+    ui::NodeEffectsController &nodeEffects() const { return *activeViews().nodeEffects; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
@@ -1002,6 +1004,7 @@ private:
         std::unique_ptr<ui::VideoViewController> videoView;
         std::unique_ptr<ui::StatusBarController> statusBar;
         std::unique_ptr<ui::TemplateEditorController> templateEditor;
+        std::unique_ptr<ui::NodeEffectsController> nodeEffects;
         std::unique_ptr<KanjiTimerController> kanjiTimer;
         std::unique_ptr<FindHost> findHost;
         std::unique_ptr<application::FindReplace> find;
@@ -1020,6 +1023,7 @@ private:
     std::vector<WindowViews *> allViews();
     void makeViews(WindowViews &views, int shellWindow);
     void makeTemplateEditor(WindowViews &views, int shellWindow);
+    void makeNodeEffects(WindowViews &views, int shellWindow);
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
     bool kanjiPending(application::DocumentId document);

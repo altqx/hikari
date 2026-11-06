@@ -219,6 +219,11 @@ target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui" "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_template_editor_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_node_effects_controller_tests SOURCES node_effects_controller_tests.cpp
+    LIBRARIES hikari_ui OFFSCREEN_ONLY)
+target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 foreach(mode offscreen xvfb native)
     if(TEST hikari_ui_template_editor_tests.${mode})
         set_tests_properties(hikari_ui_template_editor_tests.${mode} PROPERTIES TIMEOUT 300)

@@ -222,6 +222,8 @@ hikari_add_gtest(hikari_application_node_effects_tests SOURCES node_effects_test
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_node_effects_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+hikari_add_gtest(hikari_application_node_graph_editing_tests SOURCES node_graph_editing_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_timecodes_file_tests SOURCES timecodes_file_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_timecodes_file_tests PRIVATE

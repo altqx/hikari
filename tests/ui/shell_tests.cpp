@@ -13884,6 +13884,113 @@ private slots:
         return menuItem ? menuItem->property("action").value<QObject *>() : nullptr;
     }
 
+    void nodeEffectsModeHasItsOwnLayout()
+    {
+        auto *menuItem = item<QObject>("nodeEffectsMenuItem");
+        QVERIFY(menuItem);
+        auto *action = menuItem->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        QVERIFY(application->openFile(writeFile(dir, "node-mode.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\k40}ka{\\k60}ra\n")));
+        QTRY_VERIFY(action->property("enabled").toBool());
+        const auto open = [&](const char *dock) { return item<QObject>(dock)->property("isOpen").toBool(); };
+        QVERIFY(open("gridDock") && open("editorDock") && !open("nodeGraphDock"));
+        QVERIFY(!item("nodeModeBar")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+        QVERIFY(action->property("checked").toBool());
+        QTRY_VERIFY(open("nodeGraphDock") && open("nodeInspectorDock") && open("nodeSourcesDock") && open("videoDock"));
+        QVERIFY(!open("gridDock") && !open("editorDock") && !open("audioDock"));
+        QTRY_VERIFY(item("nodeModeBar")->isVisible());
+        QVERIFY(item("nodeGraphEmpty")->isVisible());
+
+        auto *effects = &application->nodeEffects();
+        QVERIFY(effects->shown());
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        QVERIFY(effects->addPreset(0));
+        QCOMPARE(session->historySize(), steps + 1);
+        QTRY_VERIFY(!item("nodeGraphEmpty")->isVisible());
+        QTRY_VERIFY(visualItem("node_emit") != nullptr);
+        QVERIFY(item("nodeGraphCount")->property("text").toString().contains(QStringLiteral("nodes")));
+
+        QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
+        QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
+        QVERIFY(!action->property("checked").toBool());
+        QTRY_VERIFY(open("gridDock") && open("editorDock"));
+        QVERIFY(!open("nodeGraphDock") && !open("nodeInspectorDock") && !open("nodeSourcesDock"));
+        QVERIFY(!item("nodeModeBar")->isVisible());
+        QCOMPARE(session->historySize(), steps + 1);
+    }
+
+    void ne2Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light")); });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto save = [&](const QString &name) {
+            QTest::qWait(400);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/ne2-") + name + QStringLiteral(".png")));
+        };
+        window->resize(1400, 820);
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        QVERIFY(application->openFile(fontAss("song.ass",
+            "Dialogue: 0,0:00:01.20,0:00:04.00,Default,,0,0,0,,{\\k40}ki{\\k35}ra{\\k45}ki{\\k30}ra\n"
+            "Dialogue: 0,0:00:05.00,0:00:07.50,Default,,0,0,0,,{\\k50}yo{\\k25}ru{\\k25}no {\\k80}so{\\k70}ra\n"
+            "Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,,{\\k42}ka{\\k38}ra{\\k35}o{\\k61}ke\n")));
+        auto *action = item<QObject>("nodeEffectsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+        auto &effects = application->nodeEffects();
+        auto *canvas = item<QObject>("nodeGraphPanel");
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            if (effects.hasGraph()) {
+                QVERIFY(effects.deleteGraph());
+                QTRY_VERIFY(!effects.hasGraph());
+            }
+            QTRY_VERIFY(item("nodeGraphEmpty")->isVisible());
+            save(QStringLiteral("empty-") + code);
+
+            const auto presets = effects.presets();
+            QVERIFY(effects.addPreset(presets.back().toMap().value(QStringLiteral("index")).toInt()));
+            QTRY_VERIFY(visualItem("node_palette") != nullptr);
+            canvas->setProperty("refusal", QString());
+            QTRY_VERIFY(canvas->property("zoom").toDouble() < 1.0);
+            canvas->setProperty("zoom", 1.0);
+            QVERIFY(QMetaObject::invokeMethod(canvas, "centreOn", Q_ARG(QVariant, QStringLiteral("palette"))));
+            effects.setSelection({QStringLiteral("palette")});
+            QTRY_VERIFY(!effects.inspector().value(QStringLiteral("values")).toList().isEmpty());
+            save(QStringLiteral("mode-") + code);
+
+            QVERIFY(QMetaObject::invokeMethod(canvas, "showRefusal", Q_ARG(QVariant,
+                effects.wireProblem(QStringLiteral("palette"), QStringLiteral("value"), QStringLiteral("place"), QStringLiteral("b")))));
+            save(QStringLiteral("refused-") + code);
+
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("nodeAddPopup"), "openAt", Q_ARG(QVariant, QVariant()),
+                                              Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QStringLiteral(""))));
+            QTRY_VERIFY(item<QObject>("nodeAddPopup")->property("visible").toBool());
+            save(QStringLiteral("add-node-") + code);
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("nodeAddPopup"), "close"));
+            QTRY_VERIFY(!item<QObject>("nodeAddPopup")->property("visible").toBool());
+        }
+        QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
+        QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
+    }
+
     void translatorModeSwitchesWithOneStepEach()
     {
         auto *action = translationModeAction();
@@ -19580,7 +19687,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 285);
+        QCOMPARE(hotkeyRows().size(), 286);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

@@ -12,7 +12,10 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -85,7 +88,10 @@
                 "Original",
                 "Log",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {
@@ -188,7 +194,10 @@
                 "Log",
                 "Styles",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -263,7 +272,10 @@
                 "Log",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -328,7 +340,10 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -391,7 +406,10 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -453,7 +471,10 @@
                 "Log",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -528,7 +549,10 @@
                 "Original",
                 "Log",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {
@@ -631,7 +655,10 @@
                 "Log",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -695,7 +722,10 @@
             "Log",
             "Template",
             "Spellchecker",
-            "Postprocessor"
+            "Postprocessor",
+            "NodeGraph",
+            "NodeInspector",
+            "NodeSources"
         ],
         "floatingWindows": [
             {
@@ -768,7 +798,10 @@
                 "Styles",
                 "Template",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -828,7 +861,10 @@
                 "Original",
                 "Log",
                 "Spellchecker",
-                "Postprocessor"
+                "Postprocessor",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {

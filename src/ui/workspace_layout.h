@@ -60,12 +60,13 @@ class WorkspaceLayoutController : public QObject {
     // Qt Quick Controls menus are Popup.Item, so the focus window stays the shell's while one is open.
     Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
     Q_PROPERTY(bool modalOpen READ modalOpen NOTIFY modalOpenChanged)
+    Q_PROPERTY(bool nodeEffects READ nodeEffects NOTIFY changed)
 public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 11 Postprocessor)
-    static constexpr int kPanelRegistry = 11;
+    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 11 Postprocessor, 15-17 node effects)
+    static constexpr int kPanelRegistry = 17;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
@@ -111,6 +112,10 @@ public:
     Q_INVOKABLE int keepFloatingPanelsOnScreen();
     // False while a panel floats: a locked arrangement has none.
     Q_INVOKABLE bool setLocked(bool locked);
+    // Node effects have their own layout: entering keeps the tab's arrangement and shows the mode's, leaving swaps back.
+    Q_INVOKABLE bool enterNodeEffects();
+    Q_INVOKABLE bool leaveNodeEffects();
+    bool nodeEffects() const { return m_beforeNodeEffects.has_value(); }
 
     void showTab(std::uint64_t tab, TabStart start = TabStart::Copy);
     void addTab(std::uint64_t tab, TabStart start = TabStart::Copy);
@@ -172,6 +177,10 @@ private:
     void keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title);
     void giveTab(std::uint64_t tab, WorkspaceArrangement arrangement);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
+    QString nodeEffectsFile() const;
+    QByteArray tabPayload() const;
+    void buildNodeEffects();
+    void dropNodeEffects();
 
     struct SavedLayout {
         QString name;
@@ -232,6 +241,7 @@ private:
     bool m_menuHasFocus = false;
     bool m_modalOpen = false;
     QTimer m_screenCheck;
+    std::optional<QByteArray> m_beforeNodeEffects;
 };
 
 }

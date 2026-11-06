@@ -1,0 +1,40 @@
+pragma Translator: "HikariSub.NodeEffects"
+import QtQuick
+import QtQuick.Controls
+import Hikari.Ui
+
+Rectangle {
+    id: badge
+    objectName: "videoNodeBadge"
+    required property NodeEffectsController controller
+    implicitWidth: row.implicitWidth + 12
+    implicitHeight: row.implicitHeight + 6
+    radius: 3
+    color: Theme.panel
+    border.width: 1
+    border.color: controller.previewKept ? Theme.warning : Theme.line
+    Accessible.role: Accessible.StaticText
+    Accessible.name: label.text.replace(/<[^>]*>/g, "")
+
+    Row {
+        id: row
+        x: 6
+        y: 3
+        spacing: 6
+        Icon {
+            anchors.verticalCenter: parent.verticalCenter
+            iconRole: badge.controller.previewKept ? "problem" : "node-editor"
+            color: badge.controller.previewKept ? Theme.warning : IconTheme.normal
+            accentColor: badge.controller.previewKept ? Theme.warning : IconTheme.accent
+        }
+        Label {
+            id: label
+            objectName: "videoNodeBadgeText"
+            anchors.verticalCenter: parent.verticalCenter
+            textFormat: Text.StyledText
+            //: Over the video: the node effects' preview of Line %1, %2 "not applied" or "last run that worked"
+            text: qsTr("<b>Preview</b> · line %1 · %2").arg(badge.controller.sourceNumber,
+                  badge.controller.previewKept ? qsTr("last run that worked") : qsTr("not applied"))
+        }
+    }
+}

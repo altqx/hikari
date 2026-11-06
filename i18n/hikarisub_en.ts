@@ -431,6 +431,74 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.NodeEffects</name>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation>
+            <numerusform>%n node</numerusform>
+            <numerusform>%n nodes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation>
+            <numerusform>%n wire</numerusform>
+            <numerusform>%n wires</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation>
+            <numerusform>%n more output</numerusform>
+            <numerusform>%n more outputs</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation>
+            <numerusform>%n node selected.</numerusform>
+            <numerusform>%n nodes selected.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation>
+            <numerusform>Wrote %n line in %1 on the last run</numerusform>
+            <numerusform>Wrote %n lines in %1 on the last run</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation>
+            <numerusform>%n karaoke line</numerusform>
+            <numerusform>%n karaoke lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problems</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation>
+            <numerusform>Applied: %n line from %1 in %2</numerusform>
+            <numerusform>Applied: %n lines from %1 in %2</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
         <source>%n rules</source>
@@ -846,6 +914,13 @@
             <numerusform>%n frames (%1)</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Searching… %n frame checked</numerusform>
+            <numerusform>Searching… %n frames checked</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.VisualTools</name>
@@ -896,16 +971,6 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.Video</name>
-    <message numerus="yes">
-        <source>Searching… %n frames checked</source>
-        <translation>
-            <numerusform>Searching… %n frame checked</numerusform>
-            <numerusform>Searching… %n frames checked</numerusform>
         </translation>
     </message>
 </context>

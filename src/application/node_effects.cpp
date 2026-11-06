@@ -390,8 +390,8 @@ struct Generated {
 class Evaluator {
 public:
     Evaluator(const Compiled &c, const node_layout::Line &line, std::u8string_view name, std::int64_t seed,
-              LuaNodePort *lua, Problems &problems)
-        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_problems(problems),
+              LuaNodePort *lua, Problems &problems, NodeValueTrace *trace)
+        : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_problems(problems), m_trace(trace),
           m_lineMemo(static_cast<std::size_t>(c.slots))
     {
     }
@@ -529,6 +529,8 @@ private:
         NodeValue v = compute(node, port, e, memo);
         if (n.kind != Kind::Info)
             cache[slot] = v;
+        if (m_trace && port < static_cast<int>(n.ports.outputs.size()))
+            m_trace->values[n.graph->id].try_emplace(n.ports.outputs[static_cast<std::size_t>(port)].name, v);
         return v;
     }
 
@@ -544,6 +546,7 @@ private:
     std::int64_t m_seed;
     LuaNodePort *m_lua;
     Problems &m_problems;
+    NodeValueTrace *m_trace;
     Memo m_lineMemo;
 };
 
@@ -1022,7 +1025,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         Problems problems{r.problems, lines[i].source->id};
         for (const std::string &p : layoutProblems[i])
             problems.add({}, p);
-        Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, problems);
+        Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, problems, i == 0 ? options.trace : nullptr);
         for (std::size_t k = 0; k < compiled.emits.size(); ++k) {
             const auto t0 = std::chrono::steady_clock::now();
             std::vector<Generated> out;

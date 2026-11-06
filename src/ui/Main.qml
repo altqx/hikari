@@ -33,6 +33,7 @@ ApplicationWindow {
     required property var automation
     required property AutomationManagerController automationManager
     required property TemplateEditorController templateEditor
+    required property NodeEffectsController nodeEffects
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
     required property ScriptResolutionPromptController automationResolution
@@ -243,6 +244,31 @@ ApplicationWindow {
         templateDock.close()
     }
 
+    function nodeEffectsLayout() {
+        for (const dock of [gridDock, editorDock, audioDock, originalDock, referenceDock, postprocessorDock, stylesDock,
+                            templateDock, timingDock, searchDock, automationDock, spellDock, logDock])
+            if (dock.isOpen)
+                dock.close()
+        const width = dockingArea.width
+        dockingArea.addDockWidget(nodeGraphDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
+                                  Qt.size(Math.round(width * 0.44), 0))
+        dockingArea.addDockWidget(nodeInspectorDock, KDDW.KDDockWidgets.Location_OnRight, nodeGraphDock,
+                                  Qt.size(Math.round(width * 0.22), 0))
+        dockingArea.addDockWidget(nodeSourcesDock, KDDW.KDDockWidgets.Location_OnBottom, videoDock,
+                                  Qt.size(0, Math.round(dockingArea.height * 0.42)))
+    }
+    function setNodeEffects(on) {
+        if (on === root.workspaceLayout.nodeEffects)
+            return
+        root.nodeEffects.commit()
+        if (on)
+            root.workspaceLayout.enterNodeEffects()
+        else
+            root.workspaceLayout.leaveNodeEffects()
+        if (on)
+            root.focusPanel(nodeGraphPanel, Qt.OtherFocusReason)
+    }
+
     function typesettingLayout() {
         const area = root.workspaceLayout.panelSize(gridDock).width
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnLeft, gridDock,
@@ -294,6 +320,8 @@ ApplicationWindow {
                 root.typesettingLayout()
             else if (name === "Karaoke")
                 root.karaokeLayout()
+            else if (name === "NodeEffects")
+                root.nodeEffectsLayout()
         }
     }
     Connections {
@@ -386,10 +414,11 @@ ApplicationWindow {
 
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel]
+                                                 logPanel, stylesPanel, templatePanel, nodeGraphPanel, nodeInspectorPanel,
+                                                 nodeSourcesPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
-                                         templateDock]
+                                         templateDock, nodeGraphDock, nodeInspectorDock, nodeSourcesDock]
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -1475,6 +1504,17 @@ ApplicationWindow {
             onSaveRequested: saveLayoutDialog.show()
             onResetRequested: root.resetLayout()
             onManageRequested: manageLayoutsDialog.show()
+        }
+        tools: IconToolButton {
+            objectName: "nodeEffectsToggle"
+            iconRole: "node-editor"
+            action: nodeEffectsAction
+            tip: nodeEffectsAction.text
+            focusPolicy: Qt.NoFocus
+            implicitHeight: 24
+            Layout.alignment: Qt.AlignVCenter
+            Accessible.checkable: true
+            Accessible.checked: checked
         }
     }
     MainWindowEdges {
@@ -2766,6 +2806,25 @@ ApplicationWindow {
             }
             MenuSeparator {}
             ShellMenuItem {
+                command: "GLOBAL_NODE_EFFECTS"
+                help: qsTranslate("HikariSub.NodeEffects", "Edits this file’s node effects on a canvas, with a preview on the video")
+                iconRole: "node-editor"
+                objectName: "nodeEffectsMenuItem"
+                action: Action {
+                    id: nodeEffectsAction
+                    text: qsTranslate("HikariSub.NodeEffects", "Node effects")
+                    checkable: true
+                    checked: root.workspaceLayout.nodeEffects
+                    enabled: root.workspaceLayout.nodeEffects || (root.shell.hasEditingTarget && !root.layoutLocked)
+                    onToggled: {
+                        if (!root.hotkeyGesture("GLOBAL_NODE_EFFECTS"))
+                            root.setNodeEffects(checked)
+                        checked = Qt.binding(() => root.workspaceLayout.nodeEffects)
+                    }
+                }
+            }
+            MenuSeparator {}
+            ShellMenuItem {
                 iconRole: "log"
                 objectName: "logMenuItem"
                 action: Action {
@@ -3670,14 +3729,21 @@ ApplicationWindow {
                     id: templateBadge
                     x: presenter.x + 8
                     y: presenter.y + 8
-                    visible: root.templateEditor.videoPreview && root.video.hasVideo
+                    visible: root.templateEditor.videoPreview && !root.nodeEffects.videoPreview && root.video.hasVideo
                     controller: root.templateEditor
+                }
+                VideoNodeBadge {
+                    id: nodeBadge
+                    x: presenter.x + 8
+                    y: presenter.y + 8
+                    visible: root.nodeEffects.videoPreview && root.video.hasVideo
+                    controller: root.nodeEffects
                 }
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
                     cost: presenter.renderCost
-                    textTop: templateBadge.visible ? templateBadge.height + 12 : 8
+                    textTop: templateBadge.visible ? templateBadge.height + 12 : nodeBadge.visible ? nodeBadge.height + 12 : 8
                 }
                 VisualLastChange {
                     anchors { top: parent.top; right: parent.right; margins: 14 }
@@ -6174,6 +6240,78 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: nodeGraphDock
+            objectName: "nodeGraphDock"
+            uniqueName: root.engineName("NodeGraph")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.NodeEffects", "Graph")
+            Binding {
+                target: root.nodeEffects
+                property: "shown"
+                value: root.workspaceLayout.nodeEffects || (nodeGraphDock.isOpen && nodeGraphPanel.visible)
+            }
+            Panel {
+                id: nodeGraphPanel
+                objectName: "nodeGraphPanelHost"
+                dockName: root.engineName("NodeGraph")
+                minimumBodySize: nodeGraphTool.minimumSize
+                anchors.fill: parent
+                title: root.nodeEffects.hasGraph ? qsTranslate("HikariSub.NodeEffects", "Graph: %1").arg(root.nodeEffects.name)
+                                                 : qsTranslate("HikariSub.NodeEffects", "Graph")
+                accessibleName: qsTranslate("HikariSub.NodeEffects", "Graph")
+                NodeGraphCanvas {
+                    id: nodeGraphTool
+                    anchors.fill: parent
+                    controller: root.nodeEffects
+                }
+            }
+        }
+
+        PanelDock {
+            id: nodeInspectorDock
+            objectName: "nodeInspectorDock"
+            uniqueName: root.engineName("NodeInspector")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.NodeEffects", "Node")
+            Panel {
+                id: nodeInspectorPanel
+                objectName: "nodeInspectorPanel"
+                dockName: root.engineName("NodeInspector")
+                minimumBodySize: nodeInspectorTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.NodeEffects", "Node")
+                NodeInspector {
+                    id: nodeInspectorTool
+                    anchors.fill: parent
+                    controller: root.nodeEffects
+                    colourPicker: root.colourPicker
+                }
+            }
+        }
+
+        PanelDock {
+            id: nodeSourcesDock
+            objectName: "nodeSourcesDock"
+            uniqueName: root.engineName("NodeSources")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.NodeEffects", "Source lines")
+            Panel {
+                id: nodeSourcesPanel
+                objectName: "nodeSourcesPanel"
+                dockName: root.engineName("NodeSources")
+                minimumBodySize: nodeSourcesTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.NodeEffects", "Source lines")
+                NodeSourceLines {
+                    id: nodeSourcesTool
+                    anchors.fill: parent
+                    controller: root.nodeEffects
+                    video: root.video
+                }
+            }
+        }
+
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: root.engineName("Log")
@@ -6204,6 +6342,9 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("Original"), true, originalTools)
             Docking.setPanelHeader(root.engineName("Styles"), true, stylesTool.toolbar)
             Docking.setPanelHeader(root.engineName("Template"), false, templateTool.toolbar)
+            Docking.setPanelHeader(root.engineName("NodeGraph"), true, nodeGraphTool.toolbar)
+            Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
+            Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
             root.defaultLayout()
         }
     }
@@ -6413,6 +6554,18 @@ ApplicationWindow {
                         onClicked: sessionWindows.remove(entryBar.modelData)
                     }
                 }
+            }
+        }
+        NodeModeBar {
+            objectName: "nodeModeBar"
+            visible: root.workspaceLayout.nodeEffects
+            Layout.fillWidth: true
+            controller: root.nodeEffects
+            onLeave: root.setNodeEffects(false)
+            onProblemChosen: node => {
+                root.nodeEffects.selection = [node]
+                nodeGraphTool.centreOn(node)
+                root.focusPanel(nodeGraphPanel, Qt.OtherFocusReason)
             }
         }
     }
@@ -7824,6 +7977,7 @@ ApplicationWindow {
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
+        GLOBAL_NODE_EFFECTS: nodeEffectsAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }

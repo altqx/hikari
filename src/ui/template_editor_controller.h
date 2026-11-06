@@ -131,6 +131,8 @@ public:
     bool canApplySelected() const;
     bool trusted() const;
     Q_INVOKABLE void trustDocument();
+    // The Document's Lua is trusted from elsewhere (node effects): one choice covers both.
+    void trustedElsewhere(const DocumentKey &document);
     bool previewPending() const;
     int changedNumber() const;
     int changedCount() const;
@@ -160,6 +162,8 @@ signals:
     void documentEdited();
     void otherDocumentEdited(std::pair<std::uint64_t, std::uint64_t> document);
     void videoChanged();
+    // The user trusted the Document's Lua here; node effects take the same choice.
+    void documentTrusted(std::pair<std::uint64_t, std::uint64_t> document);
 
 private:
     struct Pending {

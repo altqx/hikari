@@ -137,7 +137,24 @@ The port's helper-process implementation is not in NE1. The automation helper ha
 
 ## The graph library
 
-`NodeGraphLibrary` keeps the user's graphs for reuse across files. Each graph is a file `<name>.json` in the user folder's `node-effects` folder ([distribution](distribution.md)), in the same format, written to a `.partial` file and then renamed into place.
+`NodeGraphLibrary` keeps the user's graphs for reuse across files: the mode's Save to the library writes one, and From the library… adds one to the Document. Each graph is a file `<name>.json` in the user folder's `node-effects` folder ([distribution](distribution.md)), in the same format, written to a `.partial` file and then renamed into place.
+
+## The node effects mode
+
+NE2 ([#424](https://github.com/altqx/hikari/issues/424)) edits a Document's graphs on a canvas. The approved design is the [#424 gate](https://github.com/altqx/hikari/issues/424#issuecomment-6619660089). `NodeEffectsController` (`src/ui`) holds the mode's state; `node_graph_editing.h` holds the edits it makes, with no Qt.
+
+- **Switching.** View › "Node effects" (`GLOBAL_NODE_EFFECTS`, no default key) or the title bar's node-effects button turns the mode on and off, and the mode bar's "Leave node effects" turns it off. Entering keeps the tab's arrangement and shows the mode's own layout; leaving brings the tab's arrangement back and never asks.
+- **Layout.** Ordinary docks: Video and **Source lines** on the left, **Graph** in the middle, **Node** on the right (panel registry 15, 16, 17). The Grid, the Line editor and the audio close. The user may rearrange the docks; the arrangement is kept in `<layout file>-node-effects.json` beside the layout file, and View › Layout › "Reset this layout" builds the default again.
+- **The mode bar** picks the graph (the Document's `graph <name>` Lines) and has its menu: New graph, From a preset, From the library…, Rename…, Duplicate, Save to the library and Delete graph. Style sets the graph Line's Style or "All styles"; Seed sets the graph's `seed`. It shows the problem count, whose list selects and centres a node, and Apply ▾ ("Apply to every karaoke line", "Apply to the selected lines").
+- **Undo.** Each canvas edit goes into one "Edit graph" step on the graph Line; edits within 800 ms of each other, or one drag, make one step. New graph, Rename graph, Duplicate graph and Delete graph are their own steps, and Delete removes the Lines the graph wrote. Apply is one "Apply node effect" step.
+- **Canvas.** A node shows its title and id, its fields, its inputs on the left and its outputs on the right. A port's shape and colour give its type: Units a diamond, Tags a square, every other type a circle; Number, Time and Alpha share a colour, and high contrast keeps the shapes and drops the colours (`Theme.ports`). An input that reads its field has a hollow port with the constant written in. Unit info shows only its wired outputs and folds the rest. A node the catalogue doesn't know is a dashed placeholder that keeps its fields and wires; a graph whose `format` is newer opens read-only.
+- **Wiring.** Dragging from an output dims the inputs it can't feed. A drop on one is refused with the reason, a drop on a wired input replaces its wire, a wire that would make a loop is refused, and a drop in empty space opens Add node filtered to nodes that take the output. Dragging a wire off an input moves it or, dropped in empty space, removes it.
+- **Add node** opens from the Graph header, a double-click on the canvas or a typed letter. It lists the catalogue by category with "Recently added", searches names and summaries, and lists Lua last.
+- **Keyboard.** The arrows move the selection to the nearest node, Ctrl+arrow moves the node, Delete deletes it, Ctrl+G groups the selection, Enter goes into a group (the Graph header shows the path) and Backspace comes out. Each node is announced as "Choose, palette: 1 of 1 inputs wired", and the Node panel lists every wire.
+- **Node panel.** The node's summary, its id (renamable), typed field editors, "From node › port" with Disconnect for each wired input, its values on the current source Line from the last run (`NodeValueTrace`), its timing and its problems.
+- **Preview.** While the mode is shown, the graph runs on the current source Line on every edit, with NE1's cache. The video draws that Line's output in place of its generated Lines, with the badge "Preview · line N · not applied"; Source lines has the eye and Loop the line. A graph with problems keeps the last run that worked, dimmed.
+- **Lua trust** is the Template editor's choice for the open Document: trusting the file's Lua in either one covers both.
+- **Presets.** "From a preset" lists the KE3 presets that exist as graphs under their Template-editor names: Classic fill, Bounce, Sparkles, Falling letters and Colour per line. NE3 adds the other five.
 
 ## On the Hikari API
 

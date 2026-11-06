@@ -156,9 +156,14 @@ View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
 View > Panels > Template editor >
+View > Panels > Graph >
+View > Panels > Node >
+View > Panels > Source lines >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout
+View > -
+View > Node effects [GLOBAL_NODE_EFFECTS]
 View > -
 View > Log
 View > Hide tags [GLOBAL_HIDE_TAGS]
