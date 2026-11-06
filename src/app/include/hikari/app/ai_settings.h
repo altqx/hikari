@@ -45,6 +45,8 @@ class AiSettings final : public QObject {
     /// Codex under External agents: {found, path, version, canImport, signedIn, email, state, userCode, expiresAt,
     /// browserAvailable, error, host}. state is "", "starting", "code" or "browser"; error is a sign-in failure's kind.
     Q_PROPERTY(QVariantMap codex READ codex NOTIFY codexChanged)
+    /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
+    Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
 
 public:
     explicit AiSettings(AiFeatures &features, QObject *parent = nullptr);
@@ -57,6 +59,7 @@ public:
     QVariantMap draft() const { return m_draft; }
     QVariantMap download() const;
     QVariantMap codex() const;
+    bool sandboxed() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;

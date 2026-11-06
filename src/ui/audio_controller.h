@@ -41,6 +41,7 @@ class AudioController : public QObject {
     Q_PROPERTY(bool hasAudio READ hasAudio NOTIFY changed)
     Q_PROPERTY(bool loaded READ loaded NOTIFY changed)
     Q_PROPERTY(bool ready READ ready NOTIFY changed)
+    Q_PROPERTY(bool reloadable READ reloadable NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY textsChanged)
     Q_PROPERTY(QString path READ path NOTIFY changed)
     // MUST KILL: the scroll values are in units of 12 columns
@@ -98,6 +99,7 @@ public:
     bool hasAudio() const { return m_box.isOpen(); }
     bool loaded() const { return m_box.state() == application::AudioBox::State::Loading || ready(); }
     bool ready() const { return m_box.state() == application::AudioBox::State::Ready; }
+    bool reloadable() const { return loaded() && !application::AudioBox::isDummyName(m_box.path()); }
     QString status() const;
     QString path() const { return QString::fromStdString(m_box.path()); }
     void retranslate() { emit textsChanged(); }
@@ -107,6 +109,7 @@ public:
     Q_INVOKABLE void openAudioUrl(const QUrl &url) { openAudio(url.toLocalFile()); }
     void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
     Q_INVOKABLE void closeAudio();
+    Q_INVOKABLE bool reloadAudio();
     void openFromVideo(const QString &path, int track, bool videoNewIndex, const QString &handoffIndexFile = {});
     void askTrack(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer);
     void trimCache();
@@ -379,6 +382,7 @@ private:
     bool m_pointerOver = false;
     bool m_focused = false;
     bool m_fresh = true;
+    std::optional<std::int64_t> m_reloadSample;
     int m_scrollbarThickness = 0;
     application::AudioView::Scrollbar m_scrollbar;
     quint64 m_revision = 1;

@@ -3,6 +3,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     session_json.cpp include/hikari/app/session_json.h
     application_comparison.cpp
     application_video.cpp
+    application_timecodes.cpp
     application_reference.cpp
     application_tab_menu.cpp
     application_karaoke.cpp
@@ -19,11 +20,13 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     user_folder.cpp include/hikari/app/user_folder.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
+    align_to_video_controller.cpp include/hikari/app/align_to_video_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
     ai_settings.cpp include/hikari/app/ai_settings.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)

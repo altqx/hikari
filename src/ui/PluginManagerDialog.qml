@@ -437,6 +437,32 @@ DialogWindow {
             }
         }
         Heading {
+            visible: details.row.folders.length > 0
+            text: qsTr("Remembered folders")
+        }
+        Repeater {
+            model: details.row.folders
+            RowLayout {
+                id: folderRow
+                required property var modelData
+                spacing: 8
+                Layout.fillWidth: true
+                Label {
+                    text: qsTr("%1: %2").arg(folderRow.modelData.title, folderRow.modelData.path)
+                    textFormat: Text.PlainText
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                }
+                IconTextButton {
+                    objectName: "pluginForgetFolder_" + folderRow.modelData.id
+                    iconRole: "remove"
+                    text: qsTr("Forget")
+                    tip: qsTr("%1 asks again the next time it needs this folder").arg(details.row.name)
+                    onClicked: dialog.manager.forgetFolder(details.row.id, folderRow.modelData.id)
+                }
+            }
+        }
+        Heading {
             visible: details.row.adds.length > 0
             text: qsTr("What it adds")
         }
@@ -467,7 +493,7 @@ DialogWindow {
             Layout.fillWidth: true
             IconTextButton {
                 objectName: "pluginUpdateFromFile"
-                iconRole: "plugin-install"
+                iconRole: "plugin-update"
                 text: qsTr("Update from file…")
                 onClicked: {
                     installPicker.updating = details.row.id
@@ -476,7 +502,7 @@ DialogWindow {
             }
             IconTextButton {
                 objectName: "pluginOpenDataFolder"
-                iconRole: "folder-open"
+                iconRole: "show-in-folder"
                 text: qsTr("Open data folder")
                 onClicked: dialog.manager.openDataFolder(details.row.id)
             }

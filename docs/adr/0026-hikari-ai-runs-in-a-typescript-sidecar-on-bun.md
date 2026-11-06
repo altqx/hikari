@@ -16,6 +16,8 @@ This amends [ADR 0024](0024-hikari-ai.md). It replaces these parts of it:
 
 The rest of ADR 0024 stands. That includes no AI in core, off and silent until a provider is added, keys in QtKeychain, per-role models, the panel, the three permission modes and the always-prompt list.
 
+Amended by [ADR 0029](0029-the-ai-sidecar-runs-in-an-os-sandbox.md): the sidecar runs in an OS sandbox with no network and no keys; its requests go out through Qt, and Qt starts the agent CLIs, each in its own sandbox.
+
 ## Boundary
 
 - **The sidecar does:** provider requests on the official SDKs (`openai`, `@anthropic-ai/sdk`, `@google/genai`), prompt caching, the agent loop, the model calls for every role, the MCP client ([AI13 #441](https://github.com/altqx/hikari/issues/441)), the MCP server protocol ([AI3 #431](https://github.com/altqx/hikari/issues/431)) and the external agents ([AI15 #443](https://github.com/altqx/hikari/issues/443)).
@@ -67,9 +69,6 @@ The rest of ADR 0024 stands. That includes no AI in core, off and silent until a
 | sidecar → Qt | `session/update` | text, tool calls, plans, usage and cost |
 | sidecar → Qt | `session/request_permission` | Manual mode and the always-prompt list |
 | sidecar → Qt | `_hikari/api.call`, `_hikari/api.subscribe` | Hikari's tools through HA1 |
-| Qt → sidecar | `_hikari/signin.start`, `_hikari/signin.refresh` | a Codex or OpenRouter sign-in, a Codex refresh |
-| sidecar → Qt | `_hikari/signin.progress` | the device code or the page to open |
-| sidecar → Qt | `_hikari/secret.store` | new and refreshed OAuth tokens |
 
 - **Streaming.** The sidecar coalesces text deltas into at most one notification per frame interval.
 - **Cancel.** Turns are cancelled with `session/cancel`; any other request with a `$/cancel_request` notification that carries its id. A cancelled request still gets exactly one response, with the cancel error code.
@@ -112,7 +111,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 
 - **Qt opens the keychain.** It reads keys with QtKeychain and sends only the key a request needs, inside that request on the pipe.
 - **The sidecar never opens the keychain.** It holds a key only for the request that carries it, and never writes one to disk, its environment, a log or stderr.
-- **OAuth** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): sign-ins and refreshes run in the sidecar, where the HTTP calls are. Its 127.0.0.1 listener for a browser's redirect is open only while a sign-in runs. The sidecar sends the tokens to Qt with `_hikari/secret.store`; Qt takes only the name the running sign-in expects and writes the keychain. Qt opens the browser, and only on https pages of auth.openai.com and openrouter.ai.
+- **OAuth** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): tokens refresh in the sidecar, where the HTTP call is. The sidecar sends the new tokens to Qt with `_hikari/secret.store`, and Qt writes them to the keychain.
 - **Agent CLIs** use the user's own login. Hikari passes them no key.
 - **The process boundary separates crashes, not trust.** Code running as the user can read what the user can. The defences are the supply-chain rules below and, later, the OS sandbox.
 

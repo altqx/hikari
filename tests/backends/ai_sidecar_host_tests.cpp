@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 #include <optional>
+#include <string_view>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -303,6 +304,40 @@ TEST_F(AiSidecarHostTest, TheSidecarGetsACleanedEnvironmentAndAPrivateWorkingDir
 #endif
 }
 
+TEST_F(AiSidecarHostTest, ASandboxedSidecarAnswersKeepsItsTemporaryFilesInItsWorkFolderAndDiesWithTheHost)
+{
+    auto o = options(QStringLiteral("ignore-eof"));
+    hikari::backends::sandbox::Profile profile;
+    profile.name = QStringLiteral("HikariSub.Test.Sidecar");
+    profile.readExecute = {QFileInfo(QStringLiteral(HIKARI_FAKE_AI_SIDECAR)).absolutePath()};
+    profile.readWrite = {o.workingDirectory};
+    o.sandbox = profile;
+    auto h = host(o);
+    const auto result = call(*h, "environment");
+    ASSERT_TRUE(result) << result.error().message << h->diagnostics().toStdString();
+    const Json &env = *result->find("environment");
+    const QString temporary = QDir::toNativeSeparators(o.workingDirectory + QStringLiteral("/tmp"));
+    for (const char *name : {"TMPDIR", "TEMP", "TMP"}) {
+        ASSERT_TRUE(env.find(name)) << name;
+        const QString value = QString::fromStdString(env.find(name)->asString());
+#ifdef _WIN32
+        // Windows gives every AppContainer process its own TEMP and TMP in the container's profile.
+        if (std::string_view(name) != "TMPDIR") {
+            EXPECT_TRUE(value.endsWith(QStringLiteral("\\AC\\Temp"), Qt::CaseInsensitive)) << name << ' ' << value.toStdString();
+            continue;
+        }
+#endif
+        EXPECT_EQ(value, temporary) << name;
+    }
+    EXPECT_TRUE(QFileInfo(temporary).isDir());
+    const auto spawned = call(*h, "spawn");
+    ASSERT_TRUE(spawned);
+    const qint64 child = spawned->find("pid")->asInt();
+    const qint64 sidecar = h->processId();
+    h.reset();
+    EXPECT_TRUE(waitFor([&] { return !processAlive(sidecar) && !processAlive(child); }, 3'000));
+}
+
 QStringList g_log;
 void collectLog(QtMsgType, const QMessageLogContext &, const QString &message)
 {
@@ -408,14 +443,12 @@ TEST_F(AiSidecarHostTest, RequestsOverTheOutstandingLimitAreBusy)
 TEST_F(AiSidecarHostTest, NotificationsReachTheHandler)
 {
     auto h = host(options());
-    std::vector<Json> seen;
-    std::vector<Json> others;
-    h->onNotification("session/update", [&](const Json &params) { seen.push_back(params); });
-    h->onNotification("_hikari/signin.progress", [&](const Json &params) { others.push_back(params); });
+    std::vector<std::pair<std::string, Json>> seen;
+    h->onNotification([&](const std::string &method, const Json &params) { seen.emplace_back(method, params); });
     ASSERT_TRUE(call(*h, "notify", Json::object({{"text", "hi"}})));
     ASSERT_EQ(seen.size(), 1u);
-    EXPECT_EQ(seen[0], Json::object({{"text", "hi"}}));
-    EXPECT_TRUE(others.empty());
+    EXPECT_EQ(seen[0].first, "session/update");
+    EXPECT_EQ(seen[0].second, Json::object({{"text", "hi"}}));
 }
 
 }

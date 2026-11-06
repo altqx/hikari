@@ -8,6 +8,8 @@ ShellMenu {
     id: layoutMenu
     required property var layouts
     property string prefix: "layout"
+    property Action lockAction
+    property string lockReason
     readonly property var presets: ["Editing", "Timing", "Translation", "Typesetting", "Karaoke"]
     signal presetChosen(string name)
     signal savedLayoutChosen(string name)
@@ -33,6 +35,7 @@ ShellMenu {
             text: qsTranslate("HikariSub.Workspace", modelData)
             checkable: true
             checked: layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData
+            enabled: !layoutMenu.layouts.locked
             keepsMenuOpen: false
             onTriggered: {
                 checked = Qt.binding(() => layoutMenu.layouts.layout.length === 0 && layoutMenu.layouts.preset === modelData)
@@ -55,7 +58,7 @@ ShellMenu {
             required property int index
             objectName: layoutMenu.prefix + "Saved" + index
             text: modelData.name
-            enabled: modelData.usable
+            enabled: modelData.usable && !layoutMenu.layouts.locked
             checkable: true
             checked: layoutMenu.layouts.layout === modelData.name
             keepsMenuOpen: false
@@ -78,6 +81,7 @@ ShellMenu {
         objectName: layoutMenu.prefix + "Reset"
         iconRole: "layout-reset"
         text: qsTr("Reset this layout")
+        enabled: !layoutMenu.layouts.locked
         onTriggered: layoutMenu.resetRequested()
     }
     ShellMenuItem {
@@ -86,5 +90,19 @@ ShellMenu {
         text: qsTr("Manage layouts…")
         enabled: layoutMenu.layouts.savedLayouts.length > 0
         onTriggered: layoutMenu.manageRequested()
+    }
+    MenuSeparator {
+        visible: layoutMenu.lockAction !== null
+        height: visible ? implicitHeight : 0
+    }
+    ShellMenuItem {
+        objectName: layoutMenu.prefix + "Lock"
+        command: "GLOBAL_TOGGLE_LOCK_LAYOUT"
+        iconRole: "layout-lock"
+        action: layoutMenu.lockAction
+        visible: layoutMenu.lockAction !== null
+        height: visible ? implicitHeight : 0
+        keepsMenuOpen: false
+        reason: layoutMenu.lockReason
     }
 }

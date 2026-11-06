@@ -51,7 +51,7 @@ add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper)
 # Generated at build time: discovered GoogleTest cases ignore a CTest setup fixture.
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")
 set(_hikari_media_fixtures "")
-foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd audiodelay audioonly sar mkvextract yuv10)
+foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd colorhdr audiodelay audioonly sar mkvextract yuv10 keypoint)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -422,6 +422,15 @@ hikari_add_gtest(hikari_backends_ai_config_store_tests SOURCES ai_config_store_t
     LIBRARIES hikari_ai Qt6::Core LABELS backends)
 hikari_add_gtest(hikari_backends_ai_keychain_tests SOURCES ai_keychain_tests.cpp
     LIBRARIES hikari_ai Qt6::Core LABELS backends)
+add_executable(hikari_sandbox_probe sandbox_probe.cpp)
+if(WIN32)
+    target_link_libraries(hikari_sandbox_probe PRIVATE ws2_32)
+endif()
+hikari_add_gtest(hikari_backends_sandbox_tests SOURCES sandbox_tests.cpp
+    LIBRARIES hikari_sandbox Qt6::Core Qt6::Network LABELS backends)
+target_compile_definitions(hikari_backends_sandbox_tests PRIVATE
+    HIKARI_SANDBOX_PROBE="$<TARGET_FILE:hikari_sandbox_probe>")
+add_dependencies(hikari_backends_sandbox_tests hikari_sandbox_probe)
 add_executable(hikari_fake_ai_sidecar fake_ai_sidecar.cpp)
 target_link_libraries(hikari_fake_ai_sidecar PRIVATE hikari_api)
 hikari_add_gtest(hikari_backends_ai_sidecar_host_tests SOURCES ai_sidecar_host_tests.cpp
@@ -435,11 +444,17 @@ hikari_add_gtest(hikari_backends_ai_requests_tests SOURCES ai_requests_tests.cpp
 target_compile_definitions(hikari_backends_ai_requests_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_backends_ai_requests_tests hikari_fake_ai_sidecar)
-hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
+hikari_add_gtest(hikari_backends_ai_http_relay_tests SOURCES ai_http_relay_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
+add_executable(hikari_fake_agent fake_agent.cpp)
+target_link_libraries(hikari_fake_agent PRIVATE hikari_api)
+hikari_add_gtest(hikari_backends_ai_agent_broker_tests SOURCES ai_agent_broker_tests.cpp
     LIBRARIES hikari_ai Qt6::Core LABELS backends)
-target_compile_definitions(hikari_backends_ai_signin_tests PRIVATE
-    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
-add_dependencies(hikari_backends_ai_signin_tests hikari_fake_ai_sidecar)
+target_compile_definitions(hikari_backends_ai_agent_broker_tests PRIVATE
+    HIKARI_FAKE_AGENT="$<TARGET_FILE:hikari_fake_agent>")
+add_dependencies(hikari_backends_ai_agent_broker_tests hikari_fake_agent)
+hikari_add_gtest(hikari_backends_ai_signin_tests SOURCES ai_signin_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 if(HIKARI_AI_SIDECAR)
     hikari_add_gtest(hikari_backends_ai_tools_tests SOURCES ai_tools_tests.cpp
         LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends ai-sidecar)
@@ -447,6 +462,11 @@ if(HIKARI_AI_SIDECAR)
     target_compile_definitions(hikari_backends_ai_tools_tests PRIVATE
         HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_backends_ai_tools_tests hikari_ai_sidecar)
+    hikari_add_gtest(hikari_backends_ai_relay_sidecar_tests SOURCES ai_relay_sidecar_tests.cpp
+        LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends ai-sidecar)
+    target_compile_definitions(hikari_backends_ai_relay_sidecar_tests PRIVATE
+        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+    add_dependencies(hikari_backends_ai_relay_sidecar_tests hikari_ai_sidecar)
     hikari_add_gtest(hikari_backends_ai_mcp_tests SOURCES ai_mcp_tests.cpp
         LIBRARIES hikari_ai hikari_core Qt6::Core Qt6::Network LABELS backends ai-sidecar)
     target_include_directories(hikari_backends_ai_mcp_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")

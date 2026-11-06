@@ -145,6 +145,7 @@ private:
         core::StyleValues opened;
         std::optional<application::DocumentId> document;
         std::u8string catalog;
+        std::u8string copyOf;
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
     void catalogChosen();
@@ -152,7 +153,8 @@ private:
     application::EditSession *editSession() const;
     bool applyDocument(application::EditSession &session, const application::StyleList &styles,
                        const std::vector<std::optional<std::size_t>> &origin,
-                       std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt);
+                       std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt,
+                       std::optional<std::pair<std::u8string, std::u8string>> copy = std::nullopt);
 
     application::StyleCatalogs m_catalogs;
     Hooks m_hooks;

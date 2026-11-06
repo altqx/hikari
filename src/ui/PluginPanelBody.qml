@@ -66,6 +66,28 @@ Item {
         }
     }
 
+    DropArea {
+        id: drops
+        objectName: "pluginPanelDropArea"
+        anchors.fill: parent
+        enabled: body.drawn && body.panelState.tree.drop === true
+        onEntered: drag => {
+            if (!drag.hasUrls)
+                drag.accepted = false
+        }
+        onDropped: drop => {
+            if (drop.hasUrls && body.ui.drop(body.dock, drop.urls))
+                drop.accept(Qt.CopyAction)
+        }
+    }
+    Rectangle {
+        anchors.fill: parent
+        visible: drops.containsDrag
+        color: "transparent"
+        border.color: Theme.accent
+        border.width: 2
+    }
+
     ColumnLayout {
         objectName: "pluginPanelPlaceholder"
         visible: body.status !== "running"
@@ -105,7 +127,7 @@ Item {
             spacing: 12
             IconTextButton {
                 objectName: "pluginPanelAction"
-                iconRole: body.missing ? "plugins" : body.off ? "show" : "restart"
+                iconRole: body.missing ? "plugins" : body.off ? "plugin-turn-on" : "restart"
                 text: body.status === "missing" ? qsTr("Open Plugins…")
                     : body.status === "off" ? qsTr("Turn on") : qsTr("Start again")
                 onClicked: {

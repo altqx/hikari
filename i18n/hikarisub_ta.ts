@@ -1701,6 +1701,10 @@ Output device: %2</source>
         <translation>0 ஒளிபுகாதது, 255 முழுமையாக ஒளிபுகும்</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>நிறம் இல்லை</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>குறைவு</translation>
     </message>
@@ -1896,94 +1900,6 @@ Output device: %2</source>
         <translation>வசன வரிகளை வீடியோவுக்கு ஏற்ப மறுமாதிரியாக்கவா? வசன வரிகள் › வசன வரிகளை மறுமாதிரியாக்கு மூலம் பின்னரும் இதைச் செய்யலாம்.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>பட்டியல்</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>ஒவ்வொரு வரிக்கும் இந்தப் பாணி வழங்கப்படும்.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>தொடக்கக் குறிச்சொற்கள்</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>ஒவ்வொரு வரியின் தொடக்கத்திலும் எழுதப்படும்.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>தெளிவுத்திறன்</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>அகலம்</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>உயரம்</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>புதிய கோப்பின் ச்கிரிப்ட் தெளிவுத்திறன்.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>சட்டக வீதம்</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>சட்டகங்கள்</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடவும்.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD சட்டகங்களை எண்ணுகிறது: நேரங்கள் இந்த வீதத்தில் சட்டகங்களாக மாறும்.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>இறுதி நேரங்கள்</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>ஓர் எழுத்துக்கு</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>ஒரு வரி அதன் நீளம் × இந்த அளவு நீடிக்கும், குறைந்தது 1 s; அடுத்த வரி தொடங்கும் இடத்தில் முடியும்.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>என்ன மாறும்</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>சட்டக வீதம் சரியாகும் வரை காட்ட எதுவும் இல்லை.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>பாணி</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>புதிய இறுதி நேரங்கள்</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>மாற்று</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>வசன வரிகள்</translation>
     </message>
@@ -2077,18 +1993,6 @@ Output device: %2</source>
             <numerusform>%n சுழற்றப்பட்ட வரிகள் தங்கள் வடிவத்தைத் தக்கவைக்க முடியவில்லை.</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>இந்த ஆவணத்தை அந்த வடிவத்துக்கு மாற்ற முடியாது.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>தவறான FPS. அதை விருப்பங்களில் சரிசெய்து மீண்டும் முயற்சிக்கவும்.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>ச்கிரிப்ட் பண்புகளும் பாணிகளும் நீக்கப்படும்.</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -2136,13 +2040,6 @@ Output device: %2</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>%n வரியிலிருந்து அடுக்கு, பாணி, நடிகர், விளிம்புகள் அல்லது விளைவு நீக்கப்பட்டது.</numerusform>
-            <numerusform>%n வரிகளிலிருந்து அடுக்கு, பாணி, நடிகர், விளிம்புகள் அல்லது விளைவு நீக்கப்பட்டது.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>%n வரியிலிருந்து புத்தகக்குறிகள், மறைக்கப்பட்ட வரிகள், குழுக்கள் நீக்கப்பட்டன.</numerusform>
@@ -2179,6 +2076,10 @@ Output device: %2</source>
         <translation>இல்லை</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>
@@ -2213,6 +2114,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>என்னுடையதை வை</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>சேமிப்பதற்கு முன் “%1” ஐ ASS ஆக மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS ஆக மாற்று</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2343,6 +2252,14 @@ Output device: %2</source>
         <translation>தலைப்பிடப்படாத ஆவணத்தைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>அமைப்புகள் › மாற்றம் இல் உள்ள சட்டக வீதம் சரியில்லை. அதைத் திருத்தி மீண்டும் சேமிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>ASS ஆகச் சேமி</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>ஓர் ஆவணத்தைச் சேமிக்க முடியவில்லை; எதுவும் மூடப்படவில்லை.</translation>
     </message>
@@ -2357,6 +2274,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1 ஐத் திறக்க முடியவில்லை; எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>ASS வசனங்கள் (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2383,12 +2304,21 @@ Output device: %2</source>
         <translation>கீஃப்ரேம்கள்: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>நேரக்குறியீடுகள்: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>தொடர்புடைய கோப்புகள்:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>கோப்புறையிலிருந்து வீடியோ: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>இணைக்கப்பட்ட கோப்புகள் கிடைக்கவில்லை:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3034,8 +2964,16 @@ Output device: %2</source>
         <translation>எழுத்துரு, அளவு, அளவீடு அல்லது இடைவெளிக் குறிகள் நீக்கப்பட்டன</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>அளவு அல்லது இடைவெளி குறிகள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>கரை, நிழல், மங்கலாக்கம், ஒளிபுகுதன்மை அல்லது பிற நிறங்கள் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>எல்லை, நிழல் அல்லது மங்கல் குறிகள் நீக்கப்பட்டன</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -3044,6 +2982,10 @@ Output device: %2</source>
     <message>
         <source>Some bold, italic, underline or strikeout removed</source>
         <translation>சில தடிப்பு, சாய்வு, அடிக்கோடு அல்லது அடித்தல் நீக்கப்பட்டன</translation>
+    </message>
+    <message>
+        <source>Strikeout removed</source>
+        <translation>அடித்தல் நீக்கப்பட்டது</translation>
     </message>
     <message>
         <source>Position or alignment removed</source>
@@ -3086,6 +3028,14 @@ Output device: %2</source>
         <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடு.</translation>
     </message>
     <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>இந்தக் கோப்பில் பாணி விருப்பங்களைச் சேமிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>இந்தக் கோப்பிலிருந்து YouTube நேரக் குறியிட்ட உரையை உருவாக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
         <source>Couldn’t write %1: %2</source>
         <translation>%1 ஐ எழுத முடியவில்லை: %2</translation>
     </message>
@@ -3096,6 +3046,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>சாதாரண உரை</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>YouTube நேரக் குறியிட்ட உரை (srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>ஒளிர்வு</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>%1 க்கான ஒளிர்வு நிழல்</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>மென்மை</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>%1 க்கான மென் நிழல்</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>கூர்மை</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>%1 க்கான கூர் நிழல்</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>%1 க்கான சாய்வு நிழல்</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>தற்போதைய சொல்லின் உரை</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>%1 க்கான தற்போதைய சொல் உரை நிறம்</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>தற்போதைய சொல்லின் வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>%1 க்கான தற்போதைய சொல் வெளிக்கோட்டு நிறம்</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>தற்போதைய சொல்லின் நிழல்</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>%1 க்கான தற்போதைய சொல் நிழல் நிறம்</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -3156,6 +3166,46 @@ Output device: %2</source>
     <message>
         <source>Options</source>
         <translation>விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>srv3 style options</source>
+        <translation>srv3 பாணி விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>கரோக்கே</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1 க்கு நிழல் இல்லை (நிழல் 0), எனவே நிழல் வகை பொருந்தாது.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>%1 க்கான கரோக்கே</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>நிறம் இல்லை</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>%1 ஐ மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>நிழல் என்பது பாணியின் நிழலை YouTube வரையும் முறை; வெளிக்கோடு எப்போதும் ஒளிர்வாக வரையப்படும். தற்போதைய சொல் நிறங்கள் கரோக்கே வரிகளுக்குப் பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>எல்லா பாணிகளையும் காட்டு (%1)</translation>
     </message>
     <message>
         <source>Alignment as %1 tags</source>
@@ -3222,6 +3272,14 @@ Output device: %2</source>
         <translation>TMPlayer இல் முடிவு நேரங்கள் இல்லை: ஒன்றின்மேல் ஒன்று வரும் வரிகள் ஒன்றிணைக்கப்படும், வெற்று வசனம் திரையை அழிக்கும்.</translation>
     </message>
     <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>YTSubConverter 1.6.5 மாற்றுவது போலவே மாற்றப்படுகிறது. கோப்பில் இணைக்கப்பட்ட எழுத்துருக்களும் படங்களும் ஏற்றுமதி செய்யப்படாது.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>மாற்றிய விருப்பங்கள் ஏற்றுமதி செய்யும்போது வசனக் கோப்பில் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>வடிவமைப்பு, நிறங்கள், நிலைகள் வைக்கப்படாது.</translation>
     </message>
@@ -3244,6 +3302,13 @@ Output device: %2</source>
         <translation>
             <numerusform>காட்ட எதுவும் இல்லாத %n வரி தவிர்க்கப்பட்டது.</numerusform>
             <numerusform>காட்ட எதுவும் இல்லாத %n வரிகள் தவிர்க்கப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>%n பாணிக்கான விருப்பங்கள் வசனக் கோப்பில் சேமிக்கப்பட்டன.</numerusform>
+            <numerusform>%n பாணிகளுக்கான விருப்பங்கள் வசனக் கோப்பில் சேமிக்கப்பட்டன.</numerusform>
         </translation>
     </message>
     <message>
@@ -3590,6 +3655,24 @@ Output device: %2</source>
     <message>
         <source>Writing the new archive replaces it.</source>
         <translation>புதிய காப்பகத்தை எழுதினால் அது மாற்றப்படும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>“%1” இல் %n எழுத்துரு கோப்பு ஏற்கனவே உள்ளது.</numerusform>
+            <numerusform>“%1” இல் %n எழுத்துரு கோப்புகள் ஏற்கனவே உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>மேலும் %n</numerusform>
+            <numerusform>மேலும் %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>இருப்பதை வைத்திரு</translation>
     </message>
     <message>
         <source>Action</source>
@@ -4119,6 +4202,10 @@ Output device: %2</source>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>இந்தச் சேகரிப்பு முழுமையடையவில்லை. நீங்கள் அதை ஏற்றுக்கொண்டால் மட்டுமே இது எழுதப்படும், அப்போது வெளியீடு முழுமையற்றது எனக் குறிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” ஏற்கனவே கோப்புறையில் உள்ளது; அது மாற்றப்படவில்லை.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -4814,6 +4901,10 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்த வரியுடன்</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>வீடியோவில் தெரியும் வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
@@ -4839,6 +4930,35 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>விளக்கத்தைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Aegisub மடிப்புகள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>இந்தக் கோப்பில் %n Aegisub மடிப்பு உள்ளது.</numerusform>
+            <numerusform>இந்தக் கோப்பில் %n Aegisub மடிப்புகள் உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>வரிக் குழுக்களாக மாற்று</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n Aegisub மடிப்பு வரிக் குழுவாக மாறியது.</numerusform>
+            <numerusform>%n Aegisub மடிப்புகள் வரிக் குழுக்களாக மாறின.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>%n மடிப்பு தவிர்க்கப்பட்டது: அது ஒரு வரிக் குழுவுடன் மேற்பொருந்துகிறது அல்லது இணை இல்லை.</numerusform>
+            <numerusform>%n மடிப்புகள் தவிர்க்கப்பட்டன: அவை ஒரு வரிக் குழுவுடன் மேற்பொருந்துகின்றன அல்லது இணை இல்லை.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -5358,6 +5478,26 @@ Failed to copy %2 fonts.</source>
         <translation>“சிறு பிழைகளைச் சரிசெய் (சோதனை)” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: இந்த அம்சம் அகற்றப்பட்டது.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>“ASS ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › எனச் சேமி இல் ASS ஐத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>“SRT க்கு மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>“TMP க்கு மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>“MDVD ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>“MPL2 ஆக மாற்றவும்” இன் குறுக்குவிசை %1 நீக்கப்பட்டது: அதற்குப் பதிலாக கோப்பு › வேறு வடிவில் ஏற்றுமதி ஐப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>“வெற்று 2h30m ஆடியோவைத் திறக்கவும்” கட்டளையின் குறுக்குவிசை %1 அகற்றப்பட்டது: அந்தக் கட்டளை நிறுத்தப்பட்டது; போலி வீடியோ தன்னுடைய ஒலியற்ற ஆடியோவைக் கொண்டுவரும்.</translation>
     </message>
@@ -5800,26 +5940,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>சிக்கலைப் புகாரளி</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>ASS ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT க்கு மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2 ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP க்கு மாற்றவும்</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6394,6 +6514,42 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>திசையன் கிளிப்: புள்ளிகளை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>திசையன் கிளிப்: நேர்கோட்டைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>திசையன் கிளிப்: பெசியர் வளைவைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>திசையன் கிளிப்: பி-ச்ப்ளைனைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>திசையன் கிளிப்: தனிப் புள்ளியைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>திசையன் கிளிப்: புள்ளியை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>திசையன் கிளிப்: தலைகீழாக்கு</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>வசன வரிகளை இடைநிலைப்பலகைக்கு நகலெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>வசன வரிகளை PNG ஆகச் சேமிக்கவும்</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>கரோக்கியைச் சரிபார்</translation>
     </message>
@@ -6438,12 +6594,40 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரல்கள்</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>வீடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>ஆடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>நேரங்களைச் சட்டகங்களுக்குள் மையப்படுத்து</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>நேரக்குறியீடுகளைத் திற</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>நேரக்குறியீடுகளைச் சேமி</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>நேரக்குறியீடுகளை மூடு</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>வீடியோ விவரங்கள்…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6476,6 +6660,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>You cannot use the program exit shortcut.</source>
         <translation>நிரலை விட்டு வெளியேறும் குறுக்குவிசையைப் பயன்படுத்த முடியாது.</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>வீடியோவுடன் சீரமை…</translation>
     </message>
 </context>
 <context>
@@ -6870,26 +7058,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>ASS ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT க்கு மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2 ஆக மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP க்கு மாற்றவும்</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>தொடக்க நேரம்</translation>
     </message>
@@ -7262,10 +7430,6 @@ Failed to copy %2 fonts.</source>
         <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>மாற்றம்</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
     </message>
@@ -7355,26 +7519,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>ASS வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>SRT வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>microDVD வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>MPL2 வடிவத்திற்கு மாற்றுகிறது</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>TMPlayer வடிவத்திற்கு மாற்றுகிறது (பரிந்துரைக்கப்படவில்லை)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7549,6 +7693,34 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவிலிருந்து FPS ஐ அமைக்கவும்</translation>
     </message>
     <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR நேரக்குறியீடுகள் v1, v2 அல்லது v4 கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>நேரக்குறியீடுகளைத் திற</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட நேரக்குறியீடுகள்</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>VFR நேரக்குறியீடுகள் v2 கோப்பாகச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>நேரக்குறியீடுகளைச் சேமி</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>இப்போது திறந்துள்ள நேரக்குறியீட்டுக் கோப்பை மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>நேரக்குறியீடுகளை மூடு</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>சட்டகங்களாக வீடியோவுக்கு நகர்த்து</translation>
     </message>
@@ -7585,8 +7757,20 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>வீடியோ விவரங்கள்…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>வீடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>ரெண்டர் செலவு</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>ஆடியோவை மீண்டும் ஏற்று</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7595,6 +7779,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>ஆடியோ தேர்வைக் கொண்டு முந்தைய வரியுடன் இணை</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>குறிச்சொல் இல்லாத வீடியோ</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>வீடியோ எந்த வண்ண மேட்ரிக்சைப் பயன்படுத்துகிறது என்று குறிப்பிடவில்லை.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub %1 என ஊகிக்கிறது, ஆனால் மற்ற இயக்கிகள் வேறுவிதமாக ஊகிக்கலாம்; எனவே வீடியோவின் வண்ணங்களும் அவற்றுக்குப் பொருத்திய வசன வண்ணங்களும் இயக்கிக்கு இயக்கி வேறுபடலாம். எல்லா இயக்கிகளும் ஒரே மாதிரி காட்டும்படி வீடியோவை அதன் வண்ண மேட்ரிக்சுடன் குறியிடவும்.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>HDR அல்லது பரந்த வண்ண வரம்பு வீடியோ</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>வீடியோவில் HDR அல்லது பரந்த வண்ண வரம்பு வண்ணங்கள் உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>சாதாரண வசன வரிகள் இதில் வேலை செய்யும், ஆனால் வசன வண்ணங்கள் வீடியோவின் வண்ணங்களுடன் பொருந்த முடியாது.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>YCbCr மேட்ரிக்சை அமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>வசன வரிகளில் YCbCr மேட்ரிக்ச் இல்லை.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>இவை இந்த வீடியோவுக்கானவை என்றால், அதை வீடியோவினுடையதற்கு (%1) அமைக்கவும். வேறொரு வீடியோவுக்கானவை என்றால், அந்த வீடியோவைத் திறக்கும் வரை அமைக்காமல் விடவும்.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>அமைக்காமல் விடு</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>%1 ஆக அமை</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>YCbCr மேட்ரிக்ச் பொருந்தாமை</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>வீடியோவின் YCbCr மேட்ரிக்ச் (%1) வசன வரிகளுடையதிலிருந்து (%2) வேறுபடுகிறது.</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>இந்த வீடியோவின் வண்ணங்கள், வசன வரிகள் உருவாக்கப்பட்ட வீடியோவின் வண்ணங்களைப் போலவே தோன்றினால், வசன வரிகளின் மேட்ரிக்சை வீடியோவினுடையதற்கு அமைக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 ஐ வை</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>தளவமைப்புத் தெளிவுத்திறனை அமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>வசன வரிகளில் தளவமைப்புத் தெளிவுத்திறன் இல்லை.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>இவை இந்த வீடியோவுக்கானவை என்றால், அதை வீடியோவினுடையதற்கு (%1) அமைக்கவும். பழைய கோப்பு என்றால், அது உருவாக்கப்பட்ட வீடியோவின் தெளிவுத்திறனுக்கு அமைக்கவும்; அது பெரும்பாலும் அதன் ச்கிரிப்ட் தெளிவுத்திறன் (%2) ஆகும்.</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>வீடியோவினுடையதற்கு அமை (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>ச்கிரிப்ட் தெளிவுத்திறனுக்கு அமை (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>தளவமைப்புத் தெளிவுத்திறன் பொருந்தாமை</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>வீடியோவின் தெளிவுத்திறன் %1, வசன வரிகளின் தளவமைப்புத் தெளிவுத்திறன் %2.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>அவற்றின் தோற்ற விகிதங்கள் வேறுபடுகின்றன. தளவமைப்புத் தெளிவுத்திறனை வீடியோவினுடையதற்கு அமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>இது பொதுவாகச் சிக்கலில்லை. வசன வரிகளில் இன்னும் குறிப்பிடத்தக்க வடிவமைப்பு இல்லை, அவற்றை இந்த வீடியோவில் வடிவமைக்கப் போகிறீர்கள் என்றால், தளவமைப்புத் தெளிவுத்திறனை வீடியோவினுடையதற்கு அமைக்கவும்.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7727,10 +8007,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens Script properties</source>
         <translation>ஸ்கிரிப்ட் பண்புகளைத் திறக்கிறது</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>ஒரு வடிவத்திலிருந்து இன்னொரு வடிவத்திற்கு மாற்றுகிறது</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -8338,6 +8614,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>சிறு பிழைகளைச் சரிசெய் அம்சம் அகற்றப்பட்டது. உங்கள் விதிகள் %1 இல் பயன்படுத்தப்படாமல் அப்படியே உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>தேர்ந்த புள்ளி தன் வண்ணத்தைத் தக்கவைக்கும், வீடியோ சட்டகத்தைச் சுற்றியுள்ள சட்டகங்களுக்கு செயலில் உள்ள வரியின் நேரத்தை அமைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>வீடியோவுடன் சீரமை</translation>
     </message>
 </context>
 <context>
@@ -9165,6 +9453,18 @@ Failed to copy %2 fonts.</source>
         <translation>தொடக்கப் பெரிதாக்கம்</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>காட்சிக் கருவிகள்</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>கைப்பிடி அளவு</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>காட்சிக் கருவிகளின் கைப்பிடிகளின் அளவு. 50 முதல் 400 வரை</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>ச்கிரிப்ட் தெளிவுத்திறன்</translation>
     </message>
@@ -9175,6 +9475,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>தெளிவுத்திறன் பொருந்தாமை பற்றி எச்சரிக்காதே</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>வசன வரிகளில் YCbCr மேட்ரிக்ச் இல்லை</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>அமைக்காமல் விடு</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>கேள்</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>வீடியோவினுடையதற்கு அமை</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>வீடியோவிலிருந்து வேறுபட்ட YCbCr மேட்ரிக்ச்</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>வசன வரிகளுடையதை வை</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>வசன வரிகளில் தளவமைப்புத் தெளிவுத்திறன் இல்லை</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>ச்கிரிப்ட் தெளிவுத்திறனுக்கு அமை</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>வீடியோவிலிருந்து வேறுபட்ட தளவமைப்புத் தெளிவுத்திறன்</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>ஒருபோதும் கேட்காதே</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>தோற்ற விகிதம் வேறுபடும்போது கேள்</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>எப்போதும் கேள்</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>வீடியோ திறக்கும்போது சரிபார்க்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>வீடியோவில் வண்ண மேட்ரிக்ச் குறிச்சொல் இல்லையென்றால் எச்சரி</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>வீடியோவில் HDR அல்லது பரந்த வண்ண வரம்பு வண்ணங்கள் இருந்தால் எச்சரி</translation>
     </message>
     <message>
         <source>Output</source>
@@ -9199,6 +9559,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>வரியை மாற்றிய பின் இயக்காதே</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>மோனோவில் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>ஆடியோ பலகம் மற்றும் திருத்தும்போது இயக்குவதற்கான சேனல்களைக் கலக்கிறது. பொது வீடியோ இயக்கம் கோப்பின் சேனல்களை அப்படியே வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -9539,6 +9907,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
         <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: செருகுநிரலின் ஒவ்வொரு கோரிக்கையும் மறுக்கப்படும்.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -10221,8 +10597,16 @@ Failed to copy %2 fonts.</source>
         <translation>வழங்குநர்களுக்கு என்ன அனுப்பப்படுகிறது</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அணுகுகிறது.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
+        <translation type="vanished">கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -10524,6 +10908,22 @@ Failed to copy %2 fonts.</source>
         <translation>அனுமதிகள்</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>நினைவில் வைத்த கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>மற</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>அடுத்த முறை இந்தக் கோப்புறை தேவைப்படும்போது %1 மீண்டும் கேட்கும்</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>இது சேர்ப்பவை</translation>
     </message>
@@ -10660,6 +11060,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>படிக்கவும் எழுதவும் %1 ஒரு கோப்புறையைக் கேட்கிறது: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>படிக்க %1 ஒரு கோப்புறையைக் கேட்கிறது: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1-க்கு இந்தக் கோப்புறையை நினைவில் வை</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>கோப்புறையைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: கோப்பைச் சேமி</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: கோப்பைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
 </context>
 <context>
@@ -11967,6 +12395,10 @@ because it was edited.</source>
         <translation>கீஃப்ரேம்கள்</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>நேரக்குறியீடுகள்</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>இந்தத் தாவலின் வசன வரிகளான %1 கிடைக்கவில்லை.</translation>
     </message>
@@ -11981,6 +12413,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>இந்தத் தாவலின் கீஃப்ரேம்களான %1 கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>இந்தத் தாவலின் நேரக்குறியீட்டுக் கோப்பான %1 கிடைக்கவில்லை.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -12001,6 +12437,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>கீஃப்ரேம் கோப்பு (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -12876,6 +13316,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>நொடிக்குச் சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>வினாடிக்குச் சட்டகங்கள், நேரக்குறியீட்டுக் கோப்பு %1-இன் சராசரி</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -15919,6 +16363,14 @@ Styles deleted:
         <translation>கீஃப்ரேம் கோப்பைத் தேர்ந்தெடு</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பைச் சேமி</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
@@ -16006,6 +16458,14 @@ Styles deleted:
     <message>
         <source>Copy with subtitles</source>
         <translation>வசன வரிகளுடன் நகலெடு</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>வசன வரிகளை மட்டும் PNG ஆகச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>வசன வரிகளை மட்டும் நகலெடு</translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -16260,6 +16720,70 @@ or codecs or a splitter may be missing</source>
         <translation>சட்டகம் %1 / %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>எதுவுமில்லை</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>PC வரம்பு</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>TV வரம்பு</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>போலி வீடியோ</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>மாறுபடும்</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n சட்டகம் (%1)</numerusform>
+            <numerusform>%n சட்டகங்கள் (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>தெரியவில்லை</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1-பிட்</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>சாம்பல் அளவு, %1-பிட்</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1-பிட்</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2-பிட்</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (குறிக்கப்படவில்லை; அளவைக் கொண்டு ஊகிக்கப்பட்டது)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>தோற்ற விகிதம்: %1</translation>
     </message>
@@ -16293,6 +16817,189 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>திற</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>வீடியோவுடன் சீரமை</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>முதலில் சீரமைக்க ஒரு வரியைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>வீடியோவின் ஒரு சட்டகத்தைப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>வசன வரிகள் படிக்க மட்டுமே.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>வரி தெரிய வேண்டிய வரை தன் வண்ணத்தைத் தக்கவைக்கும் ஒரு புள்ளியைக் கிளிக் செய்யவும். இந்தச் சட்டகத்தைச் சுற்றி அது அப்படியே இருக்கும் ஒவ்வொரு சட்டகத்துக்கும் வரியின் நேரம் அமைக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>வீடியோ சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>அம்பு விசைகள் புள்ளியை நகர்த்தும்; Enter சீரமைக்கும்</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>புள்ளி X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>புள்ளி Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>வண்ணம் %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>சகிப்பளவு</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>ஒரு வண்ணம் எவ்வளவு மாறினாலும் அதே வண்ணமாகக் கருதப்படும் அளவு, 0 முதல் 255 வரை</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>தேடுகிறது… %n சட்டகம் சரிபார்க்கப்பட்டது</numerusform>
+            <numerusform>தேடுகிறது… %n சட்டகங்கள் சரிபார்க்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>சீரமை</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பைத் திற</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>அறியப்படாத நேரக்குறியீட்டு வடிவம்</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>தவறான நேரக்குறியீட்டு வரி</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>குறைந்தது இரண்டு நேரக்குறியீடுகள் தேவை</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு 10000000 உள்ளீடுகள் வரம்பை மீறுகிறது</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>நேரக்குறியீடுகள் வரிசையில் இல்லை</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>எல்லா நேரக்குறியீடுகளும் ஒன்றாகவே உள்ளன</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>எதிர்மறைச் சட்டகங்களுக்குச் சட்டக வீதத்தைக் குறிப்பிட முடியாது</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>முடிவுச் சட்டகம் தொடக்கச் சட்டகத்துக்குச் சமமாகவோ அதைவிடப் பெரியதாகவோ இருக்க வேண்டும்</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>V1 நேரக்குறியீட்டு வரம்பு 10000000 சட்டக வரம்பை மீறுகிறது</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS பூஜ்ஜியத்தை விட அதிகமாக இருக்க வேண்டும்</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS 1000-ஐ விட அதிகமாக இருக்கக் கூடாது</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>மேலெழுது வரம்புகள் ஒன்றின் மேல் ஒன்று வரக் கூடாது</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>நேரக்குறியீடு ஆதரிக்கப்படும் நேர வரம்பை மீறுகிறது</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பைப் பகுக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு %1-ஐத் திறக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு காணொளிக்கு முன்பே முடிகிறது (%2-இல் சட்டகம் %1). அடுத்த சட்டகங்கள் அதன் சராசரிச் சட்டக வீதத்தில் தொடர்கின்றன.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>சேமிக்கச் சட்டக நேரங்கள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு %1-ஐச் சேமிக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>வீடியோ விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>கோப்பு</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>தெளிவுத்திறன்</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>நீளம்</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>வண்ண வெளி</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>வண்ண மேட்ரிக்ச்</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>வசனங்களுக்குப் பயன்படுவது</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
     </message>
 </context>
 <context>

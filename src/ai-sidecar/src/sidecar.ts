@@ -3,11 +3,10 @@ import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallPara
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
     type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
+import { LinkRelay } from "./providers/relay";
 import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
 import type { UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
-import { SignInService, type SignInOptions } from "./signin/service";
-import { SignInError } from "./signin/types";
 import type { OperationName, Operations } from "./tools/api.gen";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
 
@@ -28,7 +27,7 @@ export class HikariApi implements HikariCalls {
     }
 }
 
-/** A provider's or sign-in's failure as its JSON-RPC error. */
+/** A provider's failure as its JSON-RPC error. */
 async function wire<T>(work: () => T | Promise<T>): Promise<T> {
     try {
         return await work();
@@ -37,8 +36,6 @@ async function wire<T>(work: () => T | Promise<T>): Promise<T> {
             throw new RpcError(ErrorCode.invalidParams, error.message);
         if (error instanceof ProviderError)
             throw new RpcError(ErrorCode.providerFailed, error.detail || error.kind, error.data);
-        if (error instanceof SignInError)
-            throw new RpcError(ErrorCode.signInFailed, error.detail || error.kind, error.data);
         throw error;
     }
 }
@@ -47,18 +44,13 @@ export class Sidecar {
     readonly api: HikariApi;
     readonly providers: ProviderService;
     readonly tools: ToolSet;
-    readonly signIn: SignInService;
     readonly mcp: McpServer;
     private initialized = false;
 
-    constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}, signIn: SignInOptions = {}) {
+    constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions) {
         this.api = new HikariApi(peer);
-        this.providers = new ProviderService(providers);
+        this.providers = new ProviderService(providers ?? { relay: new LinkRelay(peer) });
         this.tools = new ToolSet(this.api);
-        this.signIn = new SignInService({
-            progress: (params) => peer.notify(Method.signinProgress, params),
-            store: (name, value) => peer.request(Method.secretStore, { name, value }),
-        }, signIn);
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
             { name: "hikarisub", title: "HikariSub", version: build.buildId });
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
@@ -78,8 +70,6 @@ export class Sidecar {
                 throw new RpcError(ErrorCode.invalidParams, "_hikari/tools.call needs a tool name");
             return this.tools.call(p.name, p.arguments);
         });
-        this.handle(Method.signinStart, (params, signal) => wire(() => this.signIn.start(params, signal)));
-        this.handle(Method.signinRefresh, (params, signal) => wire(() => this.signIn.refresh(params, signal)));
         this.handle(Method.mcpMessage, (params): Promise<McpMessageResult> => {
             const p = (params ?? {}) as Partial<McpMessageParams>;
             if (typeof p.connection !== "string" || typeof p.text !== "string")

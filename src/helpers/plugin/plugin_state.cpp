@@ -403,13 +403,28 @@ int call(lua_State *L)
     return pushCallResult(L, Access::host(L).call(operation, *params));
 }
 
-int uiCall(lua_State *L)
+int request(lua_State *L, Area area)
 {
     const std::string operation = luaL_checkstring(L, 1);
     auto params = toJson(L, 2, 0);
     if (!params)
         raise(L, params.error());
-    return pushCallResult(L, Access::host(L).ui(operation, *params));
+    return pushCallResult(L, Access::host(L).request(area, operation, *params));
+}
+
+int uiCall(lua_State *L)
+{
+    return request(L, Area::Ui);
+}
+
+int filesCall(lua_State *L)
+{
+    return request(L, Area::Files);
+}
+
+int netCall(lua_State *L)
+{
+    return request(L, Area::Net);
 }
 
 void addHandler(lua_State *L, const std::string &name, int function)
@@ -715,6 +730,7 @@ std::expected<void, std::string> PluginState::runPrelude()
     const std::pair<std::string_view, std::array<lua_CFunction, 2>> preludes[] = {
         {documentPrelude(), {lock, unlock}},
         {uiPrelude(), {uiCall, listen}},
+        {filesPrelude(), {filesCall, netCall}},
     };
     for (const auto &[source, functions] : preludes) {
         if (luaL_loadbufferx(L, source.data(), source.size(), "=hikari", "t") != 0) {

@@ -121,9 +121,12 @@ def video_film(right=8, bottom=8.5, divider=10):
             + stroke("M4.5 2.5V10M8.5 2.5V%s" % q(divider)) + stroke("M1.5 5h3M1.5 7.5h3M11.5 5h-3M11.5 7.5h-3"))
 
 
-def note(x=6.5):
-    """An eighth note whose stem stands at x."""
-    return stroke("M%s 11.5V2.5l4 1.5" % q(x)) + dot(x - 2, 11.5, 2)
+def note(x=6.5, y=11.5, top=2.5, flag=(4, 1.5)):
+    """An eighth note: a tilted oval head left of the stem at x, around height y, the stem up to top."""
+    head = "M%s %sC%s %s %s %s %s %sC%s %s %s %s %s %sC%s %s %s %s %s %sC%s %s %s %s %s %sz" % tuple(q(v) for v in (
+        x + .25, y - .75, x + .25, y + .5, x - 1.25, y + 2, x - 2.75, y + 2, x - 3.5, y + 2, x - 4, y + 1.5, x - 4, y + 1,
+        x - 4, y - .25, x - 2.5, y - 1.75, x - 1, y - 1.75, x - .25, y - 1.75, x + .25, y - 1.25, x + .25, y - .75))
+    return stroke("M%s %sV%sl%s %s" % (q(x), q(y - .75), q(top), q(flag[0]), q(flag[1]))) + fill(head)
 
 
 def magnifier(cx=6.5, cy=6.5, r=4.5, handle=4.5):
@@ -147,6 +150,12 @@ def clock_badge():
     return accent(circle(12, 12, 3), stroke("M12 10.5V12l1 1"))
 
 
+def timecodes_ruler():
+    """A time ruler whose uneven ticks stand for variable frame times, open at its lower right for a badge."""
+    return (stroke("M8.5 10.5h-6a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1V8")
+            + stroke("M3.5 3.5v3.5M8.5 3.5v3.5") + stroke("M5.5 3.5v2M10.5 3.5v2M12.5 3.5v2"))
+
+
 def waveform(x=1.5, top=4.5, bottom=11.5):
     mid = (top + bottom) / 2
     heights = [1, 3, 2, 3.5, 1.5, 2.5, 1]
@@ -154,6 +163,11 @@ def waveform(x=1.5, top=4.5, bottom=11.5):
     for i, hgt in enumerate(heights):
         d.append("M%s %sv%s" % (q(x + i * 2), q(mid - hgt), q(2 * hgt)))
     return stroke("".join(d))
+
+
+RELOAD_CW = stroke("M13.5 8a5.5 5.5 0 1 1-5.5-5.5") + solid("M8 1l2.5 1.5L8 4z")
+RELOAD_CCW = stroke("M2.5 8a5.5 5.5 0 1 0 5.5-5.5") + solid("M8 1L5.5 2.5 8 4z")
+RELOAD_BADGE = accent(stroke("M14.25 12.75a2.25 2.25 0 1 1-2.25-2.25"), solid("M12 9.5l1.75 1L12 11.5z"))
 
 
 def triangle(x, y, w, h, right=True):
@@ -256,7 +270,7 @@ icon("undo-to-last-save", "Undo to last save", ["UndoToLastSave.png"], [EDIT],
      stroke("M7.5 4.5l-3 3 3 3") + stroke("M4.5 7.5h5.5a3 3 0 0 1 0 6h-2") + accent(stroke("M1.5 2.5v10")),
      mirror=True)
 icon("history", "History", ["History.png"], [EDIT, "history-panel"],
-     stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + stroke("M8 5v3.5l2.5 1.5"))
+     RELOAD_CCW + stroke("M8 5.5v3l2.5 1.5"))
 icon("find-replace", "Find and replace", ["FindReplace.png"], [EDIT, "search-tool"],
      magnifier(6, 6, 4, 2) + accent(stroke("M8.5 12.5h6M12.5 10.5l2 2-2 2")), mirror=True)
 icon("search", "Find", ["Search.png"], [EDIT, "search-tool"], magnifier(6.5, 6.5, 4.5, 4))
@@ -278,6 +292,10 @@ icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "vid
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO], diamond(6, 6.5, 4.5) + plus_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
+icon("open-timecodes", "Open timecodes", [], [VIDEO], timecodes_ruler() + plus_badge())
+icon("recent-timecodes", "Recently opened timecodes", [], [VIDEO], timecodes_ruler() + clock_badge())
+icon("save-timecodes", "Save timecodes", [], [VIDEO], timecodes_ruler() + accent(stroke("M12 9.5v4.5M10 12l2 2 2-2")))
+icon("close-timecodes", "Close timecodes", [], [VIDEO], timecodes_ruler() + cross_badge())
 icon("set-start-time", "Insert start time from video", ["SetStartTime.png"], [VIDEO],
      time_insert(start=True))
 icon("set-end-time", "Insert end time from video", ["SetEndTime.png"], [VIDEO],
@@ -322,7 +340,7 @@ icon("show-toolbar", "Full screen bar", [], [FULLSCREEN],
 icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO], note(6.5) + plus_badge())
 icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note(6.5) + clock_badge())
 icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [AUDIO],
-     video_film() + accent(stroke("M13.5 12.5v-8l1.5 .5"), dot(11.5, 12.5, 2)))
+     video_film() + accent(note(13.5, 12.5, 4.5, (1.5, .5))))
 icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(6.5) + cross_badge())
 
 icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX],
@@ -421,14 +439,8 @@ icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-t
                                                 "tab-menu"],
      stroke("M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z")
      + accent(dot(4.75, 7.5, 1), dot(6.75, 4.5, 1), dot(10, 4.5, 1)))
-CONVERT = stroke("M2.5 3.5h9M9.5 1.5l2 2-2 2")
-icon("convert", "Convert", ["Convert.png"], [SUBS],
+icon("convert", "Convert", ["Convert.png"], ["settings-dialog"],
      stroke("M2.5 5.5h10M10 3l2.5 2.5L10 8") + stroke("M13.5 10.5h-10M6 8l-2.5 2.5L6 13"))
-icon("convert-ass", "Convert to ASS", ["Convass.png"], [SUBS], CONVERT + accent(letters("ASS", 2, 9)))
-icon("convert-srt", "Convert to SRT", ["ConvSRT.png"], [SUBS], CONVERT + accent(letters("SRT", 2, 9)))
-icon("convert-mdvd", "Convert to MDVD", ["ConvMDVD.png"], [SUBS], CONVERT + accent(letters("MDVD", 0, 9)))
-icon("convert-mpl2", "Convert to MPL2", ["ConvMPL2.png"], [SUBS], CONVERT + accent(letters("MPL2", 0, 9)))
-icon("convert-tmp", "Convert to TMP", ["Convtmp.png"], [SUBS], CONVERT + accent(letters("TMP", 2, 9)))
 icon("shift-times", "Shift times", ["Time.png"], [TIMING, SUBS, VIDEO],
      circle(6.5, 6.5, 5) + stroke("M6.5 4v2.5l2 1.5") + accent(stroke("M9.5 12.5h5M12.5 10.5l2 2-2 2")))
 icon("resample", "Resample subtitles", ["subsResample.png"], [SUBS, VISUAL, "resample"],
@@ -452,7 +464,7 @@ icon("report-issue", "Report an issue", ["Nazi.png"], [HELP],
      stroke("M5.5 6.5a2.5 2.5 0 0 1 5 0v4a2.5 2.5 0 0 1-5 0z") + stroke("M6.5 4.5l-1-2M9.5 4.5l1-2")
      + stroke("M2.5 7.5h3M10.5 7.5h3M2.5 11h3M10.5 11h3") + accent(stroke("M8 6.5v6")))
 icon("check-updates", "Check for updates", ["About.png"], [HELP],
-     stroke("M13.5 8a5.5 5.5 0 1 1-1.75-4") + stroke("M13.5 1.5v3h-3") + accent(stroke("M8 5v5.5M6 8.5l2 2 2-2")))
+     RELOAD_CW + accent(stroke("M8 5.5v5M6 8.5l2 2 2-2")))
 icon("about", "About", ["About.png"], [HELP, "about", "translation-matching"],
      circle(8, 8, 6.5) + stroke("M8 7.5v4") + dot(8, 5, 0.75))
 icon("credits", "Credits", ["Helpers.png"], [HELP, "credits"],
@@ -485,9 +497,11 @@ icon("layout", "Layout", [], [VIEW, "status-bar"],
 icon("layout-save", "Save layout as", [], [VIEW, "status-bar", "save-layout"],
      LAYOUT_CUT + accent(stroke("M12.5 9.5v5M10 12h5")))
 icon("layout-reset", "Reset this layout", [], [VIEW, "status-bar"],
-     LAYOUT_CUT + accent(stroke("M14.5 12a2.5 2.5 0 1 1-.75-1.75"), stroke("M14 9v1.5h-1.5")))
+     LAYOUT_CUT + RELOAD_BADGE)
 icon("layout-manage", "Manage layouts", [], [VIEW, "status-bar", "manage-layouts"],
      LAYOUT_CUT + accent(stroke("M10 10.5h4.5M10 12.5h4.5M10 14.5h4.5")))
+icon("layout-lock", "Lock layout", [], [VIEW, "status-bar", "dock-headers"],
+     rect(3.5, 7.5, 9, 7) + stroke("M5.5 7.5V5a2.5 2.5 0 0 1 5 0v2.5") + accent(stroke("M8 10.5v1.5")))
 
 icon("window-minimize", "Minimise", [], ["title-bar"], stroke("M3.5 8.5h9"))
 icon("window-maximize", "Maximise", [], ["title-bar"], rect(3.5, 3.5, 9, 9, 0.5))
@@ -504,7 +518,7 @@ icon("tool-move", "Text moving", ["Move.png"], [VISUAL],
 icon("tool-scale", "Text scaling", ["Scale.png"], [VISUAL],
      rect(1.5, 8.5, 6, 6, 1) + stroke("M7.5 8.5l6-6M10 2.5h3.5V6") + accent(stroke("M1.5 5.5v-3a1 1 0 0 1 1-1h3M14.5 10.5v3a1 1 0 0 1-1 1h-3")))
 icon("tool-rotate-z", "Text Z rotation", ["FRZ.png"], [VISUAL],
-     stroke("M13.5 8a5.5 5.5 0 1 1-1.75-4") + stroke("M13.5 1.5v3h-3") + accent(dot(8, 8, 1.5)))
+     RELOAD_CW + accent(dot(8, 8, 1.5)))
 icon("tool-rotate-xy", "Text X / Y rotation", ["FRXY.png"], [VISUAL],
      stroke("M8 1.5v13") + stroke("M11 4.5c2.25.5 3.5 1.5 3.5 2.5 0 1.75-3 3-6.5 3S1.5 8.75 1.5 7c0-1.25 1.75-2.25 4.25-2.75")
      + accent(stroke("M4.25 3l1.5 1.25L4.5 5.75")))
@@ -641,8 +655,8 @@ icon("import", "Load", [], [LISTS, "settings-dialog"],
 icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU, AUTOPANEL],
      stroke("M9 2l5 5-6.5 6.5-5-5z") + accent(stroke("M5.5 5.5l5 5")) + stroke("M7.5 13.5h6"))
 icon("refresh", "Refresh", [], ["font-catalog", AUTOPANEL],
-     stroke("M2.5 8a5.5 5.5 0 0 1 9.75-3.5") + stroke("M12.5 1.5v3h-3")
-     + stroke("M13.5 8a5.5 5.5 0 0 1-9.75 3.5") + stroke("M3.5 14.5v-3h3"))
+     stroke("M2.5 8a5.5 5.5 0 0 1 9.25-3.75") + solid("M12.75 3.25L13 5.5l-2.25-.25z")
+     + stroke("M13.5 8a5.5 5.5 0 0 1-9.25 3.75") + solid("M3.25 12.75L3 10.5l2.25.25z"))
 icon("filter", "Filter", [], [GRIDMENU, "font-catalog"], stroke("M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"))
 icon("edit-copy", "Copy", [], [GRIDMENU, TEXTMENU],
      stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2") + rect(2.5, 4.5, 8, 10, 1))
@@ -656,7 +670,7 @@ icon("folder-open", "Choose a folder", [], [SEARCH, "font-collector", "settings-
      stroke("M1.5 13.5v-10a1 1 0 0 1 1-1h3l1.5 1.5h5a1 1 0 0 1 1 1v1.5") + stroke("M1.5 13.5l2.25-7h10.75l-2.25 7z"))
 icon("find-in-files", "Find in subtitles", [], [SEARCH], FOLDER_CUT + accent(circle(11.5, 11.5, 2),
                                                                              stroke("M13 13l1.5 1.5")))
-icon("show-in-folder", "Open the containing folder", [], [TABMENU],
+icon("show-in-folder", "Open the containing folder", [], [TABMENU, FILE, "settings-dialog", "plugin-manager"],
      FOLDER_CUT + accent(stroke("M10 14.5l4.5-4.5M11.5 10h3v3")))
 icon("compare", "Subtitle comparison", [], [TABMENU, "dock-headers"],
      rect(1.5, 2.5, 6, 11, 1) + rect(8.5, 2.5, 6, 11, 1) + stroke("M3.5 5.5h2M3.5 8h2M3.5 10.5h2M10.5 5.5h2M10.5 8h2")
@@ -733,7 +747,6 @@ COPY_BACK = stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2
 PASTE_BOARD = (stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-10a1 1 0 0 0-1-1h-2")
                + rect(5.5, 1.5, 5, 2, 0.5))
 FPS_FILM = film(1.5, 1.5, 13, 6, 3)
-REFRESH_BADGE = accent(stroke("M14.5 12a2.5 2.5 0 1 1-.75-1.75"), stroke("M14 9v1.5h-1.5"))
 SWAP = accent(stroke("M10.5 12.5v-9M9.5 4.5l1-1 1 1M13.5 3.5v9M12.5 11.5l1 1 1-1"))
 
 icon("autosave", "Open auto save", [], [FILE], floppy(True) + clock_badge())
@@ -746,7 +759,7 @@ icon("session-save", "Save session to file", [], [FILE],
      floppy(True) + accent(stroke("M11.5 9.5h3v3"), rect(9.5, 11, 3.5, 3.5, 0.5)))
 
 icon("rerun-macro", "Rerun last macro", [], [AUTO],
-     SCRIPT_CUT + REFRESH_BADGE)
+     SCRIPT_CUT + RELOAD_BADGE)
 icon("repeat-run", "Repeat last run", [], [AUTO, AUTOPANEL],
      SCRIPT_CUT + accent(stroke("M9.5 11.5v-.5A1.5 1.5 0 0 1 11 9.5h3.5"), stroke("M13.5 8.5l1 1-1 1"),
                          stroke("M14.5 12.5v.5A1.5 1.5 0 0 1 13 14.5H9.5"), stroke("M10.5 13.5l-1 1 1 1")))
@@ -769,6 +782,8 @@ icon("video-streams", "Streams", [], [VIDEO, VIDEOMENU],
      stroke("M1.5 3.5h6M1.5 7h6M1.5 10.5h3") + accent(note(10.5)))
 icon("chapters", "Chapters", [], [VIDEO, VIDEOMENU],
      stroke("M1.5 13.5h13M3.5 13.5v-2M12.5 13.5v-2") + accent(stroke("M6.5 13.5v-10h5l-1.5 2 1.5 2h-5")))
+icon("video-details", "Video details", [], ["menu:video"],
+     video_film() + accent(circle(12, 12, 3), stroke("M12 11.5v2"), dot(12, 10.25, 0.5)))
 icon("copy-position", "Copy video position", [], [VIDEOMENU],
      COPY_BACK + rect(2.5, 4.5, 8, 10, 1)
      + accent(circle(6.5, 9.5, 1.5), stroke("M6.5 6.5v1.5M6.5 11v1.5M3.5 9.5H5M8 9.5h1.5")))
@@ -808,11 +823,11 @@ icon("tab-switch", "Switch to", [], [TABMENU],
      stroke("M1.5 13.5h13M2.5 13.5v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4M8.5 13.5v-4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4")
      + accent(stroke("M3.5 4h9M5 2.5L3.5 4 5 5.5M11 2.5L12.5 4 11 5.5")))
 icon("tab-close-others", "Close other tabs", [], [TABMENU],
-     stroke("M1.5 13.5h13M2.5 13.5v-7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7")
-     + accent(stroke("M9.5 5.5l4 4M13.5 5.5l-4 4")))
+     stroke("M1.5 13.5h13M6.5 13.5v-5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v5")
+     + accent(stroke("M1.5 8l3 3M4.5 8l-3 3M11.5 8l3 3M14.5 8l-3 3")))
 icon("tab-close-right", "Close tabs to the right", [], [TABMENU],
      stroke("M1.5 13.5h13M2.5 13.5v-7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v7")
-     + accent(stroke("M9.5 2.5h4M12 1l1.5 1.5L12 4M10 6.5l3 3M13 6.5l-3 3")), mirror=True)
+     + accent(stroke("M9.5 6.5l4 4M13.5 6.5l-4 4")), mirror=True)
 icon("fonts-from-subtitles", "Add fonts from subtitles", [], ["font-catalog"], page(True) + accent(letters("F", 11, 10)))
 
 icon("dictionary", "Primary language", [], ["kanji-timer", "settings-dialog"],
@@ -822,6 +837,9 @@ icon("dictionary-add", "Add word to dictionary", [], [TEXTMENU],
      + stroke("M6.5 4.5h3.5M6.5 6.5h2") + plus_badge())
 
 icon("make-tree", "Make tree", [], [GRIDMENU], TREE_ROWS + accent(TREE_LINKS), mirror=True)
+icon("convert-folds", "Convert Aegisub folds to line groups", [], ["grid-menu"],
+     stroke("M3.5 2.5h-2v11h2") + stroke("M5.5 3.5h9M9.5 8.5h5M9.5 12.5h5")
+     + accent(stroke("M6.5 5.5v7h2M6.5 8.5h2")), mirror=True)
 icon("tree-add-lines", "Add lines", [], [GRIDMENU],
      stroke("M1.5 3.5h8M7 8h7.5M7 12.5h1") + TREE_LINKS + plus_badge(), mirror=True)
 icon("tree-select", "Select tree lines", [], [GRIDMENU],
@@ -847,6 +865,9 @@ icon("split-at-video", "Split line at video time", [], [GRIDMENU],
 icon("split-frames", "Split lines into frames", [], [GRIDMENU, VIDEO],
      stroke("M1.5 2.5h13M1.5 13.5h13") + rect(1.5, 4.5, 3, 7, 1) + rect(6.5, 4.5, 3, 7, 1) + rect(11.5, 4.5, 3, 7, 1)
      + accent(stroke("M5.5 2.5v11M10.5 2.5v11")))
+icon("align-to-video", "Align to video", [], ["menu:video"],
+     rect(1.5, 1.5, 13, 9, 1) + stroke("M3.5 13.5h9M3.5 12.5v2M12.5 12.5v2")
+     + accent(circle(8, 6, 2), stroke("M8 3v1M8 8v1M5 6h1M10 6h1")))
 icon("split-characters", "Split lines into characters", [], [GRIDMENU],
      letters("A", 2, 5) + letters("S", 10, 5) + accent(stroke("M7.5 2.5v11")))
 icon("split-words", "Split lines into words", [], [GRIDMENU],
@@ -900,7 +921,7 @@ icon("ui-colours", "UI colors", [], ["settings-dialog"],
      rect(1.5, 2.5, 4, 4, 0.5) + rect(1.5, 9.5, 4, 4, 0.5) + stroke("M8 4.5h6.5M8 11.5h6.5")
      + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
 icon("restore-default", "Restore default", [], ["kanji-timer", "settings-dialog"],
-     stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
+     RELOAD_CCW + accent(dot(8, 8, 1.5)), mirror=True)
 icon("settings-grid", "Subtitle grid", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13M5.5 2.5v11") + accent(stroke("M7.5 8.25h5M7.5 10.75h3")),
      mirror=True)
@@ -937,6 +958,16 @@ icon("frame-snapshot-subtitles", "Save frame with subtitles as PNG", [], [VIDEOM
 icon("frame-copy", "Copy frame to clipboard", [], [VIDEOMENU], COPY_BACK + COPY_FRONT + accent(circle(6.5, 9.5, 2)))
 icon("frame-copy-subtitles", "Copy frame with subtitles to clipboard", [], [VIDEOMENU],
      COPY_BACK + COPY_FRONT + circle(6.5, 7.5, 1.5) + accent(stroke("M4.5 10.5h4M5.5 12.5h2")))
+icon("subtitles-snapshot", "Save subtitles as PNG", [], ["video-context-menu"],
+     stroke("M1.5 5.5v-1a1 1 0 0 1 1-1h1.5M12 3.5h1.5a1 1 0 0 1 1 1v1M14.5 11.5v1a1 1 0 0 1-1 1H12M4 13.5H2.5a1 1 0 0 1-1-1v-1")
+     + accent(stroke("M4.5 7.5h7M6 9.5h4")))
+icon("subtitles-copy", "Copy subtitles to clipboard", [], ["video-context-menu"],
+     stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2")
+     + stroke("M2.5 6.5v-1a1 1 0 0 1 1-1h1M8.5 4.5h1a1 1 0 0 1 1 1v1M10.5 12.5v1a1 1 0 0 1-1 1h-1M4.5 14.5h-1a1 1 0 0 1-1-1v-1")
+     + accent(stroke("M4.5 9.5h4M5.5 11.5h2")))
+icon("reload-video", "Reload video", [], ["menu:video"],
+     video_film() + RELOAD_BADGE)
+icon("reload-audio", "Reload audio", [], ["menu:audio"], note(6.5) + RELOAD_BADGE)
 icon("screenshot", "Add the screenshot", [], ["report-issue"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13")
      + accent(stroke("M4.5 9V7.5H6M11.5 9V7.5H10M4.5 10v1.5H6M11.5 10v1.5H10")))
@@ -957,7 +988,7 @@ icon("dialog-memory", "Last answers", [], ["settings-dialog", "automation-dialog
      stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v5") + stroke("M1.5 5h13M4 8.5h4")
      + clock_badge(), mirror=True)
 icon("restart", "Restart now", [], ["updates"],
-     stroke("M13.5 8a5.5 5.5 0 1 1-1.75-4") + stroke("M13.5 1.5v3h-3") + accent(solid("M6.5 5.5v5l4-2.5z")))
+     RELOAD_CW + accent(solid("M6.5 5.5v5l4-2.5z")))
 icon("skip-version", "Skip this version", [], ["updates", "settings-dialog"],
      rect(5.5, 10.5, 5, 4, 1) + accent(stroke("M2.5 10a5.5 5.5 0 0 1 11 0M11.5 8l2 2 2-2")))
 icon("tab-name-length", "Tab name length", [], ["settings-dialog"],
@@ -1007,7 +1038,83 @@ icon("ai-send", "Send", [], ["agent-panel"],
 icon("review-keep", "Keep", [], ["agent-panel", "grid", EDITOR],
      stroke("M1.5 4.5h9M1.5 8h6") + accent(stroke("M8.5 12l2 2 4-4.5")), mirror=True)
 icon("checkpoint", "Checkpoint", [], ["agent-panel"],
-     stroke("M1.5 8h3.5M11 8h3.5") + accent(diamond(8, 8, 3)))
+     stroke("M1.5 8h4M10.5 8h4") + accent(circle(8, 8, 2.5)))
+
+UP_BADGE = accent(stroke("M12 14.5v-5M10 11.5l2-2 2 2"))
+TABBED_WINDOW = (stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6") + stroke("M1.5 4.5h13")
+                 + stroke("M3.5 4.5v-1h4v1"))
+SHIELD = stroke("M8 1.5l5.5 2v4.5c0 3.5-2.5 5.5-5.5 6.5-3-1-5.5-3-5.5-6.5V3.5z")
+
+icon("copy-path", "Copy path", [], [TABMENU, "home"],
+     COPY_BACK + COPY_FRONT + accent(stroke("M4.5 12.5l1.5-5M7 12.5l1.5-5")))
+icon("timing-postprocessor", "Timing postprocessor", [], [SUBS],
+     rect(5.5, 5.5, 5, 5, 1) + accent(stroke("M4 8H1.5M3 6.5L1.5 8 3 9.5M12 8h2.5M13 6.5l1.5 1.5L13 9.5")))
+icon("shift-start-to-video", "Start at video", [], [VIDEO],
+     rect(3.5, 7.5, 9, 5, 1) + stroke("M13.5 4.5h-7M8 3L6.5 4.5 8 6")
+     + accent(solid("M2 1.5h3L3.5 3z"), stroke("M3.5 3v11")))
+icon("shift-end-to-video", "End at video", [], [VIDEO],
+     rect(3.5, 7.5, 9, 5, 1) + stroke("M2.5 4.5h7M8 3l1.5 1.5L8 6")
+     + accent(solid("M11 1.5h3L12.5 3z"), stroke("M12.5 3v11")))
+icon("center-times", "Centre times within frames", [], [VIDEO],
+     stroke("M1.5 3.5v9M13.5 3.5v9") + stroke("M3 8h3M4.5 6.5L6 8 4.5 9.5M12 8H9M10.5 6.5L9 8l1.5 1.5")
+     + accent(stroke("M7.5 2.5v11")))
+icon("plugin-update", "Update plugin", [], ["plugin-manager"], PUZZLE_CUT + UP_BADGE)
+icon("plugin-turn-on", "Turn on", [], ["plugin-panel"], PUZZLE_CUT + accent(solid("M10 9.5v5l4.5-2.5z")))
+icon("test-connection", "Test connection", [], ["settings-dialog"], stroke("M1.5 8.5h3l1.5-4 3 7 1.5-3h4"))
+
+icon("open-project", "Open folder", [], [FILE, "home"], FOLDER_CUT + plus_badge())
+icon("recent-projects", "Recent projects", [], [FILE, "home"], FOLDER_CUT + clock_badge())
+icon("close-project", "Close project", [], [FILE], FOLDER_CUT + cross_badge())
+icon("project", "Project", [], ["title-bar", "home", "tier-chips"], FOLDER + accent(stroke("M4 8.5h8M4 10.5h5")))
+icon("mine", "Mine", [], ["tier-chips"], circle(8, 5, 3) + stroke("M2.5 14.5a5.5 5.5 0 0 1 11 0"))
+icon("copy-to-tier", "Copy to", [], ["tier-chips"],
+     COPY_BACK + COPY_FRONT + accent(stroke("M4.5 9.5h4M7 8l1.5 1.5L7 11")))
+icon("move-to-tier", "Move to", [], ["tier-chips"],
+     rect(8.5, 2.5, 6, 11, 1) + accent(stroke("M1.5 8h5M5 6.5l1.5 1.5L5 9.5")))
+icon("trust", "Trust this folder", [], ["notices", "settings-dialog"], SHIELD + accent(stroke("M5.5 8l2 2 3-3.5")))
+icon("untrusted", "Needs a trusted folder", [], ["settings-dialog", "plugin-manager"],
+     SHIELD + accent(rect(5.5, 7.5, 5, 4, 0.5), stroke("M6.5 7.5v-1a1.5 1.5 0 0 1 3 0v1")))
+icon("explorer", "Explorer", [], [VIEW, "explorer"],
+     stroke("M1.5 5.5v-3h3l1 1h3v2z") + stroke("M8.5 8.5h6M8.5 12.5h6") + accent(stroke("M3.5 5.5v7h3M3.5 8.5h3")),
+     mirror=True)
+icon("new-subtitle-file", "New subtitle file", [], ["explorer"],
+     page(True) + accent(circle(12, 12, 3), stroke("M12 10.5v3M10.5 12h3")))
+icon("show-all-files", "Show all files", [], ["explorer"],
+     page(True) + accent(stroke("M9.5 12c.75-1.25 1.5-2 2.75-2s2 .75 2.75 2c-.75 1.25-1.5 2-2.75 2s-2-.75-2.75-2z"),
+                         dot(12.25, 12, 0.75)))
+icon("group-by-name", "Group by name", [], ["explorer"],
+     rect(1.5, 1.5, 6, 5, 1) + rect(1.5, 9.5, 6, 5, 1)
+     + accent(stroke("M9.5 4h1.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H9.5M12 8h2.5")), mirror=True)
+icon("tab-to-new-window", "Move tab to new window", [], [TABMENU, TABS], TABBED_WINDOW + plus_badge())
+icon("tab-to-window", "Move tab to window", [], [TABMENU, TABS],
+     TABBED_WINDOW + accent(stroke("M9.5 12h5M12.5 10l2 2-2 2")))
+icon("qc-notes", "QC notes", [], [VIEW, SUBS, "qc-notes"],
+     stroke("M3.5 14.5v-13") + accent(solid("M3.5 2.5h9l-2 3 2 3h-9z")))
+icon("qc-done-reset", "Mark all as not done", [], ["qc-notes"], stroke("M1.5 7.5l3 3 6-7") + RELOAD_BADGE)
+icon("node-library", "From the library", [], ["node-editor"],
+     stroke(BOOK) + accent(dot(7, 4.5, 1.25), dot(10, 8, 1.25), stroke("M7.75 5.5l1.5 1.5")))
+icon("compact", "Compact conversation", [], ["agent-panel"],
+     stroke("M2.5 1.5h11M2.5 13.5h11M4.5 7.5h7")
+     + accent(stroke("M8 3v2.5M6.5 4L8 5.5 9.5 4M8 12V9.5M6.5 11L8 9.5 9.5 11")))
+icon("review-panel", "Review panel", [], [VIEW, EDIT, "review-panel"],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M8.5 6.5h3.5M8.5 9.5h3.5") + accent(stroke("M3.5 6.5h3M5 5v3M3.5 9.5h3")))
+icon("web-search", "Search the web", [], ["agent-panel", "settings-dialog"],
+     magnifier(6.5, 6.5, 4.5, 4)
+     + accent(stroke("M2 6.5h9"),
+              stroke("M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z")))
+icon("update", "Update now", [], ["settings-dialog"],
+     stroke("M2.5 4.5L8 1.5l5.5 3V8M2.5 4.5V11L8 14M2.5 4.5L8 7.5l5.5-3M8 7.5V14") + UP_BADGE)
+icon("network", "Internet access", [], ["settings-dialog", "plugin-manager"],
+     stroke("M1.5 6a9 9 0 0 1 13 0M3.75 8.5a6 6 0 0 1 8.5 0M6 11a3 3 0 0 1 4 0") + accent(dot(8, 13, 1)))
+icon("marketplace", "Marketplace", [], ["plugin-manager"],
+     stroke("M2.5 8v5.5h11V8") + stroke("M6.5 13.5V10h3v3.5")
+     + accent(stroke("M1.5 6.5l1-4h11l1 4c0 1-.75 1.5-1.5 1.5S12 7.5 11.5 6.5c-.25 1-1 1.5-1.75 1.5s-1.5-.5-1.75-1.5"
+                     "c-.25 1-1 1.5-1.75 1.5s-1.5-.5-1.75-1.5c-.25 1-1 1.5-1.75 1.5S1.5 7.5 1.5 6.5z")))
+icon("plugin-installed", "Installed", [], ["plugin-manager"], PUZZLE_CUT + accent(stroke("M9.5 12l1.5 1.5 3-3.5")))
+icon("plugin-full-access", "Full access", [], ["plugin-manager"],
+     PUZZLE_CUT + accent(rect(9.5, 11.5, 5, 3.5, 0.5), stroke("M10.5 11.5V10a1.5 1.5 0 0 1 3 0")))
+icon("plugin-sandbox", "Sandboxed", [], ["plugin-manager"],
+     stroke("M4.5 6h2a1 1 0 1 1 2 0h2v2a1 1 0 1 1 0 2v2.5h-6z") + accent(rect(1.5, 1.5, 13, 13, 1)))
 
 NOT_REPLACED = {
     "application and file-type icons (kept as they are)": [
@@ -1028,9 +1135,23 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "NE2 #424": ["node-editor"],
+    "NE2 #424": ["node-editor", "node-library"],
     "AI7 #435": ["ai-send"],
-    "AI2 #430": ["review-keep", "checkpoint"],
+    "AI2 #430": ["review-keep", "checkpoint", "review-panel"],
+    "PJ2 #770": ["open-project", "recent-projects", "close-project", "project"],
+    "PJ3 #771": ["trust"],
+    "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
+    "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
+    "PJ8 #776": ["untrusted"],
+    "MW2 #630": ["tab-to-new-window", "tab-to-window"],
+    "FA20 #577": ["qc-notes", "qc-done-reset"],
+    "AI21 #725": ["compact"],
+    "AI23 #742": ["web-search"],
+    "AI24 #744": ["update"],
+    "PL5 #417": ["network"],
+    "PL6 #418": ["marketplace", "plugin-installed"],
+    "PL7 #419": ["plugin-sandbox"],
+    "PL8 #420": ["plugin-full-access"],
 }.items():
     for role in roles:
         PENDING[role] = card

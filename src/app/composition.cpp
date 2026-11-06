@@ -242,6 +242,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.userFolder = userFolder.root();
     options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
     options.gettingStarted = true;
+    options.askVideoProperties = true;
     options.settingsFile = userFolder.settingsFile();
     options.recoveryDir = userFolder.recovery();
     options.spellingBackend = backends::hunspellSpellingLoader();
@@ -315,6 +316,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
+    attachAlignToVideoStill(engine, application.alignToVideo());
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);

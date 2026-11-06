@@ -97,15 +97,34 @@ export class Peer {
             this.die(`a message is over ${this.limits.maxMessageBytes} bytes`);
     }
 
-    request(method: string, params?: unknown): Promise<unknown> {
+    /** Aborting `signal` asks the peer to cancel; the answer still comes, usually as requestCancelled. */
+    request(method: string, params?: unknown, signal?: AbortSignal): Promise<unknown> {
+        if (signal?.aborted)
+            return Promise.reject(new RpcError(ErrorCode.requestCancelled, "cancelled"));
         const id = this.nextId++;
         const line = JSON.stringify({ jsonrpc: "2.0", id, method, params });
         const bytes = encoder.encode(line).length;
         if (this.outgoing.size >= this.limits.maxOutstanding ||
             this.outgoingBytes + bytes > this.limits.maxOutstandingBytes || bytes > this.limits.maxMessageBytes)
             return Promise.reject(new RpcError(ErrorCode.busy, "too many requests are outstanding"));
+        const onAbort = () => {
+            if (this.outgoing.has(id))
+                this.notify(Method.cancelRequest, { requestId: id } satisfies CancelRequestParams);
+        };
+        signal?.addEventListener("abort", onAbort, { once: true });
+        const done = () => signal?.removeEventListener("abort", onAbort);
         return new Promise((resolve, reject) => {
-            this.outgoing.set(id, { resolve, reject, bytes });
+            this.outgoing.set(id, {
+                resolve: (result) => {
+                    done();
+                    resolve(result);
+                },
+                reject: (error) => {
+                    done();
+                    reject(error);
+                },
+                bytes,
+            });
             this.outgoingBytes += bytes;
             this.send(line + "\n");
         });

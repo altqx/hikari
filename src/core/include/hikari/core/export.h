@@ -11,7 +11,7 @@
 
 namespace hikari::core {
 
-enum class ExportFormat { Srt, WebVtt, Sbv, PlainText, MicroDvd, Mpl2, TMPlayer, Ttml, Dfxp };
+enum class ExportFormat { Srt, WebVtt, Sbv, PlainText, MicroDvd, Mpl2, TMPlayer, Ttml, Dfxp, Srv3 };
 
 // Netflix keeps italics only: white text, centred, at the top or the bottom, with times in frames.
 enum class TtmlProfile { Generic, Netflix };
@@ -47,8 +47,8 @@ enum class ExportLoss : std::uint32_t {
     Fade = 1u << 4,
     Rotation = 1u << 5,   // \fr \frx \fry \frz \fax \fay \org
     Font = 1u << 6,       // \fn \fs \fscx \fscy \fsp
-    Outline = 1u << 7,    // borders, shadows, blur, alphas, \3c \4c
-    Colour = 1u << 8,     // \c \1c \2c
+    Outline = 1u << 7,
+    Colour = 1u << 8,
     Formatting = 1u << 9, // \i \b \u \s
     Position = 1u << 10,  // \pos \an \a, or a Style that is not bottom centre
     Karaoke = 1u << 11,
@@ -70,9 +70,12 @@ struct ExportResult {
     int linesWritten = 0;
     int commentsSkipped = 0;
     int emptySkipped = 0; // nothing visible left, or no duration
+    // srv3: YTSubConverter's reason for refusing the Document; nothing else is set.
+    std::string refusal;
 };
 
-// Never changes the Document. UTF-8 without a byte-order mark.
+// Never changes the Document. UTF-8 without a byte-order mark, except srv3, which is byte for byte what
+// YTSubConverter 1.6.5 writes.
 ExportResult exportDocument(const Document &document, ExportFormat format, const ExportOptions &options);
 
 }

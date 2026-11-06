@@ -9,3 +9,8 @@ std::string_view hikari::plugin_helper::uiPrelude()
 {
     return R"hikari-lua(@HIKARI_UI_LUA@)hikari-lua";
 }
+
+std::string_view hikari::plugin_helper::filesPrelude()
+{
+    return R"hikari-lua(@HIKARI_FILES_LUA@)hikari-lua";
+}

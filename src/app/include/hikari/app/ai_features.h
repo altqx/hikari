@@ -13,6 +13,7 @@ namespace hikari::api {
 class Api;
 }
 namespace hikari::backends::ai {
+class AgentBroker;
 class AiRequests;
 class AiSignIn;
 struct CodexCli;
@@ -40,6 +41,9 @@ public:
         std::function<std::unique_ptr<backends::ai::AiSidecarHost>()> sidecarHost;
         /// The download of this version's sidecar; null when one is installed or the build runs its own.
         std::function<std::unique_ptr<backends::ai::AiSidecarDownload>()> sidecarDownload;
+        /// Adds the agent CLIs the sidecar may ask Qt to start.
+        std::function<void(backends::ai::AgentBroker &)> agents;
+        std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
         std::function<void(std::function<void(std::optional<backends::ai::CodexCli>)>)> findCodex;
         /// The Codex CLI's sign-in, which Import reads and never writes.
         QString codexAuthPath;
@@ -69,13 +73,16 @@ public:
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
     backends::ai::AiSidecarHost *sidecar() const;
+    /// Whether the sidecar runs fully sandboxed: the host's own coverage once it is built, else what this system can
+    /// enforce.
+    bool sandboxed() const;
 
 signals:
     void switched(bool on);
 
 private:
     void apply();
-    backends::ai::AiSidecarHost *sidecarForSignIn();
+    void startSidecar();
 
     struct Live;
     ui::SettingsStore &m_settings;

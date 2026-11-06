@@ -144,9 +144,9 @@ AiSidecarHost *AiRequests::connect(const app::Config &config)
     AiSidecarHost *host = m_host();
     if (!host)
         return nullptr;
-    host->onNotification("session/update", [this, alive = std::weak_ptr(m_alive)](const Json &params) {
+    host->onNotification([this, alive = std::weak_ptr(m_alive)](const std::string &method, const Json &params) {
         if (alive.lock())
-            receive(params);
+            receive(method, params);
     });
     host->request("_hikari/providers.set", providersJson(config), [](SidecarResult) {});
     return host;
@@ -167,37 +167,26 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
     request["model"] = ref->modelId;
     if (!m_caching)
         request["caching"] = false;
+    AiSidecarHost *host = connect();
+    if (!host) {
+        sink(app::Failed{{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"}});
+        return id;
+    }
     auto pending = std::make_shared<Pending>();
     pending->sink = std::move(sink);
+    pending->host = host;
+    pending->sent = true;
     m_pending[id] = pending;
-    m_providers.readKey(ref->providerId, [this, alive = std::weak_ptr(m_alive), id, providerId = ref->providerId,
-                                          request = std::move(request)](std::optional<std::string> key) mutable {
-        if (!alive.lock() || !m_pending.contains(id))
-            return;
-        if (!key) {
-            end(id, app::Failed{{.kind = app::ErrorKind::Key}});
-            return;
-        }
-        AiSidecarHost *host = connect();
-        if (!host) {
-            end(id, app::Failed{{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"}});
-            return;
-        }
-        const auto pending = m_pending.at(id);
-        pending->host = host;
-        pending->sent = true;
-        Json params = Json::object({{"stream", id}, {"providerId", providerId}, {"key", std::move(*key)},
-                                    {"request", std::move(request)}});
-        pending->request = host->request("_hikari/complete", std::move(params),
-                                         [this, alive, id](SidecarResult result) {
-                                             if (!alive.lock())
-                                                 return;
-                                             if (result)
-                                                 end(id, finishedOf(*result));
-                                             else
-                                                 end(id, app::Failed{requestError(result.error())});
-                                         });
-    });
+    Json params = Json::object({{"stream", id}, {"providerId", ref->providerId}, {"request", std::move(request)}});
+    pending->request = host->request("_hikari/complete", std::move(params),
+                                     [this, alive = std::weak_ptr(m_alive), id](SidecarResult result) {
+                                         if (!alive.lock())
+                                             return;
+                                         if (result)
+                                             end(id, finishedOf(*result));
+                                         else
+                                             end(id, app::Failed{requestError(result.error())});
+                                     });
     return id;
 }
 
@@ -227,29 +216,34 @@ void AiRequests::refreshModels(const std::string &providerId, std::function<void
             done(app::Error{.kind = app::ErrorKind::Key});
             return;
         }
-        AiSidecarHost *host = connect();
-        if (!host) {
-            done(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"});
-            return;
-        }
-        host->request("_hikari/models.list", Json::object({{"providerId", providerId}, {"key", std::move(*key)}}),
-                      [this, alive, providerId, done](SidecarResult result) {
-                          if (!alive.lock())
-                              return;
-                          if (!result) {
-                              done(requestError(result.error()));
-                              return;
-                          }
-                          if (!m_providers.config().provider(providerId)) {
-                              done(app::Error{.kind = app::ErrorKind::NoProvider});
-                              return;
-                          }
-                          if (!m_providers.setModels(providerId, modelsOf(*result)))
-                              done(app::Error{.kind = app::ErrorKind::Rejected, .detail = "config"});
-                          else
-                              done(std::nullopt);
-                      });
+        listModels(providerId, std::move(done));
     });
+}
+
+void AiRequests::listModels(const std::string &providerId, std::function<void(std::optional<app::Error>)> done)
+{
+    AiSidecarHost *host = connect();
+    if (!host) {
+        done(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"});
+        return;
+    }
+    host->request("_hikari/models.list", Json::object({{"providerId", providerId}}),
+                  [this, alive = std::weak_ptr(m_alive), providerId, done = std::move(done)](SidecarResult result) {
+                      if (!alive.lock())
+                          return;
+                      if (!result) {
+                          done(requestError(result.error()));
+                          return;
+                      }
+                      if (!m_providers.config().provider(providerId)) {
+                          done(app::Error{.kind = app::ErrorKind::NoProvider});
+                          return;
+                      }
+                      if (!m_providers.setModels(providerId, modelsOf(*result)))
+                          done(app::Error{.kind = app::ErrorKind::Rejected, .detail = "config"});
+                      else
+                          done(std::nullopt);
+                  });
 }
 
 void AiRequests::probe(const app::Provider &provider, const std::string &key, std::function<void(Probed)> done)
@@ -265,10 +259,15 @@ void AiRequests::probe(const app::Provider &provider, const std::string &key, st
         done(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"});
         return;
     }
-    host->request("_hikari/models.list", Json::object({{"providerId", provider.id}, {"key", key}}),
-                  [alive = std::weak_ptr(m_alive), done = std::move(done)](SidecarResult result) {
+    const std::uint64_t draft = ++m_lastDraft;
+    m_drafts.insert_or_assign(provider.id, Draft{provider, key, draft});
+    host->request("_hikari/models.list", Json::object({{"providerId", provider.id}}),
+                  [this, alive = std::weak_ptr(m_alive), id = provider.id, draft,
+                   done = std::move(done)](SidecarResult result) {
                       if (!alive.lock())
                           return;
+                      if (const auto it = m_drafts.find(id); it != m_drafts.end() && it->second.generation == draft)
+                          m_drafts.erase(it);
                       if (result)
                           done(modelsOf(*result));
                       else
@@ -276,23 +275,31 @@ void AiRequests::probe(const app::Provider &provider, const std::string &key, st
                   });
 }
 
+RelayTargets AiRequests::relayTargets()
+{
+    return [this, saved = providerTargets(m_providers)](const Json &target, std::function<void(RelayTargetResult)> done) {
+        const Json *kind = target.find("kind");
+        const Json *id = target.find("id");
+        if (kind && *kind == Json("provider") && id && id->isString())
+            if (const auto it = m_drafts.find(id->asString()); it != m_drafts.end())
+                return done(RelayTarget{QUrl(QString::fromStdString(it->second.provider.baseUrl)), it->second.key});
+        saved(target, std::move(done));
+    };
+}
+
 void AiRequests::endConversation(const std::string &providerId, const std::string &cacheKey)
 {
     if (!m_providers.config().provider(providerId) || cacheKey.empty())
         return;
-    m_providers.readKey(providerId, [this, alive = std::weak_ptr(m_alive), providerId,
-                                     cacheKey](std::optional<std::string> key) {
-        if (!alive.lock() || !key)
-            return;
-        if (AiSidecarHost *host = connect())
-            host->request("_hikari/conversation.end",
-                          Json::object({{"providerId", providerId}, {"key", std::move(*key)}, {"cacheKey", cacheKey}}),
-                          [](SidecarResult) {});
-    });
+    if (AiSidecarHost *host = connect())
+        host->request("_hikari/conversation.end", Json::object({{"providerId", providerId}, {"cacheKey", cacheKey}}),
+                      [](SidecarResult) {});
 }
 
-void AiRequests::receive(const Json &params)
+void AiRequests::receive(const std::string &method, const Json &params)
 {
+    if (method != "session/update")
+        return;
     const Json *stream = params.find("stream");
     const Json *update = params.find("update");
     if (!stream || !stream->isInt() || !update)
