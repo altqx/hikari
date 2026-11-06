@@ -512,7 +512,7 @@ DialogWindow {
                                         Badge {
                                             visible: listed.modelData.unrestricted
                                             iconRole: "plugin-full-access"
-                                            text: qsTr("Unrestricted")
+                                            text: qsTr("Full trust")
                                         }
                                     }
                                     Label {
@@ -600,7 +600,7 @@ DialogWindow {
                     Badge {
                         visible: market.listing.unrestricted
                         iconRole: "plugin-full-access"
-                        text: qsTr("Unrestricted")
+                        text: qsTr("Full trust")
                     }
                 }
                 Label {

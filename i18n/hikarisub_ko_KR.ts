@@ -10749,10 +10749,6 @@ Failed to copy %2 fonts.</source>
         <translation>마켓플레이스 플러그인</translation>
     </message>
     <message>
-        <source>Unrestricted</source>
-        <translation>제한 없음</translation>
-    </message>
-    <message>
         <source>Update</source>
         <translation>업데이트</translation>
     </message>

@@ -10812,10 +10812,6 @@ Failed to copy %2 fonts.</source>
         <translation>சந்தைச் செருகுநிரல்கள்</translation>
     </message>
     <message>
-        <source>Unrestricted</source>
-        <translation>கட்டுப்பாடற்றது</translation>
-    </message>
-    <message>
         <source>Update</source>
         <translation>புதுப்பிப்பு</translation>
     </message>

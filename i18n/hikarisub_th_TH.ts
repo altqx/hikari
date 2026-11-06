@@ -10749,10 +10749,6 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอินในมาร์เก็ตเพลส</translation>
     </message>
     <message>
-        <source>Unrestricted</source>
-        <translation>ไม่จำกัดสิทธิ์</translation>
-    </message>
-    <message>
         <source>Update</source>
         <translation>อัปเดต</translation>
     </message>

@@ -10875,10 +10875,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wtyczki z katalogu</translation>
     </message>
     <message>
-        <source>Unrestricted</source>
-        <translation>Bez ograniczeń</translation>
-    </message>
-    <message>
         <source>Update</source>
         <translation>Aktualizacja</translation>
     </message>
