@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace hikari::api {
 class Api;
@@ -14,6 +15,8 @@ class Api;
 namespace hikari::backends::ai {
 class AgentBroker;
 class AiRequests;
+class AiSignIn;
+struct CodexCli;
 class AiSidecarDownload;
 class AiSidecarHost;
 }
@@ -40,6 +43,10 @@ public:
         std::function<std::unique_ptr<backends::ai::AiSidecarDownload>()> sidecarDownload;
         /// Adds the agent CLIs the sidecar may ask Qt to start.
         std::function<void(backends::ai::AgentBroker &)> agents;
+        std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
+        std::function<void(std::function<void(std::optional<backends::ai::CodexCli>)>)> findCodex;
+        /// The Codex CLI's sign-in, which Import reads and never writes.
+        QString codexAuthPath;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
     static Ports defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion);
@@ -53,6 +60,8 @@ public:
     application::ai::ConfigStore *configs() const;
     application::ai::Providers *providers() const;
     backends::ai::AiRequests *requests() const;
+    backends::ai::AiSignIn *signIn() const;
+    const Ports &ports() const { return m_ports; }
     /// Null with AI off, or when nothing needs downloading.
     std::unique_ptr<backends::ai::AiSidecarDownload> sidecarDownload() const;
     /// The sidecar for an AI action: built on the first one once a provider exists. Null with AI off, without a

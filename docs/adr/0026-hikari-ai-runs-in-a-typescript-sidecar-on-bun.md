@@ -69,7 +69,6 @@ Amended by [ADR 0029](0029-the-ai-sidecar-runs-in-an-os-sandbox.md): the sidecar
 | sidecar → Qt | `session/update` | text, tool calls, plans, usage and cost |
 | sidecar → Qt | `session/request_permission` | Manual mode and the always-prompt list |
 | sidecar → Qt | `_hikari/api.call`, `_hikari/api.subscribe` | Hikari's tools through HA1 |
-| sidecar → Qt | `_hikari/secret.store` | refreshed OAuth tokens |
 
 - **Streaming.** The sidecar coalesces text deltas into at most one notification per frame interval.
 - **Cancel.** Turns are cancelled with `session/cancel`; any other request with a `$/cancel_request` notification that carries its id. A cancelled request still gets exactly one response, with the cancel error code.
@@ -103,7 +102,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 - **Codex: `codex app-server`** over stdio JSON-RPC, using the user's installed `codex`.
   - The types are generated from `codex app-server generate-json-schema` for a pinned minimum version, and features are detected rather than assumed. OpenAI labels app-server experimental.
   - The sandbox is read-only, and every `commandExecution` and `fileChange` approval is declined.
-  - Sign-in stays with `codex login` unless the owner decides otherwise in AI15.
+  - HikariSub keeps its own ChatGPT sign-in for Codex (AI6), apart from `codex login`'s, and hands it to `codex app-server` (AI15). It never writes `~/.codex`.
 - **Gemini CLI and custom agents: ACP** (`gemini --acp`, a registry entry or a user command). Permission requests for anything but Hikari's tools are declined. Hikari never reuses Gemini CLI's OAuth.
 - **Every agent edits only through Hikari's tools,** into the review, under the thread's mode.
 - **Hikari never downloads or installs a vendor CLI.** It finds the CLI on `PATH` or at a path the user sets.

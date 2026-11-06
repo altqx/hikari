@@ -79,7 +79,7 @@ target_link_libraries(hikari_sandbox PUBLIC Qt6::Core)
 hikari_module(hikari_sandbox ALLOW "Qt6::*")
 
 add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_config_store.h ai_requests.cpp
-    include/hikari/backends/ai_requests.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
+    include/hikari/backends/ai_requests.h ai_signin.cpp include/hikari/backends/ai_signin.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
     include/hikari/backends/ai_sidecar_host.h ai_sidecar_download.cpp include/hikari/backends/ai_sidecar_download.h
     ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent_broker.cpp
     include/hikari/backends/ai_agent_broker.h

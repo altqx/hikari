@@ -10062,6 +10062,42 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai에서 로그인을 거부했습니다.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com에서 로그인을 거부했습니다. 사용할 ChatGPT 계정으로 HikariSub의 요청을 승인한 뒤 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>ChatGPT 워크스페이스에서 로그인 코드를 껐습니다. 대신 브라우저로 로그인하세요.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>코드를 입력하기 전에 만료되었습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>브라우저를 기다리다 로그인 시간이 초과되었습니다.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>다른 앱이 포트 1455를 쓰는 동안에는 브라우저 로그인을 사용할 수 없습니다. 사용하려면 그 앱의 로그인을 닫으세요.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>%1에 연결할 수 없습니다. 연결을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex에 가져올 ChatGPT 로그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>로그인하지 못했습니다. 다시 시도하세요.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>키가 거부됨(%1)</translation>
     </message>
@@ -10154,12 +10190,32 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API 키</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>OpenRouter 키</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API 키(선택 사항)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>API 키</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>OpenRouter로 로그인…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>로그인됨(OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>로그아웃</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>또는 키 붙여넣기</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -10180,6 +10236,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Google AI Studio에서 받은 키입니다. Vertex AI와 Google Cloud 로그인은 지원하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>로그인하면 브라우저에서 openrouter.ai가 열리고 HikariSub용 키가 만들어집니다. 이 키는 붙여넣은 키처럼 키체인에 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>로그아웃하면 이 컴퓨터에서 키가 삭제됩니다. 키는 %1에서 직접 삭제할 때까지 그곳에 남아 있습니다.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>내 OpenRouter 키</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>브라우저에서 openrouter.ai를 기다리는 중</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>페이지 다시 열기</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -10302,6 +10378,10 @@ Failed to copy %2 fonts.</source>
         <translation>편집에서 키를 바꾸세요</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>편집에서 다시 로그인하세요</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>키체인에 키 있음</translation>
     </message>
@@ -10340,6 +10420,114 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>자체 모델이 없는 역할은 채팅 모델을 사용합니다. 비전에는 이미지를 읽는 모델만 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>외부 에이전트</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>PATH에서 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>PATH에서 찾음 · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>PATH에서 찾음.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>로그인하지 않음</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ChatGPT로 로그인…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>~/.codex에서 가져오기(읽기 전용)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>ChatGPT 로그인 가져오기</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>~/.codex에서 ChatGPT 로그인을 가져올까요? 그러면 HikariSub와 터미널의 Codex가 로그인 하나를 함께 쓰게 되며, 한쪽이 로그인을 새로 고치면 다른 쪽은 다시 로그인해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub는 ~/.codex의 로그인과 별도로 Codex용 ChatGPT 로그인을 따로 유지하므로 서로 로그아웃시키지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1(으)로 로그인됨</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex는 이 로그인으로 실행됩니다. 여기서 로그아웃해도 터미널의 Codex는 로그인된 상태로 남습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>로그인이 만료됨</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>다시 로그인…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>비밀번호 변경이나 모든 기기에서 로그아웃한 경우 등으로 ChatGPT가 HikariSub의 세션을 끝냈습니다. Codex를 계속 쓰려면 다시 로그인하세요.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ChatGPT로 로그인</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>auth.openai.com을 열고 ChatGPT에 로그인한 뒤 이 코드를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>auth.openai.com 열기</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>브라우저에 auth.openai.com이 열려 있습니다. 거기서 로그인하세요. 페이지에 닫아도 된다고 나오면 HikariSub가 마무리합니다.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>코드를 기다리는 중 · %1 후 만료</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>브라우저를 기다리는 중</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>코드를 쓸 수 없나요? 브라우저로 로그인</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>브라우저로 로그인</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>새 코드 받기</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
     </message>
     <message>
         <source>Use prompt caching</source>

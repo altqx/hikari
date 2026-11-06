@@ -7,6 +7,7 @@
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_signin.h"
 #include "hikari/backends/sandbox.h"
 #include "settings_store.h"
 
@@ -34,6 +35,7 @@ struct AiFeatures::Live {
     std::unique_ptr<backends::ai::HttpRelay> relay;
     std::unique_ptr<backends::ai::AiSidecarHost> host;
     std::unique_ptr<backends::ai::AgentBroker> agents;
+    std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
 };
 
@@ -86,6 +88,9 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                                                      agents + QStringLiteral("/codex/work")))
                 broker.add("codex", std::move(*spec));
     };
+    ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
+    ports.findCodex = backends::ai::findCodexCli;
+    ports.codexAuthPath = QDir::homePath() + QStringLiteral("/.codex/auth.json");
     return ports;
 }
 
@@ -117,6 +122,8 @@ void AiFeatures::apply()
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(m_live->requests->relayTargets());
+        if (m_ports.signIn)
+            m_live->signIn = m_ports.signIn(*m_live->keys);
     } else {
         m_live.reset();
     }
@@ -157,6 +164,11 @@ void AiFeatures::setDrafting(bool drafting)
 backends::ai::AiSidecarHost *AiFeatures::sidecar() const
 {
     return m_live ? m_live->host.get() : nullptr;
+}
+
+backends::ai::AiSignIn *AiFeatures::signIn() const
+{
+    return m_live ? m_live->signIn.get() : nullptr;
 }
 
 bool AiFeatures::sandboxed() const

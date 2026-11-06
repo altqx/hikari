@@ -49,6 +49,7 @@ app::Config JsonConfigStore::load()
         p.wire = *wire;
         p.baseUrl = o.value(QStringLiteral("baseUrl")).toString().toStdString();
         p.needsKey = o.value(QStringLiteral("needsKey")).toBool(true);
+        p.signedIn = o.value(QStringLiteral("signedIn")).toBool(false);
         p.defaults = capabilitiesFrom(o.value(QStringLiteral("defaults")).toObject());
         for (const QJsonValue &mv : o.value(QStringLiteral("models")).toArray()) {
             const QJsonObject m = mv.toObject();
@@ -122,6 +123,7 @@ bool JsonConfigStore::save(const app::Config &config)
             {QStringLiteral("wire"), QString::fromUtf8(app::wireId(p.wire))},
             {QStringLiteral("baseUrl"), QString::fromStdString(p.baseUrl)},
             {QStringLiteral("needsKey"), p.needsKey},
+            {QStringLiteral("signedIn"), p.signedIn},
             {QStringLiteral("defaults"), capabilitiesJson(p.defaults)},
             {QStringLiteral("models"), models},
             {QStringLiteral("capabilityOverrides"), overrides},
