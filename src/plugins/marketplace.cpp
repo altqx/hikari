@@ -181,6 +181,17 @@ std::optional<std::string> listedManifestProblem(const Listing &listing, const L
     return std::nullopt;
 }
 
+std::optional<Revoked> revocation(const Listing &listing, std::string_view version, std::int64_t apiVersion)
+{
+    if (listing.revoked)
+        return Revoked{listing.revoked->reason, {}};
+    const auto installed = std::ranges::find(listing.versions, version, &ListedVersion::version);
+    if (installed == listing.versions.end() || !installed->revoked)
+        return std::nullopt;
+    const ListedVersion *good = listing.newest(apiVersion);
+    return Revoked{installed->revoked->reason, good ? good->version : std::string()};
+}
+
 std::int64_t loadHighestSerial(const fs::path &file)
 {
     std::ifstream in(file, std::ios::binary);
