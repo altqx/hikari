@@ -2522,7 +2522,10 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "tab-menu"
+    "tab-menu",
+    "menu:file",
+    "settings-dialog",
+    "plugin-manager"
    ]
   },
   {
@@ -4248,6 +4251,434 @@
     "agent-panel"
    ],
    "pending": "AI2 #430"
+  },
+  {
+   "role": "copy-path",
+   "file": "copy-path.svg",
+   "label": "Copy path",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu",
+    "home"
+   ]
+  },
+  {
+   "role": "timing-postprocessor",
+   "file": "timing-postprocessor.svg",
+   "label": "Timing postprocessor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "shift-start-to-video",
+   "file": "shift-start-to-video.svg",
+   "label": "Start at video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "shift-end-to-video",
+   "file": "shift-end-to-video.svg",
+   "label": "End at video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "center-times",
+   "file": "center-times.svg",
+   "label": "Centre times within frames",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "plugin-update",
+   "file": "plugin-update.svg",
+   "label": "Update plugin",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-manager"
+   ]
+  },
+  {
+   "role": "plugin-turn-on",
+   "file": "plugin-turn-on.svg",
+   "label": "Turn on",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-panel"
+   ]
+  },
+  {
+   "role": "test-connection",
+   "file": "test-connection.svg",
+   "label": "Test connection",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "open-project",
+   "file": "open-project.svg",
+   "label": "Open folder",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file",
+    "home"
+   ],
+   "pending": "PJ2 #770"
+  },
+  {
+   "role": "recent-projects",
+   "file": "recent-projects.svg",
+   "label": "Recent projects",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file",
+    "home"
+   ],
+   "pending": "PJ2 #770"
+  },
+  {
+   "role": "close-project",
+   "file": "close-project.svg",
+   "label": "Close project",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ],
+   "pending": "PJ2 #770"
+  },
+  {
+   "role": "project",
+   "file": "project.svg",
+   "label": "Project",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "title-bar",
+    "home",
+    "tier-chips"
+   ],
+   "pending": "PJ2 #770"
+  },
+  {
+   "role": "mine",
+   "file": "mine.svg",
+   "label": "Mine",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tier-chips"
+   ],
+   "pending": "PJ5 #773"
+  },
+  {
+   "role": "copy-to-tier",
+   "file": "copy-to-tier.svg",
+   "label": "Copy to",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tier-chips"
+   ],
+   "pending": "PJ5 #773"
+  },
+  {
+   "role": "move-to-tier",
+   "file": "move-to-tier.svg",
+   "label": "Move to",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tier-chips"
+   ],
+   "pending": "PJ5 #773"
+  },
+  {
+   "role": "trust",
+   "file": "trust.svg",
+   "label": "Trust this folder",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "notices",
+    "settings-dialog"
+   ],
+   "pending": "PJ3 #771"
+  },
+  {
+   "role": "untrusted",
+   "file": "untrusted.svg",
+   "label": "Needs a trusted folder",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog",
+    "plugin-manager"
+   ],
+   "pending": "PJ8 #776"
+  },
+  {
+   "role": "explorer",
+   "file": "explorer.svg",
+   "label": "Explorer",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "explorer"
+   ],
+   "pending": "PJ4 #772"
+  },
+  {
+   "role": "new-subtitle-file",
+   "file": "new-subtitle-file.svg",
+   "label": "New subtitle file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ],
+   "pending": "PJ4 #772"
+  },
+  {
+   "role": "show-all-files",
+   "file": "show-all-files.svg",
+   "label": "Show all files",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ],
+   "pending": "PJ4 #772"
+  },
+  {
+   "role": "group-by-name",
+   "file": "group-by-name.svg",
+   "label": "Group by name",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "explorer"
+   ],
+   "pending": "PJ4 #772"
+  },
+  {
+   "role": "tab-to-new-window",
+   "file": "tab-to-new-window.svg",
+   "label": "Move tab to new window",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu",
+    "document-tabs"
+   ],
+   "pending": "MW2 #630"
+  },
+  {
+   "role": "tab-to-window",
+   "file": "tab-to-window.svg",
+   "label": "Move tab to window",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu",
+    "document-tabs"
+   ],
+   "pending": "MW2 #630"
+  },
+  {
+   "role": "qc-notes",
+   "file": "qc-notes.svg",
+   "label": "QC notes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "menu:subtitles",
+    "qc-notes"
+   ],
+   "pending": "FA20 #577"
+  },
+  {
+   "role": "qc-done-reset",
+   "file": "qc-done-reset.svg",
+   "label": "Mark all as not done",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "qc-notes"
+   ],
+   "pending": "FA20 #577"
+  },
+  {
+   "role": "node-library",
+   "file": "node-library.svg",
+   "label": "From the library",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-editor"
+   ],
+   "pending": "NE2 #424"
+  },
+  {
+   "role": "compact",
+   "file": "compact.svg",
+   "label": "Compact conversation",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel"
+   ],
+   "pending": "AI21 #725"
+  },
+  {
+   "role": "review-panel",
+   "file": "review-panel.svg",
+   "label": "Review panel",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "menu:edit",
+    "review-panel"
+   ],
+   "pending": "AI2 #430"
+  },
+  {
+   "role": "web-search",
+   "file": "web-search.svg",
+   "label": "Search the web",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel",
+    "settings-dialog"
+   ],
+   "pending": "AI23 #742"
+  },
+  {
+   "role": "update",
+   "file": "update.svg",
+   "label": "Update now",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "AI24 #744"
+  },
+  {
+   "role": "network",
+   "file": "network.svg",
+   "label": "Internet access",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog",
+    "plugin-manager"
+   ],
+   "pending": "PL5 #417"
+  },
+  {
+   "role": "marketplace",
+   "file": "marketplace.svg",
+   "label": "Marketplace",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-manager"
+   ],
+   "pending": "PL6 #418"
+  },
+  {
+   "role": "plugin-installed",
+   "file": "plugin-installed.svg",
+   "label": "Installed",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-manager"
+   ],
+   "pending": "PL6 #418"
+  },
+  {
+   "role": "plugin-full-access",
+   "file": "plugin-full-access.svg",
+   "label": "Full access",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-manager"
+   ],
+   "pending": "PL8 #420"
+  },
+  {
+   "role": "plugin-sandbox",
+   "file": "plugin-sandbox.svg",
+   "label": "Sandboxed",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "plugin-manager"
+   ],
+   "pending": "PL7 #419"
   }
  ],
  "notReplaced": {

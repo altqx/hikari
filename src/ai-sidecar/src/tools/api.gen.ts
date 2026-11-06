@@ -592,6 +592,20 @@ export type NodesCatalogueResult = {
     })[];
 };
 
+/** Checks a node-effect graph; each problem names its node and port or field. */
+export type NodesValidateParams = {
+    graph: Record<string, unknown>;
+};
+
+export type NodesValidateResult = {
+    valid: boolean;
+    problems: ({
+        node?: string;
+        port?: string;
+        message: string;
+    })[];
+};
+
 /** A Document's content changed: a commit, Undo or Redo. */
 export type DocumentChangedEvent = {
     document: DocumentId;
@@ -661,6 +675,7 @@ export interface Operations {
     "files.read": { access: "read"; params: FilesReadParams; result: FilesReadResult };
     "files.write": { access: "write"; params: FilesWriteParams; result: FilesWriteResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
+    "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
 }
 
 export type OperationName = keyof Operations;

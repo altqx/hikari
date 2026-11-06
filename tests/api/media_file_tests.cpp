@@ -118,4 +118,22 @@ TEST_F(MediaAndFiles, RegisteredNodeTypesAreCatalogued)
               *Json::parse(R"({"nodes": []})"));
 }
 
+TEST_F(MediaAndFiles, TheEnginesNodesAreCataloguedAndGraphsValidated)
+{
+    const Result units = client.call(aiCaller(), "nodes.catalogue", *Json::parse(R"({"category": "units"})"));
+    ASSERT_TRUE(units);
+    EXPECT_EQ(units->find("nodes")->asArray().front().find("id")->asString(), "units.for_each");
+    const Result fine = client.call(aiCaller(), "nodes.validate", *Json::parse(R"({"graph": {"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"}, {"id": "emit", "type": "output.emit"}],
+        "wires": [{"from": "syl.units", "to": "emit.units"}]}})"));
+    ASSERT_TRUE(fine);
+    EXPECT_EQ(*fine, *Json::parse(R"({"valid": true, "problems": []})"));
+    const Result bad = client.call(aiCaller(), "nodes.validate", *Json::parse(R"({"graph": {"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each", "fields": {"unit": "word"}}, {"id": "emit", "type": "output.emit"}],
+        "wires": [{"from": "syl.units", "to": "emit.units"}]}})"));
+    ASSERT_TRUE(bad);
+    EXPECT_EQ(bad->dump(), Json::parse(R"({"valid": false, "problems": [
+        {"node": "syl", "port": "unit", "message": "is not one of its choices"}]})")->dump());
+}
+
 }

@@ -2117,6 +2117,58 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "nodes.validate",
+      "access": "read",
+      "summary": "Checks a node-effect graph; each problem names its node and port or field.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [

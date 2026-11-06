@@ -3,6 +3,7 @@
 
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/sandbox.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -31,6 +32,7 @@ struct Counts {
     int keyReads = 0;
     int configStores = 0;
     int sidecarHosts = 0;
+    int agentLists = 0;
 };
 
 class CountingKeyStore final : public ai::KeyStore {
@@ -103,6 +105,7 @@ protected:
             o.buildId = "test";
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
+        p.agents = [this](backends::ai::AgentBroker &) { ++counts.agentLists; };
         return p;
     }
 
@@ -125,6 +128,7 @@ TEST_F(AiFeaturesTest, WithAiOffNothingIsBuiltAcrossStartupAndASession)
     EXPECT_EQ(counts.keyReads, 0);
     EXPECT_EQ(counts.configStores, 0);
     EXPECT_EQ(counts.sidecarHosts, 0);
+    EXPECT_EQ(counts.agentLists, 0);
 }
 
 TEST_F(AiFeaturesTest, WithoutAProviderNoSidecarIsBuiltOrStarted)
@@ -134,6 +138,7 @@ TEST_F(AiFeaturesTest, WithoutAProviderNoSidecarIsBuiltOrStarted)
     EXPECT_EQ(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.sidecarHosts, 0);
     EXPECT_EQ(counts.keyReads, 0);
+    EXPECT_EQ(counts.agentLists, 0);
 }
 
 TEST_F(AiFeaturesTest, StartupAndOpeningSettingsDontBuildTheSidecar)
@@ -148,8 +153,10 @@ TEST_F(AiFeaturesTest, StartupAndOpeningSettingsDontBuildTheSidecar)
 TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsOnDemand)
 {
     app::AiFeatures features(settings, ports(true));
+    EXPECT_EQ(features.sandboxed(), backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete());
     auto *host = features.sidecarForAction();
     ASSERT_NE(host, nullptr);
+    EXPECT_FALSE(features.sandboxed()) << "the test host starts its sidecar without a profile";
     bool answered = false;
     host->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
     ASSERT_TRUE(waitFor([&] { return answered; }));
@@ -170,6 +177,18 @@ TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsO
     EXPECT_NE(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.keyStores, 2);
     EXPECT_EQ(counts.sidecarHosts, 2);
+    EXPECT_EQ(counts.agentLists, 2);
+}
+
+TEST_F(AiFeaturesTest, ASidecarStartedForMcpServesAiActionsWithItsRelayAndAgents)
+{
+    app::AiFeatures features(settings, ports(false));
+    auto *host = features.sidecarForMcp();
+    ASSERT_NE(host, nullptr);
+    EXPECT_EQ(counts.agentLists, 1);
+    EXPECT_EQ(features.sidecarForAction(), host);
+    EXPECT_EQ(counts.sidecarHosts, 1);
+    EXPECT_EQ(counts.agentLists, 1);
 }
 
 TEST_F(AiFeaturesTest, NoMcpListenerUnlessTheUserTurnsItOnAndNeverWithAiOff)

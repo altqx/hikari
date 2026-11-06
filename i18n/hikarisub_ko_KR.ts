@@ -2144,6 +2144,10 @@ Output device: %2</source>
         <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>자막이 포함된 영상 (*.mkv *.ogm)</translation>
     </message>
@@ -2170,6 +2174,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>새 자막</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>%1(을)를 YouTube 시간 지정 텍스트로 가져올 수 없습니다. %2 아무것도 가져오지 않았습니다.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -9851,6 +9859,14 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>플러그인의 인터넷 연결 허용</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 플러그인의 요청을 모두 거부합니다.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>단축키 (Hotkeys.txt)</translation>
     </message>
@@ -10338,8 +10354,16 @@ Failed to copy %2 fonts.</source>
         <translation>공급자에게 보내는 내용</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
+        <translation type="vanished">요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -10641,6 +10665,22 @@ Failed to copy %2 fonts.</source>
         <translation>권한</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>기억한 폴더</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>잊기</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>다음에 이 폴더가 필요할 때 %1이(가) 다시 묻습니다</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>추가하는 항목</translation>
     </message>
@@ -10775,6 +10815,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1이(가) 읽고 쓸 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1이(가) 읽을 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1에 이 폴더 기억하기</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>폴더 선택…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: 파일 저장</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: 파일 선택</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
     </message>
 </context>
 <context>

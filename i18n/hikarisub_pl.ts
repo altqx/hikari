@@ -2184,6 +2184,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>Napisy czasowe YouTube (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>Wideo z osadzonymi napisami (*.mkv *.ogm)</translation>
     </message>
@@ -2210,6 +2214,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Untitled</source>
         <translation>Bez nazwy</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>Nie można zaimportować %1 jako napisów czasowych YouTube. %2 Nic nie zaimportowano.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -9967,6 +9975,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>Pozwól wtyczkom łączyć się z internetem</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: każde żądanie wtyczki jest odrzucane.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>Skróty klawiszowe (Hotkeys.txt)</translation>
     </message>
@@ -10464,8 +10480,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Co jest wysyłane do dostawców</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
+        <translation type="vanished">Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
     </message>
 </context>
 <context>
@@ -10767,6 +10791,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Uprawnienia</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>Zapamiętane foldery</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>Zapomnij</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>%1 zapyta ponownie, gdy następnym razem będzie potrzebować tego folderu</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>Co dodaje</translation>
     </message>
@@ -10905,6 +10945,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Details</source>
         <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1 prosi o folder do odczytu i zapisu: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1 prosi o folder do odczytu: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>Zapamiętaj ten folder dla %1</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>Wybierz folder…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: zapisz plik</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: wybierz plik</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
 </context>
 <context>
