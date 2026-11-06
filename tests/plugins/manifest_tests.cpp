@@ -241,4 +241,18 @@ TEST(PluginManifest, VersionsCompareBySemver)
     EXPECT_GT(compareVersions("1.0.0-beta", "1.0.0-alpha.9"), 0);
 }
 
+TEST(PluginManifest, ListedPermissionsOfTheWrongShapeAreLeftOut)
+{
+    const Permissions p = readPermissions(*Json::parse(
+        R"({"documents.all": 1, "network": {"hosts": ["api.example.com", 2], "reason": "Looks words up"},
+            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}]})"));
+    EXPECT_FALSE(p.allDocuments);
+    EXPECT_EQ(p.networkHosts, std::vector<std::string>{"api.example.com"});
+    EXPECT_EQ(p.networkReason, "Looks words up");
+    ASSERT_EQ(p.files.size(), 1u);
+    EXPECT_FALSE(p.files.front().writable);
+    EXPECT_EQ(p.files.front().reason, "");
+    EXPECT_TRUE(readPermissions(*Json::parse(R"({"network": {"hosts": "x"}, "files": {}})")).networkHosts.empty());
+}
+
 }

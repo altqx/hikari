@@ -10484,6 +10484,10 @@ Failed to copy %2 fonts.</source>
         <translation>பயனர் கோப்புறையில் உள்ள plugins.json ஐப் படிக்க முடியவில்லை: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>பதிவிறக்கம் சந்தை பட்டியலிடும் செருகுநிரல் அல்ல: %1.</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>தொகுப்பு அதன் மேனிஃபெச்ட் குறிப்பிடாத ஒரு விசையால் கையொப்பமிடப்பட்டுள்ளது.</translation>
     </message>
@@ -10564,6 +10568,10 @@ Failed to copy %2 fonts.</source>
         <translation>நிறுத்தப்பட்டது</translation>
     </message>
     <message>
+        <source>From the marketplace</source>
+        <translation>சந்தையிலிருந்து</translation>
+    </message>
+    <message>
         <source>OK</source>
         <translation>சரி</translation>
     </message>
@@ -10628,12 +10636,28 @@ Failed to copy %2 fonts.</source>
         <translation>செயலில் உள்ள வசனக் கோப்பைத் தவிர வேறு எந்த அனுமதியையும் இது கேட்கவில்லை.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>%1 மீது நம்பிக்கை இருந்தால் மட்டுமே நிறுவவும். இது உங்கள் கணினியை முழுமையாக அணுகும்.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>%1 கையொப்பமிட்டது, சந்தையுடன் சரிபார்க்கப்பட்டது.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>நம்பி நிறுவு</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>முழு அணுகலுடன் நிறுவு</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>ஒவ்வொரு செருகுநிரலும் நீங்கள் வேலை செய்யும் ஆவணத்தைப் படித்துத் திருத்தலாம், ஒரே செயல்தவிர் படியாக.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10662,6 +10686,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>செருகுநிரலின் நிறுவல் நீக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>நிறுவப்பட்டவை %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>சந்தை</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>புதுப்பிப்புகளைச் சரிபார்</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகள்</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10698,6 +10742,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust</source>
         <translation>முழு நம்பிக்கை</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>செருகுநிரல்களைத் தேடு</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>அனைத்து வகைகள்</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>வகை</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>சந்தையை ஏற்றுகிறது…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>சந்தையில் இன்னும் செருகுநிரல்கள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>தேடலுக்குப் பொருந்தும் செருகுநிரல் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>சந்தைச் செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Unrestricted</source>
+        <translation>கட்டுப்பாடற்றது</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>புதுப்பிப்பு</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>பதிவிறக்குகிறது…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>%1-க்குப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>நிறுவு</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>இதற்கு HikariSub %1 அல்லது புதியது தேவை. நிறுவ HikariSub-ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>அடிப்படைக்கு மேல் எதுவும் இல்லை: பிணையம், கோப்புறைகள், பிற ஆவணங்கள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>%1-இல் புதியவை</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>தேவை</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 அல்லது புதியது</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>உரிமம்</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>புதுப்பிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>மூலம்</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1” அதே விசையால் கையொப்பமிடப்பட்டுச் சந்தையில் உள்ளது. புதுப்பிப்புகளைப் பெற அங்கு நகர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>இப்போது வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>சந்தைக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>On</source>
@@ -10770,6 +10910,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install from file…</source>
         <translation>கோப்பிலிருந்து நிறுவு…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகளைச் சரிபார்</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>தொடக்கத்திலும் நாளுக்கு ஒருமுறையும். HikariSub முழுப் பட்டியலையும் பதிவிறக்கும், உங்களிடம் உள்ள செருகுநிரல்களை ஒருபோதும் அனுப்பாது.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10880,6 +11028,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>சந்தையின் பட்டியல் சந்தை விசையால் கையொப்பமிடப்படவில்லை, எனவே HikariSub அதைப் புறக்கணித்தது.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>சந்தையின் கையொப்பம் வேறொரு கோப்புக்கானது, எனவே HikariSub பட்டியலைப் புறக்கணித்தது.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>HikariSub ஏற்கெனவே பார்த்ததை விடப் பழைய பட்டியலைச் சந்தை அனுப்பியது, எனவே HikariSub அதைப் புறக்கணித்தது.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>சந்தையின் பட்டியலைப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub சந்தையை அடைய முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1” இந்த HikariSub-க்கான சந்தையில் இல்லை.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>சந்தை தன் தளத்துக்கு வெளியே உள்ள பதிவிறக்கத்தைப் பட்டியலிடுகிறது, எனவே HikariSub அதைப் பெறாது.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>செருகுநிரலைப் பதிவிறக்க முடியவில்லை: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>

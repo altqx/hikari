@@ -1,0 +1,126 @@
+{
+  "format": 1,
+  "serial": 1,
+  "generated": "2026-11-02T10:00:00Z",
+  "apiVersions": {
+    "1": "0.1.0"
+  },
+  "featured": [
+    "com.example.hello"
+  ],
+  "plugins": [
+    {
+      "id": "com.example.hello",
+      "author": "ana",
+      "authorName": "Ana Fansubs",
+      "repo": "https://github.com/ana/hello",
+      "publicKey": "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4",
+      "categories": [
+        "Timing"
+      ],
+      "versions": [
+        {
+          "version": "1.1.0",
+          "api": 1,
+          "tier": "restricted",
+          "name": "Hello",
+          "summary": "Says hello",
+          "license": "MIT",
+          "authors": [
+            "Ana"
+          ],
+          "permissions": {},
+          "url": "https://marketplace.test/p/com.example.hello/1.1.0.hikariplugin",
+          "sha256": "c2e6da011b58dcc4aefea86a71e21f047b2d8e13c2d0765f9256d61c467f10b9",
+          "size": 427,
+          "published": "2026-11-01T10:00:00Z",
+          "readme": "https://marketplace.test/readme.md",
+          "description": "Says hello in the log, now in more languages.",
+          "changelog": "Greets in Polish and Korean."
+        },
+        {
+          "version": "1.0.0",
+          "api": 1,
+          "tier": "restricted",
+          "name": "Hello",
+          "summary": "Says hello",
+          "license": "MIT",
+          "authors": [
+            "Ana"
+          ],
+          "permissions": {},
+          "url": "https://marketplace.test/p/com.example.hello/1.0.0.hikariplugin",
+          "sha256": "6b4905c6166a99f21b6afd90536bd126ea0b29eb4cdfc16738bec4e8b2960892",
+          "size": 426,
+          "published": "2026-11-01T10:00:00Z",
+          "readme": "https://marketplace.test/readme.md"
+        }
+      ]
+    },
+    {
+      "id": "com.example.native",
+      "author": "ana",
+      "authorName": "Ana Fansubs",
+      "repo": "https://github.com/ana/native",
+      "publicKey": "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4",
+      "categories": [
+        "Video"
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "api": 1,
+          "tier": "unrestricted",
+          "name": "Native Tools",
+          "summary": "Tracks signs with a native library",
+          "license": "MIT",
+          "authors": [
+            "Ana"
+          ],
+          "permissions": {},
+          "url": "https://marketplace.test/p/com.example.native/1.0.0.hikariplugin",
+          "sha256": "903846244e451e6569f04587478a44f50a1d68906c64b722443cc100e2c76616",
+          "size": 456,
+          "published": "2026-11-01T10:00:00Z",
+          "readme": "https://marketplace.test/readme.md"
+        }
+      ]
+    },
+    {
+      "id": "com.example.glossary",
+      "author": "ana",
+      "authorName": "Ana Fansubs",
+      "repo": "https://github.com/ana/glossary",
+      "publicKey": "RWQBI0VniavN7wOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4",
+      "categories": [
+        "Translation"
+      ],
+      "versions": [
+        {
+          "version": "2.0.0",
+          "api": 1,
+          "tier": "restricted",
+          "name": "Glossary",
+          "summary": "Looks words up in an online dictionary",
+          "license": "MIT",
+          "authors": [
+            "Ana"
+          ],
+          "permissions": {
+            "network": {
+              "hosts": [
+                "api.example.com"
+              ],
+              "reason": "Looks words up"
+            }
+          },
+          "url": "https://marketplace.test/p/com.example.glossary/2.0.0.hikariplugin",
+          "sha256": "6b4905c6166a99f21b6afd90536bd126ea0b29eb4cdfc16738bec4e8b2960892",
+          "size": 426,
+          "published": "2026-11-01T10:00:00Z",
+          "readme": "https://marketplace.test/readme.md"
+        }
+      ]
+    }
+  ]
+}

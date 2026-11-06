@@ -133,13 +133,22 @@ public:
                 for (const Json &key : required->asArray())
                     if (!value.find(key.asString()))
                         return SchemaFailure{path, "missing \"" + key.asString() + "\""};
+            const Json *patterns = schema.find("patternProperties");
             const Json *additional = schema.find("additionalProperties");
             for (const Json::Member &member : value.asObject()) {
                 const std::string at = path + "/" + escapePointer(member.key);
+                bool matched = false;
+                if (patterns)
+                    for (const Json::Member &pattern : patterns->asObject())
+                        if (matches(pattern.key, member.key)) {
+                            matched = true;
+                            if (auto failure = check(pattern.value, member.value, at, depth + 1))
+                                return failure;
+                        }
                 if (const Json *property = properties ? properties->find(member.key) : nullptr) {
                     if (auto failure = check(*property, member.value, at, depth + 1))
                         return failure;
-                } else if (additional) {
+                } else if (additional && !matched) {
                     if (additional->isBool() && !additional->asBool())
                         return SchemaFailure{at, "unknown property"};
                     if (auto failure = check(*additional, member.value, at, depth + 1))
@@ -252,6 +261,15 @@ std::optional<std::string> checkNode(const Json &schema, const Json &defs, const
             for (const Json::Member &p : v.asObject())
                 if (auto problem = sub(p.value, at + "/" + escapePointer(p.key)))
                     return problem;
+        } else if (m.key == "patternProperties") {
+            if (!v.isObject())
+                return at + ": not an object";
+            for (const Json::Member &p : v.asObject()) {
+                if (!ecmaPattern(p.key))
+                    return at + "/" + escapePointer(p.key) + ": not a regular expression";
+                if (auto problem = sub(p.value, at + "/" + escapePointer(p.key)))
+                    return problem;
+            }
         } else if (m.key == "items" || m.key == "additionalProperties") {
             if (auto problem = sub(v, at))
                 return problem;

@@ -16,12 +16,16 @@ struct FileGrant {
     bool writable = false;
 };
 
+// Where the installed copy came from: a package file the user chose, or the marketplace.
+enum class Source { File, Marketplace };
+
 struct InstalledPlugin {
     std::string version;
     bool enabled = true;
     std::optional<minisign::PublicKey> key; // pinned at first signed install
     std::map<std::string, FileGrant> grants; // by the manifest's file request id
     api::Json settings = api::Json::object(); // values set, by the manifest's setting id
+    Source source = Source::File;
 };
 
 // plugins.json in the user folder, by plugin id.
