@@ -6638,6 +6638,10 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோ விவரங்கள்…</translation>
     </message>
     <message>
+        <source>Perspective tracking…</source>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7763,6 +7767,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: கண்காணிப்புத் தரவு சட்டகம் வாரியானது.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
         <source>Video details…</source>
@@ -15703,6 +15719,126 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>நேரங்கள் சட்டகங்களுக்குள் மையப்படுத்தப்படவில்லை: வீடியோ எதுவும் திறக்கப்படவில்லை</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>வரி %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>வரிகள் %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>After Effects அல்லது Blender இலிருந்து ஏற்றுமதி செய்த Power-Pin தரவை ஒட்டவும். பயன்படுத்து CC Power Pin இன் நான்கு மூலைகளைப் படிக்கும்.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>இது Power-Pin தரவு அல்ல: CC Power Pin மூலைகள் எதுவும் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>கண்காணிக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>தரவில் %n சட்டகம் உள்ளது, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும்.</numerusform>
+            <numerusform>தரவில் %n சட்டகங்கள் உள்ளன, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>சட்டகம் %1 இல் தேர்ந்தெடுத்த வரி எதுவும் காட்டப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>வரிகள் ஒன்றின் மேல் ஒன்று வருகின்றன, ஆனால் வரி %1 சட்டகம் %2 இல் காட்டப்படவில்லை. எல்லா வரிகளும் காட்டப்படும் சட்டகத்தைத் தேர்ந்தெடுக்கவும், அல்லது ஒவ்வொன்றாகப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>%1 × %2 இல் கண்காணிக்கப்பட்டது, ஆனால் வீடியோ %3 × %4. மூலைகள் வீடியோவுக்கு ஏற்ப அளவிடப்படும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%1 fps இல் %n சட்டகம், %2 × %3 இல் கண்காணிக்கப்பட்டது. தேர்வின் சட்டகங்கள் %4–%5 ஐ உள்ளடக்குகிறது.</numerusform>
+            <numerusform>%1 fps இல் %n சட்டகங்கள், %2 × %3 இல் கண்காணிக்கப்பட்டன. தேர்வின் சட்டகங்கள் %4–%5 ஐ உள்ளடக்குகின்றன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n சட்டகம். தேர்வின் சட்டகங்கள் %1–%2 ஐ உள்ளடக்குகிறது.</numerusform>
+            <numerusform>%n சட்டகங்கள். தேர்வின் சட்டகங்கள் %1–%2 ஐ உள்ளடக்குகின்றன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>ஒரு வரியைக் கண்காணிக்க முடியாது: அதன் உரையை அளக்க முடியவில்லை அல்லது தளம் அதை மடிக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Power-Pin தரவு</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>சார்ந்த சட்டகம்</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>%1 இல் · வீடியோ சட்டகம் %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>மூலப்புள்ளி</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>மையம்</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>%1 இல்லை</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>தக்கவை</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>முதலில் தட்டையான வரிகளைத் தளத்துக்குப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>கிளிப்புகளைத் தளத்துடன் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>வெளிக்கோடு மற்றும் நிழலை அளவிடு</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>பார்வைக்கோணக் கருவிக்கும் Derive Perspective Track-க்கும் தளம் ஒவ்வொரு வரியுடனும் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · சட்டகங்கள் %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>

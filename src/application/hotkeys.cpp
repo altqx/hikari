@@ -328,6 +328,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_CLOSE_TIMECODES", 5236},
         {"GLOBAL_VIDEO_DETAILS", 5237},
         {"GLOBAL_CONVERT_FOLDS_TO_GROUPS", 5239},
+        {"GLOBAL_PERSPECTIVE_TRACKING", 5240},
 };
 
 struct NameRow {
@@ -621,6 +622,7 @@ constexpr NameRow kNames[] = {
         {5236, "Close timecodes"},
         {5237, "Video details…"},
         {5239, "Convert Aegisub folds to line groups"},
+        {5240, "Perspective tracking…"},
 };
 
 struct DefaultRow {

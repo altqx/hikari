@@ -5298,14 +5298,7 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     const auto &video = m_video->session();
     if (video.state() == application::VideoSession::State::Ready && video.lastFrame())
         options.frameHeight = video.lastFrame()->height;
-    if (const ui::VisualToolsController *tools = activeViews().visualTools.get()) {
-        options.measure.port = tools->textMeasure();
-        options.measure.leased = [tools](const std::string &name) { return tools->fontLeased(name); };
-        options.measure.fallsBackToLeased = [tools](const std::string &font, bool bold, bool italic,
-                                                    std::u16string_view text) {
-            return tools->fallsBackToLeased(font, bold, italic, text);
-        };
-    }
+    options.measure = perspectiveMeasure();
     options.unscaled = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
         unscaled << unscaledValue(row, value, tag);
     };
@@ -5317,6 +5310,19 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+application::visual::perspective::TextMeasure Application::perspectiveMeasure() const
+{
+    application::visual::perspective::TextMeasure measure;
+    if (const ui::VisualToolsController *tools = activeViews().visualTools.get()) {
+        measure.port = tools->textMeasure();
+        measure.leased = [tools](const std::string &name) { return tools->fontLeased(name); };
+        measure.fallsBackToLeased = [tools](const std::string &font, bool bold, bool italic, std::u16string_view text) {
+            return tools->fallsBackToLeased(font, bold, italic, text);
+        };
+    }
+    return measure;
 }
 
 namespace {

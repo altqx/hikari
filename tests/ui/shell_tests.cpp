@@ -8759,6 +8759,75 @@ private slots:
         application->editor().discard();
     }
 
+    void perspectiveTrackingAppliesPowerPinData()
+    {
+        const QString path = dir.filePath(QStringLiteral("tracking.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.20,Default,,0,0,0,,{\\pos(320,180)}Sign\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto *line = session->document().lines()[0];
+        session->setSelection(application::Selection{line->id, {line->id}, line->id, {}});
+        auto *action = root->findChild<QObject *>(QStringLiteral("perspectiveTrackingMenuItem"))->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(!action->property("enabled").toBool());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(action->property("enabled").toBool(), 20000);
+        const int frames = application->perspectiveTrackingValues().value(QStringLiteral("frames")).toInt();
+        QVERIFY(frames > 1);
+        const auto values = application->resampleValues();
+        const int width = values.value(QStringLiteral("videoWidth")).toInt();
+        const int height = values.value(QStringLiteral("videoHeight")).toInt();
+        QString data = QStringLiteral("Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t25\n\tSource Width\t%1\n"
+                                      "\tSource Height\t%2\n\n").arg(width).arg(height);
+        const int corners[4][3] = {{2, 100, 100}, {3, 300, 100}, {4, 100, 200}, {5, 300, 200}};
+        for (const auto &c : corners) {
+            data += QStringLiteral("Effects\tCC Power Pin #1\tCC Power Pin-000%1\n\tFrame\tX pixels\tY pixels\n").arg(c[0]);
+            for (int i = 0; i < frames; ++i)
+                data += QStringLiteral("\t%1\t%2\t%3\n").arg(i).arg(c[1] + 4 * i).arg(c[2]);
+            data += QLatin1Char('\n');
+        }
+        data += QStringLiteral("End of Keyframe Data\n");
+        QGuiApplication::clipboard()->setText(data);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("perspectiveTrackingDialog"))) &&
+                    dialog->property("visible").toBool());
+        QQuickItem *text = dialogItem("perspectiveTrackingDialog", "perspectiveTrackingData");
+        QCOMPARE(text->property("text").toString(), data);
+        QQuickItem *apply = dialogItem("perspectiveTrackingDialog", "perspectiveTrackingApply");
+        QVERIFY(apply->property("enabled").toBool());
+        QVERIFY(dialogItem("perspectiveTrackingDialog", "perspectiveTrackingFitFlat")->property("checked").toBool());
+        text->setProperty("text", QStringLiteral("not tracking data"));
+        QTRY_VERIFY(!apply->property("enabled").toBool());
+        QVERIFY(dialogItem("perspectiveTrackingDialog", "perspectiveTrackingStatus")->property("text").toString().contains(QStringLiteral("Power-Pin")));
+        text->setProperty("text", data);
+        QTRY_VERIFY(apply->property("enabled").toBool());
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY2(!dialog->property("visible").toBool(),
+                     qPrintable(dialogItem("perspectiveTrackingDialog", "perspectiveTrackingStatus")->property("text").toString()));
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Perspective tracking"));
+        QCOMPARE(session->document().lines().size(), std::size_t(frames));
+        QCOMPARE(session->selection().selected.size(), std::size_t(frames));
+        QVERIFY(application->video().unloadVideo());
+        QTRY_VERIFY(!action->property("enabled").toBool());
+        application->editor().discard();
+    }
+
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();
@@ -8797,10 +8866,12 @@ private slots:
                                                                   QStringLiteral("BSD 3-Clause and ISC")}));
         QCOMPARE(sourceRows.value(1).toStringList(),
                  (QStringList{QStringLiteral("Aegisub, arch1t3cht's fork"), QStringLiteral("arch1t3cht and Aegisub contributors"),
-                              QStringLiteral("BSD 3-Clause")}));
+                              QStringLiteral("BSD 3-Clause and ISC")}));
         QCOMPARE(sourceRows.value(2).toStringList(),
                  (QStringList{QStringLiteral("Align to video, from arch1t3cht's fork"), QStringLiteral("2019 Charlie Jiang"),
                               QStringLiteral("BSD 3-Clause")}));
+        QCOMPARE(sourceRows.value(3).toStringList(), (QStringList{QStringLiteral("arch1t3cht's Aegisub scripts"),
+                                                                  QStringLiteral("arch1t3cht"), QStringLiteral("MIT")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("YTSubConverter")));
@@ -8830,7 +8901,7 @@ private slots:
         QVERIFY(list->property("contentHeight").toReal() > list->height());
         QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
         QVERIFY(sources);
-        QCOMPARE(sources->childItems().size(), 4);
+        QCOMPARE(sources->childItems().size(), 5);
         QVERIFY(sources->childItems().first()->height() > 0);
         QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
@@ -19580,7 +19651,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 285);
+        QCOMPARE(hotkeyRows().size(), 286);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

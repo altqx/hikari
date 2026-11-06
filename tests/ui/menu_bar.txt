@@ -89,6 +89,7 @@ Video > Shift by frames to video > Selected lines, start at video [GLOBAL_SHIFT_
 Video > Shift by frames to video > Selected lines, end at video [GLOBAL_SHIFT_FRAMES_TO_VIDEO_END]
 Video > Shift by frames to video > Following lines, start at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START]
 Video > Shift by frames to video > Following lines, end at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END]
+Video > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
 Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
 Video > Next frame [GLOBAL_NEXT_FRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
