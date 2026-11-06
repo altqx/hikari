@@ -96,6 +96,31 @@ TEST(Resample, StretchScalesWidthThroughFscxAndFontSizeByTheLargerFactor)
     EXPECT_EQ(text(plain, 1).substr(0, 10), "{\\fscx100\\");
 }
 
+TEST(Resample, StretchPutsTheExtraScaleOnTheAxisThatGrewMore)
+{
+    constexpr std::string_view line = "{\\fscx50\\fscy80}a{\\p1}m 0 0 l 4 4{\\p0}";
+    std::string script(kScript.substr(0, kScript.find("Dialogue:")));
+    script += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,";
+    script += line;
+    script += "\n";
+
+    EditSession taller{load(script)};
+    ASSERT_TRUE(changeResolution(taller, {640, 360}, {960, 1080}, true, {.stretch = true}));
+    const auto tallStyle = core::decodeStyles(taller.document()).front();
+    EXPECT_EQ(tallStyle.fontsize, u8"30");
+    EXPECT_EQ(tallStyle.scaleX, u8"100");
+    EXPECT_EQ(tallStyle.scaleY, u8"200");
+    EXPECT_EQ(text(taller.document(), 0), "{\\fscx50\\fscy160}a{\\p1}m 0 0 l 6 6{\\p0}");
+
+    EditSession wider{load(script)};
+    ASSERT_TRUE(changeResolution(wider, {640, 360}, {1920, 720}, true, {.stretch = true}));
+    const auto wideStyle = core::decodeStyles(wider.document()).front();
+    EXPECT_EQ(wideStyle.fontsize, u8"40");
+    EXPECT_EQ(wideStyle.scaleX, u8"150");
+    EXPECT_EQ(wideStyle.scaleY, u8"100");
+    EXPECT_EQ(text(wider.document(), 0), "{\\fscx75\\fscy80}a{\\p1}m 0 0 l 8 8{\\p0}");
+}
+
 TEST(Resample, UnscalableValuesAreKeptAndReported)
 {
     auto d = load(std::string(kScript.substr(0, kScript.find("Dialogue:"))) +
