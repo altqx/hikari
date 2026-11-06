@@ -143,6 +143,8 @@ public:
     // a video until replaced; nullopt goes back to the video's.
     void setFrameTimes(std::optional<AegisubFrameTimes> times);
     const std::optional<AegisubFrameTimes> &replacedFrameTimes() const { return m_frameTimes; }
+    // The video's own frame starts, replaced or not.
+    const std::vector<core::DocumentTime> &streamStarts() const { return m_streamStarts; }
     // Changes with each setFrameTimes.
     std::uint64_t frameTimesSerial() const { return m_frameTimesSerial; }
     // The replaced frame times, else the video's; nullopt without either.

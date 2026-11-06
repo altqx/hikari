@@ -4370,6 +4370,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Add fonts</source>
         <translation>Dodaj czcionki</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
@@ -11048,8 +11056,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Pozwól wtyczkom łączyć się z internetem</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: każde żądanie wtyczki jest odrzucane.</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: HikariSub odrzuca każde żądanie, które wtyczka wysyła przez niego. Wtyczka z pełnym zaufaniem nadal może łączyć się sama.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -11253,6 +11261,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai odrzucił logowanie.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com odrzucił logowanie. Zatwierdź prośbę HikariSub na wybranym koncie ChatGPT i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>Twój obszar roboczy ChatGPT wyłącza kody logowania. Zaloguj się zamiast tego przez przeglądarkę.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>Kod wygasł, zanim został wpisany.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>Logowanie przekroczyło limit czasu, czekając na przeglądarkę.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>Logowanie przez przeglądarkę jest niedostępne, gdy inna aplikacja używa portu 1455. Aby z niego skorzystać, zamknij logowanie tamtej aplikacji.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>Nie można połączyć się z %1. Sprawdź połączenie.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>W ~/.codex nie ma logowania ChatGPT do zaimportowania.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>Logowanie nie powiodło się. Spróbuj ponownie.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>Klucz odrzucony (%1)</translation>
     </message>
@@ -11345,12 +11389,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Klucz API Gemini</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>Klucz OpenRouter</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>Klucz API (opcjonalnie)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>Klucz API</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>Zaloguj się przez OpenRouter…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>Zalogowano (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>Wyloguj się</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>lub wklej klucz</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -11371,6 +11435,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Klucz z Google AI Studio. Vertex AI i logowanie przez Google Cloud nie są obsługiwane.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>Logowanie otwiera openrouter.ai w przeglądarce i tworzy klucz dla HikariSub. Trafia on do magazynu kluczy, tak jak wklejony klucz.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>Wylogowanie usuwa klucz z tego komputera. Pozostaje on w %1, dopóki go tam nie usuniesz.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>Twoich kluczach OpenRouter</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>Czekanie na openrouter.ai w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>Otwórz stronę ponownie</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -11497,6 +11581,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Zastąp klucz przyciskiem Edytuj</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>Zaloguj się ponownie przyciskiem Edytuj</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>Klucz w magazynie kluczy</translation>
     </message>
@@ -11535,6 +11623,114 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>Rola bez własnego modelu używa modelu czatu. Obraz wymienia tylko modele, które czytają obrazy.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>Agenci zewnętrzni</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>Nie znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>Znaleziono w PATH · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>Znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>Nie zalogowano</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>Zaloguj się przez ChatGPT…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>Importuj z ~/.codex (tylko odczyt)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>Importuj logowanie ChatGPT</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>Zaimportować logowanie ChatGPT z ~/.codex? HikariSub i Codex w terminalu będą wtedy dzielić jedno logowanie, a gdy jedno z nich je odświeży, drugie będzie musiało zalogować się ponownie.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Importuj</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub ma własne logowanie ChatGPT dla Codex, oddzielne od tego w ~/.codex, więc żadne nie wylogowuje drugiego.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Zalogowano jako %1</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex działa z tym logowaniem. Wylogowanie tutaj pozostawia Codex w terminalu zalogowany.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>Logowanie wygasło</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>Zaloguj się ponownie…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>ChatGPT zakończył sesję HikariSub, na przykład po zmianie hasła lub wylogowaniu na wszystkich urządzeniach. Zaloguj się ponownie, aby dalej używać Codex.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>Zaloguj się przez ChatGPT</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>Otwórz auth.openai.com, zaloguj się do ChatGPT i wpisz ten kod.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>Otwórz auth.openai.com</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com jest otwarta w przeglądarce. Zaloguj się tam; HikariSub skończy, gdy strona poinformuje, że można ją zamknąć.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>Czekanie na kod · wygaśnie za %1</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>Czekanie na przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>Nie możesz użyć kodu? Zaloguj się przez przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>Zaloguj się przez przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>Pobierz nowy kod</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -11616,6 +11812,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można odczytać pliku plugins.json w folderze użytkownika: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>Pobrany plik nie jest wtyczką z katalogu wtyczek: %1.</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>Pakiet jest podpisany kluczem, którego jego manifest nie podaje.</translation>
     </message>
@@ -11652,6 +11852,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>Katalog wtyczek wycofał tę wersję. Zainstaluj inną, aby ją włączyć.</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>Polecenie: %1</translation>
     </message>
@@ -11670,6 +11874,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub nie może odczytać pliku %1.</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>Wtyczka zmieniła się podczas pobierania aktualizacji.</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -11694,6 +11902,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Stopped</source>
         <translation>Zatrzymana</translation>
+    </message>
+    <message>
+        <source>From the marketplace</source>
+        <translation>Z katalogu wtyczek</translation>
     </message>
     <message>
         <source>OK</source>
@@ -11760,12 +11972,28 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wtyczka nie prosi o uprawnienia wykraczające poza aktywny plik napisów.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>Zainstaluj ją tylko, jeśli ufasz: %1. Dostanie pełny dostęp do komputera.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>Podpisane przez: %1 i sprawdzone w katalogu wtyczek.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>Zaufaj i zainstaluj</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>Zainstaluj z pełnym dostępem</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>Każda wtyczka może czytać i zmieniać dokument, nad którym pracujesz, jako jeden krok cofania.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -11794,6 +12022,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Plugin not uninstalled</source>
         <translation>Nie odinstalowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>Zainstalowane %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowane</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>Katalog wtyczek</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Sprawdź aktualizacje</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>Aktualizacje wtyczek</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -11832,12 +12080,160 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Pełne zaufanie</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>Wycofana</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 czeka na Ciebie</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>Nowe</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>dozwolone teraz</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>Prosi o więcej niż %1</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>Zmiany w wersji %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>Szukaj wtyczek</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>Wszystkie kategorie</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategoria</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>Wczytywanie katalogu wtyczek…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>Katalog wtyczek nie zawiera jeszcze żadnych wtyczek.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>Żadna wtyczka nie pasuje do wyszukiwania.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>Wtyczki z katalogu</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>Aktualizacja</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>Pobieranie…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>Zaktualizuj do %1</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>Wymaga HikariSub %1 lub nowszego. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>Nic ponad podstawy: bez sieci, folderów i innych dokumentów.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>Nowości w %1</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>Wymaga</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 lub nowszy</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>Licencja</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>Zaktualizowano</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>Źródło</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>„%1” jest w katalogu wtyczek, podpisana tym samym kluczem. Przenieś ją tam, aby dostawać aktualizacje.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>Przenieś do katalogu wtyczek</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>Katalog wtyczek wycofał wersję %1, więc HikariSub ją wyłączył: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>Zainstaluj %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1 prosi o więcej niż %2, więc czeka na Ciebie.</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>Przejrzyj…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>Przywróć wersję %1</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>Nie przywrócono wtyczki</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>Włączona</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>Nie zmieniono wtyczki</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -11902,6 +12298,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>Sprawdzaj aktualizacje wtyczek</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>Przy uruchomieniu i raz dziennie. HikariSub pobiera całą listę i nigdy nie wysyła, jakie masz wtyczki.</translation>
+    </message>
+    <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>Tylko dla wtyczek z katalogu, gdy skończą to, co robią. Aktualizacja, która prosi o więcej, czeka na Ciebie.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -11980,6 +12388,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>O wtyczce %1…</translation>
     </message>
     <message>
+        <source>%1 rolled back to %2</source>
+        <translation>Przywrócono %1 do wersji %2</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>Automatyczne aktualizacje pominą wersję, z której zrezygnowano.</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>Wyłączono: %1</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>Katalog wtyczek wycofał wersję %1: %2.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 nie jest zainstalowana.</translation>
     </message>
@@ -12014,6 +12446,38 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Details</source>
         <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>Lista katalogu wtyczek nie jest podpisana kluczem katalogu, więc HikariSub ją pominął.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>Podpis katalogu wtyczek dotyczy innego pliku, więc HikariSub pominął listę.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>Katalog wtyczek przysłał starszą listę niż ta, którą HikariSub już widział, więc HikariSub ją pominął.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>Nie można odczytać listy katalogu wtyczek: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub nie mógł połączyć się z katalogiem wtyczek: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>„%1” nie ma w katalogu wtyczek dla tej wersji HikariSub.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>Katalog wtyczek wskazuje plik spoza własnej witryny, więc HikariSub go nie pobierze.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>Nie można pobrać wtyczki: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>
@@ -13560,6 +14024,18 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” nie ma wartości true ani false.</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” nie jest listą.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>Okno %1 nie jest obiektem.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>Okno %1: “%2” ma nieprawidłowy typ.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -17964,7 +18440,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>Nie znaleziono pliku kodów czasowych: %1</translation>
+        <translation type="vanished">Nie znaleziono pliku kodów czasowych: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -17981,6 +18457,14 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Frame rate</source>
         <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>Liczba klatek na sekundę strumienia wideo</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>Czasy klatek z pliku</translation>
     </message>
     <message>
         <source>Length</source>

@@ -340,6 +340,191 @@ TEST_F(PluginInstaller, TheRegistryRoundTripsAndRefusesIdsThatAreNotIds)
     std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"..": {"version": "1.0.0", "enabled": true}}})";
     EXPECT_FALSE(loadRegistry(folders().registry));
     EXPECT_TRUE(loadRegistry(m_root / "missing.json"));
+
+    std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"com.example.hello": {"version": "1.0.0", "enabled": true, "source": "web"}}})";
+    EXPECT_FALSE(loadRegistry(folders().registry));
+}
+
+Listing listing(const Signer &author, std::string_view version)
+{
+    Listing out;
+    out.id = "com.example.hello";
+    out.publicKey = author.key;
+    ListedVersion listed;
+    listed.version = version;
+    out.versions.push_back(listed);
+    return out;
+}
+
+TEST_F(PluginInstaller, AMarketplacePackageInstallsUnderItsListedKey)
+{
+    const Listing l = listing(a, "1.0.0");
+    const auto r = installer.reviewListed(plugin("1.0.0", &a), l, l.versions.front());
+    ASSERT_TRUE(r) << r.error().detail;
+    EXPECT_EQ(r->signer, a.key);
+    EXPECT_EQ(r->source, Source::Marketplace);
+    EXPECT_FALSE(r->needsRetrust);
+    ASSERT_TRUE(installer.install(*r, false));
+    EXPECT_EQ(installed().key, a.key);
+    EXPECT_EQ(installed().source, Source::Marketplace);
+
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    EXPECT_EQ(installed().source, Source::File);
+}
+
+TEST_F(PluginInstaller, AMarketplacePackageMustBeTheListedOne)
+{
+    const auto refusal = [&](std::vector<PackageFile> files, const Listing &l) {
+        const auto r = installer.reviewListed(std::move(files), l, l.versions.front());
+        EXPECT_FALSE(r);
+        return r ? Refusal::Package : r.error().kind;
+    };
+    EXPECT_EQ(refusal(plugin("1.0.0", &a), listing(b, "1.0.0")), Refusal::Listing);
+    EXPECT_EQ(refusal(plugin("1.0.0"), listing(a, "1.0.0")), Refusal::Listing);
+    EXPECT_EQ(refusal(plugin("1.0.1", &a), listing(a, "1.0.0")), Refusal::Listing);
+    EXPECT_EQ(refusal(plugin("1.0.0", &a, R"(, "tier": "unrestricted")"), listing(a, "1.0.0")), Refusal::Listing);
+    EXPECT_FALSE(fs::exists(folder()));
+}
+
+TEST_F(PluginInstaller, TheMarketplaceCannotMoveAPinnedKeyOrDowngrade)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    const Listing otherKey = listing(b, "1.2.0");
+    const auto moved = installer.reviewListed(plugin("1.2.0", &b), otherKey, otherKey.versions.front());
+    ASSERT_FALSE(moved);
+    EXPECT_EQ(moved.error().kind, Refusal::Listing);
+
+    const Listing older = listing(a, "1.0.0");
+    const auto downgrade = installer.reviewListed(plugin("1.0.0", &a), older, older.versions.front());
+    ASSERT_FALSE(downgrade);
+    EXPECT_EQ(downgrade.error().kind, Refusal::Listing);
+    EXPECT_EQ(installed().version, "1.1.0");
+}
+
+TEST_F(PluginInstaller, AnExplicitDowngradeFromTheListingInstalls)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    const Listing older = listing(a, "1.0.0");
+    const auto downgrade = installer.reviewListed(plugin("1.0.0", &a), older, older.versions.front(), true);
+    ASSERT_TRUE(downgrade) << downgrade.error().detail;
+    EXPECT_EQ(downgrade->change, Change::Downgrade);
+    ASSERT_TRUE(installer.install(*downgrade, false));
+    EXPECT_EQ(installed().version, "1.0.0");
+}
+
+TEST_F(PluginInstaller, TheUpdateStateRoundTrips)
+{
+    Registry registry;
+    InstalledPlugin entry{"1.4.0", false, a.key};
+    entry.autoUpdate = false;
+    entry.skip = "1.5.0";
+    entry.previous = "1.3.2";
+    entry.held = "1.6.0";
+    entry.revoked = Revoked{"crashed", "1.3.2"};
+    registry["com.example.hello"] = entry;
+    fs::create_directories(folders().registry.parent_path());
+    ASSERT_TRUE(saveRegistry(folders().registry, registry));
+    const InstalledPlugin loaded = loadRegistry(folders().registry)->at("com.example.hello");
+    EXPECT_FALSE(loaded.autoUpdate);
+    EXPECT_EQ(loaded.skip, "1.5.0");
+    EXPECT_EQ(loaded.previous, "1.3.2");
+    EXPECT_EQ(loaded.held, "1.6.0");
+    EXPECT_EQ(loaded.revoked, (Revoked{"crashed", "1.3.2"}));
+
+    registry["com.example.hello"] = {"1.4.0"};
+    ASSERT_TRUE(saveRegistry(folders().registry, registry));
+    EXPECT_EQ(read(folders().registry).find("autoUpdate"), std::string::npos);
+    EXPECT_TRUE(loadRegistry(folders().registry)->at("com.example.hello").autoUpdate);
+
+    for (const char *bad : {R"("autoUpdate": "no")", R"("skip": 1)", R"("revoked": {"reason": "x"})"}) {
+        std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"com.example.hello": {"version": "1.0.0", "enabled": true, )"
+                                          << bad << "}}}";
+        EXPECT_FALSE(loadRegistry(folders().registry)) << bad;
+    }
+}
+
+TEST_F(PluginInstaller, AnUpdateKeepsTheVersionItReplacesForRollBack)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", &a), &a), false));
+    EXPECT_TRUE(installed().previous.empty());
+    EXPECT_FALSE(fs::exists(folders().plugins / ".previous"));
+    ASSERT_FALSE(installer.rollBack("com.example.hello", true));
+
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    EXPECT_EQ(installed().previous, "1.0.0");
+    EXPECT_EQ(read(folders().plugins / ".previous/com.example.hello/main.lua"), "return '1.0.0'");
+
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    EXPECT_EQ(installed().previous, "1.0.0") << "a reinstall keeps the older copy";
+    EXPECT_EQ(read(folders().plugins / ".previous/com.example.hello/main.lua"), "return '1.0.0'");
+
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.2.0", &a), &a), false));
+    EXPECT_EQ(installed().previous, "1.1.0");
+    EXPECT_EQ(read(folders().plugins / ".previous/com.example.hello/main.lua"), "return '1.1.0'");
+}
+
+TEST_F(PluginInstaller, RollBackSwapsOneStepAndSkipsTheVersionLeft)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", &a), &a), false));
+    touch(folders().data / "com.example.hello/notes.txt");
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    touch(folders().cache / "com.example.hello/index.bin");
+
+    const auto left = installer.rollBack("com.example.hello", true);
+    ASSERT_TRUE(left) << left.error();
+    EXPECT_EQ(*left, "1.1.0");
+    EXPECT_EQ(read(folder() / "main.lua"), "return '1.0.0'");
+    EXPECT_EQ(read(folders().plugins / ".previous/com.example.hello/main.lua"), "return '1.1.0'");
+    EXPECT_TRUE(fs::exists(folders().data / "com.example.hello/notes.txt"));
+    EXPECT_FALSE(fs::exists(folders().cache / "com.example.hello"));
+    EXPECT_EQ(installed().version, "1.0.0");
+    EXPECT_EQ(installed().previous, "1.1.0");
+    EXPECT_EQ(installed().skip, "1.1.0");
+    EXPECT_EQ(installed().key, a.key);
+
+    const auto undone = installer.rollBack("com.example.hello", false);
+    ASSERT_TRUE(undone) << undone.error();
+    EXPECT_EQ(read(folder() / "main.lua"), "return '1.1.0'");
+    EXPECT_EQ(installed().version, "1.1.0");
+    EXPECT_EQ(installed().previous, "1.0.0");
+    EXPECT_TRUE(installed().skip.empty());
+}
+
+TEST_F(PluginInstaller, InstallingTheSkippedOrHeldVersionClearsItAndUninstallDropsTheKeptCopy)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", &a), &a), false));
+    ASSERT_TRUE(installer.edit("com.example.hello", [](InstalledPlugin &p) {
+        p.skip = "1.1.0";
+        p.held = "1.1.0";
+        p.autoUpdate = false;
+    }));
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    EXPECT_TRUE(installed().skip.empty());
+    EXPECT_TRUE(installed().held.empty());
+    EXPECT_FALSE(installed().autoUpdate);
+
+    ASSERT_TRUE(installer.uninstall("com.example.hello", false));
+    EXPECT_FALSE(fs::exists(folders().plugins / ".previous/com.example.hello"));
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    EXPECT_TRUE(installed().previous.empty());
+    EXPECT_TRUE(installed().autoUpdate);
+}
+
+TEST_F(PluginInstaller, InstallingOverARevokedCopyTurnsItBackOn)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", &a), &a), false));
+    ASSERT_TRUE(installer.edit("com.example.hello", [](InstalledPlugin &p) {
+        p.enabled = false;
+        p.revoked = Revoked{"crashed", "1.0.0"};
+    }));
+    const Listing older = listing(a, "1.0.0");
+    ASSERT_TRUE(installer.install(*installer.reviewListed(plugin("1.0.0", &a), older, older.versions.front(), true), false));
+    EXPECT_TRUE(installed().enabled);
+    EXPECT_FALSE(installed().revoked);
+
+    ASSERT_TRUE(installer.setEnabled("com.example.hello", false));
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.2.0", &a), &a), false));
+    EXPECT_FALSE(installed().enabled) << "a plugin you turned off stays off";
 }
 
 }

@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Search"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
 import QtQuick.Templates as T
 import Hikari.Ui
@@ -904,7 +903,7 @@ Item {
     }
     readonly property bool resultsVisible: resultsShown && !resultsClosed && opened
 
-    Dialogs.FolderDialog {
+    FolderChooser {
         id: folderDialog
         objectName: "findFolderDialog"
         title: qsTr("Choose folder")

@@ -292,9 +292,13 @@ void NodeEffectsController::setSessionSource(SessionSource source)
     m_sessionSource = std::move(source);
 }
 
-void NodeEffectsController::setDocumentKey(DocumentKeySource key)
+void NodeEffectsController::shareTrustWith(TemplateEditorController *editor)
 {
-    m_documentKey = std::move(key);
+    m_trustOwner = editor;
+    connect(editor, &TemplateEditorController::documentTrusted, this, [this] {
+        emit changed();
+        schedulePreview();
+    });
 }
 
 void NodeEffectsController::setLibraryFolder(std::filesystem::path folder)
@@ -905,43 +909,20 @@ bool NodeEffectsController::hasLua() const
     return flat && std::ranges::any_of(flat->nodes, [](const GraphNode &n) { return n.type == kLua; });
 }
 
-std::string NodeEffectsController::luaState() const
-{
-    std::string out;
-    if (!m_graph)
-        return out;
-    if (const auto flat = application::flattenGraph(*m_graph))
-        for (const GraphNode &n : flat->nodes)
-            if (n.type == kLua)
-                out += n.id + '\x1e' + application::nodeField(n, "code").dump() + '\x1f';
-    return out;
-}
-
 bool NodeEffectsController::trusted() const
 {
-    if (!hasLua())
-        return true;
-    const auto it = m_documentKey ? m_trusted.find(m_documentKey()) : m_trusted.end();
-    return it != m_trusted.end() && it->second.contains(luaState());
+    return !hasLua() || (m_trustOwner && m_trustOwner->trusted());
 }
 
 void NodeEffectsController::trustDocument()
 {
-    if (!m_documentKey || trusted())
-        return;
-    m_trusted[m_documentKey()].insert(luaState());
-    emit documentTrusted(m_documentKey());
-    emit changed();
-    schedulePreview();
+    if (m_trustOwner && !trusted())
+        m_trustOwner->trustDocument();
 }
 
-void NodeEffectsController::trustedElsewhere(const DocumentKey &document)
+bool NodeEffectsController::editKeepingTrust(const std::function<bool()> &edit)
 {
-    if (!m_documentKey || m_documentKey() != document || !hasLua() || trusted())
-        return;
-    m_trusted[document].insert(luaState());
-    emit changed();
-    schedulePreview();
+    return m_trustOwner ? m_trustOwner->editKeepingTrust(edit) : edit();
 }
 
 bool NodeEffectsController::canApply() const
@@ -1036,7 +1017,7 @@ void NodeEffectsController::commit()
     auto *s = session();
     if (!s || !m_current || !m_graph)
         return;
-    if (application::editGraph(*s, *m_current, *m_graph))
+    if (editKeepingTrust([&] { return application::editGraph(*s, *m_current, *m_graph).has_value(); }))
         emit documentEdited();
     m_seenRevision = 0;
     refresh();
@@ -1272,7 +1253,7 @@ bool NodeEffectsController::runGraphCommand(const std::function<bool(application
 {
     commit();
     auto *s = session();
-    if (!s || !m_editable || !command(*s))
+    if (!s || !m_editable || !editKeepingTrust([&] { return command(*s); }))
         return false;
     emit documentEdited();
     m_seenRevision = 0;

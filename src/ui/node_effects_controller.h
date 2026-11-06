@@ -6,6 +6,7 @@
 #include "hikari/application/node_graph.h"
 
 #include <QObject>
+#include <QPointer>
 #include <QStringList>
 #include <QTimer>
 #include <QVariantList>
@@ -23,6 +24,8 @@
 #include <vector>
 
 namespace hikari::ui {
+
+class TemplateEditorController;
 
 // The node-effects mode of one shell window: the current Document's graph Lines, the canvas's
 // graph, its preview on one karaoke Line, and Apply.
@@ -73,22 +76,18 @@ class NodeEffectsController : public QObject {
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
-    // MUST KILL: DocumentKey is TemplateEditorController's anonymous pair (DocumentId, load generation)
-    using DocumentKey = std::pair<std::uint64_t, std::uint64_t>;
-    using DocumentKeySource = std::function<DocumentKey()>;
 
     explicit NodeEffectsController(QObject *parent = nullptr);
     ~NodeEffectsController() override;
 
     void setSessionSource(SessionSource source);
-    void setDocumentKey(DocumentKeySource key);
+    // The Template editor holds the one Lua trust choice for the active Document.
+    void shareTrustWith(TemplateEditorController *editor);
     void setLibraryFolder(std::filesystem::path folder);
     void setEditable(bool editable);
     void setMeasure(application::TextMeasurePort *measure) { m_measure = measure; }
     void setDelays(int previewMs, int commitMs);
     void refresh();
-    // The Document's Lua is trusted from elsewhere (the Template editor): one choice covers both.
-    void trustedElsewhere(const DocumentKey &document);
 
     // The Document as Apply would leave it for the current source Line, or nothing.
     std::optional<core::Document> videoDocument(const core::Document &doc) const;
@@ -186,8 +185,6 @@ signals:
     void libraryChanged();
     void documentEdited();
     void videoChanged();
-    // The user trusted the Document's Lua here; the Template editor takes the same choice.
-    void documentTrusted(std::pair<std::uint64_t, std::uint64_t> document);
 
 private:
     application::EditSession *session() const;
@@ -202,12 +199,12 @@ private:
     void schedulePreview();
     void runPreview();
     application::NodeEffectOptions options() const;
-    std::string luaState() const;
+    bool editKeepingTrust(const std::function<bool()> &edit);
     void addRecent(const QString &type);
     QString luaName() const;
 
     SessionSource m_sessionSource;
-    DocumentKeySource m_documentKey;
+    QPointer<TemplateEditorController> m_trustOwner;
     QtTextMeasurePort m_qtMeasure;
     application::TextMeasurePort *m_measure = &m_qtMeasure;
     std::filesystem::path m_libraryFolder;
@@ -238,7 +235,6 @@ private:
     bool m_previewKept = false;
     double m_previewSeconds = 0;
     application::NodeEffectCache m_cache;
-    std::map<DocumentKey, std::set<std::string>> m_trusted;
     QVariantMap m_lastApply;
 };
 

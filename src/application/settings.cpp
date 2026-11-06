@@ -302,6 +302,8 @@ const std::vector<SettingDefinition> &definitions()
         // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        {"plugins.checkUpdates", "", Bool, Profile, Mapped, false, true},
+        {"plugins.autoUpdate", "", Bool, Profile, Mapped, false, true},
         // Without a "v"; empty: none.
         {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
         {"shiftTimes.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -342,6 +344,7 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},

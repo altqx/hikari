@@ -1,5 +1,6 @@
 #include "node_catalogue_text.h"
 #include "node_effects_controller.h"
+#include "template_editor_controller.h"
 
 #include "hikari/application/edit_session.h"
 #include "hikari/application/node_catalogue.h"
@@ -71,7 +72,6 @@ private slots:
         m_session.emplace(fixture());
         m_controller = std::make_unique<NodeEffectsController>();
         m_controller->setSessionSource([this] { return &*m_session; });
-        m_controller->setDocumentKey([] { return NodeEffectsController::DocumentKey{1, 1}; });
         m_controller->setEditable(true);
         m_controller->setDelays(0, 60000);
         m_controller->setShown(true);
@@ -194,27 +194,30 @@ private slots:
         QCOMPARE(historyNames(*m_session).back(), std::string("Delete graph"));
     }
 
-    void luaWaitsForTrustSharedWithTheTemplateEditor()
+    void luaWaitsForTheTemplateEditorsTrustChoice()
     {
+        TemplateEditorController editor;
+        editor.setSessionSource([this] { return &*m_session; });
+        controller().shareTrustWith(&editor);
         QVERIFY(controller().newGraph());
-        controller().addNode(QStringLiteral("lua.code"), 300, 200);
+        QVERIFY(controller().trusted());
+        const QString lua = controller().addNode(QStringLiteral("lua.code"), 300, 200);
         controller().commit();
         QVERIFY(controller().hasLua());
         QVERIFY(!controller().trusted());
+        QVERIFY(!editor.trusted());
         QVERIFY(!controller().canApply());
-        QSignalSpy trusted(&controller(), &NodeEffectsController::documentTrusted);
-        controller().trustDocument();
-        QCOMPARE(trusted.size(), 1);
-        QVERIFY(controller().trusted());
 
-        NodeEffectsController other;
-        other.setSessionSource([this] { return &*m_session; });
-        other.setDocumentKey([] { return NodeEffectsController::DocumentKey{1, 1}; });
-        other.refresh();
-        other.setCurrent(controller().current());
-        QVERIFY(!other.trusted());
-        other.trustedElsewhere({1, 1});
-        QVERIFY(other.trusted());
+        QSignalSpy changed(&controller(), &NodeEffectsController::changed);
+        controller().trustDocument();
+        QVERIFY(editor.trusted());
+        QVERIFY(controller().trusted());
+        QVERIFY(!changed.isEmpty());
+
+        controller().setField(lua, QStringLiteral("code"), QStringLiteral("out = 2"));
+        controller().commit();
+        QVERIFY(controller().trusted());
+        QVERIFY(editor.trusted());
     }
 
     void groupingAndEnteringAGroup()

@@ -4292,6 +4292,14 @@ Failed to copy %2 fonts.</source>
         <source>Add fonts</source>
         <translation>เพิ่มแบบอักษร</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
@@ -10914,8 +10922,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: ปฏิเสธคำขอทุกรายการของปลั๊กอิน</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: HikariSub ปฏิเสธคำขอทุกรายการที่ปลั๊กอินส่งผ่าน HikariSub แต่ปลั๊กอินแบบเชื่อถือเต็มที่ยังเชื่อมต่อเองได้</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -11113,6 +11121,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai ปฏิเสธการลงชื่อเข้าใช้</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com ปฏิเสธการลงชื่อเข้าใช้ อนุมัติคำขอของ HikariSub ด้วยบัญชี ChatGPT ที่ต้องการ แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>พื้นที่ทำงาน ChatGPT ของคุณปิดรหัสลงชื่อเข้าใช้ไว้ ให้ลงชื่อเข้าใช้ผ่านเบราว์เซอร์แทน</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>รหัสหมดอายุก่อนที่จะป้อน</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>การลงชื่อเข้าใช้หมดเวลาระหว่างรอเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>ลงชื่อเข้าใช้ผ่านเบราว์เซอร์ไม่ได้ขณะที่แอปอื่นใช้พอร์ต 1455 อยู่ ปิดการลงชื่อเข้าใช้ของแอปนั้นเพื่อใช้งาน</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>ติดต่อ %1 ไม่ได้ ตรวจสอบการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex ไม่มีการลงชื่อเข้าใช้ ChatGPT ให้นำเข้า</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>ลงชื่อเข้าใช้ไม่สำเร็จ ลองอีกครั้ง</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>คีย์ถูกปฏิเสธ (%1)</translation>
     </message>
@@ -11205,12 +11249,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>คีย์ API ของ Gemini</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>คีย์ OpenRouter</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>คีย์ API (ไม่บังคับ)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>คีย์ API</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย OpenRouter…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>ลงชื่อเข้าใช้แล้ว (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>ออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>หรือวางคีย์</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -11231,6 +11295,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>คีย์จาก Google AI Studio ไม่รองรับ Vertex AI และการลงชื่อเข้าใช้ Google Cloud</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>การลงชื่อเข้าใช้จะเปิด openrouter.ai ในเบราว์เซอร์และสร้างคีย์สำหรับ HikariSub คีย์นี้จะเก็บในพวงกุญแจเหมือนคีย์ที่วาง</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>การออกจากระบบจะลบคีย์ออกจากคอมพิวเตอร์นี้ คีย์ยังอยู่ใน %1 จนกว่าคุณจะลบที่นั่น</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>คีย์ OpenRouter ของคุณ</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>กำลังรอ openrouter.ai ในเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>เปิดหน้าอีกครั้ง</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -11353,6 +11437,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แทนที่คีย์ด้วย แก้ไข</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>ลงชื่อเข้าใช้อีกครั้งด้วย แก้ไข</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>มีคีย์ในพวงกุญแจ</translation>
     </message>
@@ -11391,6 +11479,114 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>บทบาทที่ไม่มีโมเดลของตัวเองจะใช้โมเดลแชต การมองเห็นแสดงเฉพาะโมเดลที่อ่านภาพได้</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>เอเจนต์ภายนอก</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>ไม่พบใน PATH</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>พบใน PATH · %1</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>พบใน PATH</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>ยังไม่ได้ลงชื่อเข้าใช้</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย ChatGPT…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>นำเข้าจาก ~/.codex (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>นำเข้าการลงชื่อเข้าใช้ ChatGPT</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>นำเข้าการลงชื่อเข้าใช้ ChatGPT จาก ~/.codex หรือไม่ HikariSub กับ Codex ในเทอร์มินัลจะใช้การลงชื่อเข้าใช้เดียวกัน และเมื่อฝั่งหนึ่งรีเฟรช อีกฝั่งต้องลงชื่อเข้าใช้ใหม่</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>นำเข้า</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub เก็บการลงชื่อเข้าใช้ ChatGPT สำหรับ Codex ของตัวเอง แยกจากของ ~/.codex จึงไม่มีฝั่งใดทำให้อีกฝั่งออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>ลงชื่อเข้าใช้เป็น %1</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex ทำงานด้วยการลงชื่อเข้าใช้นี้ การออกจากระบบที่นี่ไม่ทำให้ Codex ในเทอร์มินัลออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>การลงชื่อเข้าใช้หมดอายุ</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>ลงชื่อเข้าใช้อีกครั้ง…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>ChatGPT สิ้นสุดเซสชันของ HikariSub แล้ว เช่น หลังเปลี่ยนรหัสผ่านหรือออกจากระบบทุกอุปกรณ์ ลงชื่อเข้าใช้อีกครั้งเพื่อใช้ Codex ต่อ</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ลงชื่อเข้าใช้ด้วย ChatGPT</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>เปิด auth.openai.com ลงชื่อเข้าใช้ ChatGPT แล้วป้อนรหัสนี้</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>เปิด auth.openai.com</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com เปิดอยู่ในเบราว์เซอร์ ลงชื่อเข้าใช้ที่นั่น HikariSub จะทำงานเสร็จเมื่อหน้าเว็บบอกว่าปิดได้</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>กำลังรอรหัส · หมดอายุใน %1</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>กำลังรอเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>ใช้รหัสไม่ได้ใช่ไหม ลงชื่อเข้าใช้ผ่านเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>ลงชื่อเข้าใช้ผ่านเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>รับรหัสใหม่</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -11472,6 +11668,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ่าน plugins.json ในโฟลเดอร์ผู้ใช้ไม่ได้: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ใช่ปลั๊กอินที่มาร์เก็ตเพลสระบุไว้: %1</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>แพ็กเกจลงนามด้วยคีย์ที่แมนิเฟสต์ไม่ได้ระบุ</translation>
     </message>
@@ -11508,6 +11708,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชันนี้แล้ว ติดตั้งเวอร์ชันอื่นเพื่อเปิดใช้</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>คำสั่ง: %1</translation>
     </message>
@@ -11526,6 +11730,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>ปลั๊กอินเปลี่ยนไประหว่างดาวน์โหลดอัปเดต</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -11550,6 +11758,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Stopped</source>
         <translation>หยุดแล้ว</translation>
+    </message>
+    <message>
+        <source>From the marketplace</source>
+        <translation>จากมาร์เก็ตเพลส</translation>
     </message>
     <message>
         <source>OK</source>
@@ -11616,12 +11828,28 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ปลั๊กอินนี้ไม่ขอสิทธิ์ใดนอกเหนือจากไฟล์คำบรรยายที่ใช้งานอยู่</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>ติดตั้งเฉพาะเมื่อคุณเชื่อถือ %1 ปลั๊กอินนี้จะเข้าถึงคอมพิวเตอร์ของคุณได้เต็มที่</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>ลงนามโดย %1 และตรวจสอบกับมาร์เก็ตเพลสแล้ว</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>เชื่อถือและติดตั้ง</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>ติดตั้งพร้อมสิทธิ์เต็ม</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>ปลั๊กอินทุกตัวอ่านและแก้ไขเอกสารที่คุณทำงานอยู่ได้ โดยเลิกทำได้ในขั้นเดียว</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -11650,6 +11878,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Plugin not uninstalled</source>
         <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>ติดตั้งแล้ว %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>มาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>ตรวจหาอัปเดต</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>อัปเดตปลั๊กอิน</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -11688,12 +11936,160 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เชื่อถือเต็มที่</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>ถูกเพิกถอน</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 รอคุณอยู่</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>ใหม่</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>อนุญาตอยู่แล้ว</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่า %1</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>การเปลี่ยนแปลงใน %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>ค้นหาปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>ทุกหมวดหมู่</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>หมวดหมู่</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>กำลังโหลดมาร์เก็ตเพลส…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>มาร์เก็ตเพลสยังไม่มีปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>ไม่มีปลั๊กอินที่ตรงกับการค้นหา</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>ปลั๊กอินในมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>อัปเดต</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>กำลังดาวน์โหลด…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>อัปเดตเป็น %1</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>ต้องใช้ HikariSub %1 ขึ้นไป อัปเดต HikariSub เพื่อติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>ไม่มีสิทธิ์เกินพื้นฐาน: ไม่ใช้เครือข่าย ไม่ใช้โฟลเดอร์ ไม่ใช้เอกสารอื่น</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>มีอะไรใหม่ใน %1</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>ต้องใช้</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 ขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>สัญญาอนุญาต</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>อัปเดตเมื่อ</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>ซอร์ส</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1” อยู่ในมาร์เก็ตเพลส ลงนามด้วยคีย์เดียวกัน ย้ายไปที่นั่นเพื่อรับอัปเดต</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไม่ใช่ตอนนี้</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>ย้ายไปมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชัน %1 HikariSub จึงปิดไว้: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1 ขอมากกว่า %2 จึงรอให้คุณตัดสินใจ</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>ตรวจทาน…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>ย้อนกลับเป็น %1</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>ไม่ได้ย้อนปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>เปิด</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>ไม่ได้เปลี่ยนปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>ติดตั้งอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -11758,6 +12154,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install from file…</source>
         <translation>ติดตั้งจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>ตรวจหาอัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>ตอนเริ่มและวันละครั้ง HikariSub ดาวน์โหลดทั้งรายการ และไม่ส่งข้อมูลว่าคุณมีปลั๊กอินใดบ้าง</translation>
+    </message>
+    <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>เฉพาะปลั๊กอินจากมาร์เก็ตเพลส เมื่อทำงานที่ค้างอยู่เสร็จ อัปเดตที่ขอมากกว่าเดิมจะรอคุณ</translation>
     </message>
     <message>
         <source>Close</source>
@@ -11832,6 +12240,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เกี่ยวกับ %1…</translation>
     </message>
     <message>
+        <source>%1 rolled back to %2</source>
+        <translation>ย้อน %1 กลับเป็น %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>การอัปเดตอัตโนมัติจะข้ามเวอร์ชันที่คุณย้อนออกมา</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>เลิกทำ</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>ปิด %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชัน %1: %2</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>ไม่ได้ติดตั้ง %1</translation>
     </message>
@@ -11866,6 +12298,38 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Details</source>
         <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>รายการของมาร์เก็ตเพลสไม่ได้ลงนามด้วยคีย์ของมาร์เก็ตเพลส HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>ลายเซ็นของมาร์เก็ตเพลสเป็นของไฟล์อื่น HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>มาร์เก็ตเพลสส่งรายการที่เก่ากว่ารายการที่ HikariSub เคยเห็นแล้ว HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>อ่านรายการของมาร์เก็ตเพลสไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub เชื่อมต่อมาร์เก็ตเพลสไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1” ไม่มีในมาร์เก็ตเพลสสำหรับ HikariSub รุ่นนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>มาร์เก็ตเพลสระบุไฟล์ดาวน์โหลดที่อยู่นอกเว็บไซต์ของตัวเอง HikariSub จึงจะไม่ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>ดาวน์โหลดปลั๊กอินไม่ได้: %1</translation>
     </message>
     <message>
         <source>%1 asks for a folder to read and write: %2</source>
@@ -13386,6 +13850,18 @@ because it was edited.</source>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” ไม่ใช่ true หรือ false</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” ไม่ใช่รายการ</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>หน้าต่าง %1 ไม่ใช่ออบเจ็กต์</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>หน้าต่าง %1: “%2” มีชนิดข้อมูลไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -17722,7 +18198,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>ไม่พบไฟล์ไทม์โค้ด: %1</translation>
+        <translation type="vanished">ไม่พบไฟล์ไทม์โค้ด: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -17739,6 +18215,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>อัตราเฟรมของสตรีมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>เวลาเฟรมจาก</translation>
     </message>
     <message>
         <source>Length</source>

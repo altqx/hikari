@@ -33,9 +33,11 @@ DialogWindow {
     property int resolveRequest: -1
     property string resolvedFor: ""
 
-    readonly property var shown: {
-        const term = search.text.trim().toLowerCase()
-        return term.length === 0 ? listed : listed.filter(f => f.toLowerCase().indexOf(term) >= 0)
+    readonly property alias shown: matches.matches
+    FontFamilyFilter {
+        id: matches
+        families: picker.listed
+        text: search.text
     }
     readonly property int familyIndex: indexIn(shown, family)
     readonly property string unlisted: {
@@ -124,13 +126,8 @@ DialogWindow {
         showFamily()
     }
     function pickTyped() {
-        const term = search.text.trim().toLowerCase()
-        if (shown.length === 0 || term.length === 0)
-            return
-        let at = indexIn(shown, term)
-        if (at < 0)
-            at = shown.findIndex(f => f.toLowerCase().startsWith(term))
-        pick(shown[Math.max(0, at)])
+        if (matches.count > 0 && search.text.trim().length > 0)
+            pick(matches.at(0))
     }
     function step(by) {
         if (shown.length === 0)

@@ -1,5 +1,7 @@
 #include "hikari/app/application.h"
 
+#include "docking.h"
+
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
@@ -62,6 +64,7 @@
 #include <cstring>
 #include <QCollator>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QLocale>
 #include <QDir>
 #include <QUuid>
@@ -624,8 +627,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 return made ? out : nullptr;
             });
     });
+    m_luaHelper = luaHelperPath(options.luaHelper);
     m_automation = std::make_unique<AutomationShell>(
-        AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir),
+        AutomationShell::Paths{m_luaHelper, automationPath(options.automationDir),
                                options.userAutomationDir},
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, *m_video,
@@ -754,6 +758,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_aiSettings = std::make_unique<AiSettings>(*m_ai);
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
+    m_pluginMarketplace = std::make_unique<PluginMarketplace>(
+        *m_pluginManager, m_settings.get(), options.marketplace,
+        options.plugins.registry.isEmpty() ? QString()
+                                           : QFileInfo(options.plugins.registry).dir().filePath(QStringLiteral("marketplace.json")),
+        options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.marketplaceNetwork);
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
@@ -764,6 +773,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
             [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
@@ -1810,14 +1821,9 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)
 {
-    using DocumentKey = ui::NodeEffectsController::DocumentKey;
     const auto active = [this, &v] { return &v == &activeViews(); };
     v.nodeEffects = std::make_unique<ui::NodeEffectsController>();
     auto *effects = v.nodeEffects.get();
-    effects->setDocumentKey([this, shellWindow]() -> DocumentKey {
-        const auto tab = m_workspace.currentTab(shellWindow);
-        return tab ? DocumentKey{tab->value, m_files->generation(*tab)} : DocumentKey{};
-    });
     effects->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
     effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
     connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
@@ -1825,14 +1831,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
         if (active() && (m_videoShowsTemplate || effects->videoPreview()))
             showVideoSubtitles();
     });
-    const auto shareTrust = [this](DocumentKey document) {
-        for (auto *views : allViews()) {
-            views->templateEditor->trustedElsewhere(document);
-            views->nodeEffects->trustedElsewhere(document);
-        }
-    };
-    connect(effects, &ui::NodeEffectsController::documentTrusted, this, shareTrust);
-    connect(v.templateEditor.get(), &ui::TemplateEditorController::documentTrusted, this, shareTrust);
+    effects->shareTrustWith(v.templateEditor.get());
 }
 
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
@@ -1936,6 +1935,14 @@ Application::~Application()
     m_port->waitIdle();
     if (m_localisation)
         QGuiApplication::setFont(m_startFont);
+}
+
+application::LuaNodePort &Application::luaNodes()
+{
+    if (!m_luaNodes)
+        m_luaNodes = std::make_unique<backends::LuaNodeHelper>(
+            backends::LuaNodeHelper::Options{m_luaHelper, 10'000, backends::luaNodeProfile(m_luaHelper)});
+    return *m_luaNodes;
 }
 
 namespace {
@@ -6015,16 +6022,106 @@ std::vector<ui::WorkspaceLayoutController *> Application::layouts()
     return out;
 }
 
+namespace {
+
+void notePlace(const QWindow &window, application::SessionWindow &place)
+{
+    if (!window.isVisible())
+        return;
+    place.maximized = window.windowStates().testFlag(Qt::WindowMaximized);
+    if (const QRect g = window.geometry(); window.windowStates() == Qt::WindowNoState && !g.isEmpty())
+        place.geometry = application::SessionGeometry{g.x(), g.y(), g.width(), g.height()};
+}
+
+}
+
+void Application::shellWindowLoaded(QQuickWindow *window)
+{
+    const auto id = shellWindowOf(window);
+    if (!id)
+        return;
+    if (*id == 0)
+        m_firstWindow = window;
+    const auto keepPlace = [this, window, id = *id] { notePlace(*window, m_windowPlaces[id]); };
+    for (const auto changed : {&QWindow::xChanged, &QWindow::yChanged, &QWindow::widthChanged, &QWindow::heightChanged})
+        connect(window, changed, this, keepPlace);
+    connect(window, &QWindow::windowStateChanged, this, keepPlace);
+    keepPlace();
+}
+
+QQuickWindow *Application::shellQuickWindow(int shellWindow) const
+{
+    if (shellWindow == 0)
+        return m_firstWindow;
+    const auto found = m_shellWindows.find(shellWindow);
+    return found == m_shellWindows.end() ? nullptr : found->second.window.data();
+}
+
+std::vector<int> Application::sessionWindows() const
+{
+    std::vector<int> out{0};
+    for (const auto &[id, shell] : m_shellWindows)
+        if (shell.window && !shell.closing)
+            out.push_back(id);
+    for (const auto tab : m_workspace.allTabs())
+        if (const auto window = m_workspace.window(tab); window && std::ranges::find(out, *window) == out.end())
+            out.push_back(*window);
+    return out;
+}
+
+application::SessionWindow Application::sessionWindow(int shellWindow)
+{
+    auto &place = m_windowPlaces[shellWindow];
+    if (const QQuickWindow *window = shellQuickWindow(shellWindow))
+        notePlace(*window, place);
+    return place;
+}
+
+void Application::placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved)
+{
+    if (window.windowStates() != Qt::WindowNoState)
+        window.setWindowStates(Qt::WindowNoState);
+    if (const auto &g = saved.geometry) {
+        const QRect client(g->x, g->y, g->width, g->height);
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+            window.resize(client.size());
+        } else if (QScreen *primary = QGuiApplication::primaryScreen()) {
+            QList<QRect> available;
+            for (QScreen *screen : QGuiApplication::screens())
+                available << screen->availableGeometry();
+            const QMargins margins = window.frameMargins();
+            const QRect fitted = ui::fitOnScreens(client.marginsAdded(margins), margins.top() + ui::dockchrome::kHeaderHeight,
+                                                  available, primary->availableGeometry());
+            window.setGeometry(fitted.marginsRemoved(margins));
+        }
+    }
+    if (saved.maximized)
+        window.setWindowStates(Qt::WindowMaximized);
+}
+
+bool Application::saveLayoutForQuit()
+{
+    const int active = m_workspace.activeWindow();
+    if (const auto target = m_workspace.editingTarget(); active != 0 && target)
+        if (const auto arrangement = layoutOf(active).tabArrangement(target->value))
+            return m_workspaceLayout->saveForQuit(*arrangement);
+    return m_workspaceLayout->saveForQuit();
+}
+
 void Application::shellWindowClosed(int shellWindow)
 {
     const auto found = m_shellWindows.find(shellWindow);
     if (found == m_shellWindows.end())
         return;
+    if (found->second.closing)
+        return;
+    m_windowPlaces.erase(shellWindow);
     const QPointer<QQuickWindow> window = found->second.window;
     if (!window) {
         m_shellWindows.erase(found);
         return;
     }
+    found->second.closing = true;
     closeShellWindowDocuments(shellWindow);
     connect(window, &QObject::destroyed, this, [this, shellWindow] {
         QMetaObject::invokeMethod(this, [this, shellWindow] { m_shellWindows.erase(shellWindow); }, Qt::QueuedConnection);

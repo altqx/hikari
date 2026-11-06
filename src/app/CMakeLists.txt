@@ -25,7 +25,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     api_host.cpp include/hikari/app/api_host.h
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
     ai_settings.cpp include/hikari/app/ai_settings.h
-    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    plugin_manager.cpp include/hikari/app/plugin_manager.h
+    plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
@@ -43,7 +44,8 @@ target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER=
     HIKARI_VERSION="${HIKARI_VERSION}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage)
 if(HIKARI_AI_LOCAL_SIDECAR)
-    target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_SIDECAR="${HIKARI_AI_SIDECAR_FILE}")
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_RUNTIME="${HIKARI_AI_RUNTIME_FILE}"
+        HIKARI_AI_LOCAL_BUNDLE="${HIKARI_AI_BUNDLE_FILE}")
     add_dependencies(hikari_composition hikari_ai_sidecar)
 endif()
 option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)

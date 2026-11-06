@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Styles"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -649,7 +648,7 @@ DialogWindow {
         if (!editing)
             return
         const v = editor.values()
-        const browsed = fontField.browsedFont()
+        const browsed = fontField.browsedFamily
         if (browsed.length)
             v.fontname = browsed
         styles.renderPreview(v, Math.max(1, preview.width), Math.max(1, preview.height), previewText.text,
@@ -1521,7 +1520,7 @@ DialogWindow {
                     function load(m) {
                         const show = (key, text) => manager.isMixed(key) ? "" : String(text)
                         nameField.text = manager.multi ? "" : m.name
-                        fontField.editText = show("fontname", m.fontname)
+                        fontField.text = show("fontname", m.fontname)
                         sizeField.text = show("fontsize", m.fontsize)
                         boldBox.checked = m.bold && !manager.isMixed("bold")
                         italicBox.checked = m.italic && !manager.isMixed("italic")
@@ -1558,7 +1557,7 @@ DialogWindow {
                             if (alignments.itemAt(i).checked)
                                 alignment = String([7, 8, 9, 4, 5, 6, 1, 2, 3][i])
                         const v = {
-                            name: manager.multi ? manager.values.name : nameField.text, fontname: fontField.editText,
+                            name: manager.multi ? manager.values.name : nameField.text, fontname: fontField.text,
                             fontsize: sizeField.text,
                             primary: colours.itemAt(0).colour, secondary: colours.itemAt(1).colour,
                             outline: colours.itemAt(2).colour, back: colours.itemAt(3).colour,
@@ -1618,52 +1617,23 @@ DialogWindow {
                     SectionTitle { text: qsTr("Font") }
                     FieldLabel { text: qsTr("Family"); key: "fontname"; Layout.columnSpan: 3 }
                     FieldLabel { text: qsTr("Size"); key: "fontsize" }
-                    ComboBox {
+                    FontFamilyBox {
                         id: fontField
                         objectName: "styleFont"
-                        editable: true
+                        rowName: "styleFontRow"
+                        families: fontCatalogBar.fonts
                         Layout.columnSpan: 3
                         Layout.fillWidth: true
                         Accessible.name: qsTr("Font")
                         font.italic: manager.isMixed("fontname")
-                        onEditTextChanged: manager.updatePreview()
-                        Connections {
-                            target: fontField.contentItem
-                            function onTextEdited() { manager.edited("fontname") }
-                        }
-                        onActivated: manager.edited("fontname")
-                        onHighlightedIndexChanged: if (popup.visible) manager.updatePreview()
-                        // The box's text field draws no placeholder of its own.
-                        Label {
-                            objectName: "styleFontMixed"
-                            z: 2
-                            visible: manager.isMixed("fontname") && fontField.editText.length === 0
-                            x: fontField.contentItem.x + fontField.contentItem.leftPadding
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: qsTr("Multiple values")
-                            font: fontField.font
-                            color: fontField.palette.placeholderText
-                        }
-                        function browsedFont() {
-                            return popup.visible && highlightedIndex >= 0 && model && highlightedIndex < model.length
-                                   ? model[highlightedIndex] : ""
-                        }
-                        Connections {
-                            target: fontField.popup
-                            function onVisibleChanged() { manager.updatePreview() }
-                        }
+                        placeholderText: manager.isMixed("fontname") ? qsTr("Multiple values") : ""
+                        onTextChanged: manager.updatePreview()
+                        onTextEdited: manager.edited("fontname")
+                        onPicked: manager.edited("fontname")
+                        onBrowsedFamilyChanged: manager.updatePreview()
                         Connections {
                             target: manager.catalogs
                             function onFontsChanged() { FontFaces.forget() }
-                        }
-                        delegate: FontFamilyRow {
-                            required property string modelData
-                            required property int index
-                            objectName: "styleFontRow"
-                            family: modelData
-                            width: ListView.view ? ListView.view.width : implicitWidth
-                            highlighted: fontField.highlightedIndex === index
-                            hoverEnabled: fontField.hoverEnabled
                         }
                     }
                     StyleField { id: sizeField; objectName: "styleSize"; key: "fontsize"; Accessible.name: qsTr("Size") }
@@ -1677,13 +1647,7 @@ DialogWindow {
                         Layout.fillWidth: true
                         Layout.preferredWidth: 120
                         catalogs: manager.catalogs
-                        fontName: fontField.editText
-                        // A new model clears the ComboBox's editText.
-                        onListMade: {
-                            const text = fontField.editText
-                            fontField.model = fonts
-                            fontField.editText = text
-                        }
+                        fontName: fontField.text
                     }
                     Rectangle {
                         objectName: "styleEmphasis"
@@ -2019,7 +1983,7 @@ DialogWindow {
             onClicked: newCatalogPopover.create()
         }
     }
-    FileDialog {
+    FileChooser {
         id: loadDialog
         property bool toStore: false
         property Item anchor: null

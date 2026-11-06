@@ -20,9 +20,9 @@ Resolution scriptResolution(const core::Document &document);
 // A value that could not be scaled; `row` is 1-based.
 using ResampleWarning = std::function<void(int row, const std::u16string &value, const std::u16string &tag)>;
 
-// Scales Style margins, font size, outline, shadow, spacing (ScaleX when stretching) and each
-// non-comment Line's margins, positioning, clip, border, shadow and font tags and drawings. Edits
-// the translation when there is one.
+// Scales Style margins, font size, outline, shadow, spacing (and, when stretching, ScaleX or ScaleY of the
+// axis that grew more) and each non-comment Line's margins, positioning, clip, border, shadow and font tags
+// and drawings. Edits the translation when there is one.
 void resizeSubtitles(core::Document &document, float xScale, float yScale, bool stretch,
                      const ResampleWarning &warn = {});
 

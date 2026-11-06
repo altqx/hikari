@@ -1,7 +1,7 @@
 hikari-ai, the HikariSub AI sidecar: third-party notices
 
-hikari-ai is HikariSub's own code (GPL-3.0-or-later), built into one executable with Bun. Its source and
-build are in https://github.com/altqx/hikari under src/ai-sidecar, so it can be rebuilt and relinked.
+hikari-ai is HikariSub's own code (GPL-3.0-or-later), run by its own build of Bun. Its source and build
+are in https://github.com/altqx/hikari under src/ai-sidecar, so it can be rebuilt and relinked.
 
 ==============================================================================
 Bun (MIT)

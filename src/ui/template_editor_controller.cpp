@@ -2,6 +2,7 @@
 
 #include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/node_graph.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/editor_syntax.h"
 
@@ -1008,6 +1009,24 @@ std::string TemplateEditorController::headOf(const core::Document &doc)
     return out;
 }
 
+namespace {
+
+void addGraphLua(const core::LineRecord &line, std::set<std::string> &out)
+{
+    const auto graph = application::parseGraph(std::string(line.text.begin(), line.text.end()));
+    if (!graph)
+        return;
+    const auto flat = application::flattenGraph(*graph);
+    if (!flat)
+        return;
+    for (const application::GraphNode &n : flat->nodes)
+        if (n.type == "lua.code")
+            out.insert(application::nodeField(n, "code").dump() + '\x1f' + application::nodeField(n, "inputs").dump() +
+                       '\x1f' + application::nodeField(n, "outputs").dump());
+}
+
+}
+
 TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s,
                                                                        bool withDraft)
 {
@@ -1024,15 +1043,25 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
             const auto m = application::macroLineOf(l);
             whole = m.style.find('!') != std::string::npos || m.actor.find('!') != std::string::npos;
         }
+        if (application::graphNameOf(l))
+            addGraphLua(l, out.graphLua);
     }, withDraft);
-    forEachRunLine(s, [&](const core::LineRecord &l) {
-        if (application::isKaraokeLine(l))
-            out.fields.insert(fieldOf(l, whole));
-    }, withDraft);
+    // MUST KILL: karaoke fields join the trust state only when the Document has templates
+    if (!out.templates.empty())
+        forEachRunLine(s, [&](const core::LineRecord &l) {
+            if (application::isKaraokeLine(l))
+                out.fields.insert(fieldOf(l, whole));
+        }, withDraft);
     // Templater Lua reads the Styles (orgline.styleref) and Script Info (meta) too.
     if (whole)
         out.head = headOf(s.document());
     return out;
+}
+
+bool TemplateEditorController::covers(const TrustState &chosen, const TrustState &now)
+{
+    return chosen.templates == now.templates && chosen.head == now.head &&
+           std::ranges::includes(chosen.fields, now.fields) && std::ranges::includes(chosen.graphLua, now.graphLua);
 }
 
 bool TemplateEditorController::trustedIn(const application::EditSession &s, const DocumentKey &document,
@@ -1042,10 +1071,7 @@ bool TemplateEditorController::trustedIn(const application::EditSession &s, cons
     if (it == m_trusted.end())
         return false;
     const TrustState now = stateOf(s, withDraft);
-    return std::ranges::any_of(it->second, [&](const TrustState &chosen) {
-        return chosen.templates == now.templates && chosen.head == now.head &&
-               std::ranges::includes(chosen.fields, now.fields);
-    });
+    return std::ranges::any_of(it->second, [&](const TrustState &chosen) { return covers(chosen, now); });
 }
 
 void TemplateEditorController::trust()
@@ -1058,10 +1084,7 @@ void TemplateEditorController::trust(const application::EditSession &s, const Do
 {
     auto &states = m_trusted[document];
     TrustState now = stateOf(s);
-    if (std::ranges::none_of(states, [&](const TrustState &chosen) {
-            return chosen.templates == now.templates && chosen.head == now.head &&
-               std::ranges::includes(chosen.fields, now.fields);
-        }))
+    if (std::ranges::none_of(states, [&](const TrustState &chosen) { return covers(chosen, now); }))
         states.push_back(std::move(now));
 }
 
@@ -1069,6 +1092,17 @@ bool TemplateEditorController::trusted() const
 {
     const auto *s = session();
     return s && trustedIn(*s, documentKey());
+}
+
+bool TemplateEditorController::editKeepingTrust(const std::function<bool()> &edit)
+{
+    const bool chosen = trusted();
+    if (!edit())
+        return false;
+    if (chosen)
+        trust();
+    emit changed();
+    return true;
 }
 
 void TemplateEditorController::trustDocument()
@@ -1080,21 +1114,7 @@ void TemplateEditorController::trustDocument()
     emit changed();
     updateSource();
     schedulePreview();
-    emit documentTrusted(documentKey());
-}
-
-void TemplateEditorController::trustedElsewhere(const DocumentKey &document)
-{
-    auto *s = m_sessionOf ? m_sessionOf(document) : nullptr;
-    if (!s || trustedIn(*s, document))
-        return;
-    trust(*s, document);
-    if (document != documentKey())
-        return;
-    m_previewSnapshotKey.clear();
-    emit changed();
-    updateSource();
-    schedulePreview();
+    emit documentTrusted();
 }
 
 int TemplateEditorController::changedNumber() const

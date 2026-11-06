@@ -69,7 +69,6 @@ Amended by [ADR 0029](0029-the-ai-sidecar-runs-in-an-os-sandbox.md): the sidecar
 | sidecar → Qt | `session/update` | text, tool calls, plans, usage and cost |
 | sidecar → Qt | `session/request_permission` | Manual mode and the always-prompt list |
 | sidecar → Qt | `_hikari/api.call`, `_hikari/api.subscribe` | Hikari's tools through HA1 |
-| sidecar → Qt | `_hikari/secret.store` | refreshed OAuth tokens |
 
 - **Streaming.** The sidecar coalesces text deltas into at most one notification per frame interval.
 - **Cancel.** Turns are cancelled with `session/cancel`; any other request with a `$/cancel_request` notification that carries its id. A cancelled request still gets exactly one response, with the cancel error code.
@@ -103,7 +102,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 - **Codex: `codex app-server`** over stdio JSON-RPC, using the user's installed `codex`.
   - The types are generated from `codex app-server generate-json-schema` for a pinned minimum version, and features are detected rather than assumed. OpenAI labels app-server experimental.
   - The sandbox is read-only, and every `commandExecution` and `fileChange` approval is declined.
-  - Sign-in stays with `codex login` unless the owner decides otherwise in AI15.
+  - HikariSub keeps its own ChatGPT sign-in for Codex (AI6), apart from `codex login`'s, and hands it to `codex app-server` (AI15). It never writes `~/.codex`.
 - **Gemini CLI and custom agents: ACP** (`gemini --acp`, a registry entry or a user command). Permission requests for anything but Hikari's tools are declined. Hikari never reuses Gemini CLI's OAuth.
 - **Every agent edits only through Hikari's tools,** into the review, under the thread's mode.
 - **Hikari never downloads or installs a vendor CLI.** It finds the CLI on `PATH` or at a path the user sets.
@@ -218,3 +217,5 @@ Tests use mock servers only. No test calls a real provider or a real vendor CLI,
 **The C++ reference.** #637 and #641 merge on green and stay as the reference until the TypeScript port passes the same cases; the port PR then deletes them. AI19's paused C++ branch isn't merged, and its cases move to the port.
 
 Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): the AI reaches the window's Project only through Hikari API folder grants. The sidecar's working directory stays its private folder, and Claude's and Codex's built-in file tools stay off.
+
+Amended by [ADR 0031](0031-the-ai-sidecar-updates-on-its-own.md): the sidecar updates on its own from the `ai-channel` release, as a runtime and a bundle. An app runs any sidecar with its protocol major and a required API no newer than its own, so the one-commit rule, the refusal of a sidecar from another build and the download from the app's own release no longer apply.

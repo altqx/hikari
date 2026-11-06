@@ -197,10 +197,6 @@ void Application::offerAssociations(application::DocumentId document)
     auto associations = application::resolveMediaAssociations(
         session->document(), path,
         [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, kWindows);
-    if (associations.timecodes && !associations.timecodes->resolved)
-        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open timecodes file"),
-                      QCoreApplication::translate("HikariSub.Video", "Timecodes file not found: %1")
-                          .arg(QDir::toNativeSeparators(qs(associations.timecodes->authored))));
     for (auto *reference : {&associations.video, &associations.audio, &associations.keyframes, &associations.timecodes})
         if (*reference && (*reference)->resolved)
             (*reference)->resolved = QDir::toNativeSeparators(qs(*(*reference)->resolved)).toStdString();
@@ -257,6 +253,9 @@ void Application::showAssociationOffer()
                 break;
             case application::MediaKind::Keyframes:
                 prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: %1").arg(path);
+                break;
+            case application::MediaKind::Timecodes:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Timecodes: %1").arg(path);
                 break;
             }
         }

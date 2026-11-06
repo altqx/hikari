@@ -38,7 +38,9 @@ Rectangle {
                 focusPolicy: Qt.StrongFocus
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                readonly property string iconRole: modelData.iconRole || ""
                 implicitWidth: Math.ceil(Math.max(label.implicitWidth, boldText.implicitWidth)) + 20
+                               + (iconRole.length > 0 ? glyph.size + content.spacing : 0)
                 implicitHeight: label.implicitHeight + 10
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: text
@@ -78,17 +80,33 @@ Rectangle {
                     text: choice.text
                     font.bold: true
                 }
-                contentItem: Label {
-                    id: label
-                    textFormat: Text.PlainText
-                    text: choice.text
-                    font.bold: choice.checked
-                    color: choice.enabled ? Theme.text : Theme.disabled
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    wrapMode: group.wrapsLabels ? Text.Wrap : Text.NoWrap
-                    maximumLineCount: group.wrapsLabels ? 2 : undefined
-                    elide: Text.ElideRight
+                contentItem: Item {
+                    RowLayout {
+                        id: content
+                        anchors.centerIn: parent
+                        width: Math.min(implicitWidth, parent.width)
+                        spacing: 6
+                        Icon {
+                            id: glyph
+                            visible: choice.iconRole.length > 0
+                            iconRole: choice.iconRole
+                            enabled: choice.enabled
+                        }
+                        Label {
+                            id: label
+                            textFormat: Text.PlainText
+                            text: choice.text
+                            font.bold: choice.checked
+                            color: choice.enabled ? Theme.text : Theme.disabled
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            wrapMode: group.wrapsLabels ? Text.Wrap : Text.NoWrap
+                            maximumLineCount: group.wrapsLabels ? 2 : undefined
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            Layout.maximumWidth: implicitWidth
+                        }
+                    }
                 }
             }
         }

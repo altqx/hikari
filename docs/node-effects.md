@@ -129,11 +129,52 @@ A change to one branch therefore re-runs only the Emits that read it, and only f
 
 ## Lua
 
-The `lua.code` node is the only place Lua runs. A graph that holds one writes nothing until the user trusts the Document's Lua, the same prompt templates holding Lua use. The engine then calls a `LuaNodePort` once per karaoke Line with every row the node needs.
+The `lua.code` node is the only place Lua runs (NE1b, [#753](https://github.com/altqx/hikari/issues/753)).
 
-Its inputs and outputs are Number, Text, Colour, Alpha, Time, Point, Bool or Tags.
+**Trust.** A graph that holds a Lua node writes nothing until the user trusts the Document's Lua. Until then the run's problem is "runs only once you trust this Document's Lua".
 
-The port's helper-process implementation is not in NE1. The automation helper has no command for it yet, so until it does, a trusted Lua node reports that it has no Lua helper to run it.
+- Templates and graphs share one choice per open Document, made in the Template editor or the node-effects mode.
+- The choice covers each Lua node's code and ports as they were when the user chose:
+  - edits made in the node-effects mode keep it (`TemplateEditorController::editKeepingTrust`), and so does an Undo of them;
+  - a Lua node added, or its code or ports changed any other way (a paste, an import, the Line editor), asks again;
+  - graph edits that don't touch Lua never ask, and a graph without a Lua node never asks;
+  - a reload from the file asks again.
+
+**Batches.** The engine calls a `LuaNodePort` once per karaoke Line, with every row the node needs. A run with a Lua node uses one thread. `backends::LuaNodeHelper` is the port: it runs the batch in a `hikari-lua-helper` of its own, with the automation helper's `RunNodes` command.
+
+**Ports.** Inputs and outputs are Number, Text, Colour, Alpha, Time, Point, Bool or Tags. In Lua:
+
+- Number, Time and Alpha are numbers;
+- Text and Tags are strings, tags without braces;
+- Bool is a boolean;
+- Colour is a string `#RRGGBB`;
+- Point is a table `{x = …, y = …}`.
+
+An output that is unset, or of another type, fails the batch and names the output.
+
+**The environment.** The same graph and Lines always give the same output, so the code gets only:
+
+- the base functions `assert`, `error`, `ipairs`, `next`, `pairs`, `pcall`, `rawequal`, `rawget`, `rawset`, `select`, `tonumber`, `tostring`, `type`, `unpack`, `getmetatable`, `setmetatable` and `xpcall`, with `_G` and `_VERSION`;
+- `string` without `dump`;
+- `table` and `bit`;
+- `math` without `random` and `randomseed`.
+
+It has no `io`, `os`, `require`, `load`, `loadstring`, `dofile`, `debug`, `ffi`, `jit`, `coroutine` or `aegisub`. Randomness comes only from the seeded Random node. Code is loaded as text; precompiled bytecode is refused.
+
+**Fresh globals per row.** Each row runs in new globals that hold only that environment and the row's inputs. Nothing a row sets, not even a change to `string`, reaches the next row or Line. A counter across units comes from `stagger` or unit info, not from Lua.
+
+**Limits.** A Line's batch may take 10 seconds. Past that, or when the helper crashes:
+
+- the helper is ended;
+- the node's problem says it "took longer than 10 seconds and was stopped", or "the Lua helper stopped";
+- the rest of the run stops and it writes nothing;
+- the next run starts a new helper.
+
+A Lua error fails only its batch, with Lua's message (`code:3: …`), and the helper stays.
+
+**The sandbox.** The helper starts under `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) with the profile `HikariSub.Lua.Nodes`: the helper's folder to read and execute, nothing else, and network `none`. Where the sandbox can't apply, Lua nodes still run, and the host logs what is missing under `hikari.nodes.sandbox`.
+
+**Protocol.** `RunNodes` is command 5 of the Lua helper protocol, version 9 ([`lua_protocol.h`](../src/backends/include/hikari/backends/lua_protocol.h)). It needs no `Load`. Version 9 changes nothing else. A version 8 helper is refused at the handshake, so an application and a helper from different releases never run a script together.
 
 ## The graph library
 

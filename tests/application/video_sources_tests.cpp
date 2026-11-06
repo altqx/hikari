@@ -635,6 +635,17 @@ TEST(VideoDetails, DescribeTheOpenVideo)
     media.timeline.pts = {0, 41, 83, 125};
     session.open("/v/b.mkv");
     EXPECT_FALSE(videoDetails(session)->variableRate);
+    EXPECT_FALSE(videoDetails(session)->frameTimesReplaced);
+    session.setFrameTimes(AegisubFrameTimes::fromFrameStarts({0, 100, 150, 400}));
+    details = videoDetails(session);
+    EXPECT_TRUE(details->frameTimesReplaced);
+    EXPECT_EQ(details->fps, (Ratio{25, 1}));
+    EXPECT_FALSE(details->variableRate);
+    EXPECT_EQ(details->frames, 4);
+    EXPECT_EQ(details->lastFrameMs, 400);
+    session.setFrameTimes(std::nullopt);
+    EXPECT_FALSE(videoDetails(session)->frameTimesReplaced);
+    EXPECT_EQ(videoDetails(session)->lastFrameMs, 125);
     session.close();
     EXPECT_FALSE(videoDetails(session));
 }

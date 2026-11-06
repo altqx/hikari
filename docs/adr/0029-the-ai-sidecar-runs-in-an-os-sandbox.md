@@ -35,7 +35,7 @@ It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
   - For a provider without a key, Qt drops that header.
   - Qt masks the key as `[key]` in everything it relays back.
 - **Qt opens the keychain,** as before. No key travels over the link, in either direction.
-- **OAuth tokens** ([AI6 #434](https://github.com/altqx/hikari/issues/434)) are keys under this rule. AI6 settles how a token refreshes without the sidecar holding it.
+- **OAuth tokens** ([AI6 #434](https://github.com/altqx/hikari/issues/434)) are keys under this rule. Qt runs the sign-ins and refreshes a token itself, and writes it straight to the keychain; the sidecar never sees it.
 - **Agent CLIs** use their own login. Claude keeps the user's `claude` login. Codex's Hikari session ([AI15 #443](https://github.com/altqx/hikari/issues/443)) goes in from Qt and never passes through the sidecar.
 
 ## Network

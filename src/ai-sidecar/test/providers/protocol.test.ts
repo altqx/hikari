@@ -23,7 +23,7 @@ beforeEach(async () => {
         player.take(message);
     }, () => {});
     feed = (message) => peer.feed(new TextEncoder().encode(JSON.stringify(message) + "\n"));
-    new Sidecar(peer, { buildId: "test", hikariApiVersion: 1 });
+    new Sidecar(peer, { buildId: "test", hikariApiVersion: 1, version: "0.0.0-dev", packages: {} });
     feed({ jsonrpc: "2.0", id: 0, method: Method.initialize, params: { protocolVersion: kProtocolVersion, hikariApiVersion: 1, buildId: "test" } });
     feed({ jsonrpc: "2.0", id: 1, method: Method.providersSet, params: { providers: [{ id: "or", preset: "openrouter", wire: "chat-completions", baseUrl: mock.base }] } });
     await waitFor(() => sent.some((m) => m.id === 1));

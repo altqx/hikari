@@ -43,6 +43,8 @@ void HelperHost::start()
     if (m_state != State::Idle)
         return;
     m_state = State::Starting;
+    if (m_prepare)
+        m_prepare(m_process);
     m_process.start(m_program, m_arguments);
     QTimer::singleShot(m_limits.handshakeMs, this, [this] {
         if (m_state == State::Starting)

@@ -154,4 +154,16 @@ std::expected<Verified, Refusal> verify(std::span<const std::byte> message, std:
     return Verified{*key, std::string(comment), prehashed};
 }
 
+std::string sha256Hex(std::span<const std::byte> bytes)
+{
+    std::array<unsigned char, crypto_hash_sha256_BYTES> digest{};
+    if (!ready())
+        return {};
+    crypto_hash_sha256(digest.data(), reinterpret_cast<const unsigned char *>(bytes.data()), bytes.size());
+    std::string hex(digest.size() * 2 + 1, '\0');
+    sodium_bin2hex(hex.data(), hex.size(), digest.data(), digest.size());
+    hex.pop_back();
+    return hex;
+}
+
 }
