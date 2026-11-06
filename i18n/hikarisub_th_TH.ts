@@ -9949,8 +9949,8 @@ Failed to copy %2 fonts.</source>
         <translation>อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: ปฏิเสธคำขอทุกรายการของปลั๊กอิน</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: HikariSub ปฏิเสธคำขอทุกรายการที่ปลั๊กอินส่งผ่าน HikariSub แต่ปลั๊กอินแบบเชื่อถือเต็มที่ยังเชื่อมต่อเองได้</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -10735,6 +10735,10 @@ Failed to copy %2 fonts.</source>
         <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชันนี้แล้ว ติดตั้งเวอร์ชันอื่นเพื่อเปิดใช้</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>คำสั่ง: %1</translation>
     </message>
@@ -10753,6 +10757,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>ปลั๊กอินเปลี่ยนไประหว่างดาวน์โหลดอัปเดต</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -10955,6 +10963,34 @@ Failed to copy %2 fonts.</source>
         <translation>เชื่อถือเต็มที่</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>ถูกเพิกถอน</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 รอคุณอยู่</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>ใหม่</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>อนุญาตอยู่แล้ว</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่า %1</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>การเปลี่ยนแปลงใน %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
         <source>Search plugins</source>
         <translation>ค้นหาปลั๊กอิน</translation>
     </message>
@@ -10985,10 +11021,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Marketplace plugins</source>
         <translation>ปลั๊กอินในมาร์เก็ตเพลส</translation>
-    </message>
-    <message>
-        <source>Unrestricted</source>
-        <translation>ไม่จำกัดสิทธิ์</translation>
     </message>
     <message>
         <source>Update</source>
@@ -11051,12 +11083,40 @@ Failed to copy %2 fonts.</source>
         <translation>ย้ายไปมาร์เก็ตเพลส</translation>
     </message>
     <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชัน %1 HikariSub จึงปิดไว้: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1 ขอมากกว่า %2 จึงรอให้คุณตัดสินใจ</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>ตรวจทาน…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>ย้อนกลับเป็น %1</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>ไม่ได้ย้อนปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>เปิด</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>ไม่ได้เปลี่ยนปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>ติดตั้งอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -11131,6 +11191,10 @@ Failed to copy %2 fonts.</source>
         <translation>ตอนเริ่มและวันละครั้ง HikariSub ดาวน์โหลดทั้งรายการ และไม่ส่งข้อมูลว่าคุณมีปลั๊กอินใดบ้าง</translation>
     </message>
     <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>เฉพาะปลั๊กอินจากมาร์เก็ตเพลส เมื่อทำงานที่ค้างอยู่เสร็จ อัปเดตที่ขอมากกว่าเดิมจะรอคุณ</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
@@ -11201,6 +11265,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>About %1…</source>
         <translation>เกี่ยวกับ %1…</translation>
+    </message>
+    <message>
+        <source>%1 rolled back to %2</source>
+        <translation>ย้อน %1 กลับเป็น %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>การอัปเดตอัตโนมัติจะข้ามเวอร์ชันที่คุณย้อนออกมา</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>เลิกทำ</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>ปิด %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชัน %1: %2</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
     </message>
     <message>
         <source>%1 isn’t installed.</source>

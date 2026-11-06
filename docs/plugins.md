@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)), and browsing and installing from the marketplace (PL6, [#418](https://github.com/altqx/hikari/issues/418)). Automatic plugin updates follow.
+A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)), and the marketplace with its automatic updates, roll back and revocation (PL6, [#418](https://github.com/altqx/hikari/issues/418)).
 
 ## The package
 
@@ -64,8 +64,16 @@ The HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418
 - **Rollback.** HikariSub keeps the highest serial it has accepted in `<user folder>/marketplace.json` and refuses a lower one.
 - **Privacy.** HikariSub downloads the whole index and never sends which plugins are installed: two GETs with no query string, no cookies and no cache. It shows icons and screenshots only from the marketplace's own origin.
 - **When.** At start and every 24 hours while "Check for plugin updates" (`plugins.checkUpdates`, on by default) is on, and whenever the Marketplace view or Check for updates asks.
-- **Install.** HikariSub downloads the listed version's `url`, which must be on the marketplace's origin and no larger than `size`. Then it checks `size` and `sha256`, runs the package checks, and checks that the manifest has the listed id, version, tier and API. The manifest's `publicKey` must be the listing's `publicKey` and, for an installed plugin, the pinned key. The marketplace packages carry no `.minisig`: the signed index vouches for the listing's author key. A downgrade is refused. The install question always opens first.
+- **Install.** HikariSub downloads the listed version's `url`, which must be on the marketplace's origin and no larger than `size`. Then it checks `size` and `sha256`, runs the package checks, and checks that the manifest has the listed id, version, tier and API. The manifest's `publicKey` must be the listing's `publicKey` and, for an installed plugin, the pinned key. The marketplace packages carry no `.minisig`: the signed index vouches for the listing's author key. A downgrade is refused, except Install <last good> after a revocation. The install question always opens first, except for an [automatic update](#updates-roll-back-and-revocation).
 - **Source.** `plugins.json` records `"source": "marketplace"` for a marketplace install; a missing `source` means a file. Installing from a file over a marketplace copy makes it a file install again.
+
+### Updates, roll back and revocation
+
+- **Automatic updates.** After each index HikariSub accepts, it installs the newest version a marketplace plugin can run when "Install updates automatically" (`plugins.autoUpdate`, on by default, under "Check for plugin updates") and the plugin's own switch are both on. The download gets the same checks as Install. File installs never update by themselves.
+- **When it applies.** Only while the plugin isn't running a command or an event. An update that finishes downloading during one waits for it to end. One still waiting at quit is fetched again at the next start.
+- **Asking for more.** An update that asks for more than the installed version waits for the user instead. It asks for more when it moves to Full trust, asks for every open document, adds a network host, or adds a folder or makes one writable. `plugins.json` keeps its version as `held`. Review… opens the update question, which marks each permission New or allowed now and shows the listing's changelog. Keep <installed> drops it, and automatic updates then pass over that version.
+- **Roll back.** An install over another version keeps the replaced copy in `<user folder>/plugins/.previous/<id>/`, one step back. Roll back to <version> swaps the two copies. Automatic updates pass over the version left (`skip`), and the toast's Undo swaps them again and clears that. Data, settings and folder grants stay; the cache is cleared.
+- **Revocation.** When the index revokes the installed version, or the whole plugin, HikariSub turns the plugin off, says so in a toast, and records `revoked` in `plugins.json`. The plugin can't be turned back on unless a later index lifts the revocation. Its details offer Install <last good>, the newest version it can run that isn't revoked, and Uninstall. Installing any other version clears the mark and turns it back on. Revocation applies only when the installed key is the listing's key.
 
 ## Folders and `plugins.json`
 
@@ -74,17 +82,18 @@ The HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418
 | `<user folder>/plugins/<id>/` | The installed files. An install stages them in `.staging-<id>` and swaps them in, so a failed install leaves the old copy. |
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
-| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`. |
+| `<user folder>/plugins/.previous/<id>/` | The version the last update replaced, for Roll back. |
+| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`; for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
 | `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
 
 ## The plugin manager
 
-Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu. Installed shows how many marketplace plugins have a newer version. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates".
+Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu. Installed counts the updates that wait for the user, and the newer versions that won't install automatically. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates" and "Install updates automatically".
 
-- **The list.** Each row shows the package icon, name, version and signer (From the marketplace for a marketplace install). It shows a state only when the plugin isn't simply running: Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
-- **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off.
+- **The list.** Each row shows the package icon, name, version and signer (From the marketplace for a marketplace install). It shows a state only when the plugin isn't simply running: Revoked, <version> waits for you, Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
+- **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically", and Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
 - **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** A form built from `contributes.settings`: a check box for `boolean`, a field for `integer`, `number` and `string`, and a drop-down for `choice`. A change is kept at once, the same way `hikari.settings.set` keeps it, and a running plugin's `hikari.settings.get` sees it.
 - **Errors.** A plugin that didn't start, crashed or hit the time limit shows the error and its traceback, with Start again and Copy.
@@ -280,7 +289,7 @@ A request is a URL, or `{url, method, headers, body, encoding}`. `method` is `GE
 
 HikariSub refuses the request, with the error `refused` and its `reason`, or `not_granted`:
 
-- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off every plugin's network at once.
+- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because nothing sandboxes it yet (PL7 [#419](https://github.com/altqx/hikari/issues/419)).
 - **`not_https`.** The URL isn't `https://`. **`port`.** It names a port other than 443.
 - **`not_granted`**, with `host`. The host isn't one of the manifest's `permissions.network.hosts`, matched exactly. The plugin manager shows those hosts, and so does the install.
 - **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).

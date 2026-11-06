@@ -10008,8 +10008,8 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: செருகுநிரலின் ஒவ்வொரு கோரிக்கையும் மறுக்கப்படும்.</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>ஒவ்வொரு கோரிக்கையையும் HikariSub தானே HTTPS வழியாக அனுப்புகிறது, நிறுவும்போது செருகுநிரல் பட்டியலிட்ட ஹோஸ்ட்களுக்கு மட்டும். முடக்கினால்: HikariSub வழியாக செருகுநிரல் அனுப்பும் ஒவ்வொரு கோரிக்கையையும் அது மறுக்கும். முழு நம்பிக்கை உள்ள செருகுநிரல் இன்னும் தானாக இணைய முடியும்.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -10799,6 +10799,10 @@ Failed to copy %2 fonts.</source>
         <translation>படிக்க ஒரு கோப்புறையை உங்களிடம் கேட்டல், %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>சந்தை இந்தப் பதிப்பைத் திரும்பப் பெற்றது. இயக்க வேறொரு பதிப்பை நிறுவவும்.</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>கட்டளை: %1</translation>
     </message>
@@ -10817,6 +10821,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub ஆல் %1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>புதுப்பிப்பு பதிவிறக்கும்போது செருகுநிரல் மாறியது.</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -11019,6 +11027,34 @@ Failed to copy %2 fonts.</source>
         <translation>முழு நம்பிக்கை</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>திரும்பப் பெறப்பட்டது</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 உங்களுக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>புதியது</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>இப்போது அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>இது %1 ஐ விட அதிகம் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>%1 இல் மாற்றங்கள்</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 ஐ வைத்திரு</translation>
+    </message>
+    <message>
         <source>Search plugins</source>
         <translation>செருகுநிரல்களைத் தேடு</translation>
     </message>
@@ -11049,10 +11085,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Marketplace plugins</source>
         <translation>சந்தைச் செருகுநிரல்கள்</translation>
-    </message>
-    <message>
-        <source>Unrestricted</source>
-        <translation>கட்டுப்பாடற்றது</translation>
     </message>
     <message>
         <source>Update</source>
@@ -11115,12 +11147,40 @@ Failed to copy %2 fonts.</source>
         <translation>சந்தைக்கு நகர்த்து</translation>
     </message>
     <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>சந்தை பதிப்பு %1 ஐத் திரும்பப் பெற்றதால், HikariSub அதை முடக்கியது: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>%1 ஐ நிறுவு</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1, %2 ஐ விட அதிகம் கேட்கிறது, எனவே உங்களுக்காகக் காத்திருக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>மதிப்பாய்வு…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>%1-க்குத் திரும்பு</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>செருகுநிரல் திருப்பப்படவில்லை</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>இயக்கு</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>செருகுநிரல் மாற்றப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>புதுப்பிப்புகளைத் தானாக நிறுவு</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -11195,6 +11255,10 @@ Failed to copy %2 fonts.</source>
         <translation>தொடக்கத்திலும் நாளுக்கு ஒருமுறையும். HikariSub முழுப் பட்டியலையும் பதிவிறக்கும், உங்களிடம் உள்ள செருகுநிரல்களை ஒருபோதும் அனுப்பாது.</translation>
     </message>
     <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>சந்தைச் செருகுநிரல்களுக்கு மட்டும், அவை செய்வதை முடித்த பின். அதிகம் கேட்கும் புதுப்பிப்பு உங்களுக்காகக் காத்திருக்கும்.</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>மூடு</translation>
     </message>
@@ -11267,6 +11331,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>About %1…</source>
         <translation>%1 பற்றி…</translation>
+    </message>
+    <message>
+        <source>%1 rolled back to %2</source>
+        <translation>%1 %2-க்குத் திரும்பியது</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>நீங்கள் விட்ட பதிப்பைத் தானியங்கு புதுப்பிப்புகள் தவிர்க்கும்.</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>செயல்தவிர்</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>%1 முடக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>சந்தை பதிப்பு %1 ஐத் திரும்பப் பெற்றது: %2.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>காட்டு</translation>
     </message>
     <message>
         <source>%1 isn’t installed.</source>

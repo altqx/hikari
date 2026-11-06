@@ -160,6 +160,27 @@ TEST(Marketplace, NewestSkipsRevokedVersionsAndOnesThisApiCannotRun)
     EXPECT_EQ(result->plugins.front().newest(4), nullptr);
 }
 
+TEST(Marketplace, ARevocationNamesTheVersionToOfferInstead)
+{
+    const std::string revoked = R"(, "revoked": {"reason": "Leaked a token"})";
+    auto result = read(index(5, plugin(version("1.2.0", 1, revoked) + "," + version("1.1.0", 4) + "," + version("1.0.0", 1))),
+                       comment(5));
+    ASSERT_TRUE(result) << result.error().detail;
+    const Listing &listing = result->plugins.front();
+    EXPECT_EQ(revocation(listing, "1.2.0", 4), (Revoked{"Leaked a token", "1.1.0"}));
+    EXPECT_EQ(revocation(listing, "1.2.0", 1), (Revoked{"Leaked a token", "1.0.0"}));
+    EXPECT_EQ(revocation(listing, "1.1.0", 4), std::nullopt);
+    EXPECT_EQ(revocation(listing, "0.9.0", 4), std::nullopt);
+
+    result = read(index(5, plugin(version("1.0.0", 1, revoked))), comment(5));
+    ASSERT_TRUE(result);
+    EXPECT_EQ(revocation(result->plugins.front(), "1.0.0", 4), (Revoked{"Leaked a token", ""}));
+
+    result = read(index(5, plugin(version("1.0.0", 1), R"(, "revoked": {"reason": "Malware"})")), comment(5));
+    ASSERT_TRUE(result);
+    EXPECT_EQ(revocation(result->plugins.front(), "1.0.0", 4), (Revoked{"Malware", ""}));
+}
+
 TEST(Marketplace, ADownloadMustMatchTheListedSizeAndHash)
 {
     const auto result = read(kIndex, comment(5));

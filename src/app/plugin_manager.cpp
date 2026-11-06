@@ -244,6 +244,30 @@ QString problemText(const std::string &problem)
     return QCoreApplication::translate("HikariSub.Plugins", "HikariSub couldn’t finish: %1").arg(text(problem));
 }
 
+QString noUserFolder()
+{
+    return QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none.");
+}
+
+QVariantList permissionChanges(const plugins::Manifest &current, const plugins::Manifest &next)
+{
+    const plugins::PermissionIncrease more = plugins::permissionIncrease(current, next);
+    QList<bool> added;
+    if (next.tier == plugins::Tier::Unrestricted)
+        added << more.unrestricted;
+    if (next.permissions.allDocuments)
+        added << more.allDocuments;
+    if (!next.permissions.networkHosts.empty())
+        added << !more.networkHosts.empty();
+    for (const plugins::FileGrantRequest &request : next.permissions.files)
+        added << (std::ranges::find(more.files, request.id) != more.files.end());
+    const QStringList lines = permissionLines(next);
+    QVariantList rows;
+    for (qsizetype i = 0; i < lines.size(); ++i)
+        rows << QVariantMap{{QStringLiteral("text"), lines.at(i)}, {QStringLiteral("added"), added.value(i)}};
+    return rows;
+}
+
 }
 
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &p)
@@ -314,6 +338,12 @@ void PluginManager::refresh()
                     {QStringLiteral("adds"), manifest ? contributionLines(*manifest) : QStringList()},
                     {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings) : QVariantList()},
                     {QStringLiteral("folders"), manifest ? folderRows(*manifest, entry.grants) : QVariantList()},
+                    {QStringLiteral("autoUpdate"), entry.autoUpdate},
+                    {QStringLiteral("previous"), text(entry.previous)},
+                    {QStringLiteral("held"), text(entry.held)},
+                    {QStringLiteral("revoked"), entry.revoked.has_value()},
+                    {QStringLiteral("revokedReason"), entry.revoked ? text(entry.revoked->reason) : QString()},
+                    {QStringLiteral("lastGood"), entry.revoked ? text(entry.revoked->lastGood) : QString()},
                 });
             }
         }
@@ -355,23 +385,49 @@ QVariantMap PluginManager::review(const QUrl &url)
 }
 
 QVariantMap PluginManager::reviewListed(const QByteArray &package, const plugins::Listing &listing,
-                                        const plugins::ListedVersion &listed)
+                                        const plugins::ListedVersion &listed, bool allowDowngrade)
 {
     m_review.reset();
-    const auto refused = [](const QString &message) {
-        return QVariantMap{{QStringLiteral("ok"), false}, {QStringLiteral("message"), message}};
-    };
+    Prepared prepared = prepareListed(package, listing, listed, allowDowngrade);
+    if (!prepared.review)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), prepared.problem}};
+    m_review = std::move(*prepared.review);
+    QVariantMap review = describe(*m_review);
+    review.insert(QStringLiteral("signedBy"), text(listing.authorName));
+    review.insert(QStringLiteral("changelog"), text(listed.changelog));
+    return review;
+}
+
+PluginManager::Prepared PluginManager::prepareListed(const QByteArray &package, const plugins::Listing &listing,
+                                                     const plugins::ListedVersion &listed, bool allowDowngrade) const
+{
     if (!m_installer)
-        return refused(QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none."));
+        return {std::nullopt, noUserFolder()};
     if (const auto problem = plugins::listedPackageProblem(listed, bytes(package)))
-        return refused(refusalMessage({InstallRefusal::Kind::Listing, {}, {}, *problem}));
+        return {std::nullopt, refusalMessage({InstallRefusal::Kind::Listing, {}, {}, *problem})};
     Unpacked unpacked = unpack(package);
     if (!unpacked.problem.isEmpty())
-        return refused(unpacked.problem);
-    QVariantMap review = reviewed(m_installer->reviewListed(std::move(unpacked.files), listing, listed));
-    if (review.value(QStringLiteral("ok")).toBool())
-        review.insert(QStringLiteral("signedBy"), text(listing.authorName));
-    return review;
+        return {std::nullopt, unpacked.problem};
+    auto result = m_installer->reviewListed(std::move(unpacked.files), listing, listed, allowDowngrade);
+    if (!result)
+        return {std::nullopt, refusalMessage(result.error())};
+    bool more = false;
+    if (const auto current = m_installer->installedManifest(result->package.manifest.id))
+        more = plugins::permissionIncrease(*current, result->package.manifest).any();
+    return {std::move(*result), {}, more};
+}
+
+QString PluginManager::installPrepared(const plugins::InstallReview &review)
+{
+    if (!m_installer)
+        return noUserFolder();
+    const auto registry = m_installer->registry();
+    const auto it = registry ? registry->find(review.package.manifest.id) : plugins::Registry::const_iterator();
+    if (!registry || it == registry->end() || it->second.version != review.installedVersion)
+        return QCoreApplication::translate("HikariSub.Plugins", "The plugin changed while its update downloaded.");
+    const auto done = m_installer->install(review, false);
+    refresh();
+    return done ? QString() : problemText(done.error());
 }
 
 std::expected<plugins::Registry, std::string> PluginManager::registry() const
@@ -381,26 +437,48 @@ std::expected<plugins::Registry, std::string> PluginManager::registry() const
     return m_installer->registry();
 }
 
+QString PluginManager::name(const QString &id) const
+{
+    for (const QVariant &row : m_rows)
+        if (row.toMap().value(QStringLiteral("id")).toString() == id)
+            return row.toMap().value(QStringLiteral("name")).toString();
+    return id;
+}
+
 QVariantMap PluginManager::reviewed(std::expected<plugins::InstallReview, plugins::InstallRefusal> result)
 {
     if (!result)
         return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), refusalMessage(result.error())}};
     m_review = std::move(*result);
-    const plugins::Manifest &m = m_review->package.manifest;
-    return {
+    return describe(*m_review);
+}
+
+QVariantMap PluginManager::describe(const plugins::InstallReview &review) const
+{
+    const plugins::Manifest &m = review.package.manifest;
+    QVariantMap out{
         {QStringLiteral("ok"), true},
         {QStringLiteral("id"), text(m.id)},
         {QStringLiteral("name"), text(m.name)},
         {QStringLiteral("version"), text(m.version)},
-        {QStringLiteral("change"), changeName(m_review->change)},
-        {QStringLiteral("installedVersion"), text(m_review->installedVersion)},
-        {QStringLiteral("keyId"), keyId(m_review->signer)},
-        {QStringLiteral("pinnedKeyId"), keyId(m_review->pinned)},
-        {QStringLiteral("needsRetrust"), m_review->needsRetrust},
+        {QStringLiteral("change"), changeName(review.change)},
+        {QStringLiteral("installedVersion"), text(review.installedVersion)},
+        {QStringLiteral("keyId"), keyId(review.signer)},
+        {QStringLiteral("pinnedKeyId"), keyId(review.pinned)},
+        {QStringLiteral("needsRetrust"), review.needsRetrust},
         {QStringLiteral("unrestricted"), m.tier == plugins::Tier::Unrestricted},
         {QStringLiteral("permissions"), permissionLines(m)},
-        {QStringLiteral("marketplace"), m_review->source == plugins::Source::Marketplace},
+        {QStringLiteral("marketplace"), review.source == plugins::Source::Marketplace},
+        {QStringLiteral("changes"), QVariantList()},
+        {QStringLiteral("asksForMore"), false},
     };
+    if (review.installedVersion.empty() || !m_installer)
+        return out;
+    if (const auto current = m_installer->installedManifest(m.id)) {
+        out.insert(QStringLiteral("changes"), permissionChanges(*current, m));
+        out.insert(QStringLiteral("asksForMore"), plugins::permissionIncrease(*current, m).any());
+    }
+    return out;
 }
 
 QVariantMap PluginManager::reviewUpdate(const QUrl &file, const QString &id)
@@ -442,10 +520,52 @@ QString PluginManager::install(bool retrusted)
     return done ? QString() : problemText(done.error());
 }
 
+QString PluginManager::edit(const QString &id, const std::function<void(plugins::InstalledPlugin &)> &change)
+{
+    if (!m_installer)
+        return noUserFolder();
+    const auto done = m_installer->edit(id.toStdString(), change);
+    refresh();
+    return done ? QString() : problemText(done.error());
+}
+
+QString PluginManager::setAutoUpdate(const QString &id, bool on)
+{
+    return edit(id, [on](plugins::InstalledPlugin &plugin) { plugin.autoUpdate = on; });
+}
+
+QString PluginManager::rollBack(const QString &id)
+{
+    if (!m_installer)
+        return noUserFolder();
+    const auto left = m_installer->rollBack(id.toStdString(), true);
+    refresh();
+    if (!left)
+        return problemText(left.error());
+    const auto registry = m_installer->registry();
+    const auto entry = registry ? registry->find(id.toStdString()) : plugins::Registry::const_iterator();
+    emit rolledBack(id, name(id), registry && entry != registry->end() ? text(entry->second.version) : QString());
+    return {};
+}
+
+QString PluginManager::undoRollBack(const QString &id)
+{
+    if (!m_installer)
+        return noUserFolder();
+    const auto done = m_installer->rollBack(id.toStdString(), false);
+    refresh();
+    return done ? QString() : problemText(done.error());
+}
+
 QString PluginManager::setEnabled(const QString &id, bool enabled)
 {
     if (!m_installer)
         return {};
+    if (const auto registry = m_installer->registry(); enabled && registry) {
+        const auto entry = registry->find(id.toStdString());
+        if (entry != registry->end() && entry->second.revoked)
+            return QCoreApplication::translate("HikariSub.Plugins", "The marketplace revoked this version. Install another one to turn it on.");
+    }
     const auto done = m_installer->setEnabled(id.toStdString(), enabled);
     refresh();
     return done ? QString() : problemText(done.error());

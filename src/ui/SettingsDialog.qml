@@ -1726,7 +1726,7 @@ DialogWindow {
                         SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
                         SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
                         SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
-                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.") }
+                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }
                 }
             }
