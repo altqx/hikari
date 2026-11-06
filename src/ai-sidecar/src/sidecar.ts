@@ -4,11 +4,13 @@ import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallPara
     type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
 import { LinkRelay } from "./providers/relay";
-import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
-import type { UpdateParams } from "./providers/types";
+import { kSchemas } from "./providers/schema";
+import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
+import type { SearchService, UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
 import type { OperationName, Operations } from "./tools/api.gen";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
+import { WebSearch } from "./tools/web";
 
 export interface Build {
     buildId: string;
@@ -44,13 +46,16 @@ export class Sidecar {
     readonly api: HikariApi;
     readonly providers: ProviderService;
     readonly tools: ToolSet;
+    readonly web: WebSearch;
     readonly mcp: McpServer;
     private initialized = false;
 
     constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions) {
         this.api = new HikariApi(peer);
-        this.providers = new ProviderService(providers ?? { relay: new LinkRelay(peer) });
-        this.tools = new ToolSet(this.api);
+        const options = providers ?? { relay: new LinkRelay(peer) };
+        this.providers = new ProviderService(options);
+        this.web = new WebSearch(options.relay, () => this.providers.searchService);
+        this.tools = new ToolSet(this.api, [this.web]);
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
             { name: "hikarisub", title: "HikariSub", version: build.buildId });
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
@@ -63,6 +68,8 @@ export class Sidecar {
         this.handle(Method.conversationEnd, (params, signal) => wire(() => this.providers.endConversation(params, signal)));
         this.handle(Method.complete, (params, signal) => wire(() => this.providers.complete(params, signal,
             (stream, update) => peer.notify(Method.sessionUpdate, { stream, update } satisfies UpdateParams))));
+        this.handle(Method.searchTest, (params) => wire(() =>
+            this.web.test(checked<{ service: SearchService }>(kSchemas.searchTestParams, params).service)));
         this.handle(Method.toolsList, (params) => ({ tools: this.tools.list((params as ToolsListParams | null)?.all === true) }));
         this.handle(Method.toolsCall, (params) => {
             const p = (params ?? {}) as Partial<ToolsCallParams>;

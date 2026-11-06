@@ -6,11 +6,19 @@ import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
 import { kKeyPlaceholder } from "./relay";
 import { ProviderError, wrapsProviderError } from "./errors";
+import { nativeSearch, providerState } from "./search";
 import type { ErrorKind, Request, StopReason, Usage } from "./types";
 
 type Json = Record<string, unknown>;
 
 const kDefaultMaxTokens = 8192;
+const kSearchUses = 5;
+
+/** web_search_20250305 and web_fetch_20250910 are the versions that need no code execution, so ZDR keeps them. */
+const kSearchTools: Json[] = [
+    { type: "web_search_20250305", name: "web_search", max_uses: kSearchUses },
+    { type: "web_fetch_20250910", name: "web_fetch", max_uses: kSearchUses },
+];
 
 const kStops: Record<string, StopReason> = { tool_use: "toolUse", max_tokens: "maxTokens", refusal: "refused" };
 
@@ -24,6 +32,11 @@ const kErrorKinds: Record<string, ErrorKind> = {
 function messages(request: Request): Json[] {
     const out: Json[] = [];
     for (const message of request.messages) {
+        const kept = message.author === "assistant" ? providerState(message, "anthropic-messages") : undefined;
+        if (kept) {
+            out.push({ role: "assistant", content: kept });
+            continue;
+        }
         const content: Json[] = [];
         if (message.author === "user")
             for (const p of message.parts)
@@ -93,11 +106,21 @@ export function anthropicClient({ config, fetch }: ClientOptions): Client {
             const system: Json[] = prefixTexts(request).map((text) => ({ type: "text", text }));
             if (marksCache(request))
                 markLast(system.length ? system : tools, cacheControl(request.cacheLifetime));
+            if (nativeSearch(config, request))
+                tools.push(...kSearchTools);
             if (system.length)
                 body.system = system;
             if (tools.length)
                 body.tools = tools;
             let stop: StopReason | undefined;
+            const blocks: Json[] = [];
+            const inputs = new Map<number, string>();
+            let searched = false;
+            const finish = (reason: StopReason) => {
+                if (searched)
+                    out.keepProviderState("anthropic-messages", blocks.filter(Boolean));
+                return reason;
+            };
             try {
                 const stream = await client.messages.create(body as never, { signal });
                 for await (const event of stream as unknown as AsyncIterable<Json>) {
@@ -106,19 +129,41 @@ export function anthropicClient({ config, fetch }: ClientOptions): Client {
                         readUsage(out.usage, (event.message as Json | undefined)?.usage as Json | undefined);
                         break;
                     case "content_block_start": {
-                        const block = (event.content_block ?? {}) as Json;
+                        const index = Number(event.index ?? 0);
+                        const block = structuredClone((event.content_block ?? {}) as Json);
+                        blocks[index] = block;
+                        if (block.type === "server_tool_use")
+                            searched = true;
                         if (block.type === "tool_use")
-                            out.startCall(Number(event.index ?? 0), String(block.id ?? ""), String(block.name ?? ""));
+                            out.startCall(index, String(block.id ?? ""), String(block.name ?? ""));
                         else if (block.type === "text")
                             out.addText(String(block.text ?? ""));
                         break;
                     }
                     case "content_block_delta": {
+                        const index = Number(event.index ?? 0);
+                        const block = blocks[index] ?? {};
                         const delta = (event.delta ?? {}) as Json;
-                        if (delta.type === "text_delta")
+                        if (delta.type === "text_delta") {
+                            block.text = String(block.text ?? "") + String(delta.text ?? "");
                             out.addText(String(delta.text ?? ""));
-                        else if (delta.type === "input_json_delta")
-                            out.addArguments(Number(event.index ?? 0), String(delta.partial_json ?? ""));
+                        } else if (delta.type === "input_json_delta") {
+                            inputs.set(index, (inputs.get(index) ?? "") + String(delta.partial_json ?? ""));
+                            out.addArguments(index, String(delta.partial_json ?? ""));
+                        } else if (delta.type === "citations_delta") {
+                            const citation = (delta.citation ?? {}) as Json;
+                            block.citations = [...((block.citations as Json[] | null | undefined) ?? []), citation];
+                            if (citation.type === "web_search_result_location")
+                                out.addCitation(String(citation.url ?? ""), String(citation.title ?? ""),
+                                    typeof citation.cited_text === "string" ? citation.cited_text : undefined);
+                        }
+                        break;
+                    }
+                    case "content_block_stop": {
+                        const index = Number(event.index ?? 0);
+                        const input = inputs.get(index);
+                        if (input !== undefined && blocks[index])
+                            blocks[index].input = argumentsObject(input);
                         break;
                     }
                     case "message_delta": {
@@ -129,7 +174,7 @@ export function anthropicClient({ config, fetch }: ClientOptions): Client {
                         break;
                     }
                     case "message_stop":
-                        return stop ?? "end";
+                        return finish(stop ?? "end");
                     }
                 }
             } catch (error) {

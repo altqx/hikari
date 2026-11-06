@@ -5,7 +5,9 @@ import { geminiModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
 import { kKeyPlaceholder } from "./relay";
+import type { Collector } from "./collector";
 import { kindOfStatus, ProviderError } from "./errors";
+import { nativeSearch, providerState } from "./search";
 import type { Request, StopReason } from "./types";
 
 type Json = Record<string, unknown>;
@@ -21,6 +23,16 @@ function contents(request: Request): Json[] {
     const callNames = new Map<string, string>();
     const out: Json[] = [];
     for (const message of request.messages) {
+        const kept = message.author === "assistant" ? providerState(message, "gemini") as Json[] | undefined : undefined;
+        if (kept) {
+            for (const part of kept) {
+                const call = part.functionCall as Json | undefined;
+                if (call?.id && typeof call.name === "string")
+                    callNames.set(String(call.id), call.name);
+            }
+            out.push({ role: "model", parts: kept });
+            continue;
+        }
         const parts: Json[] = [];
         for (const p of message.parts)
             if (p.type === "toolResult")
@@ -92,16 +104,43 @@ function tapped(fetchFn: typeof fetch, seen: (event: Json) => void): typeof fetc
     return wrapped as typeof fetch;
 }
 
-/** The system prompt and context as `systemInstruction`, then the tools by name: Gemini's cacheable prefix. */
-function prefix(request: Request): Json {
+/**
+ * The system prompt and context as `systemInstruction`, then the tools by name: Gemini's cacheable prefix. Google
+ * Search beside functions needs the server tool invocations back and VALIDATED calling (Gemini 3 and later).
+ */
+function prefix(request: Request, search: boolean): Json {
     const texts = prefixTexts(request);
-    const tools = sortedTools(request).map((t) => ({
+    const functions = sortedTools(request).map((t) => ({
         name: t.name, description: t.description, parametersJsonSchema: schemaObject(t.parametersJson),
     }));
+    const tool: Json = {
+        ...(functions.length ? { functionDeclarations: functions } : {}),
+        ...(search ? { googleSearch: {}, urlContext: {} } : {}),
+    };
     return {
         ...(texts.length ? { systemInstruction: { parts: texts.map((text) => ({ text })) } } : {}),
-        ...(tools.length ? { tools: [{ functionDeclarations: tools }] } : {}),
+        ...(Object.keys(tool).length ? { tools: [tool] } : {}),
+        ...(search && functions.length
+            ? { toolConfig: { includeServerSideToolInvocations: true, functionCallingConfig: { mode: "VALIDATED" } } }
+            : {}),
     };
+}
+
+function addGrounding(out: Collector, metadata: Json | undefined): void {
+    if (!metadata)
+        return;
+    const chunks = ((metadata.groundingChunks as Json[] | undefined) ?? []).map((c) => (c.web ?? {}) as Json);
+    for (const support of (metadata.groundingSupports as Json[] | undefined) ?? []) {
+        const quote = (support.segment as Json | undefined)?.text;
+        for (const i of (support.groundingChunkIndices as number[] | undefined) ?? [])
+            if (chunks[i])
+                out.addCitation(String(chunks[i].uri ?? ""), String(chunks[i].title ?? ""),
+                    typeof quote === "string" ? quote : undefined);
+    }
+    for (const chunk of chunks)
+        out.addCitation(String(chunk.uri ?? ""), String(chunk.title ?? ""));
+    const suggestions = (metadata.searchEntryPoint as Json | undefined)?.renderedContent;
+    out.setSearchSuggestions(typeof suggestions === "string" ? suggestions : undefined);
 }
 
 function failure(error: unknown): unknown {
@@ -131,7 +170,7 @@ export function geminiClient({ config, fetch }: ClientOptions): Client {
             try {
                 const cache = await ai.caches.create({
                     model: request.model,
-                    config: { abortSignal: signal, ttl: `${ttlSeconds}s`, ...prefix(request) } as never,
+                    config: { abortSignal: signal, ttl: `${ttlSeconds}s`, ...prefix(request, nativeSearch(config, request)) } as never,
                 });
                 if (!cache.name)
                     throw new ProviderError("malformed", "the provider made a cache without a name");
@@ -148,6 +187,9 @@ export function geminiClient({ config, fetch }: ClientOptions): Client {
             }
         },
         async complete(request, out, signal, cache) {
+            const search = nativeSearch(config, request);
+            const raw: Json[] = [];
+            let serverTools = false;
             let stop: StopReason | undefined;
             try {
                 const stream = await ai.models.generateContentStream({
@@ -155,7 +197,7 @@ export function geminiClient({ config, fetch }: ClientOptions): Client {
                     contents: contents(request) as never,
                     config: {
                         abortSignal: signal,
-                        ...(cache ? { cachedContent: cache } : prefix(request) as never),
+                        ...(cache ? { cachedContent: cache } : prefix(request, search) as never),
                         ...(request.maxOutputTokens !== undefined ? { maxOutputTokens: request.maxOutputTokens } : {}),
                     },
                 });
@@ -170,7 +212,11 @@ export function geminiClient({ config, fetch }: ClientOptions): Client {
                     if ((chunk.promptFeedback as Json | undefined)?.blockReason)
                         return "refused";
                     const candidate = ((chunk.candidates as Json[] | undefined) ?? [])[0] ?? {};
+                    addGrounding(out, candidate.groundingMetadata as Json | undefined);
                     for (const part of (((candidate.content as Json | undefined)?.parts as Json[] | undefined) ?? [])) {
+                        raw.push(part);
+                        if (part.toolCall || part.toolResponse)
+                            serverTools = true;
                         if (part.thought)
                             continue;
                         const call = part.functionCall as Json | undefined;
@@ -205,6 +251,8 @@ export function geminiClient({ config, fetch }: ClientOptions): Client {
             }
             if (!stop)
                 throw new ProviderError("malformed", "the stream ended before the response finished");
+            if (serverTools)
+                out.keepProviderState("gemini", raw);
             return stop;
         },
     };

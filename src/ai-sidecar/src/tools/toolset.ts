@@ -1,7 +1,7 @@
 import { ErrorCode } from "../protocol";
 import { RpcError } from "../rpc";
 import type { CommandsListResult, OperationName, Operations, VideoFrameResult } from "./api.gen";
-import { forModel, kCatalogue, kGroups, type Entry, type Group, type Tool } from "./catalogue";
+import { forModel, kCatalogue, searchToolsTool, type Tool } from "./catalogue";
 import { pngFromBgra } from "./png";
 
 export type Content = { type: "text"; text: string } | { type: "image"; data: string; mimeType: string };
@@ -10,6 +10,17 @@ export type Content = { type: "text"; text: string } | { type: "image"; data: st
 export interface CallToolResult {
     content: Content[];
     isError?: boolean;
+}
+
+/**
+ * Tools from outside HA1 that search_tools finds as one more group, such as the web search service. A source with no
+ * tools now is left out of search_tools.
+ */
+export interface ToolSource {
+    readonly group: string;
+    readonly description: string;
+    tools(): Tool[];
+    call(name: string, args: Record<string, unknown>): Promise<CallToolResult>;
 }
 
 export interface HikariCalls {
@@ -84,31 +95,39 @@ export class ToolSet {
     private readonly offered = new Set(kCatalogue.filter((e) => e.group === "core").map((e) => e.tool.name));
     private readonly byName = new Map(kCatalogue.map((e) => [e.tool.name, e]));
 
-    constructor(private readonly api: HikariCalls) {}
+    constructor(private readonly api: HikariCalls, private readonly sources: readonly ToolSource[] = []) {}
 
     /** The tools to offer now, or `all` of them. */
     list(all = false): Tool[] {
-        return kCatalogue.filter((e) => all || this.offered.has(e.tool.name)).map((e) => e.tool);
+        const search = searchToolsTool(this.liveSources().map(({ group, description }) => ({ group, description })));
+        return [
+            ...kCatalogue.filter((e) => all || this.offered.has(e.tool.name))
+                .map((e) => (e.tool.name === "search_tools" ? search : e.tool)),
+            ...this.sourceTools().filter(([tool]) => all || this.offered.has(tool.name)).map(([tool]) => tool),
+        ];
     }
 
     has(name: string): boolean {
-        return this.byName.has(name);
+        return this.byName.has(name) || this.sourceOf(name) !== undefined;
     }
 
     async call(name: string, args: unknown): Promise<CallToolResult> {
         const entry = this.byName.get(name);
-        if (!entry)
+        const source = entry ? undefined : this.sourceOf(name);
+        if (!entry && !source)
             return failure(`No tool is named "${name}". search_tools finds more tools.`);
         const params = args ?? {};
         if (!isObject(params))
             return failure(`${name} takes a JSON object of arguments.`);
+        if (source)
+            return source.call(name, params).catch((error: unknown) => failure(worded(name, error)));
         try {
             if (name === "search_tools")
                 return this.searchTools(params);
             if (name === "search_commands")
                 return await this.searchCommands(params);
-            const result = await this.api.call(entry.operation!, params as never);
-            return entry.operation === "video.frame" ? frame(result as VideoFrameResult) : text(result);
+            const result = await this.api.call(entry!.operation!, params as never);
+            return entry!.operation === "video.frame" ? frame(result as VideoFrameResult) : text(result);
         } catch (error) {
             return failure(worded(name, error));
         }
@@ -118,18 +137,22 @@ export class ToolSet {
         const { query, group } = params;
         if (query !== undefined && (typeof query !== "string" || query.length === 0))
             return failure("search_tools: query must be words to look for.");
-        if (group !== undefined && (typeof group !== "string" || group === "core" || !(group in kGroups)))
+        if (group !== undefined && (typeof group !== "string" || !this.groups().includes(group)))
             return failure(`search_tools: group must be one of ${this.groups().join(", ")}.`);
         if (query === undefined && group === undefined)
             return failure("search_tools needs a query, a group or both.");
         const wanted = words((query as string | undefined) ?? "");
-        const found = kCatalogue
-            .filter((e) => e.group !== "core" && (group === undefined || e.group === group))
-            .map((e): [Entry, number] => [e, score(wanted, `${e.tool.name} ${e.tool.description} ${e.group}`)])
+        const candidates: [Tool, string][] = [
+            ...kCatalogue.filter((e) => e.group !== "core").map((e): [Tool, string] => [e.tool, e.group]),
+            ...this.sourceTools().map(([tool, source]): [Tool, string] => [tool, source.group]),
+        ];
+        const found = candidates
+            .filter(([, g]) => group === undefined || g === group)
+            .map(([tool, g]): [Tool, number] => [tool, score(wanted, `${tool.name} ${tool.description} ${g}`)])
             .filter(([, s]) => wanted.length === 0 || s > 0)
-            .sort(([a, sa], [b, sb]) => sb - sa || a.tool.name.localeCompare(b.tool.name))
+            .sort(([a, sa], [b, sb]) => sb - sa || a.name.localeCompare(b.name))
             .slice(0, 10)
-            .map(([e]) => e.tool);
+            .map(([tool]) => tool);
         if (found.length === 0)
             return failure(`No tool matches. The groups are ${this.groups().join(", ")}.`);
         for (const tool of found)
@@ -150,7 +173,20 @@ export class ToolSet {
         return text({ commands: matches.slice(0, limit), total: matches.length });
     }
 
-    private groups(): Group[] {
-        return [...new Set(kCatalogue.map((e) => e.group))].filter((g) => g !== "core");
+    private groups(): string[] {
+        return [...[...new Set(kCatalogue.map((e) => e.group as string))].filter((g) => g !== "core"),
+            ...this.liveSources().map((s) => s.group)];
+    }
+
+    private liveSources(): ToolSource[] {
+        return this.sources.filter((s) => s.tools().length > 0);
+    }
+
+    private sourceTools(): [Tool, ToolSource][] {
+        return this.sources.flatMap((source) => source.tools().map((tool): [Tool, ToolSource] => [tool, source]));
+    }
+
+    private sourceOf(name: string): ToolSource | undefined {
+        return this.sourceTools().find(([tool]) => tool.name === name)?.[1];
     }
 }

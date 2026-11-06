@@ -10553,6 +10553,126 @@ Failed to copy %2 fonts.</source>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
     </message>
+    <message>
+        <source>Web search</source>
+        <translation>웹 검색</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>AI가 웹을 검색하도록 허용</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>에이전트가 이름, 용어, 가사, 참고 자료를 찾아보고 어디서 찾았는지 알려 줍니다. 에이전트가 작성한 각 검색어와 연 페이지는 공급자나 검색 서비스로 전송됩니다.</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google 검색, 페이지 읽기 가능</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>자체 검색, 페이지 읽기 가능</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>검색 서비스 필요</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>검색을 사용한 Gemini 답변에는 Google 약관에 따라 Google 검색 추천이 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>검색 서비스</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search(검색만)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search는 검색만 합니다. 자체 검색이 없는 공급자는 이 서비스로 페이지를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>자체 검색이 없는 공급자용입니다. Anthropic, Google Gemini, OpenAI, OpenRouter는 검색 서비스 없이 검색합니다.</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>%1 키</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>키 바꾸기…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>그래도 추가</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>키 제거</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>%1 키 받기</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>연결됨</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>검색 한도 소진(%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>키를 테스트하려면 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>%1에 연결할 수 없음</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>검색 서비스 오류(%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>테스트 안 함</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>키체인에 저장됩니다. HikariSub는 에이전트가 작성한 검색어만 보내며 파일은 절대 보내지 않습니다. 연결 테스트는 검색을 한 번 실행하며, %1 요금제 사용량에 포함됩니다.</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1에서 키를 거부했습니다. %1 대시보드에서 새 키를 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>%1 요금제에 남은 검색이 없습니다. 초기화될 때까지 자체 검색이 없는 공급자는 검색 없이 답하고 그 사실을 알립니다.</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>키는 키체인에 있습니다. 공급자는 토큰 외에 자체 검색 비용을 따로 청구합니다. %1 검색은 %1 요금제로 청구됩니다.</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>%1 키를 제거할까요?</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>키체인에서 삭제됩니다. 자체 검색이 없는 공급자는 키를 추가할 때까지 검색하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>요청은 추가한 공급자와 %1에만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>요청은 추가한 공급자와 %1에만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

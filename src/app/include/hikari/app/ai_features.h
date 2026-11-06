@@ -33,6 +33,8 @@ class AiFeatures final : public QObject {
 public:
     static constexpr const char *kOffSetting = "ai.off";
     static constexpr const char *kCachingSetting = "ai.promptCaching";
+    static constexpr const char *kWebSearchSetting = "ai.webSearch";
+    static constexpr const char *kSearchServiceSetting = "ai.searchService";
 
     struct Ports {
         std::function<std::unique_ptr<application::ai::KeyStore>()> keyStore;
@@ -59,6 +61,7 @@ public:
     application::ai::KeyStore *keys() const;
     application::ai::ConfigStore *configs() const;
     application::ai::Providers *providers() const;
+    application::ai::SearchKeys *searchKeys() const;
     backends::ai::AiRequests *requests() const;
     backends::ai::AiSignIn *signIn() const;
     const Ports &ports() const { return m_ports; }
@@ -69,6 +72,9 @@ public:
     backends::ai::AiSidecarHost *sidecarForAction();
     /// The sidecar for the MCP server, which needs no provider. Null with AI off or without an installed sidecar.
     backends::ai::AiSidecarHost *sidecarForMcp();
+    /// Applies the web search settings. The sidecar gets the search service only once its key is in the keychain, so
+    /// call this after a search key is stored or removed.
+    void applyWebSearch();
     /// While the user adds their first provider, its Test connection may start the sidecar too.
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
