@@ -31,6 +31,7 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
 | `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
+| `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
@@ -48,11 +49,11 @@ One write runs at a time; another write meanwhile gets `busy`.
 
 ## Files
 
-A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. The plugin and AI cards decide when the user grants files; HA1 provides the table and the operations.
+A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
 
 ## Node catalogue
 
-`api::nodeCatalogue()` holds the node types of the node-effect editor (NE1): an id, a category, a summary, input and output ports, and a parameter schema. It is empty until NE1 registers its nodes; `nodes.catalogue` and the reference list them.
+`api::nodeCatalogue()` holds the node types of the node-effect editor: an id, a category, a summary, input and output ports, and a parameter schema. It starts with the engine's nodes ([node effects](node-effects.md)), and `nodes.catalogue` and the reference list them. `nodes.validate` checks a graph in the [graph format](node-effects.md#the-graph-format) and returns `{valid, problems}`.
 
 ## Events
 

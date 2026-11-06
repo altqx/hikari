@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <thread>
 
 namespace hikari::backends {
 
@@ -179,7 +180,7 @@ application::OutputStatus OutputEngine::status() const
 application::ClockEstimate OutputEngine::clock(double now) const
 {
     application::ClockEstimate e;
-    for (int attempt = 0; attempt < 16; ++attempt) {
+    for (;; std::this_thread::yield()) {
         const std::uint64_t before = m_seq.load(std::memory_order_acquire);
         if (before & 1)
             continue;
@@ -204,7 +205,6 @@ application::ClockEstimate OutputEngine::clock(double now) const
                   && e.epoch == m_epoch.load(std::memory_order_acquire) && now - e.monotonicSeconds <= stallLimit();
         return e;
     }
-    return {};
 }
 
 }

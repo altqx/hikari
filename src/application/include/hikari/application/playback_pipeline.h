@@ -87,6 +87,9 @@ public:
     // Overlays at the picture's on-screen size in device pixels (nullopt: the
     // frame's size). Any thread.
     void setScreenSize(std::optional<std::pair<int, int>> size);
+    // The subtitle time each frame start renders at; empty: the frame start itself. Any thread.
+    using TimeMap = std::function<std::int64_t(std::int64_t)>;
+    void setTimeMap(TimeMap map);
     Counters counters() const;
     FramePool &pool() { return *m_pool; }
 

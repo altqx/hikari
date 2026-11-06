@@ -244,11 +244,28 @@ TEST_F(PluginInstaller, GrantsTheManifestStillAsksForSurviveAnUpdate)
     registry["com.example.hello"].grants = {{"fonts", {"/fonts", false}}, {"out", {"/out", true}}};
     ASSERT_TRUE(saveRegistry(folders().registry, registry));
 
-    const std::string_view asksLess = R"(, "permissions": {"files": [{"id": "fonts", "title": "Fonts", "reason": "r"}]})";
+    const std::string_view asksLess = R"(, "permissions": {"files": [{"id": "out", "title": "Out", "reason": "r"}]})";
     ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", nullptr, asksLess)), false));
     const InstalledPlugin entry = installed();
     ASSERT_EQ(entry.grants.size(), 1u);
-    EXPECT_EQ(entry.grants.at("fonts").path, "/fonts");
+    EXPECT_EQ(entry.grants.at("out").path, "/out");
+    EXPECT_FALSE(entry.grants.at("out").writable);
+}
+
+TEST_F(PluginInstaller, SetGrantRemembersAndForgetsOnlyFoldersTheManifestAsksFor)
+{
+    const std::string_view asks = R"(, "permissions": {"files": [{"id": "fonts", "title": "Fonts", "reason": "r"},)"
+                                  R"( {"id": "out", "title": "Out", "writable": true, "reason": "r"}]})";
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", nullptr, asks)), false));
+    ASSERT_TRUE(installer.setGrant("com.example.hello", "fonts", FileGrant{"/fonts", true}));
+    ASSERT_TRUE(installer.setGrant("com.example.hello", "out", FileGrant{"/out", true}));
+    EXPECT_FALSE(installed().grants.at("fonts").writable);
+    EXPECT_TRUE(installed().grants.at("out").writable);
+    EXPECT_EQ(installer.setGrant("com.example.hello", "home", FileGrant{"/home", false}).error(),
+              "\xE2\x80\x9Chome\xE2\x80\x9D isn't a folder com.example.hello asks for");
+    EXPECT_FALSE(installer.setGrant("com.example.other", "fonts", FileGrant{"/fonts", false}));
+    ASSERT_TRUE(installer.setGrant("com.example.hello", "fonts", std::nullopt));
+    EXPECT_EQ(installed().grants.size(), 1u);
 }
 
 constexpr std::string_view kSettings =

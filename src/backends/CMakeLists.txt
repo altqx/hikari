@@ -68,14 +68,25 @@ if(WIN32)
     add_subdirectory(directshow)
 endif()
 
+if(WIN32)
+    add_library(hikari_sandbox STATIC sandbox_windows.cpp include/hikari/backends/sandbox.h)
+    target_link_libraries(hikari_sandbox PRIVATE userenv advapi32)
+else()
+    add_library(hikari_sandbox STATIC sandbox_linux.cpp include/hikari/backends/sandbox.h)
+endif()
+target_include_directories(hikari_sandbox PUBLIC include)
+target_link_libraries(hikari_sandbox PUBLIC Qt6::Core)
+hikari_module(hikari_sandbox ALLOW "Qt6::*")
+
 add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_config_store.h ai_requests.cpp
     include/hikari/backends/ai_requests.h ai_keychain.cpp include/hikari/backends/ai_keychain.h ai_sidecar_host.cpp
     include/hikari/backends/ai_sidecar_host.h ai_channel.cpp include/hikari/backends/ai_channel.h
-    ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h
+    ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h ai_http_relay.cpp
+    include/hikari/backends/ai_http_relay.h ai_agent_broker.cpp include/hikari/backends/ai_agent_broker.h
     ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
-target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api Qt6::Core Qt6::Network
+target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api hikari_sandbox Qt6::Core Qt6::Network
     PRIVATE Qt6Keychain::Qt6Keychain ZLIB::ZLIB)
 # QZipReader is private Qt API.
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
@@ -83,4 +94,4 @@ target_link_libraries(hikari_ai PRIVATE Qt6::CorePrivate)
 if(NOT WIN32)
     target_link_libraries(hikari_ai PRIVATE Qt6::DBus)
 endif()
-hikari_module(hikari_ai ALLOW hikari_application hikari_api hikari_core "Qt6::*" ZLIB::ZLIB)
+hikari_module(hikari_ai ALLOW hikari_application hikari_api hikari_core hikari_sandbox "Qt6::*" ZLIB::ZLIB)

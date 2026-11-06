@@ -108,7 +108,7 @@ Everything a user may edit or keep is in one user folder, Aegisub's `?user` ([UD
 | Windows | `%APPDATA%\HikariSub` | `%LOCALAPPDATA%\HikariSub\cache` |
 | Portable | `user` beside the program | as the platform's |
 
-`HIKARISUB_USER_DIR` names another user folder (tests, power users). The folder holds the settings files and list files (below), `automation/autoload` and `automation/include` (DependencyControl's modules and its config too), `dictionaries` (Hunspell pairs, `UserDic.udic`), `catalogs` (style and font catalogs), `presets` (saved workspace layouts) and `recovery`. Help > Open user folder and Settings > General > Folders open it. No uninstaller deletes it.
+`HIKARISUB_USER_DIR` names another user folder (tests, power users). The folder holds the settings files and list files (below), `automation/autoload` and `automation/include` (DependencyControl's modules and its config too), `dictionaries` (Hunspell pairs, `UserDic.udic`), `catalogs` (style and font catalogs), `presets` (saved workspace layouts), `node-effects` (saved [node-effect](node-effects.md) graphs) and `recovery`. Help > Open user folder and Settings > General > Folders open it. No uninstaller deletes it.
 
 **Settings files (CF1, #488).** The settings are three files, each starting with `version = 1` (`"version": 1` in JSON) and holding only values that differ from the default. The rule is: what you set on purpose goes in settings, and what the app remembers goes in state.
 - **`settings.toml`** holds the preferences. A setting's dotted id is tables and a key (`audio.cacheFilesLimit` is `cacheFilesLimit` in `[audio]`), and lists are arrays. The tag buttons are `[[editor.tagButton]]` slots (`tag`, `type`, `name`, `icon`) after `editor.tagButtons`, the count shown. The script dialogs' presets are `[automation.dialogPresets]`, a table of arrays of tables keyed by dialog.
@@ -151,7 +151,7 @@ Hikari AI's sidecar ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-
 
 - **The assets.** The `AI sidecar` workflow (`tools/release/build-ai-sidecar.sh`) builds two:
   - `hikari-ai-runtime-<runtime>-<platform>.gz`, the Bun that runs the bundle, about 49 MiB on Linux and 52 MiB on Windows, for linux-x64 and windows-x64. `<runtime>` is `<Bun version>-<8 hex digits>` and changes only with Bun or the loader;
-  - `hikari-ai-<version>.zip`, the bundle (`hikari-ai.js` and its bytecode), the same for both platforms.
+  - `hikari-ai-<version>.zip`, the bundle (`hikari-ai.js`, the provider SDK files `hikari-ai-{anthropic,gemini,openai}.js`, and each one's bytecode), the same for both platforms.
 
   The workflow builds each twice and fails unless both builds are byte-identical. It fails if any bundled file comes from `@anthropic-ai/claude-agent-sdk`, or if the split starts slower than 1.10× one executable plus 20 ms. `bun audit` runs as a report, not a gate.
 - **The notices.** The bundle carries `src/ai-sidecar/NOTICES.txt`, which `hikari-ai-runtime <bundle> --licenses` prints; `hikari-ai-runtime --licenses` prints the runtime's own:

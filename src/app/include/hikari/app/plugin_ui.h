@@ -4,11 +4,13 @@
 #include "hikari/plugins/manifest.h"
 
 #include <QObject>
+#include <QStringList>
 #include <QUrl>
 #include <QVariant>
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <deque>
 #include <functional>
 #include <map>
 #include <optional>
@@ -109,12 +111,57 @@ private:
     bool m_modal = false;
 };
 
+// The file picker or folder request a plugin waits on, for QML to show.
+class PluginFileRequest : public QObject {
+    Q_OBJECT
+    // "open", "save" or "folder".
+    Q_PROPERTY(QString kind READ kind CONSTANT)
+    Q_PROPERTY(QString pluginName READ pluginName CONSTANT)
+    // The picker's title from the plugin, or the folder request's title.
+    Q_PROPERTY(QString title READ title CONSTANT)
+    // Why a folder is asked for, from the manifest.
+    Q_PROPERTY(QString reason READ reason CONSTANT)
+    Q_PROPERTY(bool writable READ writable CONSTANT)
+    Q_PROPERTY(QStringList nameFilters READ nameFilters CONSTANT)
+    // Where a save picker starts: the suggested name in Documents, or empty.
+    Q_PROPERTY(QUrl file READ file CONSTANT)
+
+public:
+    using Answer = std::function<void(std::optional<QString> path, bool remember)>;
+    PluginFileRequest(QString kind, QString pluginName, QString title, QString reason, bool writable, QStringList nameFilters,
+                      QString name, Answer answer, QObject *parent);
+
+    QString kind() const { return m_kind; }
+    QString pluginName() const { return m_pluginName; }
+    QString title() const { return m_title; }
+    QString reason() const { return m_reason; }
+    bool writable() const { return m_writable; }
+    QStringList nameFilters() const { return m_nameFilters; }
+    QUrl file() const { return m_file; }
+
+    // `remember` keeps a folder for the plugin's later runs.
+    Q_INVOKABLE void accept(const QUrl &chosen, bool remember = false);
+    Q_INVOKABLE void reject();
+
+signals:
+    void settled();
+
+private:
+    QString m_kind, m_pluginName, m_title, m_reason;
+    bool m_writable = false;
+    QStringList m_nameFilters;
+    QUrl m_file;
+    Answer m_answer;
+};
+
 // The panels and dialogs of the installed plugins, between the plugin helpers and QML.
 class PluginUi : public QObject {
     Q_OBJECT
     // [{dock, plugin, pluginName, panel, title, area ("left", "right" or "bottom")}] of the plugins turned on,
     // by title.
     Q_PROPERTY(QVariantList panels READ panels NOTIFY panelsChanged)
+    // The oldest picker or folder request still waiting, or null.
+    Q_PROPERTY(hikari::app::PluginFileRequest *fileRequest READ fileRequest NOTIFY fileRequestChanged)
 
 public:
     struct Plugin {
@@ -129,6 +176,16 @@ public:
                                        const std::string &coalesceKey)>;
     // The answer to the helper: {"result": …} or {"error": {code, message}}.
     using Reply = std::function<void(std::string)>;
+    struct FileAsk {
+        QString kind; // "open", "save" or "folder"
+        QString title;
+        QString reason;
+        bool writable = false;
+        QStringList nameFilters;
+        QString name;
+    };
+    // {file, name, access} for a file dropped on one of the plugin's panels, or null.
+    using GrantDrop = std::function<api::Json(const std::string &plugin, const QString &path)>;
 
     explicit PluginUi(Deliver deliver, QObject *parent = nullptr);
     ~PluginUi() override;
@@ -140,6 +197,13 @@ public:
     // status "stopped" or "failed": its panels lose their trees and its dialogs close.
     void stopped(const std::string &plugin, const QString &status, const QString &reason);
     void serve(const std::string &plugin, const std::string &operation, const api::Json &params, Reply reply);
+    // Queued behind other plugins' requests; never answered when the plugin stops first.
+    void askForFile(const std::string &plugin, FileAsk ask, PluginFileRequest::Answer answer);
+    void setGrantDrop(GrantDrop grant) { m_grantDrop = std::move(grant); }
+    PluginFileRequest *fileRequest() const { return m_fileRequests.empty() ? nullptr : m_fileRequests.front().second; }
+    // Files dropped on a panel whose tree has `drop`: granted for reading and sent as a "drop" event.
+    // False when the panel doesn't take drops.
+    Q_INVOKABLE bool drop(const QString &dock, const QList<QUrl> &files);
 
     QVariantList panels() const { return m_rows; }
     // {status ("missing", "off", "running", "stopped" or "failed"), reason} of an installed plugin.
@@ -162,6 +226,7 @@ signals:
     void showRequested(const QString &dock);
     void dialogOpened(hikari::app::PluginDialogState *dialog);
     void dialogClosed(hikari::app::PluginDialogState *dialog);
+    void fileRequestChanged();
 
 private:
     struct Dialog {
@@ -182,6 +247,8 @@ private:
     void relist();
     void close(const QString &key);
     void closeDialogsOf(const std::string &plugin);
+    void dropFileRequestsOf(const std::string &plugin);
+    void answered(PluginFileRequest *request);
     void deliver(const std::string &plugin, const std::string &event, api::Json data, const std::string &key);
     void present(const std::string &plugin, const api::Json &params, std::optional<Reply> asked, const Reply &reply);
 
@@ -192,6 +259,8 @@ private:
     std::set<QString> m_shown;
     std::map<QString, Dialog> m_dialogs;
     QVariantList m_rows;
+    std::deque<std::pair<std::string, PluginFileRequest *>> m_fileRequests;
+    GrantDrop m_grantDrop;
 };
 
 }

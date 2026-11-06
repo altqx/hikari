@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds the AI sidecar's release assets into <out> (ADR 0031):
-#   hikari-ai-<version>.zip                            the bundle, hikari-ai.js and its bytecode, for every platform
+#   hikari-ai-<version>.zip                            the bundle and its provider SDK files, each with its bytecode, for every platform
 #   hikari-ai-runtime-<runtime>-{linux-x64,windows-x64}.gz   the runtime that runs it
 #   build.json                                         what the manifest says about this build
 #   tools/release/build-ai-sidecar.sh <version> <out> [<commit>]
@@ -22,6 +22,10 @@ windows_bun=$(bun_for windows-x64)
 api=$(sed -n 's/^inline constexpr int kApiVersion = \([0-9]*\);$/\1/p' "$root/src/api/include/hikari/api/api.h")
 [[ -n "$api" ]] || { echo "::error::no kApiVersion in src/api/include/hikari/api/api.h"; exit 1; }
 build_id="$version+${commit:0:12}"
+bundle_files="hikari-ai.js hikari-ai.js.jsc"
+for sdk in anthropic gemini openai; do
+    bundle_files+=" hikari-ai-$sdk.js hikari-ai-$sdk.js.jsc"
+done
 
 cd "$root/src/ai-sidecar"
 "$bun" ci --ignore-scripts
@@ -36,7 +40,7 @@ for platform in linux-x64 windows-x64; do
         "$bun" tools/build.ts --target "$platform" --runtime "$runtime" --out "$out/pass-$pass/$platform" \
             --version "$version" --build-id "$build_id" --api-version "$api" "${single[@]}"
     done
-    for file in "hikari-ai-runtime$exe" hikari-ai.js hikari-ai.js.jsc build.json; do
+    for file in "hikari-ai-runtime$exe" $bundle_files build.json; do
         if ! cmp "$out/pass-1/$platform/$file" "$out/pass-2/$platform/$file"; then
             echo "::error::the two $platform builds of $file differ"
             exit 1
@@ -47,7 +51,7 @@ for platform in linux-x64 windows-x64; do
         exit 1
     fi
 done
-for file in hikari-ai.js hikari-ai.js.jsc build.json; do
+for file in $bundle_files build.json; do
     if ! cmp "$out/pass-1/linux-x64/$file" "$out/pass-1/windows-x64/$file"; then
         echo "::error::$file differs between the platforms, so one bundle can't serve both"
         exit 1
@@ -57,11 +61,11 @@ done
 built="$out/pass-1/linux-x64"
 cp "$built/build.json" "$out/build.json"
 runtime_id=$(sed -n 's/^  "runtime": "\(.*\)",$/\1/p' "$out/build.json")
-python3 - "$built" "$out/hikari-ai-$version.zip" <<'EOF'
+python3 - "$built" "$out/hikari-ai-$version.zip" $bundle_files <<'EOF'
 import sys, zipfile
 built, archive = sys.argv[1], sys.argv[2]
 with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-    for name in ("hikari-ai.js", "hikari-ai.js.jsc"):
+    for name in sys.argv[3:]:
         info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o644 << 16

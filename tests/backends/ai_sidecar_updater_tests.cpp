@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
@@ -196,6 +197,19 @@ TEST_F(AiSidecarUpdaterTest, ARuntimeLongerThanTheManifestSaysIsDeleted)
     EXPECT_TRUE(*outcome.error == SidecarDownloadError::Mismatch || *outcome.error == SidecarDownloadError::Network);
     EXPECT_TRUE(entries(QStringLiteral("runtime")).isEmpty());
     EXPECT_TRUE(entries(QStringLiteral("download")).isEmpty());
+}
+
+TEST_F(AiSidecarUpdaterTest, UnpacksTheProviderSdkFilesNextToTheBundle)
+{
+    channel.addRelease({.version = QStringLiteral("1.1.0"),
+                        .extra = {{QStringLiteral("hikari-ai-openai.js"), "openai"},
+                                  {QStringLiteral("hikari-ai-openai.js.jsc"), "bytecode"}}});
+    channel.publish(signer);
+    const Outcome outcome = install();
+    ASSERT_TRUE(outcome.installed) << outcome.detail.toStdString();
+    EXPECT_EQ(readAll(QFileInfo(outcome.installed->bundle).dir().filePath(QStringLiteral("hikari-ai-openai.js"))),
+              QByteArray("openai"));
+    EXPECT_EQ(entries(QStringLiteral("bundle/1.1.0")).size(), 5);
 }
 
 TEST_F(AiSidecarUpdaterTest, ABundleHoldingAnyOtherFileIsNeverUnpacked)

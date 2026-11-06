@@ -49,6 +49,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     },
     "audio.peaks": { group: "karaoke" },
     "nodes.catalogue": { group: "effects" },
+    "nodes.validate": { group: "effects" },
     "panels.list": { group: "app" },
     "panels.open": { group: "app" },
     "panels.close": { group: "app" },

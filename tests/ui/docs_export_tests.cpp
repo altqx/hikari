@@ -33,7 +33,7 @@ QByteArray read(const QString &path)
     return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
 }
 
-QJsonObject json(const QTemporaryDir &dir, const QString &name)
+QJsonObject jsonFile(const QTemporaryDir &dir, const QString &name)
 {
     return QJsonDocument::fromJson(read(dir.filePath(name))).object();
 }
@@ -81,7 +81,7 @@ private slots:
 
     void metaNamesTheBuild()
     {
-        const QJsonObject meta = json(first, QStringLiteral("meta.json"));
+        const QJsonObject meta = jsonFile(first, QStringLiteral("meta.json"));
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), app::kDocsSchema);
         QCOMPARE(meta.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(meta.value(QStringLiteral("version")).toString(), QStringLiteral(HIKARI_VERSION));
@@ -95,7 +95,7 @@ private slots:
 
     void apiIsTheReference()
     {
-        const QJsonObject reference = json(first, QStringLiteral("api.json"));
+        const QJsonObject reference = jsonFile(first, QStringLiteral("api.json"));
         QCOMPARE(reference.value(QStringLiteral("version")).toInt(), api::kApiVersion);
         QCOMPARE(qsizetype(reference.value(QStringLiteral("operations")).toArray().size()),
                  qsizetype(api::Api::registry().operations().size()));
@@ -105,7 +105,7 @@ private slots:
 
     void everyCommandIsThere()
     {
-        const QJsonArray commands = json(first, QStringLiteral("commands.json")).value(QStringLiteral("commands")).toArray();
+        const QJsonArray commands = jsonFile(first, QStringLiteral("commands.json")).value(QStringLiteral("commands")).toArray();
         QMap<int, QJsonObject> byId;
         int previous = -1;
         for (const QJsonValue &v : commands) {
@@ -158,13 +158,14 @@ private slots:
 
     void menusAreTheRealOnes()
     {
-        const QJsonArray commands = json(first, QStringLiteral("commands.json")).value(QStringLiteral("commands")).toArray();
+        const QJsonArray commands = jsonFile(first, QStringLiteral("commands.json")).value(QStringLiteral("commands")).toArray();
         QMap<QString, QStringList> menus;
         for (const QJsonValue &v : commands)
             for (const QJsonValue &m : v.toObject().value(QStringLiteral("menus")).toArray())
                 menus[v.toObject().value(QStringLiteral("symbol")).toString()] << m.toString();
         QCOMPARE(menus.value(QStringLiteral("GLOBAL_SAVE_SUBS")), QStringList{QStringLiteral("File > Save")});
-        QVERIFY(menus.value(QStringLiteral("GLOBAL_CONVERT_TO_SRT")).contains(QStringLiteral("Subtitles > Conversion > Convert to SRT")));
+        QVERIFY(menus.value(QStringLiteral("GLOBAL_OPEN_ASS_PROPERTIES")).contains(QStringLiteral("Subtitles > Script properties")));
+        QVERIFY(!menus.contains(QStringLiteral("GLOBAL_CONVERT_TO_SRT")));
         QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Before")));
         QVERIFY(menus.value(QStringLiteral("GRID_DUPLICATE_LINES")).contains(QStringLiteral("Grid menu > Duplicate lines")));
         QCOMPARE(menus.value(QStringLiteral("GRID_SET_NEW_FPS")), QStringList{QStringLiteral("Subtitles > Set FPS > Set new FPS…")});
@@ -182,7 +183,7 @@ private slots:
 
     void everySettingIsThere()
     {
-        const QJsonObject doc = json(first, QStringLiteral("settings.json"));
+        const QJsonObject doc = jsonFile(first, QStringLiteral("settings.json"));
         QSet<QString> pages;
         for (const QJsonValue &p : doc.value(QStringLiteral("pages")).toArray())
             pages.insert(p.toObject().value(QStringLiteral("id")).toString());
@@ -265,7 +266,7 @@ private slots:
 
     void guideLinksAreTheTable()
     {
-        const QJsonObject doc = json(first, QStringLiteral("guide-links.json"));
+        const QJsonObject doc = jsonFile(first, QStringLiteral("guide-links.json"));
         QCOMPARE(doc.value(QStringLiteral("home")).toString(), QStringLiteral("/en/docs"));
         const QJsonArray links = doc.value(QStringLiteral("links")).toArray();
         QCOMPARE(links.size(), qsizetype(application::guideLinks().size()));

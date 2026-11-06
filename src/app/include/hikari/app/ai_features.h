@@ -17,6 +17,7 @@ namespace hikari::api {
 class Api;
 }
 namespace hikari::backends::ai {
+class AgentBroker;
 class AiRequests;
 class AiSidecarHost;
 }
@@ -55,6 +56,8 @@ public:
         /// The sidecar a developer or test build runs instead.
         std::optional<backends::ai::SidecarInstall> localSidecar;
         std::function<bool()> autoUpdateOffByPolicy;
+        /// Adds the agent CLIs the sidecar may ask Qt to start.
+        std::function<void(backends::ai::AgentBroker &)> agents;
         Timing timing;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
@@ -82,6 +85,9 @@ public:
     backends::ai::AiSidecarHost *sidecar() const;
     /// The version the running sidecar reported, or the one that would run.
     QString sidecarVersion() const;
+    /// Whether the sidecar runs fully sandboxed: the host's own coverage once it is built, else what this system can
+    /// enforce.
+    bool sandboxed() const;
 
     bool autoUpdate() const;
     bool autoUpdateOffByPolicy() const;

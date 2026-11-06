@@ -15,8 +15,12 @@ add_custom_command(OUTPUT "${_hikari_ai_installed}"
     DEPENDS "${_hikari_ai_dir}/package.json" "${_hikari_ai_dir}/bun.lock" "${_hikari_ai_dir}/bunfig.toml"
     COMMENT "Installing the AI sidecar's locked packages"
     VERBATIM)
+set(_hikari_ai_sdk_files)
+foreach(_sdk anthropic gemini openai)
+    list(APPEND _hikari_ai_sdk_files "${_hikari_ai_out}/hikari-ai-${_sdk}.js" "${_hikari_ai_out}/hikari-ai-${_sdk}.js.jsc")
+endforeach()
 add_custom_command(OUTPUT "${HIKARI_AI_RUNTIME_FILE}" "${HIKARI_AI_BUNDLE_FILE}" "${HIKARI_AI_BUNDLE_FILE}.jsc"
-        "${_hikari_ai_out}/build.json"
+        ${_hikari_ai_sdk_files} "${_hikari_ai_out}/build.json"
     COMMAND "${HIKARI_BUN}" tools/build.ts --target "${HIKARI_BUN_HOST_PLATFORM}" --runtime "${HIKARI_BUN}"
         --out "${_hikari_ai_out}" --version 0.0.0-dev --build-id "${HIKARI_AI_BUILD_ID}"
         --api-version "${_hikari_api_version}"

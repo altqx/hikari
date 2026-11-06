@@ -3,6 +3,7 @@ import { ErrorCode, kDeclaredMethods, kProtocolVersion, kRequiredApiVersion, Met
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
     type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
+import { LinkRelay } from "./providers/relay";
 import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
 import type { UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
@@ -59,9 +60,9 @@ export class Sidecar {
     readonly mcp: McpServer;
     private initialized = false;
 
-    constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}) {
+    constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions) {
         this.api = new HikariApi(peer);
-        this.providers = new ProviderService(providers);
+        this.providers = new ProviderService(providers ?? { relay: new LinkRelay(peer) });
         this.tools = new ToolSet(this.api);
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
             { name: "hikarisub", title: "HikariSub", version: build.buildId }, () => this.catalogue);

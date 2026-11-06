@@ -1,0 +1,4 @@
+# timestamp format v1
+assume 23.976
+10,19,29.97
+30,39,59.94

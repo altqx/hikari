@@ -161,8 +161,9 @@ TEST_F(PortAudioDevice, ConsumesQueuedAudioAndPublishesAClock)
     EXPECT_FALSE(out.status().deviceLost);
     EXPECT_FALSE(out.clock().valid) << "stopped: no estimate";
     ASSERT_TRUE(out.start()) << "restart after stop";
-    ASSERT_TRUE(feedUntil(out, [&] { return out.clock().valid; }));
-    EXPECT_GT(out.clock().epoch, e.epoch) << "restart begins a new epoch";
+    application::ClockEstimate restarted;
+    ASSERT_TRUE(feedUntil(out, [&] { return (restarted = out.clock()).valid; }));
+    EXPECT_GT(restarted.epoch, e.epoch) << "restart begins a new epoch";
     out.close();
     EXPECT_FALSE(out.status().open);
 }

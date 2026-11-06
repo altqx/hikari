@@ -31,24 +31,26 @@ constexpr std::string_view kSong =
     "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,Effector [fx],ka\n"
     "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,FX,not the templater's\n"
     "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx2,nor this\n"
-    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx,last\n";
+    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx,last\n"
+    "Dialogue: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,fx Shine,a node effect's\n"
+    "Dialogue: 0,0:00:10.00,0:00:12.00,Romaji,,0,0,0,fx my karaoke,not a graph name\n";
 
 }
 
-TEST(GeneratedRuns, OnlyTheTwoEffectsMarkAGeneratedLine)
+TEST(GeneratedRuns, OnlyTheGeneratedEffectsMarkAGeneratedLine)
 {
     const core::Document doc = load(kSong);
     const auto lines = doc.lines();
-    ASSERT_EQ(lines.size(), 10u);
+    ASSERT_EQ(lines.size(), 12u);
     std::vector<bool> generated;
     for (const auto *line : lines)
         generated.push_back(isFoldableGeneratedLine(*line));
-    EXPECT_EQ(generated, (std::vector<bool>{false, false, true, true, false, false, true, false, false, true}));
+    EXPECT_EQ(generated, (std::vector<bool>{false, false, true, true, false, false, true, false, false, true, true, false}));
 }
 
 TEST(GeneratedRuns, ConsecutiveGeneratedLinesMakeOneRun)
 {
     const core::Document doc = load(kSong);
-    EXPECT_EQ(generatedRuns(doc.lines()), (std::vector<GeneratedRun>{{2, 2}, {6, 1}, {9, 1}}));
+    EXPECT_EQ(generatedRuns(doc.lines()), (std::vector<GeneratedRun>{{2, 2}, {6, 1}, {9, 2}}));
     EXPECT_TRUE(generatedRuns(core::Document{}.lines()).empty());
 }

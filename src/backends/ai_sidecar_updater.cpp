@@ -22,7 +22,12 @@ namespace {
 
 constexpr qint64 kMaxExecutableBytes = qint64{512} << 20;
 constexpr qint64 kMaxBundleBytes = qint64{256} << 20;
-const QStringList kBundleFiles{QStringLiteral("hikari-ai.js"), QStringLiteral("hikari-ai.js.jsc")};
+const QStringList kBundleFiles = [] {
+    QStringList files;
+    for (const char *name : {"hikari-ai", "hikari-ai-anthropic", "hikari-ai-gemini", "hikari-ai-openai"})
+        files << QLatin1String(name) + QStringLiteral(".js") << QLatin1String(name) + QStringLiteral(".js.jsc");
+    return files;
+}();
 
 bool allowedGitHubHost(const QString &host)
 {

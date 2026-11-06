@@ -1691,6 +1691,10 @@ Output device: %2</source>
         <translation>0은 불투명, 255는 완전 투명</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>색 없음</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>접기</translation>
     </message>
@@ -1886,94 +1890,6 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>목록</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>모든 줄에 이 스타일이 적용됩니다.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>시작 태그</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>모든 줄의 시작 부분에 추가됩니다.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>해상도</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>너비</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>높이</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>새 파일의 스크립트 해상도입니다.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>프레임 속도</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>프레임</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>1에서 1000 사이의 프레임 속도를 입력하십시오.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD는 프레임 단위로 계산합니다. 시간은 이 속도에 따라 프레임으로 변환됩니다.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>종료 시간</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>글자당</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>줄의 길이는 글자 수 × 이 값이며, 최소 1초이고 다음 줄이 시작하는 곳에서 끝납니다.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>변경 내용</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>프레임 속도를 올바르게 입력할 때까지 표시할 내용이 없습니다.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>새로운 종료 시간</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>변환</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -2065,18 +1981,6 @@ Output device: %2</source>
             <numerusform>회전된 줄 %n개가 모양을 유지하지 못했습니다.</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>이 문서는 해당 형식으로 변환할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>잘못된 프레임 속도입니다. 설정에서 수정하고 다시 시도하십시오.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>스크립트 속성과 스타일이 제거됩니다.</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -2118,12 +2022,6 @@ Output device: %2</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>줄 %n개에서 레이어, 스타일, 배우, 여백 또는 효과가 제거됩니다.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>줄 %n개에서 책갈피, 숨긴 줄 및 그룹이 제거됩니다.</numerusform>
@@ -2156,6 +2054,10 @@ Output device: %2</source>
     <message>
         <source>No</source>
         <translation>아니오</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -2192,6 +2094,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>내 변경 사항 유지</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>저장하기 전에 “%1”을(를) ASS로 변환할까요?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS로 변환</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2234,6 +2144,10 @@ Output device: %2</source>
         <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>자막이 포함된 영상 (*.mkv *.ogm)</translation>
     </message>
@@ -2260,6 +2174,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>새 자막</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>%1(을)를 YouTube 시간 지정 텍스트로 가져올 수 없습니다. %2 아무것도 가져오지 않았습니다.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -2322,6 +2240,14 @@ Output device: %2</source>
         <translation>새 자막을 저장할 위치를 선택하십시오.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>설정 › 변환의 프레임 속도가 올바르지 않습니다. 수정한 다음 다시 저장하십시오.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>ASS로 저장</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>문서를 저장하지 못해 아무것도 닫지 않았습니다.</translation>
     </message>
@@ -2336,6 +2262,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1(을)를 열 수 없습니다. 아무것도 변경되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>ASS 자막 (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2362,12 +2292,21 @@ Output device: %2</source>
         <translation>키 프레임: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>타임코드: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>연결된 파일:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>폴더에 있는 영상: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>찾을 수 없는 연결된 파일:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -3010,8 +2949,16 @@ Output device: %2</source>
         <translation>글꼴, 크기, 비율 또는 자간 태그 제거됨</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>크기 비율 또는 자간 태그 제거됨</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>테두리, 그림자, 흐림, 투명도 또는 다른 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>테두리, 그림자 또는 흐림 태그 제거됨</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -3020,6 +2967,10 @@ Output device: %2</source>
     <message>
         <source>Some bold, italic, underline or strikeout removed</source>
         <translation>일부 굵게, 기울임, 밑줄 또는 취소선 제거됨</translation>
+    </message>
+    <message>
+        <source>Strikeout removed</source>
+        <translation>취소선 제거됨</translation>
     </message>
     <message>
         <source>Position or alignment removed</source>
@@ -3062,6 +3013,14 @@ Output device: %2</source>
         <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
     </message>
     <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>이 파일에는 스타일 옵션을 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>이 파일로 YouTube 시간 지정 텍스트를 만들 수 없습니다: %1</translation>
+    </message>
+    <message>
         <source>Couldn’t write %1: %2</source>
         <translation>%1 파일을 쓸 수 없습니다: %2</translation>
     </message>
@@ -3072,6 +3031,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>일반 텍스트</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>글로우</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>%1의 글로우 그림자</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>부드럽게</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>%1의 부드러운 그림자</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>선명하게</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>%1의 선명한 그림자</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>베벨</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>%1의 베벨 그림자</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>현재 단어 글자</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>%1의 현재 단어 글자 색</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>현재 단어 외곽선</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>%1의 현재 단어 외곽선 색</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>현재 단어 그림자</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>%1의 현재 단어 그림자 색</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -3132,6 +3151,46 @@ Output device: %2</source>
     <message>
         <source>Options</source>
         <translation>옵션</translation>
+    </message>
+    <message>
+        <source>srv3 style options</source>
+        <translation>srv3 스타일 옵션</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>가라오케</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1에는 그림자가 없으므로(그림자 0) 그림자 종류가 적용되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>%1의 가라오케</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>색 없음</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>%1 초기화</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>그림자는 YouTube가 스타일의 그림자를 그리는 방식입니다. 외곽선은 항상 글로우로 그려집니다. 현재 단어 색은 가라오케 줄에 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>모든 스타일 보기(%1)</translation>
     </message>
     <message>
         <source>Alignment as %1 tags</source>
@@ -3198,6 +3257,14 @@ Output device: %2</source>
         <translation>TMPlayer에는 종료 시간이 없으므로 겹치는 줄은 병합되고, 빈 자막이 화면을 지웁니다.</translation>
     </message>
     <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>YTSubConverter 1.6.5와 똑같이 변환합니다. 파일에 첨부된 글꼴과 그래픽은 내보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>변경한 옵션은 내보낼 때 자막 파일에 저장됩니다.</translation>
+    </message>
+    <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
     </message>
@@ -3217,6 +3284,12 @@ Output device: %2</source>
         <source>%n line(s) with nothing to show skipped.</source>
         <translation>
             <numerusform>표시할 내용이 없는 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>스타일 %n개의 옵션을 자막 파일에 저장했습니다.</numerusform>
         </translation>
     </message>
     <message>
@@ -3557,6 +3630,22 @@ Output device: %2</source>
     <message>
         <source>Writing the new archive replaces it.</source>
         <translation>새 압축 파일을 쓰면 기존 파일을 대체합니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>“%1”에 글꼴 파일 %n개가 이미 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>외 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>기존 파일 유지</translation>
     </message>
     <message>
         <source>Action</source>
@@ -4084,6 +4173,10 @@ Output device: %2</source>
     <message>
         <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.</source>
         <translation>이 수집은 완전하지 않습니다. 이를 확인한 경우에만 쓰며, 출력은 불완전함으로 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1”(이)가 폴더에 이미 있어 그대로 두었습니다.</translation>
     </message>
     <message>
         <source>Cannot create folder.</source>
@@ -4776,6 +4869,10 @@ Failed to copy %2 fonts.</source>
         <translation>다음 줄과</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>영상에 보이는 줄 선택</translation>
     </message>
@@ -4800,6 +4897,32 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>설명 추가</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Aegisub 접기</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>이 파일에 Aegisub 접기가 %n개 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>줄 그룹으로 변환</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>Aegisub 접기 %n개를 줄 그룹으로 바꿨습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>접기 %n개를 건너뛰었습니다. 줄 그룹과 겹치거나 짝이 맞지 않습니다.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -5314,6 +5437,26 @@ Failed to copy %2 fonts.</source>
         <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
     </message>
     <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>“ASS로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 이름으로 저장에서 ASS를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>“SRT로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>“TMP로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>“MDVD로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>“MPL2로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation>“빈 2h30m 소리 열기”의 단축키 %1(이)가 제거되었습니다. 이 명령은 없어졌으며 더미 영상에 무음 소리가 함께 제공됩니다.</translation>
     </message>
@@ -5756,26 +5899,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>문제 보고</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6350,6 +6473,42 @@ Failed to copy %2 fonts.</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>벡터 클립: 점 이동</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>벡터 클립: 직선 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>벡터 클립: 베지어 곡선 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>벡터 클립: B-스플라인 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>벡터 클립: 별도 점 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>벡터 클립: 점 삭제</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>벡터 클립: 반전</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>자막 복사(클립보드)</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>PNG 파일로 자막 저장</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>노래방 검사</translation>
     </message>
@@ -6394,12 +6553,40 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>영상 다시 불러오기</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>소리 다시 불러오기</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>타임코드 열기</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>타임코드 저장</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>타임코드 닫기</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -6432,6 +6619,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>You cannot use the program exit shortcut.</source>
         <translation>프로그램 종료 단축키는 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>영상에 맞추기…</translation>
     </message>
 </context>
 <context>
@@ -6824,26 +7015,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>시작 시간</translation>
     </message>
@@ -7216,10 +7387,6 @@ Failed to copy %2 fonts.</source>
         <translation>스크립트 속성</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>변환</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>글꼴 수집기</translation>
     </message>
@@ -7308,26 +7475,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>MicroDVD로 변환하기</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>TMPlayer(권하지 않음)로 변환</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7502,6 +7649,34 @@ Failed to copy %2 fonts.</source>
         <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR 타임코드 v1, v2, v4 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>타임코드 열기</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>열었던 타임코드</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>VFR 타임코드 v2 파일로 저장합니다</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>타임코드 저장</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>지금 열린 타임코드 파일을 닫습니다</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>타임코드 닫기</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>영상 위치로 프레임 단위 이동</translation>
     </message>
@@ -7538,8 +7713,20 @@ Failed to copy %2 fonts.</source>
         <translation>뒤따르는 줄, 끝을 영상에</translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>영상 다시 불러오기</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>렌더링 비용</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>소리 다시 불러오기</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7548,6 +7735,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>태그 없는 영상</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>영상에 사용하는 색상 매트릭스가 명시되어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub은 %1(으)로 추정하지만 다른 플레이어는 다르게 추정할 수 있으므로, 영상의 색상과 그에 맞춘 자막 색상이 플레이어마다 다르게 보일 수 있습니다. 모든 플레이어에서 똑같이 보이도록 영상에 색상 매트릭스 태그를 지정하십시오.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>HDR 또는 광색역 영상</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>영상이 HDR 또는 광색역 색상을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>일반 자막은 문제없이 쓸 수 있지만, 자막 색상을 영상 색상과 일치시킬 수는 없습니다.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>YCbCr 매트릭스를 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>자막에 YCbCr 매트릭스가 없습니다.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>이 영상용 자막이면 영상 값(%1)으로 설정하십시오. 다른 영상용이면 그 영상을 열 때까지 설정하지 마십시오.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>설정 안 함</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>%1(으)로 설정</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>YCbCr 매트릭스 불일치</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>영상의 YCbCr 매트릭스(%1)가 자막의 매트릭스(%2)와 다릅니다.</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>이 영상의 색상이 자막을 만든 원래 영상의 색상과 같아 보이면 자막의 매트릭스를 영상 값으로 설정하십시오.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>레이아웃 해상도를 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>자막에 레이아웃 해상도가 없습니다.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>이 영상용 자막이면 영상 값(%1)으로 설정하십시오. 오래된 파일이면 그 파일을 만든 영상의 해상도로 설정하십시오. 대개 스크립트 해상도(%2)와 같습니다.</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>영상 값(%1)으로 설정</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>스크립트 해상도(%1)로 설정</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>레이아웃 해상도 불일치</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>영상 해상도는 %1이고 자막의 레이아웃 해상도는 %2입니다.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>가로 세로 비율이 다릅니다. 레이아웃 해상도를 영상 값으로 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>대개는 문제없습니다. 자막에 아직 이렇다 할 서식이 없고 이 영상에서 서식을 지정할 예정이면 레이아웃 해상도를 영상 값으로 설정하십시오.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7680,10 +7963,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens Script properties</source>
         <translation>스크립트 속성을 엽니다</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>다른 자막 형식으로 변환</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -8286,6 +8565,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>사소한 오류 수정 기능이 제거되었습니다. 규칙은 %1에 그대로 남아 있지만 사용되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>선택한 지점이 색을 유지하는, 영상 프레임 주변의 프레임에 맞춰 활성 줄의 시간을 정합니다</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>영상에 맞추기…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>영상에 맞추기</translation>
     </message>
 </context>
 <context>
@@ -9112,6 +9403,18 @@ Failed to copy %2 fonts.</source>
         <translation>시작 확대 비율</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>시각 도구</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>핸들 크기</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>시각 도구 핸들의 크기는 50에서 400까지 설정할 수 있습니다</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>스크립트 해상도</translation>
     </message>
@@ -9122,6 +9425,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>해상도 불일치 경고 안 함</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>자막에 YCbCr 매트릭스 없음</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>설정하지 않음</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>묻기</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>영상 값으로 설정</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>영상과 다른 YCbCr 매트릭스</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>자막 값 유지</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>자막에 레이아웃 해상도 없음</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>스크립트 해상도로 설정</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>영상과 다른 레이아웃 해상도</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>묻지 않음</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>가로 세로 비율이 다를 때 묻기</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>항상 묻기</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>영상을 열 때 확인합니다.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>영상에 색상 매트릭스 태그가 없으면 경고</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>영상이 HDR 또는 광색역 색상이면 경고</translation>
     </message>
     <message>
         <source>Output</source>
@@ -9146,6 +9509,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>줄 변경 후 재생 안 함</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>모노로 재생</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>소리 패널과 편집 재생의 채널을 하나로 섞습니다. 일반 영상 재생은 파일의 채널을 그대로 유지합니다.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -9486,6 +9857,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
         <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>플러그인의 인터넷 연결 허용</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
+        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 플러그인의 요청을 모두 거부합니다.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -9975,8 +10354,16 @@ Failed to copy %2 fonts.</source>
         <translation>공급자에게 보내는 내용</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
+        <translation type="vanished">요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -10278,6 +10665,22 @@ Failed to copy %2 fonts.</source>
         <translation>권한</translation>
     </message>
     <message>
+        <source>Remembered folders</source>
+        <translation>기억한 폴더</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>잊기</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>다음에 이 폴더가 필요할 때 %1이(가) 다시 묻습니다</translation>
+    </message>
+    <message>
         <source>What it adds</source>
         <translation>추가하는 항목</translation>
     </message>
@@ -10412,6 +10815,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1이(가) 읽고 쓸 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1이(가) 읽을 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1에 이 폴더 기억하기</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>폴더 선택…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: 파일 저장</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: 파일 선택</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
     </message>
 </context>
 <context>
@@ -11710,6 +12141,10 @@ because it was edited.</source>
         <translation>키 프레임</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>타임코드</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>이 탭의 자막 파일 %1(을)를 찾을 수 없습니다.</translation>
     </message>
@@ -11724,6 +12159,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>이 탭의 키 프레임 파일 %1(을)를 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>이 탭의 타임코드 파일 %1(을)를 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11744,6 +12183,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>키 프레임 파일 (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>타임코드 파일 (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -12609,6 +13052,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>초당 프레임</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>초당 프레임, 타임코드 파일 %1의 평균</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -15626,6 +16073,14 @@ Styles deleted:
         <translation>키 프레임 파일 선택</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>타임코드 파일 (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>타임코드 파일 저장</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
     </message>
@@ -15713,6 +16168,14 @@ Styles deleted:
     <message>
         <source>Copy with subtitles</source>
         <translation>자막과 함께 복사</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>자막만 PNG로 저장…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>자막만 복사</translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -15967,6 +16430,69 @@ or codecs or a splitter may be missing</source>
         <translation>프레임 %1/%2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>PC 범위</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>TV 범위</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>더미 영상</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>가변</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n프레임 (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>알 수 없음</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1비트</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>회색조, %1비트</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1비트</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2비트</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (태그 없음, 크기로 추정)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>가로 세로 비율: %1</translation>
     </message>
@@ -16000,6 +16526,188 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>열기</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>영상에 맞추기</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>먼저 영상을 여세요.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>먼저 맞출 줄을 선택하세요.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>영상의 프레임 하나를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>자막이 읽기 전용입니다.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>줄이 보여야 하는 동안 색이 유지되는 지점을 클릭하세요. 이 프레임 주변에서 그 색이 유지되는 모든 프레임에 줄의 시간이 맞춰집니다.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>영상 프레임</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>화살표 키로 지점을 옮기고, Enter로 맞춥니다</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>지점 X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>지점 Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>색상 %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>허용 오차</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>색이 얼마나 달라져도 같은 색으로 볼지, 0부터 255까지</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>검색 중… 프레임 %n개 확인함</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>맞추기</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>타임코드 파일 열기</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>알 수 없는 타임코드 형식</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>잘못된 타임코드 줄</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>타임코드가 두 개 이상 있어야 합니다</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>타임코드 파일이 10000000개 항목 제한을 넘습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>타임코드의 순서가 맞지 않습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>타임코드가 모두 같습니다</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>음수 프레임에는 프레임 레이트를 지정할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>끝 프레임은 시작 프레임보다 크거나 같아야 합니다</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>V1 타임코드 범위가 10000000 프레임 제한을 넘습니다</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS는 0보다 커야 합니다</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS는 1000보다 클 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>재정의 범위가 겹치면 안 됩니다</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>타임코드가 지원되는 시간 범위를 넘습니다</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번째 줄: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>타임코드 파일을 해석하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>타임코드 파일 %1을(를) 열 수 없습니다</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>타임코드 파일이 영상보다 먼저 끝납니다(%2개 중 %1번째 프레임). 이후 프레임은 파일의 평균 프레임 레이트로 이어집니다.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>저장할 프레임 시간이 없습니다</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>타임코드 파일 %1을(를) 저장할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation>타임코드 파일을 찾을 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>영상 정보</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>해상도</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>길이</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>색 공간</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>색 매트릭스</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>자막에 사용</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
     </message>
 </context>
 <context>

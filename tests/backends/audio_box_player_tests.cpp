@@ -169,6 +169,27 @@ TEST_F(BoxPlayer, AppliesTheVolume)
     EXPECT_FLOAT_EQ(device.rendered[1], -1501 / 32768.0f);
 }
 
+TEST_F(BoxPlayer, PlayMonoSendsTheAverageToEveryChannel)
+{
+    audio.emplace(48000, 48000);
+    std::vector<std::int16_t> data(48000 * 2);
+    for (std::size_t i = 0; i < data.size(); i += 2) {
+        data[i] = 1000;
+        data[i + 1] = 3001;
+    }
+    ASSERT_TRUE(audio->appendFrames(data.data(), 48000, 2));
+    audio->finish();
+    EXPECT_FALSE(player.mono());
+    player.setMono(true);
+    EXPECT_TRUE(player.mono());
+    player.play(0, 4800);
+    EXPECT_EQ(player.outputFormat(), (OutputFormat{48000, 2}));
+    run(1);
+    ASSERT_GE(device.rendered.size(), 2u);
+    EXPECT_FLOAT_EQ(device.rendered[0], 2000.5f / 32768.0f);
+    EXPECT_FLOAT_EQ(device.rendered[1], 2000.5f / 32768.0f);
+}
+
 TEST_F(BoxPlayer, PositionFollowsTheOutputClock)
 {
     player.play(48000, 48000);

@@ -217,7 +217,7 @@ The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/Automat
 1. `bun ci --ignore-scripts` installs the locked packages. It is frozen, runs no lifecycle scripts and has no `trustedDependencies`. `bunfig.toml` sets `minimumReleaseAge` to 7 days for any lock change.
 2. `bun tools/build.ts` builds the two parts into `<build>/src/ai-sidecar/hikari-ai/` ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)):
    - the runtime, `hikari-ai-runtime[.exe]`: `src/runtime.ts` built with `bun build --compile --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig --target=bun-<platform>-baseline --compile-executable-path=<pinned bun>`;
-   - the bundle, `hikari-ai.js` and `hikari-ai.js.jsc`: `bun build --target=bun --format=cjs --bytecode`, with the build id (`<version>+<commit>`), HA1's `kApiVersion`, the sidecar's version and its package versions defined in;
+   - the bundle, `hikari-ai.js` and `hikari-ai.js.jsc`, and each provider SDK as `hikari-ai-<sdk>.js` with its `.jsc`, which the bundle loads on first use: `bun build --target=bun --format=cjs --bytecode`, with the build id (`<version>+<commit>`), HA1's `kApiVersion`, the sidecar's version and its package versions defined in;
    - `build.json`, what the channel manifest says about the build. `--single` also builds today's single executable, for the startup check.
 3. It then checks the bundle's metafile: no input from `@anthropic-ai/claude-agent-sdk`, and `NOTICES.txt` current.
 

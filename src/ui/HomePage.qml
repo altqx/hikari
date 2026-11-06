@@ -554,7 +554,7 @@ FocusScope {
         }
         ShellMenuItem {
             objectName: "homeMenuCopyPath"
-            iconRole: "edit-copy"
+            iconRole: "copy-path"
             text: qsTr("Copy path")
             onTriggered: home.app.copyText(rowMenu.row.path)
         }

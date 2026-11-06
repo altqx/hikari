@@ -21,6 +21,7 @@ It amends [ADR 0019](0019-installers-and-seamless-updates.md) and [ADR 0027](002
 
 - **The runtime** is `hikari-ai-runtime`, a compiled Bun that only loads the bundle it is given (`src/ai-sidecar/src/runtime.ts`), built with the same `--compile --bytecode --no-compile-autoload-*` flags as before. Its id is `<Bun version>-<8 hex digits>`, from a SHA-256 over its inputs, so it changes only when Bun or the loader does. The asset is `hikari-ai-runtime-<id>-<platform>.gz`, about 49 MiB.
 - **The bundle** is `hikari-ai.js` and its bytecode `hikari-ai.js.jsc`, one zip for both platforms: `hikari-ai-<version>.zip`, a few MiB. Most updates download only this.
+  - **Each provider SDK** is a file of its own next to it, `hikari-ai-{anthropic,gemini,openai}.js` with its bytecode, loaded the first time that provider is used. Loading all of them at start made the split start twice as slowly as one file.
 - **Reproducible:** CI builds each twice and compares them byte for byte, and the bundle must be the same for both platforms.
 - **As fast as one file:** CI starts the split sidecar and a single executable 20 times each. The median of the split must stay within 1.10× the single file plus 20 ms.
 
@@ -67,6 +68,7 @@ It amends [ADR 0019](0019-installers-and-seamless-updates.md) and [ADR 0027](002
 ## On the user's machine
 
 - **The store** is `<user folder>/ai/sidecar/`: `runtime/<id>/`, `bundle/<version>/` and `state.json`. The state names the current version, the previous one, a staged one, the versions skipped after failing, and the newest manifest seen. Only the current, previous and staged sidecars and their runtimes are kept.
+- **The sandbox** ([ADR 0029](0029-the-ai-sidecar-runs-in-an-os-sandbox.md)): Qt downloads, checks and unpacks every update. The sidecar never does, and has no network to do it with. Its profile reads and executes only the current runtime's and bundle's folders, and it can't write to the store.
 - **Checks** happen when AI starts, then hourly while AI is on, and never with AI off. A check fetches the manifest from the download URL, not the API, with a conditional GET.
 - **The first download** comes from the channel, when the first provider is added, as before.
 - **Updates** download in the background. A new sidecar switches in once nothing has been busy for 2 minutes: no request outstanding, no turn, no AI22 sub-agent, no MCP client. Otherwise it waits for the next AI start.

@@ -1,0 +1,4 @@
+<timedtext format="3"><body><p t="0" d="1000"> </p><p t="1000" d="1000">&#32;</p><p t="2000" d="1000">a<![CDATA[b]]>c</p><p t="3000" d="1000">x<!--c-->y<?pi data?>z</p><p t="4000" d="1000"><s>q<![CDATA[r]]><!--z-->s</s></p><p t="5000" d="1000"><s> </s></p><p t="6000" d="1000">l1
+l2l3
+l4&#13;l5&#xA;l6</p><p t="-5000" d="1000">negative</p><p t="1" d="1000">one &amp; &lt;b&gt; &quot;&apos; \n\N\hÂ nbsp</p><p t="7000" d="1000">padâ€‹ â€‹dingâ€‹zw &#x1F600; ğŸ‰</p><p t="8000">default duration</p><p d="100">no start</p><p t="9000" d="1000"><s><s>nested</s> inner</s></p><p t="3600000" d="7200000">long</p><p t="10000" d="1000">bad ÿÃ( bytes í € end</p></body></timedtext>
+<!-- trailing comment -->

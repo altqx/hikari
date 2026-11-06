@@ -41,6 +41,15 @@ export const Method = {
     complete: "_hikari/complete",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",
+    httpRequest: "_hikari/http.request",
+    httpResponse: "_hikari/http.response",
+    httpData: "_hikari/http.data",
+    agentStart: "_hikari/agent.start",
+    agentWrite: "_hikari/agent.write",
+    agentCloseInput: "_hikari/agent.closeInput",
+    agentKill: "_hikari/agent.kill",
+    agentOutput: "_hikari/agent.output",
+    agentExit: "_hikari/agent.exit",
     toolsList: "_hikari/tools.list",
     toolsCall: "_hikari/tools.call",
     mcpMessage: "_hikari/mcp.message",
@@ -119,4 +128,62 @@ export interface ToolsCallParams {
 
 export interface CancelRequestParams {
     requestId: number | string;
+}
+
+/** Where a relayed request goes; Qt knows its base URL and key. */
+export interface RelayTarget {
+    kind: "provider";
+    id: string;
+}
+
+export interface HttpRequestParams {
+    /** Names the `_hikari/http.response` and `_hikari/http.data` notifications of this request. */
+    stream: number;
+    target: RelayTarget;
+    method: string;
+    url: string;
+    headers: [string, string][];
+    /** Base64. */
+    body?: string;
+}
+
+export interface HttpResponseParams {
+    stream: number;
+    status: number;
+    headers: [string, string][];
+}
+
+export interface HttpDataParams {
+    stream: number;
+    /** Base64. */
+    data: string;
+}
+
+/** Qt starts the agent it knows by `agent` in its own sandbox; `env` passes only the variables Qt lists for it. */
+export interface AgentStartParams {
+    /** Names the agent's later requests and notifications. */
+    process: number;
+    agent: string;
+    args: string[];
+    env: Record<string, string>;
+}
+
+export interface AgentProcessParams {
+    process: number;
+}
+
+export interface AgentWriteParams extends AgentProcessParams {
+    /** Base64. */
+    data: string;
+}
+
+export interface AgentOutputParams extends AgentProcessParams {
+    stream: "stdout" | "stderr";
+    /** Base64. */
+    data: string;
+}
+
+export interface AgentExitParams extends AgentProcessParams {
+    /** -1 when it crashed or was killed. */
+    code: number;
 }

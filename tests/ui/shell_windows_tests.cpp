@@ -2,6 +2,7 @@
 #include "hikari/app/hotkeys_controller.h"
 
 #include "docking.h"
+#include "status_bar_controller.h"
 #include "workspace_layout.h"
 
 #include <QDir>
@@ -272,6 +273,31 @@ private slots:
             QCOMPARE(controller(second, "shell")->property("editingTitle").toString(), QStringLiteral("second.ass"));
             QVERIFY2(statusFields(first()).contains(QStringLiteral("640 x 360")), qPrintable(statusFields(first()).join(u'|')));
             QVERIFY2(statusFields(second).contains(QStringLiteral("1280 x 720")), qPrintable(statusFields(second).join(u'|')));
+        }
+    }
+
+    void eachWindowsStatusBarNamesItsTabsTimecodesAndEveryEditorIsTimed()
+    {
+        const QString timecodes = dir.filePath(QStringLiteral("second-timecodes.txt"));
+        {
+            QFile file(timecodes);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("# timecode format v2\n0\n100\n200\n300\n");
+        }
+        const auto fpsTip = [](QQuickWindow *window) {
+            return controller(window, "statusBar")->property("tooltips").toStringList()[ui::StatusBarController::FramesPerSecond];
+        };
+        const auto timed = [](QQuickWindow *window) { return controller(window, "editor")->property("framesShown").toBool(); };
+        for (QQuickWindow *window : {first(), second.data()})
+            QVERIFY(controller(window, "editor")->setProperty("showFrames", true));
+        QCOMPARE(application->openTimecodesFile(timecodes), QString());
+        for (const int active : {1, 0, 1}) {
+            application->activateShellWindow(active);
+            QCOMPARE(application->workspace().activeWindow(), active);
+            QVERIFY2(fpsTip(second).contains(QStringLiteral("second-timecodes.txt")), qPrintable(fpsTip(second)));
+            QVERIFY2(!fpsTip(first()).contains(QStringLiteral("second-timecodes.txt")), qPrintable(fpsTip(first())));
+            QTRY_COMPARE(timed(first()), active == 1);
+            QTRY_COMPARE(timed(second), active == 1);
         }
     }
 
