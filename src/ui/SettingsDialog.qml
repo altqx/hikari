@@ -580,7 +580,7 @@ DialogWindow {
                                 Accessible.name: qsTr("User folder")
                             }
                             IconTextButton {
-                                iconRole: "folder-open"
+                                iconRole: "show-in-folder"
                                 objectName: "settingsOpenUserFolder"
                                 text: qsTr("Open")
                                 Accessible.name: qsTr("Open user folder")

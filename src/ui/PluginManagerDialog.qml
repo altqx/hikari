@@ -467,7 +467,7 @@ DialogWindow {
             Layout.fillWidth: true
             IconTextButton {
                 objectName: "pluginUpdateFromFile"
-                iconRole: "plugin-install"
+                iconRole: "plugin-update"
                 text: qsTr("Update from file…")
                 onClicked: {
                     installPicker.updating = details.row.id
@@ -476,7 +476,7 @@ DialogWindow {
             }
             IconTextButton {
                 objectName: "pluginOpenDataFolder"
-                iconRole: "folder-open"
+                iconRole: "show-in-folder"
                 text: qsTr("Open data folder")
                 onClicked: dialog.manager.openDataFolder(details.row.id)
             }

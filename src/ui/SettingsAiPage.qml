@@ -342,8 +342,9 @@ ScrollView {
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
-                Button {
+                IconTextButton {
                     objectName: "aiDraftTest"
+                    iconRole: "test-connection"
                     text: qsTr("Test connection")
                     enabled: !form.busy
                     onClicked: page.ai.testDraft(form.values())
@@ -523,8 +524,9 @@ ScrollView {
                                         color: Theme.muted
                                     }
                                 }
-                                Button {
+                                IconTextButton {
                                     objectName: "aiProviderTest"
+                                    iconRole: "test-connection"
                                     text: qsTr("Test connection")
                                     enabled: row.modelData.state !== "testing"
                                     onClicked: page.ai.test(row.modelData.id)
