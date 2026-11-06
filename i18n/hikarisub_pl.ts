@@ -16687,7 +16687,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>Nie znaleziono pliku kodów czasowych: %1</translation>
+        <translation type="vanished">Nie znaleziono pliku kodów czasowych: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -16704,6 +16704,14 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Frame rate</source>
         <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>Liczba klatek na sekundę strumienia wideo</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>Czasy klatek z pliku</translation>
     </message>
     <message>
         <source>Length</source>

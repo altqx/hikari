@@ -16465,7 +16465,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>ไม่พบไฟล์ไทม์โค้ด: %1</translation>
+        <translation type="vanished">ไม่พบไฟล์ไทม์โค้ด: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -16482,6 +16482,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>อัตราเฟรมของสตรีมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>เวลาเฟรมจาก</translation>
     </message>
     <message>
         <source>Length</source>

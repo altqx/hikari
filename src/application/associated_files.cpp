@@ -88,6 +88,8 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
         offer.missing.push_back({MediaKind::Audio, associations.audio->authored});
     if (missing(associations.keyframes) && tab.keyframes.empty())
         offer.missing.push_back({MediaKind::Keyframes, associations.keyframes->authored});
+    if (missing(associations.timecodes) && tab.timecodes.empty())
+        offer.missing.push_back({MediaKind::Timecodes, associations.timecodes->authored});
     if (!directoryVideo.empty()) {
         if (tab.video == directoryVideo)
             return {};

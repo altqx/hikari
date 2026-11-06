@@ -186,6 +186,7 @@ TEST(AssociationOffer, TheTimecodesFileLoadsAfterTheVideo)
     ASSERT_TRUE(missing.timecodes);
     EXPECT_FALSE(missing.timecodes->resolved);
     EXPECT_EQ(associationOffer(missing, "", {}).timecodes, "");
+    EXPECT_EQ(associationOffer(missing, "", {}).missing, (std::vector<MissingMedia>{{MediaKind::Timecodes, "tc/ep1.txt"}}));
 }
 
 TEST(AssociationOffer, ReportsLinkedFilesThatAreMissing)
@@ -210,6 +211,24 @@ TEST(AssociationOffer, ReportsLinkedFilesThatAreMissing)
     const auto open = associationOffer(resolveMediaAssociations(doc, "/subs/ep1.ass", [](const std::string &) { return false; }, false),
                                        "", {"/v/other.mkv", "", ""});
     EXPECT_EQ(open.missing, (std::vector<MissingMedia>{{MediaKind::Audio, "audio/ep1.flac"}, {MediaKind::Keyframes, "kf.txt"}}));
+
+    const auto withTimecodes = parse("[Script Info]\nVideo File: ep1.mkv\nAudio File: audio/ep1.flac\nKeyframes File: kf.txt\n\n"
+                                     "[Aegisub Project Garbage]\nTimecodes File: tc/ep1.txt\n");
+    const auto gone = resolveMediaAssociations(withTimecodes, "/subs/ep1.ass", [](const std::string &) { return false; }, false);
+    EXPECT_EQ(associationOffer(gone, "", {}).missing,
+              (std::vector<MissingMedia>{{MediaKind::Video, "ep1.mkv"},
+                                         {MediaKind::Audio, "audio/ep1.flac"},
+                                         {MediaKind::Keyframes, "kf.txt"},
+                                         {MediaKind::Timecodes, "tc/ep1.txt"}}));
+    EXPECT_EQ(associationOffer(gone, "", {"", "", "", "/v/other.txt"}).missing.size(), 3u);
+
+    const auto timecodesOnly = associationOffer(
+        resolveMediaAssociations(parse("[Script Info]\nTimecodes File: tc/ep1.txt\n"), "/subs/b.ass",
+                                 [](const std::string &) { return false; }, false),
+        "", {});
+    EXPECT_FALSE(timecodesOnly.loads());
+    EXPECT_TRUE(timecodesOnly.asks());
+    EXPECT_EQ(timecodesOnly.missing, (std::vector<MissingMedia>{{MediaKind::Timecodes, "tc/ep1.txt"}}));
 }
 
 TEST(AssociationOffer, AMissingVideosOwnAudioAndDummyAudioAreNotReportedTwice)

@@ -19,7 +19,7 @@ struct TabMediaPaths {
     std::string video, audio, keyframes, timecodes;
 };
 
-enum class MediaKind { Video, Audio, Keyframes };
+enum class MediaKind { Video, Audio, Keyframes, Timecodes };
 
 struct MissingMedia {
     MediaKind kind;

@@ -10,6 +10,7 @@ DialogWindow {
     objectName: "videoDetailsDialog"
     dialogId: "videoDetails"
     required property var video
+    property string timecodesFile
     title: qsTr("Video details")
     defaultButton: closeButton
     property var details: ({})
@@ -19,6 +20,7 @@ DialogWindow {
         open()
     }
     function refresh() { details = video.details() }
+    onTimecodesFileChanged: if (visible) refresh()
     Connections {
         target: dialog.video
         enabled: dialog.visible
@@ -61,11 +63,25 @@ DialogWindow {
             text: dialog.details.resolution ?? ""
             Accessible.name: qsTr("Resolution")
         }
-        DetailName { text: qsTr("Frame rate") }
+        DetailName {
+            objectName: "videoDetailsFrameRateName"
+            text: dialog.details.frameTimesReplaced ? qsTr("Video stream frame rate") : qsTr("Frame rate")
+        }
         DetailValue {
             objectName: "videoDetailsFrameRate"
             text: dialog.details.frameRate ?? ""
-            Accessible.name: qsTr("Frame rate")
+            Accessible.name: dialog.details.frameTimesReplaced ? qsTr("Video stream frame rate") : qsTr("Frame rate")
+        }
+        DetailName {
+            visible: frameTimes.visible
+            text: qsTr("Frame times from")
+        }
+        DetailValue {
+            id: frameTimes
+            objectName: "videoDetailsFrameTimes"
+            visible: (dialog.details.frameTimesReplaced ?? false) && dialog.timecodesFile.length > 0
+            text: dialog.timecodesFile
+            Accessible.name: qsTr("Frame times from")
         }
         DetailName { text: qsTr("Length") }
         DetailValue {
