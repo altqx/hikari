@@ -4370,6 +4370,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Add fonts</source>
         <translation>Dodaj czcionki</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
