@@ -4541,17 +4541,195 @@ private slots:
         auto *font = findItem(window->contentItem(), QStringLiteral("styleFont"));
         auto *bar = findItem(window->contentItem(), QStringLiteral("styleEditorCatalogBar"));
         auto *choice = findItem(bar, QStringLiteral("fontCatalogChoice"));
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
-        QCOMPARE(font->property("editText").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
+        QCOMPARE(font->property("text").toString(), QStringLiteral("Tahoma"));
         choose(choice, 1);
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
-        QCOMPARE(font->property("editText").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        QCOMPARE(font->property("text").toString(), QStringLiteral("Tahoma"));
         application->settingsStore()->set("styles.editFilterText", QStringLiteral("z"));
         choose(choice, 0);
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontFilter")), "toggle"));
         QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontFilter")), "toggled");
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Tahoma"}));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Tahoma"}));
         QVERIFY(QMetaObject::invokeMethod(window, "closeManager"));
+    }
+
+    void typeIntoFontBox(QQuickWindow *window, QQuickItem *box)
+    {
+        auto *popup = box->property("popup").value<QObject *>();
+        const auto shown = [box] { return box->property("shown").toStringList(); };
+        const QStringList all{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"};
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+
+        auto *arrow = findItem(box, QStringLiteral("fontFamilyBoxArrow"));
+        QVERIFY(arrow);
+        const QPoint at = arrow->mapToScene(QPointF(arrow->width() / 2, arrow->height() / 2)).toPoint();
+        QTest::mouseClick(window, Qt::LeftButton, {}, at);
+        QTRY_VERIFY2(popup->property("opened").toBool(),
+                     qPrintable(QStringLiteral("arrow at %1,%2 in %3x%4").arg(at.x()).arg(at.y()).arg(window->width()).arg(window->height())));
+        QVERIFY(box->hasActiveFocus());
+        QCOMPARE(shown(), all);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        typeText(window, QStringLiteral("t"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("t"));
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(shown(), (QStringList{"Tahoma", "Impact"}));
+        QCOMPARE(box->property("highlightedIndex").toInt(), 0);
+        QCOMPARE(box->property("browsedFamily").toString(), QStringLiteral("Tahoma"));
+        QTest::keyClick(window, Qt::Key_Down);
+        QCOMPARE(box->property("browsedFamily").toString(), QStringLiteral("Impact"));
+        QTest::keyClick(window, Qt::Key_Down);
+        QCOMPARE(box->property("highlightedIndex").toInt(), 1);
+
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QVERIFY(window->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("t"));
+
+        typeText(window, QStringLiteral("zz"));
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(shown(), QStringList());
+        QVERIFY(findItem(popup->property("contentItem").value<QQuickItem *>(), QStringLiteral("fontFamilyBoxNoMatch"))->isVisible());
+        QSignalSpy picked(box, SIGNAL(picked(QString)));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("tzz"));
+        QCOMPARE(picked.size(), 1);
+        QCOMPARE(picked.first().first().toString(), QStringLiteral("tzz"));
+
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        QTest::keyClick(window, Qt::Key_Backspace);
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(shown(), all);
+        typeText(window, QStringLiteral("er"));
+        QCOMPARE(shown(), QStringList{"Verdana"});
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Verdana"));
+        QCOMPARE(picked.last().first().toString(), QStringLiteral("Verdana"));
+    }
+
+    void styleEditorFontBoxFiltersAsYouType()
+    {
+        usePickerFonts();
+        QVERIFY(application->openFile(fontAss("style-type.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *font = findItem(manager->contentItem(), QStringLiteral("styleFont"));
+        QTRY_VERIFY(font->isVisible() && font->width() > 0);
+        QCOMPARE(font->property("text").toString(), QStringLiteral("Tahoma"));
+        auto &styles = application->styleManager();
+        int key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(font, "openAll"));
+        QCOMPARE(font->property("browsedFamily").toString(), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(font->property("browsedFamily").toString(), QStringLiteral("Verdana"));
+        QTRY_VERIFY(styles.previewKey() > key);
+        QVERIFY(QMetaObject::invokeMethod(font->property("popup").value<QObject *>(), "close"));
+
+        typeIntoFontBox(manager, font);
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(manager->property("changedKeys").toMap().value(QStringLiteral("fontname")).toBool());
+        QVERIFY(QMetaObject::invokeMethod(manager, "commit", Q_ARG(QVariant, false)));
+        QCOMPARE(application->styleManager().beginEdit(false, 0).value(QStringLiteral("fontname")).toString(),
+                 QStringLiteral("Verdana"));
+    }
+
+    void programFontBoxFiltersAsYouType()
+    {
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("appearance");
+        auto *box = dialogItem("settingsDialog", "setting_program.font");
+        QVERIFY(box);
+        box->setProperty("families", QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"});
+        auto *flick = dialogItem("settingsDialog", "settingsPageAppearance")->property("contentItem").value<QQuickItem *>();
+        QVERIFY(flick);
+        const QPointF corner = box->mapToItem(flick->property("contentItem").value<QQuickItem *>(), QPointF(box->width(), box->height()));
+        flick->setProperty("contentX", std::max(0.0, corner.x() - flick->width()));
+        flick->setProperty("contentY", std::max(0.0, corner.y() - flick->height()));
+        QTRY_VERIFY(flick->contains(box->mapToItem(flick, QPointF(box->width() - 1, box->height() - 1))));
+
+        typeIntoFontBox(box->window(), box);
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("program.font")).toString(), QStringLiteral("Verdana"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("program.font"), QStringLiteral("Verdana"));
+    }
+
+    void fontBoxScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        usePickerFonts();
+        QVERIFY(application->openFile(fontAss("font-box-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        app::attachStylePreview(*engine, application->styleManager());
+        auto *root = engine->rootObjects().first();
+        const auto shoot = [&](QQuickWindow *w, QQuickItem *box, const QString &name) {
+            auto *popup = box->property("popup").value<QObject *>();
+            QTRY_VERIFY(popup->property("opened").toBool());
+            auto *list = popup->property("contentItem").value<QQuickItem *>();
+            QRectF r = box->mapRectToScene(QRectF(0, 0, box->width(), box->height()));
+            r = r.united(list->mapRectToScene(QRectF(0, 0, list->width(), list->height()))).adjusted(-12, -12, 12, 12);
+            const qreal dpr = w->effectiveDevicePixelRatio();
+            QVERIFY(w->grabWindow().copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect())
+                        .save(out + QStringLiteral("/fs1-") + name + QStringLiteral(".png")));
+        };
+        const auto type = [](QQuickWindow *w, QQuickItem *box, const QString &text) {
+            w->requestActivate();
+            QVERIFY(QTest::qWaitForWindowActive(w));
+            box->forceActiveFocus(Qt::MouseFocusReason);
+            QTest::keyClick(w, Qt::Key_A, Qt::ControlModifier);
+            typeText(w, text);
+        };
+        for (const char *theme : {"light", "dark"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(theme));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+
+            auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+            QTRY_VERIFY(manager->isVisible());
+            const QVariantMap values = application->styleManager().beginEdit(false, 0);
+            QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+            auto *font = findItem(manager->contentItem(), QStringLiteral("styleFont"));
+            QTRY_VERIFY(font->isVisible() && font->width() > 0);
+            type(manager, font, QStringLiteral("t"));
+            shoot(manager, font, QStringLiteral("style-editor-") + QLatin1String(theme));
+            typeText(manager, QStringLiteral("zz"));
+            shoot(manager, font, QStringLiteral("style-editor-no-match-") + QLatin1String(theme));
+            QTest::keyClick(manager, Qt::Key_Escape);
+            QVERIFY(QMetaObject::invokeMethod(manager, "revert"));
+            QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+            QTRY_VERIFY(!manager->isVisible());
+
+            auto *dialog = openSettings();
+            QVERIFY(dialog);
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            showSettingsPage("appearance");
+            auto *box = dialogItem("settingsDialog", "setting_program.font");
+            box->setProperty("families", QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"});
+            type(box->window(), box, QStringLiteral("a"));
+            shoot(box->window(), box, QStringLiteral("program-font-") + QLatin1String(theme));
+            QTest::keyClick(box->window(), Qt::Key_Escape);
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
     }
 
     void styleEditorFitsTheScreen()
@@ -4716,7 +4894,7 @@ private slots:
         auto *bar = findItem(editor->contentItem(), QStringLiteral("styleEditorCatalogBar"));
         auto *choice = findItem(bar, QStringLiteral("fontCatalogChoice"));
         choose(choice, 3);
-        QCOMPARE(font->property("model").toStringList(), QStringList{"Impact"});
+        QCOMPARE(font->property("families").toStringList(), QStringList{"Impact"});
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
         auto *window = named("fontCatalogWindow");
         QTRY_VERIFY(window->property("visible").toBool());
@@ -4729,10 +4907,10 @@ private slots:
         QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalogue", "A"}));
         QCOMPARE(choice->property("currentIndex").toInt(), 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
         choose(choice, 2);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Verdana"}));
         choose(choice, 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("All fonts"));
         QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
@@ -4941,18 +5119,18 @@ private slots:
         while (big.size() < 6000)
             big << QStringLiteral("Not a font %1").arg(big.size());
         auto *font = findItem(content, QStringLiteral("styleFont"));
-        const QString typed = font->property("editText").toString();
-        font->setProperty("model", big);
-        font->setProperty("editText", typed);
+        const QString typed = font->property("text").toString();
+        font->setProperty("families", big);
+        QCOMPARE(font->property("text").toString(), typed);
         auto *faces = engine->singletonInstance<ui::FontFaces *>("Hikari.Ui", "FontFaces");
         QVERIFY(faces);
         const int looked = faces->lookups();
         auto *popup = font->property("popup").value<QObject *>();
         QElapsedTimer timer;
         timer.start();
-        QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+        QVERIFY(QMetaObject::invokeMethod(font, "openAll"));
         QTRY_VERIFY(popup->property("opened").toBool());
-        auto *list = popup->property("contentItem").value<QQuickItem *>();
+        auto *list = findItem(popup->property("contentItem").value<QQuickItem *>(), QStringLiteral("fontFamilyBoxList"));
         QVERIFY(list);
         const auto rowItems = [&] {
             QList<QQuickItem *> found;
@@ -5016,24 +5194,19 @@ private slots:
         // A pointer resting over the list moves the highlight as rows scroll under it.
         font->setProperty("hoverEnabled", false);
         int key = styles.previewKey();
-        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
-        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+        QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
+        QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
         QVERIFY(font->property("highlightedIndex").toInt() >= 0);
         QTRY_VERIFY(styles.previewKey() > key);
-        QCOMPARE(font->property("editText").toString(), typed);
-        QVariant browsed;
-        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
-        QString highlighted;
-        QVERIFY(QMetaObject::invokeMethod(font, "textAt", Q_RETURN_ARG(QString, highlighted),
-                                          Q_ARG(int, font->property("highlightedIndex").toInt())));
+        QCOMPARE(font->property("text").toString(), typed);
+        const QString highlighted = font->property("shown").toStringList().value(font->property("highlightedIndex").toInt());
         QVERIFY(!highlighted.isEmpty());
-        QCOMPARE(browsed.toString(), highlighted);
+        QCOMPARE(font->property("browsedFamily").toString(), highlighted);
         key = styles.previewKey();
         QVERIFY(QMetaObject::invokeMethod(popup, "close"));
         QTRY_VERIFY(!popup->property("visible").toBool());
         QTRY_VERIFY(styles.previewKey() > key);
-        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
-        QCOMPARE(browsed.toString(), QString());
+        QCOMPARE(font->property("browsedFamily").toString(), QString());
 
         for (const char *field : {"styleSize", "styleOutline", "styleShadow", "styleScaleX", "styleScaleY", "styleAngle",
                                   "styleSpacing", "styleMarginLeft", "styleMarginRight", "styleMarginVertical", "styleName"}) {
@@ -28151,7 +28324,7 @@ private slots:
             shot(manager, QStringLiteral("window-") + theme);
             QVERIFY(QMetaObject::invokeMethod(manager, "revert"));
             pick({4, 5, 6});
-            QVERIFY(field("styleFontMixed")->isVisible());
+            QCOMPARE(field("styleFont")->property("placeholderText").toString(), QStringLiteral("Multiple values"));
             shot(manager, QStringLiteral("multi-") + theme);
             pick({4});
             edit("styleName", QStringLiteral("Sign - Station board"));
@@ -28268,13 +28441,13 @@ private slots:
             auto *font = findItem(content, QStringLiteral("styleFont"));
             QStringList families = QFontDatabase::families();
             families.removeIf([](const QString &f) { return QFontDatabase::isPrivateFamily(f); });
-            font->setProperty("model", families);
-            font->setProperty("editText", values.value(QStringLiteral("fontname")));
+            font->setProperty("families", families);
+            font->setProperty("text", values.value(QStringLiteral("fontname")));
             auto *popup = font->property("popup").value<QObject *>();
-            QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+            QVERIFY(QMetaObject::invokeMethod(font, "openAll"));
             QTRY_VERIFY(popup->property("opened").toBool());
             for (int i = 0; i < 3; ++i)
-                QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+                QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
             QTest::qWait(250);
             auto *list = popup->property("contentItem").value<QQuickItem *>();
             QVERIFY(crop(manager, around(font, list, 12))
@@ -29030,11 +29203,15 @@ private:
         return application->files().session(*application->workspace().editingTarget());
     }
     // QTest::keyClicks takes widgets only: one key press per character.
-    void typeText(const QString &text)
+    static void typeText(QWindow *target, const QString &text)
     {
         for (const QChar c : text)
-            QTest::keyClick(window, c.toLatin1());
+            QTest::keyClick(target, c.toLatin1());
         QCoreApplication::processEvents();
+    }
+    void typeText(const QString &text)
+    {
+        typeText(window, text);
     }
     void typeInto(const char *name, const QString &text)
     {

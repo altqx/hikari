@@ -472,6 +472,7 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_font_faces_tests SOURCES font_faces_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_font_family_filter_tests SOURCES font_family_filter_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_font_faces_tests PRIVATE
     HIKARI_SYMBOL_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-symf020.ttf"
     HIKARI_NO_LETTERS_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-arabic.ttf")

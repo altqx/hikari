@@ -228,18 +228,16 @@ ScrollView {
             SettingsRow {
                 iconRole: "ui-font"
                 text: qsTr("Program font")
-                ComboBox {
+                FontFamilyBox {
                     id: family
                     objectName: "setting_program.font"
-                    editable: true
-                    model: Qt.fontFamilies()
+                    families: Qt.fontFamilies()
                     Accessible.name: qsTr("Program font")
                     Layout.preferredWidth: 200
-                    function refresh() { editText = page.dialog.values["program.font"] ?? "" }
+                    function refresh() { text = page.dialog.values["program.font"] ?? "" }
                     Component.onCompleted: refresh()
                     Connections { target: page.dialog; function onReloaded() { family.refresh() } }
-                    onActivated: page.dialog.put("program.font", currentText)
-                    onAccepted: page.dialog.put("program.font", editText)
+                    onPicked: name => page.dialog.put("program.font", name)
                 }
                 SpinBox {
                     id: size
