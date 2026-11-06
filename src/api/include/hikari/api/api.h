@@ -47,6 +47,8 @@ struct Caller {
     bool allDocuments = false;
     // The Documents the user attached with @, besides the editing target.
     std::vector<application::DocumentId> attached;
+    // Its document.apply changes go to the review (AI callers).
+    bool reviewed = false;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.

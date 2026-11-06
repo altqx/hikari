@@ -45,6 +45,16 @@ Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
 Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
+Edit > Review >
+Edit > Review > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
+Edit > Review > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
+Edit > Review > Next AI change [GLOBAL_NEXT_AI_CHANGE]
+Edit > Review > Previous AI change [GLOBAL_PREVIOUS_AI_CHANGE]
+Edit > Review > -
+Edit > Review > Keep all [GLOBAL_KEEP_ALL_AI_CHANGES]
+Edit > Review > Undo all [GLOBAL_UNDO_ALL_AI_CHANGES]
+Edit > Review > -
+Edit > Review > Show panel [GLOBAL_SHOW_AI_REVIEW]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
 Edit > Find… [GLOBAL_SEARCH]
 Edit > Replace… [GLOBAL_FIND_REPLACE]
@@ -156,6 +166,7 @@ View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
 View > Panels > Template editor >
+View > Panels > Review >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout

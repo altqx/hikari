@@ -25,6 +25,7 @@ Text field > Delete
 Text field > -
 Text field > Select all
 Grid
+Grid > -
 Grid > Insert >
 Grid > Insert > Before [GRID_INSERT_BEFORE]
 Grid > Insert > After [GRID_INSERT_AFTER]
