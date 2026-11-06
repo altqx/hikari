@@ -187,10 +187,10 @@ private slots:
         QTRY_VERIFY(!report->isVisible());
         const QJsonObject sent = endpoint->events().at(1).toObject().value(QStringLiteral("properties")).toObject();
         QCOMPARE(sent.value(QStringLiteral("note")).toString(), QStringLiteral("I had just switched to the Perspective tool."));
-        QCOMPARE(application->crashReports().pending(), QString());
-        QVERIFY(!QFile::exists(path("crash-report.json")));
         QTRY_COMPARE(shell(QStringLiteral("notices.entries.length > 0 ? notices.entries[0].title : ''")).toString(),
                      QStringLiteral("Crash report sent. Thank you."));
+        QCOMPARE(application->crashReports().pending(), QString());
+        QVERIFY(!QFile::exists(path("crash-report.json")));
         if (const QString out = qEnvironmentVariable("HIKARI_CRASH_PAYLOAD_OUT"); !out.isEmpty()) {
             QFile f(out);
             QVERIFY(f.open(QIODevice::WriteOnly));

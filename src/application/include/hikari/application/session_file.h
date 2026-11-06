@@ -20,6 +20,7 @@ struct SessionTab {
     int scroll = 0;        // "Scroll: ", the Grid's first row
     std::string audio;     // "Audio: "; written only when not "" and not the video
     std::string keyframes; // "Keyframes: "
+    std::string timecodes; // JSON only
     std::string layout;    // "Layout: ", the arrangement's compact JSON
     std::size_t window = 0; // an index into Session::windows
     bool operator==(const SessionTab &) const = default;

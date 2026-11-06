@@ -217,7 +217,7 @@ private slots:
                 }
         }
         for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next",
-                                 "open-subtitles", "undo", "recent-subtitles", "convert-srt", "audio-previous-line", "link",
+                                 "open-subtitles", "undo", "recent-subtitles", "convert", "audio-previous-line", "link",
                                  "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
                                  "document-modified", "search", "find-replace", "history", "styles", "settings",
                                  "select-lines", "automation", "tool-crosshair", "tool-all-tags", "font-collector",
@@ -807,7 +807,7 @@ Rectangle {
             QStringLiteral("settings-grid"), QStringLiteral("notices"),
             QStringLiteral("select-all"), QStringLiteral("tags-insert"), QStringLiteral("preview-text"),
             QStringLiteral("dialog-memory"), QStringLiteral("getting-started"), QStringLiteral("ai-send"),
-            QStringLiteral("review-keep"), QStringLiteral("tab-close-right")};
+            QStringLiteral("review-keep"), QStringLiteral("tab-close-right"), QStringLiteral("convert-folds")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

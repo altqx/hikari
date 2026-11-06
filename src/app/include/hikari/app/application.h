@@ -12,6 +12,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
@@ -22,7 +23,10 @@
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/aegisub_frame_times.h"
+#include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
 #include "hikari/application/document_files.h"
@@ -65,6 +69,7 @@
 #include "video_fullscreen_controller.h"
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -87,6 +92,7 @@
 
 #include <functional>
 #include <deque>
+#include <expected>
 #include <map>
 #include <memory>
 #include <set>
@@ -109,10 +115,15 @@ signals:
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
     void resolutionMismatch(const QVariantMap &sizes);
+    // kind: missingMatrix, matrixMismatch, missingLayoutRes, layoutResMismatch, untaggedMatrix or hdr.
+    void videoPropertyQuestion(const QVariantMap &question);
     void recentChanged();
     // description: the group the command would break (0: it would make a new
     // malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
+    // An opened file has Aegisub folds that Convert Aegisub folds to line groups would convert.
+    void aegisubFoldsFound(qulonglong document, int folds);
+    void foldsConverted(int converted, int skipped);
     void spellingChanged();
     // The dictionary changed; a running check starts over with it.
     void spellCheckerRestarted();
@@ -151,6 +162,8 @@ public:
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
+        // Aegisub 3.5's questions and warnings about the YCbCr Matrix and LayoutRes when a video opens.
+        bool askVideoProperties = false;
         // Empty: in memory only.
         QString settingsFile;
         // Most preferred first; on the first start a leading Polish one picks Polish for
@@ -301,7 +314,8 @@ public:
     // "dialog" when Save must ask for a file, "readonly" for a read-only file, "" to
     // save in place.
     Q_INVOKABLE QString saveRoute() const;
-    // {folder, file, filter, extension}.
+    // {folder, file, filter, filters, formats, extension}: formats[i] is "ass" for the
+    // filter that converts to ASS, else "".
     Q_INVOKABLE QVariantMap saveDialogValues() const;
     // Adds the format's extension when missing. "readonly" asks again; "" when the
     // save started.
@@ -312,13 +326,18 @@ public:
     // editing target).
     Q_INVOKABLE QString saveRouteFor(qulonglong id) const;
     Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
-    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file);
+    // format "ass" converts a Document of another format to ASS before it is saved.
+    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file, const QString &format = {});
+    // {} when saving as file in format keeps the Document's format; else {convert: true} with
+    // changes (what converting to ASS does, to confirm first) or problem.
+    Q_INVOKABLE QVariantMap assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const;
     Q_INVOKABLE bool saveDocument(qulonglong id);
     Q_INVOKABLE bool turnOffTranslationMode();
     // translationHint: why the mode is unavailable (a PlainText Document); else empty.
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
+    Q_PROPERTY(QString timecodesFile READ timecodesFile NOTIFY timecodesChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
@@ -406,18 +425,7 @@ public:
     Q_INVOKABLE bool exactTimebase() const;
     // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
-    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix, resolutionWidth,
-    // resolutionHeight}.
-    Q_INVOKABLE QVariantMap conversionOptions() const;
-    Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
-    // "ass", "srt", "mdvd", "mpl2", "tmp"; none in translation mode.
-    Q_INVOKABLE QStringList conversionTargets() const;
-    Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {ok, problem, fpsInvalid, losses, kinds ("warning" removed, else "info")};
-    // acceptConversion applies it unless the Document or the options changed since.
-    Q_INVOKABLE QVariantMap previewConversion(const QString &target);
-    Q_INVOKABLE bool acceptConversion();
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
@@ -425,6 +433,10 @@ public:
                               bool adjustRotations = true);
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
+    Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
+    // The question's setting then does what `choice` did: 0 leaves things as they are.
+    Q_INVOKABLE void stopAskingVideoProperty(const QString &kind, int choice);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
@@ -573,6 +585,8 @@ public:
     Q_INVOKABLE bool addLinesToGroup(qulonglong description);
     Q_INVOKABLE bool copyGroup(qulonglong description);
     Q_INVOKABLE QString groupTitle(qulonglong description) const;
+    Q_INVOKABLE bool canConvertFolds() const;
+    Q_INVOKABLE bool convertFoldsToGroups();
     // key: "start", "end", "style", "actor", "effect" or "layer"; text keys use
     // the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
@@ -643,6 +657,15 @@ public:
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
+    // Empty: loaded; else the message.
+    Q_INVOKABLE QString openTimecodesFile(const QString &path);
+    // Empty: saved; else the message.
+    Q_INVOKABLE QString saveTimecodesFile(const QString &path);
+    Q_INVOKABLE void closeTimecodes();
+    Q_INVOKABLE QVariantList recentTimecodes();
+    Q_INVOKABLE QUrl timecodesDialogFolder() const;
+    // The current tab's loaded timecodes file; empty when none.
+    QString timecodesFile() const;
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
     // The error to log, else empty.
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
@@ -702,6 +725,7 @@ public:
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
+    AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -887,6 +911,7 @@ signals:
     void documentWriteFailed(qulonglong document);
     // A later start handed files over, about to open.
     void filesForwarded();
+    void timecodesChanged();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
@@ -1022,6 +1047,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
+    std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
@@ -1038,6 +1064,7 @@ private:
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
+    std::unique_ptr<AlignToVideoController> m_alignToVideo;
     QString m_readingDictionary;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
@@ -1084,17 +1111,14 @@ private:
     std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
-    struct ConversionPlan {
-        std::uint64_t document = 0;
-        std::uint64_t revision = 0;
-        QVariantMap options;
-        float frameMs = 0.f;
-        core::Document converted;
-    };
-    std::unique_ptr<ConversionPlan> m_conversionPlan;
-    std::set<std::uint64_t> m_formatChanged;
+    std::optional<core::ConversionOptions> assConversionOptions() const;
+    std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
+    bool convertToAss(application::DocumentId document);
     QString m_resolutionCheckedVideo;
+    bool m_askVideoProperties = false;
     void checkResolution();
+    void checkVideoMatrix();
+    void checkLayoutResolution();
     QStringList m_selectRecent;
     void destroyDialogs();
     void resetAllSettings();
@@ -1173,7 +1197,7 @@ private:
     std::optional<std::uint64_t> m_videoRevision;
     bool m_videoShowsDraft = false;
     std::vector<std::byte> m_videoScript;
-    QString m_editorTimebaseVideo;
+    std::optional<std::pair<std::string, std::uint64_t>> m_editorTimebaseFor;
     std::optional<core::LineId> m_videoLine;
     struct LineChangeOrigin {
         bool gridClick = false;
@@ -1317,6 +1341,7 @@ private:
     std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine;
     std::optional<application::LegacyTimebase> m_audioTimebase;
     std::string m_audioTimebasePath;
+    std::uint64_t m_audioTimebaseSerial = 0;
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir;
@@ -1345,6 +1370,12 @@ private:
     bool keyframesWithoutVideo(const QString &path, QString &problem);
     application::RecentFiles m_recentVideo;
     application::RecentFiles m_recentKeyframes;
+    application::RecentFiles m_recentTimecodes;
+    void rememberRecentTimecodes(const QString &path);
+    std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
+    void showTabTimecodes(std::optional<application::DocumentId> document);
+    QString tabTimecodes(std::optional<application::DocumentId> document) const;
+    bool m_enteringTabMedia = false;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
     std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
     QString m_recentVideoSeen;
@@ -1361,6 +1392,10 @@ private:
         int position = 0;
         QString audio;
         QString keyframes;
+        QString timecodes;
+        std::optional<application::AegisubFrameTimes> frameTimes;
+        bool timecodesDropped = false;
+        bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
     };
@@ -1380,6 +1415,10 @@ private:
         std::vector<application::SessionWindow> windows;
     };
     std::map<std::uint64_t, TabMedia> m_tabMedia;
+    void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);
+    void warnShortTimecodes(TabMedia &media);
+    std::vector<application::ProjectGarbageEdit> timecodesGarbage(application::DocumentId document,
+                                                                   const application::DestinationKey &destination) const;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
     std::vector<application::DocumentId> m_closingTabs;

@@ -55,6 +55,8 @@ Translation mode remains a document capability with original/translated text and
 
 Accepted in the live tool-placement review: **B / movable and floating panels**. Tools can be rearranged, hidden, restored and detached from the main workspace. Preserve keyboard-accessible placement actions alongside pointer interactions. Each Document tab keeps the arrangement chosen in it (ADR 0020). Panels resize by their separators, and where separators meet a drag resizes both ways at once; a floating panel resizes from each of its edges and corners ([#658](https://github.com/altqx/hikari/issues/658), [docking contract](../docking.md#chrome)).
 
+**Lock layout** (DK4, [#657](https://github.com/altqx/hikari/issues/657)) holds a tab's arrangement: panels can't be dragged, floated, docked elsewhere, opened or closed from the menus until it is unlocked, and resizing still works. It is in View › Layout ▸, the layout switcher's menu and a panel's ⋯, and can't be turned on while a panel floats. See the [docking contract](../docking.md#save-restore-and-recovery).
+
 The [reviewed HTML follow-up](https://github.com/altqx/hikari/blob/9781b3cb51fb87d9640366a9619b9c5589ff1e26/docs/prototypes/workspace-tools.html) illustrates Left/Right/Bottom and Float positions. Its floating cards stay inside the browser page; this acceptance chooses the UX capability, not that simulation as a native implementation. The [accepted native docking contract](../docking.md) selects KDDockWidgets behind Hikari’s adapter, including persistence/recovery and cross-window ownership. Native accessibility, monitor and Qt integration qualification remain required.
 
 ## Persistent tools and Home

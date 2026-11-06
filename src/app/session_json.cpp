@@ -147,6 +147,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
         integer("position", tab.position);
         text("audio", tab.audio);
         text("keyframes", tab.keyframes);
+        text("timecodes", tab.timecodes);
         integer("activeLine", tab.active);
         integer("scroll", tab.scroll);
         if (const QJsonValue layout = t.value(QStringLiteral("layout")); layout.isObject())
@@ -221,6 +222,8 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
             t.insert(QStringLiteral("audio"), qs(tab.audio));
         if (!tab.keyframes.empty())
             t.insert(QStringLiteral("keyframes"), qs(tab.keyframes));
+        if (!tab.timecodes.empty())
+            t.insert(QStringLiteral("timecodes"), qs(tab.timecodes));
         t.insert(QStringLiteral("activeLine"), tab.active);
         t.insert(QStringLiteral("scroll"), tab.scroll);
         if (const QJsonDocument layout = QJsonDocument::fromJson(QByteArray::fromStdString(tab.layout));

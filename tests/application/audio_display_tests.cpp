@@ -1130,6 +1130,48 @@ TEST(AudioBox, TheChooserPicksTheTrack)
     EXPECT_EQ(f.source.openedTrack, 3);
 }
 
+TEST(AudioBox, ReopenOpensTheSameTrackWithoutTheChooser)
+{
+    BoxFixture f("reopen");
+    std::function<void(std::optional<int>)> answer;
+    int asked = 0;
+    f.box.setChooser([&](const std::vector<std::string> &, std::function<void(std::optional<int>)> a) {
+        ++asked;
+        answer = std::move(a);
+    });
+    EXPECT_FALSE(f.box.reopen());
+    f.box.open("/media/a.mkv");
+    f.source.probed({{1, true, false, "A", {}, "aac"}, {2, true, false, "B", {}, "aac"}});
+    std::exchange(answer, nullptr)(1);
+    f.source.opened(1, 1000, false);
+    f.source.answer(4, 1);
+    ASSERT_EQ(f.box.state(), AudioBox::State::Ready);
+    const auto serial = f.box.serial();
+    f.source.openedTrack = -1;
+    f.source.probedPath.clear();
+    ASSERT_TRUE(f.box.reopen());
+    EXPECT_EQ(asked, 1);
+    EXPECT_TRUE(f.source.probedPath.empty());
+    EXPECT_EQ(f.source.openedTrack, 2);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Opening);
+    EXPECT_EQ(f.box.path(), "/media/a.mkv");
+    EXPECT_NE(f.box.serial(), serial);
+    f.source.opened(1, 1000, false);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_EQ(f.box.track(), 2);
+
+    f.box.openFromVideo("/media/v.mkv", 3, false);
+    f.source.opened(1, 1000, false);
+    f.source.openedTrack = -1;
+    ASSERT_TRUE(f.box.reopen());
+    EXPECT_TRUE(f.box.fromVideo());
+    EXPECT_EQ(f.source.openedTrack, 3);
+
+    f.box.open(AudioBox::kDummyName);
+    EXPECT_FALSE(f.box.reopen());
+    EXPECT_EQ(f.box.path(), AudioBox::kDummyName);
+}
+
 TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)
 {
     BoxFixture f("from-video");

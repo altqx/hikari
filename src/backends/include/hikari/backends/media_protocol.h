@@ -19,7 +19,11 @@
 //                      i32 width, i32 height (frame 0's encoded size),
 //                      i32 sarNum, i32 sarDen (the track's SAR; 0: unknown),
 //                      i32 colorSpace, i32 colorRange (frame 0's FFMS_CS_* matrix and
-//                      FFMS_CR_* range)
+//                      FFMS_CR_* range), i32 primaries, i32 transfer (frame 0's
+//                      ColorPrimaries and TransferCharateristics),
+//                      str pixelFormat (frame 0's encoded format, FFmpeg's name; empty:
+//                      unknown), u8 rgb, i32 components, i32 chromaShiftX,
+//                      i32 chromaShiftY (log2 subsampling), i32 bitDepth
 //         terminal failures: u8 stage, str text, as the audio box's below
 // InputMatrix request: u8 InputMatrix, i32 colorSpace, i32 colorRange (FFMS_SetInputFormatV
 //                  on the open video, the pixel format kept; applies to the next frames)
@@ -97,7 +101,7 @@
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 11;
+inline constexpr std::uint32_t kProtocolVersion = 13;
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,

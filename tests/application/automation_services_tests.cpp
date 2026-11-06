@@ -152,14 +152,14 @@ struct FakeMedia : MacroMediaPort {
     {
         return video ? std::optional<std::int64_t>(f * 40) : std::nullopt;
     }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override
+    std::optional<AegisubFrameTimes> frameTimes() const override
     {
         if (!video)
             return std::nullopt;
         std::vector<std::int64_t> starts;
         for (std::int64_t i = 0; i < 100; ++i)
             starts.push_back(i * 40);
-        return starts;
+        return AegisubFrameTimes::fromFrameStarts(std::move(starts));
     }
     std::optional<VideoSize> videoSize() const override
     {
@@ -174,7 +174,7 @@ struct FakeMedia : MacroMediaPort {
         pendingFrame = std::move(reply);
     }
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
-    std::optional<Project> project() const override { return Project{12, "a.wav", "v.mkv", ""}; }
+    std::optional<Project> project() const override { return Project{12, "a.wav", "v.mkv", "", "t.txt"}; }
     std::optional<std::string> fileName() const override { return "ep1.ass"; }
     std::optional<const DisplayAudio *> audio;
     std::optional<const DisplayAudio *> peakAudio() const override { return audio; }
@@ -252,7 +252,7 @@ TEST_F(RouterTest, MediaAnswersInTheirUnitsWithAegisubFrameRounding)
     EXPECT_EQ(replies[1].integers, std::vector<std::int64_t>{980});
     EXPECT_EQ(replies[2].integers, (std::vector<std::int64_t>{640, 360, 16, 9}));
     EXPECT_EQ(replies[3].integers, std::vector<std::int64_t>{12});
-    EXPECT_EQ(replies[3].strings, (std::vector<std::string>{"a.wav", "v.mkv", ""}));
+    EXPECT_EQ(replies[3].strings, (std::vector<std::string>{"a.wav", "v.mkv", "", "t.txt"}));
     EXPECT_EQ(replies[4].status, HostServiceReply::Status::Unavailable);
 }
 

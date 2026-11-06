@@ -144,6 +144,14 @@ constexpr OptionsBinding kBindings[] = {
     {"grid.splitFramesBakeAnimations", Check, Grid},
     {"ai.off", Check, Ai},
     {"ai.promptCaching", Check, Ai},
+    {"video.handleSize", Number, Video, 50, 400},
+    {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
+    {"video.matrixMismatch", IndexChoice, Video, 0, 0, 3},
+    {"video.missingLayoutRes", IndexChoice, Video, 0, 0, 4},
+    {"video.layoutResMismatch", IndexChoice, Video, 0, 0, 3},
+    {"video.untaggedMatrixWarning", Check, Video},
+    {"video.hdrWarning", Check, Video},
+    {"audio.playMono", Check, Audio},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

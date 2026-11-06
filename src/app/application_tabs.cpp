@@ -14,6 +14,7 @@
 #include <QLockFile>
 #include <QQmlEngine>
 #include <QSaveFile>
+#include <QScopedValueRollback>
 
 namespace hikari::app {
 
@@ -61,7 +62,7 @@ QStringList networkHosts(const application::Session &session)
 {
     QStringList hosts;
     for (const auto &tab : session.tabs)
-        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes})
+        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes, &tab.timecodes})
             if (const QString target = networkTarget(QString::fromStdString(*path));
                 !target.isEmpty() && !hosts.contains(target, Qt::CaseInsensitive))
                 hosts << target;
@@ -303,6 +304,10 @@ constexpr const char *kLayoutInFile = "subtitles.layoutInFile";
 
 void Application::setUpFileArrangements()
 {
+    m_files->setProjectGarbageSource(
+        [this](application::DocumentId document, const application::DestinationKey &destination) {
+            return timecodesGarbage(document, destination);
+        });
     m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
         if (!m_settings->boolean(kLayoutInFile))
             return std::nullopt;
@@ -373,6 +378,7 @@ void Application::trackTabMedia()
             media.video = path;
             emit tabsChanged();
         }
+        warnShortTimecodes(media);
         if (m_pendingTabSeek && !m_tabSeekQueued && m_pendingTabSeek->first == path && video.frameCount() > 0) {
             m_tabSeekQueued = true;
             // MUST KILL: queued to land after the session's own pending seek on Ready
@@ -450,6 +456,7 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
             m_pendingKeyframes.clear();
         if (document && previous)
             m_tabMedia[document->value];
+        showTabTimecodes(document);
         emit tabShown(0);
         return;
     }
@@ -464,8 +471,10 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
         m_pendingTabSeek = std::pair(media.video, media.position);
         if (!media.audio.isEmpty())
             m_keepTabAudio = media.video;
+        const QScopedValueRollback entering(m_enteringTabMedia, true);
         m_video->openVideo(media.video);
     }
+    showTabTimecodes(document);
     const QString shown = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
     if (!media.audio.isEmpty()) {
         if (shown != media.audio)
@@ -626,6 +635,9 @@ bool Application::saveLastSession(bool closing, const QString &path)
             tab.keyframes = utf8(media.keyframes);
             if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
                 tab.keyframes = utf8(u->path);
+            tab.timecodes = utf8(media.timecodes);
+            if (const auto *u = unresolved("timecodes"); u && media.timecodes.isEmpty())
+                tab.timecodes = utf8(u->path);
             if (const auto arrangement = layoutFor(id).tabArrangement(id.value))
                 tab.layout = arrangement->serialise().toStdString();
             tab.window = w;
@@ -875,6 +887,15 @@ void Application::applySession()
             else
                 m_unresolved.push_back({*id, QStringLiteral("keyframes"), keyframes, 0, 0});
         }
+        if (const QString timecodes = qs(tab.timecodes); !timecodes.isEmpty()) {
+            if (!isFile(timecodes))
+                m_unresolved.push_back({*id, QStringLiteral("timecodes"), timecodes, 0, 0});
+            else if (auto times = readTimecodes(timecodes))
+                loadTabTimecodes(media, timecodes, *times);
+            else
+                m_log->notice(ui::LogController::Warning,
+                              QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), times.error());
+        }
         if (const QString video = qs(tab.video); !video.isEmpty()) {
             const bool dummy = application::isDummyVideo(video.toStdString()) &&
                                application::parseDummyVideo(video.toStdString());
@@ -1014,6 +1035,7 @@ bool Application::retryRestore(int row)
                 m_pendingTabSeek = std::pair(native, entry.position);
                 if (!media.audio.isEmpty())
                     m_keepTabAudio = native;
+                const QScopedValueRollback entering(m_enteringTabMedia, true);
                 m_video->openVideo(native);
             }
         } else if (entry.kind == QLatin1String("audio")) {
@@ -1025,6 +1047,17 @@ bool Application::retryRestore(int row)
             if (isTarget())
                 if (const QString problem = openKeyframes(QUrl::fromLocalFile(entry.path)); !problem.isEmpty())
                     m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
+        } else if (entry.kind == QLatin1String("timecodes")) {
+            if (auto times = readTimecodes(entry.path)) {
+                loadTabTimecodes(media, entry.path, *times);
+                if (isTarget()) {
+                    showTabTimecodes(entry.document);
+                    warnShortTimecodes(media);
+                }
+            } else {
+                m_log->notice(ui::LogController::Warning,
+                              QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), times.error());
+            }
         }
     }
     refreshViews();

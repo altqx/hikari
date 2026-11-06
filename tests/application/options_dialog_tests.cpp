@@ -293,9 +293,40 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(id), nullptr);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), on) << id;
     }
+    const auto &handleSize = all[std::size(kLegacy) + 47];
+    EXPECT_EQ(handleSize.setting, "video.handleSize");
+    EXPECT_EQ(handleSize.control, OptionsControl::Number);
+    EXPECT_EQ(handleSize.page, OptionsPage::Video);
+    EXPECT_EQ(handleSize.min, 50);
+    EXPECT_EQ(handleSize.max, 400);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.handleSize")->defaultValue), 100);
+    for (std::size_t i = 0; const auto &[id, entries] : {std::pair<std::string_view, int>{"video.missingMatrix", 3},
+                                      {"video.matrixMismatch", 3},
+                                      {"video.missingLayoutRes", 4},
+                                      {"video.layoutResMismatch", 3}}) {
+        const auto &prompt = all[std::size(kLegacy) + 48 + i++];
+        EXPECT_EQ(prompt.setting, id);
+        EXPECT_EQ(prompt.control, OptionsControl::IndexChoice);
+        EXPECT_EQ(prompt.page, OptionsPage::Video);
+        EXPECT_EQ(prompt.entries, entries) << id;
+        EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), 1) << id;
+    }
+    for (std::size_t i = 0; const std::string_view id : {"video.untaggedMatrixWarning", "video.hdrWarning"}) {
+        const auto &warning = all[std::size(kLegacy) + 52 + i++];
+        EXPECT_EQ(warning.setting, id);
+        EXPECT_EQ(warning.control, OptionsControl::Check);
+        EXPECT_EQ(warning.page, OptionsPage::Video);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), true) << id;
+    }
+    const auto &mono = all[std::size(kLegacy) + 54];
+    EXPECT_EQ(mono.setting, "audio.playMono");
+    EXPECT_EQ(mono.control, OptionsControl::Check);
+    EXPECT_EQ(mono.page, OptionsPage::Audio);
+    ASSERT_NE(findSetting("audio.playMono"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("audio.playMono")->defaultValue), false);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 49);
-    const auto &hostApi = all[std::size(kLegacy) + 47];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 57);
+    const auto &hostApi = all[std::size(kLegacy) + 55];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -306,7 +337,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 47);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 55);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

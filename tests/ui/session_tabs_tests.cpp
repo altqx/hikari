@@ -332,6 +332,48 @@ private slots:
                  QDir::fromNativeSeparators(k.fileName()));
     }
 
+    void aTabsTimecodesFileComesBackWithTheSession()
+    {
+        QTemporaryDir home;
+        QTemporaryDir files;
+        const QString timecodes = files.filePath(QStringLiteral("tenths.txt"));
+        {
+            QFile f(timecodes);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# timecode format v2\n0\n100\n200\n");
+        }
+        const QString subtitles = writeSubtitles(files.filePath(QStringLiteral("timed.ass")), "timed");
+        {
+            app::Application a(options(home));
+            QVERIFY(a.openFile(subtitles));
+            QCOMPARE(a.openTimecodesFile(QUrl::fromLocalFile(timecodes).toString()), QString());
+            QCOMPARE(a.openTimecodesFile(timecodes), QString());
+            QVERIFY(a.saveLastSession());
+            const auto written = readSession(a.lastSessionPath());
+            QCOMPARE(QDir::fromNativeSeparators(QString::fromStdString(written.tabs[0].timecodes)),
+                     QDir::fromNativeSeparators(timecodes));
+        }
+        {
+            app::Application b(options(home));
+            QVERIFY(loadSession(b));
+            QCOMPARE(b.timecodesFile(), QDir::toNativeSeparators(timecodes));
+            QCOMPARE(b.video().session().legacyTimebase().msAt(2), 200);
+            QVERIFY(b.exactTimebase());
+        }
+        const QString moved = files.filePath(QStringLiteral("moved.txt"));
+        QVERIFY(QFile::rename(timecodes, moved));
+        app::Application c(options(home));
+        QVERIFY(loadSession(c));
+        QCOMPARE(c.timecodesFile(), QString());
+        QVERIFY(!c.video().session().replacedFrameTimes());
+        const QVariantList unresolved = c.unresolvedRestores();
+        QCOMPARE(unresolved.size(), qsizetype(1));
+        QCOMPARE(unresolved[0].toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("timecodes"));
+        QVERIFY(c.relinkRestore(0, QUrl::fromLocalFile(moved)));
+        QCOMPARE(c.timecodesFile(), QDir::toNativeSeparators(moved));
+        QVERIFY(c.video().session().replacedFrameTimes());
+    }
+
     void aLaterTabNeverInheritsAudio()
     {
         QTemporaryDir home;

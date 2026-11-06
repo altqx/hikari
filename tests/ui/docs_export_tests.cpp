@@ -164,7 +164,8 @@ private slots:
             for (const QJsonValue &m : v.toObject().value(QStringLiteral("menus")).toArray())
                 menus[v.toObject().value(QStringLiteral("symbol")).toString()] << m.toString();
         QCOMPARE(menus.value(QStringLiteral("GLOBAL_SAVE_SUBS")), QStringList{QStringLiteral("File > Save")});
-        QVERIFY(menus.value(QStringLiteral("GLOBAL_CONVERT_TO_SRT")).contains(QStringLiteral("Subtitles > Conversion > Convert to SRT")));
+        QVERIFY(menus.value(QStringLiteral("GLOBAL_OPEN_ASS_PROPERTIES")).contains(QStringLiteral("Subtitles > Script properties")));
+        QVERIFY(!menus.contains(QStringLiteral("GLOBAL_CONVERT_TO_SRT")));
         QVERIFY(menus.value(QStringLiteral("GRID_INSERT_BEFORE")).contains(QStringLiteral("Grid menu > Insert > Before")));
         QVERIFY(menus.value(QStringLiteral("GRID_DUPLICATE_LINES")).contains(QStringLiteral("Grid menu > Duplicate lines")));
         QCOMPARE(menus.value(QStringLiteral("GRID_SET_NEW_FPS")), QStringList{QStringLiteral("Subtitles > Set FPS > Set new FPS…")});

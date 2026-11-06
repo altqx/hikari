@@ -1,3 +1,4 @@
+#include "hikari/application/video_details.h"
 #include "hikari/application/video_session.h"
 #include "hikari/application/video_sources.h"
 
@@ -218,7 +219,7 @@ TEST(DummyVideo, ParsesWhatTheProviderAccepts)
 {
     const auto video = parseDummyVideo("?dummy:23.976000:35964:1920:1080:47:163:254:c");
     ASSERT_TRUE(video);
-    EXPECT_FLOAT_EQ(video->fps, 23.976f);
+    EXPECT_FLOAT_EQ(video->rate.fps, 23.976);
     EXPECT_EQ(video->frames, 35964);
     EXPECT_EQ(video->width, 1920);
     EXPECT_EQ(video->height, 1080);
@@ -240,13 +241,13 @@ TEST(DummyVideo, ParsesWhatTheProviderAccepts)
 
 TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
 {
-    DummyVideo plain{25.f, 3, 4, 2, 47, 163, 254, false};
+    DummyVideo plain{{25.f}, 3, 4, 2, 47, 163, 254, false};
     const auto frame = dummyVideoFrame(plain);
     ASSERT_EQ(frame.size(), 4u * 2u * 4u);
     for (int y = 0; y < 2; ++y)
         for (int x = 0; x < 4; ++x)
             EXPECT_EQ(pixel(frame, 4, x, y), (std::array<int, 4>{254, 163, 47, 255}));
-    DummyVideo board{25.f, 1, 25, 25, 47, 163, 254, true};
+    DummyVideo board{{25.f}, 1, 25, 25, 47, 163, 254, true};
     const auto b = dummyVideoFrame(board);
     const std::array<int, 4> colour{254, 163, 47, 255}, lighter{254, 184, 93, 255};
     EXPECT_EQ(pixel(b, 25, 0, 0), colour);
@@ -256,12 +257,12 @@ TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
     EXPECT_EQ(pixel(b, 25, 10, 10), colour);
     EXPECT_EQ(pixel(b, 25, 20, 0), colour);
     EXPECT_EQ(pixel(b, 25, 24, 24), colour);
-    DummyVideo black{25.f, 1, 11, 1, 0, 0, 0, true}, white{25.f, 1, 11, 1, 255, 255, 255, true};
+    DummyVideo black{{25.f}, 1, 11, 1, 0, 0, 0, true}, white{{25.f}, 1, 11, 1, 255, 255, 255, true};
     EXPECT_EQ(pixel(dummyVideoFrame(black), 11, 10, 0), (std::array<int, 4>{24, 24, 24, 255}));
     EXPECT_EQ(pixel(dummyVideoFrame(white), 11, 10, 0), (std::array<int, 4>{231, 231, 231, 255}));
-    DummyVideo red{25.f, 1, 11, 1, 128, 0, 0, true};
+    DummyVideo red{{25.f}, 1, 11, 1, 128, 0, 0, true};
     EXPECT_EQ(pixel(dummyVideoFrame(red), 11, 10, 0), (std::array<int, 4>{0, 0, 176, 255}));
-    DummyVideo film{23.976f, 35964, 2, 2, 0, 0, 0, false};
+    DummyVideo film{{23.976f}, 35964, 2, 2, 0, 0, 0, false};
     const auto times = dummyVideoTimecodes(film);
     ASSERT_EQ(times.size(), 35964u);
     EXPECT_EQ(times[0], 0);
@@ -272,8 +273,69 @@ TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
     EXPECT_EQ(times[1000], 41708);
     EXPECT_EQ(times[35963], 1499958);
     EXPECT_EQ(dummyVideoAudioFrames(film, 44100), std::llround(35964 * double(1000.f / 23.976f) * 44.1));
-    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{25.f, 50, 2, 2, 0, 0, 0, false}, 44100), 88200);
-    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{0.f, 50, 2, 2, 0, 0, 0, false}, 44100), 0);
+    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{{25.f}, 50, 2, 2, 0, 0, 0, false}, 44100), 88200);
+    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{{0.f}, 50, 2, 2, 0, 0, 0, false}, 44100), 0);
+}
+
+TEST(DummyVideo, ADecimalRateStillWritesTheLegacyBytes)
+{
+    EXPECT_EQ(dummyVideoText("23.976", 1500000, 1920, 1080, 0x2F, 0xA3, 0xFE, false),
+              "?dummy:23.976000:35964:1920:1080:47:163:254:");
+    const auto video = parseDummyVideo("?dummy:23.976000:35964:1920:1080:47:163:254:");
+    ASSERT_TRUE(video);
+    EXPECT_FALSE(video->rate.exact());
+}
+
+TEST(DummyVideo, AFractionalRateIsStoredAndTimedExactly)
+{
+    const auto text = dummyVideoText("24000/1001", 1500000, 1920, 1080, 0x2F, 0xA3, 0xFE, false);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(*text, "?dummy:24000/1001:35964:1920:1080:47:163:254:");
+    EXPECT_EQ(dummyVideoFrames("30000/1001", 60000), 1798);
+    for (const char *fps : {"24000/", "/1001", "24000/0", "0/1001", "-24000/1001", "24000/1001/1", "1/1", "24000.5/1001",
+                            "3000000000/1001"})
+        EXPECT_EQ(dummyVideoFrames(fps, 60000).error(), DummyVideoError::InvalidFps) << fps;
+
+    const auto video = parseDummyVideo(*text);
+    ASSERT_TRUE(video);
+    EXPECT_TRUE(video->rate.exact());
+    EXPECT_EQ(video->rate.numerator, 24000);
+    EXPECT_EQ(video->rate.denominator, 1001);
+    const auto times = dummyVideoTimecodes(*video);
+    ASSERT_EQ(times.size(), 35964u);
+    EXPECT_EQ(times[1], 41);
+    EXPECT_EQ(times[2], 83);
+    EXPECT_EQ(times[24], 1001);
+    EXPECT_EQ(times[1000], 41708);
+    // 35963 × 1001 / 24 = 1499956.79; the decimal 23.976 drifts to 1499958.
+    EXPECT_EQ(times[35963], 1499956);
+    EXPECT_EQ(dummyVideoAudioFrames(*video, 48000), std::llround(35964.0 * 1001 * 48000 / 24000));
+}
+
+TEST(DummyVideo, AFractionalRateReachesTheTimelineExactly)
+{
+    struct Media : IndexedSourcePort {
+        std::uint64_t open(const std::string &, Progress, Opened) override { return 1; }
+        void cancelOpen() override {}
+        void frame(int, FrameReady) override {}
+        void openAudio(int, AudioOpened) override {}
+        void audio(std::int64_t, std::int64_t, AudioReady) override {}
+        void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
+        void nextPcm(std::int64_t, PcmReady) override {}
+        void cancelReads() override {}
+        std::uint64_t generation() const override { return 1; }
+    } media;
+    DummyVideoSource source(media);
+    std::optional<std::expected<SourceTimeline, SourceError>> opened;
+    source.open("?dummy:30000/1001:100:8:4:0:0:0:", {}, [&](auto r) { opened = std::move(r); });
+    ASSERT_TRUE(opened && *opened);
+    EXPECT_EQ((*opened)->fpsNumerator, 30000);
+    EXPECT_EQ((*opened)->fpsDenominator, 1001);
+    EXPECT_EQ((*opened)->pts.at(99), 99 * 1001 / 30);
+    std::optional<std::expected<IndexedFrame, SourceError>> frame;
+    source.frame(99, [&](auto r) { frame = std::move(r); });
+    ASSERT_TRUE(frame && *frame);
+    EXPECT_EQ((*frame)->pts, (*opened)->pts.at(99));
 }
 
 TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
@@ -327,6 +389,42 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
     EXPECT_EQ(media.opens, 1);
     EXPECT_EQ(source.generation(), 7u);
     EXPECT_FALSE(session.dummy());
+}
+
+TEST(DummyVideo, SidesOver8192AreDrawnScaledButReportedAsAsked)
+{
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 8192, 4320, 0, 0, 0, false}), (DummyVideoSize{8192, 4320}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 16384, 9216, 0, 0, 0, false}), (DummyVideoSize{8192, 4608}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 300, 100000, 0, 0, 0, false}), (DummyVideoSize{25, 8192}));
+    EXPECT_EQ(dummyVideoDrawnSize(DummyVideo{{25.f}, 1, 100000, 1, 0, 0, 0, false}), (DummyVideoSize{8192, 1}));
+    struct Media : IndexedSourcePort {
+        std::uint64_t open(const std::string &, Progress, Opened) override { return 1; }
+        void cancelOpen() override {}
+        void frame(int, FrameReady) override {}
+        void openAudio(int, AudioOpened) override {}
+        void audio(std::int64_t, std::int64_t, AudioReady) override {}
+        void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
+        void nextPcm(std::int64_t, PcmReady) override {}
+        void cancelReads() override {}
+        std::uint64_t generation() const override { return 1; }
+    } media;
+    struct Renderer : SubtitleRendererPort {
+        std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+        std::expected<OverlayFrame, RenderError> render(core::DocumentTime, int, int) override
+        {
+            return std::unexpected(RenderError::NoSnapshot);
+        }
+    } renderer;
+    DummyVideoSource source(media);
+    VideoSession session(source, renderer);
+    session.open("?dummy:25.000000:2:16384:9216:1:2:3:");
+    ASSERT_EQ(session.state(), VideoSession::State::Ready);
+    ASSERT_TRUE(session.lastFrame());
+    EXPECT_EQ(session.lastFrame()->width, 8192);
+    EXPECT_EQ(session.lastFrame()->height, 4608);
+    EXPECT_EQ(session.lastFrame()->bgra.size(), 8192u * 4608u * 4u);
+    EXPECT_EQ(session.sourceGeometry().width, 16384);
+    EXPECT_EQ(session.sourceGeometry().height, 9216);
 }
 
 TEST(DummyVideo, ARefusedTextDoesNotReportTheLastFilesFailure)
@@ -435,4 +533,108 @@ TEST(Keyframes, WithoutVideoAtFilmRate)
     EXPECT_EQ(keyframeSnapWithoutVideo(1000), 970);
     EXPECT_EQ(keyframeSnapWithoutVideo(41), 20);
     EXPECT_EQ(keyframeSnapWithoutVideo(0), -20);
+}
+
+namespace {
+
+struct NoRenderer : SubtitleRendererPort {
+    std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+    std::expected<OverlayFrame, RenderError> render(core::DocumentTime, int, int) override
+    {
+        return std::unexpected(RenderError::NoSnapshot);
+    }
+};
+
+struct TimelineMedia : IndexedSourcePort {
+    SourceTimeline timeline;
+    std::uint64_t open(const std::string &, Progress, Opened done) override
+    {
+        done(timeline);
+        return 1;
+    }
+    void cancelOpen() override {}
+    void frame(int, FrameReady) override {}
+    void openAudio(int, AudioOpened) override {}
+    void audio(std::int64_t, std::int64_t, AudioReady) override {}
+    void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
+    void nextPcm(std::int64_t, PcmReady) override {}
+    void cancelReads() override {}
+    std::uint64_t generation() const override { return 1; }
+};
+
+}
+
+TEST(VideoDetails, Texts)
+{
+    EXPECT_EQ(rateDecimal({24000, 1001}), "23.976");
+    EXPECT_EQ(rateDecimal({30000, 1001}), "29.97");
+    EXPECT_EQ(rateDecimal({25, 1}), "25");
+    EXPECT_EQ(rateDecimal({2997, 125}), "23.976");
+    EXPECT_EQ(rateDecimal({}), "");
+    EXPECT_TRUE(rateIsRounded({24000, 1001}));
+    EXPECT_FALSE(rateIsRounded({2997, 125}));
+    EXPECT_FALSE(rateIsRounded({25, 1}));
+    EXPECT_EQ(chromaSubsampling({"yuv420p10le", false, 3, 1, 1, 10}), "4:2:0");
+    EXPECT_EQ(chromaSubsampling({"yuv422p", false, 3, 1, 0, 8}), "4:2:2");
+    EXPECT_EQ(chromaSubsampling({"yuv444p", false, 3, 0, 0, 8}), "4:4:4");
+    EXPECT_EQ(chromaSubsampling({"gray", false, 1, 0, 0, 8}), "");
+    EXPECT_EQ(chromaSubsampling({"gbrp", true, 3, 0, 0, 8}), "");
+    EXPECT_EQ(lengthText(1'438'000 + 970), "0:23:58.97");
+    EXPECT_EQ(lengthText(3'600'000 * 2 + 5), "2:00:00.00");
+}
+
+TEST(VideoDetails, DescribeTheOpenVideo)
+{
+    TimelineMedia media;
+    NoRenderer renderer;
+    DummyVideoSource source(media);
+    VideoSession session(source, renderer);
+    EXPECT_FALSE(videoDetails(session));
+    session.open("?dummy:24000/1001:100:1920:1080:0:0:0:");
+    auto details = videoDetails(session);
+    ASSERT_TRUE(details);
+    EXPECT_EQ(details->path, "?dummy:24000/1001:100:1920:1080:0:0:0:");
+    EXPECT_EQ(details->width, 1920);
+    EXPECT_EQ(details->height, 1080);
+    EXPECT_EQ(details->aspect, (Ratio{16, 9}));
+    EXPECT_EQ(details->fps, (Ratio{24000, 1001}));
+    EXPECT_FALSE(details->variableRate);
+    EXPECT_EQ(details->frames, 100);
+    EXPECT_EQ(details->lastFrameMs, 99 * 1001 / 24);
+    EXPECT_TRUE(details->pixelFormat.rgb);
+    EXPECT_EQ(details->pixelFormat.bitDepth, 8);
+    EXPECT_FALSE(details->tagged);
+    EXPECT_EQ(details->matrix, "TV.709");
+    EXPECT_EQ(details->scriptMatrix, "");
+    session.setMatrix("TV.601");
+    EXPECT_EQ(videoDetails(session)->scriptMatrix, "TV.601");
+    session.setMatrix("TV.709");
+    EXPECT_EQ(videoDetails(session)->scriptMatrix, "");
+
+    media.timeline.generation = 1;
+    media.timeline.fpsNumerator = 50;
+    media.timeline.fpsDenominator = 2;
+    media.timeline.pts = {0, 40, 80, 130, 170};
+    media.timeline.width = 1440;
+    media.timeline.height = 1080;
+    media.timeline.sarNum = 4;
+    media.timeline.sarDen = 3;
+    media.timeline.colorSpace = ffms_colour::kBt709;
+    media.timeline.colorRange = ffms_colour::kRangeJpeg;
+    media.timeline.pixelFormat = {"yuv420p10le", false, 3, 1, 1, 10};
+    session.open("/v/a.mkv");
+    details = videoDetails(session);
+    ASSERT_TRUE(details);
+    EXPECT_EQ(details->aspect, (Ratio{16, 9}));
+    EXPECT_EQ(details->fps, (Ratio{25, 1}));
+    EXPECT_TRUE(details->variableRate);
+    EXPECT_EQ(details->lastFrameMs, 170);
+    EXPECT_EQ(details->pixelFormat.name, "yuv420p10le");
+    EXPECT_TRUE(details->tagged);
+    EXPECT_EQ(details->matrix, "PC.709");
+    media.timeline.pts = {0, 41, 83, 125};
+    session.open("/v/b.mkv");
+    EXPECT_FALSE(videoDetails(session)->variableRate);
+    session.close();
+    EXPECT_FALSE(videoDetails(session));
 }

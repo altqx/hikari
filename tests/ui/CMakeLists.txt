@@ -181,6 +181,12 @@ hikari_add_qttest(hikari_ui_automation_progress_tests SOURCES automation_progres
 target_compile_definitions(hikari_ui_automation_progress_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_progress_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_packages_tests SOURCES automation_packages_tests.cpp
+    LIBRARIES hikari_composition Qt6::Network)
+target_compile_definitions(hikari_ui_automation_packages_tests PRIVATE
+    HIKARI_AUTOMATION_ROOT="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_THIRDPARTY_RUNS="${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty/runs.json")
+add_dependencies(hikari_ui_automation_packages_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_automation_runs_tests SOURCES automation_runs_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation_document_scripts_tests.cpp
     LIBRARIES hikari_composition)

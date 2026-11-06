@@ -306,7 +306,7 @@ KDDWViews.TabBarBase {
         z: root.mouseAreaZ + 1
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
-        cursorShape: Qt.SizeAllCursor
+        cursorShape: Docking.layoutLocked ? Qt.ArrowCursor : Qt.SizeAllCursor
         onPressed: mouse => {
             const at = root.count === 1 ? 0 : root.getTabIndexAtPosition(mapToGlobal(mouse.x, mouse.y))
             const index = at >= 0 ? at : root.currentTabIndex
