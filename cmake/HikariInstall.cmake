@@ -62,6 +62,8 @@ install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/harper/THIRD-PARTY.txt" 
 
 install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/aegisub/LICENSE" DESTINATION licenses/aegisub
     COMPONENT hikari_app)
+install(FILES "${PROJECT_SOURCE_DIR}/packaging/licenses/ytsubconverter/LICENSE" DESTINATION licenses/ytsubconverter
+    COMPONENT hikari_app)
 
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION . COMPONENT hikari_app)
 
