@@ -1,4 +1,5 @@
 #include "hikari/application/media_association.h"
+#include "hikari/application/timecodes_file.h"
 #include "hikari/application/video_session.h"
 #include "hikari/core/ass_load.h"
 
@@ -1253,4 +1254,104 @@ TEST_F(PlayingTest, NewSubtitlesRenderTheWorkersFrameAgain)
     EXPECT_EQ(std::count(renderer.renderedAt.begin(), renderer.renderedAt.end(), 205'000), 2);
     EXPECT_EQ(renderer.renderedAt.back(), 205'000);
     video.setFrameWorker(nullptr);
+}
+
+namespace {
+
+AegisubFrameTimes everyTenth()
+{
+    const auto parsed = parseTimecodes("# timecode format v2\n0\n100\n200\n300\n");
+    EXPECT_TRUE(parsed);
+    return AegisubFrameTimes::fromTimecodes(*parsed);
+}
+
+}
+
+TEST_F(VideoTest, ReplacedFrameTimesTimeTheFramesAndRunOnPastTheFile)
+{
+    video.setPresenter(&presenter);
+    video.setSubtitles({std::byte{'x'}});
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    const float ownDuration = video.legacyTimebase().frameDuration();
+    video.setFrameTimes(everyTenth());
+    EXPECT_EQ(video.frameCount(), 10);
+    EXPECT_EQ(video.frameStart(2), core::DocumentTime(200'000));
+    EXPECT_EQ(video.frameStart(5), core::DocumentTime(500'000));
+    EXPECT_EQ(video.frameAtOrAfter(core::DocumentTime(150'000)), 2);
+    EXPECT_EQ(video.legacyTimebase().msAt(3), 300);
+    EXPECT_FLOAT_EQ(video.legacyTimebase().frameDuration(), 100.f);
+    EXPECT_FLOAT_EQ(video.legacyFps(), 10.f);
+    EXPECT_EQ(video.durationMs(), 900);
+    video.seekTo(core::DocumentTime(250'000));
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 3);
+    source.answer();
+    EXPECT_EQ(renderer.renderedAt.back(), 300'000);
+    EXPECT_EQ(video.tellMs(), 300);
+
+    video.setFrameTimes(std::nullopt);
+    EXPECT_EQ(video.frameStart(3), core::DocumentTime(120'000));
+    EXPECT_EQ(renderer.renderedAt.back(), 120'000);
+    EXPECT_FLOAT_EQ(video.legacyTimebase().frameDuration(), ownDuration);
+}
+
+TEST_F(VideoTest, ReplacedFrameTimesTimeFramesWithoutAVideo)
+{
+    EXPECT_TRUE(video.legacyTimebase().empty());
+    EXPECT_FALSE(video.aegisubFrameTimes());
+    video.setFrameTimes(everyTenth());
+    const auto timebase = video.legacyTimebase();
+    EXPECT_TRUE(timebase.exact());
+    EXPECT_EQ(timebase.msAt(2), 200);
+    EXPECT_EQ(timebase.frameAt(150), 2);
+    EXPECT_EQ(video.frameCount(), 0);
+    ASSERT_TRUE(video.aegisubFrameTimes());
+    EXPECT_EQ(video.aegisubFrameTimes()->frameFromMs(150), 2);
+}
+
+TEST_F(VideoTest, ThePlayerSeeksTheVideosOwnTimesWhileSubtitlesFollowTheReplacedOnes)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.setSubtitles({std::byte{'x'}});
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    video.setFrameTimes(everyTenth());
+    video.showFrame(2);
+    source.answer();
+    ASSERT_TRUE(video.play());
+    player.opened();
+    player.delivered();
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "seek 80000", "play"}));
+    video.generalFrame(playerFrame(), 125'000);
+    EXPECT_EQ(renderer.renderedAt.back(), 305'000);
+    EXPECT_EQ(video.tellMs(), 305);
+    EXPECT_EQ(video.currentFrame(), 3);
+    ASSERT_TRUE(video.pause());
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 3);
+}
+
+TEST_F(PlayingTest, TheWorkerRendersAPlayerFrameAtItsReplacedTime)
+{
+    video.setFrameTimes(everyTenth());
+    video.submitGeneralFrame(205'000, 245'000, pooledPlayerFrame());
+    EXPECT_EQ(renderer.renderedAt.back(), 505'000);
+    video.setFrameTimes(std::nullopt);
+    video.submitGeneralFrame(245'000, 285'000, pooledPlayerFrame());
+    EXPECT_EQ(renderer.renderedAt.back(), 245'000);
+}
+
+TEST_F(VideoTest, ANewVideoKeepsTheReplacedFrameTimes)
+{
+    video.setFrameTimes(everyTenth());
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    EXPECT_EQ(video.frameStart(1), core::DocumentTime(100'000));
+    video.close();
+    EXPECT_EQ(video.legacyTimebase().msAt(1), 100);
 }

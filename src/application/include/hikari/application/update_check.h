@@ -278,6 +278,7 @@ struct StartupArguments {
     std::string updatedFrom; // --hikari-updated-from=<version>
     // --export-docs <dir> (or =<dir>); "" when the folder is missing.
     std::optional<std::string> exportDocs;
+    bool mcp = false; // --mcp: relay stdio to the running HikariSub's MCP server
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);

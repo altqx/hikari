@@ -51,7 +51,7 @@ add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper)
 # Generated at build time: discovered GoogleTest cases ignore a CTest setup fixture.
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")
 set(_hikari_media_fixtures "")
-foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd audiodelay audioonly sar mkvextract yuv10)
+foreach(kind cfr vfr bframes longgop long longaudio audio tracks unknown color601 color709 color709full colorhd colorhdr audiodelay audioonly sar mkvextract yuv10 keypoint)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -442,6 +442,12 @@ if(HIKARI_AI_SIDECAR)
     target_compile_definitions(hikari_backends_ai_tools_tests PRIVATE
         HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_backends_ai_tools_tests hikari_ai_sidecar)
+    hikari_add_gtest(hikari_backends_ai_mcp_tests SOURCES ai_mcp_tests.cpp
+        LIBRARIES hikari_ai hikari_core Qt6::Core Qt6::Network LABELS backends ai-sidecar)
+    target_include_directories(hikari_backends_ai_mcp_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
+    target_compile_definitions(hikari_backends_ai_mcp_tests PRIVATE
+        HIKARI_AI_SIDECAR_FILE="${HIKARI_AI_SIDECAR_FILE}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+    add_dependencies(hikari_backends_ai_mcp_tests hikari_ai_sidecar)
 endif()
 hikari_add_gtest(hikari_backends_ai_sidecar_download_tests SOURCES ai_sidecar_download_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)

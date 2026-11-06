@@ -94,13 +94,6 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n QC note(s) removed.</source>
-        <translation>
-            <numerusform>%n QC note removed.</numerusform>
-            <numerusform>%n QC notes removed.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>%n comment line removed.</numerusform>
@@ -140,13 +133,6 @@
         <translation>
             <numerusform>%n line gets the conversion style “%1”.</numerusform>
             <numerusform>%n lines get the conversion style “%1”.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>Layer, style, actor, margins or effect removed from %n line.</numerusform>
-            <numerusform>Layer, style, actor, margins or effect removed from %n lines.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -284,6 +270,20 @@
             <numerusform>The fonts of every style and every %1 tag in all %n open files.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>%n font file already exists in “%1”.</numerusform>
+            <numerusform>%n font files already exist in “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>and %n more</numerusform>
+            <numerusform>and %n more</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Grid</name>
@@ -334,6 +334,27 @@
         <translation>
             <numerusform>Delete line</numerusform>
             <numerusform>Delete %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>This file has %n Aegisub fold.</numerusform>
+            <numerusform>This file has %n Aegisub folds.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n Aegisub fold became a line group.</numerusform>
+            <numerusform>%n Aegisub folds became line groups.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>%n fold was skipped: it overlaps a line group or does not pair.</numerusform>
+            <numerusform>%n folds were skipped: they overlap a line group or do not pair.</numerusform>
         </translation>
     </message>
 </context>
@@ -437,6 +458,20 @@
         <translation>
             <numerusform>%n skipped: its keys are taken.</numerusform>
             <numerusform>%n skipped: their keys are taken.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>Connected · %n model</numerusform>
+            <numerusform>Connected · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>Not tested · %n model</numerusform>
+            <numerusform>Not tested · %n models</numerusform>
         </translation>
     </message>
 </context>
@@ -890,6 +925,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Video</name>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n frame (%1)</numerusform>
+            <numerusform>%n frames (%1)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.VisualTools</name>
     <message numerus="yes">
         <source>Changes %n lines</source>
@@ -938,6 +983,16 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Video</name>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Searching… %n frame checked</numerusform>
+            <numerusform>Searching… %n frames checked</numerusform>
         </translation>
     </message>
 </context>

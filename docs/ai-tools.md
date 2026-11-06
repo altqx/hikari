@@ -72,7 +72,7 @@ Qt calls the tools with two `_hikari/*` requests:
 | `_hikari/tools.list` | `{all?}` | `{tools}`: those offered now, or every tool with `all` |
 | `_hikari/tools.call` | `{name, arguments}` | MCP's `CallToolResult` |
 
-`list` and `call` have the shapes of MCP's `tools/list` and `tools/call`. The MCP server ([AI3 #431](https://github.com/altqx/hikari/issues/431)) and the agents ([AI7 #435](https://github.com/altqx/hikari/issues/435), [AI15 #443](https://github.com/altqx/hikari/issues/443)) serve the same `ToolSet`.
+`list` and `call` have the shapes of MCP's `tools/list` and `tools/call`. The [MCP server](ai-mcp.md) and the agents ([AI7 #435](https://github.com/altqx/hikari/issues/435), [AI15 #443](https://github.com/altqx/hikari/issues/443)) serve the same `ToolSet`.
 
 ## Tests
 

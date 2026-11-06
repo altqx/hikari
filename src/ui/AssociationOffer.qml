@@ -8,6 +8,7 @@ Frame {
     id: offer
     objectName: "associationOffer"
     required property var video
+    readonly property bool reportOnly: video.offerAssociatedLabel.length === 0 && video.offerDirectoryLabel.length === 0
     visible: video.offering
     background: Rectangle {
         objectName: "associationOfferBackground"
@@ -24,6 +25,7 @@ Frame {
         }
         CheckBox {
             objectName: "associationApplyToAll"
+            visible: !offer.reportOnly
             text: qsTr("Apply to all")
             checked: offer.video.offerApplyToAll
             onToggled: offer.video.offerApplyToAll = checked
@@ -42,7 +44,7 @@ Frame {
         }
         Button {
             objectName: "dismissAssociation"
-            text: qsTr("No")
+            text: offer.reportOnly ? qsTr("OK") : qsTr("No")
             onClicked: offer.video.dismissOffer()
         }
     }

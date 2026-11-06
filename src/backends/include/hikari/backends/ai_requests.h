@@ -8,6 +8,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <variant>
+#include <vector>
 
 namespace hikari::backends::ai {
 
@@ -32,13 +34,20 @@ public:
     void cancel(application::ai::StreamId id);
     /// Replaces the provider's catalogue with the provider's own list.
     void refreshModels(const std::string &providerId, std::function<void(std::optional<application::ai::Error>)> done);
+    using Probed = std::variant<std::vector<application::ai::Model>, application::ai::Error>;
+    /// Lists the catalogue of a provider that isn't stored yet, or is being edited, with the key the user typed.
+    /// Nothing is saved.
+    void probe(const application::ai::Provider &provider, const std::string &key, std::function<void(Probed)> done);
+    /// Off sends every request with `caching: false`.
+    void setCaching(bool on) { m_caching = on; }
     /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`). Call
     /// when the thread ends.
     void endConversation(const std::string &providerId, const std::string &cacheKey);
 
 private:
     struct Pending;
-    AiSidecarHost *connect();
+    AiSidecarHost *connect(const application::ai::Config &config);
+    AiSidecarHost *connect() { return connect(m_providers.config()); }
     void receive(const std::string &method, const api::Json &params);
     void end(application::ai::StreamId id, const application::ai::Event &event);
 
@@ -46,6 +55,7 @@ private:
     HostFor m_host;
     std::map<application::ai::StreamId, std::shared_ptr<Pending>> m_pending;
     application::ai::StreamId m_nextId = 1;
+    bool m_caching = true;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };
 

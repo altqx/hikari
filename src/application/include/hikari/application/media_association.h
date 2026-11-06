@@ -5,8 +5,12 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace hikari::application {
+
+// Aegisub keeps it in [Aegisub Project Garbage]; older files have it in Script Info.
+inline constexpr std::u8string_view kTimecodesFileKey = u8"Timecodes File";
 
 struct MediaReference {
     std::string authored;              // the Script Info value as written
@@ -14,12 +18,12 @@ struct MediaReference {
 };
 
 struct MediaAssociations {
-    std::optional<MediaReference> video, audio, keyframes; // nullopt: no such Script Info entry
+    std::optional<MediaReference> video, audio, keyframes, timecodes; // nullopt: no such entry
     // Resolved entries only.
     bool offersAnything() const;
 };
 
-// From the Document's own Script Info only. Relative paths resolve against the
+// From the Document's own Script Info, and its Project Garbage for timecodes. Relative paths resolve against the
 // subtitle file's directory; a missing file leaves the entry unresolved.
 // `windows` selects drive-letter ("X:...") absolute paths and "\" separators.
 MediaAssociations resolveMediaAssociations(const core::Document &document, const std::string &subtitlePath,

@@ -1,4 +1,5 @@
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -169,6 +170,61 @@ TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsO
     EXPECT_NE(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.keyStores, 2);
     EXPECT_EQ(counts.sidecarHosts, 2);
+}
+
+TEST_F(AiFeaturesTest, NoMcpListenerUnlessTheUserTurnsItOnAndNeverWithAiOff)
+{
+    const QString file = backends::ai::mcpEndpointFile(dir.path());
+    settings.set(app::AiFeatures::kOffSetting, true);
+    settings.set(app::AiMcp::kSetting, true);
+    settings.set(app::AiMcp::kHttpSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    app::AiMcp mcp(settings, features, file);
+    EXPECT_EQ(mcp.server(), nullptr);
+    EXPECT_FALSE(QFile::exists(file));
+
+    settings.set(app::AiFeatures::kOffSetting, false);
+    ASSERT_NE(mcp.server(), nullptr);
+    EXPECT_FALSE(mcp.server()->socketName().isEmpty());
+    EXPECT_NE(mcp.server()->httpPort(), 0);
+    EXPECT_EQ(counts.sidecarHosts, 0);
+    const auto listening = backends::ai::readMcpEndpoint(file);
+    ASSERT_TRUE(listening);
+    EXPECT_EQ(listening->socket, mcp.server()->socketName());
+    EXPECT_EQ(listening->port, mcp.server()->httpPort());
+
+    settings.set(app::AiMcp::kSetting, false);
+    EXPECT_EQ(mcp.server(), nullptr);
+    EXPECT_TRUE(backends::ai::readMcpEndpoint(file)->socket.isEmpty());
+    settings.set(app::AiMcp::kSetting, true);
+    ASSERT_NE(mcp.server(), nullptr);
+    settings.set(app::AiFeatures::kOffSetting, true);
+    EXPECT_EQ(mcp.server(), nullptr);
+    EXPECT_TRUE(backends::ai::readMcpEndpoint(file)->socket.isEmpty());
+}
+
+TEST_F(AiFeaturesTest, TheMcpTokenAndPortSurviveARestartAndHttpTurnsOffAlone)
+{
+    const QString file = backends::ai::mcpEndpointFile(dir.path());
+    settings.set(app::AiMcp::kSetting, true);
+    settings.set(app::AiMcp::kHttpSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    QByteArray token;
+    quint16 port = 0;
+    {
+        app::AiMcp mcp(settings, features, file);
+        token = mcp.endpoint().token;
+        port = mcp.server()->httpPort();
+        settings.set(app::AiMcp::kHttpSetting, false);
+        ASSERT_NE(mcp.server(), nullptr);
+        EXPECT_EQ(mcp.server()->httpPort(), 0);
+        EXPECT_EQ(backends::ai::readMcpEndpoint(file)->port, port);
+        settings.set(app::AiMcp::kHttpSetting, true);
+    }
+    EXPECT_TRUE(backends::ai::readMcpEndpoint(file)->socket.isEmpty());
+    app::AiMcp again(settings, features, file);
+    EXPECT_EQ(again.endpoint().token, token);
+    EXPECT_EQ(again.server()->httpPort(), port);
 }
 
 TEST(AiCommands, NoCommandOrMenuEntryIsAnAiOneWhileAiHasNoCommands)

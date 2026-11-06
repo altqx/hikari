@@ -29,11 +29,18 @@ std::string directoryOf(const std::string &path, bool windows)
     return at == std::string::npos ? std::string() : path.substr(0, at + 1);
 }
 
+std::optional<std::string> timecodesValue(const core::Document &document, std::u8string_view key)
+{
+    if (auto value = document.projectGarbage(key))
+        return std::string(value->begin(), value->end());
+    return scriptInfo(document, key);
+}
+
 std::optional<MediaReference> resolve(const core::Document &document, std::u8string_view key,
                                       const std::string &subtitleDir,
                                       const std::function<bool(const std::string &)> &exists, bool windows)
 {
-    auto value = scriptInfo(document, key);
+    auto value = key == kTimecodesFileKey ? timecodesValue(document, key) : scriptInfo(document, key);
     if (!value || value->empty())
         return std::nullopt;
     MediaReference ref{*value, std::nullopt};
@@ -55,7 +62,8 @@ std::optional<MediaReference> resolve(const core::Document &document, std::u8str
 
 bool MediaAssociations::offersAnything() const
 {
-    return (video && video->resolved) || (audio && audio->resolved) || (keyframes && keyframes->resolved);
+    return (video && video->resolved) || (audio && audio->resolved) || (keyframes && keyframes->resolved) ||
+           (timecodes && timecodes->resolved);
 }
 
 MediaAssociations resolveMediaAssociations(const core::Document &document, const std::string &subtitlePath,
@@ -64,7 +72,8 @@ MediaAssociations resolveMediaAssociations(const core::Document &document, const
     const std::string dir = directoryOf(subtitlePath, windows);
     return {resolve(document, u8"Video File", dir, exists, windows),
             resolve(document, u8"Audio File", dir, exists, windows),
-            resolve(document, u8"Keyframes File", dir, exists, windows)};
+            resolve(document, u8"Keyframes File", dir, exists, windows),
+            resolve(document, kTimecodesFileKey, dir, exists, windows)};
 }
 
 }

@@ -47,8 +47,8 @@ enum class ExportLoss : std::uint32_t {
     Fade = 1u << 4,
     Rotation = 1u << 5,   // \fr \frx \fry \frz \fax \fay \org
     Font = 1u << 6,       // \fn \fs \fscx \fscy \fsp
-    Outline = 1u << 7,    // borders, shadows, blur, alphas, \3c \4c
-    Colour = 1u << 8,     // \c \1c \2c
+    Outline = 1u << 7,
+    Colour = 1u << 8,
     Formatting = 1u << 9, // \i \b \u \s
     Position = 1u << 10,  // \pos \an \a, or a Style that is not bottom centre
     Karaoke = 1u << 11,
