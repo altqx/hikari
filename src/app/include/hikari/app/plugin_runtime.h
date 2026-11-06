@@ -67,9 +67,13 @@ public:
     // The plugin's file handles and the folders granted for this run end, as when it stops.
     Q_INVOKABLE void endFileAccess(const QString &pluginId);
     backends::PluginProcess *process(const QString &pluginId) const;
+    // Running a command or an event right now.
+    bool busy(const QString &pluginId) const;
 
 signals:
     void commandsChanged();
+    // The plugin finished a command or an event, or stopped.
+    void idle(const QString &pluginId);
 
 private:
     struct Running;

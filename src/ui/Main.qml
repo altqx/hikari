@@ -6523,6 +6523,22 @@ ApplicationWindow {
         settings: root.app.settings
         onCopyRequested: text => root.app.copyText(text)
     }
+    Connections {
+        target: root.app.pluginManager
+        function onRolledBack(id, name, version) {
+            root.notices.post("info", qsTranslate("HikariSub.Plugins", "%1 rolled back to %2").arg(name, version),
+                              qsTranslate("HikariSub.Plugins", "Automatic updates skip the version you left."),
+                              {actions: [{text: qsTranslate("HikariSub.Plugins", "Undo"), run: () => root.app.pluginManager.undoRollBack(id)}]})
+        }
+    }
+    Connections {
+        target: root.app.pluginMarketplace
+        function onRevoked(id, name, version, reason) {
+            root.notices.post("warning", qsTranslate("HikariSub.Plugins", "%1 turned off").arg(name),
+                              qsTranslate("HikariSub.Plugins", "The marketplace revoked version %1: %2.").arg(version, reason),
+                              {actions: [{text: qsTranslate("HikariSub.Plugins", "Show"), run: () => pluginManagerDialog.showPlugin(id)}]})
+        }
+    }
 
     TapCalibrationWindow {
         id: tapCalibrationWindow

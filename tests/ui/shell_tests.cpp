@@ -17010,6 +17010,64 @@ private slots:
         restartWith(app::Application::Options());
         marketNetwork.reset();
     }
+    void marketplacePluginsRollBackHoldAndRevoke()
+    {
+        QTemporaryDir home;
+        startMarketplace(home, true);
+        auto *manager = application->pluginManager();
+        const auto row = [&] { return manager->plugins().first().toMap(); };
+        QObject *dialog = named("pluginManagerDialog");
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QQuickItem *rollBack = nullptr;
+        QTRY_VERIFY((rollBack = dialogItem("pluginManagerDialog", "pluginRollBack")));
+        QVERIFY(!rollBack->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginAutoUpdate_com.example.hello")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginMove"), "click"));
+        answerMessage("pluginManagerMessages", QStringLiteral("Update plugin"), QStringLiteral("Update “Hello” from 1.0.0 to 1.1.0?"),
+                      QStringLiteral("install"));
+        QTRY_COMPARE(row().value(QStringLiteral("version")).toString(), QStringLiteral("1.1.0"));
+        QTRY_VERIFY(dialogItem("pluginManagerDialog", "pluginRollBack")->isVisible());
+        QVERIFY(dialogItem("pluginManagerDialog", "pluginAutoUpdate_com.example.hello")->isVisible());
+        QCOMPARE(dialogItem("pluginManagerDialog", "pluginRollBack")->property("text").toString(), QStringLiteral("Roll back to 1.0.0"));
+
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("toastStack"), "clear"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginRollBack"), "click"));
+        QTRY_COMPARE(row().value(QStringLiteral("version")).toString(), QStringLiteral("1.0.0"));
+        QTRY_VERIFY(toastWith(QStringLiteral("Automatic updates skip the version you left.")));
+        const QVariantList toasts = named("toastStack")->property("entries").toList();
+        QVERIFY(std::ranges::any_of(toasts, [](const QVariant &t) {
+            return t.toMap().value(QStringLiteral("title")).toString() == QStringLiteral("Hello rolled back to 1.0.0");
+        }));
+        QCOMPARE(manager->undoRollBack(QStringLiteral("com.example.hello")), QString());
+        QTRY_COMPARE(row().value(QStringLiteral("version")).toString(), QStringLiteral("1.1.0"));
+
+        QCOMPARE(manager->edit(QStringLiteral("com.example.hello"), [](hikari::plugins::InstalledPlugin &p) { p.held = "1.3.0"; }),
+                 QString());
+        QQuickItem *held = nullptr;
+        QTRY_VERIFY((held = dialogItem("pluginManagerDialog", "pluginHeldBar")) && held->isVisible());
+        QCOMPARE(dialogItem("pluginManagerDialog", "pluginState_com.example.hello")->property("text").toString(),
+                 QStringLiteral("1.3.0 waits for you"));
+        QCOMPARE(manager->edit(QStringLiteral("com.example.hello"), [](hikari::plugins::InstalledPlugin &p) {
+            p.held.clear();
+            p.enabled = false;
+            p.revoked = hikari::plugins::Revoked{"Leaked a token", "1.0.0"};
+        }), QString());
+        QVERIFY(QMetaObject::invokeMethod(application->pluginMarketplace(), "revoked", Q_ARG(QString, QStringLiteral("com.example.hello")),
+                                          Q_ARG(QString, QStringLiteral("Hello")), Q_ARG(QString, QStringLiteral("1.1.0")),
+                                          Q_ARG(QString, QStringLiteral("Leaked a token")), Q_ARG(QString, QStringLiteral("1.0.0"))));
+        QTRY_VERIFY(toastWith(QStringLiteral("The marketplace revoked version 1.1.0: Leaked a token.")));
+        QQuickItem *revoked = nullptr;
+        QTRY_VERIFY((revoked = dialogItem("pluginManagerDialog", "pluginRevokedBar")) && revoked->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginHeldBar")->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginRollBack")->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginEnabled_com.example.hello")->isEnabled());
+        QCOMPARE(dialogItem("pluginManagerDialog", "pluginInstallLastGood")->property("text").toString(), QStringLiteral("Install 1.0.0"));
+        QCOMPARE(dialogItem("pluginManagerDialog", "pluginState_com.example.hello")->property("text").toString(), QStringLiteral("Revoked"));
+        restartWith(app::Application::Options());
+        marketNetwork.reset();
+    }
     void pluginMarketplaceScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");

@@ -56,6 +56,14 @@ DialogWindow {
             list.forceActiveFocus()
         }
     }
+    property bool automaticUpdates: settings !== null && settings.value("plugins.autoUpdate") === true
+    Connections {
+        target: dialog.settings
+        function onChanged(id) {
+            if (id === "plugins.autoUpdate")
+                dialog.automaticUpdates = dialog.settings.value(id) === true
+        }
+    }
     property int statesVersion: 0
     Connections {
         target: dialog.ui
@@ -66,6 +74,10 @@ DialogWindow {
         return row && dialog.ui ? dialog.ui.pluginState(row.id) : { status: "running", reason: "" }
     }
     function stateText(row) {
+        if (row.revoked)
+            return qsTr("Revoked")
+        if (row.held.length > 0)
+            return qsTr("%1 waits for you").arg(row.held)
         const status = dialog.stateOf(row).status
         if (status === "off")
             return qsTr("Turned off")
@@ -133,9 +145,15 @@ DialogWindow {
             reinstall: qsTr("Reinstall “%1” %2?").arg(review.name, review.version),
             downgrade: qsTr("Replace “%1” %2 with the older %3?").arg(review.name, review.installedVersion, review.version)
         }
-        const asks = review.permissions.length > 0
-                ? qsTr("It asks for these permissions") + "\n• " + review.permissions.join("\n• ")
-                : qsTr("It asks for no permissions beyond the active subtitle file.")
+        const tagged = review.changes.map(c => "• " + c.text + " (" + (c.added ? qsTr("New") : qsTr("allowed now")) + ")")
+        const asks = review.permissions.length === 0
+                ? qsTr("It asks for no permissions beyond the active subtitle file.")
+                : review.asksForMore ? qsTr("It asks for more than %1 does").arg(review.installedVersion) + "\n" + tagged.join("\n")
+                : qsTr("It asks for these permissions") + "\n• " + review.permissions.join("\n• ")
+        const changelog = (review.changelog || "").length > 0
+                ? "\n\n" + qsTr("Changes in %1").arg(review.version) + "\n" + review.changelog : ""
+        const held = dialog.rows.find(r => r.id === review.id && r.held === review.version) !== undefined
+        const keep = held ? [{ id: "keep", text: qsTr("Keep %1").arg(review.installedVersion), role: "action" }] : []
         const fullAccess = review.marketplace && review.unrestricted
         const trust = review.marketplace
                 ? (fullAccess ? qsTr("Install it only if you trust %1. It gets full access to your computer.").arg(review.signedBy) + "\n\n" : "")
@@ -145,17 +163,18 @@ DialogWindow {
         messages.ask({
             title: titles[review.change],
             text: questions[review.change],
-            detail: trust + "\n\n" + asks + "\n\n" + dialog.basics,
+            detail: trust + "\n\n" + asks + changelog + "\n\n" + dialog.basics,
             severity: warn || review.unrestricted ? "warning" : "question",
             choices: [
                 { id: "install", text: review.needsRetrust ? qsTr("Trust and install")
                                      : fullAccess ? qsTr("Install with full access") : titles[review.change],
-                  role: warn ? "destructive" : "accept", isDefault: !warn },
-                { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: warn }
-            ]
+                  role: warn ? "destructive" : "accept", isDefault: !warn }
+            ].concat(keep).concat([{ id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: warn }])
         }, answer => {
             if (answer !== "install") {
                 dialog.manager.cancelReview()
+                if (answer === "keep")
+                    dialog.market.keepCurrent(review.id)
                 return
             }
             const problem = dialog.manager.install(review.needsRetrust)
@@ -215,8 +234,8 @@ DialogWindow {
                 visible: dialog.marketAvailable
                 choices: [{ text: dialog.market && dialog.market.updates > 0 ? qsTr("Installed %1").arg(dialog.market.updates)
                                                                              : qsTr("Installed"),
-                            name: "pluginViewInstalled" },
-                          { text: qsTr("Marketplace"), name: "pluginViewMarketplace" }]
+                            name: "pluginViewInstalled", iconRole: "plugins" },
+                          { text: qsTr("Marketplace"), name: "pluginViewMarketplace", iconRole: "marketplace" }]
                 currentIndex: dialog.view === "market" ? 1 : 0
                 onActivated: index => dialog.showView(index === 1 ? "market" : "installed")
             }
@@ -354,7 +373,8 @@ DialogWindow {
                                     visible: text.length > 0
                                     text: dialog.stateText(row.modelData)
                                     font: dialog.fontAt(12)
-                                    color: ["failed", "stopped"].includes(dialog.stateOf(row.modelData).status) ? Theme.danger
+                                    color: row.modelData.revoked || ["failed", "stopped"].includes(dialog.stateOf(row.modelData).status) ? Theme.danger
+                                         : row.modelData.held.length > 0 ? Theme.accent
                                          : row.modelData.unrestricted && row.modelData.enabled ? Theme.warning : Theme.muted
                                 }
                             }
@@ -591,11 +611,15 @@ DialogWindow {
                     Layout.fillWidth: true
                 }
             }
-            Label {
+            RowLayout {
                 objectName: "marketInstalled"
                 visible: market.listing.action === "installed"
-                text: qsTr("Installed")
-                color: Theme.muted
+                spacing: 4
+                Icon { iconRole: "plugin-installed" }
+                Label {
+                    text: qsTr("Installed")
+                    color: Theme.muted
+                }
             }
             PrimaryButton {
                 objectName: "marketInstall"
@@ -729,7 +753,7 @@ DialogWindow {
         InlineBar {
             objectName: "pluginMoveBar"
             visible: details.offer.move && !dialog.notNow.includes(details.row.id)
-            iconRole: "plugins"
+            iconRole: "marketplace"
             closable: false
             text: qsTr("“%1” is in the marketplace, signed with the same key. Move it there to get updates.").arg(details.row.name)
             Layout.fillWidth: true
@@ -746,20 +770,74 @@ DialogWindow {
                 onClicked: dialog.market.download(details.row.id)
             }
         }
+        InlineBar {
+            objectName: "pluginRevokedBar"
+            visible: details.row.revoked
+            severity: "error"
+            closable: false
+            text: qsTr("The marketplace revoked version %1, so HikariSub turned it off: %2").arg(details.row.version, details.row.revokedReason)
+            Layout.fillWidth: true
+            Button {
+                objectName: "pluginInstallLastGood"
+                visible: details.row.lastGood.length > 0
+                text: qsTr("Install %1").arg(details.row.lastGood)
+                font.bold: true
+                enabled: dialog.market !== null && dialog.market.downloading.length === 0
+                onClicked: dialog.market.installLastGood(details.row.id)
+            }
+            Button {
+                objectName: "pluginRevokedUninstall"
+                text: qsTr("Uninstall…")
+                onClicked: dialog.askUninstall(details.row)
+            }
+        }
+        InlineBar {
+            objectName: "pluginHeldBar"
+            visible: details.row.held.length > 0 && !details.row.revoked
+            iconRole: "plugin-update"
+            closable: false
+            text: qsTr("%1 asks for more than %2 does, so it waits for you.").arg(details.row.held, details.row.version)
+            Layout.fillWidth: true
+            Button {
+                objectName: "pluginHeldReview"
+                text: dialog.market && dialog.market.downloading === details.row.id ? qsTr("Downloading…") : qsTr("Review…")
+                font.bold: true
+                enabled: dialog.market !== null && dialog.market.downloading.length === 0
+                onClicked: dialog.market.download(details.row.id)
+            }
+        }
         RowLayout {
             spacing: 10
             Layout.fillWidth: true
+            opacity: details.row.revoked ? 0.6 : 1
             PluginIcon { row: details.row; size: 32 }
             ColumnLayout {
                 spacing: 0
                 Layout.fillWidth: true
-                Label {
-                    objectName: "pluginDetailsName"
-                    text: details.row.name + " " + details.row.version
-                    textFormat: Text.PlainText
-                    font: dialog.fontAt(15, Font.DemiBold)
-                    elide: Text.ElideRight
+                RowLayout {
+                    spacing: 8
                     Layout.fillWidth: true
+                    Label {
+                        objectName: "pluginDetailsName"
+                        text: details.row.name + " " + details.row.version
+                        textFormat: Text.PlainText
+                        font: dialog.fontAt(15, Font.DemiBold)
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                    }
+                    LinkButton {
+                        objectName: "pluginRollBack"
+                        iconRole: "undo"
+                        visible: details.row.previous.length > 0 && !details.row.revoked
+                        text: qsTr("Roll back to %1").arg(details.row.previous)
+                        onClicked: {
+                            const problem = dialog.manager.rollBack(details.row.id)
+                            if (problem.length > 0)
+                                dialog.tell(qsTr("Plugin not rolled back"), problem)
+                        }
+                    }
+                    Item { Layout.fillWidth: true }
                 }
                 Label {
                     visible: text.length > 0
@@ -773,6 +851,7 @@ DialogWindow {
             Switch {
                 objectName: "pluginEnabled_" + details.row.id
                 text: qsTr("On")
+                enabled: !details.row.revoked
                 checked: details.row.enabled
                 onToggled: {
                     const problem = dialog.manager.setEnabled(details.row.id, checked)
@@ -798,6 +877,19 @@ DialogWindow {
                 color: Theme.muted
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
+            }
+        }
+        CheckBox {
+            objectName: "pluginAutoUpdate_" + details.row.id
+            visible: details.row.source === "marketplace" && dialog.marketAvailable
+            text: qsTr("Install updates automatically")
+            enabled: dialog.automaticUpdates
+            checked: details.row.autoUpdate
+            onToggled: {
+                const problem = dialog.manager.setAutoUpdate(details.row.id, checked)
+                if (problem.length > 0)
+                    dialog.tell(qsTr("Plugin not changed"), problem)
+                checked = Qt.binding(() => details.row.autoUpdate)
             }
         }
         Rectangle {
@@ -1038,6 +1130,24 @@ DialogWindow {
             wrapMode: Text.Wrap
             Layout.maximumWidth: 300
             Layout.leftMargin: checkUpdates.indicator ? checkUpdates.indicator.width + checkUpdates.spacing : 0
+        }
+        CheckBox {
+            id: autoUpdate
+            objectName: "pluginAutoUpdateSetting"
+            text: qsTr("Install updates automatically")
+            enabled: checkUpdates.checked
+            checked: dialog.settings ? dialog.settings.value("plugins.autoUpdate") === true : false
+            onToggled: {
+                dialog.settings.setValue("plugins.autoUpdate", checked)
+                checked = Qt.binding(() => dialog.settings.value("plugins.autoUpdate") === true)
+            }
+        }
+        Label {
+            text: qsTr("Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.")
+            color: Theme.muted
+            wrapMode: Text.Wrap
+            Layout.maximumWidth: 300
+            Layout.leftMargin: autoUpdate.indicator ? autoUpdate.indicator.width + autoUpdate.spacing : 0
         }
     }
     buttons: [

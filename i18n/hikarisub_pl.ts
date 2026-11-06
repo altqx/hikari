@@ -10579,6 +10579,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>Katalog wtyczek wycofał tę wersję. Zainstaluj inną, aby ją włączyć.</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>Polecenie: %1</translation>
     </message>
@@ -10597,6 +10601,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub nie może odczytać pliku %1.</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>Wtyczka zmieniła się podczas pobierania aktualizacji.</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -10799,6 +10807,34 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pełne zaufanie</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>Wycofana</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 czeka na Ciebie</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>Nowe</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>dozwolone teraz</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>Prosi o więcej niż %1</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>Zmiany w wersji %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
         <source>Search plugins</source>
         <translation>Szukaj wtyczek</translation>
     </message>
@@ -10895,12 +10931,40 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przenieś do katalogu wtyczek</translation>
     </message>
     <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>Katalog wtyczek wycofał wersję %1, więc HikariSub ją wyłączył: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>Zainstaluj %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1 prosi o więcej niż %2, więc czeka na Ciebie.</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>Przejrzyj…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>Przywróć wersję %1</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>Nie przywrócono wtyczki</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>Włączona</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>Nie zmieniono wtyczki</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -10973,6 +11037,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
         <translation>Przy uruchomieniu i raz dziennie. HikariSub pobiera całą listę i nigdy nie wysyła, jakie masz wtyczki.</translation>
+    </message>
+    <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>Tylko dla wtyczek z katalogu, gdy skończą to, co robią. Aktualizacja, która prosi o więcej, czeka na Ciebie.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -11049,6 +11117,30 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>About %1…</source>
         <translation>O wtyczce %1…</translation>
+    </message>
+    <message>
+        <source>%1 rolled back to %2</source>
+        <translation>Przywrócono %1 do wersji %2</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>Automatyczne aktualizacje pominą wersję, z której zrezygnowano.</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>Wyłączono: %1</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>Katalog wtyczek wycofał wersję %1: %2.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
     </message>
     <message>
         <source>%1 isn’t installed.</source>
