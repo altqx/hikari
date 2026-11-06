@@ -129,7 +129,7 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
                                  QStringLiteral("Log"), QStringLiteral("Styles"), QStringLiteral("Template"),
                                  QStringLiteral("Spellchecker"),
-                                 QStringLiteral("Postprocessor")};
+                                 QStringLiteral("Postprocessor"), QStringLiteral("QcNotes")};
     return ids;
 }
 

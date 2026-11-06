@@ -620,9 +620,28 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return index.row() == m_draftRow;
     case UnplacedRunsRole:
         return unplacedRunsOf(r);
+    case QcNotesRole:
+        if (const auto it = m_qcMarks.find(line.id.value); it != m_qcMarks.end())
+            return it->second;
+        return QStringList();
+    case QcCurrentRole:
+        return m_qcCurrent == line.id;
     default:
         return {};
     }
+}
+
+void LineTableModel::setQcMarks(QcMarks marks, std::optional<core::LineId> current)
+{
+    if (marks == m_qcMarks && current == m_qcCurrent)
+        return;
+    const bool marked = !m_qcMarks.empty();
+    m_qcMarks = std::move(marks);
+    m_qcCurrent = current;
+    if (marked != !m_qcMarks.empty())
+        emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
+    if (!m_rows.empty())
+        emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {QcNotesRole, QcCurrentRole});
 }
 
 QString LineTableModel::startText(const core::LineRecord &line) const
@@ -735,6 +754,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return m_filtered;
     if (role == HeaderBlockRole)
         return m_headerBlock;
+    if (role == QcMarkedRole)
+        return !m_qcMarks.empty();
     if (role == ComparisonColoursRole)
         return QVariantList(m_comparisonColours.begin(), m_comparisonColours.end());
     if (role == LabelColoursRole)
@@ -797,7 +818,9 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {DraftRole, "draft"},
                   {UnplacedRunsRole, "unplacedRuns"},
                   {FoldRole, "fold"},
-                  {FoldCountRole, "foldCount"}});
+                  {FoldCountRole, "foldCount"},
+                  {QcNotesRole, "qcNotes"},
+                  {QcCurrentRole, "qcCurrent"}});
     return roles;
 }
 

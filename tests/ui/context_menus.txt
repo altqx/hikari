@@ -68,6 +68,8 @@ Grid > Translation matching… [GRID_TRANSLATION_DIALOG]
 Grid > -
 Grid > Delete text [GLOBAL_REMOVE_TEXT]
 Grid > Delete 1 line(s) [GLOBAL_REMOVE_LINES]
+Grid > -
+Grid > Add QC note… [GLOBAL_ADD_QC_NOTE]
 Grid header
 Grid header > Layer [GRID_HIDE_LAYER]
 Grid header > Start time [GRID_HIDE_START]

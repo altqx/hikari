@@ -5058,6 +5058,12 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation>책갈피</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>QC 메모 %n개</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>미적용</translation>
@@ -6587,6 +6593,20 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Video details…</source>
         <translation>영상 정보…</translation>
+        <source>QC notes panel</source>
+        <translation>QC 메모 패널</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>다음 QC 메모</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>이전 QC 메모</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>QC 메모 추가</translation>
     </message>
     <message>
         <source>Global</source>
@@ -7631,6 +7651,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>조건식으로 줄을 선택합니다</translation>
+    </message>
+    <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>QC 검토 메모를 파일에 저장하고 메모가 가리키는 줄을 표시합니다</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>QC 메모(&amp;Q)…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -10843,6 +10871,295 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC 메모</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>더 이상 메모가 없습니다</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>메모 파일 가져오기…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>클립보드에서 메모 가져오기</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>메모 내보내기…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>모두 완료 안 됨으로 표시</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>모든 메모 제거…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>QC 메모 추가…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1에 메모가 없습니다. 메모는 3:24나 0:03:24처럼 시간으로 시작하는 줄입니다.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>클립보드에 메모가 없습니다. 메모는 3:24나 0:03:24처럼 시간으로 시작하는 줄입니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>메모 %n개를 가져왔습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n개는 이미 파일에 있었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>메모 %n개는 시간에서 15초 안에 줄이 없습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>클립보드</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>QC 메모 가져오기</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1에 메모 %n개가 있습니다</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>(구역 %n개).</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>이 파일에는 이미 메모 %n개가 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>추가할 때 이미 있는 메모 %n개는 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>메모 %n개 추가</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>이 파일의 메모 바꾸기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>%1을(를) 읽을 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>모든 메모 제거</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>이 파일에서 QC 메모 %n개를 모두 제거할까요?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>실행 취소하면 되돌아옵니다.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>모두 제거</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>메모 파일 가져오기</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>QC 메모 (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>QC 메모 내보내기</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>메모 %n개를 내보냈습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>메모를 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>이 파일</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>메모 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>메모 추가</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>완료된 메모 포함</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>선택한 구역만 (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>선택한 구역만</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>메모 %n개 내보내기…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>전체</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1/%2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>%1번 줄</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>줄 없음</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>완료 안 됨</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>줄 없음</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>여기에 메모 파일을 끌어다 놓으세요</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>QC 메모를 저장할 자막 파일을 여세요.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>메모 붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>메모는 시간으로 시작합니다: 3:24 - …
+[구역] 줄로 묶습니다.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>이전</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>다음</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>완료된 메모 숨기기</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>시간</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>비디오 시간</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>줄 시작</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>구역</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>메모</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>고칠 점</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter 저장 · Esc 취소</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>저장</translation>
     </message>
 </context>
 <context>

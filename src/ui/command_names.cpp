@@ -295,6 +295,10 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close timecodes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Video details…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Convert Aegisub folds to line groups"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "QC notes panel"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next QC note"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous QC note"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Add QC note"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
