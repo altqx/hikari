@@ -108,6 +108,9 @@ std::u8string joinedRows(const Flat &f, u8sv separator, const std::function<std:
 
 std::uint32_t ttmlLosses(const ExportOptions &o, const Flat &f);
 // IMSC1 text profile when `imsc`, else DFXP. Adds Position to `losses` where the placement is approximated.
+// YTSubConverter 1.6.5's conversion of the Lines as the video renderer sees them, without attachments.
+ExportResult exportSrv3(const Document &document, const ExportOptions &options);
+
 void writeTtml(std::u8string &out, const std::vector<Flat> &cues, const ExportOptions &o, PlayRes res, bool imsc,
                std::map<std::uint64_t, std::uint32_t> &losses);
 
