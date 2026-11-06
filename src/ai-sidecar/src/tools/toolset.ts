@@ -1,7 +1,7 @@
 import { ErrorCode } from "../protocol";
 import { RpcError } from "../rpc";
 import type { CommandsListResult, OperationName, Operations, VideoFrameResult } from "./api.gen";
-import { forModel, kCatalogue, kGroups, type Entry, type Group, type Tool } from "./catalogue";
+import { kCatalogue, kGroups, type Catalogue, type Entry, type Group, type Tool } from "./catalogue";
 import { pngFromBgra } from "./png";
 
 export type Content = { type: "text"; text: string } | { type: "image"; data: string; mimeType: string };
@@ -41,7 +41,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 /** An error as the model reads it: what happened and what to do next. */
-function worded(tool: string, error: unknown): string {
+function worded(tool: string, error: unknown, catalogue: Catalogue): string {
     if (!(error instanceof RpcError))
         return `${tool} failed: ${error instanceof Error ? error.message : String(error)}`;
     if (error.code === ErrorCode.requestCancelled)
@@ -53,7 +53,7 @@ function worded(tool: string, error: unknown): string {
     const hint = code === "not_granted" && isObject(details) && "document" in details ? kDocumentHint : kHints[code];
     const current = code === "stale_revision" && isObject(details) && typeof details.current === "number"
         ? `It is now at revision ${details.current}.` : undefined;
-    return [forModel(error.message), current, hint].filter(Boolean).join(" ");
+    return [catalogue.forModel(error.message), current, hint].filter(Boolean).join(" ");
 }
 
 function words(query: string): string[] {
@@ -81,14 +81,19 @@ function frame(result: VideoFrameResult): CallToolResult {
  * through `_hikari/api.call`, which validates it and scopes it; errors come back as text for the model.
  */
 export class ToolSet {
-    private readonly offered = new Set(kCatalogue.filter((e) => e.group === "core").map((e) => e.tool.name));
-    private readonly byName = new Map(kCatalogue.map((e) => [e.tool.name, e]));
+    private readonly entries: readonly Entry[];
+    private readonly offered: Set<string>;
+    private readonly byName: Map<string, Entry>;
 
-    constructor(private readonly api: HikariCalls) {}
+    constructor(private readonly api: HikariCalls, private readonly catalogue: Catalogue = kCatalogue) {
+        this.entries = catalogue.entries;
+        this.offered = new Set(this.entries.filter((e) => e.group === "core").map((e) => e.tool.name));
+        this.byName = new Map(this.entries.map((e) => [e.tool.name, e]));
+    }
 
     /** The tools to offer now, or `all` of them. */
     list(all = false): Tool[] {
-        return kCatalogue.filter((e) => all || this.offered.has(e.tool.name)).map((e) => e.tool);
+        return this.entries.filter((e) => all || this.offered.has(e.tool.name)).map((e) => e.tool);
     }
 
     has(name: string): boolean {
@@ -110,7 +115,7 @@ export class ToolSet {
             const result = await this.api.call(entry.operation!, params as never);
             return entry.operation === "video.frame" ? frame(result as VideoFrameResult) : text(result);
         } catch (error) {
-            return failure(worded(name, error));
+            return failure(worded(name, error, this.catalogue));
         }
     }
 
@@ -123,7 +128,7 @@ export class ToolSet {
         if (query === undefined && group === undefined)
             return failure("search_tools needs a query, a group or both.");
         const wanted = words((query as string | undefined) ?? "");
-        const found = kCatalogue
+        const found = this.entries
             .filter((e) => e.group !== "core" && (group === undefined || e.group === group))
             .map((e): [Entry, number] => [e, score(wanted, `${e.tool.name} ${e.tool.description} ${e.group}`)])
             .filter(([, s]) => wanted.length === 0 || s > 0)
@@ -151,6 +156,6 @@ export class ToolSet {
     }
 
     private groups(): Group[] {
-        return [...new Set(kCatalogue.map((e) => e.group))].filter((g) => g !== "core");
+        return [...new Set(this.entries.map((e) => e.group))].filter((g) => g !== "core");
     }
 }

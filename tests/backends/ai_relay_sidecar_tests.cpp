@@ -67,13 +67,14 @@ protected:
         });
 
         AiSidecarHost::Options o;
-        o.program = QStringLiteral(HIKARI_AI_SIDECAR_FILE);
+        o.program = QStringLiteral(HIKARI_AI_RUNTIME_FILE);
+        o.arguments = {QStringLiteral(HIKARI_AI_BUNDLE_FILE)};
         o.workingDirectory = dir.filePath(QStringLiteral("work"));
         o.buildId = HIKARI_AI_BUILD_ID;
         o.handshakeMs = 30'000;
         o.sandbox = hikari::backends::sandbox::Profile{
             .name = QStringLiteral("HikariSub.Test.Sidecar"),
-            .readExecute = {QFileInfo(o.program).absolutePath()},
+            .readExecute = {QFileInfo(o.program).absolutePath(), QFileInfo(o.arguments.front()).absolutePath()},
             .readWrite = {o.workingDirectory},
         };
         sidecar = std::make_unique<AiSidecarHost>(std::move(o), nullptr, hikari::api::Caller{"ai", "Hikari AI", false});

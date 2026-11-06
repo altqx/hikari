@@ -143,21 +143,43 @@ TEST_F(AiSidecarHostTest, NoAnswerToInitializeInTimeIsACrash)
     EXPECT_EQ(h->state(), AiSidecarHost::State::Idle);
 }
 
-TEST_F(AiSidecarHostTest, RefusesASidecarFromAnotherBuildUntilReset)
+TEST_F(AiSidecarHostTest, RunsASidecarFromAnotherBuildAndKeepsWhatItReports)
 {
     auto o = options();
     o.buildId = "0.1.0+other";
+    auto h = host(o);
+    ASSERT_TRUE(call(*h, "echo"));
+    EXPECT_EQ(h->info().version, "9.9.9");
+    EXPECT_EQ(h->info().versions.at("openai"), "7.45.0");
+}
+
+TEST_F(AiSidecarHostTest, RefusesASidecarThatNeedsANewerApiUntilReset)
+{
+    auto o = options();
+    o.arguments << QStringLiteral("--required-api") << QString::number(hikari::api::kApiVersion + 1);
     auto h = host(o);
     QSignalSpy refused(h.get(), &AiSidecarHost::refused);
     auto result = call(*h, "echo");
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().error, SidecarError::Refused);
     EXPECT_EQ(refused.count(), 1);
-    EXPECT_TRUE(refused.at(0).at(0).toString().contains(QStringLiteral("build id")));
+    EXPECT_TRUE(refused.at(0).at(0).toString().contains(QStringLiteral("newer HikariSub")));
     result = call(*h, "echo");
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().error, SidecarError::Refused);
     EXPECT_EQ(h->processId(), 0);
+}
+
+TEST_F(AiSidecarHostTest, InitializeCarriesTheAppsApiReference)
+{
+    auto h = host(options());
+    const auto sent = call(*h, "initialized");
+    ASSERT_TRUE(sent);
+    const Json *reference = sent->find("hikariApi");
+    ASSERT_NE(reference, nullptr);
+    EXPECT_EQ(*reference->find("version"), Json(hikari::api::kApiVersion));
+    EXPECT_FALSE(reference->find("operations")->asArray().empty());
+    EXPECT_EQ(reference->find("nodes"), nullptr);
 }
 
 TEST_F(AiSidecarHostTest, RefusesAnotherProtocolVersion)

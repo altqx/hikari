@@ -38,7 +38,7 @@ inline constexpr int kRequestCancelled = -32800;
 enum class SidecarError {
     SidecarLost, // the sidecar crashed, broke the protocol or was stopped while the request was out
     Stopped,     // three crashes in a minute; nothing restarts until reset()
-    Refused,     // the sidecar's versions differ from the app's; download it again
+    Refused,     // the sidecar speaks another protocol or needs a newer Hikari API
     Busy,        // the outstanding-request limits are reached
     Cancelled,
     Remote,      // the sidecar answered with a JSON-RPC error
@@ -103,6 +103,8 @@ public:
         std::optional<sandbox::Profile> sandbox;
         std::string buildId;
         int hikariApiVersion = api::kApiVersion;
+        /// The app's HA1 reference, which the sidecar offers tools from; empty means apiReference().
+        api::Json hikariApi;
         int handshakeMs = 10'000;
         int shutdownMs = 3'000;
         std::size_t maxOutstanding = 64;
@@ -123,7 +125,14 @@ public:
     AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent = nullptr);
     ~AiSidecarHost() override;
 
+    /// What the running sidecar reported in `initialize`.
+    struct Info {
+        std::string version;
+        std::map<std::string, std::string> versions;
+    };
+
     State state() const { return m_state; }
+    const Info &info() const { return m_info; }
     /// Starts the sidecar when it isn't running; the request waits for `initialize`.
     std::uint64_t request(const std::string &method, api::Json params, SidecarReply reply);
     /// The reply still comes once, with Cancelled.
@@ -148,6 +157,7 @@ public:
     const sandbox::Coverage &sandboxCoverage() const { return m_launcher->coverage(); }
 
 signals:
+    void requested();
     void ready();
     void refused(QString reason);
     void lost(QString reason);
@@ -187,6 +197,7 @@ private:
     void finish(std::uint64_t id, SidecarResult result);
 
     Options m_options;
+    Info m_info;
     api::Api *m_hikari;
     api::Caller m_caller;
     std::unique_ptr<QProcess> m_process;

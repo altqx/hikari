@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { ErrorCode, kProtocolVersion, Method } from "../src/protocol";
+import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method } from "../src/protocol";
 import { Peer, RpcError } from "../src/rpc";
 import { Sidecar } from "../src/sidecar";
+import { kOwnReference } from "../src/tools/catalogue";
 
 const limits = { maxOutstanding: 4, maxOutstandingBytes: 1024, maxMessageBytes: 512 };
 
@@ -105,16 +106,42 @@ describe("Peer", () => {
 });
 
 describe("Sidecar", () => {
-    const build = { buildId: "0.1.0+test", hikariApiVersion: 3 };
+    const build = { buildId: "1.4.0+test", hikariApiVersion: 3, version: "1.4.0", packages: { openai: "7.45.0" } };
 
-    test("initialize answers with the protocol, API and build versions", async () => {
+    test("initialize answers with the protocol, API, version and package versions", async () => {
         const { peer, sent, feed } = link();
         new Sidecar(peer, build);
         feed({ jsonrpc: "2.0", id: 1, method: Method.initialize,
-            params: { protocolVersion: kProtocolVersion, hikariApiVersion: 3, buildId: "0.1.0+test" } });
+            params: { protocolVersion: kProtocolVersion, hikariApiVersion: 3, buildId: "0.1.0+app" } });
         await settle();
         expect(sent).toEqual([{ jsonrpc: "2.0", id: 1, result: {
-            protocolVersion: kProtocolVersion, hikariApiVersion: 3, buildId: "0.1.0+test", capabilities: {} } }]);
+            protocolVersion: kProtocolVersion, hikariApiVersion: 3, requiredApiVersion: kRequiredApiVersion,
+            version: "1.4.0", buildId: "1.4.0+test", versions: { bun: Bun.version, openai: "7.45.0" }, capabilities: {} } }]);
+    });
+
+    test("the tools are those of the app's reference: an operation it lacks is never offered", async () => {
+        const { peer, sent, feed } = link({ ...limits, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        new Sidecar(peer, build);
+        const older = { ...kOwnReference, operations: kOwnReference.operations.filter((op) =>
+            op.name !== "audio.peaks" && op.name !== "commands.list") };
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion, hikariApi: older } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.toolsList, params: { all: true } });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.toolsCall, params: { name: "audio_peaks", arguments: {} } });
+        await settle();
+        const names = ((sent.find((m) => m.id === 2)!.result as { tools: { name: string }[] }).tools).map((t) => t.name);
+        expect(names).toContain("lines_find");
+        expect(names).not.toContain("audio_peaks");
+        expect(names).not.toContain("search_commands");
+        expect(sent.find((m) => m.method === Method.apiCall)).toBeUndefined();
+        expect((sent.find((m) => m.id === 3)!.result as { isError: boolean }).isError).toBe(true);
+    });
+
+    test("initialize refuses a hikariApi that isn't a reference", async () => {
+        const { peer, sent, feed } = link();
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion, hikariApi: { operations: 3 } } });
+        await settle();
+        expect((sent[0]!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
     });
 
     test("declared methods refuse before initialize and say they aren't implemented after it", async () => {

@@ -1,5 +1,7 @@
 #include "hikari/backends/ai_sidecar_host.h"
 
+#include "hikari/api/reference.h"
+
 #include <QDir>
 #include <QFile>
 #include <QLoggingCategory>
@@ -115,6 +117,10 @@ void SidecarRequest::cancel()
 AiSidecarHost::AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent)
     : QObject(parent), m_options(std::move(options)), m_hikari(hikari), m_caller(std::move(caller))
 {
+    if (m_options.hikariApi.isNull()) {
+        m_options.hikariApi = api::apiReference();
+        std::erase_if(m_options.hikariApi.asObject(), [](const api::Json::Member &m) { return m.key == "nodes"; });
+    }
     preparePrivateFolder();
     m_launcher = std::make_unique<sandbox::Launcher>(m_options.sandbox);
     handle(std::string(kApiCall), [this](const api::Json &params, std::shared_ptr<SidecarRequest> request) {
@@ -148,6 +154,7 @@ AiSidecarHost::~AiSidecarHost()
 
 std::uint64_t AiSidecarHost::request(const std::string &method, api::Json params, SidecarReply reply)
 {
+    emit requested();
     const std::uint64_t id = m_nextId++;
     auto message = api::Json::object({{"jsonrpc", "2.0"}, {"id", id}, {"method", method}});
     if (!params.isNull())
@@ -157,7 +164,7 @@ std::uint64_t AiSidecarHost::request(const std::string &method, api::Json params
     if (m_state == State::Stopped)
         refusal = failure(SidecarError::Stopped, "the sidecar crashed too often");
     else if (m_state == State::Refused)
-        refusal = failure(SidecarError::Refused, "the sidecar doesn't match this app");
+        refusal = failure(SidecarError::Refused, "the sidecar doesn't run with this app");
     else if (m_pending.size() >= m_options.maxOutstanding ||
              m_pendingBytes + bytes > m_options.maxOutstandingBytes || bytes > m_options.maxMessageBytes)
         refusal = failure(SidecarError::Busy, "too many requests are outstanding");
@@ -278,7 +285,8 @@ void AiSidecarHost::handshake()
     send(api::Json::object({{"jsonrpc", "2.0"}, {"id", m_initializeId}, {"method", "initialize"},
                             {"params", api::Json::object({{"protocolVersion", kSidecarProtocolVersion},
                                                           {"hikariApiVersion", m_options.hikariApiVersion},
-                                                          {"buildId", m_options.buildId}})}}));
+                                                          {"buildId", m_options.buildId},
+                                                          {"hikariApi", m_options.hikariApi}})}}));
 }
 
 void AiSidecarHost::send(const api::Json &message)
@@ -362,23 +370,27 @@ void AiSidecarHost::receiveResponse(std::uint64_t id, const api::Json &message)
         const api::Json *result = message.find("result");
         const auto field = [&](std::string_view name) { return result ? result->find(name) : nullptr; };
         const api::Json *protocol = field("protocolVersion");
-        const api::Json *apiVersion = field("hikariApiVersion");
-        const api::Json *build = field("buildId");
-        QString mismatch;
+        const api::Json *required = field("requiredApiVersion");
+        QString refusal;
         if (!protocol || *protocol != api::Json(kSidecarProtocolVersion))
-            mismatch = QStringLiteral("protocol version");
-        else if (!apiVersion || *apiVersion != api::Json(m_options.hikariApiVersion))
-            mismatch = QStringLiteral("Hikari API version");
-        else if (!build || *build != api::Json(m_options.buildId))
-            mismatch = QStringLiteral("build id");
+            refusal = QStringLiteral("The AI sidecar speaks another protocol than this HikariSub.");
+        else if (!required || !required->isInt() || required->asInt() > m_options.hikariApiVersion)
+            refusal = QStringLiteral("The AI sidecar needs a newer HikariSub.");
         m_handshakeTimer.stop();
-        if (!mismatch.isEmpty()) {
+        if (!refusal.isEmpty()) {
             m_state = State::Refused;
             killTree();
-            failAll(failure(SidecarError::Refused, "the sidecar doesn't match this app"));
-            emit refused(QStringLiteral("The AI sidecar's %1 doesn't match this HikariSub.").arg(mismatch));
+            failAll(failure(SidecarError::Refused, "the sidecar doesn't run with this app"));
+            emit refused(refusal);
             return;
         }
+        m_info = {};
+        if (const api::Json *version = field("version"); version && version->isString())
+            m_info.version = version->asString();
+        if (const api::Json *versions = field("versions"); versions && versions->isObject())
+            for (const api::Json::Member &m : versions->asObject())
+                if (m.value.isString())
+                    m_info.versions[m.key] = m.value.asString();
         m_state = State::Ready;
         emit ready();
         sendQueued();

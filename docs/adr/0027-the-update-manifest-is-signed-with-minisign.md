@@ -55,3 +55,5 @@ RWSZidnvIHp8qW7ynpUV8iDc/FH3riGpLuA+tz6zSeqwE3Q9Y+jmY5TH
 4. A later release removes the old key from the list.
 
 A lost or leaked key works the same way, except that step 3 can't wait. Copies that never received the next key can't verify releases signed with it. They see no update until they install a newer version by hand. The release notes and the site then say so.
+
+Amended by [ADR 0031](0031-the-ai-sidecar-updates-on-its-own.md): the AI sidecar's manifest, `hikari-ai-update.json` in the `ai-channel` release, is signed the same way under `hikarisub ai-v<version> hikari-ai-update.json`. Its signing job runs in the `ai-release` environment, which admits only main. `hikarisub-update.json` no longer names the sidecar.

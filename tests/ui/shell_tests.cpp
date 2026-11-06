@@ -16640,15 +16640,14 @@ private slots:
             return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(port), signInTime.clock());
         };
         ports.configStore = [stored] { return std::make_unique<Configs>(stored); };
-        ports.sidecarHost = [this] {
+        ports.sidecarHost = [this](const backends::ai::SidecarInstall &) {
             backends::ai::AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
-            o.arguments = {QStringLiteral("--build-id"), QStringLiteral("test"), QStringLiteral("--api-version"),
-                           QString::number(api::kApiVersion)};
+            o.arguments = {QStringLiteral("--mode"), QStringLiteral("ok")};
             o.workingDirectory = dir.filePath(QStringLiteral("ai-page/ai/work"));
-            o.buildId = "test";
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
+        ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, {}, {}};
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("ai-page/hikari.ini"));
         options.playbackAudio = false;

@@ -43,7 +43,9 @@ With AI off, `AiSettings` lists no providers and refuses every action, and nothi
 
 ## The AI component download
 
-The sidecar isn't in the packages ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)). When none is installed for this version, opening the add form reads the release manifest for its size, without downloading, and the form says: "Your first provider downloads the AI component once: N MB." Test connection or Add starts the download, with progress in the form, and a test waits for it. A failed download fails the test with its reason. A sign-in doesn't need it: only the test that follows an OpenRouter sign-in waits for the download. Nothing downloads while AI is off, and builds with `HIKARI_AI_LOCAL_SIDECAR` download nothing.
+The sidecar isn't in the packages ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)). When no sidecar this app runs is installed, opening the add form reads the `ai-channel` manifest for the size of the runtime and bundle it would fetch, without downloading, and the form says: "Your first provider downloads the AI component once: N MB." Test connection or Add starts the download, with progress in the form, and a test waits for it. A failed download fails the test with its reason. A sign-in doesn't need it: only the test that follows an OpenRouter sign-in waits for the download. Nothing downloads while AI is off, and builds with `HIKARI_AI_LOCAL_SIDECAR` download nothing.
+
+Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)): `ai.autoUpdate`, on by default, lets the hourly check download a newer sidecar, which switches in at an idle moment.
 
 ## Where it lives
 

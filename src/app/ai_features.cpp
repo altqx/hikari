@@ -1,19 +1,25 @@
 #include "hikari/app/ai_features.h"
 
+#include "hikari/api/api.h"
 #include "hikari/backends/ai_agent_broker.h"
-#include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_config_store.h"
 #include "hikari/backends/ai_http_relay.h"
+#include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_requests.h"
-#include "hikari/backends/ai_sidecar_download.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/sandbox.h"
 #include "settings_store.h"
 
 #include <QDir>
+#include <QElapsedTimer>
+#include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSettings>
 #include <QStandardPaths>
+#include <QTimer>
 
 namespace hikari::app {
 
@@ -27,9 +33,27 @@ public:
 
 }
 
+bool aiAutoUpdateOffByPolicy(const QString &environment, const QString &policyFile)
+{
+    if (environment == QLatin1String("0"))
+        return true;
+#ifdef Q_OS_WIN
+    const QSettings policy(QStringLiteral("HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\HikariSub"), QSettings::NativeFormat);
+    const QVariant value = policy.value(QStringLiteral("AiAutoUpdate"));
+    if (value.isValid() && value.toInt() == 0)
+        return true;
+#endif
+    QFile file(policyFile);
+    if (policyFile.isEmpty() || !file.open(QIODevice::ReadOnly) || file.size() > 64 * 1024)
+        return false;
+    const QJsonValue member = QJsonDocument::fromJson(file.readAll()).object().value(QStringLiteral("ai_auto_update"));
+    return member.isBool() && !member.toBool();
+}
+
 struct AiFeatures::Live {
     std::unique_ptr<application::ai::KeyStore> keys;
     std::unique_ptr<application::ai::ConfigStore> configs;
+    std::unique_ptr<backends::ai::AiSidecarUpdater> updater;
     std::unique_ptr<application::ai::Providers> providers;
     std::unique_ptr<backends::ai::AiRequests> requests;
     std::unique_ptr<backends::ai::HttpRelay> relay;
@@ -37,9 +61,16 @@ struct AiFeatures::Live {
     std::unique_ptr<backends::ai::AgentBroker> agents;
     std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
+    QString hostVersion;
+    bool hostReady = false;
+    std::deque<qint64> crashes;
+    QElapsedTimer clock;
+    qint64 lastActive = 0;
+    QTimer checkTimer;
+    QTimer pollTimer;
 };
 
-AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion)
+AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *api, const QString &)
 {
     const QString ai = userFolder + QStringLiteral("/ai");
     Ports ports;
@@ -49,35 +80,36 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
             return std::make_unique<NoConfigStore>();
         return std::make_unique<backends::ai::JsonConfigStore>(ai + QStringLiteral("/providers.json"));
     };
-    ports.sidecarHost = [ai, api, appVersion]() -> std::unique_ptr<backends::ai::AiSidecarHost> {
-#ifdef HIKARI_AI_LOCAL_SIDECAR
-        const QString program = QStringLiteral(HIKARI_AI_LOCAL_SIDECAR);
-#else
-        const QString program = backends::ai::AiSidecarDownload(ai + QStringLiteral("/sidecar"), appVersion)
-                                    .installedProgram()
-                                    .value_or(QString());
-#endif
-        if (program.isEmpty() || !QFileInfo(program).isExecutable())
+    ports.sidecarHost = [ai, api](const backends::ai::SidecarInstall &install)
+        -> std::unique_ptr<backends::ai::AiSidecarHost> {
+        if (!QFileInfo(install.runtime).isExecutable() || !QFileInfo(install.bundle).isFile())
             return nullptr;
         backends::ai::AiSidecarHost::Options options;
-        options.program = program;
+        options.program = install.runtime;
+        options.arguments = {install.bundle};
         options.workingDirectory = ai + QStringLiteral("/work");
         options.sandbox = backends::sandbox::Profile{
             .name = QStringLiteral("HikariSub.AI.Sidecar"),
-            .readExecute = {QFileInfo(program).absolutePath()},
+            .readExecute = {QFileInfo(install.runtime).absolutePath(), QFileInfo(install.bundle).absolutePath()},
             .readWrite = {options.workingDirectory},
         };
         options.buildId = HIKARI_AI_BUILD_ID;
         return std::make_unique<backends::ai::AiSidecarHost>(std::move(options), api,
                                                              api::Caller{"ai", "Hikari AI", false});
     };
-    ports.sidecarDownload = [ai, appVersion]() -> std::unique_ptr<backends::ai::AiSidecarDownload> {
-#ifdef HIKARI_AI_LOCAL_SIDECAR
-        return nullptr;
+#ifdef HIKARI_AI_LOCAL_RUNTIME
+    ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), QStringLiteral(HIKARI_AI_LOCAL_RUNTIME),
+                                                      QStringLiteral(HIKARI_AI_LOCAL_BUNDLE), {}};
 #else
-        auto download = std::make_unique<backends::ai::AiSidecarDownload>(ai + QStringLiteral("/sidecar"), appVersion);
-        return download->installedProgram() ? nullptr : std::move(download);
+    ports.sidecarUpdater = [ai] {
+        return std::make_unique<backends::ai::AiSidecarUpdater>(
+            ai + QStringLiteral("/sidecar"),
+            backends::ai::SidecarCompat{backends::ai::kSidecarProtocolVersion, api::kApiVersion});
+    };
 #endif
+    ports.autoUpdateOffByPolicy = [] {
+        return aiAutoUpdateOffByPolicy(qEnvironmentVariable("HIKARI_AI_AUTO_UPDATE"),
+                                       QStringLiteral("/etc/hikarisub/policy.json"));
     };
     ports.agents = [ai](backends::ai::AgentBroker &broker) {
         const QString agents = ai + QStringLiteral("/agents");
@@ -102,6 +134,11 @@ AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent
             apply();
         else if (id == QLatin1String(kCachingSetting) && m_live)
             m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
+        else if (id == QLatin1String(kAutoUpdateSetting) && m_live) {
+            emit componentsChanged();
+            if (autoUpdate())
+                stage();
+        }
     });
     apply();
 }
@@ -115,6 +152,7 @@ void AiFeatures::apply()
         return;
     if (wanted) {
         m_live = std::make_unique<Live>();
+        m_live->clock.start();
         m_live->keys = m_ports.keyStore();
         m_live->configs = m_ports.configStore();
         m_live->providers = std::make_unique<application::ai::Providers>(*m_live->configs, *m_live->keys);
@@ -124,10 +162,209 @@ void AiFeatures::apply()
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(m_live->requests->relayTargets());
         if (m_ports.signIn)
             m_live->signIn = m_ports.signIn(*m_live->keys);
+        if (m_ports.sidecarUpdater)
+            m_live->updater = m_ports.sidecarUpdater();
+        startUpdates();
     } else {
         m_live.reset();
     }
     emit switched(wanted);
+}
+
+void AiFeatures::startUpdates()
+{
+    backends::ai::AiSidecarUpdater *updater = m_live->updater.get();
+    if (!updater)
+        return;
+    using backends::ai::AiSidecarUpdater;
+    connect(updater, &AiSidecarUpdater::checked, this, [this] {
+        const auto next = runnable();
+        if (m_live->host && (!next || next->version != m_live->hostVersion))
+            m_live->pollTimer.start();
+        emit componentsChanged();
+    });
+    connect(updater, &AiSidecarUpdater::downloaded, this, [this] {
+        if (!m_live->host && !runnable())
+            m_live->updater->switchToStaged();
+        else
+            m_live->pollTimer.start();
+        emit componentsChanged();
+    });
+    connect(updater, &AiSidecarUpdater::installed, this, [this] {
+        if (!m_live->checkTimer.isActive())
+            m_live->checkTimer.start();
+        emit componentsChanged();
+    });
+    m_live->checkTimer.setInterval(m_ports.timing.checkMs);
+    connect(&m_live->checkTimer, &QTimer::timeout, this, &AiFeatures::stage);
+    m_live->pollTimer.setInterval(m_ports.timing.pollMs);
+    connect(&m_live->pollTimer, &QTimer::timeout, this, &AiFeatures::poll);
+    if (!updater->current())
+        return;
+    if (autoUpdate())
+        updater->switchToStaged();
+    m_live->checkTimer.start();
+    stage();
+}
+
+void AiFeatures::stage()
+{
+    if (m_live && m_live->updater && !m_live->updater->busy())
+        m_live->updater->check(autoUpdate());
+}
+
+void AiFeatures::checkNow()
+{
+    stage();
+}
+
+void AiFeatures::updateNow()
+{
+    if (m_live && m_live->updater && !m_live->updater->busy())
+        m_live->updater->check(true);
+}
+
+bool AiFeatures::autoUpdateOffByPolicy() const
+{
+    return m_ports.autoUpdateOffByPolicy && m_ports.autoUpdateOffByPolicy();
+}
+
+bool AiFeatures::autoUpdate() const
+{
+    return m_settings.boolean(kAutoUpdateSetting) && !autoUpdateOffByPolicy();
+}
+
+bool AiFeatures::busy() const
+{
+    if (m_live->host && m_live->host->outstanding() > 0)
+        return true;
+    for (const auto &[id, source] : m_busy)
+        if (source())
+            return true;
+    return false;
+}
+
+void AiFeatures::poll()
+{
+    if (!m_live)
+        return;
+    if (busy()) {
+        m_live->lastActive = m_live->clock.elapsed();
+        return;
+    }
+    if (m_live->clock.elapsed() - m_live->lastActive < m_ports.timing.idleMs)
+        return;
+    m_live->pollTimer.stop();
+    const bool switched = m_live->updater && m_live->updater->switchToStaged();
+    const auto next = runnable();
+    if (m_live->host && (switched || !next || next->version != m_live->hostVersion))
+        replaceHost();
+    emit componentsChanged();
+}
+
+void AiFeatures::replaceHost()
+{
+    backends::ai::AiSidecarHost *old = m_live->host.release();
+    old->disconnect(this);
+    old->setParent(this);
+    QTimer::singleShot(0, old, [old] {
+        if (old->processId() != 0)
+            connect(old, &backends::ai::AiSidecarHost::finished, old, &QObject::deleteLater);
+        else
+            old->deleteLater();
+        old->shutdown();
+    });
+    m_live->agents.reset();
+    m_live->hostVersion.clear();
+    m_live->hostReady = false;
+    m_live->crashes.clear();
+}
+
+void AiFeatures::noteActivity()
+{
+    if (m_live)
+        m_live->lastActive = m_live->clock.elapsed();
+}
+
+int AiFeatures::addBusySource(std::function<bool()> busy)
+{
+    const int id = m_nextBusy++;
+    m_busy.emplace(id, std::move(busy));
+    return id;
+}
+
+void AiFeatures::removeBusySource(int id)
+{
+    m_busy.erase(id);
+}
+
+std::optional<backends::ai::SidecarInstall> AiFeatures::runnable() const
+{
+    if (m_ports.localSidecar)
+        return m_ports.localSidecar;
+    return m_live && m_live->updater ? m_live->updater->current() : std::nullopt;
+}
+
+backends::ai::AiSidecarHost *AiFeatures::buildHost()
+{
+    if (!m_live->host && m_ports.sidecarHost) {
+        if (const auto install = runnable()) {
+            m_live->host = m_ports.sidecarHost(*install);
+            if (m_live->host) {
+                m_live->relay->attach(*m_live->host);
+                m_live->agents = std::make_unique<backends::ai::AgentBroker>();
+                if (m_ports.agents)
+                    m_ports.agents(*m_live->agents);
+                m_live->agents->attach(*m_live->host);
+                watchHost(m_live->host.get(), install->version);
+            }
+        }
+    }
+    return m_live->host.get();
+}
+
+void AiFeatures::watchHost(backends::ai::AiSidecarHost *host, const QString &version)
+{
+    using backends::ai::AiSidecarHost;
+    m_live->hostVersion = version;
+    m_live->hostReady = false;
+    m_live->crashes.clear();
+    connect(host, &AiSidecarHost::requested, this, [this] { noteActivity(); });
+    connect(host, &AiSidecarHost::ready, this, [this] {
+        m_live->hostReady = true;
+        emit componentsChanged();
+    });
+    if (m_ports.localSidecar)
+        return;
+    connect(host, &AiSidecarHost::refused, this, [this, version](const QString &reason) { failed(version, reason); });
+    connect(host, &AiSidecarHost::lost, this, [this, version](const QString &reason) {
+        if (!m_live->hostReady)
+            return failed(version, reason);
+        m_live->hostReady = false;
+        const qint64 now = m_live->clock.elapsed();
+        m_live->crashes.push_back(now);
+        while (now - m_live->crashes.front() > m_ports.timing.crashWindowMs)
+            m_live->crashes.pop_front();
+        if (m_live->crashes.size() >= 2)
+            failed(version, reason);
+    });
+}
+
+void AiFeatures::failed(const QString &version, const QString &reason)
+{
+    backends::ai::AiSidecarUpdater *updater = m_live->updater.get();
+    const auto current = updater ? updater->current() : std::nullopt;
+    if (!current || current->version != version || updater->previous().isEmpty())
+        return;
+    updater->reject(version);
+    replaceHost();
+    emit rolledBack(version, reason);
+    emit componentsChanged();
+}
+
+backends::ai::AiSidecarUpdater *AiFeatures::updater() const
+{
+    return m_live ? m_live->updater.get() : nullptr;
 }
 
 application::ai::KeyStore *AiFeatures::keys() const
@@ -150,11 +387,6 @@ backends::ai::AiRequests *AiFeatures::requests() const
     return m_live ? m_live->requests.get() : nullptr;
 }
 
-std::unique_ptr<backends::ai::AiSidecarDownload> AiFeatures::sidecarDownload() const
-{
-    return m_live && m_ports.sidecarDownload ? m_ports.sidecarDownload() : nullptr;
-}
-
 void AiFeatures::setDrafting(bool drafting)
 {
     if (m_live)
@@ -164,6 +396,16 @@ void AiFeatures::setDrafting(bool drafting)
 backends::ai::AiSidecarHost *AiFeatures::sidecar() const
 {
     return m_live ? m_live->host.get() : nullptr;
+}
+
+QString AiFeatures::sidecarVersion() const
+{
+    if (!m_live)
+        return {};
+    if (m_live->host && m_live->hostReady && !m_live->host->info().version.empty())
+        return QString::fromStdString(m_live->host->info().version);
+    const auto install = runnable();
+    return install ? install->version : QString();
 }
 
 backends::ai::AiSignIn *AiFeatures::signIn() const
@@ -180,34 +422,16 @@ bool AiFeatures::sandboxed() const
 
 backends::ai::AiSidecarHost *AiFeatures::sidecarForMcp()
 {
-    if (!m_live)
-        return nullptr;
-    if (!m_live->host)
-        startSidecar();
-    return m_live->host.get();
+    return m_live ? buildHost() : nullptr;
 }
 
 backends::ai::AiSidecarHost *AiFeatures::sidecarForAction()
 {
     if (!m_live)
         return nullptr;
-    if (!m_live->host && (m_live->providers->enabled() || m_live->drafting))
-        startSidecar();
-    return m_live->host.get();
-}
-
-void AiFeatures::startSidecar()
-{
-    if (!m_ports.sidecarHost)
-        return;
-    m_live->host = m_ports.sidecarHost();
-    if (!m_live->host)
-        return;
-    m_live->relay->attach(*m_live->host);
-    m_live->agents = std::make_unique<backends::ai::AgentBroker>();
-    if (m_ports.agents)
-        m_ports.agents(*m_live->agents);
-    m_live->agents->attach(*m_live->host);
+    if (!m_live->host && !(m_live->providers->enabled() || m_live->drafting))
+        return nullptr;
+    return buildHost();
 }
 
 }

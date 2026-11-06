@@ -1,4 +1,5 @@
 import { RpcError } from "../rpc";
+import { kCatalogue, type Catalogue } from "../tools/catalogue";
 import { ToolSet, type HikariCalls } from "../tools/toolset";
 import { httpStatus, McpError } from "./errors";
 import { Resources } from "./resources";
@@ -95,7 +96,8 @@ function failed(id: Id | null, error: Failure): Answer {
 export class McpServer {
     private readonly connections = new Map<string, Connection>();
 
-    constructor(private readonly callsFor: CallsFor, private readonly info: ServerInfo) {}
+    constructor(private readonly callsFor: CallsFor, private readonly info: ServerInfo,
+        private readonly catalogue: () => Catalogue = () => kCatalogue) {}
 
     async message(connection: string, text: string, http?: HttpHeaders): Promise<Answer> {
         let message: unknown;
@@ -148,7 +150,7 @@ export class McpServer {
         let state = this.connections.get(name);
         if (!state) {
             const calls = this.callsFor(name, () => state!.client);
-            state = { tools: new ToolSet(calls), resources: new Resources(calls), running: new Set(), cancelled: new Set() };
+            state = { tools: new ToolSet(calls, this.catalogue()), resources: new Resources(calls), running: new Set(), cancelled: new Set() };
             this.connections.set(name, state);
         }
         return state;

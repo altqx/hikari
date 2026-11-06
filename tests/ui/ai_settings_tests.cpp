@@ -1,10 +1,8 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
-#include "hikari/application/update_check.h"
-#include "hikari/application/update_signature.h"
 #include "hikari/backends/ai_requests.h"
-#include "hikari/backends/ai_sidecar_download.h"
+#include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
@@ -84,8 +82,6 @@ private:
     ai::Config &m_stored;
 };
 
-const QString kVersion = QStringLiteral("0.1.0");
-
 class AiSettingsTest : public ::testing::Test {
 protected:
     static void SetUpTestSuite()
@@ -101,23 +97,27 @@ protected:
         app::AiFeatures::Ports p;
         p.keyStore = [this] { return std::make_unique<MemoryKeys>(chain); };
         p.configStore = [this] { return std::make_unique<MemoryConfigs>(stored); };
-        p.sidecarHost = [this] {
+        p.sidecarHost = [this](const backends::ai::SidecarInstall &install) {
             ++hostsBuilt;
             backends::ai::AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
-            o.arguments = {QStringLiteral("--build-id"), QStringLiteral("test"), QStringLiteral("--api-version"),
-                           QString::number(api::kApiVersion)};
+            o.arguments = {install.bundle};
             o.workingDirectory = dir.filePath(QStringLiteral("ai/work"));
-            o.buildId = "test";
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
-        if (download)
-            p.sidecarDownload = [this]() -> std::unique_ptr<backends::ai::AiSidecarDownload> {
-                auto d = std::make_unique<backends::ai::AiSidecarDownload>(
-                    dir.filePath(QStringLiteral("ai/sidecar")), kVersion,
+        if (download) {
+            p.sidecarUpdater = [this] {
+                return std::make_unique<backends::ai::AiSidecarUpdater>(
+                    dir.filePath(QStringLiteral("ai/sidecar")), backends::ai::SidecarCompat{1, api::kApiVersion},
                     backends::ai::SidecarSource::local(release.base(), {signer.publicKey()}));
-                return d->installedProgram() ? nullptr : std::move(d);
             };
+        } else {
+            const QString flags = dir.filePath(QStringLiteral("local-bundle"));
+            QFile file(flags);
+            if (!file.open(QIODevice::WriteOnly) || file.write("--mode ok") != 9)
+                ADD_FAILURE() << "can't write " << flags.toStdString();
+            p.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        }
         p.signIn = [this](ai::KeyStore &keys) {
             return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(browserPort), time.clock());
         };
@@ -128,21 +128,9 @@ protected:
 
     void serveSidecar()
     {
-        const QByteArray executable = QByteArray("#!/bin/sh\necho sidecar\n").repeated(4000);
-        const QByteArray asset = test::gzip(executable);
-        const QString name = backends::ai::sidecarAssetName(kVersion, backends::ai::sidecarPlatform());
-        release.files["/download/v0.1.0/" + name.toLatin1()] = asset;
-        const QByteArray manifest = test::manifest(
-            kVersion, name, asset.size(), QCryptographicHash::hash(asset, QCryptographicHash::Sha256).toHex());
-        release.files["/download/v0.1.0/hikarisub-update.json"] = manifest;
-        signManifest(signer);
-    }
-
-    void signManifest(const test::MinisignSigner &by)
-    {
-        release.files["/download/v0.1.0/hikarisub-update.json.minisig"] = QByteArray::fromStdString(
-            by.sign(release.files.at("/download/v0.1.0/hikarisub-update.json").toStdString(),
-                    application::releaseTrustedComment("v0.1.0", application::kManifestAsset)));
+        channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), QByteArray("#!/bin/sh\necho sidecar\n").repeated(4000));
+        channel.addRelease({QStringLiteral("1.1.0")});
+        channel.publish(signer);
     }
 
     static QVariantMap form(const QString &preset, const QString &name, const QString &key, const QString &id = {},
@@ -179,6 +167,7 @@ protected:
     Keychain chain;
     ai::Config stored;
     test::LocalRelease release;
+    test::FakeChannel channel{release};
     test::MinisignSigner signer;
     int hostsBuilt = 0;
     std::optional<backends::ai::CodexCli> codexCli;
@@ -340,13 +329,13 @@ TEST_F(AiSettingsTest, TheFirstProviderDownloadsTheComponentOnceItsSizeIsShown)
     page.testDraft(form(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), QStringLiteral("sk-ant")));
     ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("ok"); }));
     EXPECT_FALSE(page.download().value(QStringLiteral("needed")).toBool());
-    EXPECT_EQ(release.requested.size(), 5u);
+    EXPECT_EQ(release.requested.size(), 6u);
     EXPECT_EQ(hostsBuilt, 1);
 
     page.closeDraft();
     page.openDraft();
     EXPECT_FALSE(page.download().value(QStringLiteral("needed")).toBool());
-    EXPECT_EQ(release.requested.size(), 5u);
+    EXPECT_EQ(release.requested.size(), 6u);
 }
 
 TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
@@ -363,7 +352,7 @@ TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
 TEST_F(AiSettingsTest, AManifestSignedByAnotherKeyFailsTheTestAndInstallsNothing)
 {
     serveSidecar();
-    signManifest(test::MinisignSigner());
+    channel.publish(test::MinisignSigner());
     app::AiFeatures features(settings, ports(true));
     app::AiSettings page(features);
     page.openDraft();

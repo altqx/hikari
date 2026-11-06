@@ -217,3 +217,5 @@ Tests use mock servers only. No test calls a real provider or a real vendor CLI,
 **The C++ reference.** #637 and #641 merge on green and stay as the reference until the TypeScript port passes the same cases; the port PR then deletes them. AI19's paused C++ branch isn't merged, and its cases move to the port.
 
 Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): the AI reaches the window's Project only through Hikari API folder grants. The sidecar's working directory stays its private folder, and Claude's and Codex's built-in file tools stay off.
+
+Amended by [ADR 0031](0031-the-ai-sidecar-updates-on-its-own.md): the sidecar updates on its own from the `ai-channel` release, as a runtime and a bundle. An app runs any sidecar with its protocol major and a required API no newer than its own, so the one-commit rule, the refusal of a sidecar from another build and the download from the app's own release no longer apply.
