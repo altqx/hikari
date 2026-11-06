@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 
 import { prefixTexts, sortedTools, usage } from "./cache";
 import { geminiModels } from "./catalogue";
@@ -6,6 +5,7 @@ import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
 import { kNoKey } from "./egress";
 import { kindOfStatus, ProviderError } from "./errors";
+import { sdk } from "./sdks";
 import type { Request, StopReason } from "./types";
 
 type Json = Record<string, unknown>;
@@ -117,7 +117,7 @@ export function geminiClient({ config, key, fetch }: ClientOptions): Client {
         if (typeof message === "string")
             finishMessage = message;
     });
-    const ai = new GoogleGenAI({
+    const ai = new (sdk("gemini").GoogleGenAI)({
         apiKey: key || kNoKey,
         vertexai: false,
         httpOptions: { ...httpBase(config.baseUrl), fetch: raw },

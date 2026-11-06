@@ -1,7 +1,8 @@
 name: AI sidecar
 
-# Builds hikari-ai for linux-x64 and windows-x64 on Linux (ADR 0026): twice each, byte-identical, with the notices,
-# never with the Claude Agent SDK inside. The release calls it; bun audit reports advisories without failing.
+# Builds hikari-ai (ADR 0026, ADR 0031): the runtime for linux-x64 and windows-x64 and the bundle both run, each twice
+# and byte-identical, never with the Claude Agent SDK inside. On main it publishes the next ai-v<protocol>.<n>.0 to the
+# ai-channel release when the sidecar changed since the last ai-v* tag: on a merge, by hand, and from each app release.
 on:
   push:
     branches: [main]
@@ -10,35 +11,82 @@ on:
       - src/api/include/hikari/api/api.h
       - cmake/HikariBun.cmake
       - tools/release/build-ai-sidecar.sh
+      - tools/release/make-ai-manifest.py
       - .github/workflows/ai-sidecar.yml
   workflow_dispatch:
     inputs:
-      version:
-        description: 'The version the assets are named for'
-        type: string
-        default: '0.0.0-dev'
-  workflow_call:
-    inputs:
-      version:
-        type: string
-        required: true
+      publish:
+        description: 'Publish to the ai-channel release (main only)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: ai-sidecar-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SIDECAR_PATHS: >-
+    src/ai-sidecar src/api/include/hikari/api/api.h cmake/HikariBun.cmake tools/release/build-ai-sidecar.sh
+    tools/release/make-ai-manifest.py
+
 jobs:
-  build:
-    name: Build the sidecar
+  version:
+    name: Pick the version
     runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.pick.outputs.version }}
+      publish: ${{ steps.pick.outputs.publish }}
+      previous: ${{ steps.pick.outputs.previous }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
           submodules: false
+          fetch-depth: 0
+
+      - id: pick
+        env:
+          WANTED: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish) }}
+        run: |
+          set -euo pipefail
+          major=$(sed -n 's/^export const kProtocolVersion = \([0-9]*\);$/\1/p' src/ai-sidecar/src/protocol.ts)
+          [[ -n "$major" ]] || { echo "::error::no kProtocolVersion in src/ai-sidecar/src/protocol.ts"; exit 1; }
+          previous=$(git tag -l "ai-v$major.*.0" --sort=-v:refname | head -n 1)
+          n=0
+          if [[ -n "$previous" ]]; then
+            n=$(( $(echo "$previous" | sed -n "s/^ai-v$major\.\([0-9]*\)\.0$/\1/p") + 1 ))
+          fi
+          publish=false
+          if [[ "$WANTED" == true ]]; then
+            # shellcheck disable=SC2086
+            if [[ -n "$previous" ]] && git diff --quiet "$previous" HEAD -- $SIDECAR_PATHS; then
+              echo "::notice::The sidecar hasn't changed since $previous, so nothing publishes."
+            else
+              publish=true
+            fi
+          fi
+          version=0.0.0-dev
+          [[ "$publish" == true ]] && version="$major.$n.0"
+          echo "Version $version, publish $publish"
+          { echo "version=$version"; echo "publish=$publish"; echo "previous=$previous"; } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build the sidecar
+    needs: version
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+          fetch-depth: 0
 
       - name: Build both platforms twice and compare
-        env:
-          VERSION: ${{ inputs.version || '0.0.0-dev' }}
         run: tools/release/build-ai-sidecar.sh "$VERSION" out/ai-sidecar "$GITHUB_SHA"
 
       - name: Run the sidecar's tests
@@ -46,6 +94,25 @@ jobs:
         run: |
           bun=$(ls "$GITHUB_WORKSPACE"/out/ai-sidecar/bun-downloads/bun-*-linux-x64/*/bun)
           "$bun" test
+
+      - name: Check it against main and the last 3 app releases with AI
+        run: |
+          set -euo pipefail
+          compat=$GITHUB_WORKSPACE/out/compat
+          mkdir -p "$compat"
+          apps=(--app "main=$GITHUB_WORKSPACE/src/ai-sidecar/src/tools/api.json")
+          releases=0
+          for tag in $(git tag -l 'v*' --sort=-v:refname); do
+            (( releases < 3 )) || break
+            if git show "$tag:src/ai-sidecar/src/tools/api.json" > "$compat/$tag.json" 2> /dev/null; then
+              apps+=(--app "$tag=$compat/$tag.json")
+              releases=$(( releases + 1 ))
+            fi
+          done
+          built=$GITHUB_WORKSPACE/out/ai-sidecar/pass-1/linux-x64
+          bun=$(ls "$GITHUB_WORKSPACE"/out/ai-sidecar/bun-downloads/bun-*-linux-x64/*/bun)
+          cd src/ai-sidecar
+          "$bun" tools/compat.ts --runtime "$built/hikari-ai-runtime" --bundle "$built/hikari-ai.js" "${apps[@]}"
 
       - name: Report advisories (bun audit)
         continue-on-error: true
@@ -58,7 +125,140 @@ jobs:
         with:
           name: hikari-ai
           path: |
-            out/ai-sidecar/hikari-ai-*.gz
+            out/ai-sidecar/hikari-ai-*.zip
+            out/ai-sidecar/hikari-ai-runtime-*.gz
+            out/ai-sidecar/build.json
             out/ai-sidecar/hikari-ai-notices.txt
+            out/ai-sidecar/hikari-ai-runtime-notices.txt
             out/ai-sidecar/bun-audit.txt
           if-no-files-found: error
+
+  # A job of its own, so the signing key never meets the build: it runs only the pinned minisign and the repository's
+  # scripts, and only its signing step receives the key.
+  sign:
+    name: Sign the channel manifest
+    needs: [version, build]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    environment: ai-release
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Fetch minisign and build the app's signature check
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libsodium-dev
+          echo "MINISIGN=$(packaging/linux/fetch-tool.sh minisign "$RUNNER_TEMP/tools")" >> "$GITHUB_ENV"
+          tools/release/build-verifier.sh "$RUNNER_TEMP/verify-release-signature"
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikari-ai
+          path: built
+
+      - name: Write the manifest over the published one
+        run: |
+          set -euo pipefail
+          mkdir published signing
+          previous=()
+          if gh release view ai-channel > /dev/null 2>&1; then
+            gh release download ai-channel --dir published \
+              --pattern hikari-ai-update.json --pattern hikari-ai-update.json.minisig
+            tag="ai-v$(jq -r .version published/hikari-ai-update.json)"
+            "$RUNNER_TEMP/verify-release-signature" published/hikari-ai-update.json \
+              published/hikari-ai-update.json.minisig "$tag"
+            previous=(--previous published/hikari-ai-update.json)
+          fi
+          python3 tools/release/make-ai-manifest.py --build built --channel src/ai-sidecar/channel.json \
+            "${previous[@]}" --out signing/hikari-ai-update.json --uploads signing/uploads.txt
+          cat signing/hikari-ai-update.json signing/uploads.txt
+
+      - name: Sign
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: tools/release/sign-release.sh "$MINISIGN" "ai-v$VERSION" signing/hikari-ai-update.json
+
+      - name: Check the signature with the app's check
+        run: |
+          "$RUNNER_TEMP/verify-release-signature" signing/hikari-ai-update.json signing/hikari-ai-update.json.minisig \
+            "ai-v$VERSION"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hikari-ai-manifest
+          path: signing/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to ai-channel
+    needs: [version, sign]
+    runs-on: ubuntu-24.04
+    environment: ai-release
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      PREVIOUS: ${{ needs.version.outputs.previous }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikari-ai
+          path: built
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hikari-ai-manifest
+          path: signing
+
+      - name: Upload the assets, then the manifest
+        run: |
+          set -euo pipefail
+          if ! gh release view ai-channel > /dev/null 2>&1; then
+            gh release create ai-channel --target "$GITHUB_SHA" --latest=false --title "HikariSub AI components" \
+              --notes ""
+          fi
+          mapfile -t uploads < signing/uploads.txt
+          for name in "${uploads[@]}"; do
+            gh release upload ai-channel "built/$name"
+          done
+          gh release upload ai-channel signing/hikari-ai-update.json signing/hikari-ai-update.json.minisig --clobber
+          for name in "${uploads[@]}" hikari-ai-update.json hikari-ai-update.json.minisig; do
+            file=built/$name
+            [[ -f "$file" ]] || file=signing/$name
+            got=$(gh release view ai-channel --json assets --jq ".assets[] | select(.name == \"$name\") | .digest")
+            if [[ "$got" != "sha256:$(sha256sum < "$file" | cut -d' ' -f1)" ]]; then
+              echo "::error::$name does not read back as uploaded."
+              exit 1
+            fi
+          done
+
+      - name: Tag ai-v${{ needs.version.outputs.version }} and add its notes
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/git/refs" -f ref="refs/tags/ai-v$VERSION" -f sha="$GITHUB_SHA" > /dev/null
+          range=$GITHUB_SHA
+          [[ -n "$PREVIOUS" ]] && range="$PREVIOUS..$GITHUB_SHA"
+          # shellcheck disable=SC2086
+          changes=$(git log --merges --format='- %b' "$range" -- $SIDECAR_PATHS | sed '/^- $/d' | head -n 50)
+          {
+            printf '## ai-v%s\n\n%s\n\n' "$VERSION" "${changes:-- Rebuilt.}"
+            gh release view ai-channel --json body --jq .body | awk '/^## ai-v/ { n++ } n >= 1 && n < 10'
+          } > notes.md
+          gh release edit ai-channel --notes-file notes.md --latest=false

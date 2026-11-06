@@ -34,7 +34,7 @@ The adapter arrow denotes implementation of port contracts, not an application d
 
 [ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md) splits Hikari AI in two:
 
-- **The sidecar** (`src/ai-sidecar`, TypeScript on Bun 1.4) makes the provider requests and runs the agent loop. It is one executable per platform, downloaded on its own and never part of the packages.
+- **The sidecar** (`src/ai-sidecar`, TypeScript on Bun 1.4) makes the provider requests and runs the agent loop. It is a runtime per platform and one bundle, downloaded and updated on their own and never part of the packages ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)).
 - **Qt** keeps the UI, the Hikari API, the staged review, the AI settings and the keys (QtKeychain).
 
 The pieces in C++:
@@ -42,11 +42,11 @@ The pieces in C++:
 - **`AiFeatures`** (`src/app/ai_features.*`) is the only place that builds AI objects. It reads `ai.off`, the "Turn off all AI features" switch, before anything else. With it on, no key store, config store, `Providers`, `AiRequests` or sidecar host exists, so nothing reads the keychain, downloads, starts or listens. Turning the switch on builds them on demand; turning it off destroys them and stops the sidecar. [Settings › AI](ai-settings.md) (`AiSettings`) works only through what it built.
 - **`AiSidecarHost`** (`src/backends/ai_sidecar_host.*`) starts the sidecar on the first AI action once a provider exists, never at startup or when Settings opens. It starts it with an allowlisted environment (no `*_API_KEY`, `*_BASE_URL`, `ANTHROPIC_*`, `OPENAI_*`, `GEMINI_*`, `GOOGLE_*`, `OTEL_*` or `NODE_OPTIONS`), in `<user folder>/ai/work`, in its own process group on Linux and a kill-on-close job object on Windows. Shutdown closes stdin, waits 3 s, then kills the tree.
 - **`AiMcp`** (`src/app/ai_mcp.*`) runs the [MCP server](ai-mcp.md) while AI is on and `ai.mcp.server` is on. It starts the sidecar on the first MCP message, with or without a provider.
-- **`AiSidecarDownload`** (`src/backends/ai_sidecar_download.*`) fetches `hikari-ai-<version>-<platform>.gz` from the app's own release into `<user folder>/ai/sidecar/<version>/`. It checks the size and SHA-256 that release's `hikarisub-update.json` gives, and deletes a file that fails.
+- **`AiSidecarUpdater`** (`src/backends/ai_sidecar_updater.*`) keeps `<user folder>/ai/sidecar/`: the runtimes, the bundles and `state.json`. It reads the signed `ai-channel` manifest (`ai_channel.*`), picks the newest release this app runs, and downloads it. It checks each file's size and SHA-256 and deletes one that fails. `AiFeatures` checks hourly, switches a staged sidecar in once nothing has been busy for 2 minutes, and rolls back one that fails `initialize` or crashes twice in 10 minutes.
 
 **The link** is JSON-RPC 2.0, one message per line on the sidecar's stdin and stdout, with requests both ways:
 
-- `initialize` carries the protocol major (`kSidecarProtocolVersion`, 1), HA1's `kApiVersion` and the build id (`<version>+<commit>`). Qt refuses a sidecar whose answer differs, and it isn't restarted until it is downloaded again.
+- `initialize` carries the protocol major (`kSidecarProtocolVersion`, 1), HA1's `kApiVersion`, the build id and the app's HA1 reference, from which the sidecar offers its tools. The answer gives the sidecar's version, its `requiredApiVersion` and its package versions. Qt refuses a sidecar with another protocol major or a required API newer than its own, and it isn't restarted until the store changes.
 - `$/cancel_request {requestId}` cancels a request, which still gets exactly one response, with code -32800.
 - `_hikari/api.call {operation, params}` runs `Api::call` under the sidecar's `Caller`. An HA1 error comes back as code -32000, with HA1's code in `data.code`.
 - `_hikari/tools.list` and `_hikari/tools.call` list and run Hikari's AI tools, which the sidecar builds from HA1's operations ([AI tools](ai-tools.md)).

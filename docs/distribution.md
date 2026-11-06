@@ -57,7 +57,7 @@ What the first passing release offers depends on the package kind:
 
 ## Integrity
 
-[ADR 0027](adr/0027-the-update-manifest-is-signed-with-minisign.md) has the rules. The release job signs `hikarisub-update.json` and `SHA256SUMS` with the owner's minisign key. Each trusted comment is `hikarisub <tag> <file>`. HikariSub trusts the keys in `kReleaseKeys` (`src/application/include/hikari/application/update_signature.h`) and checks the manifest's signature before it reads anything from it, both in the update check and in the AI sidecar download.
+[ADR 0027](adr/0027-the-update-manifest-is-signed-with-minisign.md) has the rules. The release job signs `hikarisub-update.json` and `SHA256SUMS` with the owner's minisign key. Each trusted comment is `hikarisub <tag> <file>`. HikariSub trusts the keys in `kReleaseKeys` (`src/application/include/hikari/application/update_signature.h`) and checks the manifest's signature before it reads anything from it, in the update check. The AI sidecar's channel manifest is signed and checked the same way, under its own `ai-v*` tag ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)).
 
 The release key (key id A97C7A20EFD98999):
 
@@ -147,33 +147,26 @@ Packages are staged from CMake install rules and Qt's QML deployment support, an
 
 ## The AI sidecar
 
-Hikari AI's sidecar ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)) isn't in any package: not the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives.
+Hikari AI's sidecar ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)) isn't in any package: not the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives. It updates on its own from the `ai-channel` release ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)).
 
-- **The assets.** Each release carries `hikari-ai-<version>-linux-x64.gz` and `hikari-ai-<version>-windows-x64.gz`. Each is one gzip-compressed executable, about 49 MiB and 52 MiB, built by the `AI sidecar` workflow (`tools/release/build-ai-sidecar.sh`).
-  - The workflow builds each platform twice and fails unless both builds are byte-identical.
-  - It fails if any bundled file comes from `@anthropic-ai/claude-agent-sdk`.
-  - `bun audit` runs as a report, not a gate.
-- **The notices.** The executable carries `src/ai-sidecar/NOTICES.txt`, which `hikari-ai --licenses` prints:
+- **The assets.** The `AI sidecar` workflow (`tools/release/build-ai-sidecar.sh`) builds two:
+  - `hikari-ai-runtime-<runtime>-<platform>.gz`, the Bun that runs the bundle, about 49 MiB on Linux and 52 MiB on Windows, for linux-x64 and windows-x64. `<runtime>` is `<Bun version>-<8 hex digits>` and changes only with Bun or the loader;
+  - `hikari-ai-<version>.zip`, the bundle (`hikari-ai.js` and its bytecode), the same for both platforms.
+
+  The workflow builds each twice and fails unless both builds are byte-identical. It fails if any bundled file comes from `@anthropic-ai/claude-agent-sdk`, or if the split starts slower than 1.10× one executable plus 20 ms. `bun audit` runs as a report, not a gate.
+- **The notices.** The bundle carries `src/ai-sidecar/NOTICES.txt`, which `hikari-ai-runtime <bundle> --licenses` prints; `hikari-ai-runtime --licenses` prints the runtime's own:
   - Bun (MIT);
   - JavaScriptCore and WebCore (LGPL-2.0) and tinycc (LGPL-2.1), which Bun links statically;
   - every npm package in the bundle.
 
   `bun tools/notices.ts` regenerates it from the bundle's inputs. The build fails when it is stale. The sidecar's source and build are in this repository, and Bun publishes its patched WebKit, so the sidecar can be rebuilt and relinked.
-- **The manifest member.** `hikarisub-update.json` gains `ai_sidecar`, which adds only, so the manifest stays at schema 1:
-
-  ```json
-  "ai_sidecar": {
-    "linux-x64": {"name": "hikari-ai-0.1.0-linux-x64.gz", "size": 51677387, "sha256": "…"},
-    "windows-x64": {"name": "hikari-ai-0.1.0-windows-x64.gz", "size": 54572333, "sha256": "…"}
-  }
-  ```
-
-  `tools/release/make-update-manifest.py` writes it from the files and checks each against its asset's GitHub digest, as it does for packages. The manifest is signed ([Integrity](#integrity)).
-- **The download.** It happens when the user first adds a provider or agent, and never with "Turn off all AI features" on.
-  - The app reads its own release's manifest over HTTPS and checks its signature as the update check does; a missing or bad signature fails with the manifest error. It downloads the asset from the release, following redirects only to GitHub's download hosts.
-  - It checks the size and SHA-256, unpacks the file into `<user folder>/ai/sidecar/<version>/`, then removes the other versions' folders.
-  - A file that fails is deleted and never run. An app never runs a sidecar from another version.
-- **Developer and test builds.** Configure with `-DHIKARI_AI_LOCAL_SIDECAR=ON` to run the sidecar the build makes instead (see [build](build.md#ai-sidecar-sc1-2026-11-02)).
+- **The channel.** `ai-channel` is one rolling release, never marked latest. It holds every runtime and bundle and `hikari-ai-update.json`, which lists the last 10 releases, newest first, with each asset's size and SHA-256 and the versions `src/ai-sidecar/channel.json` blocks. `tools/release/make-ai-manifest.py` writes it. The manifest is signed under `hikarisub ai-v<version> hikari-ai-update.json` ([Integrity](#integrity)) in the `ai-release` environment, which admits only main. Each version is `ai-v<protocol major>.<n>.0` and gets its git tag.
+- **Publishing.** From main only: on a merge that changes the sidecar, by hand (`publish`), and from each app release. A run publishes only when the sidecar changed since the last `ai-v*` tag, and only once `tools/compat.ts` has run it against main's API reference and those of the last 3 app releases that have AI. `AI sidecar bump` opens a weekly PR when the Claude Agent SDK has a version 7 days old.
+- **The download.** The first one happens when the user first adds a provider or agent. After that, the app checks the channel when AI starts and hourly, and never with "Turn off all AI features" on.
+  - The app fetches the manifest from the download URL with a conditional GET and checks its signature as the update check does. A missing or bad signature, or a manifest older than one it has seen, fails with the manifest error. It follows redirects only to GitHub's download hosts.
+  - It picks the newest release with its protocol major and a `required_api` no newer than its own that is neither blocked nor skipped. It downloads the runtime only when it lacks that runtime.
+  - It checks each asset's size and SHA-256 and unpacks it into `<user folder>/ai/sidecar/runtime/<runtime>/` or `bundle/<version>/`. A file that fails is deleted and never run. Only the current, previous and staged sidecars are kept.
+- **Developer and test builds.** Configure with `-DHIKARI_AI_LOCAL_SIDECAR=ON` to run the runtime and bundle the build makes instead (see [build](build.md#ai-sidecar-sc1-2026-11-02)).
 
 ## Testing an update
 

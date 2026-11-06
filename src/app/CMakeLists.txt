@@ -40,7 +40,8 @@ target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER=
     HIKARI_VERSION="${HIKARI_VERSION}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage)
 if(HIKARI_AI_LOCAL_SIDECAR)
-    target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_SIDECAR="${HIKARI_AI_SIDECAR_FILE}")
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_RUNTIME="${HIKARI_AI_RUNTIME_FILE}"
+        HIKARI_AI_LOCAL_BUNDLE="${HIKARI_AI_BUNDLE_FILE}")
     add_dependencies(hikari_composition hikari_ai_sidecar)
 endif()
 option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)

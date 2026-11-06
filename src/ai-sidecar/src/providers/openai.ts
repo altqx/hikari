@@ -1,4 +1,4 @@
-import OpenAI, { APIError } from "openai";
+import type OpenAI from "openai";
 
 import { cacheControl, markLast, marksCache, prefixTexts, sortedTools, usage } from "./cache";
 import { catalogueModels } from "./catalogue";
@@ -6,6 +6,7 @@ import { type Client, type ClientOptions, messageInside } from "./client";
 import { type Collector, schemaObject } from "./collector";
 import { kNoKey } from "./egress";
 import { ProviderError, streamError, wrapsProviderError } from "./errors";
+import { sdk as loadSdk } from "./sdks";
 import type { Message, Part, ProviderConfig, Request, StopReason } from "./types";
 
 type Json = Record<string, unknown>;
@@ -14,7 +15,7 @@ const dataUrl = (part: Extract<Part, { type: "image" }>) => `data:${part.mediaTy
 
 function sdk({ config, key, fetch }: ClientOptions): OpenAI {
     const openRouter = config.preset === "openrouter";
-    return new OpenAI({
+    return new (loadSdk("openai").default)({
         apiKey: key || kNoKey,
         baseURL: config.baseUrl,
         fetch,
@@ -131,7 +132,7 @@ function chatClient(options: ClientOptions): Client {
                         stop = reason;
                 }
             } catch (error) {
-                if (error instanceof APIError && error.status === undefined && !wrapsProviderError(error))
+                if (error instanceof loadSdk("openai").APIError && error.status === undefined && !wrapsProviderError(error))
                     throw streamError(error.error);
                 throw error;
             }
@@ -232,7 +233,7 @@ function responsesClient(options: ClientOptions): Client {
                     }
                 }
             } catch (error) {
-                if (error instanceof APIError && error.status === undefined && !wrapsProviderError(error)) {
+                if (error instanceof loadSdk("openai").APIError && error.status === undefined && !wrapsProviderError(error)) {
                     const e = (error.error ?? {}) as Json;
                     const code = String(e.code ?? "");
                     const limited = code.includes("rate_limit") || code.includes("usage_limit");

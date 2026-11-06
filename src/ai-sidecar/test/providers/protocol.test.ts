@@ -18,7 +18,7 @@ beforeEach(async () => {
     sent = [];
     const peer = new Peer((line) => sent.push(JSON.parse(line)), () => {});
     feed = (message) => peer.feed(new TextEncoder().encode(JSON.stringify(message) + "\n"));
-    new Sidecar(peer, { buildId: "test", hikariApiVersion: 1 }, {
+    new Sidecar(peer, { buildId: "test", hikariApiVersion: 1, version: "0.0.0-dev", packages: {} }, {
         network: { resolve: async () => [], localAddresses: () => [] },
     });
     feed({ jsonrpc: "2.0", id: 0, method: Method.initialize, params: { protocolVersion: kProtocolVersion, hikariApiVersion: 1, buildId: "test" } });

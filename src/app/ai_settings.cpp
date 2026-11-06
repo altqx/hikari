@@ -2,7 +2,7 @@
 
 #include "hikari/app/ai_features.h"
 #include "hikari/backends/ai_requests.h"
-#include "hikari/backends/ai_sidecar_download.h"
+#include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include <QUrl>
@@ -220,13 +220,14 @@ void AiSettings::prepareDownload()
 {
     if (m_download || !m_features.on())
         return;
-    m_download = m_features.sidecarDownload();
-    if (!m_download)
+    backends::ai::AiSidecarUpdater *updater = m_features.updater();
+    if (!updater || updater->current())
         return;
-    using backends::ai::AiSidecarDownload;
-    connect(m_download.get(), &AiSidecarDownload::described, this, [this](const backends::ai::SidecarAsset &asset) {
+    m_download = updater;
+    using backends::ai::AiSidecarUpdater;
+    connect(updater, &AiSidecarUpdater::described, this, [this](qint64 bytes) {
         m_describing = false;
-        m_downloadSize = asset.size;
+        m_downloadSize = bytes;
         if (m_installWanted) {
             m_installWanted = false;
             m_installing = true;
@@ -234,22 +235,23 @@ void AiSettings::prepareDownload()
         }
         emit downloadChanged();
     });
-    connect(m_download.get(), &AiSidecarDownload::progress, this, [this](qint64 received, qint64 total) {
+    connect(updater, &AiSidecarUpdater::progress, this, [this](qint64 received, qint64 total) {
         m_downloadReceived = received;
         if (total > 0)
             m_downloadSize = total;
         emit downloadChanged();
     });
-    connect(m_download.get(), &AiSidecarDownload::installed, this, [this](const QString &) {
+    connect(updater, &AiSidecarUpdater::installed, this, [this] {
         auto waiting = std::exchange(m_afterDownload, {});
-        m_download.release()->deleteLater();
+        m_download->disconnect(this);
+        m_download = nullptr;
         m_installing = false;
         m_downloadError.clear();
         emit downloadChanged();
         for (auto &then : waiting)
             then(true);
     });
-    connect(m_download.get(), &AiSidecarDownload::failed, this,
+    connect(updater, &AiSidecarUpdater::failed, this,
             [this](backends::ai::SidecarDownloadError error, const QString &) {
                 const bool wasInstalling = m_installing || m_installWanted;
                 m_describing = m_installing = m_installWanted = false;
@@ -270,8 +272,9 @@ void AiSettings::dropDownload()
     m_afterDownload.clear();
     if (m_download) {
         m_download->disconnect(this);
-        m_download->abort();
-        m_download.release()->deleteLater();
+        if (m_describing || m_installing)
+            m_download->abort();
+        m_download = nullptr;
     }
     m_describing = m_installing = m_installWanted = false;
     m_downloadReceived = 0;
