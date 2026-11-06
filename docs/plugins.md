@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). Documents and selections (PL3), panels and the full plugin manager (PL4), and files and network (PL5) come later.
+A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), and files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)).
 
 ## The package
 
@@ -28,7 +28,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `icon` | no | A package file: a 256 × 256 px PNG or a square SVG. |
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
-| `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`). |
+| `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`; the ids `data` and `cache` are the plugin's own). See [Files](#files) and [Network](#network). |
 | `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, and `area`: `left`, `right` or `bottom`, where the panel docks when first shown; `right` by default), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
 
 Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`.
@@ -72,6 +72,7 @@ Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window: the
 
 - **The list.** Each row shows the package icon, name, version and signer. It shows a state only when the plugin isn't simply running: Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
 - **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off.
+- **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** A form built from `contributes.settings`: a check box for `boolean`, a field for `integer`, `number` and `string`, and a drop-down for `choice`. A change is kept at once, the same way `hikari.settings.set` keeps it, and a running plugin's `hikari.settings.get` sees it.
 - **Errors.** A plugin that didn't start, crashed or hit the time limit shows the error and its traceback, with Start again and Copy.
 - **Actions.** Install from file… for a new plugin, then per plugin Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
@@ -89,7 +90,7 @@ These limits come from process isolation and the restricted state; they are not 
 
 ### The helper protocol
 
-The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 3) has two requests, `Load` and `Run`, plus events and seven services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock` and `Ui`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `dialogs.show`, `dialogs.ask`, `dialogs.close`) with JSON parameters, and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
+The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 4) has two requests, `Load` and `Run`, plus events and nine services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock`, `Ui`, `Files` and `Net`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `dialogs.show`, `dialogs.ask`, `dialogs.close`), `Files` the file operations (`files.pick`, `files.folder`, `files.open`, `files.entries`) and `Net` `net.fetch`. Each takes JSON parameters and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
 
 ## The `hikari` global
 
@@ -107,6 +108,8 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
 | `hikari.selection.get(document)`, `hikari.selection.set(selected, active, document)` | The selected Lines and the active Line, as `selection.get` and `selection.set` give and take them. |
 | `hikari.panels.render(panel, tree)`, `hikari.panels.show(panel)`, `hikari.panels.on(panel, fn)` | Draws a panel from `contributes.panels`, opens it, and calls `fn(event)` for its events. See [Panels and dialogs](#panels-and-dialogs). |
+| `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
+| `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
 
 Tables go to HikariSub as JSON: a table with keys 1 to n is an array, one with text keys an object. Numbers must be finite, text must be UTF-8, and a table that holds itself is refused.
@@ -159,7 +162,7 @@ end)
 
 The [Line tools sample](examples/line-tools/) draws a reading-speed panel with a chart, a list, a menu and a dialog.
 
-A panel's root may carry `menu = {{id, text, checked, disabled}}`. Those rows lead the panel's ⋯ menu, and choosing one sends the event `{kind = "menu", widget = id}`.
+A panel's root may carry `menu = {{id, text, checked, disabled}}`. Those rows lead the panel's ⋯ menu, and choosing one sends the event `{kind = "menu", widget = id}`. With `drop = true` on the root, the panel takes files dropped on it. See [Files](#files).
 
 ### Widgets
 
@@ -213,3 +216,58 @@ A dialog spec is `{title, body, buttons, width, height}`, with 1 to 4 buttons `{
 ### When the plugin isn't there
 
 A layout can keep a place for a panel whose plugin is missing, turned off or stopped. The panel keeps the title the layout saved and shows why, with the one action that helps: Open Plugins… when the plugin isn't installed, Turn on when it is off, and Start again with Details when it stopped. When the plugin comes back, its panel fills the place. Closing a placeholder for a plugin that isn't installed, or View › Panels › <panel> › Remove from the layout, forgets the place.
+
+## Files
+
+A restricted plugin never names a path on disk. It reaches a file only through a handle, and HikariSub hands one out only for a file the plugin may use:
+
+- **Its own folders.** `data` is `<user folder>/plugin-data/<id>/` and `cache` is `<cache>/plugins/<id>/`. Both are writable, and HikariSub makes them when first used.
+- **Folders the user chose.** Each `permissions.files` request `{id, title, writable, reason}` names a folder the plugin asks for, such as `{id = "fonts", title = "Font folder", writable = false, reason = "Reads fonts to measure lines"}`.
+- **Files the user picked or dropped.** `hikari.files.pick` opens the system file dialog, and a panel with `drop = true` takes dropped files.
+
+```lua
+local note = hikari.files.open("data", "notes/today.txt")
+hikari.files.write(note, "hello")
+if hikari.files.folder("fonts") then
+    for _, entry in ipairs(hikari.files.entries("fonts", "")) do
+        print(entry.name, entry.folder)
+    end
+end
+```
+
+`hikari.files.open(place, path)` returns `{file, name, access}`: the handle, the path asked for, and `"read"` or `"write"`. `place` is `"data"`, `"cache"` or a folder id. A writable place makes the missing folders on the way. `hikari.files.entries(place, path)` lists a folder in name order as `{name, folder}`, at most 4096 entries. `hikari.files.read(file, encoding)` and `hikari.files.write(file, data, encoding)` take a handle or the table that holds one, as [`files.read` and `files.write`](api.md) do, up to 16 MiB; `encoding` is `"utf8"` (the default) or `"base64"`. `hikari.files.list()` lists the handles the plugin holds.
+
+A `path` is relative, with `/` between its parts, at most 1024 bytes of UTF-8. A part that is empty, `.` or `..`, that holds a control character or one of `\ : * ? " < > |`, that ends with a dot or a space, or that Windows reserves (`CON`, `NUL`, `COM1` and so on) is refused with `not_granted`, as is a path whose links lead outside the place. An empty path is `invalid_params` for `open` and the place itself for `entries`.
+
+`hikari.files.folder(id)` asks the user for the folder the first time and returns whether the plugin has it. The question shows the plugin's name, the request's `title` and `reason`, and **Remember this folder for <plugin>**, checked. A remembered folder is kept in `plugins.json` `grants` and is used without asking from then on, until the user forgets it in the plugin manager or uninstalls the plugin. Otherwise the folder lasts until the plugin stops. A request with `writable = false` is read-only whatever the folder allows. Opening a place the plugin doesn't have yet asks for it the same way, and declining gives `not_granted` with `reason = "declined"`.
+
+`hikari.files.pick{title, save, name, filters}` opens the file dialog and returns `{file, name, access}`, or `nil` when the user cancels. `save = true` asks for a file to write, with `name` as the suggestion. `filters` is a list of up to 16 `{name, patterns}`, where a pattern is `*` or `*.ext`. A file dropped on a panel with `drop = true` sends `{kind = "drop", files = {{file, name, access}}}`, read-only. A pick or drop grants that one file only.
+
+A plugin that stops, crashes or is turned off loses its handles, its folders for this run, and any file dialog still open for it.
+
+## Network
+
+A plugin can't open sockets. `hikari.net.fetch` asks HikariSub to make the request:
+
+```lua
+local response, err = hikari.net.fetch({
+    url = "https://api.example.com/v1/translate",
+    method = "POST",
+    headers = {["content-type"] = "application/json"},
+    body = '{"text": "Hello"}',
+})
+if response then
+    print(response.status, response.body)
+end
+```
+
+A request is a URL, or `{url, method, headers, body, encoding}`. `method` is `GET` (the default), `HEAD`, `POST`, `PUT`, `PATCH` or `DELETE`. `headers` are text, and HikariSub refuses `host`, `cookie`, `connection`, `content-length`, `transfer-encoding`, `upgrade`, `te`, `trailer`, `keep-alive`, `expect` and `proxy-…`, and any value with a line break. `body` is at most 16 MiB, never on `GET` or `HEAD`, and `encoding = "base64"` sends and returns bytes. The answer is `{status, url, headers, encoding, body}`, with lower-case header names. A header that comes more than once is one value, joined with `, `, except `set-cookie`, joined with line breaks. An HTTP error status is an answer too.
+
+HikariSub refuses the request, with the error `refused` and its `reason`, or `not_granted`:
+
+- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off every plugin's network at once.
+- **`not_https`.** The URL isn't `https://`. **`port`.** It names a port other than 443.
+- **`not_granted`**, with `host`. The host isn't one of the manifest's `permissions.network.hosts`, matched exactly. The plugin manager shows those hosts, and so does the install.
+- **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).
+
+Redirects are followed up to 5 times, each checked the same way. HikariSub sends no cookies and keeps no cache. Requests still running when the plugin stops are dropped.

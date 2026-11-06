@@ -6765,6 +6765,10 @@ ApplicationWindow {
     AutomationFilePicker {
         picker: root.automationPicker
     }
+    PluginFilePicker {
+        ui: root.pluginUi
+        messages: root.messages
+    }
     ScriptResolutionDialog {
         prompt: root.automationResolution
     }

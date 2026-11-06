@@ -754,9 +754,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_aiSettings = std::make_unique<AiSettings>(*m_ai);
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
-    m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
-        pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
-        [this] { return m_localisation ? m_localisation->language() : QString(); }});
+    PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
+                                       [this] { return m_localisation ? m_localisation->language() : QString(); }};
+    pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
     m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });

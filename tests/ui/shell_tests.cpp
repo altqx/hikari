@@ -16296,7 +16296,8 @@ private slots:
               {"privacy.alwaysSendCrashReports", "Always send crash reports"},
               {"privacy.discordPresence", "Show what I am doing in Discord"},
               {"privacy.discordFileName", "Include the file name"},
-              {"privacy.starPrompt", "Suggest starring HikariSub on GitHub"}}},
+              {"privacy.starPrompt", "Suggest starring HikariSub on GitHub"},
+              {"plugins.network", "Let plugins connect to the internet"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -17133,6 +17134,110 @@ private slots:
             const QString suffix = themed(code);
             QVERIFY(!QTest::currentTestFailed());
             QVERIFY(window->grabWindow().save(out + QStringLiteral("/placeholder-off") + suffix));
+        }
+        restartWith(app::Application::Options());
+    }
+    void startGlossaryPlugin(const QTemporaryDir &home)
+    {
+        const QString folder = home.filePath(QStringLiteral("plugins/com.example.glossary"));
+        QVERIFY(QDir().mkpath(folder));
+        QVERIFY(writeBytes(folder + QStringLiteral("/hikari-plugin.json"),
+                           "{\"id\": \"com.example.glossary\", \"name\": \"Glossary\", \"version\": \"1.0.0\", \"api\": 1,"
+                           " \"main\": \"main.lua\", \"authors\": [\"Ana\"],"
+                           " \"contributes\": {\"commands\": [{\"id\": \"open\", \"title\": \"Open a glossary\"}]},"
+                           " \"permissions\": {\"files\": [{\"id\": \"glossaries\", \"title\": \"Glossary folder\","
+                           " \"writable\": false, \"reason\": \"Reads your glossaries\"}]}}"));
+        QVERIFY(writeBytes(folder + QStringLiteral("/main.lua"),
+                           "hikari.commands.register('open', function() hikari.files.folder('glossaries') end)\n"));
+        QVERIFY(writeBytes(home.filePath(QStringLiteral("plugins.json")),
+                           "{\"format\": 1, \"plugins\": {\"com.example.glossary\": {\"version\": \"1.0.0\", \"enabled\": true}}}"));
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        restartWith(options);
+    }
+    void aPluginsFolderQuestionOffersToRememberIt()
+    {
+        QTemporaryDir home;
+        startGlossaryPlugin(home);
+        QVERIFY(application->settingsStore()->boolean("plugins.network"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openSettings", Q_ARG(QVariant, QStringLiteral("updates")),
+                                          Q_ARG(QVariant, QVariant())));
+        auto *network = dialogItem("settingsDialog", "setting_plugins.network");
+        QTRY_VERIFY(network && network->property("checked").toBool());
+        settingsWindow()->setProperty("visible", false);
+        QTRY_VERIFY(application->pluginRuntime()->run(QStringLiteral("plugin.com.example.glossary.open")));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        QCOMPARE(box->title(), QStringLiteral("Glossary"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Glossary asks for a folder to read: Glossary folder"));
+        auto *remember = messageBoxItem("messageBoxDontAsk");
+        QVERIFY(remember && remember->isVisible() && remember->property("checked").toBool());
+        QCOMPARE(remember->property("text").toString(), QStringLiteral("Remember this folder for Glossary"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
+        restartWith(app::Application::Options());
+    }
+    void pluginNetworkAndFolderScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir home;
+        startGlossaryPlugin(home);
+        window->resize(1600, 900);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto *manager = named("pluginManagerDialog");
+        const QUrl package = QUrl::fromLocalFile(QStringLiteral(HIKARI_PLUGIN_FIXTURES "/hello-1.3.0-network.hikariplugin"));
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QTest::qWait(300);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+
+            QVERIFY(QMetaObject::invokeMethod(root, "openSettings", Q_ARG(QVariant, QStringLiteral("updates")), Q_ARG(QVariant, QVariant())));
+            auto *settingsDialog = qobject_cast<QQuickWindow *>(settingsWindow());
+            QQuickItem *network = nullptr;
+            QTRY_VERIFY((network = dialogItem("settingsDialog", "setting_plugins.network")) && settingsDialog->isVisible());
+            QQuickItem *flick = network->parentItem();
+            while (flick && !flick->inherits("QQuickFlickable"))
+                flick = flick->parentItem();
+            QVERIFY(flick);
+            flick->setProperty("contentY", std::max(0.0, network->mapToItem(flick->childItems().first(), QPointF()).y() - 160));
+            QTest::qWait(400);
+            QVERIFY(settingsDialog->grabWindow().save(out + QStringLiteral("/settings-network") + suffix));
+            settingsDialog->close();
+            QTRY_VERIFY(!settingsDialog->isVisible());
+
+            QVERIFY(QMetaObject::invokeMethod(manager, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.glossary"))));
+            QTRY_VERIFY(manager->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(manager, "reviewFile", Q_ARG(QVariant, package)));
+            QQuickWindow *prompt = nullptr;
+            QTRY_VERIFY((prompt = messageBox("pluginManagerMessages")) && prompt->isVisible());
+            QCOMPARE(prompt->property("text").toString(), QStringLiteral("Install “Hello” 1.3.0?"));
+            QVERIFY(prompt->property("detail").toString().contains(
+                QStringLiteral("Connect to api.example.com, cdn.example.com: Looks words up in an online dictionary")));
+            QTest::qWait(400);
+            QVERIFY(prompt->grabWindow().save(out + QStringLiteral("/install-hosts") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!prompt->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(manager, "close"));
+            QTRY_VERIFY(!manager->property("visible").toBool());
+
+            QVERIFY(application->pluginRuntime()->run(QStringLiteral("plugin.com.example.glossary.open")));
+            QQuickWindow *folder = nullptr;
+            QTRY_VERIFY((folder = messageBox("messages")) && folder->isVisible());
+            QTest::qWait(400);
+            QVERIFY(folder->grabWindow().save(out + QStringLiteral("/folder-question") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(folder, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!folder->isVisible());
+            QTRY_VERIFY(!application->pluginRuntime()->ui()->fileRequest());
         }
         restartWith(app::Application::Options());
     }
