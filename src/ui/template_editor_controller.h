@@ -129,8 +129,11 @@ public:
     bool videoPreview() const;
     bool canApply() const;
     bool canApplySelected() const;
+    // The user trusts the active Document's Lua, templates and graphs together, as it is now.
     bool trusted() const;
     Q_INVOKABLE void trustDocument();
+    // Runs an edit of the node-effects mode on the active Document; a choice to trust it holds after it.
+    bool editKeepingTrust(const std::function<bool()> &edit);
     bool previewPending() const;
     int changedNumber() const;
     int changedCount() const;
@@ -217,8 +220,10 @@ private:
         std::string templates;
         std::set<std::string> fields;
         std::string head;
+        std::set<std::string> graphLua;
     };
     static TrustState stateOf(const application::EditSession &s, bool withDraft = true);
+    static bool covers(const TrustState &chosen, const TrustState &now);
     bool trustedIn(const application::EditSession &s, const DocumentKey &document, bool withDraft = true) const;
     void trust();
     void trust(const application::EditSession &s, const DocumentKey &document);

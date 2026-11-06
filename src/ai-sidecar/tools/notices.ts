@@ -6,7 +6,7 @@ import { bundledPackages, kNoticesFile, kRoot, notices, readMetafile } from "./b
 const check = process.argv.includes("--check");
 const dir = mkdtempSync(join(tmpdir(), "hikari-ai-notices-"));
 try {
-    const build = Bun.spawnSync([process.execPath, "build", join("src", "main.ts"), "--target=bun",
+    const build = Bun.spawnSync([process.execPath, "build", join("src", "single.ts"), "--target=bun",
         `--metafile=${join(dir, "meta.json")}`, `--outdir=${join(dir, "out")}`],
         { cwd: kRoot, stdio: ["ignore", "ignore", "inherit"] });
     if (build.exitCode !== 0)

@@ -86,26 +86,14 @@ interface Operation {
     params: JsonSchema;
 }
 
-const kOperations = reference.operations as unknown as Operation[];
-const kDefs = reference.$defs as Record<string, JsonSchema>;
-
-const kToolNames = new Map<string, string>([
-    ...kOperations.flatMap((op): [string, string][] => {
-        const placement = kPlacements[op.name];
-        return placement ? [[op.name, placement.name ?? op.name.replaceAll(".", "_")]] : [];
-    }),
-    ["commands.list", "search_commands"],
-]);
-
-/** HA1's text with each operation it names given as the tool that offers it. */
-export function forModel(text: string): string {
-    return text.replace(/\b[a-z]+(?:\.[a-z_]+)+\b/g, (name) => kToolNames.get(name) ?? name);
+/** HA1's reference, as `api.json` holds it or the app sends it in `initialize`. */
+export interface Reference {
+    version?: number;
+    $defs: Record<string, JsonSchema>;
+    operations: Operation[];
 }
 
-function schema(params: JsonSchema): JsonSchema {
-    const inlined = inline(params, kDefs, forModel);
-    return inlined.properties ? inlined : { ...inlined, properties: {} };
-}
+export const kOwnReference = reference as unknown as Reference;
 
 function entry(name: string, description: string, inputSchema: JsonSchema, access: "read" | "write", group: Group,
     operation?: OperationName): Entry {
@@ -116,62 +104,90 @@ function entry(name: string, description: string, inputSchema: JsonSchema, acces
     };
 }
 
-function operation(name: OperationName): Operation {
-    const op = kOperations.find((o) => o.name === name);
-    if (!op)
-        throw new Error(`HA1 has no ${name}`);
-    return op;
-}
+/** The tools one app offers: an operation that app's reference lacks is never offered. */
+export class Catalogue {
+    readonly entries: readonly Entry[];
+    private readonly operations: Map<string, Operation>;
+    private readonly toolNames: Map<string, string>;
 
-const kSearchable = (Object.keys(kGroups) as Group[]).filter((group) =>
-    group !== "core" && Object.values(kPlacements).some((p) => p.group === group));
-
-function searchTools(): Entry {
-    const groups = kSearchable.map((group) => `${group} (${kGroups[group]})`).join("; ");
-    return entry("search_tools",
-        `Finds more tools by words in their names and descriptions, or by group, and offers them from then on. Groups: ${groups}.`,
-        {
-            type: "object",
-            properties: {
-                query: { type: "string", minLength: 1, description: "Words to look for, such as \"video frame\"." },
-                group: { enum: kSearchable, description: "Every tool of one group." },
-            },
-            additionalProperties: false,
-        }, "read", "core");
-}
-
-function searchCommands(): Entry {
-    const list = operation("commands.list");
-    const window = (list.params.properties as Record<string, JsonSchema>).window!;
-    return entry("search_commands",
-        "Finds HikariSub's commands, the actions of menus, toolbars and shortcuts, by words in their id or name, with " +
-        "whether each is enabled now and its keys. run_command runs one.",
-        {
-            type: "object",
-            properties: {
-                query: { type: "string", minLength: 1, description: "Words to look for, such as \"save subtitles\"." },
-                window,
-                limit: { type: "integer", minimum: 1, maximum: 100, description: "20 when omitted." },
-            },
-            required: ["query"],
-            additionalProperties: false,
-        }, list.access, "core", "commands.list");
-}
-
-function catalogue(): Entry[] {
-    const entries = [searchTools(), searchCommands()];
-    for (const op of kOperations) {
-        const placement = kPlacements[op.name];
-        if (placement && op.deprecatedIn === undefined)
-            entries.push(entry(kToolNames.get(op.name)!, placement.description ?? forModel(op.summary), schema(op.params),
-                op.access, placement.group, op.name));
+    constructor(private readonly reference: Reference) {
+        this.operations = new Map(reference.operations.map((op) => [op.name, op]));
+        this.toolNames = new Map<string, string>([
+            ...reference.operations.flatMap((op): [string, string][] => {
+                const placement = kPlacements[op.name];
+                return placement ? [[op.name, placement.name ?? op.name.replaceAll(".", "_")]] : [];
+            }),
+            ["commands.list", "search_commands"],
+        ]);
+        this.entries = this.build();
     }
-    return entries;
+
+    /** HA1's text with each operation it names given as the tool that offers it. */
+    forModel(text: string): string {
+        return text.replace(/\b[a-z]+(?:\.[a-z_]+)+\b/g, (name) => this.toolNames.get(name) ?? name);
+    }
+
+    /** HA1's operations that no tool offers and that aren't meant to be left out. */
+    unplacedOperations(): string[] {
+        return [...this.operations.keys()].filter((name) =>
+            !kPlacements[name as OperationName] && !kUnoffered.includes(name as OperationName));
+    }
+
+    private schema(params: JsonSchema): JsonSchema {
+        const inlined = inline(params, this.reference.$defs, (text) => this.forModel(text));
+        return inlined.properties ? inlined : { ...inlined, properties: {} };
+    }
+
+    private searchable(): Group[] {
+        return (Object.keys(kGroups) as Group[]).filter((group) => group !== "core" &&
+            [...this.operations.keys()].some((name) => kPlacements[name as OperationName]?.group === group));
+    }
+
+    private searchTools(): Entry {
+        const searchable = this.searchable();
+        const groups = searchable.map((group) => `${group} (${kGroups[group]})`).join("; ");
+        return entry("search_tools",
+            `Finds more tools by words in their names and descriptions, or by group, and offers them from then on. Groups: ${groups}.`,
+            {
+                type: "object",
+                properties: {
+                    query: { type: "string", minLength: 1, description: "Words to look for, such as \"video frame\"." },
+                    group: { enum: searchable, description: "Every tool of one group." },
+                },
+                additionalProperties: false,
+            }, "read", "core");
+    }
+
+    private searchCommands(list: Operation): Entry {
+        const window = (list.params.properties as Record<string, JsonSchema>).window!;
+        return entry("search_commands",
+            "Finds HikariSub's commands, the actions of menus, toolbars and shortcuts, by words in their id or name, with " +
+            "whether each is enabled now and its keys. run_command runs one.",
+            {
+                type: "object",
+                properties: {
+                    query: { type: "string", minLength: 1, description: "Words to look for, such as \"save subtitles\"." },
+                    window,
+                    limit: { type: "integer", minimum: 1, maximum: 100, description: "20 when omitted." },
+                },
+                required: ["query"],
+                additionalProperties: false,
+            }, list.access, "core", "commands.list");
+    }
+
+    private build(): Entry[] {
+        const entries = [this.searchTools()];
+        const list = this.operations.get("commands.list");
+        if (list)
+            entries.push(this.searchCommands(list));
+        for (const op of this.reference.operations) {
+            const placement = kPlacements[op.name];
+            if (placement && op.deprecatedIn === undefined)
+                entries.push(entry(this.toolNames.get(op.name)!, placement.description ?? this.forModel(op.summary),
+                    this.schema(op.params), op.access, placement.group, op.name));
+        }
+        return entries;
+    }
 }
 
-export const kCatalogue: readonly Entry[] = catalogue();
-
-/** HA1's operations that no tool offers and that aren't meant to be left out. */
-export function unplacedOperations(): string[] {
-    return kOperations.map((op) => op.name).filter((name) => !kPlacements[name] && !kUnoffered.includes(name));
-}
+export const kCatalogue = new Catalogue(kOwnReference);

@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "program": "HikariSub 0.1.0",
+    "closed": true,
+    "windows": [
+        { "x": 40, "y": 60, "width": 1200, "height": 800, "maximized": false },
+        { "x": 3000, "y": 100, "width": 900, "height": 700, "maximized": true }
+    ],
+    "tabs": [
+        { "current": true, "subtitles": "a.ass", "video": "", "position": 0, "activeLine": 0, "scroll": 0 },
+        { "subtitles": "b.ass", "video": "", "position": 0, "activeLine": 0, "scroll": 0 },
+        { "window": 1, "subtitles": "c.ass", "video": "", "position": 0, "activeLine": 0, "scroll": 0 },
+        { "active": true, "window": 1, "current": true, "subtitles": "d.ass", "video": "", "position": 0,
+          "activeLine": 2, "scroll": 0 }
+    ]
+}

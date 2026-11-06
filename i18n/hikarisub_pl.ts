@@ -4370,6 +4370,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Add fonts</source>
         <translation>Dodaj czcionki</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
@@ -10264,6 +10272,42 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai odrzucił logowanie.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com odrzucił logowanie. Zatwierdź prośbę HikariSub na wybranym koncie ChatGPT i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>Twój obszar roboczy ChatGPT wyłącza kody logowania. Zaloguj się zamiast tego przez przeglądarkę.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>Kod wygasł, zanim został wpisany.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>Logowanie przekroczyło limit czasu, czekając na przeglądarkę.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>Logowanie przez przeglądarkę jest niedostępne, gdy inna aplikacja używa portu 1455. Aby z niego skorzystać, zamknij logowanie tamtej aplikacji.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>Nie można połączyć się z %1. Sprawdź połączenie.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>W ~/.codex nie ma logowania ChatGPT do zaimportowania.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>Logowanie nie powiodło się. Spróbuj ponownie.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>Klucz odrzucony (%1)</translation>
     </message>
@@ -10356,12 +10400,32 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Klucz API Gemini</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>Klucz OpenRouter</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>Klucz API (opcjonalnie)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>Klucz API</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>Zaloguj się przez OpenRouter…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>Zalogowano (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>Wyloguj się</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>lub wklej klucz</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -10382,6 +10446,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Klucz z Google AI Studio. Vertex AI i logowanie przez Google Cloud nie są obsługiwane.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>Logowanie otwiera openrouter.ai w przeglądarce i tworzy klucz dla HikariSub. Trafia on do magazynu kluczy, tak jak wklejony klucz.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>Wylogowanie usuwa klucz z tego komputera. Pozostaje on w %1, dopóki go tam nie usuniesz.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>Twoich kluczach OpenRouter</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>Czekanie na openrouter.ai w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>Otwórz stronę ponownie</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -10508,6 +10592,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zastąp klucz przyciskiem Edytuj</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>Zaloguj się ponownie przyciskiem Edytuj</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>Klucz w magazynie kluczy</translation>
     </message>
@@ -10546,6 +10634,114 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>Rola bez własnego modelu używa modelu czatu. Obraz wymienia tylko modele, które czytają obrazy.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>Agenci zewnętrzni</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>Nie znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>Znaleziono w PATH · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>Znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>Nie zalogowano</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>Zaloguj się przez ChatGPT…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>Importuj z ~/.codex (tylko odczyt)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>Importuj logowanie ChatGPT</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>Zaimportować logowanie ChatGPT z ~/.codex? HikariSub i Codex w terminalu będą wtedy dzielić jedno logowanie, a gdy jedno z nich je odświeży, drugie będzie musiało zalogować się ponownie.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Importuj</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub ma własne logowanie ChatGPT dla Codex, oddzielne od tego w ~/.codex, więc żadne nie wylogowuje drugiego.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Zalogowano jako %1</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex działa z tym logowaniem. Wylogowanie tutaj pozostawia Codex w terminalu zalogowany.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>Logowanie wygasło</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>Zaloguj się ponownie…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>ChatGPT zakończył sesję HikariSub, na przykład po zmianie hasła lub wylogowaniu na wszystkich urządzeniach. Zaloguj się ponownie, aby dalej używać Codex.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>Zaloguj się przez ChatGPT</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>Otwórz auth.openai.com, zaloguj się do ChatGPT i wpisz ten kod.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>Otwórz auth.openai.com</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com jest otwarta w przeglądarce. Zaloguj się tam; HikariSub skończy, gdy strona poinformuje, że można ją zamknąć.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>Czekanie na kod · wygaśnie za %1</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>Czekanie na przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>Nie możesz użyć kodu? Zaloguj się przez przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>Zaloguj się przez przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>Pobierz nowy kod</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -13299,6 +13495,18 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” nie ma wartości true ani false.</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” nie jest listą.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>Okno %1 nie jest obiektem.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>Okno %1: “%2” ma nieprawidłowy typ.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -17826,7 +18034,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>Nie znaleziono pliku kodów czasowych: %1</translation>
+        <translation type="vanished">Nie znaleziono pliku kodów czasowych: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -17843,6 +18051,14 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Frame rate</source>
         <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>Liczba klatek na sekundę strumienia wideo</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>Czasy klatek z pliku</translation>
     </message>
     <message>
         <source>Length</source>

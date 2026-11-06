@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <numeric>
+#include <vector>
 
 namespace hikari::application {
 
@@ -18,14 +19,11 @@ Ratio reduced(std::int64_t num, std::int64_t den)
     return {num / g, den / g};
 }
 
-bool variable(const VideoSession &session)
+bool variable(const std::vector<core::DocumentTime> &starts)
 {
     std::int64_t shortest = 0, longest = 0;
-    for (int i = 1; i < session.frameCount(); i++) {
-        const auto a = session.frameStart(i - 1), b = session.frameStart(i);
-        if (!a || !b)
-            return false;
-        const std::int64_t us = b->microseconds() - a->microseconds();
+    for (std::size_t i = 1; i < starts.size(); i++) {
+        const std::int64_t us = starts[i].microseconds() - starts[i - 1].microseconds();
         shortest = i == 1 ? us : std::min(shortest, us);
         longest = i == 1 ? us : std::max(longest, us);
     }
@@ -49,7 +47,8 @@ std::optional<VideoDetails> videoDetails(const VideoSession &session)
     d.aspect = reduced(shown, geometry.height);
     const auto [num, den] = session.nominalFps();
     d.fps = reduced(num, den);
-    d.variableRate = variable(session);
+    d.variableRate = variable(session.streamStarts());
+    d.frameTimesReplaced = session.replacedFrameTimes().has_value();
     d.frames = session.frameCount();
     d.lastFrameMs = session.durationMs();
     d.pixelFormat = session.pixelFormat();

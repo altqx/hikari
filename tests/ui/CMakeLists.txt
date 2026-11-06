@@ -277,7 +277,9 @@ hikari_add_qttest(hikari_ui_layout_migration_tests SOURCES layout_migration_test
 target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS windows sessions=aSessionReopensEachWindowWithItsTabsAndPlace)
+target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
@@ -341,13 +343,17 @@ add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_me
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
-hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp LIBRARIES hikari_composition LABELS ui)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
+hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
+    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
+target_include_directories(hikari_ui_ai_features_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
+    "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
     HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
 add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
 hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
-    LIBRARIES hikari_composition Qt6::Test ZLIB::ZLIB Hikari::sodium LABELS ui)
+    LIBRARIES hikari_composition Qt6::Test Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
     "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_ai_settings_tests PRIVATE
@@ -479,6 +485,7 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_font_faces_tests SOURCES font_faces_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_font_family_filter_tests SOURCES font_family_filter_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_font_faces_tests PRIVATE
     HIKARI_SYMBOL_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-symf020.ttf"
     HIKARI_NO_LETTERS_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-arabic.ttf")

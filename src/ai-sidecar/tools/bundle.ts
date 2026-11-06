@@ -1,7 +1,11 @@
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { bunNotices, kMitText, section } from "../src/notices";
 
 export const kRoot = join(import.meta.dir, "..");
+/** The provider SDKs the bundle loads from hikari-ai-<name>.js beside it, on their first use. */
+export const kSdkEntries = ["anthropic", "gemini", "openai"] as const;
 export const kNoticesFile = join(kRoot, "NOTICES.txt");
 const kNeverShipped = "@anthropic-ai/claude-agent-sdk";
 
@@ -55,21 +59,14 @@ function licenceText(dir: string, manifest: Manifest): string {
     const author = typeof manifest.author === "string" ? manifest.author : manifest.author?.name;
     if (manifest.license !== "MIT" || !author)
         throw new Error(`${dir} has no licence file`);
-    return `Copyright (c) ${author}\n\n${readFileSync(join(kRoot, "licenses", "mit.txt"), "utf8").trimEnd()}`;
-}
-
-function section(title: string, body: string): string {
-    return `${"=".repeat(78)}\n${title}\n${"=".repeat(78)}\n\n${body.trimEnd()}\n\n`;
+    return `Copyright (c) ${author}\n\n${kMitText.trimEnd()}`;
 }
 
 export function notices(packages: string[]): string {
-    const licence = (name: string) => readFileSync(join(kRoot, "licenses", name), "utf8");
     let text = "hikari-ai, the HikariSub AI sidecar: third-party notices\n\n" +
-        "hikari-ai is HikariSub's own code (GPL-3.0-or-later), built into one executable with Bun. Its source and\n" +
-        "build are in https://github.com/altqx/hikari under src/ai-sidecar, so it can be rebuilt and relinked.\n\n";
-    text += section("Bun (MIT)", licence("bun.md") + "\n\n" + licence("mit.txt"));
-    text += section("JavaScriptCore and WebCore, statically linked into Bun (LGPL-2.0)", licence("lgpl-2.0.txt"));
-    text += section("tinycc, statically linked into Bun (LGPL-2.1)", licence("lgpl-2.1.txt"));
+        "hikari-ai is HikariSub's own code (GPL-3.0-or-later), run by its own build of Bun. Its source and build\n" +
+        "are in https://github.com/altqx/hikari under src/ai-sidecar, so it can be rebuilt and relinked.\n\n";
+    text += bunNotices();
     for (const name of packages) {
         const dir = join(kRoot, "node_modules", name);
         if (!existsSync(dir))
@@ -80,4 +77,16 @@ export function notices(packages: string[]): string {
     if (packages.length === 0)
         text += "No npm packages are bundled.\n";
     return text.replace(/\r\n?/g, "\n");
+}
+
+/** The files the runtime is built from, besides Bun itself. */
+export const kRuntimeInputs = ["src/runtime.ts", "src/notices.ts", "licenses/bun.md", "licenses/mit.txt",
+    "licenses/lgpl-2.0.txt", "licenses/lgpl-2.1.txt"];
+
+/** The runtime's id: Bun's version and a digest of its other inputs, so a new runtime has a new id. */
+export function runtimeId(bunVersion: string): string {
+    const digest = createHash("sha256");
+    for (const input of kRuntimeInputs)
+        digest.update(input).update("\0").update(readFileSync(join(kRoot, input), "utf8").replace(/\r\n?/g, "\n")).update("\0");
+    return `${bunVersion}-${digest.digest("hex").slice(0, 8)}`;
 }

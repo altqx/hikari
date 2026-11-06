@@ -161,14 +161,14 @@ FocusScope {
         }
     }
 
-    Dialogs.FileDialog {
+    FileChooser {
         id: importPicker
         objectName: "qcNotesImportPicker"
         title: qsTr("Import notes file")
         nameFilters: [qsTr("QC notes (*.txt)"), qsTr("All files (*)")]
         onAccepted: panel.importFile(selectedFile)
     }
-    Dialogs.FileDialog {
+    FileChooser {
         id: exportPicker
         objectName: "qcNotesExportPicker"
         fileMode: Dialogs.FileDialog.SaveFile

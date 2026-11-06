@@ -1,5 +1,9 @@
+import type { Reference } from "./tools/catalogue";
+
 /** The link's major version; Qt refuses a sidecar whose major differs. */
 export const kProtocolVersion = 1;
+/** The oldest HA1 `kApiVersion` this sidecar works with; an app with an older one keeps its previous sidecar. */
+export const kRequiredApiVersion = 1;
 
 export const kLimits = {
     maxOutstanding: 64,
@@ -50,7 +54,6 @@ export const Method = {
     toolsCall: "_hikari/tools.call",
     mcpMessage: "_hikari/mcp.message",
     mcpClosed: "_hikari/mcp.closed",
-    secretStore: "_hikari/secret.store",
 } as const;
 
 /** Qt's requests that later cards implement. */
@@ -64,8 +67,19 @@ export interface InitializeParams {
     protocolVersion: number;
     hikariApiVersion: number;
     buildId: string;
+    /** The app's HA1 reference: the sidecar offers only the operations it lists. */
+    hikariApi?: Reference;
 }
-export interface InitializeResult extends InitializeParams {
+export interface InitializeResult {
+    protocolVersion: number;
+    /** The HA1 version the sidecar was built against. */
+    hikariApiVersion: number;
+    requiredApiVersion: number;
+    /** The `ai-v*` version, without the prefix. */
+    version: string;
+    buildId: string;
+    /** Bun's and each bundled package's version. */
+    versions: Record<string, string>;
     capabilities: Record<string, unknown>;
 }
 

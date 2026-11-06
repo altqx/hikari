@@ -19,11 +19,13 @@ AiMcp::AiMcp(ui::SettingsStore &settings, AiFeatures &ai, QString endpointFile, 
             apply();
     });
     connect(&m_ai, &AiFeatures::switched, this, &AiMcp::apply);
+    m_busySource = m_ai.addBusySource([this] { return m_server && m_server->connections() > 0; });
     apply();
 }
 
 AiMcp::~AiMcp()
 {
+    m_ai.removeBusySource(m_busySource);
     if (!m_server)
         return;
     m_server.reset();

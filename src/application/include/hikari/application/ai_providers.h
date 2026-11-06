@@ -60,6 +60,8 @@ struct Provider {
     /// Ends before the endpoint path, e.g. "https://api.openai.com/v1".
     std::string baseUrl;
     bool needsKey = true;
+    /// The key came from signing in to the provider, not from a paste.
+    bool signedIn = false;
     Capabilities defaults;
     std::vector<Model> models;
     /// The user's corrections to the catalogue, by model id.
@@ -211,6 +213,9 @@ public:
     /// Changes an added provider in place. Nullopt keeps its stored key; its roles stay.
     void update(Provider provider, std::optional<std::string> key, std::function<void(std::optional<SaveError>)> done);
     void remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done);
+    /// Deletes a signed-in provider's key from the keychain. The provider and its roles stay, without a key, until
+    /// the user signs in again or pastes one.
+    void signOut(const std::string &providerId, std::function<void(std::optional<SaveError>)> done);
     bool assign(Role role, ModelRef model);
     /// The role goes back to the chat model.
     bool unassign(Role role);

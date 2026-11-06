@@ -4,6 +4,7 @@
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/desktop_handoff.h"
 #include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
@@ -25,6 +26,7 @@
 #include "list_files.h"
 #include "toml_file.h"
 #include "audio_display_item.h"
+#include "fake_auth_server.h"
 #include "fake_font_service.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
@@ -147,6 +149,20 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
     f.write(events);
     return path;
+}
+
+struct OpenChooser {
+    QObject *impl = nullptr;
+    QQuickWindow *host = nullptr;
+};
+
+OpenChooser openFallbackChooser()
+{
+    for (QWindow *w : QGuiApplication::allWindows())
+        for (QObject *o : w->findChildren<QObject *>())
+            if ((o->inherits("QQuickFileDialogImpl") || o->inherits("QQuickFolderDialogImpl")) && o->property("visible").toBool())
+                return {o, qobject_cast<QQuickWindow *>(w)};
+    return {};
 }
 
 QString writeSrt(const QTemporaryDir &dir, const char *name, const char *cues)
@@ -4544,17 +4560,195 @@ private slots:
         auto *font = findItem(window->contentItem(), QStringLiteral("styleFont"));
         auto *bar = findItem(window->contentItem(), QStringLiteral("styleEditorCatalogBar"));
         auto *choice = findItem(bar, QStringLiteral("fontCatalogChoice"));
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
-        QCOMPARE(font->property("editText").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
+        QCOMPARE(font->property("text").toString(), QStringLiteral("Tahoma"));
         choose(choice, 1);
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
-        QCOMPARE(font->property("editText").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        QCOMPARE(font->property("text").toString(), QStringLiteral("Tahoma"));
         application->settingsStore()->set("styles.editFilterText", QStringLiteral("z"));
         choose(choice, 0);
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontFilter")), "toggle"));
         QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontFilter")), "toggled");
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Tahoma"}));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Tahoma"}));
         QVERIFY(QMetaObject::invokeMethod(window, "closeManager"));
+    }
+
+    void typeIntoFontBox(QQuickWindow *window, QQuickItem *box)
+    {
+        auto *popup = box->property("popup").value<QObject *>();
+        const auto shown = [box] { return box->property("shown").toStringList(); };
+        const QStringList all{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"};
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+
+        auto *arrow = findItem(box, QStringLiteral("fontFamilyBoxArrow"));
+        QVERIFY(arrow);
+        const QPoint at = arrow->mapToScene(QPointF(arrow->width() / 2, arrow->height() / 2)).toPoint();
+        QTest::mouseClick(window, Qt::LeftButton, {}, at);
+        QTRY_VERIFY2(popup->property("opened").toBool(),
+                     qPrintable(QStringLiteral("arrow at %1,%2 in %3x%4").arg(at.x()).arg(at.y()).arg(window->width()).arg(window->height())));
+        QVERIFY(box->hasActiveFocus());
+        QCOMPARE(shown(), all);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        typeText(window, QStringLiteral("t"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("t"));
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(shown(), (QStringList{"Tahoma", "Impact"}));
+        QCOMPARE(box->property("highlightedIndex").toInt(), 0);
+        QCOMPARE(box->property("browsedFamily").toString(), QStringLiteral("Tahoma"));
+        QTest::keyClick(window, Qt::Key_Down);
+        QCOMPARE(box->property("browsedFamily").toString(), QStringLiteral("Impact"));
+        QTest::keyClick(window, Qt::Key_Down);
+        QCOMPARE(box->property("highlightedIndex").toInt(), 1);
+
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QVERIFY(window->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("t"));
+
+        typeText(window, QStringLiteral("zz"));
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(shown(), QStringList());
+        QVERIFY(findItem(popup->property("contentItem").value<QQuickItem *>(), QStringLiteral("fontFamilyBoxNoMatch"))->isVisible());
+        QSignalSpy picked(box, SIGNAL(picked(QString)));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("tzz"));
+        QCOMPARE(picked.size(), 1);
+        QCOMPARE(picked.first().first().toString(), QStringLiteral("tzz"));
+
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        QTest::keyClick(window, Qt::Key_Backspace);
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(shown(), all);
+        typeText(window, QStringLiteral("er"));
+        QCOMPARE(shown(), QStringList{"Verdana"});
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Verdana"));
+        QCOMPARE(picked.last().first().toString(), QStringLiteral("Verdana"));
+    }
+
+    void styleEditorFontBoxFiltersAsYouType()
+    {
+        usePickerFonts();
+        QVERIFY(application->openFile(fontAss("style-type.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *font = findItem(manager->contentItem(), QStringLiteral("styleFont"));
+        QTRY_VERIFY(font->isVisible() && font->width() > 0);
+        QCOMPARE(font->property("text").toString(), QStringLiteral("Tahoma"));
+        auto &styles = application->styleManager();
+        int key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(font, "openAll"));
+        QCOMPARE(font->property("browsedFamily").toString(), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(font->property("browsedFamily").toString(), QStringLiteral("Verdana"));
+        QTRY_VERIFY(styles.previewKey() > key);
+        QVERIFY(QMetaObject::invokeMethod(font->property("popup").value<QObject *>(), "close"));
+
+        typeIntoFontBox(manager, font);
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(manager->property("changedKeys").toMap().value(QStringLiteral("fontname")).toBool());
+        QVERIFY(QMetaObject::invokeMethod(manager, "commit", Q_ARG(QVariant, false)));
+        QCOMPARE(application->styleManager().beginEdit(false, 0).value(QStringLiteral("fontname")).toString(),
+                 QStringLiteral("Verdana"));
+    }
+
+    void programFontBoxFiltersAsYouType()
+    {
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("appearance");
+        auto *box = dialogItem("settingsDialog", "setting_program.font");
+        QVERIFY(box);
+        box->setProperty("families", QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"});
+        auto *flick = dialogItem("settingsDialog", "settingsPageAppearance")->property("contentItem").value<QQuickItem *>();
+        QVERIFY(flick);
+        const QPointF corner = box->mapToItem(flick->property("contentItem").value<QQuickItem *>(), QPointF(box->width(), box->height()));
+        flick->setProperty("contentX", std::max(0.0, corner.x() - flick->width()));
+        flick->setProperty("contentY", std::max(0.0, corner.y() - flick->height()));
+        QTRY_VERIFY(flick->contains(box->mapToItem(flick, QPointF(box->width() - 1, box->height() - 1))));
+
+        typeIntoFontBox(box->window(), box);
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("program.font")).toString(), QStringLiteral("Verdana"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("program.font"), QStringLiteral("Verdana"));
+    }
+
+    void fontBoxScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        usePickerFonts();
+        QVERIFY(application->openFile(fontAss("font-box-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        app::attachStylePreview(*engine, application->styleManager());
+        auto *root = engine->rootObjects().first();
+        const auto shoot = [&](QQuickWindow *w, QQuickItem *box, const QString &name) {
+            auto *popup = box->property("popup").value<QObject *>();
+            QTRY_VERIFY(popup->property("opened").toBool());
+            auto *list = popup->property("contentItem").value<QQuickItem *>();
+            QRectF r = box->mapRectToScene(QRectF(0, 0, box->width(), box->height()));
+            r = r.united(list->mapRectToScene(QRectF(0, 0, list->width(), list->height()))).adjusted(-12, -12, 12, 12);
+            const qreal dpr = w->effectiveDevicePixelRatio();
+            QVERIFY(w->grabWindow().copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect())
+                        .save(out + QStringLiteral("/fs1-") + name + QStringLiteral(".png")));
+        };
+        const auto type = [](QQuickWindow *w, QQuickItem *box, const QString &text) {
+            w->requestActivate();
+            QVERIFY(QTest::qWaitForWindowActive(w));
+            box->forceActiveFocus(Qt::MouseFocusReason);
+            QTest::keyClick(w, Qt::Key_A, Qt::ControlModifier);
+            typeText(w, text);
+        };
+        for (const char *theme : {"light", "dark"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(theme));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+
+            auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+            QTRY_VERIFY(manager->isVisible());
+            const QVariantMap values = application->styleManager().beginEdit(false, 0);
+            QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+            auto *font = findItem(manager->contentItem(), QStringLiteral("styleFont"));
+            QTRY_VERIFY(font->isVisible() && font->width() > 0);
+            type(manager, font, QStringLiteral("t"));
+            shoot(manager, font, QStringLiteral("style-editor-") + QLatin1String(theme));
+            typeText(manager, QStringLiteral("zz"));
+            shoot(manager, font, QStringLiteral("style-editor-no-match-") + QLatin1String(theme));
+            QTest::keyClick(manager, Qt::Key_Escape);
+            QVERIFY(QMetaObject::invokeMethod(manager, "revert"));
+            QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+            QTRY_VERIFY(!manager->isVisible());
+
+            auto *dialog = openSettings();
+            QVERIFY(dialog);
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            showSettingsPage("appearance");
+            auto *box = dialogItem("settingsDialog", "setting_program.font");
+            box->setProperty("families", QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"});
+            type(box->window(), box, QStringLiteral("a"));
+            shoot(box->window(), box, QStringLiteral("program-font-") + QLatin1String(theme));
+            QTest::keyClick(box->window(), Qt::Key_Escape);
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
     }
 
     void styleEditorFitsTheScreen()
@@ -4719,7 +4913,7 @@ private slots:
         auto *bar = findItem(editor->contentItem(), QStringLiteral("styleEditorCatalogBar"));
         auto *choice = findItem(bar, QStringLiteral("fontCatalogChoice"));
         choose(choice, 3);
-        QCOMPARE(font->property("model").toStringList(), QStringList{"Impact"});
+        QCOMPARE(font->property("families").toStringList(), QStringList{"Impact"});
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
         auto *window = named("fontCatalogWindow");
         QTRY_VERIFY(window->property("visible").toBool());
@@ -4732,10 +4926,10 @@ private slots:
         QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalogue", "A"}));
         QCOMPARE(choice->property("currentIndex").toInt(), 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
         choose(choice, 2);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
-        QCOMPARE(font->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
+        QCOMPARE(font->property("families").toStringList(), (QStringList{"Arial", "Verdana"}));
         choose(choice, 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("All fonts"));
         QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
@@ -4944,18 +5138,18 @@ private slots:
         while (big.size() < 6000)
             big << QStringLiteral("Not a font %1").arg(big.size());
         auto *font = findItem(content, QStringLiteral("styleFont"));
-        const QString typed = font->property("editText").toString();
-        font->setProperty("model", big);
-        font->setProperty("editText", typed);
+        const QString typed = font->property("text").toString();
+        font->setProperty("families", big);
+        QCOMPARE(font->property("text").toString(), typed);
         auto *faces = engine->singletonInstance<ui::FontFaces *>("Hikari.Ui", "FontFaces");
         QVERIFY(faces);
         const int looked = faces->lookups();
         auto *popup = font->property("popup").value<QObject *>();
         QElapsedTimer timer;
         timer.start();
-        QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+        QVERIFY(QMetaObject::invokeMethod(font, "openAll"));
         QTRY_VERIFY(popup->property("opened").toBool());
-        auto *list = popup->property("contentItem").value<QQuickItem *>();
+        auto *list = findItem(popup->property("contentItem").value<QQuickItem *>(), QStringLiteral("fontFamilyBoxList"));
         QVERIFY(list);
         const auto rowItems = [&] {
             QList<QQuickItem *> found;
@@ -5019,24 +5213,19 @@ private slots:
         // A pointer resting over the list moves the highlight as rows scroll under it.
         font->setProperty("hoverEnabled", false);
         int key = styles.previewKey();
-        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
-        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+        QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
+        QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
         QVERIFY(font->property("highlightedIndex").toInt() >= 0);
         QTRY_VERIFY(styles.previewKey() > key);
-        QCOMPARE(font->property("editText").toString(), typed);
-        QVariant browsed;
-        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
-        QString highlighted;
-        QVERIFY(QMetaObject::invokeMethod(font, "textAt", Q_RETURN_ARG(QString, highlighted),
-                                          Q_ARG(int, font->property("highlightedIndex").toInt())));
+        QCOMPARE(font->property("text").toString(), typed);
+        const QString highlighted = font->property("shown").toStringList().value(font->property("highlightedIndex").toInt());
         QVERIFY(!highlighted.isEmpty());
-        QCOMPARE(browsed.toString(), highlighted);
+        QCOMPARE(font->property("browsedFamily").toString(), highlighted);
         key = styles.previewKey();
         QVERIFY(QMetaObject::invokeMethod(popup, "close"));
         QTRY_VERIFY(!popup->property("visible").toBool());
         QTRY_VERIFY(styles.previewKey() > key);
-        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
-        QCOMPARE(browsed.toString(), QString());
+        QCOMPARE(font->property("browsedFamily").toString(), QString());
 
         for (const char *field : {"styleSize", "styleOutline", "styleShadow", "styleScaleX", "styleScaleY", "styleAngle",
                                   "styleSpacing", "styleMarginLeft", "styleMarginRight", "styleMarginVertical", "styleName"}) {
@@ -6460,6 +6649,63 @@ private slots:
             }
         }
         QVERIFY(files > 1);
+    }
+
+    void everyFileDialogIsAChooser()
+    {
+        static const QRegularExpression plain(
+            QStringLiteral(R"re((?:^|[^\w.])((?:\w+\.)?(?:FileDialog|FolderDialog))\s*\{)re"),
+            QRegularExpression::MultilineOption);
+        int files = 0;
+        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            const QString name = QFileInfo(path).fileName();
+            if (name == QLatin1String("FileChooser.qml") || name == QLatin1String("FolderChooser.qml"))
+                continue;
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            ++files;
+            const QString text = QString::fromUtf8(file.readAll());
+            for (auto m = plain.globalMatch(text); m.hasNext();) {
+                const auto match = m.next();
+                const int line = int(text.left(match.capturedStart(1)).count(QLatin1Char('\n'))) + 1;
+                QFAIL(qPrintable(QStringLiteral("%1:%2: %3 { instead of FileChooser / FolderChooser")
+                                     .arg(name).arg(line).arg(match.captured(1))));
+            }
+        }
+        QVERIFY(files > 1);
+    }
+
+    void fallbackFileDialogsOpenWithoutAPopupWindow()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        const auto popupWindows = [] {
+            int n = 0;
+            for (QWindow *w : QGuiApplication::allWindows())
+                n += w->inherits("QQuickPopupWindow") ? 1 : 0;
+            return n;
+        };
+        const auto popupType = [](QObject *impl) {
+            const QMetaProperty p = impl->metaObject()->property(impl->metaObject()->indexOfProperty("popupType"));
+            return QString::fromLatin1(p.enumerator().valueToKey(p.read(impl).toInt()));
+        };
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+        QTRY_VERIFY(item<QObject>("searchTool"));
+        const int before = popupWindows();
+        for (const char *name : {"subtitlesOpenDialog", "findFolderDialog"}) {
+            QObject *dialog = named(name);
+            QVERIFY2(dialog, name);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+            QTRY_VERIFY2(openFallbackChooser().impl, name);
+            QCOMPARE(popupType(openFallbackChooser().impl), QStringLiteral("Item"));
+            QCOMPARE(popupWindows(), before);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY2(!openFallbackChooser().impl, name);
+        }
     }
 
     void popupsAreOnTheKit()
@@ -11550,25 +11796,13 @@ private slots:
             }
             QVERIFY(image.save(out + QStringLiteral("/ti1-") + QLatin1String(name) + QStringLiteral(".png")));
         };
-        // Qt Quick's own file and folder dialogs open in a window of their own.
-        const auto shown = [] {
-            QSet<QWindow *> out;
-            for (QWindow *w : QGuiApplication::allWindows())
-                if (w->isVisible())
-                    out << w;
-            return out;
-        };
         for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
             QObject *dialog = find(name);
-            const QSet<QWindow *> before = shown();
             QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
-            QTRY_VERIFY2(dialog->property("visible").toBool(), name);
-            QTRY_VERIFY2(!(shown() - before).isEmpty(), name);
-            auto *own = qobject_cast<QQuickWindow *>(*(shown() - before).begin());
-            QVERIFY(QTest::qWaitForWindowExposed(own));
-            save(name, own, true);
+            QTRY_VERIFY2(openFallbackChooser().host, name);
+            save(name, openFallbackChooser().host, false);
             QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
-            QTRY_VERIFY(!own->isVisible());
+            QTRY_VERIFY2(!openFallbackChooser().impl, name);
         }
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
         {
@@ -12762,8 +12996,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(time, "editingFinished"));
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 1500);
         const int lines = int(session->document().lines().size());
-        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), lines);
-        QCOMPARE(shiftPlan("shiftPreview").value(QStringLiteral("amount")).toInt(), 1500);
+        QTRY_COMPARE(shiftPlan("shiftPreview").value(QStringLiteral("amount")).toInt(), 1500);
+        QCOMPARE(shiftPlan("shiftPreview").value(QStringLiteral("changed")).toInt(), lines);
         QCOMPARE(item("shiftPreviewStatus")->property("text").toString(), QStringLiteral("Changes %1 line(s)").arg(lines));
         QCOMPARE(item("shiftApply")->property("text").toString(), QStringLiteral("Shift %1 line(s)").arg(lines));
         const auto rows = shiftPlan("shiftPreview").value(QStringLiteral("rows")).toList();
@@ -16530,18 +16764,23 @@ private slots:
             std::shared_ptr<Stored> m;
         };
         auto stored = std::make_shared<Stored>();
+        test::FakeAuthServer auth;
+        auth.script("ok");
+        test::FakeSignInClock signInTime{.realMs = 20};
         app::AiFeatures::Ports ports;
         ports.keyStore = [stored] { return std::make_unique<Keys>(stored); };
+        ports.signIn = [&auth, &signInTime, port = test::freePort()](ai::KeyStore &keys) {
+            return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(port), signInTime.clock());
+        };
         ports.configStore = [stored] { return std::make_unique<Configs>(stored); };
-        ports.sidecarHost = [this] {
+        ports.sidecarHost = [this](const backends::ai::SidecarInstall &) {
             backends::ai::AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
-            o.arguments = {QStringLiteral("--build-id"), QStringLiteral("test"), QStringLiteral("--api-version"),
-                           QString::number(api::kApiVersion)};
+            o.arguments = {QStringLiteral("--mode"), QStringLiteral("ok")};
             o.workingDirectory = dir.filePath(QStringLiteral("ai-page/ai/work"));
-            o.buildId = "test";
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
+        ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, {}, {}};
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("ai-page/hikari.ini"));
         options.playbackAudio = false;
@@ -16599,6 +16838,78 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
+
+        std::vector<QUrl> opened;
+        const auto routes = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
+            opened.push_back(url);
+            return true;
+        }});
+        auto restoreRoutes = qScopeGuard([&] { backends::desktop::replaceRoutes(routes); });
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiExternalAgents")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiCodexFound")->property("text").toString(), QStringLiteral("Not found on PATH."));
+        QVERIFY(!dialogItem("settingsDialog", "aiCodexImport")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedIn")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiCodexEmail")->property("text").toString(),
+                 QStringLiteral("Signed in as owner@example.com"));
+        QVERIFY(stored->keys.contains("codex-chatgpt"));
+        QVERIFY(opened.empty());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignOut"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
+        QVERIFY(!stored->keys.contains("codex-chatgpt"));
+
+        auth.script("hang");
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
+        QQuickItem *code = nullptr;
+        QTRY_VERIFY((code = dialogItem("settingsDialog", "aiCodexCode")) && code->isVisible());
+        QCOMPARE(code->property("text").toString(), QStringLiteral("FAKE-1234"));
+        QCOMPARE(code->property("font").value<QFont>().featureValue(QFont::Tag("zero")), 1u);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexCancel"), "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedOut")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
+        QQuickItem *signIn = nullptr;
+        QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
+        QVERIFY(QMetaObject::invokeMethod(signIn, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiDraftDot")->isVisible());
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaitingText")->property("truncated").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiOpenRouterCancel"), "click"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiOpenRouterWaiting")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(page, "closeForm"));
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
+        auth.script("ok");
+
+        QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("openrouter")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY((signIn = dialogItem("settingsDialog", "aiOpenRouterSignIn")));
+        QCOMPARE(dialogItem("settingsDialog", "aiProviderKeyRow")->property("text").toString(), QStringLiteral("OpenRouter key"));
+        QVERIFY(signIn->isVisible());
+        opened.clear();
+        QVERIFY(QMetaObject::invokeMethod(signIn, "click"));
+        QTRY_VERIFY(!opened.empty() && opened.back().host() == QLatin1String("openrouter.ai"));
+        QCOMPARE(test::browse(test::approval(opened.back())), 200);
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiProvider_openrouter"));
+        QCOMPARE(stored->keys.at("openrouter"), "sk-or-v1-fake");
+        QVERIFY(std::ranges::any_of(opened, [](const QUrl &url) { return url.host() == QLatin1String("openrouter.ai"); }));
+        QQuickItem *note = nullptr;
+        QTRY_VERIFY((note = dialogItem("settingsDialog", "aiProvider_openrouter")->findChild<QQuickItem *>(QStringLiteral("aiProviderKeyNote"))));
+        QCOMPARE(note->property("text").toString(), QStringLiteral("Signed in (OpenRouter)"));
+        QVERIFY(QMetaObject::invokeMethod(
+            dialogItem("settingsDialog", "aiProvider_openrouter")->findChild<QQuickItem *>(QStringLiteral("aiProviderEdit")), "click"));
+        QQuickItem *signOut = nullptr;
+        QTRY_VERIFY((signOut = dialogItem("settingsDialog", "aiOpenRouterSignOut")) && signOut->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(signOut, "click"));
+        QTRY_VERIFY(!stored->keys.contains("openrouter"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiProvider_openrouter")
+                         ->findChild<QQuickItem *>(QStringLiteral("aiProviderKeyNote"))
+                         ->property("text")
+                         .toString(),
+                     QStringLiteral("No key"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()
@@ -23037,7 +23348,12 @@ private slots:
         key(Qt::Key_Space, false);
         key(Qt::Key_Space, true);
         QTest::qWait(150);
-        QCOMPARE(audio.tapSpans().size(), 3);
+        const QVariantList spans = audio.tapSpans();
+        QCOMPARE(spans.size(), 3);
+        const auto gapAfter = [&](qsizetype i) {
+            return spans[i].toMap().value(QStringLiteral("x2")).toFloat()
+                   < spans[i + 1].toMap().value(QStringLiteral("x1")).toFloat();
+        };
         QVERIFY(visualItem("audioTapSpan2"));
         for (const char *name : {"audioTapSyllable0", "audioTapNext", "audioTapSpanText"})
             QVERIFY2(visualItem(name)->property("textFormat").toInt() == int(Qt::PlainText), name);
@@ -23045,7 +23361,9 @@ private slots:
         QCOMPARE(editor.history().size(), steps + 1);
         QVERIFY2(editor.history().last().startsWith(QStringLiteral("Tap timing")), qPrintable(editor.history().last()));
         const QString tapped = documentLineText(targetSession(), 0);
-        static const QRegularExpression timed(QStringLiteral(R"(^\{\\k\d+\}ki\{\\k\d+\}\{\\k\d+\}mi\{\\k\d+\}no$)"));
+        const QString k = QStringLiteral(R"(\{\\k\d+\})");
+        const QRegularExpression timed(QStringLiteral("^%1ki%2%1mi%3%1no$")
+                                           .arg(k, gapAfter(0) ? k : QString(), gapAfter(1) ? k : QString()));
         QVERIFY2(timed.match(tapped).hasMatch(), qPrintable(tapped));
         QCOMPARE(editor.text(), QStringLiteral("{\\k50}ko{\\k50}ro"));
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
@@ -28530,7 +28848,7 @@ private slots:
             shot(manager, QStringLiteral("window-") + theme);
             QVERIFY(QMetaObject::invokeMethod(manager, "revert"));
             pick({4, 5, 6});
-            QVERIFY(field("styleFontMixed")->isVisible());
+            QCOMPARE(field("styleFont")->property("placeholderText").toString(), QStringLiteral("Multiple values"));
             shot(manager, QStringLiteral("multi-") + theme);
             pick({4});
             edit("styleName", QStringLiteral("Sign - Station board"));
@@ -28647,13 +28965,13 @@ private slots:
             auto *font = findItem(content, QStringLiteral("styleFont"));
             QStringList families = QFontDatabase::families();
             families.removeIf([](const QString &f) { return QFontDatabase::isPrivateFamily(f); });
-            font->setProperty("model", families);
-            font->setProperty("editText", values.value(QStringLiteral("fontname")));
+            font->setProperty("families", families);
+            font->setProperty("text", values.value(QStringLiteral("fontname")));
             auto *popup = font->property("popup").value<QObject *>();
-            QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+            QVERIFY(QMetaObject::invokeMethod(font, "openAll"));
             QTRY_VERIFY(popup->property("opened").toBool());
             for (int i = 0; i < 3; ++i)
-                QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+                QVERIFY(QMetaObject::invokeMethod(font, "step", Q_ARG(QVariant, 1)));
             QTest::qWait(250);
             auto *list = popup->property("contentItem").value<QQuickItem *>();
             QVERIFY(crop(manager, around(font, list, 12))
@@ -29409,11 +29727,15 @@ private:
         return application->files().session(*application->workspace().editingTarget());
     }
     // QTest::keyClicks takes widgets only: one key press per character.
-    void typeText(const QString &text)
+    static void typeText(QWindow *target, const QString &text)
     {
         for (const QChar c : text)
-            QTest::keyClick(window, c.toLatin1());
+            QTest::keyClick(target, c.toLatin1());
         QCoreApplication::processEvents();
+    }
+    void typeText(const QString &text)
+    {
+        typeText(window, text);
     }
     void typeInto(const char *name, const QString &text)
     {

@@ -4331,6 +4331,14 @@ Failed to copy %2 fonts.</source>
         <source>Add fonts</source>
         <translation>எழுத்துருக்களைச் சேர்</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
@@ -10202,6 +10210,42 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai உள்நுழைவை மறுத்தது.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com உள்நுழைவை மறுத்தது. நீங்கள் விரும்பும் ChatGPT கணக்கில் HikariSub-இன் கோரிக்கையை அனுமதித்து, மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>உங்கள் ChatGPT பணியிடம் உள்நுழைவுக் குறியீடுகளை அணைத்துள்ளது. அதற்குப் பதிலாக உலாவி வழியாக உள்நுழையவும்.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>குறியீடு உள்ளிடப்படுவதற்கு முன் காலாவதியானது.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>உலாவிக்காகக் காத்திருந்து உள்நுழைவு நேரம் கடந்துவிட்டது.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>வேறொரு செயலி போர்ட் 1455-ஐப் பயன்படுத்தும்போது உலாவி உள்நுழைவு கிடைக்காது. இதைப் பயன்படுத்த அந்தச் செயலியின் உள்நுழைவை மூடவும்.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>%1-ஐ அணுக முடியவில்லை. இணைப்பைச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex-இல் இறக்குமதி செய்ய ChatGPT உள்நுழைவு இல்லை.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>உள்நுழைவு தோல்வியடைந்தது. மீண்டும் முயலவும்.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>விசை நிராகரிக்கப்பட்டது (%1)</translation>
     </message>
@@ -10294,12 +10338,32 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API விசை</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>OpenRouter விசை</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API விசை (விருப்பத்தேர்வு)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>API விசை</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>OpenRouter மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>உள்நுழைந்துள்ளது (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>வெளியேறு</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>அல்லது விசையை ஒட்டவும்</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -10320,6 +10384,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Google AI Studio இலிருந்து பெற்ற விசை. Vertex AI மற்றும் Google Cloud உள்நுழைவு ஆதரிக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>உள்நுழைவு உங்கள் உலாவியில் openrouter.ai-ஐத் திறந்து HikariSub-க்கு ஒரு விசையை உருவாக்கும். ஒட்டிய விசையைப் போலவே அது விசைக்கொத்தில் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>வெளியேறுவது இந்தக் கணினியிலிருந்து விசையை நீக்கும். நீங்கள் அங்கே நீக்கும் வரை அது %1-இல் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>உங்கள் OpenRouter விசைகள்</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>உலாவியில் openrouter.ai-க்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>பக்கத்தை மீண்டும் திற</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -10444,6 +10528,10 @@ Failed to copy %2 fonts.</source>
         <translation>திருத்து மூலம் விசையை மாற்றவும்</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>திருத்து மூலம் மீண்டும் உள்நுழையவும்</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>விசைக்கொத்தில் விசை உள்ளது</translation>
     </message>
@@ -10482,6 +10570,114 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>சொந்த மாதிரி இல்லாத பங்கு அரட்டை மாதிரியைப் பயன்படுத்தும். பார்வை படங்களைப் படிக்கும் மாதிரிகளை மட்டுமே பட்டியலிடும்.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>வெளிப்புற முகவர்கள்</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>PATH-இல் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>PATH-இல் கிடைத்தது · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>PATH-இல் கிடைத்தது.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>உள்நுழையவில்லை</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ChatGPT மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>~/.codex-இலிருந்து இறக்குமதி (படிக்க மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>ChatGPT உள்நுழைவை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>~/.codex-இலிருந்து ChatGPT உள்நுழைவை இறக்குமதி செய்யவா? அதன்பின் HikariSub-உம் உங்கள் முனையத்திலுள்ள Codex-உம் ஒரே உள்நுழைவைப் பகிரும்; ஒன்று அதைப் புதுப்பித்தால், மற்றொன்று மீண்டும் உள்நுழைய வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>இறக்குமதி</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub, ~/.codex-இல் உள்ளதிலிருந்து தனியாக, Codex-க்குத் தனக்கென ChatGPT உள்நுழைவை வைத்திருக்கிறது; எனவே ஒன்று மற்றொன்றை வெளியேற்றாது.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1 ஆக உள்நுழைந்துள்ளது</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex இந்த உள்நுழைவுடன் இயங்கும். இங்கே வெளியேறினாலும் உங்கள் முனையத்திலுள்ள Codex உள்நுழைந்தபடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>உள்நுழைவு காலாவதியானது</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>மீண்டும் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>கடவுச்சொல் மாற்றம் அல்லது எல்லாச் சாதனங்களிலும் வெளியேறியது போன்றவற்றுக்குப் பின் ChatGPT, HikariSub-இன் அமர்வை முடித்துவிட்டது. Codex-ஐத் தொடர்ந்து பயன்படுத்த மீண்டும் உள்நுழையவும்.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ChatGPT மூலம் உள்நுழை</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>auth.openai.com-ஐத் திறந்து, ChatGPT-இல் உள்நுழைந்து, இந்தக் குறியீட்டை உள்ளிடவும்.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>நகலெடு</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>auth.openai.com-ஐத் திற</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com உங்கள் உலாவியில் திறந்துள்ளது. அங்கே உள்நுழையவும்; பக்கத்தை மூடலாம் என்று அது சொன்னதும் HikariSub முடிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>குறியீட்டுக்காகக் காத்திருக்கிறது · %1-இல் காலாவதியாகும்</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>உலாவிக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>குறியீட்டைப் பயன்படுத்த முடியவில்லையா? உலாவி வழியாக உள்நுழை</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>உலாவி வழியாக உள்நுழை</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>புதிய குறியீட்டைப் பெறு</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -13202,6 +13398,18 @@ because it was edited.</source>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” என்பது true அல்லது false அல்ல.</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” ஒரு பட்டியல் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>சாளரம் %1 ஒரு பொருள் அல்ல.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>சாளரம் %1: “%2” தவறான வகையில் உள்ளது.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -17692,7 +17900,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
+        <translation type="vanished">நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -17709,6 +17917,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>வீடியோ ஓடையின் சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>சட்டக நேரங்களின் மூலம்</translation>
     </message>
     <message>
         <source>Length</source>

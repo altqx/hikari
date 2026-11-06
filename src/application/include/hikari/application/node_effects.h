@@ -48,8 +48,13 @@ public:
         std::vector<PortSpec> inputs, outputs;
         std::vector<std::vector<NodeValue>> rows; // one value per input, per row
     };
+    struct Failure {
+        std::string message;
+        // The helper was stopped or lost: the rest of the run stops and writes nothing.
+        bool stopsRun = false;
+    };
     // One value per output, per row; or what went wrong.
-    virtual std::expected<std::vector<std::vector<NodeValue>>, std::string> run(const Call &call) = 0;
+    virtual std::expected<std::vector<std::vector<NodeValue>>, Failure> run(const Call &call) = 0;
 };
 
 // Generated Lines of one Emit for one karaoke Line, kept across runs while neither changes.
@@ -97,7 +102,7 @@ struct EmitReport {
 
 struct NodeEffectRun {
     std::u8string name;
-    bool ran = false; // false: invalid, or Lua not trusted; applying it changes nothing
+    bool ran = false; // false: invalid, Lua not trusted or its helper stopped; applying it changes nothing
     bool complete = true; // every karaoke Line was run, not only some
     // The karaoke Lines run, in Document order, and which of them got Lines.
     std::vector<core::LineId> sources;

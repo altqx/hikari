@@ -21,9 +21,11 @@ struct VideoDetails {
     std::string path;
     int width = 0, height = 0;
     Ratio aspect; // display aspect
-    Ratio fps;    // nominal
-    // Frame durations differ by more than a millisecond.
+    Ratio fps;    // the stream's nominal
+    // The stream's frame durations differ by more than a millisecond.
     bool variableRate = false;
+    // A timecodes file's times replace the stream's; frames and lastFrameMs follow them.
+    bool frameTimesReplaced = false;
     int frames = 0;
     int lastFrameMs = 0; // the last frame's start
     PixelFormat pixelFormat;

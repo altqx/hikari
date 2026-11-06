@@ -746,6 +746,15 @@ private slots:
                                     "at its average frame rate.")
                          .arg(application->video().session().frameCount()));
         QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+        auto *details = named("videoDetailsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(details && QMetaObject::invokeMethod(details, "trigger"));
+        QTRY_VERIFY(named("videoDetailsFrameTimes"));
+        const auto detail = [this](const char *name, const char *property = "text") {
+            return named(name)->property(property);
+        };
+        QCOMPARE(detail("videoDetailsFrameRateName").toString(), QStringLiteral("Video stream frame rate"));
+        QVERIFY(detail("videoDetailsFrameTimes", "visible").toBool());
+        QCOMPARE(detail("videoDetailsFrameTimes").toString(), application->timecodesFile());
 
         const auto written = [this] {
             const auto last = application->files().lastSave(*application->workspace().editingTarget());
@@ -757,6 +766,9 @@ private slots:
         QTRY_VERIFY(written());
         QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\nTimecodes File: ../tc/ep.txt\n"));
         application->closeTimecodes();
+        QTRY_COMPARE(detail("videoDetailsFrameRateName").toString(), QStringLiteral("Frame rate"));
+        QVERIFY(!detail("videoDetailsFrameTimes", "visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("videoDetailsDialog"), "reject"));
         QVERIFY(application->saveAs(moved));
         QTRY_VERIFY(written());
         QVERIFY(!readAll(moved).contains("Timecodes File"));
@@ -765,10 +777,11 @@ private slots:
         const QString untouched = writeAss(folder + QStringLiteral("/untouched.ass"),
                                            "\n[Aegisub Project Garbage]\nTimecodes File: gone.txt\n", "u");
         QVERIFY(application->openFile(untouched));
-        QCOMPARE(application->log().lastMessage(),
-                 QStringLiteral("Timecodes file not found: %1").arg(QStringLiteral("gone.txt")));
         QCOMPARE(titles().last(), QStringLiteral("untouched.ass"));
         application->selectTab(int(titles().size()) - 1);
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(), QStringLiteral("Linked files not found:\nTimecodes: gone.txt"));
+        application->video().dismissOffer();
         QVERIFY(application->timecodesFile().isEmpty());
         QVERIFY(application->saveAs(untouched));
         QTRY_VERIFY(written());

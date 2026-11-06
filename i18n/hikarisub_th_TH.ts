@@ -4292,6 +4292,14 @@ Failed to copy %2 fonts.</source>
         <source>Add fonts</source>
         <translation>เพิ่มแบบอักษร</translation>
     </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.GettingStarted</name>
@@ -10140,6 +10148,42 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai ปฏิเสธการลงชื่อเข้าใช้</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com ปฏิเสธการลงชื่อเข้าใช้ อนุมัติคำขอของ HikariSub ด้วยบัญชี ChatGPT ที่ต้องการ แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>พื้นที่ทำงาน ChatGPT ของคุณปิดรหัสลงชื่อเข้าใช้ไว้ ให้ลงชื่อเข้าใช้ผ่านเบราว์เซอร์แทน</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>รหัสหมดอายุก่อนที่จะป้อน</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>การลงชื่อเข้าใช้หมดเวลาระหว่างรอเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>ลงชื่อเข้าใช้ผ่านเบราว์เซอร์ไม่ได้ขณะที่แอปอื่นใช้พอร์ต 1455 อยู่ ปิดการลงชื่อเข้าใช้ของแอปนั้นเพื่อใช้งาน</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>ติดต่อ %1 ไม่ได้ ตรวจสอบการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex ไม่มีการลงชื่อเข้าใช้ ChatGPT ให้นำเข้า</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>ลงชื่อเข้าใช้ไม่สำเร็จ ลองอีกครั้ง</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>คีย์ถูกปฏิเสธ (%1)</translation>
     </message>
@@ -10232,12 +10276,32 @@ Failed to copy %2 fonts.</source>
         <translation>คีย์ API ของ Gemini</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>คีย์ OpenRouter</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>คีย์ API (ไม่บังคับ)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>คีย์ API</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย OpenRouter…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>ลงชื่อเข้าใช้แล้ว (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>ออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>หรือวางคีย์</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -10258,6 +10322,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>คีย์จาก Google AI Studio ไม่รองรับ Vertex AI และการลงชื่อเข้าใช้ Google Cloud</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>การลงชื่อเข้าใช้จะเปิด openrouter.ai ในเบราว์เซอร์และสร้างคีย์สำหรับ HikariSub คีย์นี้จะเก็บในพวงกุญแจเหมือนคีย์ที่วาง</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>การออกจากระบบจะลบคีย์ออกจากคอมพิวเตอร์นี้ คีย์ยังอยู่ใน %1 จนกว่าคุณจะลบที่นั่น</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>คีย์ OpenRouter ของคุณ</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>กำลังรอ openrouter.ai ในเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>เปิดหน้าอีกครั้ง</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -10380,6 +10464,10 @@ Failed to copy %2 fonts.</source>
         <translation>แทนที่คีย์ด้วย แก้ไข</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>ลงชื่อเข้าใช้อีกครั้งด้วย แก้ไข</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>มีคีย์ในพวงกุญแจ</translation>
     </message>
@@ -10418,6 +10506,114 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
         <translation>บทบาทที่ไม่มีโมเดลของตัวเองจะใช้โมเดลแชต การมองเห็นแสดงเฉพาะโมเดลที่อ่านภาพได้</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>เอเจนต์ภายนอก</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>ไม่พบใน PATH</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>พบใน PATH · %1</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>พบใน PATH</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>ยังไม่ได้ลงชื่อเข้าใช้</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย ChatGPT…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>นำเข้าจาก ~/.codex (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>นำเข้าการลงชื่อเข้าใช้ ChatGPT</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>นำเข้าการลงชื่อเข้าใช้ ChatGPT จาก ~/.codex หรือไม่ HikariSub กับ Codex ในเทอร์มินัลจะใช้การลงชื่อเข้าใช้เดียวกัน และเมื่อฝั่งหนึ่งรีเฟรช อีกฝั่งต้องลงชื่อเข้าใช้ใหม่</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>นำเข้า</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub เก็บการลงชื่อเข้าใช้ ChatGPT สำหรับ Codex ของตัวเอง แยกจากของ ~/.codex จึงไม่มีฝั่งใดทำให้อีกฝั่งออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>ลงชื่อเข้าใช้เป็น %1</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex ทำงานด้วยการลงชื่อเข้าใช้นี้ การออกจากระบบที่นี่ไม่ทำให้ Codex ในเทอร์มินัลออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>การลงชื่อเข้าใช้หมดอายุ</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>ลงชื่อเข้าใช้อีกครั้ง…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>ChatGPT สิ้นสุดเซสชันของ HikariSub แล้ว เช่น หลังเปลี่ยนรหัสผ่านหรือออกจากระบบทุกอุปกรณ์ ลงชื่อเข้าใช้อีกครั้งเพื่อใช้ Codex ต่อ</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ลงชื่อเข้าใช้ด้วย ChatGPT</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>เปิด auth.openai.com ลงชื่อเข้าใช้ ChatGPT แล้วป้อนรหัสนี้</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>เปิด auth.openai.com</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com เปิดอยู่ในเบราว์เซอร์ ลงชื่อเข้าใช้ที่นั่น HikariSub จะทำงานเสร็จเมื่อหน้าเว็บบอกว่าปิดได้</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>กำลังรอรหัส · หมดอายุใน %1</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>กำลังรอเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>ใช้รหัสไม่ได้ใช่ไหม ลงชื่อเข้าใช้ผ่านเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>ลงชื่อเข้าใช้ผ่านเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>รับรหัสใหม่</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -13105,6 +13301,18 @@ because it was edited.</source>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” ไม่ใช่ true หรือ false</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” ไม่ใช่รายการ</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>หน้าต่าง %1 ไม่ใช่ออบเจ็กต์</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>หน้าต่าง %1: “%2” มีชนิดข้อมูลไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -17558,7 +17766,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>ไม่พบไฟล์ไทม์โค้ด: %1</translation>
+        <translation type="vanished">ไม่พบไฟล์ไทม์โค้ด: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -17575,6 +17783,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>อัตราเฟรมของสตรีมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>เวลาเฟรมจาก</translation>
     </message>
     <message>
         <source>Length</source>

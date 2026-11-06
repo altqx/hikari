@@ -50,11 +50,6 @@ def asset_names(version):
     }
 
 
-def sidecar_names(version):
-    """The AI sidecar's platforms and their asset names (ADR 0026)."""
-    return {platform: f"hikari-ai-{version}-{platform}.gz" for platform in ("linux-x64", "windows-x64")}
-
-
 def codebase_of(version):
     major, minor = (int(part) for part in version.split(".")[:2])
     return "legacy" if (major, minor) == (0, 0) else "qt"
@@ -196,11 +191,6 @@ def build_manifest(version, offer_to, offer, directory, assets, published):
         packages[key] = package
     if not packages:
         fail(f"no package of {version} is in {directory}")
-    sidecars = {}
-    for platform, name in sidecar_names(version).items():
-        path = os.path.join(directory, name)
-        if os.path.isfile(path):
-            sidecars[platform] = released_file(name, path, by_name)
     manifest = {
         "schema": 1,
         "product": "HikariSub",
@@ -210,8 +200,6 @@ def build_manifest(version, offer_to, offer, directory, assets, published):
         "published": published,
         "packages": packages,
     }
-    if sidecars:
-        manifest["ai_sidecar"] = sidecars
     if offer:
         manifest["offer"] = offer
     return manifest

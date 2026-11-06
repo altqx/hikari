@@ -166,12 +166,13 @@ ApplicationWindow {
                 return false
             }
         }
-        root.workspaceLayout.saveForQuit()
+        root.app.saveLayoutForQuit()
         return true
     }
     onClosing: close => {
         if (root.shellWindow !== 0) {
-            root.app.shellWindowClosed(root.shellWindow)
+            if (!root.app.quitApproved)
+                root.app.shellWindowClosed(root.shellWindow)
             return
         }
         if (!root.app.quitApproved) {
@@ -1446,6 +1447,7 @@ ApplicationWindow {
     SessionWindows {
         id: sessionWindows
         app: root.app
+        startsTheSession: root.shellWindow === 0
         review: rows => closeReview.review(rows)
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
@@ -6806,7 +6808,7 @@ ApplicationWindow {
         saveAsDialog.selectedFile = v.file
         saveAsDialog.open()
     }
-    FileDialog {
+    FileChooser {
         id: saveAsDialog
         objectName: "saveAsDialog"
         fileMode: FileDialog.SaveFile
@@ -6959,13 +6961,13 @@ ApplicationWindow {
         toasts: root.notices
         messages: root.messages
     }
-    FileDialog {
+    FileChooser {
         id: scriptDialog
         nameFilters: [qsTranslate("HikariSub.Automation", "Automation scripts (*.lua *.moon)"), qsTranslate("HikariSub.Automation", "All files (*)")]
         onAccepted: root.automation.loadScript(selectedFile)
     }
 
-    FileDialog {
+    FileChooser {
         id: videoDialog
         objectName: "videoOpenDialog"
         nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTranslate("HikariSub.Video", "All files (*)")]
@@ -7000,6 +7002,7 @@ ApplicationWindow {
         active: false
         sourceComponent: VideoDetailsDialog {
             video: root.video
+            timecodesFile: root.app.timecodesFile
             settings: root.app.settings
         }
     }
@@ -7076,7 +7079,7 @@ ApplicationWindow {
         }
     }
 
-    FileDialog {
+    FileChooser {
         id: openDialog
         objectName: "subtitlesOpenDialog"
         title: qsTranslate("HikariSub.Documents", "Open subtitles")
@@ -7315,7 +7318,7 @@ ApplicationWindow {
         ]
     }
 
-    FileDialog {
+    FileChooser {
         id: audioDialog
         objectName: "audioDialog"
         title: qsTranslate("HikariSub.Audio", "Choose audio file")
@@ -7351,7 +7354,7 @@ ApplicationWindow {
             }
         }
     }
-    FileDialog {
+    FileChooser {
         id: keyframesDialog
         objectName: "keyframesDialog"
         title: qsTranslate("HikariSub.Video", "Choose keyframes file")
@@ -7372,7 +7375,7 @@ ApplicationWindow {
         if (problem.length > 0)
             root.notices.post("error", qsTranslate("HikariSub.Video", "Open timecodes file"), problem)
     }
-    FileDialog {
+    FileChooser {
         id: timecodesDialog
         objectName: "timecodesDialog"
         title: qsTranslate("HikariSub.Video", "Open timecodes file")
@@ -7386,7 +7389,7 @@ ApplicationWindow {
             open()
         }
     }
-    FileDialog {
+    FileChooser {
         id: saveTimecodesDialog
         objectName: "saveTimecodesDialog"
         fileMode: FileDialog.SaveFile
@@ -7403,7 +7406,7 @@ ApplicationWindow {
             open()
         }
     }
-    FileDialog {
+    FileChooser {
         id: translationFileDialog
         title: qsTranslate("HikariSub.Translation", "Choose subtitle file")
         nameFilters: [qsTranslate("HikariSub.Translation", "Subtitle files (*.ass *.srt *.sub *.txt)")]
@@ -7984,6 +7987,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        root.app.shellWindowLoaded(root)
         root.applyMenuShortcuts()
         if (root.shellWindow === 0)
             root.connectApi()
