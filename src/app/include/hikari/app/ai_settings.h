@@ -40,6 +40,8 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QVariantMap draft READ draft NOTIFY draftChanged)
     /// {needed, size, received, active, error}: the AI component's one-time download.
     Q_PROPERTY(QVariantMap download READ download NOTIFY downloadChanged)
+    /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
+    Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
 
 public:
     explicit AiSettings(AiFeatures &features, QObject *parent = nullptr);
@@ -51,6 +53,7 @@ public:
     QVariantMap roles() const;
     QVariantMap draft() const { return m_draft; }
     QVariantMap download() const;
+    bool sandboxed() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;

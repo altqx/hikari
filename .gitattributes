@@ -27,6 +27,7 @@
 /src/ai-sidecar/** text eol=lf
 # The export goldens are compared byte for byte (CRLF and LF).
 /tests/fixtures/export/** -text
+/tests/fixtures/import/** -text
 # FA3: the Aegisub extradata fixtures are compared byte for byte (BOM, CRLF).
 /tests/fixtures/aegisub-extradata/** -text
 

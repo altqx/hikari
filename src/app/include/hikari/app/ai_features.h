@@ -12,6 +12,7 @@ namespace hikari::api {
 class Api;
 }
 namespace hikari::backends::ai {
+class AgentBroker;
 class AiRequests;
 class AiSidecarDownload;
 class AiSidecarHost;
@@ -37,6 +38,8 @@ public:
         std::function<std::unique_ptr<backends::ai::AiSidecarHost>()> sidecarHost;
         /// The download of this version's sidecar; null when one is installed or the build runs its own.
         std::function<std::unique_ptr<backends::ai::AiSidecarDownload>()> sidecarDownload;
+        /// Adds the agent CLIs the sidecar may ask Qt to start.
+        std::function<void(backends::ai::AgentBroker &)> agents;
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
     static Ports defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion);
@@ -61,12 +64,16 @@ public:
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
     backends::ai::AiSidecarHost *sidecar() const;
+    /// Whether the sidecar runs fully sandboxed: the host's own coverage once it is built, else what this system can
+    /// enforce.
+    bool sandboxed() const;
 
 signals:
     void switched(bool on);
 
 private:
     void apply();
+    void startSidecar();
 
     struct Live;
     ui::SettingsStore &m_settings;

@@ -211,6 +211,16 @@ TEST(PluginManifest, RepeatedIdsAndBadDefaultsAreRefused)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, AFolderRequestCantTakeTheNameOfThePluginsOwnFolders)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"files": [{"id": "out", "title": "Out", "reason": "r"}, {"id": "cache", "title": "C", "reason": "r"}]})");
+    const ManifestProblem reserved = problem(json);
+    EXPECT_EQ(reserved.kind, Kind::Schema);
+    EXPECT_EQ(reserved.at, "/permissions/files/1/id");
+    EXPECT_EQ(reserved.detail, "\xE2\x80\x9C" "cache\xE2\x80\x9D names the plugin's own folder");
+}
+
 TEST(PluginManifest, TextThatIsNotJsonIsRefused)
 {
     const auto result = parseManifest("{\"id\": ", 1);

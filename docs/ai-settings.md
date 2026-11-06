@@ -9,7 +9,7 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 | AI features | **Turn off all AI features** (`ai.off`, off by default) | On OK or Apply, like every other setting |
 | Providers | Add, edit, test and delete providers | At once (see below) |
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
-| Privacy | **Use prompt caching** (`ai.promptCaching`, on by default) and the What is sent to providers link | On OK or Apply |
+| Privacy | **Use prompt caching** (`ai.promptCaching`, on by default), the What is sent to providers link, and a line that says whether the AI component runs in its sandbox here; "isn’t sandboxed on this system" shows in the warning colour where the sandbox can’t apply ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) | On OK or Apply |
 
 The Agent, External agents and MCP sections arrive with AI7, AI15 and AI3/AI13, below Models and above Privacy, as drawn in the mockup. Sign-in rows (AI6) go next to a provider's key and on the External agents rows.
 

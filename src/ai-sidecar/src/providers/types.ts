@@ -77,21 +77,17 @@ export interface CompleteParams {
     /** Names this completion in its `session/update` notifications. */
     stream: number;
     providerId: string;
-    /** Empty or absent for a provider that needs none. */
-    key?: string;
     request: Request;
 }
 
 /** Deletes the explicit cache kept for one conversation. */
 export interface ConversationEndParams {
     providerId: string;
-    key?: string;
     cacheKey: string;
 }
 
 export interface ModelsListParams {
     providerId: string;
-    key?: string;
 }
 
 export interface Usage {

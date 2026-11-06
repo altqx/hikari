@@ -213,8 +213,9 @@ DialogWindow {
                 Layout.minimumWidth: 300
                 Accessible.name: qsTr("Save to")
             }
-            Button {
+            IconTextButton {
                 objectName: "exportBrowse"
+                iconRole: "folder-open"
                 text: qsTr("Browse…")
                 onClicked: {
                     const path = destination.text
@@ -537,8 +538,9 @@ DialogWindow {
                     Accessible.name: qsTr("Frame rate")
                 }
                 Label { text: qsTr("fps"); color: Theme.muted }
-                Button {
+                IconTextButton {
                     objectName: "exportFpsFromVideo"
+                    iconRole: "fps-from-video"
                     visible: (dialog.setup.videoFps ?? 0) > 0
                     text: qsTr("Use video frame rate")
                     onClicked: fps.text = Number(dialog.setup.videoFps).toFixed(3).replace(/\.?0+$/, "")

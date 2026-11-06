@@ -198,6 +198,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.settings, "/contributes/settings")})
         if (problem)
             return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
+        if (const std::string &id = m.permissions.files[i].id; id == "data" || id == "cache")
+            return std::unexpected(ManifestProblem{Kind::Schema, "/permissions/files/" + std::to_string(i) + "/id",
+                                                   "\xE2\x80\x9C" + id + "\xE2\x80\x9D names the plugin's own folder", 0});
     for (std::size_t i = 0; i < m.settings.size(); ++i)
         if (auto problem = badDefault(m.settings[i], i))
             return std::unexpected(*problem);

@@ -4,6 +4,8 @@
 #include "workspace_layout.h"
 
 #include <QCollator>
+#include <QDir>
+#include <QStandardPaths>
 #include <QJsonArray>
 #include <QJsonDocument>
 
@@ -152,6 +154,36 @@ void PluginDialogState::present(const Json &spec, bool modal)
     emit changed();
 }
 
+PluginFileRequest::PluginFileRequest(QString kind, QString pluginName, QString title, QString reason, bool writable,
+                                     QStringList nameFilters, QString name, Answer answer, QObject *parent)
+    : QObject(parent), m_kind(std::move(kind)), m_pluginName(std::move(pluginName)), m_title(std::move(title)),
+      m_reason(std::move(reason)), m_writable(writable), m_nameFilters(std::move(nameFilters)), m_answer(std::move(answer))
+{
+    if (!name.isEmpty())
+        m_file = QUrl::fromLocalFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).filePath(name));
+}
+
+void PluginFileRequest::accept(const QUrl &chosen, bool remember)
+{
+    const QString path = chosen.toLocalFile();
+    if (path.isEmpty()) {
+        reject();
+        return;
+    }
+    if (const Answer answer = std::exchange(m_answer, nullptr)) {
+        emit settled();
+        answer(path, remember);
+    }
+}
+
+void PluginFileRequest::reject()
+{
+    if (const Answer answer = std::exchange(m_answer, nullptr)) {
+        emit settled();
+        answer(std::nullopt, false);
+    }
+}
+
 PluginUi::PluginUi(Deliver deliver, QObject *parent) : QObject(parent), m_deliver(std::move(deliver)) {}
 
 PluginUi::~PluginUi() = default;
@@ -168,8 +200,10 @@ void PluginUi::setPlugins(std::vector<Plugin> plugins)
         next.emplace(known.plugin.id, std::move(known));
     }
     for (const auto &[id, old] : m_plugins)
-        if (const auto now = next.find(id); now == next.end() || !now->second.plugin.enabled)
+        if (const auto now = next.find(id); now == next.end() || !now->second.plugin.enabled) {
             closeDialogsOf(id);
+            dropFileRequestsOf(id);
+        }
     m_plugins = std::move(next);
     for (auto &[dock, state] : m_panels)
         refresh(*state);
@@ -206,6 +240,7 @@ void PluginUi::running(const std::string &plugin)
 void PluginUi::stopped(const std::string &plugin, const QString &status, const QString &reason)
 {
     closeDialogsOf(plugin);
+    dropFileRequestsOf(plugin);
     const auto it = m_plugins.find(plugin);
     if (it == m_plugins.end())
         return;
@@ -507,6 +542,63 @@ void PluginUi::closeDialogsOf(const std::string &plugin)
             keys.push_back(key);
     for (const QString &key : keys)
         close(key);
+}
+
+void PluginUi::askForFile(const std::string &plugin, FileAsk ask, PluginFileRequest::Answer answer)
+{
+    const auto known = m_plugins.find(plugin);
+    const QString name = known == m_plugins.end() ? qs(plugin) : qs(known->second.plugin.name);
+    auto *request = new PluginFileRequest(std::move(ask.kind), name, std::move(ask.title), std::move(ask.reason), ask.writable,
+                                          std::move(ask.nameFilters), std::move(ask.name), std::move(answer), this);
+    connect(request, &PluginFileRequest::settled, this, [this, request] { answered(request); });
+    m_fileRequests.emplace_back(plugin, request);
+    if (m_fileRequests.size() == 1)
+        emit fileRequestChanged();
+}
+
+void PluginUi::answered(PluginFileRequest *request)
+{
+    const auto it = std::ranges::find(m_fileRequests, request, &std::pair<std::string, PluginFileRequest *>::second);
+    if (it == m_fileRequests.end())
+        return;
+    const bool front = it == m_fileRequests.begin();
+    m_fileRequests.erase(it);
+    request->deleteLater();
+    if (front)
+        emit fileRequestChanged();
+}
+
+void PluginUi::dropFileRequestsOf(const std::string &plugin)
+{
+    const bool front = !m_fileRequests.empty() && m_fileRequests.front().first == plugin;
+    std::erase_if(m_fileRequests, [&plugin](const auto &pending) {
+        if (pending.first != plugin)
+            return false;
+        pending.second->deleteLater();
+        return true;
+    });
+    if (front)
+        emit fileRequestChanged();
+}
+
+bool PluginUi::drop(const QString &dock, const QList<QUrl> &files)
+{
+    const auto parts = partsOf(dock);
+    const auto state = m_panels.find(dock);
+    if (!parts || state == m_panels.end() || state->second->status() != QStringLiteral("running") || !m_grantDrop)
+        return false;
+    const QVariantMap tree = state->second->tree().toMap();
+    if (!tree.value(QStringLiteral("drop")).toBool())
+        return false;
+    Json granted = Json::array();
+    for (const QUrl &url : files)
+        if (url.isLocalFile())
+            if (Json file = m_grantDrop(parts->plugin, url.toLocalFile()); file.isObject())
+                granted.push(std::move(file));
+    if (granted.asArray().empty())
+        return false;
+    deliver(parts->plugin, "panel:" + parts->panel, Json::object({{"kind", "drop"}, {"files", std::move(granted)}}), {});
+    return true;
 }
 
 }

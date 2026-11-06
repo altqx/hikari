@@ -2,6 +2,7 @@
 
 #include "hikari/api/api.h"
 #include "hikari/api/json.h"
+#include "hikari/backends/sandbox.h"
 
 #include <QByteArray>
 #include <QElapsedTimer>
@@ -57,6 +58,35 @@ using SidecarReply = std::function<void(SidecarResult)>;
 /// or telemetry switch.
 QProcessEnvironment sidecarEnvironment(const QProcessEnvironment &from);
 
+class AiSidecarHost;
+
+/// A request the sidecar sent to Qt. It gets exactly one answer; once the sidecar is lost, every call does nothing.
+class SidecarRequest {
+public:
+    void respond(api::Json result);
+    void fail(int code, std::string message, api::Json data = {});
+    /// A notification sent ahead of the answer.
+    void notify(const std::string &method, api::Json params);
+    /// Runs once when the sidecar cancels the request or is lost. A cancelled request that is still open needs
+    /// an answer.
+    void onCancel(std::function<void()> cancel);
+    bool open() const;
+
+private:
+    friend class AiSidecarHost;
+    SidecarRequest(AiSidecarHost &host, api::Json id, std::uint64_t generation);
+    void cancel();
+
+    AiSidecarHost *m_host;
+    std::weak_ptr<bool> m_alive;
+    api::Json m_id;
+    std::uint64_t m_generation;
+    bool m_answered = false;
+    std::function<void()> m_cancel;
+};
+
+using SidecarRequestHandler = std::function<void(const api::Json &params, std::shared_ptr<SidecarRequest> request)>;
+
 /// Starts the AI sidecar on the first request and talks JSON-RPC 2.0 to it, one message per line on stdio.
 /// Lives on its owner's thread, which needs a Qt event loop.
 class AiSidecarHost final : public QObject {
@@ -69,6 +99,8 @@ public:
         QStringList arguments;
         QString workingDirectory;
         QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        /// Without one the sidecar runs unconfined. With one, temporary files go to <workingDirectory>/tmp.
+        std::optional<sandbox::Profile> sandbox;
         std::string buildId;
         int hikariApiVersion = api::kApiVersion;
         int handshakeMs = 10'000;
@@ -98,6 +130,8 @@ public:
     void cancel(std::uint64_t request);
     void notify(const std::string &method, api::Json params);
     void onNotification(NotificationHandler handler) { m_onNotification = std::move(handler); }
+    /// Answers the sidecar's requests for `method`; `_hikari/api.call` is built in.
+    void handle(const std::string &method, SidecarRequestHandler handler);
     /// The Documents the user attached with @; the sidecar's tools see them besides the editing target.
     void setAttachedDocuments(std::vector<application::DocumentId> documents) { m_caller.attached = std::move(documents); }
     /// Without a gate, calls for MCP connections fail as unavailable.
@@ -111,6 +145,7 @@ public:
     std::size_t outstanding() const { return m_pending.size(); }
     QByteArray diagnostics() const { return m_diagnostics; }
     qint64 processId() const { return m_process ? m_process->processId() : 0; }
+    const sandbox::Coverage &sandboxCoverage() const { return m_launcher->coverage(); }
 
 signals:
     void ready();
@@ -120,6 +155,8 @@ signals:
     void finished();
 
 private:
+    friend class SidecarRequest;
+
     struct Pending {
         std::string method;
         SidecarReply reply;
@@ -129,12 +166,17 @@ private:
 
     void start();
     void startProcess();
+    void preparePrivateFolder();
     void handshake();
     void readOutput();
     void readDiagnostics();
     void receive(const QByteArray &line);
     void receiveRequest(const api::Json &id, const std::string &method, const api::Json *params);
     void receiveResponse(std::uint64_t id, const api::Json &message);
+    void callApi(const api::Json &params, std::shared_ptr<SidecarRequest> request);
+    void answer(SidecarRequest &request, api::Json body);
+    void cancelIncoming(const api::Json &id);
+    void dropIncoming();
     void send(const api::Json &message);
     void sendQueued();
     void respond(const api::Json &id, api::Json body);
@@ -162,15 +204,14 @@ private:
     std::size_t m_pendingBytes = 0;
     std::uint64_t m_generation = 0;
     qint64 m_pid = 0;
-    std::size_t m_incoming = 0;
+    std::map<std::string, SidecarRequestHandler> m_handlers;
+    std::map<std::string, std::shared_ptr<SidecarRequest>> m_incoming; // by the id's JSON text
     std::deque<qint64> m_crashes;
     QElapsedTimer m_clock;
     NotificationHandler m_onNotification;
     McpGate m_mcpGate;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
-#ifdef Q_OS_WIN
-    void *m_job = nullptr;
-#endif
+    std::unique_ptr<sandbox::Launcher> m_launcher;
 };
 
 }

@@ -54,7 +54,7 @@ function causeOf(error: unknown): ProviderError | undefined {
     return undefined;
 }
 
-/** An SDK error that only wraps one the egress fetch threw. */
+/** An SDK error that only wraps one the relay fetch threw. */
 export function wrapsProviderError(error: unknown): boolean {
     return causeOf(error) !== undefined;
 }

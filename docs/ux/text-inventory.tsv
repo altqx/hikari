@@ -541,6 +541,7 @@ Menus	Documents	Subtitle file 	whitespace	src/app/application.cpp src/ui/Main.qm
 Menus	Documents	Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)		src/ui/Main.qml src/ui/SessionWindows.qml
 Menus	Documents	Videos with embedded subtitles (*.mkv *.ogm)		src/ui/Main.qml
 Menus	Documents	Word-timed lyrics (*.lrc *.ttml)		src/ui/Main.qml
+Menus	Documents	YouTube timed text (*.ytt *.srv3)		src/ui/Main.qml
 Menus	Documents	“%1” is read-only.		src/ui/Main.qml src/ui/SessionWindows.qml
 Menus	Editor	Border color	spelling:colour	src/application/hotkeys.cpp src/ui/LineEditorStrip.qml src/ui/command_names.cpp …
 Menus	Editor	Bottom-center	spelling:centre	src/application/visual_position.cpp src/ui/AlignmentChoice.qml src/ui/command_names.cpp
@@ -3412,6 +3413,7 @@ Messages	Documents	Associated files:\n	colon whitespace	src/app/application_tab_
 Messages	Documents	Audio: 	colon whitespace	src/app/application_tab_menu.cpp src/application/include/hikari/application/session_file.h src/application/session_file.cpp
 Messages	Documents	Choose where to save the untitled document.		src/app/application.cpp
 Messages	Documents	Could not import %1: %2. Nothing was imported.		src/app/application.cpp
+Messages	Documents	Could not import %1 as YouTube timed text. %2 Nothing was imported.		src/app/application.cpp
 Messages	Documents	Could not import %1: line %2: %3. Nothing was imported.		src/app/application.cpp
 Messages	Documents	Could not open %1; nothing was changed.		src/app/application.cpp src/app/application_tabs.cpp
 Messages	Documents	Could not reload the subtitles; nothing was changed.		src/app/application.cpp

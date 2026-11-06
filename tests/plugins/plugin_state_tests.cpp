@@ -71,10 +71,12 @@ public:
     }
     void unlock() override { sequence.push_back("unlock"); }
     std::vector<std::pair<std::string, Json>> uiCalls;
+    std::vector<Area> areas;
     std::map<std::string, std::function<std::expected<Json, Json>(const Json &)>> uiOperations;
-    std::expected<Json, Json> ui(const std::string &operation, const Json &params) override
+    std::expected<Json, Json> request(Area area, const std::string &operation, const Json &params) override
     {
         uiCalls.emplace_back(operation, params);
+        areas.push_back(area);
         if (const auto it = uiOperations.find(operation); it != uiOperations.end())
             return it->second(params);
         return Json::object();
@@ -616,6 +618,50 @@ TEST_F(PluginStateTest, PanelsAndDialogsGoToHikariSubAsTheirOwnService)
     EXPECT_EQ(m_host.uiCalls[1].second.dump(), Json::parse(R"({"panel": "board"})")->dump());
     EXPECT_EQ(m_host.uiCalls[2].first, "dialogs.show");
     EXPECT_EQ(m_host.uiCalls[3].first, "dialogs.close");
+}
+
+TEST_F(PluginStateTest, FilesAndNetworkGoToHikariSubAsTheirOwnServices)
+{
+    m_host.uiOperations["files.pick"] = [](const Json &params) -> std::expected<Json, Json> {
+        if (params.find("save"))
+            return Json::object();
+        return *Json::parse(R"({"file": "f1", "name": "a.ass", "access": "read"})");
+    };
+    m_host.uiOperations["files.open"] = [](const Json &params) -> std::expected<Json, Json> {
+        if (params.find("place")->asString() == "home")
+            return std::unexpected(Json::object({{"code", "not_granted"}, {"message", "no place home"}}));
+        return Json::object({{"file", "f2"}, {"name", params.find("path")->asString()}, {"access", "write"}});
+    };
+    m_host.uiOperations["files.folder"] = [](const Json &) { return *Json::parse(R"({"granted": false})"); };
+    m_host.uiOperations["files.entries"] = [](const Json &) { return *Json::parse(R"({"entries": [{"name": "a", "folder": true}]})"); };
+    m_host.uiOperations["net.fetch"] = [](const Json &) { return *Json::parse(R"({"status": 200, "body": "ok"})"); };
+    m_host.operations["files.read"] = [](const Json &params) { return Json::object({{"data", params.find("file")->asString()}}); };
+    auto state = load(R"~(
+        local picked = hikari.files.pick({title = 'Pick'})
+        hikari.notify(picked.file .. ' ' .. picked.name)
+        hikari.notify(tostring(hikari.files.pick({save = true})))
+        local note = hikari.files.open('data', 'notes/a.txt')
+        hikari.notify(note.file .. ' ' .. note.name .. ' ' .. hikari.files.read(note))
+        hikari.notify(tostring(hikari.files.write('f2', 'hi')))
+        local missing, err = hikari.files.open('home', '.bashrc')
+        hikari.notify(tostring(missing) .. ' ' .. err.code)
+        hikari.notify(tostring(hikari.files.folder('exports')))
+        hikari.notify(hikari.files.entries('cache')[1].name)
+        hikari.notify(hikari.net.fetch('https://example.com/').body)
+    )~");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"f1 a.ass", "nil", "f2 notes/a.txt f2", "true", "nil not_granted", "false", "a", "ok"}));
+    EXPECT_EQ(m_host.areas, (std::vector<Area>{Area::Files, Area::Files, Area::Files, Area::Files, Area::Files, Area::Files, Area::Net}));
+    EXPECT_EQ(m_host.uiCalls[5].second.dump(), Json::parse(R"({"path": "", "place": "cache"})")->dump());
+    EXPECT_EQ(m_host.uiCalls[6].second.dump(), Json::parse(R"({"url": "https://example.com/"})")->dump());
+    EXPECT_EQ(m_host.paramsOf("files.write").at(0).dump(), Json::parse(R"({"data": "hi", "file": "f2"})")->dump());
+
+    auto unnamed = load("hikari.files.open(nil, 'a')");
+    ASSERT_FALSE(unnamed);
+    EXPECT_NE(unnamed.error().find("main.lua:1: hikari.files.open needs a place"), std::string::npos) << unnamed.error();
+    auto noUrl = load("hikari.net.fetch({})");
+    ASSERT_FALSE(noUrl);
+    EXPECT_NE(noUrl.error().find("main.lua:1: hikari.net.fetch needs a url"), std::string::npos) << noUrl.error();
 }
 
 TEST_F(PluginStateTest, AskReturnsTheButtonAndTheValues)
