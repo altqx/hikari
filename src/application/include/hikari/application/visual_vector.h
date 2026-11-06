@@ -42,6 +42,9 @@ std::vector<VectorPoint> parseVectorPoints(std::u16string_view text);
 
 // Each coordinate plus `offset` in getfloat's `format`. A command letter is written when it changes,
 // "m" always; an "s" run closes with "c"; a lone "m" gets an "l" to the same point.
+// Vector clips keep two decimal places, as Aegisub 3.5 writes them.
+inline constexpr std::string_view kClipPointFormat = "6.2f";
+
 std::u16string serializeVectorPoints(const std::vector<VectorPoint> &points, std::string_view format,
                                      PointF offset = {0, 0});
 

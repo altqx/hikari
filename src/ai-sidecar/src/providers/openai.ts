@@ -1,10 +1,10 @@
 import OpenAI, { APIError } from "openai";
 
-import { cacheControl, markLast, prefixTexts, sortedTools, usage } from "./cache";
+import { cacheControl, markLast, marksCache, prefixTexts, sortedTools, usage } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { type Collector, schemaObject } from "./collector";
-import { kNoKey } from "./egress";
+import { kKeyPlaceholder } from "./relay";
 import { ProviderError, streamError, wrapsProviderError } from "./errors";
 import type { Message, Part, ProviderConfig, Request, StopReason } from "./types";
 
@@ -12,10 +12,10 @@ type Json = Record<string, unknown>;
 
 const dataUrl = (part: Extract<Part, { type: "image" }>) => `data:${part.mediaType};base64,${part.base64}`;
 
-function sdk({ config, key, fetch }: ClientOptions): OpenAI {
+function sdk({ config, fetch }: ClientOptions): OpenAI {
     const openRouter = config.preset === "openrouter";
     return new OpenAI({
-        apiKey: key || kNoKey,
+        apiKey: kKeyPlaceholder,
         baseURL: config.baseUrl,
         fetch,
         maxRetries: 0,
@@ -85,7 +85,7 @@ function chatClient(options: ClientOptions): Client {
         async complete(request, out, signal) {
             const body: Json = {
                 model: request.model,
-                messages: chatMessages(request, takesCacheMarks(options.config, request.model)),
+                messages: chatMessages(request, marksCache(request) && takesCacheMarks(options.config, request.model)),
                 stream: true,
                 stream_options: { include_usage: true },
             };

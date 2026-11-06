@@ -65,6 +65,11 @@ export interface Request {
      * context reused over many turns. Needs cacheKey. Where no cache can be made, the request goes out whole.
      */
     explicitCache?: boolean;
+    /**
+     * False sends no cache markers, cache key or explicit cache. Providers that cache on their own (OpenAI, Gemini's
+     * implicit cache) still may.
+     */
+    caching?: boolean;
     maxOutputTokens?: number;
 }
 
@@ -72,21 +77,17 @@ export interface CompleteParams {
     /** Names this completion in its `session/update` notifications. */
     stream: number;
     providerId: string;
-    /** Empty or absent for a provider that needs none. */
-    key?: string;
     request: Request;
 }
 
 /** Deletes the explicit cache kept for one conversation. */
 export interface ConversationEndParams {
     providerId: string;
-    key?: string;
     cacheKey: string;
 }
 
 export interface ModelsListParams {
     providerId: string;
-    key?: string;
 }
 
 export interface Usage {

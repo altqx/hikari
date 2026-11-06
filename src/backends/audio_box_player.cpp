@@ -446,6 +446,18 @@ double AudioBoxPlayer::volume() const
     return m_volume;
 }
 
+void AudioBoxPlayer::setMono(bool mono)
+{
+    const std::scoped_lock lock(m_lock);
+    m_mono = mono;
+}
+
+bool AudioBoxPlayer::mono() const
+{
+    const std::scoped_lock lock(m_lock);
+    return m_mono;
+}
+
 application::OutputFormat AudioBoxPlayer::outputFormat() const
 {
     const std::scoped_lock lock(m_lock);
@@ -524,10 +536,18 @@ void AudioBoxPlayer::fill()
         auto &source = m_source;
         source.clear();
         source.reserve(static_cast<std::size_t>(n * outChannels));
-        for (std::int64_t i = 0; i < n; i++)
-            for (int c = 0; c < outChannels; c++)
-                source.push_back(m_frames[static_cast<std::size_t>(i * srcChannels + std::min(c, srcChannels - 1))]
-                                 / 32768.0f);
+        for (std::int64_t i = 0; i < n; i++) {
+            const auto *frame = m_frames.data() + i * srcChannels;
+            if (m_mono && srcChannels > 1) {
+                float sum = 0;
+                for (int c = 0; c < srcChannels; c++)
+                    sum += frame[c];
+                source.insert(source.end(), static_cast<std::size_t>(outChannels), sum / float(srcChannels) / 32768.0f);
+            } else {
+                for (int c = 0; c < outChannels; c++)
+                    source.push_back(frame[std::min(c, srcChannels - 1)] / 32768.0f);
+            }
+        }
         if (m_stretch)
             stretch(source, outChannels);
         const auto frames = static_cast<std::int64_t>(source.size()) / outChannels;

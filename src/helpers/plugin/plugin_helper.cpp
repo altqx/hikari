@@ -7,6 +7,7 @@
 using namespace hikari::backends::helper;
 namespace protocol = hikari::backends::plugin;
 using hikari::api::Json;
+using hikari::plugin_helper::Area;
 using hikari::plugin_helper::Host;
 using hikari::plugin_helper::Level;
 using hikari::plugin_helper::Options;
@@ -26,8 +27,13 @@ public:
         return envelope(protocol::Service::Call, operation, params);
     }
 
-    std::expected<Json, Json> ui(const std::string &operation, const Json &params) override
+    std::expected<Json, Json> request(Area area, const std::string &operation, const Json &params) override
     {
+        switch (area) {
+        case Area::Files: return envelope(protocol::Service::Files, operation, params);
+        case Area::Net: return envelope(protocol::Service::Net, operation, params);
+        case Area::Ui: break;
+        }
         return envelope(protocol::Service::Ui, operation, params);
     }
 

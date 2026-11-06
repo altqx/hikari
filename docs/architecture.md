@@ -13,7 +13,7 @@ Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](adr/00
 | Minisign / `src/minisign` | Verifying minisign signatures (`ED` and `Ed`, key id, trusted comment) | libsodium only; no Qt and no other module, so the update check can link it without the plugins. |
 | Backend adapters / `src/backends` | FFMS2/libass integration, audio/general playback, automation runtime, font/file/platform services and their resource lifetime | Implement the ports consumed by application services. Backend-specific handles stay inside their adapters. Renderer, A/V clock and thread contracts are separate decisions. |
 | Qt Quick UI / `src/ui` | QML shell, reusable controls, panels, model adapters/presenters, focus and accessibility representation | Observes application state and submits commands. It does not become another authoritative document store or make native backend calls from delegates. |
-| AI sidecar / `src/ai-sidecar` | Every model call, the agent loop, prompt caching and the MCP client, in TypeScript on Bun | A separate process the app starts. It reaches documents only through `_hikari/api.call` into the Hikari API, and never opens the keychain. See [AI](#ai). |
+| AI sidecar / `src/ai-sidecar` | Every model call, the agent loop, prompt caching and the MCP client, in TypeScript on Bun | A separate process the app starts. It runs in an OS sandbox with no network and no keys, reaches documents only through `_hikari/api.call` into the Hikari API, and sends its requests out through Qt. See [AI](#ai). |
 | Composition root / `src/app` | Process startup, explicit service construction, Qt engine setup, platform adapter selection and orderly shutdown | Wires and owns dependencies once. It does not host document algorithms. |
 
 The names above describe the intended new tree. The CMake target graph and dependency packages are settled by [Choose the dependency and build strategy for the stateless CMake build](https://github.com/altqx/hikari/issues/24); creating these production modules is later implementation work.
@@ -35,12 +35,17 @@ The adapter arrow denotes implementation of port contracts, not an application d
 [ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md) splits Hikari AI in two:
 
 - **The sidecar** (`src/ai-sidecar`, TypeScript on Bun 1.4) makes the provider requests and runs the agent loop. It is one executable per platform, downloaded on its own and never part of the packages.
-- **Qt** keeps the UI, the Hikari API, the staged review, the AI settings and the keys (QtKeychain).
+- **Qt** keeps the UI, the Hikari API, the staged review, the AI settings and the keys (QtKeychain). It also makes the sidecar's network requests and starts its agent CLIs ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
 
 The pieces in C++:
 
-- **`AiFeatures`** (`src/app/ai_features.*`) is the only place that builds AI objects. It reads `ai.off`, the "Turn off all AI features" switch, before anything else. With it on, no key store, config store or sidecar host exists, so nothing reads the keychain, downloads, starts or listens. Turning the switch on builds them on demand; turning it off destroys them and stops the sidecar.
+- **`AiFeatures`** (`src/app/ai_features.*`) is the only place that builds AI objects. It reads `ai.off`, the "Turn off all AI features" switch, before anything else. With it on, no key store, config store, `Providers`, `AiRequests` or sidecar host exists, so nothing reads the keychain, downloads, starts or listens. Turning the switch on builds them on demand; turning it off destroys them and stops the sidecar. [Settings › AI](ai-settings.md) (`AiSettings`) works only through what it built.
 - **`AiSidecarHost`** (`src/backends/ai_sidecar_host.*`) starts the sidecar on the first AI action once a provider exists, never at startup or when Settings opens. It starts it with an allowlisted environment (no `*_API_KEY`, `*_BASE_URL`, `ANTHROPIC_*`, `OPENAI_*`, `GEMINI_*`, `GOOGLE_*`, `OTEL_*` or `NODE_OPTIONS`), in `<user folder>/ai/work`, in its own process group on Linux and a kill-on-close job object on Windows. Shutdown closes stdin, waits 3 s, then kills the tree.
+  - It starts the sidecar under a `sandbox::Profile` from `hikari_sandbox` (`src/backends/sandbox*`): Landlock and seccomp on Linux, an AppContainer on Windows. The sidecar may read its install folder and write only its work folder, and it has no network. `sandboxCoverage()` says what didn't apply on this system.
+  - `handle(method, handler)` lets other objects answer the sidecar's requests.
+- **`HttpRelay`** (`src/backends/ai_http_relay.*`) answers `_hikari/http.request`. It sends the request only to a known target (today a provider's base URL), puts the keychain key where the request has the `hikari-key` placeholder, and streams the answer back with the key masked.
+- **`AgentBroker`** (`src/backends/ai_agent_broker.*`) answers `_hikari/agent.*`. It starts the `claude` or `codex` Qt found on `PATH`, each in its own sandbox, checks Claude's arguments, guards Codex's JSON-RPC, and relays their stdio.
+- **`AiMcp`** (`src/app/ai_mcp.*`) runs the [MCP server](ai-mcp.md) while AI is on and `ai.mcp.server` is on. It starts the sidecar on the first MCP message, with or without a provider.
 - **`AiSidecarDownload`** (`src/backends/ai_sidecar_download.*`) fetches `hikari-ai-<version>-<platform>.gz` from the app's own release into `<user folder>/ai/sidecar/<version>/`. It checks the size and SHA-256 that release's `hikarisub-update.json` gives, and deletes a file that fails.
 
 **The link** is JSON-RPC 2.0, one message per line on the sidecar's stdin and stdout, with requests both ways:
@@ -49,6 +54,9 @@ The pieces in C++:
 - `$/cancel_request {requestId}` cancels a request, which still gets exactly one response, with code -32800.
 - `_hikari/api.call {operation, params}` runs `Api::call` under the sidecar's `Caller`. An HA1 error comes back as code -32000, with HA1's code in `data.code`.
 - `_hikari/tools.list` and `_hikari/tools.call` list and run Hikari's AI tools, which the sidecar builds from HA1's operations ([AI tools](ai-tools.md)).
+- `_hikari/http.request {stream, target, method, url, headers, body}` is every request the sidecar sends out. Qt answers with `_hikari/http.response` and `_hikari/http.data` notifications, then `{}`.
+- `_hikari/agent.start {process, agent, args, env}`, `.write`, `.closeInput` and `.kill` run an agent CLI through Qt, which sends `_hikari/agent.output` and `_hikari/agent.exit` back.
+- `_hikari/mcp.message` and `_hikari/mcp.closed` relay HikariSub's MCP server: Qt listens, the sidecar speaks MCP, and an `_hikari/api.call` marked `mcp` runs as that connection's caller ([MCP server](ai-mcp.md)).
 - The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
 
 The ACP session methods and the other `_hikari/*` methods in the ADR are declared in `src/ai-sidecar/src/protocol.ts`. Until their cards land they answer "not implemented".

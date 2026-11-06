@@ -48,7 +48,7 @@ One write runs at a time; another write meanwhile gets `busy`.
 
 ## Files
 
-A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. The plugin and AI cards decide when the user grants files; HA1 provides the table and the operations.
+A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
 
 ## Node catalogue
 

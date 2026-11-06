@@ -7,25 +7,26 @@ The provider layer of Hikari AI ([ADR 0024](adr/0024-hikari-ai.md), [AI5 #433](h
 | Part | Module | What it holds |
 | --- | --- | --- |
 | `hikari::application::ai` | `hikari_application` | Value types (providers, models, roles, usage, errors, events), `Providers` and the `KeyStore` and `ConfigStore` ports. No Qt. |
-| `hikari::backends::ai` | `hikari_ai` | `AiRequests` (requests through the sidecar), `JsonConfigStore` and `KeychainKeyStore` (QtKeychain). |
-| `src/ai-sidecar/src/providers` | the sidecar | One client per wire on `openai`, `@anthropic-ai/sdk` and `@google/genai`, the egress fetch, the catalogue and the error mapping. |
+| `hikari::backends::ai` | `hikari_ai` | `AiRequests` (requests through the sidecar), `HttpRelay` (the sidecar's network, with the key added), `JsonConfigStore` and `KeychainKeyStore` (QtKeychain). |
+| `src/ai-sidecar/src/providers` | the sidecar | One client per wire on `openai`, `@anthropic-ai/sdk` and `@google/genai`, the relayed fetch, the catalogue and the error mapping. |
 
 The core knows nothing of any of it.
 
 ## Off until a provider is added
 
-With no provider, `AiRequests::complete` fails at once with `NoProvider`. It reads no key and never asks for the sidecar, so nothing starts and no connection opens. With AI turned off, no `Providers` or sidecar exists at all.
+With no provider, `AiRequests::complete` fails at once with `NoProvider`. It never asks for the sidecar, so nothing starts, no key is read and no connection opens. With AI turned off, no `Providers` or sidecar exists at all.
 
 ## The sidecar methods
 
 | Method | Params | Result |
 | --- | --- | --- |
 | `_hikari/providers.set` | `{providers: [{id, preset, wire, baseUrl}]}` | `null` |
-| `_hikari/complete` | `{stream, providerId, key, request}` | `{reason, text, toolCalls, usage}` |
-| `_hikari/models.list` | `{providerId, key}` | `{models: [{id, name, capabilities?, price?, contextTokens?}]}` |
-| `_hikari/conversation.end` | `{providerId, key, cacheKey}` | `null`; deletes the conversation's explicit cache |
+| `_hikari/complete` | `{stream, providerId, request}` | `{reason, text, toolCalls, usage}` |
+| `_hikari/models.list` | `{providerId}` | `{models: [{id, name, capabilities?, price?, contextTokens?}]}` |
+| `_hikari/conversation.end` | `{providerId, cacheKey}` | `null`; deletes the conversation's explicit cache |
 
-- `AiRequests` sends `providers.set` with the current config before each request, then the request with the role's model and the key it just read from the keychain. The sidecar keeps the key only for that call.
+- `AiRequests` sends `providers.set` with the current config before each request, then the request with the role's model. No key goes to the sidecar ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
+- The sidecar sends each provider request back to Qt as `_hikari/http.request` with target `{kind: "provider", id}`. `HttpRelay` reads the key from the keychain, puts it where the SDK wrote the `hikari-key` placeholder, and drops that header for a provider without a key.
 - While a completion runs, `session/update` notifications carry `{stream, update}` with `text`, `toolCall {index, id, name}`, `toolArguments {index, delta}` and `usage` updates. C++ turns them into `TextDelta`, `ToolCallStarted` and `ToolCallArguments`; the answer becomes `Finished`.
 - A failure answers with code `-32010` and `data: {kind, httpStatus, detail}`, which becomes `Failed`. `$/cancel_request` closes the provider's connection and answers `-32800`, which becomes `Failed{Cancelled}`.
 - `src/ai-sidecar/src/providers/schema.ts` holds the JSON Schemas of every method's params and results.
@@ -73,16 +74,17 @@ Sources, read on 2026-11-02:
 
 ## Keys
 
-- Keys live only in the OS keychain through QtKeychain: the Secret Service (libsecret) or KWallet on Linux, the Credential Store on Windows. The entry is `ai-provider/<provider id>` under the service `HikariSub`. The sidecar never opens the keychain and never reads a key from its environment.
+- Keys live only in the OS keychain through QtKeychain: the Secret Service (libsecret) or KWallet on Linux, the Credential Store on Windows. The entry is `ai-provider/<provider id>` under the service `HikariSub`. The sidecar never holds a key: only Qt's relay adds it to the outgoing request, and it masks the key as `[key]` in what comes back.
 - A provider is added only once its key is in the keychain. With no keyring daemon, or when the user refuses access, it isn't added, and the caller gets `KeychainUnavailable` or `KeychainDenied` to tell the user. There is no plain-text fallback.
-- Every SDK client sends through one egress fetch. It reaches only URLs under the provider's base URL and never follows a redirect.
+- Every SDK client sends through the relay. Qt sends a request only to a URL under the provider's base URL, never follows a redirect, keeps no cookies and honours the system proxy.
 - A key travels only over HTTPS, or over plain HTTP to this machine (`localhost`, `127.0.0.0/8`, `::1`) or to a Tailscale peer: an address in `100.64.0.0/10` or `fd7a:115c:a1e0::/48` while this machine has an address in the same range (the IPv4 range is also ISPs' CGNAT space). A host name, `*.ts.net` included, counts only by the address it resolves to: it is resolved once and the request goes to the address that passed, with the name kept in `Host`, so DNS can't send the key elsewhere. Anything else, a LAN address included, fails with `InsecureKey` before a connection opens.
 - The provider file, the sidecar's answers and the logs never hold a key. The tests check each.
 
 ## Models and roles
 
-- `AiRequests::refreshModels` asks the sidecar for the provider's catalogue and `Providers::setModels` stores it. Capabilities (tools, vision) and prices come from the catalogue where it reports them (OpenRouter does). Otherwise the preset's defaults apply: tools and vision for OpenAI and Anthropic, tools, vision and video for Gemini, neither for OpenRouter's unlisted models and custom endpoints. The user's own correction for a model wins over both.
-- The roles are chat, translator, reviewer, vision and judge. A role without its own model uses the chat model. The first provider added with a catalogue becomes the chat model.
+- `AiRequests::refreshModels` asks the sidecar for the provider's catalogue and `Providers::setModels` stores it. `AiRequests::probe` lists the catalogue of a provider that isn't stored yet, with the key the user typed, for Test connection in [Settings › AI](ai-settings.md); nothing is saved.
+- `Providers::update` changes an added provider in place, keeping its key unless given a new one, and `Providers::unassign` sends a role back to the chat model. Capabilities (tools, vision) and prices come from the catalogue where it reports them (OpenRouter does). Otherwise the preset's defaults apply: tools and vision for OpenAI and Anthropic, tools, vision and video for Gemini, neither for OpenRouter's unlisted models and custom endpoints. The user's own correction for a model wins over both.
+- The roles are chat, translator, reviewer, vision and judge. A role without its own model uses the chat model. The first catalogue to arrive fills the chat role while it is empty, whether it came with the provider or from a later refresh.
 
 ## Usage and cost
 
@@ -106,6 +108,7 @@ Prompt caching runs on the provider the user chose, so long agent sessions and r
   - **Storage cost.** Google bills cache storage per hour, and that cost is not in `Usage`.
   - **Explicit caches are generateContent-only.** They aren't offered for Gemini 4 Argon and later, nor in Google's newer Interactions API. There a turn can chain on the server with `previous_interaction_id`, which needs the interaction stored (the default, kept up to 55 days); `store: false` turns storage off and with it the chaining, and only implicit caching applies. Hikari uses generateContent and stores nothing on Google beyond the explicit cache a request asks for.
 - **Custom endpoints** get nothing extra: no cache key, no markers, no explicit caches.
+- **Turned off.** Settings › AI › Use prompt caching (`ai.promptCaching`, on by default) is the switch. With it off, `AiRequests` sends every request with `caching: false`, and the sidecar drops the cache key, the explicit cache and every marker. OpenAI and Gemini's implicit cache still work on their own, which no request can turn off.
 - **Privacy.** Caching stays on the provider the user chose. Nothing new is stored on this machine, and no answer is replayed from a local cache.
 
 Sources, read on 2026-11-02 (Google's caching and Interactions pages again on 2026-11-03): Anthropic's [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), OpenAI's [prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), OpenRouter's [prompt caching](https://openrouter.ai/docs/features/prompt-caching) and its [models list](https://openrouter.ai/api/v1/models) for the price fields, Google's [context caching](https://aistudio.google.com/docs/caching), [caching API](https://ai.google.dev/api/caching), [Interactions API](https://aistudio.google.com/docs/interactions-overview) and [pricing](https://ai.google.dev/gemini-api/docs/pricing), and `CachedContent` in the [Gemini API v1beta discovery document](https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta).
@@ -130,7 +133,9 @@ Sources, read on 2026-11-02 (Google's caching and Interactions pages again on 20
 
 - `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/providers`): a local mock server for each wire, Gemini included, covering streaming split at awkward bytes, tool calls, vision and history encoding, cache markers and keys on the wire, a stable prefix that is byte-identical across turns, cache reads and writes in usage, the Gemini explicit cache lifecycle, HTTP and in-stream errors, safety blocks, early ends, timeouts, cancellation, catalogues, the key rules and the JSON-RPC methods against their schemas.
 - `hikari_application_ai_providers_tests`: role fallback, capabilities, cost, keychain failures, removal, the catalogue and a Gemini model in every role.
-- `hikari_backends_ai_requests_tests`: requests through a fake sidecar: no provider starts nothing, a cancel before the key sends nothing, the key and model reach the sidecar, errors keep their kind.
+- `hikari_backends_ai_requests_tests`: requests through a fake sidecar: no provider starts nothing, the model reaches the sidecar and no key does, the relay reaches a provider with its keychain key, errors keep their kind.
+- `hikari_backends_ai_http_relay_tests`: the relay against a scripted local server: the key is added and masked, an SSE event passes before the next arrives, keyless providers, the key rules, pinned names, URLs outside the base, redirects, dropped headers, unknown targets and cancellation.
+- `hikari_backends_ai_relay_sidecar_tests`: the real sidecar, sandboxed, lists models through the relay with a key only Qt holds.
 - `hikari_backends_ai_config_store_tests`: the provider file keeps everything but the key.
 
 No test talks to a real provider.

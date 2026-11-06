@@ -8,7 +8,8 @@ namespace hikari::application {
 
 class EditSession;
 
-// FFMS2's FFMS_ColorSpaces / FFMS_ColorRanges values (libavutil's AVCOL_SPC_* / AVCOL_RANGE_*).
+// FFMS2's FFMS_ColorSpaces / FFMS_ColorRanges values (libavutil's AVCOL_SPC_* / AVCOL_RANGE_*), then
+// libavutil's AVCOL_PRI_* primaries and AVCOL_TRC_* transfers.
 namespace ffms_colour {
 inline constexpr int kRgb = 0;
 inline constexpr int kBt709 = 1;
@@ -20,6 +21,13 @@ inline constexpr int kSmpte240m = 7;
 inline constexpr int kRangeUnspecified = 0;
 inline constexpr int kRangeMpeg = 1;
 inline constexpr int kRangeJpeg = 2;
+inline constexpr int kPrimariesBt709 = 1;
+inline constexpr int kPrimariesBt2020 = 9;
+inline constexpr int kPrimariesDciP3 = 11;
+inline constexpr int kPrimariesDisplayP3 = 12;
+inline constexpr int kTransferBt709 = 1;
+inline constexpr int kTransferPq = 16;
+inline constexpr int kTransferHlg = 18;
 }
 
 // "TV." or "PC." (full range) with 601, 709, FCC or 240M, else "None".
@@ -59,10 +67,13 @@ public:
     const std::string &source() const { return m_source; }
     int sourceColorSpace() const { return m_colorSpace; }
     int sourceColorRange() const { return m_colorRange; }
+    // The source names its matrix; else source() is the guess from the size.
+    bool sourceTagged() const { return m_tagged; }
 
 private:
     int m_colorSpace = ffms_colour::kUnspecified;
     int m_colorRange = ffms_colour::kRangeUnspecified;
+    bool m_tagged = false;
     std::string m_applied, m_source;
 };
 

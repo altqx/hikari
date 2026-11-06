@@ -31,6 +31,7 @@ class StyleManagerController : public QObject {
 public:
     struct Hooks {
         std::function<application::EditSession *()> target;
+        std::function<application::EditSession *(int)> windowTarget; // a shell window's current tab
         // `session` is null for a closed Document or the reference; ids are never reused.
         std::function<std::optional<application::DocumentId>()> targetDocument;
         std::function<application::EditSession *(application::DocumentId)> session;
@@ -54,9 +55,10 @@ public:
     const application::StyleCatalogs &catalogStore() const { return m_catalogs; }
 
     Q_INVOKABLE void refreshLists();
-    // The editing target's Styles in order: {name, font, size, bold, italic, primary, outline
-    // (QColor, the ASS alpha as opacity), lines (how many Lines use it)}.
-    Q_INVOKABLE QVariantList panelRows() const;
+    // The Styles of the shell window's current tab in order: {name, font, size, bold, italic,
+    // primary, outline (QColor, the ASS alpha as opacity), lines (how many Lines use it)}.
+    Q_INVOKABLE QVariantList panelRows(int shellWindow) const;
+    Q_INVOKABLE bool availableIn(int shellWindow) const;
     // Notifies `available` when the target gains or loses ASS Styles.
     void documentEdited();
     // The catalog refreshLists would make current for the target now.
@@ -143,6 +145,7 @@ private:
         core::StyleValues opened;
         std::optional<application::DocumentId> document;
         std::u8string catalog;
+        std::u8string copyOf;
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
     void catalogChosen();
@@ -150,7 +153,8 @@ private:
     application::EditSession *editSession() const;
     bool applyDocument(application::EditSession &session, const application::StyleList &styles,
                        const std::vector<std::optional<std::size_t>> &origin,
-                       std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt);
+                       std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt,
+                       std::optional<std::pair<std::u8string, std::u8string>> copy = std::nullopt);
 
     application::StyleCatalogs m_catalogs;
     Hooks m_hooks;

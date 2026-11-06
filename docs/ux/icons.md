@@ -40,6 +40,10 @@ IC2 ([#550](https://github.com/altqx/hikari/issues/550)) went past menus: [icon-
 
 CX3 ([#579](https://github.com/altqx/hikari/issues/579)) drew the four roles the approved context-menu design ([#578](https://github.com/altqx/hikari/issues/578)) asked for: paste-special (the clipboard with an accent asterisk, for the Grid's Paste special ▸), and tab-switch, tab-close-others and tab-close-right for the document tab menu. They are `pending` for CX4 ([#580](https://github.com/altqx/hikari/issues/580)) and CX6 ([#582](https://github.com/altqx/hikari/issues/582)), which build those menus.
 
+FA14 ([#571](https://github.com/altqx/hikari/issues/571)) drew align-to-video for "Align to video…" in the Video menu: a video frame over a time bracket, with an accent crosshair on the picked point.
+
+IC3 ([#778](https://github.com/altqx/hikari/issues/778)) reviewed the roles drawn after IC2 without an icon review and redrew eleven of them; [icon-gaps-3.md](icon-gaps-3.md) lists them, the wave-8 roles that had two meanings and the 35 roles it drew, 27 of them `pending` for open cards. folder-open is only "Choose a folder": a command that opens a folder in the file manager takes show-in-folder. A diamond is a keyframe, so checkpoint is a node on a line. A role's family shares its badges: the open, recent and close commands take plus_badge, clock_badge and cross_badge, a reload takes the reload badge, an update the up arrow. Every circular arrow (refresh, check-updates, restart, restore-default, history, tool-rotate-z and the reload badge) is a circle open at the top with a solid arrowhead. A note's head is a tilted oval the stem rises from.
+
 KE1 ([#283](https://github.com/altqx/hikari/issues/283)) drew render-cost for "Show / hide render cost" in the Video menu and the video's context menu: a stopwatch whose accent hand marks the time the frame's subtitles took to draw.
 
 ## Geometry

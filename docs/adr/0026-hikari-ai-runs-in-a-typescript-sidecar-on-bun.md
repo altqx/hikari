@@ -16,6 +16,8 @@ This amends [ADR 0024](0024-hikari-ai.md). It replaces these parts of it:
 
 The rest of ADR 0024 stands. That includes no AI in core, off and silent until a provider is added, keys in QtKeychain, per-role models, the panel, the three permission modes and the always-prompt list.
 
+Amended by [ADR 0029](0029-the-ai-sidecar-runs-in-an-os-sandbox.md): the sidecar runs in an OS sandbox with no network and no keys; its requests go out through Qt, and Qt starts the agent CLIs, each in its own sandbox.
+
 ## Boundary
 
 - **The sidecar does:** provider requests on the official SDKs (`openai`, `@anthropic-ai/sdk`, `@google/genai`), prompt caching, the agent loop, the model calls for every role, the MCP client ([AI13 #441](https://github.com/altqx/hikari/issues/441)), the MCP server protocol ([AI3 #431](https://github.com/altqx/hikari/issues/431)) and the external agents ([AI15 #443](https://github.com/altqx/hikari/issues/443)).
@@ -214,3 +216,5 @@ Tests use mock servers only. No test calls a real provider or a real vendor CLI,
 7. **AI20's UI**, after its design gate.
 
 **The C++ reference.** #637 and #641 merge on green and stay as the reference until the TypeScript port passes the same cases; the port PR then deletes them. AI19's paused C++ branch isn't merged, and its cases move to the port.
+
+Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): the AI reaches the window's Project only through Hikari API folder grants. The sidecar's working directory stays its private folder, and Claude's and Codex's built-in file tools stay off.

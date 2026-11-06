@@ -43,6 +43,7 @@ export const kRequestSchema = object({
     cacheKey: string,
     cacheLifetime: { type: "string", enum: ["minutes", "hour"] },
     explicitCache: boolean,
+    caching: boolean,
     maxOutputTokens: integer,
 }, ["model", "messages"]);
 
@@ -53,10 +54,10 @@ export const kSchemas = {
             items: object({ id: string, preset: { type: "string", enum: kPresets }, wire: { type: "string", enum: kWires }, baseUrl: string }),
         },
     }),
-    completeParams: object({ stream: integer, providerId: string, key: string, request: kRequestSchema },
+    completeParams: object({ stream: integer, providerId: string, request: kRequestSchema },
         ["stream", "providerId", "request"]),
-    modelsListParams: object({ providerId: string, key: string }, ["providerId"]),
-    conversationEndParams: object({ providerId: string, key: string, cacheKey: string }, ["providerId", "cacheKey"]),
+    modelsListParams: object({ providerId: string }, ["providerId"]),
+    conversationEndParams: object({ providerId: string, cacheKey: string }, ["providerId", "cacheKey"]),
     finished: object({
         reason: { type: "string", enum: ["end", "toolUse", "maxTokens", "refused"] },
         text: string,

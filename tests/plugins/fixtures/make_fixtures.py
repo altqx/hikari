@@ -63,6 +63,11 @@ def main():
     write("bad-icon.hikariplugin", package({"hikari-plugin.json": manifest("1.0.0", icon="icon.png"),
                                             "main.lua": "return '1.0.0'\n", "icon.png": png(128, 128)}))
     write("not-a-zip.hikariplugin", b"hikari-plugin.json is not inside a zip\n")
+    write("hello-1.3.0-network.hikariplugin",
+          hello("1.3.0", "a", permissions={
+              "network": {"hosts": ["api.example.com", "cdn.example.com"], "reason": "Looks words up in an online dictionary"},
+              "files": [{"id": "glossaries", "title": "Glossary folder", "writable": False, "reason": "Reads your glossaries"}]}),
+          "a")
     native = hello("1.0.0", "a", id="com.example.native", name="Native Tools", tier="unrestricted",
                    description="Runs a native tracker")
     write("native-1.0.0-unrestricted.hikariplugin", native)

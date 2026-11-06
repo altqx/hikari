@@ -66,6 +66,8 @@ public:
     std::expected<Manifest, std::string> installedManifest(std::string_view id) const;
     // Checks the value against the installed manifest, then keeps it in plugins.json.
     std::expected<void, std::string> setSetting(std::string_view id, std::string_view setting, const api::Json &value);
+    // Remembers the folder for one of the manifest's file requests in plugins.json; nullopt forgets it.
+    std::expected<void, std::string> setGrant(std::string_view id, std::string_view request, std::optional<FileGrant> grant);
     std::expected<void, std::string> uninstall(std::string_view id, bool removeData);
 
 private:

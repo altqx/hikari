@@ -80,10 +80,13 @@ std::expected<std::size_t, std::u8string> commitStyle(StyleList &styles, const S
 // nullopt for a Document without ASS Styles.
 std::optional<StyleList> documentStyles(const EditSession &session);
 // `origin[i]` is a Style's previous row (nullopt: new), so unchanged ones keep their bytes. With
-// `rename` the Lines in `rename->first` take `rename->second`. No step when nothing changes.
+// `rename` the Lines in `rename->first` take `rename->second`. srv3 style options follow their Style:
+// renamed with it, removed with it, and copied to `copy->second` from `copy->first`. No step when
+// nothing changes.
 std::expected<void, CommandRefusal>
 setDocumentStyles(EditSession &session, const StyleList &styles, const std::vector<std::optional<std::size_t>> &origin,
-                  std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt);
+                  std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt,
+                  std::optional<std::pair<std::u8string, std::u8string>> copy = std::nullopt);
 
 // Removes Styles no Line uses, never the TLMode Style.
 struct CleanResult {

@@ -55,6 +55,8 @@ const FamilyInfo &familyInfo(Family family);
 const std::array<Family, kFamilyCount> &railOrder();
 // The family a VIDEO_TOOL_* command chooses.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
+// The vector clip tool's option a VIDEO_VECTOR_CLIP_* command sets: "mode0" to "mode5", or "invert".
+std::optional<std::string> vectorClipOptionOfHotkey(std::string_view symbol);
 
 // A pointer event over the video window, in its device pixels.
 struct Pointer {
@@ -323,6 +325,8 @@ public:
         return false;
     }
     virtual bool ignoreFiltered() const { return false; }
+    // The handle size setting: 1 is HikariSub legacy's size.
+    virtual float handleScale() const { return 1.f; }
     virtual void log(std::u16string_view text) { (void)text; }
     // The Line editor's selection in the text the tools edit, in UTF-16 code units.
     virtual std::pair<long, long> editorSelection() const { return {0, 0}; }
@@ -350,11 +354,12 @@ private:
     PointerShape m_pointerShape = PointerShape::Arrow;
 };
 
-// Device pixels per HikariSub legacy pixel: handle, ring and arrow sizes and grab
-// and snap distances times this keep their on-screen size.
+// Device pixels per HikariSub legacy pixel, times the handle size setting:
+// handle, ring and arrow sizes and grab and snap distances times this keep their
+// on-screen size.
 inline float unitOf(const VisualHost &host)
 {
-    return static_cast<float>(host.view().devicePixelRatio());
+    return static_cast<float>(host.view().devicePixelRatio()) * host.handleScale();
 }
 
 // The host gives a tool pointer events over the video with a video open, keys

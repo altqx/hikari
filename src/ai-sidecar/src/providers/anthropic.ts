@@ -1,10 +1,10 @@
 import Anthropic, { APIError } from "@anthropic-ai/sdk";
 
-import { cacheControl, markLast, prefixTexts, sortedTools } from "./cache";
+import { cacheControl, markLast, marksCache, prefixTexts, sortedTools } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
-import { kNoKey } from "./egress";
+import { kKeyPlaceholder } from "./relay";
 import { ProviderError, wrapsProviderError } from "./errors";
 import type { ErrorKind, Request, StopReason, Usage } from "./types";
 
@@ -41,7 +41,7 @@ function messages(request: Request): Json[] {
             out.push({ role: message.author, content });
     }
     const last = out.at(-1);
-    if (last)
+    if (last && marksCache(request))
         markLast(last.content as Json[], cacheControl(request.cacheLifetime));
     return out;
 }
@@ -66,11 +66,11 @@ function sdkBase(baseUrl: string): string {
     return baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
 }
 
-export function anthropicClient({ config, key, fetch }: ClientOptions): Client {
+export function anthropicClient({ config, fetch }: ClientOptions): Client {
     const client = new Anthropic({
-        apiKey: key || kNoKey,
+        apiKey: kKeyPlaceholder,
         // The SDK sends the key as a bearer token; Anthropic-compatible servers expect x-api-key.
-        defaultHeaders: { "x-api-key": key || kNoKey, Authorization: null },
+        defaultHeaders: { "x-api-key": kKeyPlaceholder, Authorization: null },
         baseURL: sdkBase(config.baseUrl),
         fetch,
         maxRetries: 0,
@@ -91,7 +91,8 @@ export function anthropicClient({ config, key, fetch }: ClientOptions): Client {
                 name: t.name, description: t.description, input_schema: schemaObject(t.parametersJson),
             }));
             const system: Json[] = prefixTexts(request).map((text) => ({ type: "text", text }));
-            markLast(system.length ? system : tools, cacheControl(request.cacheLifetime));
+            if (marksCache(request))
+                markLast(system.length ? system : tools, cacheControl(request.cacheLifetime));
             if (system.length)
                 body.system = system;
             if (tools.length)

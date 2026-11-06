@@ -923,7 +923,7 @@ DialogWindow {
                         Accessible.name: qsTr("Your folder")
                     }
                     IconTextButton {
-                        iconRole: "folder-open"
+                        iconRole: "show-in-folder"
                         objectName: "gettingStartedOpenFolder"
                         text: qsTr("Open folder")
                         onClicked: setup.app.openUserFolder()
