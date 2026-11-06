@@ -6819,6 +6819,7 @@ ApplicationWindow {
         active: false
         sourceComponent: VideoDetailsDialog {
             video: root.video
+            timecodesFile: root.app.timecodesFile
             settings: root.app.settings
         }
     }

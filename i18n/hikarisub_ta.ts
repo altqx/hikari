@@ -16963,7 +16963,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
+        <translation type="vanished">நேரக்குறியீட்டுக் கோப்பு கிடைக்கவில்லை: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -16980,6 +16980,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>வீடியோ ஓடையின் சட்டக வீதம்</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>சட்டக நேரங்களின் மூலம்</translation>
     </message>
     <message>
         <source>Length</source>

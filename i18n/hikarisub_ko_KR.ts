@@ -16851,7 +16851,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Timecodes file not found: %1</source>
-        <translation>타임코드 파일을 찾을 수 없습니다: %1</translation>
+        <translation type="vanished">타임코드 파일을 찾을 수 없습니다: %1</translation>
     </message>
     <message>
         <source>Video details</source>
@@ -16868,6 +16868,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Frame rate</source>
         <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>영상 스트림 프레임 속도</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>프레임 시간 출처</translation>
     </message>
     <message>
         <source>Length</source>
