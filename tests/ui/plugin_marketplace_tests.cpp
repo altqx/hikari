@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_marketplace.h"
 
 #include "fake_network.h"
+#include "settings_store.h"
 #include "test_signer.h"
 
 #include <QCryptographicHash>
@@ -63,6 +64,7 @@ class PluginMarketplaceTest : public QObject {
     test::Signer m_market = test::signer(9);
     std::unique_ptr<FakeNetwork> m_network;
     std::unique_ptr<PluginManager> m_manager;
+    std::unique_ptr<hikari::ui::SettingsStore> m_settings;
     std::unique_ptr<PluginMarketplace> m_marketplace;
 
     QString serialFile() const { return m_dir.filePath(QStringLiteral("user/marketplace.json")); }
@@ -113,13 +115,48 @@ class PluginMarketplaceTest : public QObject {
         return rows.size() == 1 ? rows.first().toMap() : QVariantMap();
     }
 
-    QVariantMap downloaded(const QString &id)
+    QVariantMap reviewOf(const std::function<void()> &ask)
     {
         QSignalSpy reviewed(m_marketplace.get(), &PluginMarketplace::reviewed);
-        m_marketplace->download(id);
+        ask();
         if (reviewed.isEmpty() && !reviewed.wait(5000))
             return {};
         return reviewed.first().first().toMap();
+    }
+
+    QVariantMap downloaded(const QString &id)
+    {
+        return reviewOf([&] { m_marketplace->download(id); });
+    }
+
+    QVariantMap row() const
+    {
+        const QVariantList rows = m_manager->plugins();
+        return rows.size() == 1 ? rows.first().toMap() : QVariantMap();
+    }
+
+    QString installedVersion() const { return row().value(QStringLiteral("version")).toString(); }
+
+    Version hello(const char *number, const char *file, const QString &extra = {})
+    {
+        return {QString::fromLatin1(number), fixture(file), extra, {}};
+    }
+
+    void automatic(bool on)
+    {
+        m_settings = std::make_unique<hikari::ui::SettingsStore>();
+        m_settings->set("plugins.autoUpdate", on);
+        m_marketplace.reset();
+        m_marketplace = std::make_unique<PluginMarketplace>(*m_manager, m_settings.get(), MarketplaceFeed{QUrl(kBase), {m_market.key}},
+                                                            serialFile(), QStringLiteral("0.5.0"), m_network.get());
+    }
+
+    void installFromMarketplace()
+    {
+        publish(3, {hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QVERIFY(downloaded(QStringLiteral("com.example.hello")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(m_manager->install(false), QString());
     }
 
     void installFromFile(const char *name)
@@ -150,6 +187,7 @@ private slots:
     void cleanup()
     {
         m_marketplace.reset();
+        m_settings.reset();
         m_manager.reset();
         m_network.reset();
     }
@@ -330,6 +368,157 @@ private slots:
         publish(3, {{QStringLiteral("2.0.0"), fixture("hello-2.0.0-other-key.hikariplugin"), {}, {}}});
         QVERIFY(refreshed());
         QVERIFY(m_marketplace->offers().isEmpty());
+    }
+
+    void anUpdateThatAsksForNothingNewInstallsItself()
+    {
+        automatic(true);
+        installFromMarketplace();
+        publish(4, {hello("1.1.0", "hello-1.1.0.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QTRY_COMPARE(installedVersion(), QStringLiteral("1.1.0"));
+        QCOMPARE(row().value(QStringLiteral("previous")).toString(), QStringLiteral("1.0.0"));
+        QCOMPARE(m_marketplace->updates(), 0);
+    }
+
+    void eitherSwitchOffLeavesTheUpdateToYou()
+    {
+        automatic(false);
+        installFromMarketplace();
+        publish(4, {hello("1.1.0", "hello-1.1.0.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QTest::qWait(100);
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        QCOMPARE(m_marketplace->updates(), 1);
+
+        QCOMPARE(m_manager->setAutoUpdate(QStringLiteral("com.example.hello"), false), QString());
+        m_settings->set("plugins.autoUpdate", true);
+        QTest::qWait(100);
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        QCOMPARE(m_marketplace->updates(), 1);
+
+        QCOMPARE(m_manager->setAutoUpdate(QStringLiteral("com.example.hello"), true), QString());
+        QTRY_COMPARE(installedVersion(), QStringLiteral("1.1.0"));
+    }
+
+    void anUpdateThatAsksForMoreWaitsForConsent()
+    {
+        automatic(true);
+        installFromMarketplace();
+        publish(4, {hello("1.3.0", "hello-1.3.0-network.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QTRY_COMPARE(row().value(QStringLiteral("held")).toString(), QStringLiteral("1.3.0"));
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        QCOMPARE(m_marketplace->updates(), 1);
+
+        const QVariantMap review = downloaded(QStringLiteral("com.example.hello"));
+        QVERIFY(review.value(QStringLiteral("asksForMore")).toBool());
+        const QVariantList changes = review.value(QStringLiteral("changes")).toList();
+        QCOMPARE(changes.size(), 2);
+        for (const QVariant &change : changes)
+            QVERIFY(change.toMap().value(QStringLiteral("added")).toBool());
+        QVERIFY(changes.first().toMap().value(QStringLiteral("text")).toString().contains(QStringLiteral("cdn.example.com")));
+        QVERIFY(changes.last().toMap().value(QStringLiteral("text")).toString().contains(QStringLiteral("Glossary folder")));
+        QCOMPARE(m_manager->install(false), QString());
+        QCOMPARE(installedVersion(), QStringLiteral("1.3.0"));
+        QCOMPARE(row().value(QStringLiteral("held")).toString(), QString());
+        QCOMPARE(m_marketplace->updates(), 0);
+
+        const QVariantMap again = downloaded(QStringLiteral("com.example.hello"));
+        QVERIFY(!again.value(QStringLiteral("asksForMore")).toBool());
+        QCOMPARE(again.value(QStringLiteral("changes")).toList().size(), 2);
+        for (const QVariant &change : again.value(QStringLiteral("changes")).toList())
+            QVERIFY(!change.toMap().value(QStringLiteral("added")).toBool());
+        m_manager->cancelReview();
+    }
+
+    void keepingTheCurrentVersionPassesOverTheHeldOne()
+    {
+        automatic(true);
+        installFromMarketplace();
+        publish(4, {hello("1.3.0", "hello-1.3.0-network.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QTRY_COMPARE(row().value(QStringLiteral("held")).toString(), QStringLiteral("1.3.0"));
+        m_marketplace->keepCurrent(QStringLiteral("com.example.hello"));
+        QCOMPARE(row().value(QStringLiteral("held")).toString(), QString());
+        QCOMPARE(m_marketplace->updates(), 0);
+        QVERIFY(refreshed());
+        QTest::qWait(100);
+        QCOMPARE(row().value(QStringLiteral("held")).toString(), QString());
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+    }
+
+    void anUpdateWaitsWhileThePluginIsBusy()
+    {
+        automatic(true);
+        bool busy = true;
+        m_marketplace->setBusy([&](const QString &) { return busy; });
+        installFromMarketplace();
+        publish(4, {hello("1.1.0", "hello-1.1.0.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QTest::qWait(200);
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        m_marketplace->pluginIdle(QStringLiteral("com.example.hello"));
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        busy = false;
+        m_marketplace->pluginIdle(QStringLiteral("com.example.hello"));
+        QCOMPARE(installedVersion(), QStringLiteral("1.1.0"));
+    }
+
+    void rollBackStaysUntilUndone()
+    {
+        automatic(true);
+        installFromMarketplace();
+        publish(4, {hello("1.1.0", "hello-1.1.0.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QTRY_COMPARE(installedVersion(), QStringLiteral("1.1.0"));
+
+        QSignalSpy rolled(m_manager.get(), &PluginManager::rolledBack);
+        QCOMPARE(m_manager->rollBack(QStringLiteral("com.example.hello")), QString());
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        QCOMPARE(rolled.size(), 1);
+        QCOMPARE(rolled.first().at(1).toString(), QStringLiteral("Hello"));
+        QCOMPARE(rolled.first().at(2).toString(), QStringLiteral("1.0.0"));
+        QVERIFY(refreshed());
+        QTest::qWait(200);
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+
+        QCOMPARE(m_manager->undoRollBack(QStringLiteral("com.example.hello")), QString());
+        QCOMPARE(installedVersion(), QStringLiteral("1.1.0"));
+        QCOMPARE(row().value(QStringLiteral("previous")).toString(), QStringLiteral("1.0.0"));
+    }
+
+    void aRevokedVersionIsTurnedOffAndTheLastGoodOneOffered()
+    {
+        installFromMarketplace();
+        publish(4, {hello("1.1.0", "hello-1.1.0.hikariplugin"), hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QVERIFY(downloaded(QStringLiteral("com.example.hello")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(m_manager->install(false), QString());
+
+        QSignalSpy revoked(m_marketplace.get(), &PluginMarketplace::revoked);
+        publish(5, {hello("1.1.0", "hello-1.1.0.hikariplugin", QStringLiteral(", \"revoked\": {\"reason\": \"Leaked a token\"}")),
+                    hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        QCOMPARE(revoked.size(), 1);
+        QCOMPARE(revoked.first().at(2).toString(), QStringLiteral("1.1.0"));
+        QCOMPARE(revoked.first().at(3).toString(), QStringLiteral("Leaked a token"));
+        QCOMPARE(revoked.first().at(4).toString(), QStringLiteral("1.0.0"));
+        QVERIFY(!row().value(QStringLiteral("enabled")).toBool());
+        QVERIFY(row().value(QStringLiteral("revoked")).toBool());
+        QCOMPARE(row().value(QStringLiteral("lastGood")).toString(), QStringLiteral("1.0.0"));
+        QVERIFY(!m_manager->setEnabled(QStringLiteral("com.example.hello"), true).isEmpty());
+        QVERIFY(!row().value(QStringLiteral("enabled")).toBool());
+        QVERIFY(refreshed());
+        QCOMPARE(revoked.size(), 1);
+
+        const QVariantMap review = reviewOf([&] { m_marketplace->installLastGood(QStringLiteral("com.example.hello")); });
+        QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
+        QCOMPARE(review.value(QStringLiteral("change")).toString(), QStringLiteral("downgrade"));
+        QCOMPARE(m_manager->install(false), QString());
+        QCOMPARE(installedVersion(), QStringLiteral("1.0.0"));
+        QVERIFY(row().value(QStringLiteral("enabled")).toBool());
+        QVERIFY(!row().value(QStringLiteral("revoked")).toBool());
     }
 };
 

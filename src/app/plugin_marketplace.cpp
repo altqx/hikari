@@ -83,16 +83,26 @@ PluginMarketplace::PluginMarketplace(PluginManager &manager, ui::SettingsStore *
     m_timer.setInterval(kDayMs);
     connect(&m_timer, &QTimer::timeout, this, &PluginMarketplace::refresh);
     connect(&m_manager, &PluginManager::pluginsChanged, this, &PluginMarketplace::rebuild);
+    connect(&m_manager, &PluginManager::pluginsChanged, this, &PluginMarketplace::queueUpdates, Qt::QueuedConnection);
     if (m_settings)
         connect(m_settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
             if (id == QLatin1String("plugins.checkUpdates"))
                 schedule();
+            if (id == QLatin1String("plugins.autoUpdate")) {
+                rebuild();
+                queueUpdates();
+            }
         });
+}
+
+bool PluginMarketplace::automaticUpdates() const
+{
+    return m_settings && m_settings->boolean("plugins.autoUpdate");
 }
 
 PluginMarketplace::~PluginMarketplace()
 {
-    for (QNetworkReply *reply : {m_indexReply.data(), m_signatureReply.data(), m_packageReply.data()})
+    for (QNetworkReply *reply : {m_indexReply.data(), m_signatureReply.data(), m_packageReply.data(), m_updateReply.data()})
         if (reply) {
             reply->disconnect(this);
             reply->abort();
@@ -178,7 +188,92 @@ void PluginMarketplace::indexFinished()
     m_index = std::move(*read);
     m_status = QStringLiteral("ready");
     m_problem.clear();
+    m_triedThisIndex.clear();
+    revoke();
     rebuild();
+    queueUpdates();
+}
+
+void PluginMarketplace::revoke()
+{
+    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    for (const auto &[id, entry] : registry) {
+        const plugins::Listing *listing = m_index->find(id);
+        if (!listing || entry.key != listing->publicKey)
+            continue;
+        const std::optional<plugins::Revoked> decision = plugins::revocation(*listing, entry.version, api::kApiVersion);
+        if (decision == entry.revoked)
+            continue;
+        const bool newly = decision && !entry.revoked;
+        m_manager.edit(text(id), [&](plugins::InstalledPlugin &plugin) {
+            plugin.revoked = decision;
+            if (decision)
+                plugin.enabled = false;
+        });
+        if (newly)
+            emit revoked(text(id), m_manager.name(text(id)), text(entry.version), text(decision->reason), text(decision->lastGood));
+    }
+}
+
+void PluginMarketplace::queueUpdates()
+{
+    if (!m_index || !automaticUpdates())
+        return;
+    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    for (const auto &[id, entry] : registry) {
+        const plugins::Listing *listing = m_index->find(id);
+        const plugins::ListedVersion *runnable = listing ? listing->newest(api::kApiVersion) : nullptr;
+        if (!runnable || entry.source != plugins::Source::Marketplace || !entry.autoUpdate || entry.revoked ||
+            entry.key != listing->publicKey || plugins::compareVersions(runnable->version, entry.version) <= 0 ||
+            runnable->version == entry.skip || runnable->version == entry.held)
+            continue;
+        const QString key = text(id) + QLatin1Char(' ') + text(runnable->version);
+        if (m_triedThisIndex.contains(key) || m_queue.contains(text(id)) || m_waiting.contains(text(id)))
+            continue;
+        m_triedThisIndex.insert(key);
+        m_queue << text(id);
+    }
+    nextUpdate();
+}
+
+void PluginMarketplace::nextUpdate()
+{
+    if (m_updateReply || m_queue.isEmpty())
+        return;
+    const QString id = m_queue.takeFirst();
+    const plugins::Listing *listing = m_index ? m_index->find(id.toStdString()) : nullptr;
+    const plugins::ListedVersion *listed = listing ? listing->newest(api::kApiVersion) : nullptr;
+    const QUrl url = listed ? QUrl(text(listed->url)) : QUrl();
+    if (!listed || !sameOrigin(url)) {
+        nextUpdate();
+        return;
+    }
+    m_updateReply = get(url, listed->size);
+    connect(m_updateReply, &QNetworkReply::finished, this,
+            [this, id, reply = m_updateReply.data(), listing = *listing, version = *listed] {
+                reply->deleteLater();
+                m_updateReply.clear();
+                if (failure(reply).isEmpty()) {
+                    PluginManager::Prepared prepared = m_manager.prepareListed(reply->readAll(), listing, version);
+                    if (prepared.review && prepared.asksForMore)
+                        m_manager.edit(id, [&](plugins::InstalledPlugin &plugin) { plugin.held = version.version; });
+                    else if (prepared.review && m_busy && m_busy(id))
+                        m_waiting.insert_or_assign(id, std::move(*prepared.review));
+                    else if (prepared.review)
+                        m_manager.installPrepared(*prepared.review);
+                }
+                nextUpdate();
+            });
+}
+
+void PluginMarketplace::pluginIdle(const QString &id)
+{
+    const auto waiting = m_waiting.find(id);
+    if (waiting == m_waiting.end() || (m_busy && m_busy(id)))
+        return;
+    const plugins::InstallReview review = std::move(waiting->second);
+    m_waiting.erase(waiting);
+    m_manager.installPrepared(review);
 }
 
 void PluginMarketplace::fail(const QString &problem)
@@ -257,7 +352,8 @@ void PluginMarketplace::rebuild()
         const bool marketplace = entry.source == plugins::Source::Marketplace;
         const QString update = marketplace && order > 0 ? text(runnable->version) : QString();
         const bool move = !marketplace && entry.key == listing->publicKey && order >= 0;
-        if (!update.isEmpty())
+        const bool automatic = automaticUpdates() && entry.autoUpdate && !entry.revoked;
+        if (!entry.held.empty() || (!update.isEmpty() && runnable->version != entry.skip && !automatic))
             ++m_updates;
         if (!update.isEmpty() || move)
             m_offers.insert(text(id), QVariantMap{{QStringLiteral("update"), update}, {QStringLiteral("move"), move}});
@@ -282,10 +378,36 @@ bool PluginMarketplace::openSource(const QString &id) const
 
 void PluginMarketplace::download(const QString &id)
 {
+    offer(id, {}, false);
+}
+
+void PluginMarketplace::keepCurrent(const QString &id)
+{
+    m_manager.edit(id, [](plugins::InstalledPlugin &plugin) {
+        plugin.skip = plugin.held;
+        plugin.held.clear();
+    });
+}
+
+void PluginMarketplace::installLastGood(const QString &id)
+{
+    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const auto entry = registry.find(id.toStdString());
+    offer(id, entry != registry.end() && entry->second.revoked ? text(entry->second.revoked->lastGood) : QString(), true);
+}
+
+void PluginMarketplace::offer(const QString &id, const QString &version, bool allowDowngrade)
+{
     if (m_packageReply)
         return;
     const plugins::Listing *listing = m_index ? m_index->find(id.toStdString()) : nullptr;
-    const plugins::ListedVersion *listed = listing ? listing->newest(api::kApiVersion) : nullptr;
+    const plugins::ListedVersion *listed = nullptr;
+    if (listing && version.isEmpty())
+        listed = listing->newest(api::kApiVersion);
+    else if (listing && !listing->revoked)
+        for (const plugins::ListedVersion &candidate : listing->versions)
+            if (text(candidate.version) == version && !candidate.revoked && candidate.api <= api::kApiVersion)
+                listed = &candidate;
     if (!listed) {
         emit reviewed(refused(QCoreApplication::translate("HikariSub.Plugins", "“%1” isn’t in the marketplace for this HikariSub.").arg(id)));
         return;
@@ -299,7 +421,7 @@ void PluginMarketplace::download(const QString &id)
     emit downloadingChanged();
     m_packageReply = get(url, listed->size);
     connect(m_packageReply, &QNetworkReply::finished, this,
-            [this, reply = m_packageReply.data(), listing = *listing, version = *listed] {
+            [this, allowDowngrade, reply = m_packageReply.data(), listing = *listing, version = *listed] {
                 reply->deleteLater();
                 m_packageReply.clear();
                 m_downloading.clear();
@@ -308,7 +430,7 @@ void PluginMarketplace::download(const QString &id)
                     emit reviewed(refused(QCoreApplication::translate("HikariSub.Plugins", "Couldn’t download the plugin: %1").arg(problem)));
                     return;
                 }
-                emit reviewed(m_manager.reviewListed(reply->readAll(), listing, version));
+                emit reviewed(m_manager.reviewListed(reply->readAll(), listing, version, allowDowngrade));
             });
 }
 

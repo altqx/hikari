@@ -187,7 +187,11 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     });
     const QString name = qs(raw->manifest.name);
     auto log = [this] { return m_wiring.log; };
-    connect(process, &PluginProcess::unitEnded, this, [this, raw] { releaseLock(*raw); });
+    connect(process, &PluginProcess::unitEnded, this, [this, raw] {
+        releaseLock(*raw);
+        emit idle(qs(raw->id));
+    });
+    connect(process, &PluginProcess::stopped, this, [this, raw] { emit idle(qs(raw->id)); });
     connect(process, &PluginProcess::loaded, this, [this, raw] { m_ui->running(raw->id); });
     connect(process, &PluginProcess::loadFailed, this, [this, raw, name, log](const QString &message) {
         unsubscribe(*raw);
@@ -462,6 +466,12 @@ backends::PluginProcess *PluginRuntime::process(const QString &pluginId) const
 {
     const auto it = m_plugins.find(pluginId.toStdString());
     return it == m_plugins.end() ? nullptr : it->second->process.get();
+}
+
+bool PluginRuntime::busy(const QString &pluginId) const
+{
+    const PluginProcess *running = process(pluginId);
+    return running && running->busy();
 }
 
 }

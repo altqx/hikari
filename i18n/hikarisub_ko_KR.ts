@@ -9871,8 +9871,8 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인의 인터넷 연결 허용</translation>
     </message>
     <message>
-        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: every plugin request is refused.</source>
-        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 플러그인의 요청을 모두 거부합니다.</translation>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 HikariSub를 거치는 플러그인 요청을 모두 거부합니다. 전체 신뢰 플러그인은 여전히 직접 연결할 수 있습니다.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -10657,6 +10657,10 @@ Failed to copy %2 fonts.</source>
         <translation>읽을 폴더 요청, %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>마켓플레이스가 이 버전을 철회했습니다. 켜려면 다른 버전을 설치하세요.</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>명령: %1</translation>
     </message>
@@ -10675,6 +10679,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub이 %1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>업데이트를 내려받는 동안 플러그인이 바뀌었습니다.</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -10877,6 +10885,34 @@ Failed to copy %2 fonts.</source>
         <translation>전체 신뢰</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>철회됨</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 확인 대기 중</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>새로 요청</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>현재 허용됨</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>%1보다 많은 권한을 요청합니다</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>%1의 변경 사항</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
         <source>Search plugins</source>
         <translation>플러그인 검색</translation>
     </message>
@@ -10907,10 +10943,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Marketplace plugins</source>
         <translation>마켓플레이스 플러그인</translation>
-    </message>
-    <message>
-        <source>Unrestricted</source>
-        <translation>제한 없음</translation>
     </message>
     <message>
         <source>Update</source>
@@ -10973,12 +11005,40 @@ Failed to copy %2 fonts.</source>
         <translation>마켓플레이스로 옮기기</translation>
     </message>
     <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>마켓플레이스가 버전 %1(을)를 철회해 HikariSub가 껐습니다: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>%1 설치</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1(은)는 %2보다 많은 권한을 요청하므로 확인을 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>검토…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>%1(으)로 되돌리기</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>플러그인을 되돌리지 못함</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>켜기</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>플러그인을 변경하지 않음</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>업데이트 자동 설치</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -11053,6 +11113,10 @@ Failed to copy %2 fonts.</source>
         <translation>시작할 때와 하루에 한 번. HikariSub는 전체 목록을 내려받고, 어떤 플러그인이 있는지는 보내지 않습니다.</translation>
     </message>
     <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>마켓플레이스 플러그인에만 적용되며, 하던 작업을 마친 뒤 설치합니다. 더 많은 권한을 요청하는 업데이트는 확인을 기다립니다.</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -11123,6 +11187,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>About %1…</source>
         <translation>%1 정보…</translation>
+    </message>
+    <message>
+        <source>%1 rolled back to %2</source>
+        <translation>%1(을)를 %2(으)로 되돌림</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>자동 업데이트는 되돌리기 전 버전을 건너뜁니다.</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>%1 꺼짐</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>마켓플레이스가 버전 %1(을)를 철회했습니다: %2.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
     </message>
     <message>
         <source>%1 isn’t installed.</source>

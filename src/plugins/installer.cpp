@@ -59,7 +59,9 @@ std::expected<void, std::string> writeFiles(const fs::path &root, const std::vec
     return {};
 }
 
-std::expected<void, std::string> swapIn(const fs::path &staging, const fs::path &target, const fs::path &old)
+// Moves `incoming` to `target`. The copy it replaces goes to `keep` when given, else is deleted.
+std::expected<void, std::string> swapIn(const fs::path &incoming, const fs::path &target, const fs::path &old,
+                                        const std::optional<fs::path> &keep)
 {
     std::error_code error;
     fs::remove_all(old, error);
@@ -69,12 +71,17 @@ std::expected<void, std::string> swapIn(const fs::path &staging, const fs::path 
         if (error)
             return failed("cannot move aside", target, error);
     }
-    fs::rename(staging, target, error);
+    fs::rename(incoming, target, error);
     if (error) {
         std::error_code ignored;
         if (replacing)
             fs::rename(old, target, ignored);
         return failed("cannot move into place", target, error);
+    }
+    if (replacing && keep) {
+        fs::create_directories(keep->parent_path(), error);
+        fs::remove_all(*keep, error);
+        fs::rename(old, *keep, error);
     }
     fs::remove_all(old, error);
     return {};
@@ -148,7 +155,7 @@ std::expected<InstallReview, InstallRefusal> Installer::review(std::span<const s
 }
 
 std::expected<InstallReview, InstallRefusal> Installer::reviewListed(std::vector<PackageFile> files, const Listing &listing,
-                                                                     const ListedVersion &listed) const
+                                                                     const ListedVersion &listed, bool allowDowngrade) const
 {
     auto opened = open(std::move(files));
     if (!opened)
@@ -159,7 +166,7 @@ std::expected<InstallReview, InstallRefusal> Installer::reviewListed(std::vector
     };
     if (auto problem = listedManifestProblem(listing, listed, review.package.manifest, review.pinned))
         return refused(std::move(*problem));
-    if (review.change == Change::Downgrade)
+    if (review.change == Change::Downgrade && !allowDowngrade)
         return refused("version " + listed.version + " is older than the installed " + review.installedVersion);
     review.signer = listing.publicKey;
     review.source = Source::Marketplace;
@@ -188,11 +195,16 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         fs::remove_all(staging, error);
         return written;
     }
-    if (auto swapped = swapIn(staging, m_folders.plugins / manifest.id, m_folders.plugins / (".old-" + manifest.id));
+    const bool otherVersion = existing != registry->end() && existing->second.version != manifest.version;
+    const fs::path previous = previousFolder(manifest.id);
+    if (auto swapped = swapIn(staging, m_folders.plugins / manifest.id, m_folders.plugins / (".old-" + manifest.id),
+                              otherVersion ? std::optional(previous) : std::nullopt);
         !swapped) {
         fs::remove_all(staging, error);
         return swapped;
     }
+    if (existing == registry->end())
+        fs::remove_all(previous, error);
     fs::remove_all(m_folders.cache / manifest.id, error);
     fs::create_directories(m_folders.data / manifest.id, error);
     if (error)
@@ -200,7 +212,12 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
 
     InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object(), review.source};
     if (existing != registry->end()) {
-        entry.enabled = existing->second.enabled;
+        const InstalledPlugin &old = existing->second;
+        entry.enabled = old.enabled || old.revoked.has_value();
+        entry.autoUpdate = old.autoUpdate;
+        entry.skip = old.skip == manifest.version ? std::string() : old.skip;
+        entry.previous = otherVersion ? old.version : old.previous;
+        entry.held = compareVersions(old.held, manifest.version) > 0 ? old.held : std::string();
         for (const Setting &setting : manifest.settings)
             if (const api::Json *value = existing->second.settings.find(setting.id); value && !settingRefusal(setting, *value))
                 entry.settings[setting.id] = *value;
@@ -209,6 +226,58 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
                 entry.grants[request.id] = {grant->second.path, grant->second.writable && request.writable};
     }
     (*registry)[manifest.id] = std::move(entry);
+    if (!saveRegistry(m_folders.registry, *registry))
+        return failed("cannot write", m_folders.registry);
+    return {};
+}
+
+fs::path Installer::previousFolder(std::string_view id) const
+{
+    return m_folders.plugins / ".previous" / fromUtf8(id);
+}
+
+std::expected<std::string, std::string> Installer::rollBack(std::string_view id, bool skipLeft)
+{
+    auto registry = loadRegistry(m_folders.registry);
+    if (!registry)
+        return std::unexpected(registry.error());
+    const auto it = registry->find(std::string(id));
+    if (it == registry->end())
+        return std::unexpected("not installed: " + std::string(id));
+    InstalledPlugin &entry = it->second;
+    const fs::path previous = previousFolder(id);
+    std::error_code error;
+    if (entry.previous.empty() || !fs::is_directory(previous, error))
+        return std::unexpected("no earlier version of " + std::string(id) + " is kept");
+    const fs::path swapping = m_folders.plugins / (".rollback-" + std::string(id));
+    fs::remove_all(swapping, error);
+    fs::rename(previous, swapping, error);
+    if (error)
+        return failed("cannot move aside", previous, error);
+    if (auto swapped = swapIn(swapping, m_folders.plugins / fromUtf8(id), m_folders.plugins / (".old-" + std::string(id)), previous);
+        !swapped) {
+        std::error_code ignored;
+        fs::rename(swapping, previous, ignored);
+        return std::unexpected(swapped.error());
+    }
+    fs::remove_all(m_folders.cache / fromUtf8(id), error);
+    std::string left = entry.version;
+    std::swap(entry.version, entry.previous);
+    entry.skip = skipLeft ? left : std::string();
+    if (!saveRegistry(m_folders.registry, *registry))
+        return failed("cannot write", m_folders.registry);
+    return left;
+}
+
+std::expected<void, std::string> Installer::edit(std::string_view id, const std::function<void(InstalledPlugin &)> &change)
+{
+    auto registry = loadRegistry(m_folders.registry);
+    if (!registry)
+        return std::unexpected(registry.error());
+    const auto it = registry->find(std::string(id));
+    if (it == registry->end())
+        return std::unexpected("not installed: " + std::string(id));
+    change(it->second);
     if (!saveRegistry(m_folders.registry, *registry))
         return failed("cannot write", m_folders.registry);
     return {};
@@ -305,6 +374,7 @@ std::expected<void, std::string> Installer::uninstall(std::string_view id, bool 
     if (error)
         return failed("cannot remove", folder, error);
     fs::remove_all(m_folders.cache / fromUtf8(id), error);
+    fs::remove_all(previousFolder(id), error);
     if (removeData) {
         fs::remove_all(m_folders.data / fromUtf8(id), error);
         if (error)
