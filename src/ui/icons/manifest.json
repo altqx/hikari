@@ -4541,8 +4541,7 @@
     "menu:view",
     "menu:subtitles",
     "qc-notes"
-   ],
-   "pending": "FA20 #577"
+   ]
   },
   {
    "role": "qc-done-reset",
@@ -4553,8 +4552,7 @@
    "legacy": [],
    "surfaces": [
     "qc-notes"
-   ],
-   "pending": "FA20 #577"
+   ]
   },
   {
    "role": "node-library",

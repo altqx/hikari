@@ -41,3 +41,8 @@ aegisub.register_macro("fa3 edit", "", function(subs)
     l = subs[i]; l.extra = {}; subs[i] = l
     l = subs[find(subs, "Outer fold opens")]; l.text = "Copied fold line"; subs.append(l)
 end)
+
+aegisub.register_macro("fa3 touch", "", function(subs)
+    local i = find(subs, "first")
+    local l = subs[i]; l.text = l.text .. " (edited)"; subs[i] = l
+end)

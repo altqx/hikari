@@ -149,6 +149,10 @@ public:
         m_lines.setSpelling(spelling);
         m_referenceLines.setSpelling(spelling);
     }
+    void setQcMarks(LineTableModel::QcMarks marks, std::optional<core::LineId> current)
+    {
+        m_lines.setQcMarks(std::move(marks), current);
+    }
 
     bool foldGenerated() const { return m_lines.foldGenerated(); }
     // MUST KILL: setFoldGenerated emits foldGeneratedChanged before the rows fold; Application relies on that order

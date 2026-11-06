@@ -1,4 +1,5 @@
 #include "hikari/application/playback_pipeline.h"
+#include "hikari/application/qc_notes.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/overlay_blend.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
@@ -312,6 +313,35 @@ TEST(LibassRenderer, FramesMatchLegacysCompositeByteForByte)
         for (const auto &[frame, reference] : held)
             EXPECT_TRUE(frame.pixels == OverlayPixels(reference)) << "a held frame was drawn over";
     }
+}
+
+TEST(LibassRenderer, QcNotesInScriptInfoDrawNothing)
+{
+    const auto font = testFont();
+    const std::string script = heavyScript();
+    auto document = core::loadAss(bytesOf(script)).document;
+    const auto plain = core::encodeAss(document);
+    std::vector<QcNote> notes;
+    for (int i = 0; i < 200; ++i) {
+        const std::string text = "{\\pos(10,10)\\fs80\\c&H0000FF&}note " + std::to_string(i) + ", with a comma\\Nand a break";
+        notes.push_back({i * 50, i % 3 == 0 ? u8"TLC" : u8"Timing", i % 2 == 0,
+                         std::u8string(reinterpret_cast<const char8_t *>(text.data()), text.size())});
+    }
+    ASSERT_TRUE(setDocumentQcNotes(document, notes));
+    const auto noted = core::encodeAss(document);
+    ASSERT_EQ(documentQcNotes(core::loadAss(noted).document).size(), 200u);
+    backends::LibassRenderer without, with;
+    ASSERT_TRUE(without.prepare(RenderSnapshot{plain, {FontLease{"Titillium Web", font}}, "Titillium Web", false}));
+    ASSERT_TRUE(with.prepare(RenderSnapshot{noted, {FontLease{"Titillium Web", font}}, "Titillium Web", false}));
+    int drawn = 0;
+    for (long long ms = 0; ms <= 10'000; ms += 125) {
+        const auto a = without.render(core::DocumentTime(ms * 1000), 640, 360);
+        const auto b = with.render(core::DocumentTime(ms * 1000), 640, 360);
+        ASSERT_TRUE(a && b);
+        ASSERT_TRUE(a->pixels == b->pixels) << "at " << ms << " ms";
+        drawn += !a->empty;
+    }
+    EXPECT_GT(drawn, 0);
 }
 
 TEST(LibassRenderer, ChangedAreasCoverEveryDifferenceAndNoMore)

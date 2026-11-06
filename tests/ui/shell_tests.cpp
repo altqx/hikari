@@ -14,6 +14,7 @@
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/center_times.h"
+#include "hikari/application/qc_notes.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "style/text_menus.h"
@@ -10892,6 +10893,67 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.15,Song kanji,,0,0,0,,君の愛\n");
         return path;
     }
+    void qcNotesPanelKeepsNotesInTheFile()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(application->openFile(writeFile(folder, "qc.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &qc = application->qcNotes();
+        QVERIFY(QMetaObject::invokeMethod(named("showQcNotes"), "triggered"));
+        QTRY_VERIFY(item<QObject>("qcNotesDock")->property("isOpen").toBool());
+        QTRY_VERIFY(item("qcNotesEmpty") && item("qcNotesEmpty")->isVisible());
+
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "addQcNote", Q_ARG(QVariant, 3200)));
+        QTRY_VERIFY(item("qcNotesAddEditor")->isVisible());
+        auto *text = item("qcNotesAddEditor")->findChild<QQuickItem *>(QStringLiteral("qcNoteText"));
+        QTRY_VERIFY(text->hasActiveFocus());
+        QCOMPARE(item("qcNotesAddEditor")->findChild<QQuickItem *>(QStringLiteral("qcNoteTime"))->property("text").toString(),
+                 QStringLiteral("0:00:03.20"));
+        typeText(QStringLiteral("Too late"));
+        QTest::keyClick(window, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(qc.total(), 1);
+        const std::vector<application::QcNote> added{{3200, u8"General", false, u8"Too late"}};
+        QCOMPARE(application::documentQcNotes(session->document()), added);
+        QTRY_VERIFY(!item("qcNotesAddEditor")->isVisible());
+
+        auto *lines = application->shell().lines();
+        QCOMPARE(lines->index(1, 0).data(ui::LineTableModel::QcNotesRole).toStringList(),
+                 QStringList{QStringLiteral("0:00:03.20 General: Too late")});
+        QVERIFY(lines->index(0, 0).data(ui::LineTableModel::QcNotesRole).toStringList().isEmpty());
+
+        QVERIFY(!qc.next());
+        QVERIFY(qc.add(1000, QStringLiteral("TLC"), QStringLiteral("early")));
+        QCOMPARE(qc.current(), 0);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_NEXT_QC_NOTE"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(session->selection().active, std::optional(session->document().lines()[1]->id));
+        QCOMPARE(qc.current(), 1);
+        QVERIFY(lines->index(1, 0).data(ui::LineTableModel::QcCurrentRole).toBool());
+        QVERIFY(!lines->index(0, 0).data(ui::LineTableModel::QcCurrentRole).toBool());
+        QVERIFY(!qc.next());
+
+        QVERIFY(qc.setDone(1, true));
+        QVERIFY(application::documentQcNotes(session->document())[1].done);
+        QVERIFY(application->editor().undo());
+        QVERIFY(!application::documentQcNotes(session->document())[1].done);
+        QVERIFY(application->editor().undo());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(qc.total(), 0);
+        QTRY_VERIFY(lines->index(1, 0).data(ui::LineTableModel::QcNotesRole).toStringList().isEmpty());
+
+        QGuiApplication::clipboard()->setText(QStringLiteral("[TLC]\n0:01 - one\n0:03.5 - two\n"));
+        QTRY_VERIFY(qc.clipboardHasNotes());
+        QVERIFY(QMetaObject::invokeMethod(item("qcNotesTool"), "importClipboard"));
+        QTRY_COMPARE(qc.total(), 2);
+        QTRY_COMPARE(item("qcNotesMessage")->property("text").toString(), QStringLiteral("Imported 2 note(s)."));
+        QTRY_VERIFY(item("qcNotesList")->isVisible());
+    }
+
     void kanjiTimerSuggestsAndWritesFurigana()
     {
         QVERIFY(application->openFile(writeFuriganaSong("kanji-furigana.ass")));
@@ -13127,7 +13189,7 @@ private slots:
         QVERIFY(application->openFile(episode));
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);
-        auto *tip = named("editingGridHeaderToolTip");
+        auto *tip = named("editingGridToolTip");
         QVERIFY(tip);
         const auto heading = [&](const QString &title) {
             for (int c = 0; c < grid->columnCount(); ++c)
@@ -13142,7 +13204,7 @@ private slots:
             const QPoint at = heading(title);
             QTest::mouseMove(window, at + QPoint(0, int(grid->rowHeight() * 3)));
             QTest::mouseMove(window, at);
-            return grid->property("headerToolTip").toString() == name;
+            return grid->property("hoverToolTip").toString() == name;
         };
         QTRY_VERIFY(hovering(QStringLiteral("L."), QStringLiteral("Layer")));
         QTRY_VERIFY(tip->property("visible").toBool());
@@ -19580,7 +19642,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 292);
+        QCOMPARE(hotkeyRows().size(), 296);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

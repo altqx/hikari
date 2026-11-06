@@ -13,6 +13,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -87,6 +88,7 @@
                 "Log",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -191,6 +193,7 @@
                 "Styles",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -267,6 +270,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -333,6 +337,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -397,6 +402,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -460,6 +466,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -536,6 +543,7 @@
                 "Log",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -640,6 +648,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -705,6 +714,7 @@
             "Template",
             "Spellchecker",
             "Postprocessor",
+            "QcNotes",
             "Review"
         ],
         "floatingWindows": [
@@ -779,6 +789,7 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [
@@ -840,6 +851,7 @@
                 "Log",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
                 "Review"
             ],
             "floatingWindows": [

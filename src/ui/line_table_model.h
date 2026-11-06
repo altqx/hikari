@@ -47,6 +47,7 @@ public:
     static constexpr int ComparisonColoursRole = Qt::UserRole + 53;
     // MUST KILL: LabelColoursRole is an untyped list whose order (normal, modified, saved, doubtful) is a hidden contract
     static constexpr int LabelColoursRole = Qt::UserRole + 54;
+    static constexpr int QcMarkedRole = Qt::UserRole + 55;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -78,6 +79,8 @@ public:
         FoldCountRole,
         HiddenBlockRowRole,
         GroupDepthRole,
+        QcNotesRole,
+        QcCurrentRole,
         ReviewRole,
         // MUST KILL: ReviewMarksRole is a flat list of inclusive [start, end] pairs
         ReviewMarksRole,
@@ -142,6 +145,9 @@ public:
     int hiddenColumns() const { return m_hidden; }
     bool columnShown(int column) const;
     void setFrameTimebase(std::optional<application::LegacyTimebase> frames);
+    // Per Line id, the QC notes its flag lists.
+    using QcMarks = absl::flat_hash_map<std::uint64_t, QStringList>;
+    void setQcMarks(QcMarks marks, std::optional<core::LineId> current);
 
     void setFoldGenerated(bool on);
     bool foldGenerated() const { return m_foldGenerated; }
@@ -229,6 +235,8 @@ private:
     std::vector<Run> m_runs;
     bool m_foldGenerated = false;
     absl::flat_hash_set<std::uint64_t> m_unfolded;
+    QcMarks m_qcMarks;
+    std::optional<core::LineId> m_qcCurrent;
     int m_headerBlock = 0;
     int m_hidden = 0;
     bool m_autoHide = false;

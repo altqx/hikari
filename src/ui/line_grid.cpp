@@ -104,7 +104,7 @@ void LineGrid::setModel(QAbstractItemModel *model)
             connect(m_model, &QAbstractItemModel::headerDataChanged, this, [this] {
                 updateColumns();
                 updateViewport();
-                setHeaderToolTip(-1);
+                setHoverToolTip(std::nullopt);
                 update();
             }),
             connect(m_model, &QAbstractItemModel::dataChanged, this,
@@ -239,6 +239,7 @@ void LineGrid::updateColumns()
                 m_columns.push_back(c);
         }
     m_markWidth = m_model && m_model->headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool() ? 11 : 0;
+    m_qcMarked = m_model && m_model->headerData(0, Qt::Horizontal, LineTableModel::QcMarkedRole).toBool();
     const auto it = std::find(m_columns.begin(), m_columns.end(), previous);
     m_currentColumn = it != m_columns.end() ? static_cast<int>(it - m_columns.begin())
                                             : static_cast<int>(m_columns.size()) - 1;
@@ -274,6 +275,8 @@ QString LineGrid::rowStateText(int row) const
         words << QCoreApplication::translate("HikariSub.Grid", "unconfirmed");
     if (state & 8)
         words << QCoreApplication::translate("HikariSub.Grid", "bookmarked");
+    if (const auto notes = m_model->index(row, 0).data(LineTableModel::QcNotesRole).toStringList(); !notes.isEmpty())
+        words << QCoreApplication::translate("HikariSub.Grid", "%n QC note(s)", nullptr, int(notes.size()));
     if (m_model->index(row, 0).data(LineTableModel::DraftRole).toBool())
         words << QCoreApplication::translate("HikariSub.Grid", "uncommitted");
     if (m_model->index(row, 0).data(LineTableModel::UnplacedRunsRole).toBool())
@@ -598,7 +601,7 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
     forceActiveFocus(Qt::MouseFocusReason);
     if (const int divider = dividerAt(event->position()); divider >= 0) {
         m_resize = ColumnResize{divider, event->position().x(), layoutWidths()[std::size_t(divider)]};
-        setHeaderToolTip(-1);
+        setHoverToolTip(std::nullopt);
         event->accept();
         return;
     }
@@ -706,32 +709,43 @@ void LineGrid::hoverMoveEvent(QHoverEvent *event)
         setCursor(Qt::SplitHCursor);
     else
         unsetCursor();
-    setHeaderToolTip(event->position().y() < m_geometry.headerHeight ? columnAt(event->position().x()) : -1);
+    setHoverToolTip(event->position());
 }
 
 void LineGrid::hoverLeaveEvent(QHoverEvent *event)
 {
     if (!m_resize)
         unsetCursor();
-    setHeaderToolTip(-1);
+    setHoverToolTip(std::nullopt);
     QQuickPaintedItem::hoverLeaveEvent(event);
 }
 
-void LineGrid::setHeaderToolTip(int column)
+void LineGrid::setHoverToolTip(std::optional<QPointF> at)
 {
-    const QString tip = m_model && column >= 0
-                            ? m_model->headerData(modelColumn(column), Qt::Horizontal, Qt::ToolTipRole).toString()
-                            : QString();
-    QRectF cell;
-    if (!tip.isEmpty()) {
+    if (!m_model || !at)
+        return setHoverToolTip(QString(), QRectF());
+    const int column = columnAt(at->x());
+    if (column < 0)
+        return setHoverToolTip(QString(), QRectF());
+    if (at->y() < m_geometry.headerHeight) {
         const QRectF first = cellRect(0, column);
-        cell = QRectF(first.x(), 0, first.width(), m_geometry.headerHeight);
+        return setHoverToolTip(m_model->headerData(modelColumn(column), Qt::Horizontal, Qt::ToolTipRole).toString(),
+                               QRectF(first.x(), 0, first.width(), m_geometry.headerHeight));
     }
-    if (tip == m_headerToolTip && cell == m_headerToolTipCell)
+    const int row = rowAt(at->y());
+    const QStringList notes = modelColumn(column) == LineTableModel::NumberColumn && row >= 0
+                                  ? m_model->index(row, 0).data(LineTableModel::QcNotesRole).toStringList()
+                                  : QStringList();
+    setHoverToolTip(notes.join(u'\n'), notes.isEmpty() ? QRectF() : cellRect(row, column));
+}
+
+void LineGrid::setHoverToolTip(const QString &tip, const QRectF &cell)
+{
+    if (tip == m_hoverToolTip && cell == m_hoverToolTipCell)
         return;
-    m_headerToolTip = tip;
-    m_headerToolTipCell = cell;
-    emit headerToolTipChanged();
+    m_hoverToolTip = tip;
+    m_hoverToolTipCell = tip.isEmpty() ? QRectF() : cell;
+    emit hoverToolTipChanged();
 }
 
 void LineGrid::mouseMoveEvent(QMouseEvent *event)
@@ -880,7 +894,7 @@ std::vector<double> LineGrid::widthsFor(double total) const
             continue;
         }
         switch (c) {
-        case LineTableModel::NumberColumn: width = fit("00000", 8); break;
+        case LineTableModel::NumberColumn: width = fit("00000", 8) + numberIndent(); break;
         case LineTableModel::LayerColumn: width = fit("000", 8); break;
         case LineTableModel::StartColumn:
         case LineTableModel::EndColumn: width = fit("00:00:00,000", 12); break;
@@ -985,6 +999,19 @@ void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, bool 
         painter->setBrush(Qt::NoBrush);
     }
     painter->drawEllipse(dot);
+    painter->restore();
+}
+
+void LineGrid::drawQcFlag(QPainter *painter, const QRectF &cell, const QColor &ink, bool current) const
+{
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    const double x = cell.left() + 4.5, top = cell.center().y() - 5.5;
+    painter->setPen(QPen(ink, 1.2));
+    painter->drawLine(QPointF(x, top), QPointF(x, top + 11));
+    const QPointF pennant[] = {{x, top + 0.5}, {x + 7, top + 0.5}, {x + 5.2, top + 2.75}, {x + 7, top + 5}, {x, top + 5}};
+    painter->setBrush(current ? QBrush(ink) : QBrush(Qt::NoBrush));
+    painter->drawPolygon(pennant, 5);
     painter->restore();
 }
 
@@ -1130,10 +1157,17 @@ void LineGrid::paint(QPainter *painter)
         }
         painter->save();
         painter->setClipRect(columnsArea, Qt::IntersectClip);
-        if (numberShown)
-            drawLabel(painter, QRectF(columnLeft(widths, 0), top, widths[0], rh),
-                      idx.data(LineTableModel::LineStateRole).toInt(), idx.data(LineTableModel::DraftRole).toBool(),
-                      labelColours);
+        if (numberShown) {
+            const QRectF cell(columnLeft(widths, 0), top, widths[0], rh);
+            const int state = idx.data(LineTableModel::LineStateRole).toInt();
+            drawLabel(painter, cell, state, idx.data(LineTableModel::DraftRole).toBool(), labelColours);
+            if (!idx.data(LineTableModel::QcNotesRole).toStringList().isEmpty())
+                drawQcFlag(painter, cell,
+                           labelColours.size() == 4
+                               ? labelInk(labelColours.value(LineTableModel::labelSlot(state)).value<QColor>())
+                               : roles.text,
+                           idx.data(LineTableModel::QcCurrentRole).toBool());
+        }
         if (const int review = idx.data(LineTableModel::ReviewRole).toInt(); numberShown && review != 0)
             painter->fillRect(QRectF(columnLeft(widths, 0), top, 3, rh),
                               review == static_cast<int>(LineTableModel::ReviewState::EditedSince) ? roles.warning
@@ -1168,7 +1202,7 @@ void LineGrid::paint(QPainter *painter)
             const double indent =
                 foldIndent + (mc == LineTableModel::TextColumn
                                   ? kGroupIndent * idx.data(LineTableModel::GroupDepthRole).toInt()
-                                  : 0);
+                                  : 0) + (mc == LineTableModel::NumberColumn ? numberIndent() : 0);
             if (mc == LineTableModel::TextColumn) {
                 drawReviewMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                 idx.data(LineTableModel::ReviewMarksRole).toList());

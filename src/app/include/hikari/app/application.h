@@ -14,6 +14,7 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
+#include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -727,6 +728,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -1065,6 +1067,7 @@ private:
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
     QString m_readingDictionary;
+    std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;

@@ -209,6 +209,10 @@ hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_translation_mode_tests PRIVATE
