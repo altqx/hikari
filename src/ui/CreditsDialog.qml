@@ -35,6 +35,7 @@ DialogWindow {
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
+            ["YTSubConverter", "arcusmaximus", "MIT"],
             ["en_US Hunspell dictionary", "Kevin Atkinson, Geoff Kuenning and others", "LGPL and BSD"],
             ["sjp.pl Polish dictionary", "sjp.pl contributors", "GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0 or CC BY 4.0"],
             ["th_TH Hunspell dictionary", "NECTEC (LEXiTRON) and libthai contributors", "LGPL"],

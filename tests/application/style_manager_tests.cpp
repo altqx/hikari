@@ -1,6 +1,7 @@
 #include "hikari/application/style_manager.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/srv3.h"
 
 #include <gtest/gtest.h>
 
@@ -235,6 +236,40 @@ TEST(DocumentStyles, EditsKeepUntouchedStylesAndRenameLines)
     ASSERT_TRUE(setDocumentStyles(session, more, {0, 1, 2, 3, std::nullopt}));
     EXPECT_NE(saved(session.document()).find("Style: TLmode,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\nStyle: Extra,Arial,40,"),
               std::string::npos);
+}
+
+TEST(DocumentStyles, Srv3OptionsFollowRenamesDeletionsAndCopies)
+{
+    EditSession session{load(kScript)};
+    using hikari::core::Srv3StyleOptions;
+    const std::vector<Srv3StyleOptions> options{{.style = u"Default", .shadows = hikari::core::Srv3Glow},
+                                                {.style = u"Sign", .karaoke = true, .currentWordText = 0xFF0000},
+                                                {.style = u"Elsewhere", .shadows = hikari::core::Srv3Bevel}};
+    ASSERT_TRUE(session.run(Command{"options", session.revision(), {}, [&](hikari::core::Document &d) {
+        return hikari::core::setSrv3StyleOptions(d, options);
+    }}));
+
+    auto styles = *documentStyles(session);
+    styles[1].name = u8"Title";
+    styles.erase(styles.begin());
+    ASSERT_TRUE(setDocumentStyles(session, styles, {1, 2, 3}, std::pair{std::u8string(u8"Sign"), std::u8string(u8"Title")}));
+    EXPECT_EQ(hikari::core::srv3StyleOptions(session.document()),
+              (std::vector<Srv3StyleOptions>{{.style = u"Title", .karaoke = true, .currentWordText = 0xFF0000},
+                                             {.style = u"Elsewhere", .shadows = hikari::core::Srv3Bevel}}));
+
+    auto copied = *documentStyles(session);
+    copied.push_back(copied[0]);
+    copied.back().name = u8"Copy of Title";
+    ASSERT_TRUE(setDocumentStyles(session, copied, {0, 1, 2, std::nullopt}, std::nullopt,
+                                  std::pair{std::u8string(u8"Title"), std::u8string(u8"Copy of Title")}));
+    EXPECT_EQ(hikari::core::srv3StyleOptions(session.document()),
+              (std::vector<Srv3StyleOptions>{{.style = u"Title", .karaoke = true, .currentWordText = 0xFF0000},
+                                             {.style = u"Copy of Title", .karaoke = true, .currentWordText = 0xFF0000},
+                                             {.style = u"Elsewhere", .shadows = hikari::core::Srv3Bevel}}));
+
+    ASSERT_TRUE(session.undo());
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(hikari::core::srv3StyleOptions(session.document()), options);
 }
 
 TEST(DocumentStyles, CleanKeepsUsedAndTheTranslationStyle)

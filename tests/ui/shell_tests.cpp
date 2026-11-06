@@ -8874,6 +8874,7 @@ private slots:
                                                                   QStringLiteral("arch1t3cht"), QStringLiteral("MIT")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
+        QVERIFY(names.contains(QStringLiteral("YTSubConverter")));
         QVERIFY(names.contains(QStringLiteral("hunspell-dict-ko")));
         QVERIFY(names.contains(QStringLiteral("ThamiZha! Solthiruthi")));
 #ifdef _WIN32
