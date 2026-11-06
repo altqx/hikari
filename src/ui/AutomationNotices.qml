@@ -74,7 +74,7 @@ Item {
         }
     }
 
-    Dialogs.FileDialog {
+    FileChooser {
         id: editorDialog
         objectName: "scriptEditorDialog"
         property string script

@@ -311,13 +311,13 @@ DialogWindow {
         objectName: "fontCollectorMessages"
         settings: dialog.settings
     }
-    Dialogs.FolderDialog {
+    FolderChooser {
         id: folderDialog
         objectName: "fontCollectorFolderDialog"
         title: qsTr("Choose save folder")
         onAccepted: dialog.chosen(dialog.collector.localPath(selectedFolder))
     }
-    Dialogs.FileDialog {
+    FileChooser {
         id: archiveDialog
         objectName: "fontCollectorArchiveDialog"
         title: qsTr("Select the name of the archive")

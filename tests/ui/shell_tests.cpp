@@ -150,6 +150,20 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
+struct OpenChooser {
+    QObject *impl = nullptr;
+    QQuickWindow *host = nullptr;
+};
+
+OpenChooser openFallbackChooser()
+{
+    for (QWindow *w : QGuiApplication::allWindows())
+        for (QObject *o : w->findChildren<QObject *>())
+            if ((o->inherits("QQuickFileDialogImpl") || o->inherits("QQuickFolderDialogImpl")) && o->property("visible").toBool())
+                return {o, qobject_cast<QQuickWindow *>(w)};
+    return {};
+}
+
 QString writeSrt(const QTemporaryDir &dir, const char *name, const char *cues)
 {
     const QString path = dir.filePath(QLatin1String(name));
@@ -6463,6 +6477,63 @@ private slots:
         QVERIFY(files > 1);
     }
 
+    void everyFileDialogIsAChooser()
+    {
+        static const QRegularExpression plain(
+            QStringLiteral(R"re((?:^|[^\w.])((?:\w+\.)?(?:FileDialog|FolderDialog))\s*\{)re"),
+            QRegularExpression::MultilineOption);
+        int files = 0;
+        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            const QString name = QFileInfo(path).fileName();
+            if (name == QLatin1String("FileChooser.qml") || name == QLatin1String("FolderChooser.qml"))
+                continue;
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            ++files;
+            const QString text = QString::fromUtf8(file.readAll());
+            for (auto m = plain.globalMatch(text); m.hasNext();) {
+                const auto match = m.next();
+                const int line = int(text.left(match.capturedStart(1)).count(QLatin1Char('\n'))) + 1;
+                QFAIL(qPrintable(QStringLiteral("%1:%2: %3 { instead of FileChooser / FolderChooser")
+                                     .arg(name).arg(line).arg(match.captured(1))));
+            }
+        }
+        QVERIFY(files > 1);
+    }
+
+    void fallbackFileDialogsOpenWithoutAPopupWindow()
+    {
+        const QString platform = QGuiApplication::platformName();
+        if (platform != QLatin1String("offscreen") && platform != QLatin1String("xcb"))
+            QSKIP("only offscreen and xcb are sure to use Qt Quick's own file dialog");
+        const auto popupWindows = [] {
+            int n = 0;
+            for (QWindow *w : QGuiApplication::allWindows())
+                n += w->inherits("QQuickPopupWindow") ? 1 : 0;
+            return n;
+        };
+        const auto popupType = [](QObject *impl) {
+            const QMetaProperty p = impl->metaObject()->property(impl->metaObject()->indexOfProperty("popupType"));
+            return QString::fromLatin1(p.enumerator().valueToKey(p.read(impl).toInt()));
+        };
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+        QTRY_VERIFY(item<QObject>("searchTool"));
+        const int before = popupWindows();
+        for (const char *name : {"subtitlesOpenDialog", "findFolderDialog"}) {
+            QObject *dialog = named(name);
+            QVERIFY2(dialog, name);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+            QTRY_VERIFY2(openFallbackChooser().impl, name);
+            QCOMPARE(popupType(openFallbackChooser().impl), QStringLiteral("Item"));
+            QCOMPARE(popupWindows(), before);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY2(!openFallbackChooser().impl, name);
+        }
+    }
+
     void popupsAreOnTheKit()
     {
         static const QRegularExpression opening(QStringLiteral(R"re((?:^|[^\w.])(?:Dialog|MessageDialog)\s*\{)re"));
@@ -11419,25 +11490,13 @@ private slots:
             }
             QVERIFY(image.save(out + QStringLiteral("/ti1-") + QLatin1String(name) + QStringLiteral(".png")));
         };
-        // Qt Quick's own file and folder dialogs open in a window of their own.
-        const auto shown = [] {
-            QSet<QWindow *> out;
-            for (QWindow *w : QGuiApplication::allWindows())
-                if (w->isVisible())
-                    out << w;
-            return out;
-        };
         for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
             QObject *dialog = find(name);
-            const QSet<QWindow *> before = shown();
             QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
-            QTRY_VERIFY2(dialog->property("visible").toBool(), name);
-            QTRY_VERIFY2(!(shown() - before).isEmpty(), name);
-            auto *own = qobject_cast<QQuickWindow *>(*(shown() - before).begin());
-            QVERIFY(QTest::qWaitForWindowExposed(own));
-            save(name, own, true);
+            QTRY_VERIFY2(openFallbackChooser().host, name);
+            save(name, openFallbackChooser().host, false);
             QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
-            QTRY_VERIFY(!own->isVisible());
+            QTRY_VERIFY2(!openFallbackChooser().impl, name);
         }
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
         {

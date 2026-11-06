@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -1737,7 +1736,7 @@ DialogWindow {
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
     }
 
-    FolderDialog {
+    FolderChooser {
         id: fontsFolderDialog
         objectName: "fontsFolderDialog"
         title: qsTr("Choose external font folder")
@@ -1748,7 +1747,7 @@ DialogWindow {
         }
     }
 
-    FileDialog {
+    FileChooser {
         id: legacyHotkeysFile
         objectName: "legacyHotkeysFile"
         title: qsTr("Import legacy shortcuts")
