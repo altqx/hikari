@@ -115,6 +115,11 @@ Item {
                      many: qsTr("Save the changes to %n documents before loading the session?", "", n),
                      one: qsTr("Save the changes to “%1” before loading the session?").arg(name),
                      save: qsTr("Save and load"), discard: qsTr("Load without saving") }
+        case "window":
+            return { title: qsTr("Close window"),
+                     many: qsTr("Save the changes to %n documents before closing them?", "", n),
+                     one: qsTr("Save the changes to “%1” before closing?").arg(name),
+                     save: qsTr("Save and close"), discard: qsTr("Close without saving") }
         case "close":
         case "tab":
             return { title: qsTr("Close tab"), many: "",

@@ -2387,6 +2387,10 @@ Output device: %2</source>
         <translation>ปิดแท็บ</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>ปิดหน้าต่าง</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>นำคำบรรยายออกจากตัวแก้ไข</translation>
     </message>
