@@ -6004,8 +6004,8 @@ void Application::shellWindowLoaded(QQuickWindow *window)
         m_firstWindow = window;
     const auto keepPlace = [this, window, id = *id] { notePlace(*window, m_windowPlaces[id]); };
     for (const auto changed : {&QWindow::xChanged, &QWindow::yChanged, &QWindow::widthChanged, &QWindow::heightChanged})
-        connect(window, changed, window, keepPlace);
-    connect(window, &QWindow::windowStateChanged, window, keepPlace);
+        connect(window, changed, this, keepPlace);
+    connect(window, &QWindow::windowStateChanged, this, keepPlace);
     keepPlace();
 }
 
