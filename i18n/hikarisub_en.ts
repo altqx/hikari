@@ -607,44 +607,44 @@
     <name>HikariSub.Review</name>
     <message numerus="yes">
         <source>%n AI change(s) to review</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n AI change to review</numerusform>
+            <numerusform>%n AI changes to review</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n Line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation>
+            <numerusform>Also undo my edits to %n line I changed after the AI</numerusform>
+            <numerusform>Also undo my edits to %n lines I changed after the AI</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n other change(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Also undo my edits to %n Line(s) I changed after the AI</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n other change</numerusform>
+            <numerusform>%n other changes</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n change(s) to review</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n change to review</numerusform>
+            <numerusform>%n changes to review</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n change(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n change</numerusform>
+            <numerusform>%n changes</numerusform>
         </translation>
     </message>
 </context>

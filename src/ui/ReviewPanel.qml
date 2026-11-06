@@ -274,7 +274,7 @@ FocusScope {
                         Label {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
-                            text: qsTr("You edited some of these Lines after the AI did. Undo all leaves them as they are unless you undo them anyway.")
+                            text: qsTr("You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.")
                         }
                         RowLayout {
                             Button {

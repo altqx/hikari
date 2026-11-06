@@ -7274,9 +7274,9 @@ ApplicationWindow {
                 Label {
                     color: Theme.muted
                     text: modelData.others > 0
-                          ? qsTranslate("HikariSub.Review", "%n Line(s)", "", modelData.lines) + ", "
+                          ? qsTranslate("HikariSub.Review", "%n line(s)", "", modelData.lines) + ", "
                             + qsTranslate("HikariSub.Review", "%n other change(s)", "", modelData.others)
-                          : qsTranslate("HikariSub.Review", "%n Line(s)", "", modelData.lines)
+                          : qsTranslate("HikariSub.Review", "%n line(s)", "", modelData.lines)
                 }
             }
         }
@@ -7284,14 +7284,14 @@ ApplicationWindow {
             id: alsoMyEdits
             objectName: "restoreAlsoMyEdits"
             visible: restoreCheckpointDialog.editedSince > 0
-            text: qsTranslate("HikariSub.Review", "Also undo my edits to %n Line(s) I changed after the AI", "",
+            text: qsTranslate("HikariSub.Review", "Also undo my edits to %n line(s) I changed after the AI", "",
                               restoreCheckpointDialog.editedSince)
         }
         Label {
             Layout.preferredWidth: 420
             wrapMode: Text.WordWrap
             color: Theme.muted
-            text: qsTranslate("HikariSub.Review", "Your other edits stay. Undo brings the AI's changes back.")
+            text: qsTranslate("HikariSub.Review", "Your other edits stay. Undo brings the AI’s changes back.")
         }
         buttons: [
             PrimaryButton {

@@ -11645,10 +11645,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">검토</translation>
     </message>
     <message>
-        <source>Deleted Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Line</source>
         <translation type="unfinished">줄</translation>
     </message>
@@ -11657,7 +11653,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">%1번 줄</translation>
     </message>
     <message>
-        <source>New Line %1</source>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11703,25 +11703,25 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>%n Line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>%n other change(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Also undo my edits to %n Line(s) I changed after the AI</source>
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Your other edits stay. Undo brings the AI&apos;s changes back.</source>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11785,11 +11785,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">%1/%2</translation>
     </message>
     <message>
-        <source>The AI added this Line.</source>
+        <source>The AI added this line.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>You changed this Line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11827,7 +11827,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>You edited some of these Lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -3,6 +3,7 @@
 #include "hikari/core/style.h"
 
 #include <absl/container/flat_hash_map.h>
+#include <boost/dynamic_bitset.hpp>
 
 #include <algorithm>
 #include <map>
@@ -233,7 +234,7 @@ std::vector<Live> liveItems(const std::vector<C *> &changes, const Snapshot &now
 {
     std::vector<Live> out;
     std::map<std::string, std::size_t> newest;
-    std::vector<bool> matches;
+    boost::dynamic_bitset<> matches;
     for (std::size_t c = 0; c < changes.size(); ++c)
         for (std::size_t i = 0; i < changes[c]->items.size(); ++i) {
             const AiReview::Item &item = changes[c]->items[i];

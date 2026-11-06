@@ -115,7 +115,7 @@ FocusScope {
         const read = qcNotes.readFile(url)
         const name = decodeURIComponent(url.toString().split("/").pop())
         if (read.error !== undefined) {
-            say(qsTr("%1 could not be read: %2").arg(name).arg(read.error))
+            say(qsTr("%1 could not be read: %2").arg(name, read.error))
             return
         }
         importText(read.text, name)
@@ -306,7 +306,7 @@ FocusScope {
                     required property var modelData
                     objectName: "qcNotesSection_" + modelData.name
                     text: modelData.name + "  " + (panel.qcNotes.hideDone && modelData.open !== modelData.count
-                                                   ? qsTr("%1 of %2").arg(modelData.open).arg(modelData.count) : modelData.count)
+                                                   ? qsTr("%1 of %2").arg(modelData.open, modelData.count) : modelData.count)
                     on: panel.qcNotes.section === modelData.name
                     onClicked: panel.qcNotes.section = on ? "" : modelData.name
                 }
@@ -520,7 +520,7 @@ FocusScope {
             Label {
                 objectName: "qcNotesPosition"
                 color: Theme.muted
-                text: panel.chosenRow >= 0 ? qsTr("%1 of %2").arg(panel.chosenRow + 1).arg(panel.notes.length)
+                text: panel.chosenRow >= 0 ? qsTr("%1 of %2").arg(panel.chosenRow + 1, panel.notes.length)
                                            : qsTr("%n note(s)", "", panel.notes.length)
             }
         }

@@ -75,7 +75,7 @@ Pane {
             Label {
                 objectName: "reviewStripPosition"
                 color: Theme.muted
-                text: strip.waiting ? qsTr("%1 of %2").arg(strip.change.index).arg(strip.change.count) : ""
+                text: strip.waiting ? qsTr("%1 of %2").arg(strip.change.index, strip.change.count) : ""
             }
             IconToolButton {
                 objectName: "reviewStripNext"
@@ -96,7 +96,7 @@ Pane {
             objectName: "reviewStripNew"
             visible: strip.waiting && strip.change.inserted
             color: Theme.muted
-            text: qsTr("The AI added this Line.")
+            text: qsTr("The AI added this line.")
         }
         RowLayout {
             objectName: "reviewStripConfirm"
@@ -112,7 +112,7 @@ Pane {
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: qsTr("You changed this Line after the AI did. Undo puts it back as it was before the AI, which drops your edit.")
+                text: qsTr("You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.")
             }
             Button {
                 objectName: "reviewStripUndoAnyway"

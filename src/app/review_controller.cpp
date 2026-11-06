@@ -36,11 +36,11 @@ QString itemTitle(const AiReview::Item &item, std::optional<int> row)
     switch (item.kind) {
     case AiReview::ItemKind::Line:
         if (!item.after)
-            return QCoreApplication::translate("HikariSub.Review", "Deleted Line");
+            return QCoreApplication::translate("HikariSub.Review", "Deleted line");
         if (!row)
             return QCoreApplication::translate("HikariSub.Review", "Line");
         return (item.before ? QCoreApplication::translate("HikariSub.Review", "Line %1")
-                            : QCoreApplication::translate("HikariSub.Review", "New Line %1"))
+                            : QCoreApplication::translate("HikariSub.Review", "New line %1"))
             .arg(*row);
     case AiReview::ItemKind::Style:
         return QCoreApplication::translate("HikariSub.Review", "Style %1").arg(qs(item.key));

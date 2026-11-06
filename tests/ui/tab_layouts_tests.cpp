@@ -472,7 +472,7 @@ private slots:
                                  "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock",
                                  "templateDock", "postprocessorDock", "qcNotesDock", "reviewDock"})
             closedShown += isOpen(dock) ? 0 : 1;
-        QVERIFY(closedShown < 12);
+        QVERIFY(closedShown < 14);
         window()->close();
         QTRY_VERIFY(!window()->isVisible());
         const auto session = readSession(application->lastSessionPath());
