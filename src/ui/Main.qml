@@ -845,7 +845,7 @@ ApplicationWindow {
                       run: () => qcNotesTool.importClipboard() },
                     { name: "qcNotesExport", text: qsTranslate("HikariSub.QcNotes", "Export notes…"), iconRole: "export",
                       enabled: () => root.qcNotes.total > 0, run: () => qcNotesTool.openExport() },
-                    { name: "qcNotesMarkAllNotDone", text: qsTranslate("HikariSub.QcNotes", "Mark all as not done"),
+                    { name: "qcNotesMarkAllNotDone", text: qsTranslate("HikariSub.QcNotes", "Mark all as not done"), iconRole: "qc-done-reset",
                       enabled: () => root.qcNotes.editable && root.qcNotes.sections.some(s => s.open < s.count),
                       run: () => root.qcNotes.markAllNotDone() },
                     { name: "qcNotesRemoveAll", text: qsTranslate("HikariSub.QcNotes", "Remove all notes…"), iconRole: "delete",
@@ -1977,7 +1977,7 @@ ApplicationWindow {
                 command: "GLOBAL_SHOW_QC_NOTES"
                 help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
                 id: showQcNotesItem
-                iconRole: "notices"
+                iconRole: "qc-notes"
                 objectName: "showQcNotes"
                 text: qsTr("&QC notes…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_QC_NOTES")) root.showPanel(qcNotesDock)
@@ -5946,7 +5946,7 @@ ApplicationWindow {
                         MenuSeparator {}
                         ShellMenuItem {
                             command: "GLOBAL_ADD_QC_NOTE"
-                            iconRole: "notices"
+                            iconRole: "qc-notes"
                             objectName: "addQcNote"
                             text: qsTranslate("HikariSub.QcNotes", "Add QC note…")
                             enabled: root.qcNotes.editable

@@ -1144,7 +1144,6 @@ for card, roles in {
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
     "MW2 #630": ["tab-to-new-window", "tab-to-window"],
-    "FA20 #577": ["qc-notes", "qc-done-reset"],
     "AI21 #725": ["compact"],
     "AI23 #742": ["web-search"],
     "AI24 #744": ["update"],
