@@ -12861,6 +12861,18 @@ ponieważ została zmieniona.</translation>
         <translation>“closed” nie ma wartości true ani false.</translation>
     </message>
     <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” nie jest listą.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>Okno %1 nie jest obiektem.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>Okno %1: “%2” ma nieprawidłowy typ.</translation>
+    </message>
+    <message>
         <source>Tab %1 is not an object.</source>
         <translation>Zakładka %1 nie jest obiektem.</translation>
     </message>

@@ -12705,6 +12705,18 @@ because it was edited.</source>
         <translation>“closed” 값이 true 또는 false가 아닙니다.</translation>
     </message>
     <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” 값이 목록이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>창 %1(은)는 객체가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>창 %1: “%2”의 형식이 잘못되었습니다.</translation>
+    </message>
+    <message>
         <source>Tab %1 is not an object.</source>
         <translation>탭 %1(은)는 객체가 아닙니다.</translation>
     </message>

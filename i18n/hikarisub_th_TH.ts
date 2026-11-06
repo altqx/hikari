@@ -12705,6 +12705,18 @@ because it was edited.</source>
         <translation>“closed” ไม่ใช่ true หรือ false</translation>
     </message>
     <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” ไม่ใช่รายการ</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>หน้าต่าง %1 ไม่ใช่ออบเจ็กต์</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>หน้าต่าง %1: “%2” มีชนิดข้อมูลไม่ถูกต้อง</translation>
+    </message>
+    <message>
         <source>Tab %1 is not an object.</source>
         <translation>แท็บ %1 ไม่ใช่ออบเจ็กต์</translation>
     </message>
