@@ -283,6 +283,33 @@ TEST_F(KaraokeTemplater, BundledTemplaterMatchesAegisub322ByteForByte)
 }
 
 
+TEST_F(KaraokeTemplater, CharTemplatesWalkGraphemeClusters)
+{
+    const QString document = corpusDir() + QStringLiteral("/departures/thai.ass");
+    const QString golden = corpusDir() + QStringLiteral("/departures/thai.out.ass");
+    const std::string bundled = templated(document, bundledScript());
+    ASSERT_FALSE(bundled.empty());
+    if (qEnvironmentVariableIsSet("HIKARI_UPDATE_KARAOKE_GOLDENS")) {
+        QFile out(golden);
+        ASSERT_TRUE(out.open(QIODevice::WriteOnly));
+        out.write(bundled.data(), static_cast<qint64>(bundled.size()));
+    }
+    EXPECT_EQ(bundled, textOf(readBytes(golden)));
+    EXPECT_NE(bundled, templated(document, pristineScript()));
+}
+
+TEST_F(KaraokeTemplater, GraphemesFalseSplitsCharsByCodePointAsAegisubDoes)
+{
+    const auto bytes = editedCorpus(
+        QStringLiteral("departures/thai.ass"),
+        {{"Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,template",
+          "Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,code once,graphemes = false\n"
+          "Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,template"}});
+    const std::string bundled = templatedBytes(bytes, bundledScript());
+    ASSERT_FALSE(bundled.empty());
+    EXPECT_EQ(bundled, templatedBytes(bytes, pristineScript()));
+}
+
 TEST_F(KaraokeTemplater, AReopenedFileKnowsWhichKaraokeLineEachLineCameFrom)
 {
     hikari::application::EditSession session(hikari::core::loadAss(readBytes(corpusDir() + "/stock-tutorials.ass")).document);
