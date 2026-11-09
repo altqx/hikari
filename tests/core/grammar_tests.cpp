@@ -167,7 +167,7 @@ TEST(Grammar, EveryRuleIsInOneOfHarpersFifteenGroups)
     ASSERT_EQ(groupIds().size(), 15u);
     EXPECT_EQ(groupIds().front(), "properNouns");
     EXPECT_EQ(groupIds().back(), "miscellaneous");
-    EXPECT_EQ(rules().size(), 936u); // harper-cli config of v3.0.0
+    EXPECT_EQ(rules().size(), 961u); // harper-cli config of v3.1.0
     for (const auto &rule : rules())
         EXPECT_LT(rule.group, groupIds().size()) << rule.name;
     EXPECT_EQ(groupIds()[*groupOfRule("AnA")], "miscellaneous");
