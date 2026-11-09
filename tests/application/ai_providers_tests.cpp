@@ -344,3 +344,56 @@ TEST_F(AiProvidersTest, AConfigThatCannotBeSavedChangesNothing)
     EXPECT_EQ(add(providers, openRouter(), "sk"), SaveError::Config);
     EXPECT_FALSE(providers.enabled());
 }
+
+TEST(SearchServices, IdsRoundTripAndKeysLiveApartFromProviders)
+{
+    for (const SearchService service :
+         {SearchService::Brave, SearchService::Tavily, SearchService::Exa, SearchService::Firecrawl})
+        EXPECT_EQ(searchServiceFromId(searchServiceId(service)), service);
+    EXPECT_EQ(searchServiceFromId("bing"), std::nullopt);
+    EXPECT_EQ(searchKeyEntry(SearchService::Brave), "search:brave");
+}
+
+TEST(SearchServices, PresetsSearchNativelyOnlyOnTheirOwnWire)
+{
+    const auto on = [](Preset preset, Wire wire) {
+        Provider p = presetProvider(preset, "p", "P");
+        p.wire = wire;
+        return searchesNatively(p);
+    };
+    EXPECT_TRUE(on(Preset::Anthropic, Wire::AnthropicMessages));
+    EXPECT_TRUE(on(Preset::OpenAI, Wire::Responses));
+    EXPECT_FALSE(on(Preset::OpenAI, Wire::ChatCompletions));
+    EXPECT_TRUE(on(Preset::Gemini, Wire::Gemini));
+    EXPECT_TRUE(on(Preset::OpenRouter, Wire::ChatCompletions));
+    EXPECT_FALSE(on(Preset::OpenRouter, Wire::Responses));
+    EXPECT_FALSE(on(Preset::Custom, Wire::Responses));
+    EXPECT_FALSE(on(Preset::Custom, Wire::ChatCompletions));
+}
+
+TEST(SearchServices, AKeyIsReadFromTheKeychainOnceAndRemovedFromIt)
+{
+    FakeKeys store;
+    SearchKeys keys(store);
+    std::optional<SaveError> stored = SaveError::Config;
+    keys.store(SearchService::Tavily, "tvly-0123", [&](std::optional<SaveError> e) { stored = e; });
+    EXPECT_EQ(stored, std::nullopt);
+    EXPECT_EQ(store.keys.at("search:tavily"), "tvly-0123");
+
+    SearchKeys fresh(store);
+    std::optional<std::string> read;
+    fresh.read(SearchService::Tavily, [&](std::optional<std::string> k) { read = k; });
+    fresh.read(SearchService::Tavily, [&](std::optional<std::string> k) { read = k; });
+    EXPECT_EQ(read, "tvly-0123");
+    EXPECT_EQ(store.reads, 1);
+
+    fresh.remove(SearchService::Tavily, [&](std::optional<SaveError> e) { stored = e; });
+    EXPECT_EQ(stored, std::nullopt);
+    EXPECT_FALSE(store.keys.contains("search:tavily"));
+    read = "stale";
+    fresh.read(SearchService::Tavily, [&](std::optional<std::string> k) { read = k; });
+    EXPECT_EQ(read, std::nullopt);
+
+    keys.store(SearchService::Exa, "", [&](std::optional<SaveError> e) { stored = e; });
+    EXPECT_EQ(stored, SaveError::Key);
+}

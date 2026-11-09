@@ -331,9 +331,21 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(pluginNetwork.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("plugins.network"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("plugins.network")->defaultValue), true);
+    const auto &webSearch = all[std::size(kLegacy) + 57];
+    EXPECT_EQ(webSearch.setting, "ai.webSearch");
+    EXPECT_EQ(webSearch.control, OptionsControl::Check);
+    EXPECT_EQ(webSearch.page, OptionsPage::Ai);
+    ASSERT_NE(findSetting("ai.webSearch"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("ai.webSearch")->defaultValue), true);
+    const auto &searchService = all[std::size(kLegacy) + 58];
+    EXPECT_EQ(searchService.setting, "ai.searchService");
+    EXPECT_EQ(searchService.control, OptionsControl::Text);
+    EXPECT_EQ(searchService.page, OptionsPage::Ai);
+    ASSERT_NE(findSetting("ai.searchService"), nullptr);
+    EXPECT_EQ(std::get<std::string>(findSetting("ai.searchService")->defaultValue), "");
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 59);
-    const auto &hostApi = all[std::size(kLegacy) + 57];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 61);
+    const auto &hostApi = all[std::size(kLegacy) + 59];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -344,7 +356,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 57);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 59);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

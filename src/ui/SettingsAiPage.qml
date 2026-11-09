@@ -20,6 +20,20 @@ ScrollView {
     readonly property var components: ai ? ai.components : ({})
     readonly property var agents: ai ? ai.agents : ({})
     readonly property bool autoUpdate: dialog.values["ai.autoUpdate"] === true && components.policyOff !== true
+    readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
+    readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
+    readonly property var search: ai ? ai.search : ({})
+    readonly property bool searchKeySaved: search.service === stagedService && search.hasKey === true
+    readonly property string searchVia: webSearchOn && stagedService !== "" ? serviceName(stagedService) : ""
+    property bool replacingSearchKey: false
+    property string testedSearchKey: ""
+    readonly property var searchServices: [
+        {id: "", name: qsTr("None"), menuText: qsTr("None")},
+        {id: "brave", name: "Brave Search", menuText: qsTr("Brave Search (search only)")},
+        {id: "tavily", name: "Tavily", menuText: "Tavily"},
+        {id: "exa", name: "Exa", menuText: "Exa"},
+        {id: "firecrawl", name: "Firecrawl", menuText: "Firecrawl"}
+    ]
     property bool codexBrowser: false
     readonly property string codeFontFamily: {
         const marked = ["Cascadia Mono", "Consolas", "Menlo", "JetBrains Mono", "Noto Sans Mono"]
@@ -49,7 +63,63 @@ ScrollView {
         if (ai && ai.on) {
             ai.checkCodex()
             ai.checkAgents()
+            ai.checkSearchKey(stagedService)
         }
+    }
+    onStagedServiceChanged: {
+        replacingSearchKey = false
+        testedSearchKey = ""
+        searchKeyField.clear()
+        if (ai && ai.on)
+            ai.checkSearchKey(stagedService)
+    }
+    function serviceName(id) {
+        return searchServices.find(s => s.id === id)?.name ?? id
+    }
+    function searchHow(row) {
+        if (row.searchesNatively)
+            return row.preset === "gemini" ? qsTr("Google Search, and reads pages") : qsTr("Its own search, and reads pages")
+        return searchKeySaved ? serviceName(stagedService) : qsTr("Needs a search service")
+    }
+    function searchStatus() {
+        const name = serviceName(search.service ?? "")
+        switch (search.state) {
+        case "checking": return ""
+        case "saving": return qsTr("Saving…")
+        case "testing": return qsTr("Testing…")
+        case "ok": return qsTr("Connected")
+        case "failed":
+            switch (search.error) {
+            case "unauthorized": return qsTr("Key rejected (%1)").arg(search.httpStatus)
+            case "rateLimited": return qsTr("Searches used up (%1)").arg(search.httpStatus)
+            case "noProvider": return qsTr("Add a provider to test the key")
+            case "network": return qsTr("Can’t reach %1").arg(name)
+            case "server": return qsTr("Search service error (%1)").arg(search.httpStatus)
+            }
+            return failureText(search.error, search.httpStatus)
+        }
+        return qsTr("Not tested")
+    }
+    function searchNote() {
+        const name = serviceName(stagedService)
+        if (!searchKeySaved || replacingSearchKey)
+            return qsTr("Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.").arg(name)
+        if (search.state === "failed" && search.error === "unauthorized")
+            return qsTr("%1 refused the key. Paste a new one from your %1 dashboard.").arg(name)
+        if (search.state === "failed" && search.error === "rateLimited")
+            return qsTr("Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.").arg(name)
+        return qsTr("The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.").arg(name)
+    }
+    function askRemoveSearchKey() {
+        const name = serviceName(stagedService)
+        dialog.ask({
+            title: qsTr("Remove key"),
+            text: qsTr("Remove the %1 key?").arg(name),
+            detail: qsTr("It is deleted from the keychain. Providers without their own search stop searching until you add a key."),
+            severity: "warning",
+            choices: [{ id: "remove", text: qsTr("Remove"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, answer => { if (answer === "remove") page.ai.removeSearchKey(page.stagedService) })
     }
     function signInCodex(browser) {
         codexBrowser = browser
@@ -138,7 +208,7 @@ ScrollView {
         case "form": return qsTr("Fill in the name and a valid address")
         case "downloadManifest":
         case "downloadNetwork": return qsTr("Can’t download the AI component")
-        case "downloadSignature": return qsTr("The update list failed its signature check")
+        case "downloadSignature": return qsTr("Couldn’t check: bad signature")
         case "downloadDamaged": return qsTr("Downloaded AI component is damaged")
         case "downloadDisk": return qsTr("Can’t save the AI component")
         }
@@ -161,7 +231,7 @@ ScrollView {
         if (c.state === "checking")
             return { tone: "muted", text: qsTr("Checking…") }
         if (c.state === "downloading")
-            return { tone: "muted", text: qsTr("Downloading %1 · %2 of %3 MB").arg(c.available).arg(tenths(c.received)).arg(tenths(c.total)) }
+            return { tone: "muted", text: qsTr("Downloading %1 · %2 of %3 MB").arg(c.available, tenths(c.received), tenths(c.total)) }
         if (c.error === "downloadNetwork" || c.error === "downloadManifest")
             return { tone: "bad", text: qsTr("Couldn’t check: no connection") }
         if (c.error)
@@ -169,7 +239,7 @@ ScrollView {
         if (c.staged)
             return { tone: "ok", text: qsTr("%1 is ready · starts once AI has been idle for 2 minutes").arg(c.staged) }
         if (c.available)
-            return { tone: "warn", text: qsTr("%1 is available · %2 MB").arg(c.available).arg(tenths(c.availableBytes)) }
+            return { tone: "warn", text: qsTr("%1 is available · %2 MB").arg(c.available, tenths(c.availableBytes)) }
         if (c.newerNeedsApp)
             return { tone: "ok", text: qsTr("Newest this HikariSub runs") }
         return { tone: "ok", text: c.checkedAt ? checkedText(c.checkedAt) : qsTr("Up to date") }
@@ -212,9 +282,9 @@ ScrollView {
         if (row.state === "updating")
             return qsTr("Running %1. New sessions use the new version.").arg(row.command)
         if (row.outcome === "unchanged")
-            return qsTr("Still %1 after %2. Run it in a terminal to see why:").arg(row.version).arg(row.command)
+            return qsTr("Still %1 after %2. Run it in a terminal to see why.").arg(row.version, row.command)
         if (agentFailed(row))
-            return qsTr("%1 didn’t finish. Run it in a terminal to see why:").arg(row.command)
+            return qsTr("%1 didn’t finish. Run it in a terminal to see why.").arg(row.command)
         if (!row.version)
             return qsTr("Found on PATH.")
         if (row.session && row.canUpdate && agentNeedsUpdate(row))
@@ -227,11 +297,11 @@ ScrollView {
         if (row.badge === "broken")
             return qsTr("%1 has a fault that breaks HikariSub’s agent.").arg(row.version) + " " + how
         if (row.badge === "unsupported")
-            return qsTr("%1 is older than the oldest HikariSub supports (%2).").arg(row.version).arg(row.minimum) + " " + how
+            return qsTr("%1 is older than the oldest HikariSub supports (%2).").arg(row.version, row.minimum) + " " + how
         if (row.badge === "update")
-            return row.canUpdate ? qsTr("%1 · %2 is out · installed with %3").arg(row.version).arg(row.latest).arg(method)
-                                 : qsTr("%1 · %2 is out.").arg(row.version).arg(row.latest) + " " + how
-        return method ? qsTr("%1 · installed with %2").arg(row.version).arg(method)
+            return row.canUpdate ? qsTr("%1 · %2 is out · installed with %3").arg(row.version, row.latest, method)
+                                 : qsTr("%1 · %2 is out.").arg(row.version, row.latest) + " " + how
+        return method ? qsTr("%1 · installed with %2").arg(row.version, method)
                       : qsTr("%1 · installed in an unknown way").arg(row.version)
     }
     function agentBadge(row) {
@@ -995,6 +1065,181 @@ ScrollView {
         }
 
         SettingsSection {
+            objectName: "aiWebSearch"
+            visible: page.live
+            title: qsTr("Web search")
+            AiCheck { setting: "ai.webSearch"; text: qsTr("Let AI search the web") }
+            Note { text: qsTr("The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.") }
+            Rectangle {
+                objectName: "aiSearchProviders"
+                visible: page.webSearchOn && page.providerList.length > 0
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: searchList.implicitHeight + 2
+                Layout.fillWidth: true
+                Layout.leftMargin: 24
+                ColumnLayout {
+                    id: searchList
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    spacing: 0
+                    Repeater {
+                        model: page.providerList
+                        delegate: RowLayout {
+                            id: searchRow
+                            required property var modelData
+                            readonly property bool needsService: !modelData.searchesNatively && !page.searchKeySaved
+                            objectName: "aiSearchHow_" + modelData.id
+                            spacing: 8
+                            Layout.fillWidth: true
+                            Layout.margins: 6
+                            Layout.leftMargin: 10
+                            Label { text: searchRow.modelData.name; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Label {
+                                objectName: "aiSearchHow"
+                                text: page.searchHow(searchRow.modelData)
+                                color: searchRow.needsService ? Theme.warning : Theme.success
+                            }
+                        }
+                    }
+                }
+            }
+            Note {
+                objectName: "aiGeminiSuggestionsNote"
+                visible: page.webSearchOn && page.providerList.some(p => p.preset === "gemini" && p.searchesNatively)
+                text: qsTr("Gemini answers that searched show Google’s search suggestions, as Google’s terms require.")
+                Layout.topMargin: 0
+            }
+            SettingsRow {
+                id: serviceRow
+                text: qsTr("Search service")
+                labelWidth: 200
+                enabled: page.webSearchOn
+                ComboBox {
+                    id: serviceChoice
+                    objectName: "setting_ai.searchService"
+                    readonly property var docsValues: page.searchServices.map(s => ({value: s.id, label: s.menuText}))
+                    model: page.searchServices
+                    textRole: "menuText"
+                    valueRole: "id"
+                    Accessible.name: serviceRow.text
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 420
+                    function refresh() { currentIndex = Math.max(0, indexOfValue(page.stagedService)) }
+                    Component.onCompleted: refresh()
+                    Connections { target: page; function onStagedServiceChanged() { serviceChoice.refresh() } }
+                    onActivated: index => page.dialog.put("ai.searchService", valueAt(index))
+                }
+            }
+            Note {
+                text: page.stagedService === "brave"
+                      ? qsTr("Brave Search only searches: providers without their own search can’t read a page with it.")
+                      : qsTr("For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.")
+                enabled: page.webSearchOn
+                Layout.leftMargin: 208
+                Layout.topMargin: -2
+            }
+            SettingsRow {
+                id: searchKeyRow
+                objectName: "aiSearchKeyRow"
+                visible: page.webSearchOn && page.stagedService !== "" && page.search.state !== "checking"
+                text: qsTr("%1 key").arg(page.serviceName(page.stagedService))
+                labelWidth: 200
+                TextField {
+                    id: searchKeyField
+                    objectName: "aiSearchKey"
+                    visible: !page.searchKeySaved || page.replacingSearchKey
+                    echoMode: showSearchKey.checked ? TextInput.Normal : TextInput.Password
+                    Layout.fillWidth: true
+                    Accessible.name: searchKeyRow.text
+                    onAccepted: if (text.trim() !== "") saveSearchKey.clicked()
+                    Connections {
+                        target: page.ai
+                        function onSearchKeyStored() {
+                            searchKeyField.clear()
+                            page.testedSearchKey = ""
+                            page.replacingSearchKey = false
+                        }
+                    }
+                }
+                IconToolButton {
+                    id: showSearchKey
+                    visible: searchKeyField.visible
+                    iconRole: checked ? "hide" : "show"
+                    text: checked ? qsTr("Hide key") : qsTr("Show key")
+                    checkable: true
+                }
+                StatusDot {
+                    visible: searchStatusLabel.text !== ""
+                    status: page.search.state ?? ""
+                }
+                Label {
+                    id: searchStatusLabel
+                    objectName: "aiSearchStatus"
+                    text: page.search.service === page.stagedService ? page.searchStatus() : ""
+                    visible: text !== ""
+                    color: page.search.state === "ok" ? Theme.success
+                         : page.search.state === "failed" ? (page.search.error === "rateLimited" ? Theme.warning : Theme.danger)
+                         : Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: !searchKeyField.visible
+                }
+                IconTextButton {
+                    id: saveSearchKey
+                    objectName: "aiSearchTest"
+                    iconRole: "test-connection"
+                    text: qsTr("Test connection")
+                    enabled: page.search.state !== "testing" && page.search.state !== "saving"
+                             && (searchKeyField.visible ? searchKeyField.text.trim() !== "" : true)
+                    onClicked: {
+                        if (searchKeyField.visible) {
+                            page.testedSearchKey = searchKeyField.text
+                            page.ai.saveSearchKey(page.stagedService, searchKeyField.text)
+                        } else {
+                            page.ai.testSearchKey(page.stagedService)
+                        }
+                    }
+                }
+                Button {
+                    objectName: "aiSearchAddAnyway"
+                    visible: searchKeyField.visible && page.search.service === page.stagedService
+                             && page.search.canAddAnyway === true && searchKeyField.text === page.testedSearchKey
+                    text: qsTr("Add anyway")
+                    onClicked: page.ai.addSearchKeyAnyway(page.stagedService, searchKeyField.text)
+                }
+                Button {
+                    objectName: "aiSearchReplaceKey"
+                    visible: page.searchKeySaved && !page.replacingSearchKey && page.search.error === "unauthorized"
+                    text: qsTr("Replace key…")
+                    onClicked: page.replacingSearchKey = true
+                }
+                Button {
+                    objectName: "aiSearchRemoveKey"
+                    visible: page.searchKeySaved && !page.replacingSearchKey
+                    text: qsTr("Remove key")
+                    onClicked: page.askRemoveSearchKey()
+                }
+            }
+            Note {
+                objectName: "aiSearchKeyNote"
+                visible: searchKeyRow.visible
+                text: page.searchNote()
+                Layout.leftMargin: 208
+                Layout.topMargin: -2
+            }
+            LinkButton {
+                objectName: "aiSearchKeys"
+                visible: searchKeyRow.visible && (!page.searchKeySaved || page.replacingSearchKey)
+                iconRole: "open-link"
+                text: qsTr("Get a %1 key").arg(page.serviceName(page.stagedService))
+                Layout.leftMargin: 206
+                onClicked: page.ai.openSearchKeys(page.stagedService)
+            }
+        }
+
+        SettingsSection {
             objectName: "aiExternalAgents"
             visible: page.live
             title: qsTr("External agents")
@@ -1287,7 +1532,7 @@ ScrollView {
                     Label {
                         objectName: "aiRollbackText"
                         readonly property var r: componentsSection.rollback
-                        text: qsTr("AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.").arg(r.version ?? "").arg(r.to ?? "")
+                        text: qsTr("AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.").arg(r.version ?? "", r.to ?? "")
                               + (r.reportSent === true ? " " + qsTr("A crash report was sent.") : "")
                         textFormat: Text.PlainText
                         wrapMode: Text.Wrap
@@ -1403,8 +1648,13 @@ ScrollView {
             Note {
                 objectName: "aiSandboxNote"
                 color: page.ai.sandboxed ? Theme.muted : Theme.warning
-                text: page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
-                                        : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+                text: {
+                    if (page.searchVia !== "")
+                        return page.ai.sandboxed ? qsTr("Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.").arg(page.searchVia)
+                                                 : qsTr("Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.").arg(page.searchVia)
+                    return page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
+                                             : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+                }
             }
         }
     }

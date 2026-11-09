@@ -38,7 +38,7 @@ const Json &arrayAt(const Json &object, std::string_view key)
     return value && value->isArray() ? *value : empty;
 }
 
-Json providersJson(const app::Config &config)
+Json providersJson(const app::Config &config, std::optional<app::SearchService> search)
 {
     Json providers = Json::array();
     for (const app::Provider &p : config.providers)
@@ -46,7 +46,10 @@ Json providersJson(const app::Config &config)
                                      {"preset", app::presetId(p.preset)},
                                      {"wire", app::wireId(p.wire)},
                                      {"baseUrl", p.baseUrl}}));
-    return Json::object({{"providers", std::move(providers)}});
+    Json params = Json::object({{"providers", std::move(providers)}});
+    if (search)
+        params["searchService"] = std::string(app::searchServiceId(*search));
+    return params;
 }
 
 app::Usage usageOf(const Json &usage)
@@ -71,6 +74,14 @@ app::Finished finishedOf(const Json &result)
                                       .signature = stringAt(call, "signature")});
     if (const Json *usage = result.find("usage"))
         finished.usage = usageOf(*usage);
+    for (const Json &c : arrayAt(result, "citations").asArray())
+        finished.citations.push_back({.index = static_cast<int>(intAt(c, "index")),
+                                      .url = stringAt(c, "url"),
+                                      .title = stringAt(c, "title"),
+                                      .quote = stringAt(c, "quote")});
+    finished.searchSuggestions = stringAt(result, "searchSuggestions");
+    if (const Json *state = result.find("providerState"); state && state->isObject())
+        finished.providerState = state->dump();
     return finished;
 }
 
@@ -148,7 +159,7 @@ AiSidecarHost *AiRequests::connect(const app::Config &config)
         if (alive.lock())
             receive(method, params);
     });
-    host->request("_hikari/providers.set", providersJson(config), [](SidecarResult) {});
+    host->request("_hikari/providers.set", providersJson(config, searchService()), [](SidecarResult) {});
     return host;
 }
 
@@ -167,6 +178,8 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
     request["model"] = ref->modelId;
     if (!m_caching)
         request["caching"] = false;
+    if (!m_webSearch && request.isObject())
+        std::erase_if(request.asObject(), [](const Json::Member &m) { return m.key == "webSearch"; });
     AiSidecarHost *host = connect();
     if (!host) {
         sink(app::Failed{{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"}});
@@ -188,6 +201,42 @@ app::StreamId AiRequests::complete(app::Role role, Json request, app::EventSink 
                                              end(id, app::Failed{requestError(result.error())});
                                      });
     return id;
+}
+
+void AiRequests::setWebSearch(bool on, std::optional<app::SearchService> service)
+{
+    m_webSearch = on;
+    m_searchService = service;
+}
+
+void AiRequests::testSearch(app::SearchService service, std::optional<std::string> typedKey,
+                            std::function<void(std::optional<app::Error>)> done)
+{
+    AiSidecarHost *host = connect();
+    if (!host) {
+        done(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"});
+        return;
+    }
+    const std::uint64_t test = ++m_lastAttempt;
+    m_searchTests.insert_or_assign(service, SearchTest{std::move(typedKey), test});
+    host->request("_hikari/search.test", Json::object({{"service", std::string(app::searchServiceId(service))}}),
+                  [this, alive = std::weak_ptr(m_alive), service, test, done = std::move(done)](SidecarResult result) {
+                      if (!alive.lock())
+                          return;
+                      if (const auto it = m_searchTests.find(service);
+                          it != m_searchTests.end() && it->second.generation == test)
+                          m_searchTests.erase(it);
+                      done(result ? std::nullopt : std::optional(requestError(result.error())));
+                  });
+}
+
+std::optional<SearchAccess> AiRequests::searchAccess(app::SearchService service) const
+{
+    if (const auto it = m_searchTests.find(service); it != m_searchTests.end())
+        return SearchAccess{it->second.typedKey};
+    if (searchService() == service)
+        return SearchAccess{};
+    return std::nullopt;
 }
 
 void AiRequests::cancel(app::StreamId id)
@@ -259,7 +308,7 @@ void AiRequests::probe(const app::Provider &provider, const std::string &key, st
         done(app::Error{.kind = app::ErrorKind::Network, .detail = "the AI sidecar is not installed"});
         return;
     }
-    const std::uint64_t draft = ++m_lastDraft;
+    const std::uint64_t draft = ++m_lastAttempt;
     m_drafts.insert_or_assign(provider.id, Draft{provider, key, draft});
     host->request("_hikari/models.list", Json::object({{"providerId", provider.id}}),
                   [this, alive = std::weak_ptr(m_alive), id = provider.id, draft,

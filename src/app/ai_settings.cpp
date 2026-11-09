@@ -211,6 +211,7 @@ QVariantList AiSettings::providers() const
                                   {QStringLiteral("baseUrl"), qs(p.baseUrl)},
                                   {QStringLiteral("needsKey"), p.needsKey},
                                   {QStringLiteral("signedIn"), p.signedIn},
+                                  {QStringLiteral("searchesNatively"), ai::searchesNatively(p)},
                                   {QStringLiteral("models"), int(p.models.size())},
                                   {QStringLiteral("state"), status.state},
                                   {QStringLiteral("error"), status.error},
@@ -812,6 +813,161 @@ void AiSettings::applyRoles(const QVariantMap &roles)
         emit providersChanged();
 }
 
+void AiSettings::setSearch(const QString &service, bool hasKey, const QString &state, const QString &error,
+                           int httpStatus, bool canAddAnyway)
+{
+    m_search = {{QStringLiteral("service"), service}, {QStringLiteral("hasKey"), hasKey},
+                {QStringLiteral("state"), state}, {QStringLiteral("error"), error},
+                {QStringLiteral("httpStatus"), httpStatus}, {QStringLiteral("canAddAnyway"), canAddAnyway}};
+    emit searchChanged();
+}
+
+bool AiSettings::hasSearchKey(const QString &service) const
+{
+    return m_search.value(QStringLiteral("service")) == service && m_search.value(QStringLiteral("hasKey")).toBool();
+}
+
+void AiSettings::checkSearchKey(const QString &service)
+{
+    ai::SearchKeys *keys = m_features.searchKeys();
+    const auto id = ai::searchServiceFromId(service.toStdString());
+    if (!keys || !id) {
+        setSearch({}, false, {});
+        return;
+    }
+    setSearch(service, false, QStringLiteral("checking"));
+    keys->read(*id, [this, alive = std::weak_ptr(m_alive), service](std::optional<std::string> key) {
+        if (alive.lock() && m_search.value(QStringLiteral("service")) == service)
+            setSearch(service, key.has_value(), {});
+    });
+}
+
+void AiSettings::saveSearchKey(const QString &service, const QString &key)
+{
+    if (!m_features.searchKeys() || !ai::searchServiceFromId(service.toStdString()))
+        return;
+    if (key.trimmed().isEmpty()) {
+        setSearch(service, hasSearchKey(service), QStringLiteral("failed"), saveErrorId(ai::SaveError::Key));
+        return;
+    }
+    runSearchTest(service, key.trimmed().toStdString());
+}
+
+void AiSettings::addSearchKeyAnyway(const QString &service, const QString &key)
+{
+    if (key.trimmed().isEmpty())
+        return;
+    const QVariantMap shown = m_search.value(QStringLiteral("service")) == service ? m_search : QVariantMap();
+    const QString state = shown.value(QStringLiteral("state")).toString();
+    const QString error = shown.value(QStringLiteral("error")).toString();
+    const int httpStatus = shown.value(QStringLiteral("httpStatus")).toInt();
+    storeSearchKey(service, key.trimmed().toStdString(), [this, service, state, error, httpStatus] {
+        setSearch(service, true, state, error, httpStatus);
+    });
+}
+
+void AiSettings::storeSearchKey(const QString &service, std::string key, std::function<void()> stored)
+{
+    ai::SearchKeys *keys = m_features.searchKeys();
+    const auto id = ai::searchServiceFromId(service.toStdString());
+    if (!keys || !id)
+        return;
+    const bool hadKey = hasSearchKey(service);
+    setSearch(service, hadKey, QStringLiteral("saving"));
+    keys->store(*id, std::move(key),
+                [this, alive = std::weak_ptr(m_alive), service, hadKey,
+                 stored = std::move(stored)](std::optional<ai::SaveError> error) {
+                    if (!alive.lock() || m_search.value(QStringLiteral("service")) != service)
+                        return;
+                    if (error) {
+                        setSearch(service, hadKey, QStringLiteral("failed"), saveErrorId(*error));
+                        return;
+                    }
+                    m_features.applyWebSearch();
+                    stored();
+                    emit searchKeyStored(service);
+                });
+}
+
+void AiSettings::testSearchKey(const QString &service)
+{
+    runSearchTest(service, std::nullopt);
+}
+
+void AiSettings::runSearchTest(const QString &service, std::optional<std::string> typedKey)
+{
+    const auto id = ai::searchServiceFromId(service.toStdString());
+    if (!id || !m_features.requests())
+        return;
+    const bool hasKey = hasSearchKey(service);
+    const bool typed = typedKey.has_value();
+    if (!m_features.providers()->enabled()) {
+        setSearch(service, hasKey, QStringLiteral("failed"), QStringLiteral("noProvider"), 0, typed);
+        return;
+    }
+    setSearch(service, hasKey, QStringLiteral("testing"));
+    withSidecar([this, alive = std::weak_ptr(m_alive), service, id = *id, hasKey,
+                 typedKey = std::move(typedKey)](bool ready) mutable {
+        if (!alive.lock() || !m_features.requests() || m_search.value(QStringLiteral("service")) != service)
+            return;
+        if (!ready) {
+            setSearch(service, hasKey, QStringLiteral("failed"), m_downloadError, 0, typedKey.has_value());
+            return;
+        }
+        m_features.requests()->testSearch(
+            id, typedKey, [this, alive, service, hasKey, typedKey](std::optional<ai::Error> error) {
+                if (!alive.lock() || m_search.value(QStringLiteral("service")) != service)
+                    return;
+                if (error) {
+                    const bool keyMissing = !typedKey && error->kind == ai::ErrorKind::Key;
+                    setSearch(service, hasKey && !keyMissing, QStringLiteral("failed"),
+                              qs(ai::errorKindId(error->kind)), error->httpStatus, typedKey.has_value());
+                } else if (typedKey) {
+                    storeSearchKey(service, *typedKey, [this, service] { setSearch(service, true, QStringLiteral("ok")); });
+                } else {
+                    setSearch(service, true, QStringLiteral("ok"));
+                }
+            });
+    });
+}
+
+void AiSettings::removeSearchKey(const QString &service)
+{
+    ai::SearchKeys *keys = m_features.searchKeys();
+    const auto id = ai::searchServiceFromId(service.toStdString());
+    if (!keys || !id)
+        return;
+    keys->remove(*id, [this, alive = std::weak_ptr(m_alive), service](std::optional<ai::SaveError> error) {
+        if (!alive.lock())
+            return;
+        m_features.applyWebSearch();
+        if (m_search.value(QStringLiteral("service")) == service)
+            setSearch(service, error.has_value(), error ? QStringLiteral("failed") : QString(),
+                      error ? saveErrorId(*error) : QString());
+    });
+}
+
+QUrl AiSettings::searchKeysUrl(ai::SearchService service)
+{
+    switch (service) {
+    case ai::SearchService::Brave:
+        return QUrl(QStringLiteral("https://api-dashboard.search.brave.com/app/keys"));
+    case ai::SearchService::Tavily:
+        return QUrl(QStringLiteral("https://app.tavily.com/home"));
+    case ai::SearchService::Exa:
+        return QUrl(QStringLiteral("https://dashboard.exa.ai/api-keys"));
+    case ai::SearchService::Firecrawl:
+        return QUrl(QStringLiteral("https://www.firecrawl.dev/app/api-keys"));
+    }
+    return {};
+}
+
+void AiSettings::openSearchKeys(const QString &service) const
+{
+    if (const auto id = ai::searchServiceFromId(service.toStdString()))
+        backends::desktop::openUrl(searchKeysUrl(*id));
+}
+
 void AiSettings::openWhatIsSent() const
 {
     backends::desktop::openUrl(whatIsSentUrl());
@@ -1067,6 +1223,8 @@ void AiSettings::reset()
     m_signInPage.clear();
     emit codexChanged();
     m_status.clear();
+    m_search.clear();
+    emit searchChanged();
     m_probed.reset();
     dropDownload();
     m_downloadSize = 0;
