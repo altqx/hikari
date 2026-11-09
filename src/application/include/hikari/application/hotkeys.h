@@ -67,6 +67,8 @@ std::span<const HotkeyAction> hotkeyActions();
 int hotkeyIdOf(std::string_view symbol);
 // "" for an id without a symbol.
 std::string_view hotkeySymbol(int id);
+// Its symbol has an AI token: "Turn off all AI features" unregisters it.
+bool aiCommand(int id);
 // The English names the Options list shows, by id.
 const std::map<int, std::string> &hotkeyNames();
 // "" when the id has no name (scripts, GLOBAL_QUIT...).
@@ -181,8 +183,9 @@ public:
     HotkeyList(const HotkeyList &) = delete;
     HotkeyList &operator=(const HotkeyList &) = delete;
 
-    // Selects the first row. clear() keeps the history and the modified flag.
-    void build(const HotkeyMap &live);
+    // Selects the first row; a named command `hidden` takes gets no row.
+    // clear() keeps the history and the modified flag.
+    void build(const HotkeyMap &live, const std::function<bool(int id)> &hidden = {});
     void clear();
     // Rows added while the page is open (a macro registered meanwhile),
     // at the end and in every step of the history, shown as the filter shows

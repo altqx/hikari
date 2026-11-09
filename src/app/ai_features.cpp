@@ -95,7 +95,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         };
         options.buildId = HIKARI_AI_BUILD_ID;
         return std::make_unique<backends::ai::AiSidecarHost>(std::move(options), api,
-                                                             api::Caller{"ai", "Hikari AI", false});
+                                                             api::Caller{.id = "ai", .label = "AI", .reviewed = true});
     };
 #ifdef HIKARI_AI_LOCAL_RUNTIME
     ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), QStringLiteral(HIKARI_AI_LOCAL_RUNTIME),

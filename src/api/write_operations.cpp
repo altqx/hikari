@@ -386,6 +386,11 @@ Result documentApply(const Context &context, const Json &params)
     command.expectedRevision = std::uint64_t(params.find("revision")->asInt());
     command.touches = changes.touches();
     command.apply = [&](core::Document &doc) { return changes.apply(doc); };
+    application::AiReview *review = context.caller.reviewed ? context.host.review : nullptr;
+    std::optional<core::Document> before;
+    if (review)
+        before = session.document();
+    const application::ContentId previous = session.contentId();
     if (auto ran = session.run(command); !ran) {
         if (changes.problem())
             return std::unexpected(*changes.problem());
@@ -402,6 +407,8 @@ Result documentApply(const Context &context, const Json &params)
     Json inserted = Json::array();
     for (const core::LineId id : changes.inserted())
         inserted.push(Json(id.value));
+    if (review)
+        review->record(t->id, context.caller.id, context.caller.label, name, *before, previous, session);
     context.host.documents->committed(t->id);
     return Json::object({{"revision", Json(session.revision())}, {"inserted", inserted}, {"changed", Json(true)}});
 }
@@ -458,7 +465,7 @@ void addWriteOperations(Registry &registry)
               "document": {"$ref": "#/$defs/DocumentId", "description": "Defaults to the active Document."},
               "revision": {"$ref": "#/$defs/Revision", "description": "The revision the edits were prepared against."},
               "name": {"type": "string", "minLength": 1, "maxLength": 200,
-                  "description": "Names the undo step, after the caller's name."},
+                  "description": "A few words naming the change, as the user reads it in the review and in History after the caller's name."},
               "edits": {"type": "array", "minItems": 1, "maxItems": 100000, "items": {"$ref": "#/$defs/Edit"},
                   "description": "Applied in order; any refusal leaves the Document as it was."}},
               "required": ["revision", "name", "edits"], "additionalProperties": false})",

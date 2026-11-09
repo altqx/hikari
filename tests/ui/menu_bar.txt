@@ -45,6 +45,16 @@ Edit > Sort selected lines > Text [GLOBAL_SORT_SELECTED_BY_TEXT]
 Edit > Sort selected lines > Text without tags [GLOBAL_SORT_SELECTED_BY_TEXT_WITHOUT_TAGS]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
+Edit > Review >
+Edit > Review > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
+Edit > Review > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
+Edit > Review > Next AI change [GLOBAL_NEXT_AI_CHANGE]
+Edit > Review > Previous AI change [GLOBAL_PREVIOUS_AI_CHANGE]
+Edit > Review > -
+Edit > Review > Keep all [GLOBAL_KEEP_ALL_AI_CHANGES]
+Edit > Review > Undo all [GLOBAL_UNDO_ALL_AI_CHANGES]
+Edit > Review > -
+Edit > Review > Show panel [GLOBAL_SHOW_AI_REVIEW]
 Edit > Select lines [GLOBAL_OPEN_SELECT_LINES]
 Edit > Find… [GLOBAL_SEARCH]
 Edit > Replace… [GLOBAL_FIND_REPLACE]
@@ -55,6 +65,7 @@ Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
+Subtitles > QC notes… [GLOBAL_SHOW_QC_NOTES]
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
@@ -89,6 +100,7 @@ Video > Shift by frames to video > Selected lines, start at video [GLOBAL_SHIFT_
 Video > Shift by frames to video > Selected lines, end at video [GLOBAL_SHIFT_FRAMES_TO_VIDEO_END]
 Video > Shift by frames to video > Following lines, start at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START]
 Video > Shift by frames to video > Following lines, end at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END]
+Video > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
 Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
 Video > Next frame [GLOBAL_NEXT_FRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
@@ -156,6 +168,8 @@ View > Panels > Spellchecker >
 View > Panels > Log >
 View > Panels > Styles >
 View > Panels > Template editor >
+View > Panels > QC notes >
+View > Panels > Review >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout

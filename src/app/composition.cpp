@@ -7,6 +7,7 @@
 #include "hikari/app/hang_watchdog.h"
 #include "hikari/app/launcher.h"
 #include "hikari/app/local_only_network.h"
+#include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
@@ -318,6 +319,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
     attachAlignToVideoStill(engine, application.alignToVideo());
+    attachMarketplaceImages(engine, *application.pluginMarketplace());
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);

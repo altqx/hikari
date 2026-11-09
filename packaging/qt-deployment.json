@@ -29,7 +29,8 @@
     {"plugin": "composeplatforminputcontextplugin", "module": "qtbase", "why": "dead keys and compose sequences"}
    ],
    "imageformats": [
-    {"plugin": "qsvg", "module": "qtsvg", "why": "K1: SVG images (the Qt SVG image plugin)"}
+    {"plugin": "qsvg", "module": "qtsvg", "why": "K1: SVG images (the Qt SVG image plugin)"},
+    {"plugin": "qjpeg", "module": "qtbase", "why": "PL6c: JPEG marketplace screenshots"}
    ],
    "iconengines": [
     {"plugin": "qsvgicon", "module": "qtsvg", "why": "K1: SVG icons (the Qt SVG icon engine)"}
@@ -46,7 +47,8 @@
     {"plugin": "qwindows", "module": "qtbase", "why": "the Windows platform"}
    ],
    "imageformats": [
-    {"plugin": "qsvg", "module": "qtsvg", "why": "K1: SVG images (the Qt SVG image plugin)"}
+    {"plugin": "qsvg", "module": "qtsvg", "why": "K1: SVG images (the Qt SVG image plugin)"},
+    {"plugin": "qjpeg", "module": "qtbase", "why": "PL6c: JPEG marketplace screenshots"}
    ],
    "iconengines": [
     {"plugin": "qsvgicon", "module": "qtsvg", "why": "K1: SVG icons (the Qt SVG icon engine)"}

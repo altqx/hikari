@@ -1,11 +1,17 @@
 #include "hikari/app/application.h"
+#include "hikari/application/hotkeys.h"
 
 #include "docking.h"
+#include "line_table_model.h"
+#include "settings_store.h"
+#include "shell_controller.h"
+#include "theme.h"
 
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
 #include <QQuickWindow>
+#include <QtQuickTest/quicktest.h>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -19,6 +25,11 @@ namespace {
 api::Caller assistant()
 {
     return api::Caller{"test.ai", "Test AI", true};
+}
+
+api::Caller reviewedAi()
+{
+    return api::Caller{.id = "ai", .label = "AI", .reviewed = true};
 }
 
 }
@@ -36,10 +47,10 @@ class ApiHostTest : public QObject {
     {
         return *application->files().session(*application->workspace().editingTarget());
     }
-    api::Result call(std::string_view operation, const char *params)
+    api::Result call(std::string_view operation, const char *params, const api::Caller &caller = assistant())
     {
         std::optional<api::Result> answer;
-        hikariApi().call(assistant(), operation, *api::Json::parse(params), [&](api::Result r) { answer = std::move(r); });
+        hikariApi().call(caller, operation, *api::Json::parse(params), [&](api::Result r) { answer = std::move(r); });
         if (!answer)
             return api::fail("test_no_reply", std::string(operation));
         return *answer;
@@ -51,6 +62,61 @@ class ApiHostTest : public QObject {
         if (expression.hasError())
             qWarning() << expression.error();
         return out;
+    }
+    bool aiWrites(core::LineId line, const char *text)
+    {
+        const auto edit = call("document.apply",
+                               QStringLiteral(R"({"revision": %1, "name": "Tightened", "edits": [
+            {"op": "set_line", "line": %2, "fields": {"text": "%3"}}]})")
+                                   .arg(session().revision())
+                                   .arg(line.value)
+                                   .arg(QString::fromUtf8(text))
+                                   .toUtf8()
+                                   .constData(),
+                               reviewedAi());
+        if (!edit)
+            qWarning() << edit.error().message.c_str();
+        return bool(edit);
+    }
+    bool select(core::LineId line)
+    {
+        return bool(call("selection.set", QStringLiteral(R"({"selected": [%1]})")
+                                              .arg(line.value)
+                                              .toUtf8()
+                                              .constData()));
+    }
+    int reviewRoleAt(int row) const
+    {
+        QAbstractItemModel *lines = application->shell().lines();
+        return lines->index(row, 0).data(ui::LineTableModel::ReviewRole).toInt();
+    }
+    std::u8string textAt(std::size_t row) const { return session().document().lines()[row]->text; }
+    bool reviewMenuShown()
+    {
+        return shell(QStringLiteral("(() => { for (let i = 0; i < editMenu.count; ++i) { const it = editMenu.itemAt(i);"
+                                    " if (it && it.subMenu && it.subMenu.objectName === 'reviewMenu') return true }"
+                                    " return false })()"))
+            .toBool();
+    }
+    void shoot(const QString &name)
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            return;
+        QVERIFY(QDir().mkpath(out));
+        shell(QStringLiteral("notices.visible = false"));
+        auto restore = qScopeGuard([this] {
+            ui::theme::endPreview();
+            shell(QStringLiteral("notices.visible = true"));
+        });
+        for (const auto code : ui::theme::kCodes) {
+            ui::theme::preview({{QStringLiteral("appearance.theme"), ui::theme::codeName(code)},
+                                {QStringLiteral("appearance.followSystem"), false}});
+            QQuickTest::qWaitForPolish(window());
+            QTest::qWait(200);
+            QVERIFY(window()->grabWindow().save(out + QLatin1Char('/') + name + QLatin1Char('-') +
+                                                ui::theme::codeName(code) + QStringLiteral(".png")));
+        }
     }
     bool heardEvent(const std::string &name) const { return std::ranges::find(heard, name) != heard.end(); }
 
@@ -117,6 +183,119 @@ private slots:
         QCOMPARE(session().document().lines().front()->text, std::u8string(u8"first"));
         QVERIFY(heardEvent("command.ran"));
         QVERIFY(heardEvent("document.changed"));
+    }
+
+    void anAiWriteWaitsInTheGridAndTheLineEditorUntilKept()
+    {
+        const auto first = session().document().lines().front()->id;
+        QVERIFY(aiWrites(first, "changed"));
+        QCOMPARE(application->review()->waiting(), 1);
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::Waiting));
+        QCOMPARE(reviewRoleAt(1), int(ui::LineTableModel::ReviewState::None));
+        QVERIFY(application->review()->isAiStep(int(session().historySize()) - 1));
+
+        QVERIFY(select(first));
+        QCOMPARE(application->editor().text(), QStringLiteral("changed"));
+        QTRY_VERIFY(shell(QStringLiteral("reviewStrip.visible")).toBool());
+        const QVariantMap current = application->review()->current();
+        QCOMPARE(current.value(QStringLiteral("caller")).toString(), QStringLiteral("AI"));
+        QCOMPARE(current.value(QStringLiteral("name")).toString(), QStringLiteral("Tightened"));
+        QCOMPARE(current.value(QStringLiteral("count")).toInt(), 1);
+        QVERIFY(current.value(QStringLiteral("before")).toString().contains(QStringLiteral("<s ")));
+        QCOMPARE(shell(QStringLiteral("statusStrip.reviewText")).toString(), QStringLiteral("1 AI change(s) to review"));
+        QVERIFY(shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("reviewLoader.item !== null && reviewLoader.item.here.length === 1")).toBool());
+        shoot(QStringLiteral("ai2-review"));
+
+        const std::size_t steps = session().historySize();
+        QVERIFY(shell(QStringLiteral("keepAiChangeAction.trigger(), true")).toBool());
+        QCOMPARE(application->review()->waiting(), 0);
+        QCOMPARE(session().historySize(), steps);
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::None));
+        QTRY_VERIFY(!shell(QStringLiteral("reviewStrip.visible")).toBool());
+        QCOMPARE(textAt(0), std::u8string(u8"changed"));
+    }
+
+    void undoPutsTheLineBackAsOneStepAndAnEditSinceAsksFirst()
+    {
+        const auto first = session().document().lines().front()->id;
+        QVERIFY(aiWrites(first, "changed"));
+        QVERIFY(select(first));
+        QVERIFY(application->review()->undoLine(false));
+        QCOMPARE(textAt(0), std::u8string(u8"first"));
+        QCOMPARE(application->editor().text(), QStringLiteral("first"));
+        QCOMPARE(session().history().back().name, std::string("Undo AI change to Line 1"));
+        QCOMPARE(application->review()->waiting(), 0);
+
+        QVERIFY(aiWrites(first, "again"));
+        const auto revision = session().revision();
+        QVERIFY(call("document.apply", QStringLiteral(R"({"revision": %1, "name": "Mine", "edits": [
+            {"op": "set_line", "line": %2, "fields": {"text": "mine"}}]})")
+                                           .arg(revision)
+                                           .arg(first.value)
+                                           .toUtf8()
+                                           .constData()));
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::EditedSince));
+        QCOMPARE(application->review()->lineEditedSince(), 1);
+        QVERIFY(shell(QStringLiteral("undoAiChangeAction.trigger(), true")).toBool());
+        QTRY_VERIFY(shell(QStringLiteral("reviewStrip.confirming")).toBool());
+        QCOMPARE(textAt(0), std::u8string(u8"mine"));
+        QVERIFY(application->review()->undoLine(true));
+        QCOMPARE(textAt(0), std::u8string(u8"first"));
+    }
+
+    void restoringACheckpointUndoesTheTurnKeptChangesToo()
+    {
+        const auto lines = session().document().lines();
+        const auto first = lines[0]->id, second = lines[1]->id;
+        QVERIFY(aiWrites(first, "one"));
+        QVERIFY(aiWrites(second, "two"));
+        QVERIFY(select(first));
+        application->review()->keepLine();
+        QCOMPARE(application->review()->waiting(), 1);
+        const QVariantList turns = application->review()->turns();
+        QCOMPARE(turns.size(), 1);
+        const qulonglong turn = turns.front().toMap().value(QStringLiteral("turn")).toULongLong();
+        const QVariantList checkpoint = application->review()->checkpoint(turn);
+        QCOMPARE(checkpoint.size(), 1);
+        QCOMPARE(checkpoint.front().toMap().value(QStringLiteral("lines")).toInt(), 2);
+        QVERIFY(application->review()->turnBefore(int(session().historySize()) - 2) == 1);
+
+        QVERIFY(application->review()->restore(turn, false));
+        QCOMPARE(textAt(0), std::u8string(u8"first"));
+        QCOMPARE(textAt(1), std::u8string(u8"second"));
+        QCOMPARE(session().history().back().name, std::string("Restore checkpoint before turn 1"));
+    }
+
+    void withAiOffTheReviewCommandsAndPanelAreGone()
+    {
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_KEEP_AI_CHANGE"), application::GlobalHotkey),
+                 QStringLiteral("Ctrl-Shift-Enter"));
+        QVERIFY(reviewMenuShown());
+        QVERIFY(shell(QStringLiteral("root.builtInDocks.indexOf(reviewDock) >= 0")).toBool());
+
+        application->settingsStore()->set(app::AiFeatures::kOffSetting, true);
+        QVERIFY(!application->review()->on());
+        QVERIFY(application->hotkeys().accelOf(QStringLiteral("GLOBAL_KEEP_AI_CHANGE"), application::GlobalHotkey).isEmpty());
+        for (const QVariant &shortcut : application->hotkeys().globalShortcuts()) {
+            const QString symbol = shortcut.toMap().value(QStringLiteral("symbol")).toString();
+            QVERIFY2(!application::aiCommand(application::hotkeyIdOf(symbol.toStdString())), qPrintable(symbol));
+        }
+        application->hotkeys().beginOptions();
+        for (const QVariant &row : application->hotkeys().rows())
+            QVERIFY(!row.toMap().value(QStringLiteral("text")).toString().contains(QStringLiteral("AI change")));
+        QTRY_VERIFY(!reviewMenuShown());
+        QVERIFY(shell(QStringLiteral("root.builtInDocks.indexOf(reviewDock) < 0")).toBool());
+
+        const auto first = session().document().lines().front()->id;
+        QVERIFY(aiWrites(first, "changed"));
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::None));
+
+        application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_KEEP_AI_CHANGE"), application::GlobalHotkey),
+                 QStringLiteral("Ctrl-Shift-Enter"));
+        QTRY_VERIFY(reviewMenuShown());
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::Waiting));
     }
 
     void aStaleRevisionIsRefused()

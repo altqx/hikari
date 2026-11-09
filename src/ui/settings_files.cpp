@@ -60,7 +60,8 @@ bool rememberedByTheApp(std::string_view id)
     static const std::set<std::string_view> ids{
         "find.recentFinds",       "find.recentReplacements", "findInSubs.recentFilters", "findInSubs.recentPaths",
         "selectLines.recentSelections", "colourPicker.recentColours", "automation.dialogAnswers",
-        "automation.lastScript",  "styles.lastCatalog",      "privacy.usageDataId",      "updater.skippedVersion"};
+        "automation.lastScript",  "styles.lastCatalog",      "privacy.usageDataId",      "updater.skippedVersion",
+        "qcNotes.lastSection"};
     return id.starts_with("recent.") || ids.contains(id);
 }
 

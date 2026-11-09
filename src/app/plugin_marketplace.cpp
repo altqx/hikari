@@ -4,13 +4,21 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "settings_store.h"
 
+#include <QBuffer>
 #include <QCollator>
 #include <QCoreApplication>
+#include <QCryptographicHash>
+#include <QImageReader>
+#include <QMutex>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QQmlEngine>
+#include <QQuickAsyncImageProvider>
 #include <QSet>
 
 #include <algorithm>
+#include <memory>
+#include <utility>
 
 namespace hikari::app {
 
@@ -18,6 +26,10 @@ namespace {
 
 constexpr int kDayMs = 24 * 60 * 60 * 1000;
 constexpr qint64 kMaxIndexBytes = 32 * 1024 * 1024;
+constexpr qint64 kMaxIconBytes = 256 * 1024;
+constexpr qint64 kMaxScreenshotBytes = 2 * 1024 * 1024;
+constexpr qint64 kMaxMediaCacheBytes = 32 * 1024 * 1024;
+const QSize kMaxMediaSize(1920, 1080);
 
 QString text(std::string_view s)
 {
@@ -63,6 +75,101 @@ QVariantMap refused(const QString &message)
     return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), message}};
 }
 
+QSize fitted(QSize natural, QSize box, bool scalable)
+{
+    if (scalable)
+        natural = natural.scaled(256, 256, Qt::KeepAspectRatio);
+    if (box.width() <= 0 && box.height() <= 0)
+        return natural;
+    const int unbounded = kMaxMediaSize.width();
+    box = QSize(box.width() > 0 ? box.width() : unbounded, box.height() > 0 ? box.height() : unbounded)
+              .boundedTo(kMaxMediaSize);
+    const QSize scaled = natural.scaled(box, Qt::KeepAspectRatio);
+    return scalable || scaled.width() < natural.width() ? scaled : natural;
+}
+
+QImage decodeMedia(const QByteArray &data, bool icon, const QString &path, QSize size)
+{
+    const std::span<const std::byte> raw = bytes(data);
+    const plugins::PackageFile file{path.toStdString(), {raw.begin(), raw.end()}};
+    if (data.isEmpty() || (icon ? plugins::iconProblem(file) : plugins::screenshotProblem(file)))
+        return {};
+    const bool svg = file.path.ends_with(".svg");
+    QBuffer buffer;
+    buffer.setData(data);
+    buffer.open(QIODevice::ReadOnly);
+    QImageReader reader(&buffer, svg ? "svg" : file.path.ends_with(".png") ? "png" : "jpeg");
+    const QSize natural = reader.size();
+    if (!natural.isValid() || natural.isEmpty())
+        return {};
+    reader.setScaledSize(fitted(natural, size, svg));
+    return reader.read();
+}
+
+class MediaResponse : public QQuickImageResponse {
+public:
+    MediaResponse() : m_link(std::make_shared<Link>()) { m_link->response = this; }
+    ~MediaResponse() override
+    {
+        QMutexLocker lock(&m_link->mutex);
+        m_link->response = nullptr;
+    }
+
+    std::function<void(QImage)> receiver() const
+    {
+        return [link = m_link](QImage image) {
+            QMutexLocker lock(&link->mutex);
+            MediaResponse *response = std::exchange(link->response, nullptr);
+            if (!response)
+                return;
+            response->m_image = std::move(image);
+            emit response->finished();
+        };
+    }
+
+    QQuickTextureFactory *textureFactory() const override { return QQuickTextureFactory::textureFactoryForImage(m_image); }
+    QString errorString() const override
+    {
+        return m_image.isNull() ? QStringLiteral("The marketplace image isn't available") : QString();
+    }
+    void cancel() override
+    {
+        QMutexLocker lock(&m_link->mutex);
+        if (std::exchange(m_link->response, nullptr))
+            emit finished();
+    }
+
+private:
+    struct Link {
+        QRecursiveMutex mutex;
+        MediaResponse *response = nullptr;
+    };
+    std::shared_ptr<Link> m_link;
+    QImage m_image;
+};
+
+class MarketplaceImageProvider : public QQuickAsyncImageProvider {
+public:
+    explicit MarketplaceImageProvider(PluginMarketplace &marketplace) : m_marketplace(marketplace) {}
+
+    QQuickImageResponse *requestImageResponse(const QString &id, const QSize &size) override
+    {
+        auto *response = new MediaResponse;
+        QMetaObject::invokeMethod(
+            &m_marketplace, [marketplace = &m_marketplace, id, size, done = response->receiver()] { marketplace->image(id, size, done); },
+            Qt::QueuedConnection);
+        return response;
+    }
+
+private:
+    PluginMarketplace &m_marketplace;
+};
+
+}
+
+void attachMarketplaceImages(QQmlEngine &engine, PluginMarketplace &marketplace)
+{
+    engine.addImageProvider(QStringLiteral("marketplace"), new MarketplaceImageProvider(marketplace));
 }
 
 MarketplaceFeed MarketplaceFeed::hikarisub()
@@ -102,12 +209,18 @@ bool PluginMarketplace::automaticUpdates() const
 
 PluginMarketplace::~PluginMarketplace()
 {
-    for (QNetworkReply *reply : {m_indexReply.data(), m_signatureReply.data(), m_packageReply.data(), m_updateReply.data()})
+    QList<QNetworkReply *> replies{m_indexReply.data(), m_signatureReply.data(), m_packageReply.data(), m_updateReply.data()};
+    for (const QPointer<QNetworkReply> &reply : std::as_const(m_mediaReplies))
+        replies << reply.data();
+    for (QNetworkReply *reply : replies)
         if (reply) {
             reply->disconnect(this);
             reply->abort();
             reply->deleteLater();
         }
+    for (const auto &waiting : std::as_const(m_mediaWaiting))
+        for (const auto &decode : waiting)
+            decode({});
 }
 
 void PluginMarketplace::start()
@@ -145,6 +258,58 @@ QNetworkReply *PluginMarketplace::get(const QUrl &url, qint64 limit)
             reply->abort();
     });
     return reply;
+}
+
+QUrl PluginMarketplace::mediaSource(const QUrl &url, bool icon)
+{
+    if (!sameOrigin(url))
+        return {};
+    const QString id = (icon ? QStringLiteral("icon/") : QStringLiteral("screenshot/")) +
+                       QString::fromLatin1(QCryptographicHash::hash(url.toEncoded(), QCryptographicHash::Sha256).toHex());
+    m_media.insert(id, {url, icon});
+    return QUrl(QStringLiteral("image://marketplace/") + id);
+}
+
+void PluginMarketplace::image(const QString &id, QSize size, std::function<void(QImage)> done)
+{
+    const auto media = m_media.constFind(id);
+    if (media == m_media.cend()) {
+        done({});
+        return;
+    }
+    auto decode = [icon = media->icon, path = media->url.path(), size, done = std::move(done)](const QByteArray &data) {
+        done(decodeMedia(data, icon, path, size));
+    };
+    if (const auto cached = m_mediaBytes.constFind(id); cached != m_mediaBytes.cend()) {
+        decode(*cached);
+        return;
+    }
+    auto &waiting = m_mediaWaiting[id];
+    waiting.push_back(std::move(decode));
+    if (waiting.size() > 1)
+        return;
+    QNetworkReply *reply = get(media->url, media->icon ? kMaxIconBytes : kMaxScreenshotBytes);
+    m_mediaReplies.insert(id, reply);
+    connect(reply, &QNetworkReply::finished, this, [this, id] { mediaFinished(id); });
+}
+
+void PluginMarketplace::mediaFinished(const QString &id)
+{
+    QNetworkReply *reply = m_mediaReplies.take(id);
+    if (!reply)
+        return;
+    reply->deleteLater();
+    const QByteArray data = failure(reply).isEmpty() ? reply->readAll() : QByteArray();
+    if (!data.isEmpty()) {
+        if (m_mediaCached + data.size() > kMaxMediaCacheBytes) {
+            m_mediaBytes.clear();
+            m_mediaCached = 0;
+        }
+        m_mediaBytes.insert(id, data);
+        m_mediaCached += data.size();
+    }
+    for (const auto &decode : m_mediaWaiting.take(id))
+        decode(data);
 }
 
 void PluginMarketplace::refresh()
@@ -288,6 +453,7 @@ void PluginMarketplace::rebuild()
     m_listings.clear();
     m_categories.clear();
     m_offers.clear();
+    m_media.clear();
     m_updates = 0;
     if (!m_index) {
         emit changed();
@@ -317,10 +483,9 @@ void PluginMarketplace::rebuild()
         }
         QVariantList screenshots;
         for (const plugins::ListedScreenshot &shot : shown.screenshots)
-            if (sameOrigin(QUrl(text(shot.url))))
-                screenshots << QVariantMap{{QStringLiteral("url"), QUrl(text(shot.url))}, {QStringLiteral("caption"), text(shot.caption)}};
+            if (const QUrl source = mediaSource(QUrl(text(shot.url)), false); !source.isEmpty())
+                screenshots << QVariantMap{{QStringLiteral("url"), source}, {QStringLiteral("caption"), text(shot.caption)}};
         const auto needs = m_index->apiVersions.find(shown.api);
-        const QUrl icon(text(shown.icon));
         m_listings << QVariantMap{
             {QStringLiteral("id"), text(listing.id)},
             {QStringLiteral("name"), text(shown.name)},
@@ -337,7 +502,7 @@ void PluginMarketplace::rebuild()
             {QStringLiteral("published"), text(shown.published).left(10)},
             {QStringLiteral("changelog"), text(shown.changelog)},
             {QStringLiteral("needs"), needs == m_index->apiVersions.end() ? QString() : text(needs->second)},
-            {QStringLiteral("icon"), sameOrigin(icon) ? icon : QUrl()},
+            {QStringLiteral("icon"), mediaSource(QUrl(text(shown.icon)), true)},
             {QStringLiteral("screenshots"), screenshots},
             {QStringLiteral("installedVersion"), installed == registry.end() ? QString() : text(installed->second.version)},
             {QStringLiteral("action"), action},

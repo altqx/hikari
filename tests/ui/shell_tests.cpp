@@ -15,6 +15,7 @@
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/center_times.h"
+#include "hikari/application/qc_notes.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "style/text_menus.h"
@@ -9180,6 +9181,75 @@ private slots:
         application->editor().discard();
     }
 
+    void perspectiveTrackingAppliesPowerPinData()
+    {
+        const QString path = dir.filePath(QStringLiteral("tracking.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.20,Default,,0,0,0,,{\\pos(320,180)}Sign\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto *line = session->document().lines()[0];
+        session->setSelection(application::Selection{line->id, {line->id}, line->id, {}});
+        auto *action = root->findChild<QObject *>(QStringLiteral("perspectiveTrackingMenuItem"))->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(!action->property("enabled").toBool());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(action->property("enabled").toBool(), 20000);
+        const int frames = application->perspectiveTrackingValues().value(QStringLiteral("frames")).toInt();
+        QVERIFY(frames > 1);
+        const auto values = application->resampleValues();
+        const int width = values.value(QStringLiteral("videoWidth")).toInt();
+        const int height = values.value(QStringLiteral("videoHeight")).toInt();
+        QString data = QStringLiteral("Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t25\n\tSource Width\t%1\n"
+                                      "\tSource Height\t%2\n\n").arg(width).arg(height);
+        const int corners[4][3] = {{2, 100, 100}, {3, 300, 100}, {4, 100, 200}, {5, 300, 200}};
+        for (const auto &c : corners) {
+            data += QStringLiteral("Effects\tCC Power Pin #1\tCC Power Pin-000%1\n\tFrame\tX pixels\tY pixels\n").arg(c[0]);
+            for (int i = 0; i < frames; ++i)
+                data += QStringLiteral("\t%1\t%2\t%3\n").arg(i).arg(c[1] + 4 * i).arg(c[2]);
+            data += QLatin1Char('\n');
+        }
+        data += QStringLiteral("End of Keyframe Data\n");
+        QGuiApplication::clipboard()->setText(data);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("perspectiveTrackingDialog"))) &&
+                    dialog->property("visible").toBool());
+        QQuickItem *text = dialogItem("perspectiveTrackingDialog", "perspectiveTrackingData");
+        QCOMPARE(text->property("text").toString(), data);
+        QQuickItem *apply = dialogItem("perspectiveTrackingDialog", "perspectiveTrackingApply");
+        QVERIFY(apply->property("enabled").toBool());
+        QVERIFY(dialogItem("perspectiveTrackingDialog", "perspectiveTrackingFitFlat")->property("checked").toBool());
+        text->setProperty("text", QStringLiteral("not tracking data"));
+        QTRY_VERIFY(!apply->property("enabled").toBool());
+        QVERIFY(dialogItem("perspectiveTrackingDialog", "perspectiveTrackingStatus")->property("text").toString().contains(QStringLiteral("Power-Pin")));
+        text->setProperty("text", data);
+        QTRY_VERIFY(apply->property("enabled").toBool());
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QTRY_VERIFY2(!dialog->property("visible").toBool(),
+                     qPrintable(dialogItem("perspectiveTrackingDialog", "perspectiveTrackingStatus")->property("text").toString()));
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Perspective tracking"));
+        QCOMPARE(session->document().lines().size(), std::size_t(frames));
+        QCOMPARE(session->selection().selected.size(), std::size_t(frames));
+        QVERIFY(application->video().unloadVideo());
+        QTRY_VERIFY(!action->property("enabled").toBool());
+        application->editor().discard();
+    }
+
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();
@@ -9218,10 +9288,12 @@ private slots:
                                                                   QStringLiteral("BSD 3-Clause and ISC")}));
         QCOMPARE(sourceRows.value(1).toStringList(),
                  (QStringList{QStringLiteral("Aegisub, arch1t3cht's fork"), QStringLiteral("arch1t3cht and Aegisub contributors"),
-                              QStringLiteral("BSD 3-Clause")}));
+                              QStringLiteral("BSD 3-Clause and ISC")}));
         QCOMPARE(sourceRows.value(2).toStringList(),
                  (QStringList{QStringLiteral("Align to video, from arch1t3cht's fork"), QStringLiteral("2019 Charlie Jiang"),
                               QStringLiteral("BSD 3-Clause")}));
+        QCOMPARE(sourceRows.value(3).toStringList(), (QStringList{QStringLiteral("arch1t3cht's Aegisub scripts"),
+                                                                  QStringLiteral("arch1t3cht"), QStringLiteral("MIT")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("YTSubConverter")));
@@ -9251,7 +9323,7 @@ private slots:
         QVERIFY(list->property("contentHeight").toReal() > list->height());
         QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
         QVERIFY(sources);
-        QCOMPARE(sources->childItems().size(), 4);
+        QCOMPARE(sources->childItems().size(), 5);
         QVERIFY(sources->childItems().first()->height() > 0);
         QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
@@ -11313,6 +11385,67 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.15,Song kanji,,0,0,0,,君の愛\n");
         return path;
     }
+    void qcNotesPanelKeepsNotesInTheFile()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(application->openFile(writeFile(folder, "qc.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &qc = application->qcNotes();
+        QVERIFY(QMetaObject::invokeMethod(named("showQcNotes"), "triggered"));
+        QTRY_VERIFY(item<QObject>("qcNotesDock")->property("isOpen").toBool());
+        QTRY_VERIFY(item("qcNotesEmpty") && item("qcNotesEmpty")->isVisible());
+
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "addQcNote", Q_ARG(QVariant, 3200)));
+        QTRY_VERIFY(item("qcNotesAddEditor")->isVisible());
+        auto *text = item("qcNotesAddEditor")->findChild<QQuickItem *>(QStringLiteral("qcNoteText"));
+        QTRY_VERIFY(text->hasActiveFocus());
+        QCOMPARE(item("qcNotesAddEditor")->findChild<QQuickItem *>(QStringLiteral("qcNoteTime"))->property("text").toString(),
+                 QStringLiteral("0:00:03.20"));
+        typeText(QStringLiteral("Too late"));
+        QTest::keyClick(window, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(qc.total(), 1);
+        const std::vector<application::QcNote> added{{3200, u8"General", false, u8"Too late"}};
+        QCOMPARE(application::documentQcNotes(session->document()), added);
+        QTRY_VERIFY(!item("qcNotesAddEditor")->isVisible());
+
+        auto *lines = application->shell().lines();
+        QCOMPARE(lines->index(1, 0).data(ui::LineTableModel::QcNotesRole).toStringList(),
+                 QStringList{QStringLiteral("0:00:03.20 General: Too late")});
+        QVERIFY(lines->index(0, 0).data(ui::LineTableModel::QcNotesRole).toStringList().isEmpty());
+
+        QVERIFY(!qc.next());
+        QVERIFY(qc.add(1000, QStringLiteral("TLC"), QStringLiteral("early")));
+        QCOMPARE(qc.current(), 0);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_NEXT_QC_NOTE"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(session->selection().active, std::optional(session->document().lines()[1]->id));
+        QCOMPARE(qc.current(), 1);
+        QVERIFY(lines->index(1, 0).data(ui::LineTableModel::QcCurrentRole).toBool());
+        QVERIFY(!lines->index(0, 0).data(ui::LineTableModel::QcCurrentRole).toBool());
+        QVERIFY(!qc.next());
+
+        QVERIFY(qc.setDone(1, true));
+        QVERIFY(application::documentQcNotes(session->document())[1].done);
+        QVERIFY(application->editor().undo());
+        QVERIFY(!application::documentQcNotes(session->document())[1].done);
+        QVERIFY(application->editor().undo());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(qc.total(), 0);
+        QTRY_VERIFY(lines->index(1, 0).data(ui::LineTableModel::QcNotesRole).toStringList().isEmpty());
+
+        QGuiApplication::clipboard()->setText(QStringLiteral("[TLC]\n0:01 - one\n0:03.5 - two\n"));
+        QTRY_VERIFY(qc.clipboardHasNotes());
+        QVERIFY(QMetaObject::invokeMethod(item("qcNotesTool"), "importClipboard"));
+        QTRY_COMPARE(qc.total(), 2);
+        QTRY_COMPARE(item("qcNotesMessage")->property("text").toString(), QStringLiteral("Imported 2 note(s)."));
+        QTRY_VERIFY(item("qcNotesList")->isVisible());
+    }
+
     void kanjiTimerSuggestsAndWritesFurigana()
     {
         QVERIFY(application->openFile(writeFuriganaSong("kanji-furigana.ass")));
@@ -13536,7 +13669,7 @@ private slots:
         QVERIFY(application->openFile(episode));
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);
-        auto *tip = named("editingGridHeaderToolTip");
+        auto *tip = named("editingGridToolTip");
         QVERIFY(tip);
         const auto heading = [&](const QString &title) {
             for (int c = 0; c < grid->columnCount(); ++c)
@@ -13551,7 +13684,7 @@ private slots:
             const QPoint at = heading(title);
             QTest::mouseMove(window, at + QPoint(0, int(grid->rowHeight() * 3)));
             QTest::mouseMove(window, at);
-            return grid->property("headerToolTip").toString() == name;
+            return grid->property("hoverToolTip").toString() == name;
         };
         QTRY_VERIFY(hovering(QStringLiteral("L."), QStringLiteral("Layer")));
         QTRY_VERIFY(tip->property("visible").toBool());
@@ -17433,6 +17566,8 @@ private slots:
             {market + QStringLiteral("p/com.example.native/1.0.0.hikariplugin"),
              read(QStringLiteral("native-1.0.0-unrestricted.hikariplugin"))},
         };
+        for (const QString &name : QDir(fixtures + QStringLiteral("marketplace/m")).entryList(QDir::Files))
+            marketNetwork->files.insert(market + QStringLiteral("m/") + name, read(QStringLiteral("marketplace/m/") + name));
         app::Application::Options options;
         options.playbackAudio = false;
         options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
@@ -17440,6 +17575,7 @@ private slots:
         options.marketplace = {QUrl(market), {*hikari::minisign::parsePublicKey("RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X")}};
         options.marketplaceNetwork = marketNetwork.get();
         restartWith(options);
+        app::attachMarketplaceImages(*engine, *application->pluginMarketplace());
         if (sideloadHello) {
             QVERIFY(application->pluginManager()
                         ->review(QUrl::fromLocalFile(fixtures + QStringLiteral("hello-1.0.0.hikariplugin")))
@@ -17461,6 +17597,7 @@ private slots:
         QQuickItem *bar = nullptr;
         QTRY_VERIFY((bar = dialogItem("pluginManagerDialog", "pluginMoveBar")) && bar->isVisible());
         QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerView")->isVisible());
+        QVERIFY(!dialogItem("pluginManagerDialog", "pluginDetailsName")->property("truncated").toBool());
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginMove"), "click"));
         QQuickWindow *box = nullptr;
@@ -17476,8 +17613,24 @@ private slots:
         QCOMPARE(trust->property("text").toString(), QStringLiteral("From the marketplace"));
         QTRY_VERIFY(!dialogItem("pluginManagerDialog", "pluginMoveBar")->isVisible());
 
+        const auto mediaRequests = [&] {
+            return std::ranges::count_if(marketNetwork->requests, [](const QNetworkRequest &r) { return r.url().path().startsWith(QStringLiteral("/m/")); });
+        };
+        QCOMPARE(mediaRequests(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
         QCOMPARE(dialog->property("found").toList().size(), 3);
+        QTRY_VERIFY(std::ranges::none_of(dialogItem("pluginManagerDialog", "pluginManagerView")->findChildren<QQuickItem *>(),
+                                         [](QQuickItem *i) { return i->property("truncated").toBool(); }));
+        dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
+        QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketIcon")->property("shown").toBool());
+        QQuickItem *screenshot = nullptr;
+        QTRY_VERIFY((screenshot = dialogItem("pluginManagerDialog", "marketScreenshot")) &&
+                    screenshot->property("status").toInt() == 1);
+        QCOMPARE(screenshot->implicitWidth(), 398.0);
+        QVERIFY(std::ranges::all_of(marketNetwork->requests, [](const QNetworkRequest &r) {
+            return r.url().host() == QStringLiteral("marketplace.test") && r.rawHeaderList().size() == 1 && r.hasRawHeader("User-Agent");
+        }));
+        QVERIFY(mediaRequests() >= 2);
         dialog->setProperty("search", QStringLiteral("native"));
         QCOMPARE(dialog->property("found").toList().size(), 1);
         dialog->setProperty("chosenListingId", QStringLiteral("com.example.native"));
@@ -17576,6 +17729,10 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!box->isVisible());
         };
+        QVERIFY(QMetaObject::invokeMethod(dialog, "showPlugin", Q_ARG(QVariant, QStringLiteral("com.example.hello"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         for (const auto code : ui::theme::kCodes) {
             settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(), ui::theme::current().roles.panel);
@@ -17590,6 +17747,8 @@ private slots:
 
             QVERIFY(QMetaObject::invokeMethod(dialog, "showView", Q_ARG(QVariant, QStringLiteral("market"))));
             dialog->setProperty("chosenListingId", QStringLiteral("com.example.glossary"));
+            QTRY_VERIFY(dialogItem("pluginManagerDialog", "marketIcon")->property("shown").toBool());
+            QTRY_COMPARE(dialogItem("pluginManagerDialog", "marketScreenshot")->property("status").toInt(), 1);
             QTest::qWait(400);
             QVERIFY(manager->grabWindow().save(out + QStringLiteral("/market-browse") + suffix));
             dialog->setProperty("chosenListingId", QStringLiteral("com.example.native"));
@@ -20260,7 +20419,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 285);
+        QCOMPARE(hotkeyRows().size(), 297);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -20731,7 +20890,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
-        QCOMPARE(table().size(), 34);
+        QCOMPARE(table().size(), 38);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
