@@ -13,10 +13,28 @@ ApplicationWindow {
     width: 1280
     height: 800
     visible: true
-    title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
+    title: {
+        if (!shell.hasEditingTarget)
+            return projectName.length > 0 ? qsTr("%1 - HikariSub").arg(projectName) : "HikariSub"
+        return projectName.length > 0 ? qsTr("%1 - %2 - HikariSub").arg(shell.editingTitle, projectName)
+                                      : qsTr("%1 - HikariSub").arg(shell.editingTitle)
+    }
     color: Theme.background
 
     property int shellWindow: 0
+    property int projectRevision: 0
+    readonly property string projectName: {
+        root.projectRevision
+        return root.app.projectName(root.shellWindow)
+    }
+    Connections {
+        target: root.app
+        function onProjectsChanged() { root.projectRevision++ }
+        function onProjectOffered(shellWindow, folder, name) {
+            if (shellWindow === root.shellWindow)
+                projectOfferBar.offer(folder, name)
+        }
+    }
     readonly property string engineSuffix: shellWindow === 0 ? "" : "~" + shellWindow
     readonly property var dockAffinities: ["w" + shellWindow]
     readonly property bool windowHome: {
@@ -105,6 +123,13 @@ ApplicationWindow {
 
     function beginClose(then) {
         const rows = root.app.reviewClose(then)
+        if (rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(rows)
+    }
+    function closeProject() {
+        const rows = root.app.reviewCloseProject(root.shellWindow)
         if (rows.length === 0)
             root.app.finishClose()
         else
@@ -517,7 +542,7 @@ ApplicationWindow {
                 id: pluginPanel
                 objectName: "pluginPanel_" + pluginDock.uniqueName
                 dockName: pluginDock.uniqueName
-                minimumBodySize: Qt.size(160, 120)
+                minimumBodySize: pluginBody.minimumBodySize
                 anchors.fill: parent
                 title: pluginDock.title
                 PluginPanelBody {
@@ -533,6 +558,7 @@ ApplicationWindow {
                     onTurnOn: plugin => root.app.pluginManager.setEnabled(plugin, true)
                     onRestart: plugin => root.app.pluginRuntime.restart(plugin)
                     onDetails: root.showPanel(logDock)
+                    onCopy: text => root.app.copyText(text)
                     // KDDW deletes these children inside ~DockWidget; a binding on pluginBody would then call into the dying dock.
                     onPluginNameChanged: pluginDock.pluginName = pluginName
                     onTitleChanged: pluginDock.knownTitle = title
@@ -1559,6 +1585,17 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.show()
                     }
                 }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_FOLDER"
+                    help: qsTr("Open a folder as a project")
+                    iconRole: "open-project"
+                    objectName: "openFolderMenuItem"
+                    action: Action {
+                        id: openFolderAction
+                        text: qsTr("Open &folder…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FOLDER")) projectFolderDialog.show()
+                    }
+                }
                 ShellMenu {
                     help: qsTr("Recently opened subtitles")
                     id: recentMenu
@@ -1607,6 +1644,18 @@ ApplicationWindow {
                         text: qsTr("&Close")
                         enabled: root.shell.hasEditingTarget
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CLOSE_PROJECT"
+                    help: qsTr("Close this window's tabs and its project")
+                    iconRole: "close-project"
+                    objectName: "closeProjectMenuItem"
+                    action: Action {
+                        id: closeProjectAction
+                        text: qsTr("Close pro&ject")
+                        enabled: root.projectName.length > 0
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PROJECT")) root.closeProject()
                     }
                 }
                 ShellMenuItem {
@@ -3636,12 +3685,15 @@ ApplicationWindow {
         id: homePage
         objectName: "homePage"
         app: root.app
+        shellWindow: root.shellWindow
         anchors.fill: dockingArea
         z: 1.5
         visible: root.windowHome
         spaceAbove: documentTabBar.height
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
+        onOpenFolderRequested: openFolderAction.trigger()
+        onProjectChosen: path => root.app.openFolder(path, root.shellWindow)
         onOpenVideoRequested: openVideoAction.trigger()
         onRestoreRequested: sessionWindows.load()
         offer: sessionWindows.offer
@@ -6578,6 +6630,27 @@ ApplicationWindow {
             }
         }
         InlineBar {
+            id: projectOfferBar
+            objectName: "projectOfferBar"
+            property string folder: ""
+            function offer(path, name) {
+                folder = path
+                text = qsTranslate("HikariSub.Project", "This file is in the project %1.").arg(name)
+            }
+            visible: folder.length > 0 && root.projectName.length === 0
+            Layout.fillWidth: true
+            onClosed: folder = ""
+            IconTextButton {
+                iconRole: "open-project"
+                objectName: "projectOfferOpen"
+                text: qsTranslate("HikariSub.Project", "Open project")
+                onClicked: {
+                    root.app.openFolder(projectOfferBar.folder, root.shellWindow, 2)
+                    projectOfferBar.folder = ""
+                }
+            }
+        }
+        InlineBar {
             objectName: "mkvProgress"
             visible: root.matroska.state === 3
                      && (root.mkvTab === "home" ? root.windowHome : !root.windowHome && root.currentTab().id === root.mkvTab)
@@ -7198,6 +7271,22 @@ ApplicationWindow {
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
             root.openChosenSubtitles(root.app.localPath(selectedFile))
+        }
+    }
+
+    FolderChooser {
+        id: projectFolderDialog
+        objectName: "projectFolderDialog"
+        title: qsTranslate("HikariSub.Project", "Open folder")
+        function show() {
+            const folder = root.pickerFolder("project")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+        onAccepted: {
+            root.rememberPickerFolder("project", selectedFolder)
+            root.app.openFolder(root.app.localPath(selectedFolder), root.shellWindow)
         }
     }
 
@@ -8293,6 +8382,7 @@ ApplicationWindow {
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
         GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
+        GLOBAL_OPEN_FOLDER: openFolderAction, GLOBAL_CLOSE_PROJECT: closeProjectAction,
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,

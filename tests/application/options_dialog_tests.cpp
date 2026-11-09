@@ -350,11 +350,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(id), nullptr);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
     }
+    const auto &thai = all[std::size(kLegacy) + 60];
+    EXPECT_EQ(thai.setting, "audio.karaokeThaiClusters");
+    EXPECT_EQ(thai.control, OptionsControl::Check);
+    EXPECT_EQ(thai.page, OptionsPage::Audio);
+    ASSERT_NE(findSetting("audio.karaokeThaiClusters"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("audio.karaokeThaiClusters")->defaultValue), true);
     for (std::size_t i = 0; const auto &[id, control] : {std::pair{"ai.agent.mode", OptionsControl::Text},
                                                          std::pair{"ai.agent.threadCapCents", OptionsControl::Number},
                                                          std::pair{"ai.agent.dailyCapCents", OptionsControl::Number},
                                                          std::pair{"ai.agent.costMeter", OptionsControl::Check}}) {
-        const auto &agent = all[std::size(kLegacy) + 60 + i++];
+        const auto &agent = all[std::size(kLegacy) + 61 + i++];
         EXPECT_EQ(agent.setting, id);
         EXPECT_EQ(agent.control, control) << id;
         EXPECT_EQ(agent.page, OptionsPage::Ai) << id;
@@ -365,8 +371,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.dailyCapCents")->defaultValue), 1000);
     EXPECT_EQ(findOptionsBinding("ai.agent.fullAccessWarned"), nullptr);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 66);
-    const auto &hostApi = all[std::size(kLegacy) + 64];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 67);
+    const auto &hostApi = all[std::size(kLegacy) + 65];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -377,7 +383,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 64);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 65);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

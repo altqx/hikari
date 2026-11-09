@@ -235,8 +235,17 @@ ScrollView {
                 contentItem.wrapMode = Text.Wrap
             refresh()
         }
+        property bool asksFirst: false
+        signal askedOn()
         Connections { target: page.dialog; function onReloaded() { check.refresh() } }
-        onToggled: page.dialog.put(setting, checked)
+        onToggled: {
+            if (asksFirst && checked) {
+                checked = false
+                askedOn()
+            } else {
+                page.dialog.put(setting, checked)
+            }
+        }
     }
     component Note: Label {
         color: Theme.muted
@@ -254,6 +263,61 @@ ScrollView {
             to: 360
             duration: 1200
             loops: Animation.Infinite
+        }
+    }
+    component DownloadNotice: Rectangle {
+        id: notice
+        property string title
+        property string text
+        default property alias actions: noticeActions.data
+        readonly property var download: page.ai ? page.ai.download : ({})
+        color: Theme.raised
+        border.color: Theme.line
+        implicitHeight: noticeRow.implicitHeight + 16
+        Layout.fillWidth: true
+        Rectangle { width: 3; height: parent.height; color: Theme.accent }
+        RowLayout {
+            id: noticeRow
+            x: 12
+            y: 8
+            width: parent.width - 22
+            spacing: 8
+            Icon { iconRole: "notice-info"; Layout.alignment: Qt.AlignTop }
+            ColumnLayout {
+                spacing: 4
+                Layout.fillWidth: true
+                Label {
+                    text: notice.title
+                    font.bold: true
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                Label {
+                    text: notice.text
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                RowLayout {
+                    visible: !!notice.download.active
+                    spacing: 8
+                    ProgressBar {
+                        objectName: notice.objectName + "Progress"
+                        from: 0
+                        to: Math.max(1, notice.download.size || 0)
+                        value: notice.download.received || 0
+                        Layout.preferredWidth: 180
+                    }
+                    Label {
+                        text: qsTr("%1 of %2 MB").arg(Math.round((notice.download.received || 0) / 1000000), page.megabytes(notice.download.size || 0))
+                        color: Theme.muted
+                    }
+                }
+                RowLayout {
+                    id: noticeActions
+                    visible: children.length > 0
+                    spacing: 8
+                }
+            }
         }
     }
     component StatusDot: Rectangle {
@@ -475,54 +539,13 @@ ScrollView {
                 Layout.leftMargin: 182
                 Layout.fillWidth: true
             }
-            Rectangle {
+            DownloadNotice {
                 objectName: "aiDownloadNotice"
                 visible: form.download.needed
-                color: Theme.raised
-                border.color: Theme.line
-                implicitHeight: noticeRow.implicitHeight + 16
-                Layout.fillWidth: true
-                Rectangle { width: 3; height: parent.height; color: Theme.accent }
-                RowLayout {
-                    id: noticeRow
-                    x: 12
-                    y: 8
-                    width: parent.width - 22
-                    spacing: 8
-                    Icon { iconRole: "notice-info"; Layout.alignment: Qt.AlignTop }
-                    ColumnLayout {
-                        spacing: 4
-                        Layout.fillWidth: true
-                        Label {
-                            text: form.download.size > 0
-                                  ? qsTr("Your first provider downloads the AI component once: %1 MB.").arg(page.megabytes(form.download.size))
-                                  : qsTr("Your first provider downloads the AI component once.")
-                            font.bold: true
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: qsTr("Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.")
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-                        RowLayout {
-                            visible: form.download.active
-                            spacing: 8
-                            ProgressBar {
-                                objectName: "aiDownloadProgress"
-                                from: 0
-                                to: Math.max(1, form.download.size)
-                                value: form.download.received
-                                Layout.preferredWidth: 180
-                            }
-                            Label {
-                                text: qsTr("%1 of %2 MB").arg(Math.round(form.download.received / 1000000), page.megabytes(form.download.size))
-                                color: Theme.muted
-                            }
-                        }
-                    }
-                }
+                title: form.download.size > 0
+                       ? qsTr("Your first provider downloads the AI component once: %1 MB.").arg(page.megabytes(form.download.size))
+                       : qsTr("Your first provider downloads the AI component once.")
+                text: qsTr("Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.")
             }
             RowLayout {
                 spacing: 8
@@ -1289,6 +1312,12 @@ ScrollView {
             readonly property bool httpOn: serverOn && page.dialog.values["ai.mcp.http"] === true
             readonly property var setup: page.ai && page.ai.mcp ? page.ai.mcp.setup : ({})
             property string copied: ""
+            property bool offering: false
+            property string stayedOff: ""
+            function turnOn() {
+                page.dialog.put("ai.mcp.server", true)
+                mcpServerCheck.checked = true
+            }
             function copy(kind) {
                 page.dialog.app.copyText(setup[kind])
                 copied = kind
@@ -1296,8 +1325,70 @@ ScrollView {
             }
             visible: page.live
             title: qsTr("MCP")
-            AiCheck { setting: "ai.mcp.server"; text: qsTr("Let agents outside HikariSub edit through MCP") }
+            Connections {
+                target: page.dialog
+                function onReloaded() {
+                    if (mcpSection.offering)
+                        page.ai.cancelComponent()
+                    mcpSection.offering = false
+                    mcpSection.stayedOff = ""
+                }
+            }
+            Connections {
+                target: page.ai
+                function onComponentReady(installed) {
+                    if (!mcpSection.offering)
+                        return
+                    mcpSection.offering = false
+                    if (installed)
+                        mcpSection.turnOn()
+                    else
+                        mcpSection.stayedOff = page.failureText(page.ai.download.error, 0, "")
+                }
+            }
+            AiCheck {
+                id: mcpServerCheck
+                setting: "ai.mcp.server"
+                asksFirst: true
+                text: qsTr("Let agents outside HikariSub edit through MCP")
+                onAskedOn: {
+                    mcpSection.stayedOff = ""
+                    if (page.ai.componentNeeded())
+                        mcpSection.offering = true
+                    else
+                        mcpSection.turnOn()
+                }
+            }
             Note { text: qsTr("Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.") }
+            DownloadNotice {
+                objectName: "aiMcpDownload"
+                visible: mcpSection.offering
+                title: download.size > 0
+                       ? qsTr("MCP needs the AI component, downloaded once: %1 MB.").arg(page.megabytes(download.size))
+                       : qsTr("MCP needs the AI component, downloaded once.")
+                text: qsTr("It runs only while an agent uses HikariSub, and never while AI is turned off.")
+                PrimaryButton {
+                    objectName: "aiMcpDownloadStart"
+                    text: qsTr("Download")
+                    enabled: !page.ai.download.active
+                    onClicked: page.ai.installComponent()
+                }
+                Button {
+                    objectName: "aiMcpDownloadCancel"
+                    text: qsTr("Cancel")
+                    onClicked: {
+                        page.ai.cancelComponent()
+                        mcpSection.offering = false
+                        mcpSection.stayedOff = qsTr("It needs the AI component")
+                    }
+                }
+            }
+            Note {
+                objectName: "aiMcpStayedOff"
+                visible: mcpSection.stayedOff !== "" && !mcpSection.serverOn && !mcpSection.offering
+                color: Theme.danger
+                text: qsTr("MCP stays off. %1.").arg(mcpSection.stayedOff)
+            }
             AiCheck {
                 property string docsLabel: qsTr("Also listen on http://127.0.0.1")
                 setting: "ai.mcp.http"
@@ -1322,11 +1413,22 @@ ScrollView {
                     text: qsTr("Copy setup")
                     onClicked: copySetupMenu.popup(copySetupButton, 0, copySetupButton.height)
                 }
+                IconTextButton {
+                    objectName: "aiMcpResetToken"
+                    iconRole: "refresh"
+                    text: qsTr("Reset token")
+                    onClicked: {
+                        page.ai.mcp.resetToken()
+                        mcpSection.copied = "token"
+                        copiedTimer.restart()
+                    }
+                }
                 Label {
                     objectName: "aiMcpCopied"
                     visible: mcpSection.copied !== ""
-                    text: mcpSection.copied === "claudeCode" ? qsTr("Copied. Run it in a terminal.")
-                                                             : qsTr("Copied. Paste it into the agent’s settings.")
+                    text: mcpSection.copied === "token" ? qsTr("New token saved.")
+                        : mcpSection.copied === "claudeCode" ? qsTr("Copied. Run it in a terminal.")
+                        : qsTr("Copied. Paste it into the agent’s settings.")
                     color: Theme.muted
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -1352,9 +1454,15 @@ ScrollView {
                         iconRole: "network"
                         enabled: !!mcpSection.setup.json
                         text: qsTr("JSON with the address and token")
+                        reason: qsTr("Holds your token; keep it private.")
                         onTriggered: mcpSection.copy("json")
                     }
                 }
+            }
+            Note {
+                objectName: "aiMcpResetNote"
+                visible: mcpSection.serverOn
+                text: qsTr("Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.")
             }
             Note {
                 objectName: "aiMcpJsonNote"

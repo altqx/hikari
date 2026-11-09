@@ -8987,6 +8987,14 @@ Failed to copy %2 fonts.</source>
         <translation>촉음을 별도 음절로 분리 (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>태국어를 문자 묶음으로 분리</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>자동 분할이 태국어 문자 묶음마다 음절을 하나씩 만들어 กิน이 กิ|น이 됩니다. 끄면 태국어 단어 하나가 음절 하나로 남습니다.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>%1의 긴 음절</translation>
     </message>
@@ -10644,6 +10652,30 @@ Failed to copy %2 fonts.</source>
         <translation>Claude Code, Codex 및 기타 에이전트가 열린 문서를 읽습니다. 에이전트의 편집은 유지하거나 실행 취소할 때까지 검토에서 기다립니다.</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP를 사용하려면 AI 구성 요소가 필요합니다. 한 번만 다운로드합니다: %1MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP를 사용하려면 AI 구성 요소가 필요합니다. 한 번만 다운로드합니다.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>에이전트가 HikariSub를 사용할 때만 실행되며, AI가 꺼져 있을 때는 실행되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>다운로드</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>AI 구성 요소가 필요합니다</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP가 꺼진 상태로 유지됩니다. %1.</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>http://127.0.0.1에서도 수신</translation>
     </message>
@@ -10658,6 +10690,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Copy setup</source>
         <translation>설정 복사</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>토큰 재설정</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>새 토큰을 저장했습니다.</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10678,6 +10718,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>JSON with the address and token</source>
         <translation>주소와 토큰이 담긴 JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>토큰이 들어 있으니 다른 사람에게 공유하지 마세요.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>토큰 재설정은 새 토큰을 만듭니다. 이전 토큰으로 설정한 에이전트는 설정을 다시 복사할 때까지 작동하지 않습니다.</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
@@ -10859,6 +10907,10 @@ Failed to copy %2 fonts.</source>
         <translation>이 플러그인에는 Hikari API %1(이)가 필요하지만 이 HikariSub의 API는 %2입니다. 설치하려면 HikariSub을 업데이트하십시오.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>QML 패널은 전체 신뢰 플러그인만 제공할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json이 %1에서 플러그인 스키마를 통과하지 못했습니다: %2</translation>
     </message>
@@ -10877,6 +10929,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>패키지가 미디어 규칙을 어깁니다: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>패키지에 패널 파일 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1(이)가 플러그인 패널에서 쓸 수 없는 %2(을)를 가져옵니다.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10909,6 +10969,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>전체 신뢰: HikariSub의 제한 밖에서 네이티브 코드를 실행할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub 안에 자체 패널을 표시합니다</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11499,6 +11563,22 @@ Failed to copy %2 fonts.</source>
         <translation>표시</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1의 패널이 열린 채로 HikariSub가 종료되었습니다.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>패널을 불러오지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>다시 불러오기를 선택할 때까지 패널이 닫혀 있습니다.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>다시 불러오기</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1이(가) 설치되어 있지 않습니다.</translation>
     </message>
@@ -11593,6 +11673,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>패널이 열린 채로 HikariSub가 종료되어, 다시 불러오기를 선택할 때까지 패널이 닫혀 있습니다.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>루트가 Item이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
     </message>
 </context>
 <context>

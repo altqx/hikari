@@ -9103,6 +9103,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wydzielaj podwojoną spółgłoskę w osobną sylabę (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>Dziel tajski na klastry znaków</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>Automatyczny podział daje każdemu tajskiemu klastrowi znaków osobną sylabę, więc กิน staje się กิ|น. Wyłącz, aby każde tajskie słowo było jedną sylabą.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>Długie sylaby dla %1</translation>
     </message>
@@ -10772,6 +10780,30 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Claude Code, Codex i inni agenci czytają otwarte dokumenty. Ich zmiany czekają w przeglądzie, aż je zachowasz lub cofniesz.</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>Działa tylko wtedy, gdy agent korzysta z HikariSub, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>Potrzebuje komponentu AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP pozostaje wyłączone. %1.</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>Nasłuchuj także na http://127.0.0.1</translation>
     </message>
@@ -10786,6 +10818,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Copy setup</source>
         <translation>Kopiuj konfigurację</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>Zresetuj token</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>Zapisano nowy token.</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10806,6 +10846,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>JSON with the address and token</source>
         <translation>JSON z adresem i tokenem</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>Zawiera twój token; nie udostępniaj go.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>Zresetuj token tworzy nowy token. Agenci skonfigurowani ze starym przestaną działać, dopóki nie skopiujesz konfiguracji ponownie.</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
@@ -10987,6 +11035,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>Tylko wtyczki z pełnym zaufaniem mogą zawierać panele QML.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
     </message>
@@ -11005,6 +11057,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>Pakiet narusza zasady dotyczące multimediów: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>W pakiecie brakuje pliku panelu, %1.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 importuje %2, czego panele wtyczek nie mogą używać.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -11037,6 +11097,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>Wyświetla własne panele w HikariSub</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11631,6 +11695,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub zamknął się, gdy panel wtyczki %1 był otwarty.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>Nie udało się wczytać panelu.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>Jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>Wczytaj ponownie</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 nie jest zainstalowana.</translation>
     </message>
@@ -11725,6 +11805,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub zamknął się, gdy jej panel był otwarty, więc jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>Jego element główny nie jest typu Item.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
     </message>
 </context>
 <context>

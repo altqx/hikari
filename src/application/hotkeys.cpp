@@ -344,6 +344,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SHOW_AI_REVIEW", 5251},
         {"GLOBAL_SHOW_AI_AGENT", 5252},
         {"GLOBAL_NEW_AI_THREAD", 5253},
+        {"GLOBAL_OPEN_FOLDER", 5255},
+        {"GLOBAL_CLOSE_PROJECT", 5256},
 };
 
 struct NameRow {
@@ -653,6 +655,8 @@ constexpr NameRow kNames[] = {
         {5251, "Review panel"},
         {5252, "Agent panel"},
         {5253, "New agent thread"},
+        {5255, "Open folder…"},
+        {5256, "Close project"},
 };
 
 struct DefaultRow {

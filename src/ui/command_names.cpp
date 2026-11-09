@@ -311,6 +311,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Review panel"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Agent panel"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "New agent thread"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open folder…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close project"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

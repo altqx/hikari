@@ -9045,6 +9045,14 @@ Failed to copy %2 fonts.</source>
         <translation>இரட்டை மெய்யெழுத்துக்குத் தனி அசை கொடு (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>தாய் மொழியை எழுத்துக் கொத்துகளாகப் பிரி</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>தானியங்கு பிரிப்பு ஒவ்வொரு தாய் எழுத்துக் கொத்துக்கும் தனி அசை கொடுக்கும், எனவே กิน என்பது กิ|น ஆகும். ஒவ்வொரு தாய் சொல்லையும் ஒரே அசையாக வைக்க இதை அணைக்கவும்.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>%1 க்கான நீண்ட அசைகள்</translation>
     </message>
@@ -10708,6 +10716,30 @@ Failed to copy %2 fonts.</source>
         <translation>Claude Code, Codex மற்றும் பிற முகவர்கள் திறந்த ஆவணங்களைப் படிக்கும். நீங்கள் வைத்துக்கொள்ளும் வரை அல்லது செயல்தவிர்க்கும் வரை அவற்றின் திருத்தங்கள் மதிப்பாய்வில் காத்திருக்கும்.</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>ஒரு முகவர் HikariSub ஐப் பயன்படுத்தும்போது மட்டுமே இயங்கும், AI அணைக்கப்பட்டிருக்கும்போது ஒருபோதும் இயங்காது.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>பதிவிறக்கு</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>இதற்கு AI கூறு தேவை</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP அணைந்தே இருக்கும். %1.</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>http://127.0.0.1 இலும் கேள்</translation>
     </message>
@@ -10722,6 +10754,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Copy setup</source>
         <translation>அமைப்பை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>டோக்கனை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>புதிய டோக்கன் சேமிக்கப்பட்டது.</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10742,6 +10782,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>JSON with the address and token</source>
         <translation>முகவரியும் டோக்கனும் உள்ள JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>உங்கள் டோக்கன் இதில் உள்ளது; அதைத் தனிப்பட்டதாக வைத்திருங்கள்.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>டோக்கனை மீட்டமை ஒரு புதிய டோக்கனை உருவாக்கும். பழைய டோக்கனுடன் அமைக்கப்பட்ட முகவர்கள், நீங்கள் அமைப்பை மீண்டும் நகலெடுக்கும் வரை வேலை செய்யாது.</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
@@ -10923,6 +10971,10 @@ Failed to copy %2 fonts.</source>
         <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>முழு நம்பிக்கை செருகுநிரல்கள் மட்டுமே QML பலகங்களைக் கொண்டிருக்க முடியும்.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
     </message>
@@ -10941,6 +10993,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>தொகுப்பு ஊடக விதிகளை மீறுகிறது: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>தொகுப்பில் அதன் பலகக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1, செருகுநிரல் பலகங்கள் பயன்படுத்த முடியாத %2 ஐ இறக்குகிறது.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10973,6 +11033,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub இனுள் தனது சொந்தப் பலகங்களைக் காட்டுகிறது</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11565,6 +11629,22 @@ Failed to copy %2 fonts.</source>
         <translation>காட்டு</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1 இன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>பலகத்தை ஏற்ற முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 நிறுவப்படவில்லை.</translation>
     </message>
@@ -11659,6 +11739,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>இதன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டதால், நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>இதன் மூலம் Item அல்ல.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
     </message>
 </context>
 <context>

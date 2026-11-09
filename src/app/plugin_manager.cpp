@@ -105,6 +105,8 @@ QString manifestMessage(const ManifestProblem &problem)
                                            "This plugin needs Hikari API %1, and this HikariSub has API %2. Update HikariSub to install it.")
             .arg(problem.neededApi)
             .arg(api::kApiVersion);
+    case ManifestProblem::Kind::QmlNeedsFullTrust:
+        return QCoreApplication::translate("HikariSub.Plugins", "Only Full trust plugins can ship QML panels.");
     case ManifestProblem::Kind::Schema:
     case ManifestProblem::Kind::BadDefault:
         break;
@@ -129,6 +131,11 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its main file, %1.").arg(text(problem.path));
     case PackageProblem::Kind::Media:
         return QCoreApplication::translate("HikariSub.Plugins", "The package breaks the media rules: %1 %2.")
+            .arg(text(problem.path), text(problem.detail));
+    case PackageProblem::Kind::MissingPanel:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its panel file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::QmlImport:
+        return QCoreApplication::translate("HikariSub.Plugins", "%1 imports %2, which plugin panels can’t use.")
             .arg(text(problem.path), text(problem.detail));
     case PackageProblem::Kind::Manifest:
         break;
@@ -171,7 +178,7 @@ QString refusalMessage(const InstallRefusal &refusal)
 
 QStringList permissionLines(const plugins::Manifest &manifest)
 {
-    return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions);
+    return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions, manifest.hasQmlPanels());
 }
 
 QVariantList folderRows(const plugins::Manifest &manifest, const std::map<std::string, plugins::FileGrant> &grants)
@@ -255,6 +262,8 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
     QList<bool> added;
     if (next.tier == plugins::Tier::Unrestricted)
         added << more.unrestricted;
+    if (next.tier == plugins::Tier::Unrestricted && next.hasQmlPanels())
+        added << more.unrestricted;
     if (next.permissions.allDocuments)
         added << more.allDocuments;
     if (!next.permissions.networkHosts.empty())
@@ -270,11 +279,13 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
 
 }
 
-QStringList permissionLines(bool unrestricted, const plugins::Permissions &p)
+QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bool qmlPanels)
 {
     QStringList lines;
     if (unrestricted)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Full trust: it may run native code outside HikariSub’s limits.");
+    if (unrestricted && qmlPanels)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Shows its own panels inside HikariSub");
     if (p.allDocuments)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Read and edit every open subtitle file: %1").arg(text(*p.allDocuments));
     if (!p.networkHosts.empty()) {
