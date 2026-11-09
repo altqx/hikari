@@ -1,5 +1,6 @@
 #include "hikari/backends/ai_agent.h"
 
+#include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_requests.h"
 
 #include <QDateTime>
@@ -39,15 +40,35 @@ constexpr std::size_t kJudgeMessagesChars = 8000;
 constexpr std::size_t kOutputChars = 4000;
 constexpr std::size_t kTitleChars = 60;
 
-struct AlwaysAskCommand {
-    std::string_view command;
+struct RiskyName {
+    std::string_view name;
+    Risk risk;
     std::string_view reason;
 };
 
-constexpr std::array kAlwaysAskCommands{
-    AlwaysAskCommand{"GLOBAL_DELETE_TEMPORARY_FILES", "It deletes files."},
-    AlwaysAskCommand{"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", "It runs an Automation script."},
-    AlwaysAskCommand{"GLOBAL_AUTOMATION_RELOAD_AUTOLOAD", "It runs the Autoload scripts."},
+constexpr std::string_view kRunsScript = "It runs an Automation script.";
+
+constexpr std::array kRiskyCommands{
+    RiskyName{"GLOBAL_DELETE_TEMPORARY_FILES", Risk::Files, "It deletes files."},
+    RiskyName{"GLOBAL_AUTOMATION_LOAD_SCRIPT", Risk::Programs, kRunsScript},
+    RiskyName{"GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT", Risk::Programs, kRunsScript},
+    RiskyName{"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", Risk::Programs, kRunsScript},
+    RiskyName{"GLOBAL_AUTOMATION_RELOAD_AUTOLOAD", Risk::Programs, "It runs the Autoload scripts."},
+};
+
+constexpr std::array kRiskySettings{
+    RiskyName{"automation.scriptEditor", Risk::Programs, "It changes the program that opens Automation scripts."},
+    RiskyName{"automation.lastScript", Risk::Programs, "It changes the script that Run last script runs."},
+    RiskyName{"automation.disabledAutoload", Risk::Programs, "It turns Autoload scripts on or off."},
+    RiskyName{"updater.autoInstall", Risk::Programs, "It lets HikariSub install its updates without asking."},
+    RiskyName{"plugins.autoUpdate", Risk::Plugins, "It lets plugins install their updates without asking."},
+    RiskyName{"plugins.network", Risk::Plugins, "It lets plugins reach the network."},
+    RiskyName{"automation.trustedFolders", Risk::Plugins, "It trusts the Automation scripts in more folders."},
+};
+
+constexpr std::array kRiskySettingPrefixes{
+    RiskyName{"privacy.", Risk::Network, "It changes what HikariSub sends over the network."},
+    RiskyName{"ai.", Risk::AiSettings, "It changes an AI setting."},
 };
 
 constexpr std::array<std::string_view, 4> kViewWrites{"selection.set", "panels.open", "panels.close", "panels.focus"};
@@ -167,24 +188,42 @@ std::optional<AgentMode> agentModeFromId(std::string_view id)
     return std::nullopt;
 }
 
-std::string alwaysAskReason(const std::string &operation, const Json &params,
-                            const std::function<std::optional<std::string>(std::string_view)> &pathOf,
-                            const std::vector<std::string> &safeFolders)
+RiskCheck alwaysAsk(const std::string &operation, const Json &params,
+                    const std::function<std::optional<std::string>(std::string_view)> &pathOf,
+                    const std::vector<std::string> &safeFolders)
 {
+    const auto outside = [&](const std::optional<std::string> &path) {
+        return !path || std::none_of(safeFolders.begin(), safeFolders.end(),
+                                     [&](const std::string &folder) { return under(*path, folder); });
+    };
+    const auto named = [](const auto &table, std::string_view name) -> RiskCheck {
+        for (const RiskyName &r : table)
+            if (r.name == name)
+                return {r.risk, std::string(r.reason)};
+        return {};
+    };
+    if (operation == "files.write" && outside(pathOf ? pathOf(stringAt(params, "file")) : std::nullopt))
+        return {Risk::Files, "It overwrites a file outside the subtitles' folders and your user folder."};
     if (operation == "commands.run") {
         const std::string command = stringAt(params, "command");
-        for (const AlwaysAskCommand &c : kAlwaysAskCommands)
-            if (c.command == command)
-                return std::string(c.reason);
+        if (application::isPluginCommand(command))
+            return {Risk::Programs, "It runs a plugin's command."};
+        return named(kRiskyCommands, command);
     }
-    if (operation == "settings.set" && stringAt(params, "setting").starts_with("ai."))
-        return "It changes an AI setting.";
-    if (operation == "files.write") {
-        const std::optional<std::string> path = pathOf ? pathOf(stringAt(params, "file")) : std::nullopt;
-        if (!path || std::none_of(safeFolders.begin(), safeFolders.end(),
-                                  [&](const std::string &folder) { return under(*path, folder); }))
-            return "It overwrites a file outside the subtitles' folders and your user folder.";
+    if (operation != "settings.set")
+        return {};
+    const std::string setting = stringAt(params, "setting");
+    if (setting == "fontCollector.directory") {
+        const Json *value = params.find("value");
+        if (outside(value && value->isString() ? std::optional(value->asString()) : std::nullopt))
+            return {Risk::Files, "It makes the Font collector copy fonts outside the subtitles' folders and your user folder."};
+        return {};
     }
+    if (RiskCheck check = named(kRiskySettings, setting); check.risk != Risk::None)
+        return check;
+    for (const RiskyName &r : kRiskySettingPrefixes)
+        if (setting.starts_with(r.name))
+            return {r.risk, std::string(r.reason)};
     return {};
 }
 
@@ -800,9 +839,9 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
     const auto pathOf = [this, caller](std::string_view handle) {
         return m_wiring.api ? m_wiring.api->grantedPath(caller, handle) : std::nullopt;
     };
-    const std::string reason =
-        alwaysAskReason(operation, params, pathOf, m_wiring.safeFolders ? m_wiring.safeFolders() : std::vector<std::string>());
-    switch (decide(t->mode, operation, !reason.empty(), t->allowed.contains(allowanceKey(operation, params)))) {
+    const RiskCheck risk =
+        alwaysAsk(operation, params, pathOf, m_wiring.safeFolders ? m_wiring.safeFolders() : std::vector<std::string>());
+    switch (decide(t->mode, operation, risk.risk != Risk::None, t->allowed.contains(allowanceKey(operation, params)))) {
     case Decision::Run:
         return admitCall(*t, operation, params, false, std::move(admit));
     case Decision::Judge:
@@ -810,7 +849,7 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
     case Decision::Ask:
         return openAsk(*t, Decision::Ask, operation, params, {}, std::move(admit), std::move(onWithdraw));
     case Decision::AlwaysAsk:
-        return openAsk(*t, Decision::AlwaysAsk, operation, params, reason, std::move(admit), std::move(onWithdraw));
+        return openAsk(*t, Decision::AlwaysAsk, operation, params, risk.reason, std::move(admit), std::move(onWithdraw));
     }
 }
 

@@ -51,10 +51,17 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 
 - Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close` and `panels.focus`, which change no content and no setting.
 - **Allow in this thread** covers the operation, or for `commands.run` the one command, until the thread is deleted.
-- **The always-ask list** asks in every mode, with Allow once and Deny only:
-  - `settings.set` of a setting under `ai.`;
-  - `files.write` to a file outside the open subtitles' folders, the Project and the user folder;
-  - `commands.run` of `GLOBAL_DELETE_TEMPORARY_FILES`, `GLOBAL_AUTOMATION_REPEAT_LAST_RUN` or `GLOBAL_AUTOMATION_RELOAD_AUTOLOAD`.
+- **The always-ask list** ([#410](https://github.com/altqx/hikari/issues/410)) asks in every mode, with Allow once and Deny only. `alwaysAsk` holds it:
+
+| Category | Asks for | Doesn't ask, and why |
+| --- | --- | --- |
+| Deleting or overwriting files outside the subtitles' folders and the user folder | `files.write` to a file outside them (checked by the granted file's path); `commands.run` `GLOBAL_DELETE_TEMPORARY_FILES`; `settings.set` `fontCollector.directory` to a folder outside them | The Save commands write only the subtitle's own file and open a file dialog for any other path. Save as, Export, Save timecodes and Save session open a file dialog, so the user picks the path. Video snapshots make new files and never overwrite. `VIDEO_DELETE_FILE` only closes the video. |
+| Running external programs | `commands.run` `GLOBAL_AUTOMATION_LOAD_SCRIPT`, `GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT`, `GLOBAL_AUTOMATION_REPEAT_LAST_RUN`, `GLOBAL_AUTOMATION_RELOAD_AUTOLOAD` and any `plugin.` command; `settings.set` `automation.scriptEditor`, `automation.lastScript`, `automation.disabledAutoload`, `updater.autoInstall` | `commands.run` reaches only built-in commands today; plugin commands ask in case that changes. |
+| Installing a plugin or granting full trust | `settings.set` `plugins.autoUpdate`, `plugins.network`, `automation.trustedFolders` | The Plugins window (`GLOBAL_PLUGINS`) installs and trusts only when the user clicks. |
+| Sending local files to the network | `settings.set` of any `privacy.` setting (crash reports, usage data, Discord) | Crash and issue reports send only from their own dialogs. |
+| AI settings | `settings.set` of any `ai.` setting | |
+
+  `hikari_backends_ai_agent_tests` fails when a new write operation appears, or a new Automation or delete command, or a new setting under `automation.`, `plugins.`, `privacy.`, `updater.`, `fontCollector.` or `fonts.`, until it is classified here.
 - **A denial** goes to the model as a `refused` error that says the user denied it, with the user's message if they wrote one, and tells it not to try again.
 - **The judge** is a `_hikari/complete` request on the Judge role. It sees the action and the user's own messages, never a file's content or a tool's output, so nothing the agent read can talk it into approving. Anything but `{"decision": "approve"}` asks the user. Its cost counts toward the thread's.
 - A write with no session, other than from an MCP connection, is refused once any thread runs. So is a write from a thread whose turn has stopped.
