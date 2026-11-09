@@ -14348,6 +14348,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(canvas, "showRefusal", Q_ARG(QVariant,
                 effects.wireProblem(QStringLiteral("palette"), QStringLiteral("value"), QStringLiteral("place"), QStringLiteral("b")))));
             save(QStringLiteral("refused-") + code);
+            canvas->setProperty("refusal", QString());
 
             QVERIFY(QMetaObject::invokeMethod(item<QObject>("nodeAddPopup"), "openAt", Q_ARG(QVariant, QVariant()),
                                               Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QStringLiteral(""))));
