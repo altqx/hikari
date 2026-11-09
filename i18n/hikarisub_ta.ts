@@ -11007,6 +11007,18 @@ Failed to copy %2 fonts.</source>
         <translation>செருகுநிரலை நிறுவு</translation>
     </message>
     <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகள் அணைக்கப்பட்டிருக்கும்போது “%1”-ஐ நிறுவ முடியாது.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>இந்த இணைப்பு சந்தை இணையதளத்திலிருந்து வந்தது. HikariSub தன் சொந்தக் கையொப்பமிட்ட பட்டியலில் செருகுநிரலைத் தேடுகிறது, எனவே முதலில் சந்தையைச் சரிபார்க்க வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகளை இயக்கு</translation>
+    </message>
+    <message>
         <source>Update plugin</source>
         <translation>செருகுநிரலைப் புதுப்பி</translation>
     </message>

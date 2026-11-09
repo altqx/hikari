@@ -11071,6 +11071,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zainstaluj wtyczkę</translation>
     </message>
     <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>Nie można zainstalować „%1”, gdy aktualizacje wtyczek są wyłączone.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>Link pochodzi ze strony katalogu wtyczek. HikariSub szuka wtyczki na własnej, podpisanej liście, więc najpierw musi sprawdzić katalog wtyczek.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>Włącz aktualizacje wtyczek</translation>
+    </message>
+    <message>
         <source>Update plugin</source>
         <translation>Zaktualizuj wtyczkę</translation>
     </message>
