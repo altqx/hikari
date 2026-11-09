@@ -1037,6 +1037,85 @@ ScrollView {
         }
 
         SettingsSection {
+            id: mcpSection
+            objectName: "aiMcp"
+            readonly property bool serverOn: page.dialog.values["ai.mcp.server"] === true
+            readonly property bool httpOn: serverOn && page.dialog.values["ai.mcp.http"] === true
+            readonly property var setup: page.ai && page.ai.mcp ? page.ai.mcp.setup : ({})
+            property string copied: ""
+            function copy(kind) {
+                page.dialog.app.copyText(setup[kind])
+                copied = kind
+                copiedTimer.restart()
+            }
+            visible: page.live
+            title: qsTr("MCP")
+            AiCheck { setting: "ai.mcp.server"; text: qsTr("Let agents outside HikariSub edit through MCP") }
+            Note { text: qsTr("Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.") }
+            AiCheck {
+                property string docsLabel: qsTr("Also listen on http://127.0.0.1")
+                setting: "ai.mcp.http"
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 24
+                text: mcpSection.setup.port ? qsTr("Also listen on http://127.0.0.1:%1").arg(mcpSection.setup.port) : docsLabel
+            }
+            Note {
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 48
+                text: qsTr("For agents that connect over HTTP. Only this computer can reach it, and only with the token.")
+            }
+            RowLayout {
+                visible: mcpSection.serverOn
+                spacing: 8
+                Layout.leftMargin: 22
+                Layout.fillWidth: true
+                IconTextButton {
+                    id: copySetupButton
+                    objectName: "aiMcpCopySetup"
+                    iconRole: "edit-copy"
+                    text: qsTr("Copy setup")
+                    onClicked: copySetupMenu.popup(copySetupButton, 0, copySetupButton.height)
+                }
+                Label {
+                    objectName: "aiMcpCopied"
+                    visible: mcpSection.copied !== ""
+                    text: mcpSection.copied === "claudeCode" ? qsTr("Copied. Run it in a terminal.")
+                                                             : qsTr("Copied. Paste it into the agent’s settings.")
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Timer { id: copiedTimer; interval: 4000; onTriggered: mcpSection.copied = "" }
+                }
+                ShellMenu {
+                    id: copySetupMenu
+                    objectName: "aiMcpCopyMenu"
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyClaudeCode"
+                        text: qsTr("Claude Code command")
+                        onTriggered: mcpSection.copy("claudeCode")
+                    }
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyCodex"
+                        text: qsTr("Codex config.toml")
+                        onTriggered: mcpSection.copy("codex")
+                    }
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyJson"
+                        enabled: !!mcpSection.setup.json
+                        text: qsTr("JSON with the address and token")
+                        onTriggered: mcpSection.copy("json")
+                    }
+                }
+            }
+            Note {
+                objectName: "aiMcpJsonNote"
+                visible: mcpSection.serverOn && !mcpSection.setup.json
+                text: mcpSection.httpOn ? qsTr("The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.")
+                                        : qsTr("The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.")
+            }
+        }
+
+        SettingsSection {
             objectName: "aiPrivacy"
             visible: page.live
             title: qsTr("Privacy")

@@ -10,9 +10,10 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 | Providers | Add, edit, test and delete providers | At once (see below) |
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
 | External agents | Codex: found on `PATH` with its version, and HikariSub's own ChatGPT sign-in for it (AI6) | At once (see below) |
+| MCP | **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`), **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`) and **Copy setup** ([MCP server](ai-mcp.md#settings--ai)) | On OK or Apply |
 | Privacy | **Use prompt caching** (`ai.promptCaching`, on by default), the What is sent to providers link, and a line that says whether the AI component runs in its sandbox here; "isn’t sandboxed on this system" shows in the warning colour where the sandbox can’t apply ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) | On OK or Apply |
 
-The Agent and MCP sections arrive with AI7 and AI3/AI13, below Models and above Privacy, as drawn in the mockup. External agents has only the Codex row so far; AI15 adds Claude Code and ACP agents, their detection, Choose… and their run errors.
+The Agent section arrives with AI7 below Models, and AI13 adds MCP servers to the MCP section, as drawn in the mockup. External agents has only the Codex row so far; AI15 adds Claude Code and ACP agents, their detection, Choose… and their run errors.
 
 ## Turn off all AI features
 
@@ -52,7 +53,7 @@ Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-o
 - `AiSettings` (`src/app/ai_settings.*`) is the page's model: provider rows, model choices, role values, the form's state, the download and the Codex row. It uses only what `AiFeatures` built.
 - `AiSignIn` (`src/backends/ai_signin.*`) runs the sign-ins with `QNetworkAccessManager` and a `QTcpServer` on 127.0.0.1, and keeps the Codex session: import, refresh and sign-out.
 - `SettingsAiPage.qml` is the page. `SettingsDialog` hands it the `ai` object, and calls `commit()` on OK and Apply to save the staged role models.
-- `ai.off` and `ai.promptCaching` are bound to the `ai` page (`OptionsPage::Ai`), so Reset page and settings import and export cover them.
+- `ai.off`, `ai.promptCaching`, `ai.mcp.server` and `ai.mcp.http` are bound to the `ai` page (`OptionsPage::Ai`), so Reset page and settings import and export cover them.
 
 ## Tests
 

@@ -330,9 +330,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(pluginNetwork.page, OptionsPage::Updates);
     ASSERT_NE(findSetting("plugins.network"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("plugins.network")->defaultValue), true);
+    for (std::size_t i = 0; const char *id : {"ai.mcp.server", "ai.mcp.http"}) {
+        const auto &mcp = all[std::size(kLegacy) + 56 + i++];
+        EXPECT_EQ(mcp.setting, id);
+        EXPECT_EQ(mcp.control, OptionsControl::Check);
+        EXPECT_EQ(mcp.page, OptionsPage::Ai);
+        ASSERT_NE(findSetting(id), nullptr);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
+    }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 58);
-    const auto &hostApi = all[std::size(kLegacy) + 56];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 60);
+    const auto &hostApi = all[std::size(kLegacy) + 58];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -343,7 +351,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 56);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 58);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

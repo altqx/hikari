@@ -1,6 +1,7 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_signin.h"
@@ -73,7 +74,8 @@ bool sameEndpoint(const ai::Provider &a, const ai::Provider &b)
 
 }
 
-AiSettings::AiSettings(AiFeatures &features, QObject *parent) : QObject(parent), m_features(features)
+AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, QObject *parent)
+    : QObject(parent), m_features(features), m_mcp(mcp)
 {
     connect(&m_features, &AiFeatures::switched, this, [this] {
         reset();
@@ -90,6 +92,11 @@ AiSettings::~AiSettings()
 bool AiSettings::sandboxed() const
 {
     return m_features.sandboxed();
+}
+
+QObject *AiSettings::mcp() const
+{
+    return m_mcp;
 }
 
 bool AiSettings::on() const
