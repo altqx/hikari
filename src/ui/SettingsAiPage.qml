@@ -1091,16 +1091,19 @@ ScrollView {
                     objectName: "aiMcpCopyMenu"
                     ShellMenuItem {
                         objectName: "aiMcpCopyClaudeCode"
+                        iconRole: "run-script"
                         text: qsTr("Claude Code command")
                         onTriggered: mcpSection.copy("claudeCode")
                     }
                     ShellMenuItem {
                         objectName: "aiMcpCopyCodex"
+                        iconRole: "settings"
                         text: qsTr("Codex config.toml")
                         onTriggered: mcpSection.copy("codex")
                     }
                     ShellMenuItem {
                         objectName: "aiMcpCopyJson"
+                        iconRole: "network"
                         enabled: !!mcpSection.setup.json
                         text: qsTr("JSON with the address and token")
                         onTriggered: mcpSection.copy("json")
