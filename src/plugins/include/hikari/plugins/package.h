@@ -3,6 +3,7 @@
 #include "hikari/plugins/manifest.h"
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -33,5 +34,9 @@ struct Package {
 // absolute, climbs out, repeats another case-insensitively, or that Windows cannot hold, and an
 // icon, screenshot or README.md that breaks the marketplace's media rules (docs/plugins.md).
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion);
+
+// The media rules for one file, by its extension; nullopt when it passes. The detail is English and technical.
+std::optional<std::string> iconProblem(const PackageFile &icon);
+std::optional<std::string> screenshotProblem(const PackageFile &shot);
 
 }

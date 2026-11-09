@@ -6,6 +6,7 @@ import json
 import pathlib
 import struct
 import zipfile
+import zlib
 
 HERE = pathlib.Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("minisign_fixtures", HERE.parent.parent / "minisign/fixtures/make_fixtures.py")
@@ -42,6 +43,44 @@ def hello(version, key=None, **extra):
 
 def png(width, height):
     return b"\x89PNG\r\n\x1a\n" + struct.pack(">I4sII5B", 13, b"IHDR", width, height, 8, 6, 0, 0, 0)
+
+
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+
+def picture(width, height, background, rects):
+    rows = []
+    for y in range(height):
+        row = bytearray(bytes(background) * width)
+        for x0, y0, x1, y1, colour in rects:
+            if y0 <= y < y1:
+                row[x0 * 3:x1 * 3] = bytes(colour) * (x1 - x0)
+        rows.append(b"\0" + bytes(row))
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(b"".join(rows), 9)) +
+            chunk(b"IEND", b""))
+
+
+def icon(colour, glyph):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+            f'<rect width="64" height="64" rx="14" fill="{colour}"/>'
+            f'<g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">{glyph}</g></svg>\n')
+
+
+def media():
+    folder = HERE / "marketplace/m"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "hello.svg").write_text(icon("#2f6fde", '<path d="M14 18h36v22H30l-10 8v-8h-6z"/>'))
+    (folder / "native.svg").write_text(icon("#7a4fd6", '<circle cx="32" cy="32" r="14"/><path d="M32 10v10M32 44v10M10 32h10M44 32h10"/>'))
+    (folder / "glossary.svg").write_text(icon("#1f9d74", '<path d="M16 14h22a8 8 0 0 1 8 8v28H24a8 8 0 0 1-8-8z"/><path d="M24 26h14M24 34h10"/>'))
+    panel, line, accent, text = (36, 38, 44), (58, 61, 70), (47, 111, 222), (150, 154, 166)
+    rects = [(0, 0, 1280, 40, (28, 30, 34)), (24, 64, 1256, 104, panel), (40, 78, 360, 90, text),
+             (24, 120, 1256, 696, panel), (48, 144, 300, 160, accent)]
+    for i in range(10):
+        y = 184 + i * 48
+        rects += [(48, y, 1232, y + 36, line), (64, y + 12, 240, y + 24, text), (272, y + 12, 272 + 60 * (i % 5 + 4), y + 24, text)]
+    (folder / "glossary-1.png").write_bytes(picture(1280, 720, (24, 25, 28), rects))
 
 
 def write(name, data, signer=None, signed=None):
@@ -93,18 +132,21 @@ def plugin(id, categories, versions):
 
 
 def marketplace(hello_1_0, hello_1_1, native):
+    media()
+    shot = {"url": f"{MARKET}m/glossary-1.png", "caption": "Definitions beside the grid", "width": 1280, "height": 720}
     index = {"format": 1, "serial": 1, "generated": "2026-11-02T10:00:00Z", "apiVersions": {"1": "0.1.0"},
              "featured": ["com.example.hello"], "plugins": [
                  plugin("com.example.hello", ["Timing"], [
                      listed("1.1.0", hello_1_1, description="Says hello in the log, now in more languages.",
-                            changelog="Greets in Polish and Korean."),
-                     listed("1.0.0", hello_1_0)]),
+                            changelog="Greets in Polish and Korean.", icon=f"{MARKET}m/hello.svg"),
+                     listed("1.0.0", hello_1_0, icon=f"{MARKET}m/hello.svg")]),
                  plugin("com.example.native", ["Video"], [
                      listed("1.0.0", native, id="com.example.native", tier="unrestricted", name="Native Tools",
-                            summary="Tracks signs with a native library")]),
+                            summary="Tracks signs with a native library", icon=f"{MARKET}m/native.svg")]),
                  plugin("com.example.glossary", ["Translation"], [
                      listed("2.0.0", hello_1_0, id="com.example.glossary", name="Glossary",
-                            summary="Looks words up in an online dictionary",
+                            summary="Looks words up in an online dictionary", icon=f"{MARKET}m/glossary.svg",
+                            screenshots=[shot],
                             permissions={"network": {"hosts": ["api.example.com"], "reason": "Looks words up"}})])]}
     data = (json.dumps(index, indent=2, ensure_ascii=False) + "\n").encode()
     (HERE / "marketplace").mkdir(exist_ok=True)

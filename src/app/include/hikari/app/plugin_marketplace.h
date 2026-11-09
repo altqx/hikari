@@ -3,6 +3,8 @@
 #include "hikari/app/plugin_manager.h"
 #include "hikari/plugins/marketplace.h"
 
+#include <QHash>
+#include <QImage>
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QPointer>
@@ -19,6 +21,7 @@
 #include <vector>
 
 class QNetworkReply;
+class QQmlEngine;
 
 namespace hikari::ui {
 class SettingsStore;
@@ -59,6 +62,7 @@ public:
     // Rows {id, name, summary, description, authorName, version, unrestricted, categories, permissions: [text], license,
     // homepage, repo, published (yyyy-MM-dd), changelog, needs (the first HikariSub version with its API, or ""), icon,
     // screenshots: [{url, caption}], installedVersion, action ("install", "update", "installed" or "incompatible")},
+    // icon and screenshot urls being image://marketplace/ sources for same-origin media only;
     // newest version first per plugin, by name. Revoked plugins and versions are left out.
     QVariantList listings() const { return m_listings; }
     QStringList categories() const { return m_categories; }
@@ -84,6 +88,10 @@ public:
     // Updates wait while `busy` says the plugin is running a command or an event; pluginIdle() applies them.
     void setBusy(std::function<bool(const QString &)> busy) { m_busy = std::move(busy); }
     void pluginIdle(const QString &id);
+    // Answers an image://marketplace/<id> source from listings(): a listed icon or screenshot, fetched once,
+    // checked against the package media rules and fitted into `size` when it is valid. A null image when the id
+    // isn't listed or the fetch or check fails.
+    void image(const QString &id, QSize size, std::function<void(QImage)> done);
 
 signals:
     void changed();
@@ -106,6 +114,8 @@ private:
     void revoke();
     void queueUpdates();
     void nextUpdate();
+    QUrl mediaSource(const QUrl &url, bool icon);
+    void mediaFinished(const QString &id);
 
     PluginManager &m_manager;
     ui::SettingsStore *m_settings;
@@ -131,6 +141,18 @@ private:
     QVariantMap m_offers;
     int m_updates = 0;
     QString m_downloading;
+    struct Media {
+        QUrl url;
+        bool icon = false;
+    };
+    QHash<QString, Media> m_media;
+    QHash<QString, QByteArray> m_mediaBytes;
+    qint64 m_mediaCached = 0;
+    QHash<QString, QPointer<QNetworkReply>> m_mediaReplies;
+    QHash<QString, std::vector<std::function<void(const QByteArray &)>>> m_mediaWaiting;
 };
+
+// Serves image://marketplace/ from `marketplace`, which must outlive the engine.
+void attachMarketplaceImages(QQmlEngine &engine, PluginMarketplace &marketplace);
 
 }

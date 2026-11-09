@@ -34,6 +34,7 @@ DialogWindow {
     readonly property var offers: market ? market.offers : ({})
     property var notNow: []
     readonly property var listings: market ? market.listings : []
+    readonly property bool marketShown: visible && view === "market"
     property string search: ""
     property string category: ""
     readonly property var found: {
@@ -496,7 +497,7 @@ DialogWindow {
                             }
                             contentItem: RowLayout {
                                 spacing: 8
-                                PluginIcon { row: listed.modelData; size: 32 }
+                                PluginIcon { row: listed.modelData; size: 32; live: dialog.marketShown }
                                 ColumnLayout {
                                     spacing: 0
                                     Layout.fillWidth: true
@@ -583,7 +584,7 @@ DialogWindow {
         RowLayout {
             spacing: 10
             Layout.fillWidth: true
-            PluginIcon { row: market.listing; size: 48 }
+            PluginIcon { objectName: "marketIcon"; row: market.listing; size: 48; live: dialog.marketShown }
             ColumnLayout {
                 spacing: 0
                 Layout.fillWidth: true
@@ -653,9 +654,11 @@ DialogWindow {
                 model: market.listing.screenshots
                 Image {
                     required property var modelData
-                    source: modelData.url
+                    objectName: "marketScreenshot"
+                    source: dialog.marketShown ? modelData.url : ""
                     width: 200
                     height: 112
+                    sourceSize: Qt.size(400, 224)
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     Accessible.role: Accessible.Graphic
@@ -720,13 +723,15 @@ DialogWindow {
         id: pluginIcon
         required property var row
         property int size: 24
+        property bool live: true
+        readonly property bool shown: picture.status === Image.Ready
         implicitWidth: size
         implicitHeight: size
         Image {
             id: picture
             anchors.fill: parent
             visible: status === Image.Ready
-            source: pluginIcon.row && pluginIcon.row.icon ? pluginIcon.row.icon : ""
+            source: pluginIcon.live && pluginIcon.row && pluginIcon.row.icon ? pluginIcon.row.icon : ""
             sourceSize: Qt.size(pluginIcon.size, pluginIcon.size)
             fillMode: Image.PreserveAspectFit
         }
@@ -823,8 +828,8 @@ DialogWindow {
                         textFormat: Text.PlainText
                         font: dialog.fontAt(15, Font.DemiBold)
                         elide: Text.ElideRight
-                        Layout.fillWidth: true
-                        Layout.maximumWidth: implicitWidth
+                        Layout.preferredWidth: implicitWidth
+                        Layout.minimumWidth: 40
                     }
                     LinkButton {
                         objectName: "pluginRollBack"
