@@ -633,7 +633,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_luaHelper = luaHelperPath(options.luaHelper);
     m_automation = std::make_unique<AutomationShell>(
         AutomationShell::Paths{m_luaHelper, automationPath(options.automationDir),
-                               options.userAutomationDir},
+                               options.userAutomationDir, options.compileCacheDir},
         *m_files,
         m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, *m_video,
         [this]() -> ui::ShellController & { return shell(); }, *m_mediaSource);

@@ -171,6 +171,8 @@ public:
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
+        // Where compiled MoonScript is kept between loads. Empty: compiled at every load.
+        QString compileCacheDir;
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
