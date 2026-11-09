@@ -6523,6 +6523,179 @@ private slots:
         QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("Narrator"));
     }
 
+    static QQuickItem *scrollerOf(QQuickItem *item)
+    {
+        auto *flick = item->parentItem();
+        while (flick && !flick->inherits("QQuickFlickable"))
+            flick = flick->parentItem();
+        return flick;
+    }
+
+    static bool shownInScroller(QQuickItem *item)
+    {
+        auto *flick = scrollerOf(item);
+        return !flick || QRectF(0, 0, flick->width(), flick->height()).contains(item->mapToItem(flick, QPointF(item->width() / 2, item->height() / 2)));
+    }
+
+    static void scrollIntoView(QQuickItem *item)
+    {
+        auto *flick = scrollerOf(item);
+        if (!flick)
+            return;
+        auto *content = flick->property("contentItem").value<QQuickItem *>();
+        const QPointF centre = item->mapToItem(content, QPointF(item->width() / 2, item->height() / 2));
+        const qreal maxY = std::max(0.0, content->height() - flick->height());
+        flick->setProperty("contentY", std::clamp(centre.y() - flick->height() / 2, 0.0, maxY));
+    }
+
+    static void clickCentre(QQuickItem *item, qreal across = 0.5)
+    {
+        const auto centre = [item, across] { return item->mapToScene(QPointF(item->width() * across, item->height() / 2)); };
+        QPointF at = centre();
+        for (int settled = 0; settled < 2;) {
+            QTest::qWait(20);
+            const QPointF now = centre();
+            settled = now == at ? settled + 1 : 0;
+            at = now;
+        }
+        QTest::mouseClick(item->window(), Qt::LeftButton, {}, at.toPoint());
+    }
+
+    void typeAfterClickingTheArrow(QQuickItem *box, qreal across = 0.5)
+    {
+        QVERIFY2(box && box->property("editable").toBool(), qPrintable(box ? box->objectName() : QStringLiteral("no box")));
+        const QString name = box->objectName();
+        auto *window = box->window();
+        auto *field = box->property("contentItem").value<QQuickItem *>();
+        auto *popup = box->property("popup").value<QObject *>();
+        auto *arrow = box->property("indicator").value<QQuickItem *>();
+        QVERIFY2(field && popup && arrow, qPrintable(name));
+        scrollIntoView(box);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+
+        QTRY_VERIFY2(shownInScroller(arrow), qPrintable(name));
+        clickCentre(arrow, across);
+        QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name));
+        QVERIFY2(field->hasActiveFocus(), qPrintable(name));
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        typeText(window, QStringLiteral("7"));
+        QCOMPARE(box->property("editText").toString(), QStringLiteral("7"));
+        QTRY_VERIFY2(!popup->property("visible").toBool(), qPrintable(name));
+
+        clickCentre(arrow, across);
+        QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY2(!popup->property("visible").toBool(), qPrintable(name));
+        QVERIFY2(window->isVisible(), qPrintable(name));
+        typeText(window, QStringLiteral("8"));
+        QCOMPARE(box->property("editText").toString(), QStringLiteral("78"));
+    }
+
+    void typeAfterClickingAStep(QQuickItem *spin)
+    {
+        QVERIFY2(spin && spin->property("editable").toBool(), qPrintable(spin ? spin->objectName() : QStringLiteral("no box")));
+        auto *window = spin->window();
+        auto *input = spin->property("contentItem").value<QQuickItem *>();
+        auto *up = spin->property("up").value<QObject *>()->property("indicator").value<QQuickItem *>();
+        QVERIFY(input && up);
+        scrollIntoView(spin);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+        const QString before = input->property("text").toString();
+        clickCentre(up);
+        QTRY_VERIFY(input->property("text").toString() != before);
+        QVERIFY2(input->hasActiveFocus(), qPrintable(spin->objectName()));
+        QTest::keyClick(window, Qt::Key_End);
+        typeText(window, QStringLiteral("9"));
+        QVERIFY2(input->property("text").toString().endsWith(QLatin1Char('9')), qPrintable(input->property("text").toString()));
+    }
+
+    void dummyVideoBoxesTakeTypingAfterAClick()
+    {
+        auto *action = named("dummyVideoMenuItem")->property("action").value<QObject *>();
+        QVERIFY(action && QMetaObject::invokeMethod(action, "trigger"));
+        auto *dialog = qobject_cast<QQuickWindow *>(named("dummyVideoDialog"));
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        typeAfterClickingTheArrow(dialogItem("dummyVideoDialog", "dummyFps"));
+        if (QTest::currentTestFailed())
+            return;
+        typeAfterClickingAStep(dialogItem("dummyVideoDialog", "dummyWidth"));
+    }
+
+    void setNewFpsBoxesTakeTypingAfterAClick()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "fps-typing.ass", "Dialogue: 0,0:00:10.00,0:00:20.00,Default,,0,0,0,,x\n")));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openSetNewFps"));
+        auto *fps = qobject_cast<QQuickWindow *>(named("fpsWindow"));
+        QVERIFY(fps);
+        QTRY_VERIFY(fps->isVisible());
+        for (const char *name : {"oldFps", "newFps"}) {
+            typeAfterClickingTheArrow(dialogItem("fpsWindow", name));
+            if (QTest::currentTestFailed())
+                return;
+        }
+    }
+
+    void selectLinesFindBoxTakesTypingAfterAClick()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "select-typing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha\n")));
+        auto *menuItem = named("selectLinesMenuItem");
+        QVERIFY(menuItem && QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(named("selectLinesDialog")->property("visible").toBool());
+        typeAfterClickingTheArrow(dialogItem("selectLinesDialog", "selectFindText"));
+    }
+
+    void findFolderBoxesTakeTypingAfterAClick()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "find-typing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(item("findText")->hasActiveFocus());
+        item<QObject>("searchTool")->setProperty("scope", QStringLiteral("folder"));
+        QVERIFY(QMetaObject::invokeMethod(item("findOptionsButton"), "click"));
+        QTRY_VERIFY(item("findFolder")->isVisible());
+        typeAfterClickingTheArrow(item("findFolder"));
+        if (QTest::currentTestFailed())
+            return;
+        // MUST KILL: the find options' scroll bar covers the right half of the Files box's arrow.
+        typeAfterClickingTheArrow(item("findFilters"), 0.25);
+    }
+
+    void fontsFromSubtitlesCatalogBoxTakesTypingAfterAClick()
+    {
+        usePickerFonts();
+        auto *picker = openFontPicker(fontAss("catalog-typing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnImpact}abc\n"));
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerAdd"), "click"));
+        auto *menu = named("fontPickerAddMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontsFromSubtitlesItem")), "triggered"));
+        QTRY_VERIFY(qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"))->isVisible());
+        typeAfterClickingTheArrow(dialogItem("fontsFromSubtitlesDialog", "fontsFromSubtitlesCatalog"));
+    }
+
+    void conversionFrameRateBoxTakesTypingAfterAClick()
+    {
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("conversion");
+        typeAfterClickingTheArrow(dialogItem("settingsDialog", "setting_convert.fps"));
+    }
+
+    void lineInspectorBoxesTakeTypingAfterAClick()
+    {
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(application->editor().hasLine());
+        for (const char *name : {"actorBox", "effectBox"}) {
+            typeAfterClickingTheArrow(item(name));
+            if (QTest::currentTestFailed())
+                return;
+        }
+    }
+
     void menuKeyColumnFollowsTheBindings()
     {
         QVERIFY(application->openFile(episode));

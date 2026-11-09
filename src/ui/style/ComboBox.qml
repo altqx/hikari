@@ -43,6 +43,25 @@ F.ComboBox {
         property: "Accessible.name"
         value: control.Accessible.name
     }
+    // Qt gives an editable box's field focus only on Tab or a shortcut, and Fusion makes it read-only while the list is open (#801).
+    Connections {
+        target: control.Window
+        function onActiveFocusItemChanged() {
+            if (control.editable && control.Window.activeFocusItem === control)
+                control.contentItem.forceActiveFocus(Qt.MouseFocusReason)
+        }
+    }
+    Binding {
+        target: control.contentItem
+        property: "readOnly"
+        value: false
+        when: control.editable
+    }
+    Connections {
+        target: control.editable ? control.contentItem : null
+        ignoreUnknownSignals: true
+        function onTextEdited() { control.popup.close() }
+    }
     Connections {
         target: TextMenus.adopt(control.contentItem)
         function onRequested(position) {
