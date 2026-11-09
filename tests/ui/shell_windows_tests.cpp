@@ -1,4 +1,6 @@
+#include "hikari/app/api_host.h"
 #include "hikari/app/application.h"
+#include "hikari/app/forwarded_launches.h"
 #include "hikari/app/hotkeys_controller.h"
 
 #include "docking.h"
@@ -6,6 +8,7 @@
 #include "status_bar_controller.h"
 #include "workspace_layout.h"
 
+#include <QAccessible>
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
@@ -32,7 +35,7 @@ namespace {
 const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock",  "editorDock", "gridDock",
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
-                               "postprocessorDock"};
+                               "postprocessorDock", "qcNotesDock", "reviewDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -260,6 +263,51 @@ class ShellWindowsTest : public QObject {
         application = std::make_unique<app::Application>(options);
         loadFirstWindow();
     }
+    void edit(application::DocumentId id)
+    {
+        auto *session = application->files().session(id);
+        QVERIFY(session);
+        QVERIFY(session->editDraftText(session->document().lines().front()->id, u8"edited"));
+        QVERIFY(session->commitDraft());
+        QTRY_VERIFY(modified(id));
+    }
+    static QObject *unsaved(QQuickWindow *window) { return window->findChild<QObject *>(QStringLiteral("unsavedChanges")); }
+    static QVariantList reviewed(QQuickWindow *window) { return unsaved(window)->property("rows").toList(); }
+    void closeDiscarding(QQuickWindow *window)
+    {
+        QVariantList choices;
+        for (const QVariant &row : application->reviewCloseWindow(shellId(window)))
+            choices << QVariantMap{{QStringLiteral("id"), row.toMap().value(QStringLiteral("id"))}, {QStringLiteral("save"), false}};
+        if (choices.isEmpty())
+            application->finishClose();
+        else
+            application->resolveClose(choices);
+    }
+    static QWindow *floatingOf(const QWindow *main)
+    {
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (w != main && w->isVisible() && w->transientParent() == main)
+                return w;
+        return nullptr;
+    }
+    void tearDownAfterQuit()
+    {
+        delete second.data();
+        engine.reset();
+        application.reset();
+    }
+    void hideFirst()
+    {
+        first()->close();
+        QTRY_VERIFY(!first()->isVisible());
+    }
+    void quitFrom(QQuickWindow *window)
+    {
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "globalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_QUIT"))));
+        QVERIFY(ran.toBool());
+    }
     void loadSession(const QString &file)
     {
         const QPointer<QQuickWindow> before = second;
@@ -304,9 +352,10 @@ private slots:
     }
     void cleanup()
     {
-        if (second)
-            second->close();
-        QTRY_VERIFY(!second);
+        if (second && !application->quitApproved()) {
+            closeDiscarding(second);
+            QTRY_VERIFY(!second);
+        }
         application->setSessionRestore(0);
         application->endSession();
         engine.reset();
@@ -675,8 +724,7 @@ private slots:
         QVERIFY(application->quitApproved());
         QTRY_VERIFY(!first()->isVisible());
         QTRY_VERIFY(!second || !second->isVisible());
-        engine.reset();
-        application.reset();
+        tearDownAfterQuit();
 
         relaunch();
         QTRY_VERIFY((second = otherShellWindow(first())));
@@ -766,6 +814,183 @@ private slots:
         QVERIFY(ui::WorkspaceLayoutController::payloadOf(text, &problem, &preset));
         QCOMPARE(preset, QStringLiteral("Timing"));
         QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Editing"));
+    }
+
+    void closingAWindowReviewsOnlyItsTabs()
+    {
+        edit(firstTab);
+        edit(secondTab);
+        second->close();
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QCOMPARE(reviewed(second).first().toMap().value(QStringLiteral("id")).toULongLong(), secondTab.value);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "cancel"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "close"));
+        QVERIFY(second && second->isVisible());
+        QVERIFY(dock(second, "gridDock")->property("isOpen").toBool());
+        QVERIFY(modified(secondTab));
+
+        second->close();
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(!second);
+        QVERIFY(first()->isVisible());
+        QVERIFY(!application->quitApproved());
+        QCOMPARE(application->workspace().allTabs(), (std::vector{firstTab}));
+        QCOMPARE(application->workspace().activeWindow(), 0);
+        QVERIFY(modified(firstTab));
+    }
+
+    void aClosedWindowLeavesTheCrashSession()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        QFile file(application->lastSessionPath());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject saved = QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(saved.value(QStringLiteral("closed")).toBool(true), false);
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        const QJsonArray tabs = saved.value(QStringLiteral("tabs")).toArray();
+        QCOMPARE(tabs.size(), 1);
+        QVERIFY(tabs.first().toObject().value(QStringLiteral("subtitles")).toString().endsWith(QStringLiteral("first.ass")));
+    }
+
+    void closingTheLastWindowQuits()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        edit(firstTab);
+        first()->close();
+        QTRY_COMPARE(reviewed(first()).size(), 1);
+        QCOMPARE(application->closeKind(), QStringLiteral("quit"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(first()), "discardAll"));
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+    }
+
+    void quitFromAnyWindowReviewsEveryWindowOnce()
+    {
+        application->setSessionRestore(2);
+        edit(firstTab);
+        edit(secondTab);
+        const int reviews = application->quitReviews();
+        quitFrom(second);
+        QTRY_COMPARE(reviewed(second).size(), 2);
+        QCOMPARE(application->closeKind(), QStringLiteral("quit"));
+        QCOMPARE(application->quitReviews(), reviews + 1);
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(first()->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second->isVisible());
+        tearDownAfterQuit();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+    }
+
+    void closingTheFirstWindowHidesItAsTheHost()
+    {
+        application->activateShellWindow(0);
+        edit(firstTab);
+        first()->close();
+        QTRY_COMPARE(reviewed(first()).size(), 1);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(first()), "discardAll"));
+        QTRY_VERIFY(!first()->isVisible());
+        QVERIFY(QGuiApplication::focusWindow() != first());
+        QAccessibleInterface *a11y = QAccessible::queryAccessibleInterface(first());
+        QVERIFY(!a11y || a11y->state().invisible);
+        QVERIFY(second->isVisible());
+        QVERIFY(!application->quitApproved());
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+        QCOMPARE(application->workspace().allTabs(), (std::vector{secondTab}));
+
+        application->activateShellWindow(0);
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+        application->addPage(false);
+        QCOMPARE(application->workspace().tabs(shellId(second)).size(), 2u);
+        QVERIFY(application->workspace().tabs(0).empty());
+        QVERIFY(!first()->isVisible());
+    }
+
+    void aHiddenFirstWindowLeavesTheSessionAndTheLastVisibleWindowQuits()
+    {
+        hideFirst();
+        application->setSessionRestore(2);
+        const QJsonObject saved = saveSession(dir.filePath(QStringLiteral("hidden.hksession")));
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        QCOMPARE(saved.value(QStringLiteral("tabs")).toArray().size(), 1);
+        QVERIFY(!saved.value(QStringLiteral("tabs")).toArray().first().toObject().contains(QStringLiteral("window")));
+
+        second->close();
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!second->isVisible());
+        for (QWindow *window : QGuiApplication::topLevelWindows())
+            QVERIFY2(!window->isVisible(), qPrintable(window->title()));
+        tearDownAfterQuit();
+
+        relaunch();
+        QTest::qWait(500);
+        QVERIFY(!otherShellWindow(first()));
+        QCOMPARE(titles(0), (QStringList{"second.ass*"}));
+    }
+
+    void aSessionOpenedLaterShowsTheFirstWindowWithItsFloatingPanels()
+    {
+        QVERIFY(dock(first(), "audioDock")->setProperty("isFloating", true));
+        QWindow *floating = nullptr;
+        QTRY_VERIFY((floating = floatingOf(first())));
+        const QString twoWindows = dir.filePath(QStringLiteral("two.hksession"));
+        QVERIFY(!saveSession(twoWindows).isEmpty());
+        hideFirst();
+        QVERIFY(!floating->isVisible());
+        QVERIFY(!floatingOf(first()));
+
+        loadSession(twoWindows);
+        QTRY_VERIFY(first()->isVisible());
+        QTRY_VERIFY(floatingOf(first()));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+        QCOMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+    }
+
+    void theApiActsOnTheWindowLastUsed()
+    {
+        auto *api = application->apiHost();
+        application->activateShellWindow(0);
+        QVERIFY(api->setOpen("Log", true));
+        QTRY_VERIFY(dock(first(), "logDock")->property("isOpen").toBool());
+        QVERIFY(api->setOpen("Log", false));
+        QTRY_VERIFY(!dock(first(), "logDock")->property("isOpen").toBool());
+
+        hideFirst();
+        QVERIFY(api->setOpen("Log", true));
+        QTRY_VERIFY(dock(second, "logDock")->property("isOpen").toBool());
+        QVERIFY(api->focus("Log"));
+        QVERIFY(api->run("GLOBAL_SEARCH"));
+        QTRY_VERIFY(dock(second, "searchDock")->property("isOpen").toBool());
+        const auto panels = api->panels();
+        QVERIFY(std::ranges::any_of(panels, [](const api::PanelState &p) { return p.id == "Log" && p.open; }));
+        for (const char *name : {"logDock", "searchDock"})
+            QVERIFY2(!dock(first(), name)->property("isOpen").toBool(), name);
+        QVERIFY(!first()->isVisible());
+        QVERIFY(!floatingOf(first()));
+    }
+
+    void aForwardedLaunchOpensInTheWindowLastUsed()
+    {
+        app::ForwardedLaunches forwarded(*application);
+        forwarded.setWindow(first());
+        hideFirst();
+        const QString third = writeSubtitles(dir.filePath(QStringLiteral("third.ass")), "third", 640);
+        forwarded.take({QStringList{third}, QString()});
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass", "third.ass*"}));
+        QVERIFY(application->workspace().tabs(0).empty());
+        QVERIFY(!first()->isVisible());
     }
 };
 

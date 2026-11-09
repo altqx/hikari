@@ -52,9 +52,11 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var qcNotes
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
+    required property var review
     required property var hotkeys
     required property var settingsImport
     required property VisualToolsController visualTools
@@ -154,17 +156,25 @@ ApplicationWindow {
             checkExternalChange()
     }
     // KDDW closes every panel before onClosing, so the close is reviewed here first (Docking.guardClose).
+    property bool admittingClose: false
     function admitClose() {
-        if (root.shellWindow !== 0)
-            return true
-        if (!root.app.quitApproved) {
-            const rows = root.app.reviewClose("quit")
+        if (!root.app.closeApproved(root.shellWindow)) {
+            const quits = !root.app.otherShellWindowOpen(root.shellWindow)
+            const rows = quits ? root.app.reviewClose("quit") : root.app.reviewCloseWindow(root.shellWindow)
             if (rows.length > 0) {
                 closeReview.review(rows)
                 return false
             }
+            root.admittingClose = true
+            root.app.finishClose()
+            root.admittingClose = false
+            if (!root.app.closeApproved(root.shellWindow))
+                return false
         }
-        root.app.saveLayoutForQuit()
+        if (root.shellWindow === 0 && !root.app.quitApproved) {
+            root.app.hideFirstWindow()
+            return false
+        }
         return true
     }
     onClosing: close => {
@@ -194,7 +204,7 @@ ApplicationWindow {
         function onCloseFinished(done, problem) {
             if (done) {
                 closeReview.close()
-                if (root.app.quitApproved)
+                if (root.app.closeApproved(root.shellWindow) && !root.admittingClose)
                     root.close()
             } else {
                 closeReview.fail(problem)
@@ -387,10 +397,10 @@ ApplicationWindow {
 
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel]
+                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
-                                         templateDock]
+                                         templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -720,6 +730,16 @@ ApplicationWindow {
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
+    function stepQcNote(forward) {
+        if (!qcNotesTool.step(forward) && !qcNotesDock.isOpen)
+            root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
+    }
+    function addQcNote(ms) {
+        if (!root.qcNotes.editable)
+            return
+        root.showPanel(qcNotesDock)
+        qcNotesTool.startAdding(ms)
+    }
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
@@ -786,7 +806,7 @@ ApplicationWindow {
         objectName: "dialogUserGuide"
         sequences: root.hotkeys.globalShortcuts.filter(s => s.symbol === "GLOBAL_HELP").map(s => s.keys)
         context: Qt.ApplicationShortcut
-        enabled: !root.shellActive && root.workspaceLayout.focusWindow !== null
+        enabled: root.visible && !root.shellActive && root.workspaceLayout.focusWindow !== null
                  && root.workspaceLayout.focusWindow.guideId !== undefined
         onActivated: root.openUserGuide()
     }
@@ -827,6 +847,19 @@ ApplicationWindow {
                     { name: "foldGenerated", text: qsTranslate("HikariSub.Grid", "Fold generated lines"), checkable: true,
                       checked: () => root.shell.foldGenerated,
                       run: () => root.shell.foldGenerated = !root.shell.foldGenerated }]
+        if (dock === qcNotesDock)
+            return [{ name: "qcNotesImport", text: qsTranslate("HikariSub.QcNotes", "Import notes file…"), iconRole: "import",
+                      enabled: () => root.qcNotes.editable, run: () => qcNotesTool.openImport() },
+                    { name: "qcNotesImportClipboard", text: qsTranslate("HikariSub.QcNotes", "Import notes from the clipboard"),
+                      iconRole: "edit-paste", enabled: () => root.qcNotes.editable && root.qcNotes.clipboardHasNotes,
+                      run: () => qcNotesTool.importClipboard() },
+                    { name: "qcNotesExport", text: qsTranslate("HikariSub.QcNotes", "Export notes…"), iconRole: "export",
+                      enabled: () => root.qcNotes.total > 0, run: () => qcNotesTool.openExport() },
+                    { name: "qcNotesMarkAllNotDone", text: qsTranslate("HikariSub.QcNotes", "Mark all as not done"), iconRole: "qc-done-reset",
+                      enabled: () => root.qcNotes.editable && root.qcNotes.sections.some(s => s.open < s.count),
+                      run: () => root.qcNotes.markAllNotDone() },
+                    { name: "qcNotesRemoveAll", text: qsTranslate("HikariSub.QcNotes", "Remove all notes…"), iconRole: "delete",
+                      enabled: () => root.qcNotes.editable && root.qcNotes.total > 0, run: () => qcNotesTool.removeAll() }]
         if (root.isPluginDock(dock))
             return root.pluginPanelItems(dock)
         return []
@@ -1398,7 +1431,7 @@ ApplicationWindow {
     Shortcut {
         sequences: ["Shift+F10"]
         context: Qt.ApplicationShortcut
-        enabled: Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
+        enabled: root.visible && Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
         onActivated: Docking.requestKeyboardContextMenu()
     }
     function closeTab(index) {
@@ -1755,12 +1788,13 @@ ApplicationWindow {
                     objectName: "exitMenuItem"
                     action: Action {
                         text: qsTr("E&xit")
-                        onTriggered: root.close()
+                        onTriggered: root.beginClose("quit")
                     }
                 }
             }
         }
         ShellMenu {
+            id: editMenu
             title: qsTr("&Edit")
             ShellMenuItem {
                 command: "GLOBAL_UNDO"
@@ -1839,6 +1873,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                id: historyMenuItem
                 command: "GLOBAL_HISTORY"
                 help: qsTr("History")
                 iconRole: "history"
@@ -1849,6 +1884,25 @@ ApplicationWindow {
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.open()
                 }
+            }
+            Instantiator {
+                model: root.review.on ? 1 : 0
+                delegate: ShellMenu {
+                    objectName: "reviewMenu"
+                    iconRole: "review-keep"
+                    title: qsTranslate("HikariSub.Review", "Re&view")
+                    ShellMenuItem { command: "GLOBAL_KEEP_AI_CHANGE"; iconRole: "review-keep"; objectName: "keepAiChangeMenuItem"; action: keepAiChangeAction }
+                    ShellMenuItem { command: "GLOBAL_UNDO_AI_CHANGE"; iconRole: "undo"; objectName: "undoAiChangeMenuItem"; action: undoAiChangeAction }
+                    ShellMenuItem { command: "GLOBAL_NEXT_AI_CHANGE"; iconRole: "chevron-down"; objectName: "nextAiChangeMenuItem"; action: nextAiChangeAction }
+                    ShellMenuItem { command: "GLOBAL_PREVIOUS_AI_CHANGE"; iconRole: "chevron-left"; objectName: "previousAiChangeMenuItem"; action: previousAiChangeAction }
+                    MenuSeparator {}
+                    ShellMenuItem { command: "GLOBAL_KEEP_ALL_AI_CHANGES"; iconRole: "review-keep"; objectName: "keepAllAiChangesMenuItem"; action: keepAllAiChangesAction }
+                    ShellMenuItem { command: "GLOBAL_UNDO_ALL_AI_CHANGES"; iconRole: "undo"; objectName: "undoAllAiChangesMenuItem"; action: undoAllAiChangesAction }
+                    MenuSeparator {}
+                    ShellMenuItem { command: "GLOBAL_SHOW_AI_REVIEW"; iconRole: "show"; objectName: "showAiReviewMenuItem"; action: showAiReviewAction }
+                }
+                onObjectAdded: (index, object) => editMenu.insertMenu(root.menuIndexOf(editMenu, historyMenuItem) + 1, object)
+                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_SELECT_LINES"
@@ -1950,6 +2004,15 @@ ApplicationWindow {
                 objectName: "showTimingPostprocessor"
                 text: qsTr("Timing &postprocessor…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SHOW_QC_NOTES"
+                help: qsTr("Notes from a QC pass, kept in the file, with the lines they mark")
+                id: showQcNotesItem
+                iconRole: "qc-notes"
+                objectName: "showQcNotes"
+                text: qsTr("&QC notes…")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_QC_NOTES")) root.showPanel(qcNotesDock)
             }
             ShellMenuItem {
                 command: "GLOBAL_OPEN_STYLE_MANAGER"
@@ -2264,6 +2327,19 @@ ApplicationWindow {
                         enabled: root.video.hasVideo && root.shell.hasEditingTarget
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END")) root.app.shiftFramesToVideo(true, true)
                     }
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_PERSPECTIVE_TRACKING"
+                help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
+                                          : qsTr("Open a video first: tracking data is per frame.")
+                iconRole: "tool-perspective"
+                objectName: "perspectiveTrackingMenuItem"
+                action: Action {
+                    id: perspectiveTrackingAction
+                    text: qsTr("Perspective tracking…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
                 }
             }
             ShellMenuItem {
@@ -5386,6 +5462,7 @@ ApplicationWindow {
                 minimumBodySize: Qt.size(Math.max(editorStrip.minimumWidth, editorInspector.minimumWidth)
                                          + 2 * (editorColumn.x - 4),
                                          editorStrip.implicitHeight
+                                         + (reviewStrip.visible ? editorColumn.spacing + reviewStrip.implicitHeight : 0)
                                          + (lineTextSlot.visible ? editorColumn.spacing + lineText.Layout.minimumHeight : 0)
                                          + (translationText.visible ? editorColumn.spacing
                                             + translationText.Layout.minimumHeight : 0))
@@ -5506,6 +5583,14 @@ ApplicationWindow {
                             translationTools: root.editor.translationMode && !root.originalShown
                             Layout.fillWidth: true
                             Layout.minimumWidth: minimumWidth
+                        }
+
+                        ReviewStrip {
+                            id: reviewStrip
+                            review: root.review
+                            Layout.fillWidth: true
+                            onUndoRequested: root.undoAiLine()
+                            onKeepRequested: root.review.keepLine()
                         }
 
                         Label {
@@ -5653,7 +5738,7 @@ ApplicationWindow {
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
                     onHeaderMenuRequested: (x, y) => gridHeaderMenu.popup(grid, x, y)
                     MenuKey.onRequested: grid.requestMenu()
-                    GridHeaderToolTip { grid: grid }
+                    GridToolTip { grid: grid }
                     GridScrollBars { grid: grid }
                     onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
@@ -5723,9 +5808,35 @@ ApplicationWindow {
                         property bool canPasteTranslation: false
                         property bool canShiftTranslation: false
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
+                        property bool reviewShown: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
                             canShiftTranslation = root.app.canShiftTranslation()
+                            reviewShown = root.review.on && root.review.current.count !== undefined
+                        }
+                        Instantiator {
+                            model: gridMenu.reviewShown ? [
+                                { command: "GLOBAL_KEEP_AI_CHANGE", icon: "review-keep", action: keepAiChangeAction },
+                                { command: "GLOBAL_UNDO_AI_CHANGE", icon: "undo", action: undoAiChangeAction },
+                                { command: "GLOBAL_NEXT_AI_CHANGE", icon: "chevron-down", action: nextAiChangeAction },
+                                { command: "GLOBAL_SHOW_AI_REVIEW", icon: "show", action: showAiReviewAction,
+                                  text: qsTranslate("HikariSub.Review", "Show in Review panel") }
+                            ] : []
+                            delegate: ShellMenuItem {
+                                required property var modelData
+                                objectName: "gridReview_" + modelData.command
+                                command: modelData.command
+                                iconRole: modelData.icon
+                                action: modelData.action
+                                text: modelData.text ?? modelData.action.text
+                            }
+                            onObjectAdded: (index, object) => gridMenu.insertItem(index, object)
+                            onObjectRemoved: (index, object) => gridMenu.removeItem(object)
+                        }
+                        MenuSeparator {
+                            objectName: "gridReviewSeparator"
+                            visible: gridMenu.reviewShown
+                            height: visible ? implicitHeight : 0
                         }
                         ShellMenu {
                             objectName: "gridInsertMenu"
@@ -5912,6 +6023,15 @@ ApplicationWindow {
                             readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Delete line")
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines()
                         }
+                        MenuSeparator {}
+                        ShellMenuItem {
+                            command: "GLOBAL_ADD_QC_NOTE"
+                            iconRole: "qc-notes"
+                            objectName: "addQcNote"
+                            text: qsTranslate("HikariSub.QcNotes", "Add QC note…")
+                            enabled: root.qcNotes.editable
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_ADD_QC_NOTE")) root.addQcNote(root.qcNotes.lineStart())
+                        }
                     }
                     GridColumnsMenu {
                         id: gridHeaderMenu
@@ -6027,6 +6147,70 @@ ApplicationWindow {
                 Connections {
                     target: root.audio
                     function onMarkChanged() { shiftTimesPanel.schedule(); postprocessorTool.schedule() }
+                }
+            }
+        }
+
+        PanelDock {
+            id: qcNotesDock
+            objectName: "qcNotesDock"
+            uniqueName: root.engineName("QcNotes")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.QcNotes", "QC notes")
+            Panel {
+                id: qcNotesPanel
+                objectName: "qcNotesPanel"
+                dockName: root.engineName("QcNotes")
+                minimumBodySize: qcNotesTool.minimumBodySize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.QcNotes", "QC notes")
+                QcNotesPanel {
+                    id: qcNotesTool
+                    anchors.fill: parent
+                    focus: true
+                    qcNotes: root.qcNotes
+                    messages: root.messages
+                    onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                }
+            }
+        }
+
+        PanelDock {
+            id: reviewDock
+            objectName: "reviewDock"
+            uniqueName: root.engineName("Review")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.Review", "Review")
+            Panel {
+                id: reviewPanel
+                objectName: "reviewPanel"
+                dockName: root.engineName("Review")
+                minimumBodySize: Qt.size(240, 160)
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Review", "Review")
+                Loader {
+                    id: reviewLoader
+                    anchors.fill: parent
+                    active: root.review.on
+                    focus: true
+                    sourceComponent: ReviewPanel {
+                        review: root.review
+                        targetTitle: root.shell.hasEditingTarget ? root.shell.editingTitle : ""
+                        onGoToTab: document => {
+                            const tabs = root.app.windowTabs(root.shellWindow)
+                            const index = tabs.findIndex(t => t.id === document)
+                            if (index >= 0)
+                                root.app.selectTab(index)
+                        }
+                        onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
+                    }
+                }
+                Connections {
+                    target: root.review
+                    function onChanged() {
+                        if (!root.review.on && reviewDock.isOpen)
+                            reviewDock.close()
+                    }
                 }
             }
         }
@@ -6245,6 +6429,7 @@ ApplicationWindow {
         DocumentTabBar {
             id: documentTabBar
             app: root.app
+            review: root.review
             shellWindow: root.shellWindow
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
@@ -6287,7 +6472,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             onRestartRequested: {
                 root.updates.installer.restartNow()
-                root.close()
+                root.beginClose("quit")
             }
         }
         InlineBar {
@@ -6425,6 +6610,9 @@ ApplicationWindow {
         fieldsController: root.statusBar
         selectionText: root.shell.selectionStatus
         saveText: root.editor.saveStatus
+        reviewText: root.review.on && root.review.waiting > 0
+                    ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
+        onReviewClicked: root.showPanel(reviewDock)
     }
     function currentTab() {
         const tabs = root.app.tabs
@@ -6550,6 +6738,7 @@ ApplicationWindow {
     HistoryWindow {
         id: historyWindow
         editor: root.editor
+        review: root.review
         documentName: root.shell.editingTitle
         target: {
             const tab = root.app.tabs[root.app.currentTab]
@@ -7077,6 +7266,82 @@ ApplicationWindow {
         ]
     }
 
+    DialogWindow {
+        id: restoreCheckpointDialog
+        objectName: "restoreCheckpointDialog"
+        title: qsTranslate("HikariSub.Review", "Restore checkpoint")
+        dialogId: "restoreCheckpoint"
+        settings: root.app.settings
+        modal: true
+        defaultButton: restoreCheckpointButton
+        property var turn: 0
+        property var documents: []
+        readonly property int editedSince: documents.reduce((n, d) => n + d.editedSince, 0)
+        function openFor(turn) {
+            restoreCheckpointDialog.turn = turn
+            documents = root.review.checkpoint(turn)
+            alsoMyEdits.checked = false
+            open()
+        }
+        Label {
+            Layout.preferredWidth: 420
+            wrapMode: Text.WordWrap
+            text: qsTranslate("HikariSub.Review", "Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.")
+        }
+        Repeater {
+            model: restoreCheckpointDialog.documents
+            delegate: RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                Label {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                    text: modelData.title
+                }
+                Label {
+                    color: Theme.muted
+                    text: modelData.others > 0
+                          ? qsTranslate("HikariSub.Review", "%n line(s)", "", modelData.lines) + ", "
+                            + qsTranslate("HikariSub.Review", "%n other change(s)", "", modelData.others)
+                          : qsTranslate("HikariSub.Review", "%n line(s)", "", modelData.lines)
+                }
+            }
+        }
+        CheckBox {
+            id: alsoMyEdits
+            objectName: "restoreAlsoMyEdits"
+            visible: restoreCheckpointDialog.editedSince > 0
+            text: qsTranslate("HikariSub.Review", "Also undo my edits to %n line(s) I changed after the AI", "",
+                              restoreCheckpointDialog.editedSince)
+        }
+        Label {
+            Layout.preferredWidth: 420
+            wrapMode: Text.WordWrap
+            color: Theme.muted
+            text: qsTranslate("HikariSub.Review", "Your other edits stay. Undo brings the AI’s changes back.")
+        }
+        buttons: [
+            PrimaryButton {
+                id: restoreCheckpointButton
+                objectName: "restoreCheckpointButton"
+                text: qsTranslate("HikariSub.Review", "Restore")
+                enabled: restoreCheckpointDialog.documents.length > 0
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                onClicked: {
+                    root.review.restore(restoreCheckpointDialog.turn, alsoMyEdits.checked)
+                    restoreCheckpointDialog.close()
+                }
+            },
+            Button {
+                objectName: "restoreCheckpointCancel"
+                text: qsTranslate("HikariSub.Review", "Cancel")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                onClicked: restoreCheckpointDialog.close()
+            }
+        ]
+    }
+
     FileChooser {
         id: audioDialog
         objectName: "audioDialog"
@@ -7288,6 +7553,18 @@ ApplicationWindow {
             app: root.app
             settings: root.app.settings
             video: root.video
+        }
+    }
+    function openPerspectiveTracking() {
+        perspectiveTrackingLoader.active = true
+        perspectiveTrackingLoader.item.openDialog()
+    }
+    Loader {
+        id: perspectiveTrackingLoader
+        active: false
+        sourceComponent: PerspectiveTrackingWindow {
+            app: root.app
+            settings: root.app.settings
         }
     }
     function openScriptProperties() {
@@ -7720,24 +7997,29 @@ ApplicationWindow {
             return false
         return true
     }
+    readonly property bool servesApi: root.app.lastUsedWindow === root.shellWindow
+    onServesApiChanged: if (servesApi) root.serveApi()
+    function serveApi() {
+        root.app.apiHost.commandHandler = root.apiCommand
+        root.app.apiHost.panelHandler = root.apiPanels
+    }
     function connectApi() {
         const api = root.app.apiHost
-        api.commandHandler = root.apiCommand
-        api.panelHandler = root.apiPanels
+        if (root.servesApi)
+            root.serveApi()
         for (const symbols of [root.globalActions(), root.globalItems()])
             for (const symbol in symbols)
-                symbols[symbol].triggered.connect(() => api.commandRan(symbol, true))
+                symbols[symbol].triggered.connect(() => { if (root.servesApi) api.commandRan(symbol, true) })
         for (const dock of root.dockList) {
-            dock.isOpenChanged.connect(() => api.panelChanged(root.panelName(dock)))
-            dock.isFloatingChanged.connect(() => api.panelChanged(root.panelName(dock)))
+            dock.isOpenChanged.connect(() => { if (root.servesApi) api.panelChanged(root.panelName(dock)) })
+            dock.isFloatingChanged.connect(() => { if (root.servesApi) api.panelChanged(root.panelName(dock)) })
         }
     }
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
         root.applyMenuShortcuts()
-        if (root.shellWindow === 0)
-            root.connectApi()
+        root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
         root.foldTurnedOn = turnedOn.indexOf("grid.foldGenerated") >= 0
@@ -7803,6 +8085,71 @@ ApplicationWindow {
         if (item.enabled)
             item.triggered()
     }
+    function menuIndexOf(menu, item) {
+        for (let i = 0; i < menu.count; ++i)
+            if (menu.itemAt(i) === item)
+                return i
+        return menu.count - 1
+    }
+    function undoAiLine() {
+        if (root.review.lineEditedSince() > 0) {
+            reviewStrip.confirming = true
+            root.focusPanel(editorPanel, Qt.OtherFocusReason)
+            return
+        }
+        root.review.undoLine(false)
+    }
+    function undoAllAiChanges() {
+        if (root.review.editedSince(0, -1) > 0) {
+            root.showPanel(reviewDock)
+            if (reviewLoader.item)
+                reviewLoader.item.confirming = { change: 0, item: -1 }
+            return
+        }
+        root.review.undo(0, -1, false)
+    }
+    Action {
+        id: keepAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Keep AI change")
+        enabled: root.review.on && root.review.current.count !== undefined
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_KEEP_AI_CHANGE")) root.review.keepLine()
+    }
+    Action {
+        id: undoAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Undo AI change")
+        enabled: root.review.on && root.review.current.count !== undefined
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_AI_CHANGE")) root.undoAiLine()
+    }
+    Action {
+        id: nextAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Next AI change")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_AI_CHANGE")) root.review.step(1)
+    }
+    Action {
+        id: previousAiChangeAction
+        text: qsTranslate("HikariSub.Review", "Previous AI change")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_AI_CHANGE")) root.review.step(-1)
+    }
+    Action {
+        id: keepAllAiChangesAction
+        text: qsTranslate("HikariSub.Review", "Keep all")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_KEEP_ALL_AI_CHANGES")) root.review.keep(0, -1)
+    }
+    Action {
+        id: undoAllAiChangesAction
+        text: qsTranslate("HikariSub.Review", "Undo all")
+        enabled: root.review.on && root.review.waiting > 0
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_ALL_AI_CHANGES")) root.undoAllAiChanges()
+    }
+    Action {
+        id: showAiReviewAction
+        text: qsTranslate("HikariSub.Review", "Show panel")
+        enabled: root.review.on
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_AI_REVIEW")) root.showPanel(reviewDock)
+    }
     function globalActions() {
         return {
         GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
@@ -7828,6 +8175,7 @@ ApplicationWindow {
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
+        GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
@@ -7846,6 +8194,10 @@ ApplicationWindow {
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
+        GLOBAL_KEEP_AI_CHANGE: keepAiChangeAction, GLOBAL_UNDO_AI_CHANGE: undoAiChangeAction,
+        GLOBAL_NEXT_AI_CHANGE: nextAiChangeAction, GLOBAL_PREVIOUS_AI_CHANGE: previousAiChangeAction,
+        GLOBAL_KEEP_ALL_AI_CHANGES: keepAllAiChangesAction, GLOBAL_UNDO_ALL_AI_CHANGES: undoAllAiChangesAction,
+        GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }
@@ -7855,6 +8207,7 @@ ApplicationWindow {
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorItem,
+        GLOBAL_SHOW_QC_NOTES: showQcNotesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem,
@@ -7989,7 +8342,7 @@ ApplicationWindow {
         }
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
-        case "GLOBAL_QUIT": root.close(); return true
+        case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
@@ -8004,6 +8357,9 @@ ApplicationWindow {
             return true
         case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
         case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
+        case "GLOBAL_NEXT_QC_NOTE": if (editing) root.stepQcNote(true); return true
+        case "GLOBAL_PREVIOUS_QC_NOTE": if (editing) root.stepQcNote(false); return true
+        case "GLOBAL_ADD_QC_NOTE": if (editing) root.addQcNote(-1); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
@@ -8200,7 +8556,7 @@ ApplicationWindow {
             Shortcut {
                 sequence: modelData.keys
                 context: Qt.ApplicationShortcut
-                enabled: !root.menuHasKeys && !root.workspaceLayout.modalOpen
+                enabled: root.visible && !root.menuHasKeys && !root.workspaceLayout.modalOpen
                          && !root.hotkeys.macroTakenSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }

@@ -313,6 +313,8 @@ const std::vector<SettingDefinition> &definitions()
         {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
         {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
+        {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},
+        {"qcNotes.lastSection", "", String, Profile, Mapped, false, std::string("General")},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},

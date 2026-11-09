@@ -112,8 +112,9 @@ struct LineRecord {
     std::vector<Extradata> extra;
 };
 
-// Changed gives the Line a new changeVersion; Kept leaves it.
-enum class ChangeMark { Changed, Kept };
+// Changed gives the Line a new changeVersion; Kept leaves it; Restored takes
+// the one the edit sets, as when a Line goes back to an earlier copy.
+enum class ChangeMark { Changed, Kept, Restored };
 // A version no other changed Line has (process-wide).
 std::uint64_t newChangeVersion();
 

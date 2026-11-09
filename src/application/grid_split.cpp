@@ -162,6 +162,27 @@ std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const
     return {};
 }
 
+std::vector<core::LineRecord> lineFrames(const core::LineRecord &line, const LegacyTimebase &timebase,
+                                         const std::vector<core::StyleValues> &styles, Resolution resolution)
+{
+    const int startMs = msOf(line.start.value), endMs = msOf(line.end.value);
+    const auto *style = styleFor(styles, line.style);
+    std::vector<core::LineRecord> out;
+    for (int j = timebase.frameAt(startMs), end = timebase.frameAt(endMs); j < end; ++j) {
+        core::LineRecord part = line;
+        if (style)
+            part.text = bakeAnimations(line.text, *style, styles,
+                                       BakeFrame{double(timebase.msAt(j) - startMs), double(endMs - startMs),
+                                                 resolution.width, resolution.height});
+        else
+            part.text = legacy::moveToPos(line.text, startMs, endMs, timebase.msAt(j));
+        part.start.value = core::DocumentTime(std::int64_t{zeroIt(timebase.startTimeFor(j))} * kUsPerMs);
+        part.end.value = core::DocumentTime(std::int64_t{zeroIt(timebase.endTimeFor(j))} * kUsPerMs);
+        out.push_back(std::move(part));
+    }
+    return out;
+}
+
 std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const LegacyTimebase &timebase,
                                                     FrameAnimations animations, const LineVisible &visible)
 {
@@ -179,22 +200,7 @@ std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const 
                                                             : std::vector<core::StyleValues>{};
     const auto resolution = scriptResolution(session.document());
     for (const auto *l : selected) {
-        const int startMs = msOf(l->start.value), endMs = msOf(l->end.value);
-        const auto *style = styleFor(styles, l->style);
-        const int frameStart = timebase.frameAt(startMs), frameEnd = timebase.frameAt(endMs);
-        Plan plan{l->id, {}};
-        for (int j = frameStart; j < frameEnd; ++j) {
-            core::LineRecord part = *l;
-            if (style)
-                part.text = bakeAnimations(l->text, *style, styles,
-                                           BakeFrame{double(timebase.msAt(j) - startMs), double(endMs - startMs),
-                                                     resolution.width, resolution.height});
-            else
-                part.text = legacy::moveToPos(l->text, startMs, endMs, timebase.msAt(j));
-            part.start.value = core::DocumentTime(std::int64_t{zeroIt(timebase.startTimeFor(j))} * kUsPerMs);
-            part.end.value = core::DocumentTime(std::int64_t{zeroIt(timebase.endTimeFor(j))} * kUsPerMs);
-            plan.frames.push_back(std::move(part));
-        }
+        Plan plan{l->id, lineFrames(*l, timebase, styles, resolution)};
         if (!plan.frames.empty())
             plans.push_back(std::move(plan));
     }

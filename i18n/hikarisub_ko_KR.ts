@@ -2387,6 +2387,10 @@ Output device: %2</source>
         <translation>탭 닫기</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>창 닫기</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>편집기에서 자막 제거</translation>
     </message>
@@ -5066,6 +5070,12 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation>책갈피</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>QC 메모 %n개</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>미적용</translation>
@@ -6577,6 +6587,14 @@ Failed to copy %2 fonts.</source>
         <translation>이전 버전 설정 가져오기…</translation>
     </message>
     <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
+    </message>
+    <message>
         <source>Convert Aegisub folds to line groups</source>
         <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
     </message>
@@ -6593,8 +6611,52 @@ Failed to copy %2 fonts.</source>
         <translation>타임코드 닫기</translation>
     </message>
     <message>
-        <source>Video details…</source>
-        <translation>영상 정보…</translation>
+        <source>QC notes panel</source>
+        <translation>QC 메모 패널</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>다음 QC 메모</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>이전 QC 메모</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>QC 메모 추가</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>원근 추적…</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global</source>
@@ -7641,6 +7703,14 @@ Failed to copy %2 fonts.</source>
         <translation>조건식으로 줄을 선택합니다</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>QC 검토 메모를 파일에 저장하고 메모가 가리키는 줄을 표시합니다</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>QC 메모(&amp;Q)…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>자막 시간의 프레임 속도를 바꿉니다</translation>
     </message>
@@ -7719,6 +7789,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>뒤따르는 줄, 끝을 영상에</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>선택한 줄에 Power-Pin 추적 데이터를 적용하여 프레임마다 줄을 하나씩 만듭니다</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>먼저 영상을 여세요: 추적 데이터는 프레임 단위입니다.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>원근 추적…</translation>
     </message>
     <message>
         <source>Video details…</source>
@@ -11430,6 +11512,295 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC 메모</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>더 이상 메모가 없습니다</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>메모 파일 가져오기…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>클립보드에서 메모 가져오기</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>메모 내보내기…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>모두 완료 안 됨으로 표시</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>모든 메모 제거…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>QC 메모 추가…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1에 메모가 없습니다. 메모는 3:24나 0:03:24처럼 시간으로 시작하는 줄입니다.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>클립보드에 메모가 없습니다. 메모는 3:24나 0:03:24처럼 시간으로 시작하는 줄입니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>메모 %n개를 가져왔습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n개는 이미 파일에 있었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>메모 %n개는 시간에서 15초 안에 줄이 없습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>클립보드</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>QC 메모 가져오기</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1에 메모 %n개가 있습니다</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>(구역 %n개).</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>이 파일에는 이미 메모 %n개가 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>추가할 때 이미 있는 메모 %n개는 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>메모 %n개 추가</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>이 파일의 메모 바꾸기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>%1을(를) 읽을 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>모든 메모 제거</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>이 파일에서 QC 메모 %n개를 모두 제거할까요?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>실행 취소하면 되돌아옵니다.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>모두 제거</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>메모 파일 가져오기</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>QC 메모 (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>QC 메모 내보내기</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>메모 %n개를 내보냈습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>메모를 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>이 파일</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>메모 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>메모 추가</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>완료된 메모 포함</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>선택한 구역만 (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>선택한 구역만</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>메모 %n개 내보내기…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>전체</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1/%2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>%1번 줄</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>줄 없음</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>완료 안 됨</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>줄 없음</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>여기에 메모 파일을 끌어다 놓으세요</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>QC 메모를 저장할 자막 파일을 여세요.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>메모 붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>메모는 시간으로 시작합니다: 3:24 - …
+[구역] 줄로 묶습니다.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>이전</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>다음</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>완료된 메모 숨기기</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>시간</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>비디오 시간</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>줄 시작</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>구역</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>메모</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>고칠 점</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter 저장 · Esc 취소</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>저장</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reference</name>
     <message>
         <source>Compare with reference</source>
@@ -11853,6 +12224,229 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>“충돌 보고서 항상 보내기”가 켜져 있습니다. 보낸 내용은 다음과 같습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">검토</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">줄</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">%1번 줄</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">새로 만들기</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">복원</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">실행 취소</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">유지</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%1/%2</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16192,6 +16786,123 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>%1번 줄</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>%1–%2번 줄</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>After Effects나 Blender에서 내보낸 Power-Pin 데이터를 붙여 넣으세요. 적용하면 CC Power Pin의 네 모서리를 읽습니다.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>Power-Pin 데이터가 아닙니다: CC Power Pin 모서리를 찾지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>추적할 줄을 선택하세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>데이터에는 프레임이 %n개 있지만 선택한 줄은 %1개 프레임(%2–%3)에 걸쳐 있습니다. 추적한 프레임에 걸치는 줄을 선택하세요.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>%1 프레임에 표시되는 선택한 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>줄이 겹치지만 %1번 줄은 %2 프레임에 표시되지 않습니다. 모든 줄이 표시되는 프레임을 고르거나 하나씩 적용하세요.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>%1 × %2 크기로 추적했지만 영상은 %3 × %4입니다. 모서리를 영상 크기에 맞춰 조정합니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%1 fps의 프레임 %n개, %2 × %3 크기로 추적했습니다. 선택 영역의 %4–%5 프레임에 해당합니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>프레임 %n개. 선택 영역의 %1–%2 프레임에 해당합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>추적할 수 없는 줄이 있습니다: 텍스트를 측정할 수 없거나 평면이 줄을 뒤집습니다.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>원근 추적</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Power-Pin 데이터</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>기준 프레임</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>/ %1 · 영상 프레임 %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>원점</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>중앙</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>%1 없음</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>유지</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>평평한 줄을 먼저 평면에 맞추기</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>클립을 평면과 함께 이동</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>외곽선과 그림자 크기 조정</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>평면은 원근 도구와 Derive Perspective Track에서 쓸 수 있도록 각 줄에 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · 프레임 %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Translation</name>
     <message>
         <source>Translation</source>
@@ -18410,6 +19121,26 @@ do not work on comments</source>
         <translation>패널</translation>
     </message>
     <message>
+        <source>Dock floating panels to lock the layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock it to move panels. Resizing still works.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tab with</source>
         <translation>탭으로 묶기</translation>
     </message>
@@ -18598,8 +19329,16 @@ do not work on comments</source>
         <translation>레이아웃: %1</translation>
     </message>
     <message>
+        <source>Layout: %1, locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Layout of this tab</source>
         <translation>이 탭의 레이아웃</translation>
+    </message>
+    <message>
+        <source>Layout of this tab, locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save layout as…</source>

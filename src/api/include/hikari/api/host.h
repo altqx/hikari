@@ -2,6 +2,7 @@
 
 // Ports the composition root implements; every call comes on the GUI thread.
 
+#include "hikari/application/ai_review.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/settings.h"
@@ -80,6 +81,7 @@ struct Host {
     application::Settings *settings = nullptr;
     application::MacroMediaPort *media = nullptr;
     FileHost *files = nullptr;
+    application::AiReview *review = nullptr;
 };
 
 }

@@ -77,6 +77,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <iterator>
 #include <QFileInfo>
 #include <QBuffer>
 #include <QLinearGradient>
@@ -96,6 +97,8 @@
 namespace hikari::app {
 
 namespace {
+
+QString refusalText(application::CommandRefusal refusal);
 
 // QString::toCaseFolded is simple case folding (one code point to one), so offsets carry over.
 std::u16string unicodeFold(std::u16string_view s)
@@ -741,7 +744,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
-        [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
+        [this](application::Selection next) { return applySelection(std::move(next)); },
+        [this](application::DocumentId document) {
+            for (WindowViews *v : allViews())
+                if (v->editor && v->editorDocument == document)
+                    v->editor->reloadFromSession();
+            refreshViews();
+        },
         [this](std::string_view command) {
             const QString accel = m_hotkeys->accelOf(
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
@@ -757,6 +766,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_aiSettings = std::make_unique<AiSettings>(*m_ai);
+    m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
+        m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
+        [this](application::Selection next) { return applySelection(std::move(next)); },
+        [this](application::DocumentId document) { m_apiHost->committed(document); },
+        [this](application::CommandRefusal refusal) {
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Review", "Review"),
+                          refusalText(refusal));
+        },
+        [this] { refreshViews(); }});
+    const auto hideAiCommands = [this] {
+        m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
+    };
+    hideAiCommands();
+    connect(m_ai.get(), &AiFeatures::switched, this, [this, hideAiCommands] {
+        hideAiCommands();
+        refreshViews();
+    });
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
     m_pluginMarketplace = std::make_unique<PluginMarketplace>(
         *m_pluginManager, m_settings.get(), options.marketplace,
@@ -911,6 +937,27 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             refreshViews();
         };
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
+    }
+    {
+        QcNotesController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.editable = [this] {
+            const auto target = m_workspace.editingTarget();
+            return target && m_workspace.checkContentCommand(*target).has_value();
+        };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.selectLine = [this](core::LineId line) { selectLine(line.value); };
+        hooks.seek = [this](int ms) { return m_video->hasVideo() && m_video->session().seekToMs(ms); };
+        hooks.videoTime = [this]() -> std::optional<int> {
+            return m_video->hasVideo() ? std::optional(m_video->session().tellMs()) : std::nullopt;
+        };
+        hooks.marks = [this](QcNotesController::Marks marks, std::optional<core::LineId> current) {
+            shell().setQcMarks(std::move(marks), current);
+        };
+        m_qcNotes = std::make_unique<QcNotesController>(*m_settings, std::move(hooks));
     }
     {
         FontCollectorController::Hooks hooks;
@@ -1686,6 +1733,18 @@ void Application::makeViews(WindowViews &v, int shellWindow)
             const auto *session = reference ? m_files->session(*reference) : nullptr;
             return session ? session->changeState(line) : 0;
         });
+    const auto reviewOf = [this](std::optional<application::DocumentId> document) {
+        return [this, document](core::LineId line) -> std::optional<ui::LineTableModel::ReviewMark> {
+            const ReviewController::Mark *mark = document ? m_review->mark(*document, line) : nullptr;
+            if (!mark)
+                return std::nullopt;
+            return ui::LineTableModel::ReviewMark{mark->editedSince, mark->before};
+        };
+    };
+    v.shell->setReview(
+        [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
+        [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
+    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -2142,6 +2201,7 @@ void Application::protectReference()
 
 void Application::refreshViews()
 {
+    noteLastUsedWindow();
     protectReference();
     showTabArrangement();
     if (m_workspace.editingTarget())
@@ -2155,6 +2215,8 @@ void Application::refreshViews()
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     refreshComparison();
+    if (m_review)
+        m_review->refreshed();
     shell().setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
     shell().refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
@@ -2180,6 +2242,8 @@ void Application::refreshViews()
     if (m_styleManager)
         m_styleManager->documentEdited();
     kanjiTimer().documentEdited();
+    if (m_qcNotes)
+        m_qcNotes->documentEdited();
     refreshVideo();
     refreshAudio();
     if (activeViews().statusBar)
@@ -2412,6 +2476,9 @@ QVariantList Application::reviewClose(const QString &then)
     if (then == QLatin1String("quit"))
         ++m_quitReviews;
     m_closing.clear();
+    m_closeApproved.reset();
+    if (then != QLatin1String("window"))
+        m_closingWindow.reset();
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
@@ -2435,6 +2502,9 @@ QVariantList Application::reviewClose(const QString &then)
         scope = m_closingTabs;
     else if (then == QLatin1String("all"))
         scope = m_workspace.allTabs();
+    else if (then == QLatin1String("window"))
+        std::ranges::copy_if(m_workspace.documents(), std::back_inserter(scope),
+                             [&](application::DocumentId id) { return m_workspace.window(id) == m_closingWindow; });
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
@@ -2602,7 +2672,7 @@ void Application::finishClose()
         return;
     }
     const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
-        && then != QLatin1String("all");
+        && then != QLatin1String("all") && then != QLatin1String("window");
     if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
         if (!m_workspace.setEditingTarget(*reviewed)) {
             m_closeThen = then;
@@ -2615,6 +2685,7 @@ void Application::finishClose()
     if (then == QLatin1String("quit")) {
         for (const auto id : m_workspace.documents())
             discardRecovery(id);
+        saveLayoutForQuit();
         m_quitApproved = true;
         emit quitApprovedChanged();
     } else if (then == QLatin1String("new")) {
@@ -2660,6 +2731,8 @@ void Application::finishClose()
             refreshViews();
     } else if (then == QLatin1String("all")) {
         closeAllTabs();
+    } else if (then == QLatin1String("window")) {
+        m_closeApproved = std::exchange(m_closingWindow, std::nullopt);
     } else if (then == QLatin1String("files")) {
         if (auto files = std::exchange(m_pendingFiles, std::nullopt))
             applyFiles(std::move(*files), false);
@@ -2676,6 +2749,7 @@ void Application::cancelClose()
     m_closing.clear();
     const bool quit = m_closeThen == QLatin1String("quit");
     m_closeThen.clear();
+    m_closingWindow.reset();
     if (quit)
         emit quitCancelled();
     m_pendingOpen.reset();
@@ -5317,14 +5391,7 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     const auto &video = m_video->session();
     if (video.state() == application::VideoSession::State::Ready && video.lastFrame())
         options.frameHeight = video.lastFrame()->height;
-    if (const ui::VisualToolsController *tools = activeViews().visualTools.get()) {
-        options.measure.port = tools->textMeasure();
-        options.measure.leased = [tools](const std::string &name) { return tools->fontLeased(name); };
-        options.measure.fallsBackToLeased = [tools](const std::string &font, bool bold, bool italic,
-                                                    std::u16string_view text) {
-            return tools->fallsBackToLeased(font, bold, italic, text);
-        };
-    }
+    options.measure = perspectiveMeasure();
     options.unscaled = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
         unscaled << unscaledValue(row, value, tag);
     };
@@ -5336,6 +5403,19 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+application::visual::perspective::TextMeasure Application::perspectiveMeasure() const
+{
+    application::visual::perspective::TextMeasure measure;
+    if (const ui::VisualToolsController *tools = activeViews().visualTools.get()) {
+        measure.port = tools->textMeasure();
+        measure.leased = [tools](const std::string &name) { return tools->fontLeased(name); };
+        measure.fallsBackToLeased = [tools](const std::string &font, bool bold, bool italic, std::u16string_view text) {
+            return tools->fallsBackToLeased(font, bold, italic, text);
+        };
+    }
+    return measure;
 }
 
 namespace {
@@ -6035,13 +6115,17 @@ QQuickWindow *Application::shellQuickWindow(int shellWindow) const
 
 std::vector<int> Application::sessionWindows() const
 {
-    std::vector<int> out{0};
+    std::vector<int> out;
+    if (!m_firstWindowHidden)
+        out.push_back(0);
     for (const auto &[id, shell] : m_shellWindows)
         if (shell.window && !shell.closing)
             out.push_back(id);
     for (const auto tab : m_workspace.allTabs())
         if (const auto window = m_workspace.window(tab); window && std::ranges::find(out, *window) == out.end())
             out.push_back(*window);
+    if (out.empty())
+        out.push_back(0);
     return out;
 }
 
@@ -6084,8 +6168,85 @@ bool Application::saveLayoutForQuit()
     return m_workspaceLayout->saveForQuit();
 }
 
+QVariantList Application::reviewCloseWindow(int shellWindow)
+{
+    m_closingWindow = shellWindow;
+    return reviewClose(QStringLiteral("window"));
+}
+
+bool Application::otherShellWindowOpen(int shellWindow) const
+{
+    if (shellWindow != 0 && m_firstWindow && !m_firstWindowHidden && m_firstWindow->isVisible())
+        return true;
+    return std::ranges::any_of(m_shellWindows, [&](const auto &entry) {
+        const auto &[id, shell] = entry;
+        return id != shellWindow && shell.window && !shell.closing && shell.window->isVisible();
+    });
+}
+
+std::optional<int> Application::otherUsableWindow(int besides) const
+{
+    if (besides != 0 && m_firstWindow && !m_firstWindowHidden)
+        return 0;
+    for (const auto &[id, shell] : m_shellWindows)
+        if (id != besides && shell.window && !shell.closing)
+            return id;
+    return std::nullopt;
+}
+
+void Application::leaveShellWindow(int shellWindow)
+{
+    if (m_workspace.activeWindow() != shellWindow)
+        return;
+    if (const auto next = otherUsableWindow(shellWindow))
+        activateShellWindow(*next);
+}
+
+void Application::hideFirstWindow()
+{
+    if (!m_firstWindow || m_firstWindowHidden)
+        return;
+    leaveShellWindow(0);
+    m_firstWindowHidden = true;
+    m_closeApproved.reset();
+    m_windowPlaces.erase(0);
+    closeShellWindowDocuments(0);
+    m_hiddenFloating.clear();
+    for (QWindow *floating : ui::hideFloatingPanelsOf(m_firstWindow))
+        m_hiddenFloating << floating;
+    m_firstWindow->hide();
+    noteLastUsedWindow();
+    saveLastSession();
+}
+
+void Application::showFirstWindow()
+{
+    if (!m_firstWindowHidden)
+        return;
+    m_firstWindowHidden = false;
+    if (m_firstWindow)
+        m_firstWindow->show();
+    for (const auto &floating : std::exchange(m_hiddenFloating, {}))
+        if (floating)
+            floating->show();
+}
+
+void Application::noteLastUsedWindow()
+{
+    if (std::exchange(m_lastUsedWindow, m_workspace.activeWindow()) != m_workspace.activeWindow())
+        emit lastUsedWindowChanged();
+}
+
 void Application::shellWindowClosed(int shellWindow)
 {
+    forgetShellWindow(shellWindow);
+    saveLastSession();
+}
+
+void Application::forgetShellWindow(int shellWindow)
+{
+    if (m_closeApproved == shellWindow)
+        m_closeApproved.reset();
     const auto found = m_shellWindows.find(shellWindow);
     if (found == m_shellWindows.end())
         return;
@@ -6098,6 +6259,7 @@ void Application::shellWindowClosed(int shellWindow)
         return;
     }
     found->second.closing = true;
+    leaveShellWindow(shellWindow);
     closeShellWindowDocuments(shellWindow);
     connect(window, &QObject::destroyed, this, [this, shellWindow] {
         QMetaObject::invokeMethod(this, [this, shellWindow] { m_shellWindows.erase(shellWindow); }, Qt::QueuedConnection);
@@ -6143,9 +6305,11 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
+            {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

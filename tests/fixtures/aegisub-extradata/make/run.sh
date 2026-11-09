@@ -22,7 +22,7 @@ run() {
     [ -n "$w" ] && xdotool windowfocus --sync "$w"
     xdotool mousemove 500 600 click 1
     sleep 1
-    xdotool key --clearmodifiers "ctrl+shift+$([ "$edit" = edit ] && echo F10 || echo F11)"
+    xdotool key --clearmodifiers "ctrl+shift+$(case $edit in edit) echo F10 ;; touch) echo F9 ;; *) echo F11 ;; esac)"
     sleep 3
     xdotool key --clearmodifiers ctrl+s
     sleep 3
@@ -39,6 +39,7 @@ run perspective-hikari.ass perspective-hikari.aegisub dump
 run kanji-skip-hikari.ass kanji-skip-hikari.aegisub dump
 run kara-marks-hikari.ass kara-marks-hikari.aegisub dump
 run tm-order-hikari.ass tm-order-hikari.aegisub dump
+run qc-notes-hikari.ass qc-notes-hikari.aegisub touch
 mv "$out/folds.aegisub.lua-extra.txt" "$out/folds.lua-extra.txt"
 mv "$out/perspective.aegisub.lua-extra.txt" "$out/perspective.lua-extra.txt"
 for name in perspective-hikari kanji-skip-hikari kara-marks-hikari tm-order-hikari; do

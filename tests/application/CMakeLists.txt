@@ -2,6 +2,10 @@ hikari_add_gtest(hikari_application_write_tests SOURCES write_coordinator_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_edit_tests SOURCES edit_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_ai_review_tests SOURCES ai_review_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_word_diff_tests SOURCES word_diff_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_editor_fields_tests SOURCES editor_fields_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_workspace_tests SOURCES workspace_tests.cpp
@@ -204,6 +208,12 @@ target_compile_definitions(hikari_application_video_timing_tests PRIVATE
 hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
+hikari_add_gtest(hikari_application_perspective_tracking_tests SOURCES perspective_tracking_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)

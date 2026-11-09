@@ -3,6 +3,7 @@
 
 #include "hikari/application/generated_runs.h"
 #include "hikari/application/grid_filtering.h"
+#include "hikari/application/word_diff.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/legacy_regex.h"
 #include "hikari/core/line_groups.h"
@@ -259,10 +260,12 @@ void LineTableModel::setHideTags(bool hide, const QString &swap)
     for (const Row &row : m_rows) {
         row.shownText.reset();
         row.spellMarks.reset();
+        row.reviewMarks.reset();
     }
     if (m_draft) {
         m_draft->shownText.reset();
         m_draft->spellMarks.reset();
+        m_draft->reviewMarks.reset();
     }
     if (!m_rows.empty())
         emit dataChanged(index(0, TextColumn), index(rowCount() - 1, TextColumn), {Qt::DisplayRole, SpellMarksRole});
@@ -291,6 +294,26 @@ void LineTableModel::setLabelColours(const LabelColours &colours)
         return;
     m_labelColours = colours;
     emit headerDataChanged(Qt::Horizontal, 0, 0);
+}
+
+const QVariantList &LineTableModel::reviewMarksOf(const Row &row) const
+{
+    if (row.reviewMarks)
+        return *row.reviewMarks;
+    QVariantList marks;
+    if (row.review) {
+        const QString after = shownTextOf(row);
+        const QString before = row.review->before ? shownTextOf(Row{*row.review->before}) : QString();
+        const auto view = [](const QString &text) {
+            return std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
+                                       static_cast<std::size_t>(text.size()));
+        };
+        for (const application::DiffPart &part : application::wordDiff(view(before), view(after)))
+            if (part.kind == application::DiffPart::Kind::Added)
+                marks << static_cast<int>(part.start) << static_cast<int>(part.start + part.length - 1);
+    }
+    row.reviewMarks = std::move(marks);
+    return *row.reviewMarks;
 }
 
 const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
@@ -356,6 +379,8 @@ void LineTableModel::setDocument(const core::Document &document,
         m_rows.push_back(Row{*line, std::nullopt, 0});
         m_rows.back().state = (m_changeState ? m_changeState(*line) : 0) | (line->unconfirmed ? 4 : 0) |
                               (line->bookmark ? 8 : 0);
+        if (m_review)
+            m_rows.back().review = m_review(line->id);
     }
     m_filtered = application::isFiltered(document);
     const std::size_t n = lines.size();
@@ -458,6 +483,7 @@ void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
         shown.spellMarks.reset();
         shown.shownText.reset();
         shown.unplacedRuns.reset();
+        shown.reviewMarks.reset();
         m_draft = std::move(shown);
         m_draftRow = *row;
     }
@@ -551,7 +577,9 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case SpellMarksRole:
         case ComparisonMarksRole: return QVariantList();
         case ComparisonRole:
+        case ReviewRole:
         case LineStateRole: return 0;
+        case ReviewMarksRole: return QVariantList();
         default: break;
         }
     }
@@ -614,15 +642,40 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.comparison;
     case ComparisonMarksRole:
         return r.comparisonMarks;
+    case ReviewRole:
+        return static_cast<int>(!r.review                ? ReviewState::None
+                                : r.review->editedSince ? ReviewState::EditedSince
+                                                        : ReviewState::Waiting);
+    case ReviewMarksRole:
+        return reviewMarksOf(r);
     case LineStateRole:
         return r.state;
     case DraftRole:
         return index.row() == m_draftRow;
     case UnplacedRunsRole:
         return unplacedRunsOf(r);
+    case QcNotesRole:
+        if (const auto it = m_qcMarks.find(line.id.value); it != m_qcMarks.end())
+            return it->second;
+        return QStringList();
+    case QcCurrentRole:
+        return m_qcCurrent == line.id;
     default:
         return {};
     }
+}
+
+void LineTableModel::setQcMarks(QcMarks marks, std::optional<core::LineId> current)
+{
+    if (marks == m_qcMarks && current == m_qcCurrent)
+        return;
+    const bool marked = !m_qcMarks.empty();
+    m_qcMarks = std::move(marks);
+    m_qcCurrent = current;
+    if (marked != !m_qcMarks.empty())
+        emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
+    if (!m_rows.empty())
+        emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {QcNotesRole, QcCurrentRole});
 }
 
 QString LineTableModel::startText(const core::LineRecord &line) const
@@ -735,6 +788,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return m_filtered;
     if (role == HeaderBlockRole)
         return m_headerBlock;
+    if (role == QcMarkedRole)
+        return !m_qcMarks.empty();
     if (role == ComparisonColoursRole)
         return QVariantList(m_comparisonColours.begin(), m_comparisonColours.end());
     if (role == LabelColoursRole)
@@ -794,10 +849,14 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {ComparisonRole, "comparison"},
                   {ComparisonMarksRole, "comparisonMarks"},
                   {LineStateRole, "lineState"},
+                  {ReviewRole, "review"},
+                  {ReviewMarksRole, "reviewMarks"},
                   {DraftRole, "draft"},
                   {UnplacedRunsRole, "unplacedRuns"},
                   {FoldRole, "fold"},
-                  {FoldCountRole, "foldCount"}});
+                  {FoldCountRole, "foldCount"},
+                  {QcNotesRole, "qcNotes"},
+                  {QcCurrentRole, "qcCurrent"}});
     return roles;
 }
 
