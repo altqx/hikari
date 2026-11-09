@@ -27,7 +27,7 @@ With no provider, `AiRequests::complete` fails at once with `NoProvider`. It nev
 
 - `AiRequests` sends `providers.set` with the current config before each request, then the request with the role's model. No key goes to the sidecar ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
 - The sidecar sends each provider request back to Qt as `_hikari/http.request` with target `{kind: "provider", id}`. `HttpRelay` reads the key from the keychain, puts it where the SDK wrote the `hikari-key` placeholder, and drops that header for a provider without a key.
-- While a completion runs, `session/update` notifications carry `{stream, update}` with `text`, `toolCall {index, id, name}`, `toolArguments {index, delta}` and `usage` updates. C++ turns them into `TextDelta`, `ToolCallStarted` and `ToolCallArguments`; the answer becomes `Finished`.
+- While a completion runs, `session/update` notifications carry `{stream, update}` with `text`, `toolCall {index, id, name}`, `toolArguments {index, delta}` and `usage` updates. C++ turns them into `TextDelta`, `ToolCallStarted` and `ToolCallArguments`; the answer becomes `Finished`. Updates that carry a `sessionId` instead belong to an [agent thread](ai-agent.md).
 - A failure answers with code `-32010` and `data: {kind, httpStatus, detail}`, which becomes `Failed`. `$/cancel_request` closes the provider's connection and answers `-32800`, which becomes `Failed{Cancelled}`.
 - `src/ai-sidecar/src/providers/schema.ts` holds the JSON Schemas of every method's params and results.
 

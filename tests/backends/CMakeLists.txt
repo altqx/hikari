@@ -454,6 +454,12 @@ hikari_add_gtest(hikari_backends_ai_requests_tests SOURCES ai_requests_tests.cpp
 target_compile_definitions(hikari_backends_ai_requests_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_backends_ai_requests_tests hikari_fake_ai_sidecar)
+hikari_add_gtest(hikari_backends_ai_agent_tests SOURCES ai_agent_tests.cpp
+    LIBRARIES hikari_ai hikari_core Qt6::Core LABELS backends)
+target_include_directories(hikari_backends_ai_agent_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
+target_compile_definitions(hikari_backends_ai_agent_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_backends_ai_agent_tests hikari_fake_ai_sidecar)
 hikari_add_gtest(hikari_backends_ai_http_relay_tests SOURCES ai_http_relay_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::Network LABELS backends)
 add_executable(hikari_fake_agent fake_agent.cpp)

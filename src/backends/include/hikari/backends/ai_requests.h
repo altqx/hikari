@@ -43,6 +43,9 @@ public:
     void probe(const application::ai::Provider &provider, const std::string &key, std::function<void(Probed)> done);
     /// Off sends every request with `caching: false`.
     void setCaching(bool on) { m_caching = on; }
+    bool caching() const { return m_caching; }
+    /// The sidecar, told the current providers first; null when AI is off or no sidecar is installed.
+    AiSidecarHost *connected() { return connect(); }
     /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`). Call
     /// when the thread ends.
     void endConversation(const std::string &providerId, const std::string &cacheKey);
@@ -74,5 +77,7 @@ private:
 
 /// The sidecar's answer to a failed request as the panel shows it.
 application::ai::Error requestError(const SidecarFailure &failure);
+/// The protocol's Usage object.
+application::ai::Usage usageOf(const api::Json &usage);
 
 }

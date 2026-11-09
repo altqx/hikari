@@ -49,16 +49,6 @@ Json providersJson(const app::Config &config)
     return Json::object({{"providers", std::move(providers)}});
 }
 
-app::Usage usageOf(const Json &usage)
-{
-    return {.inputTokens = intAt(usage, "inputTokens"),
-            .outputTokens = intAt(usage, "outputTokens"),
-            .cachedInputTokens = intAt(usage, "cachedInputTokens"),
-            .cacheWriteTokens = intAt(usage, "cacheWriteTokens"),
-            .cacheWriteHourTokens = intAt(usage, "cacheWriteHourTokens"),
-            .reportedCost = numberAt(usage, "reportedCost")};
-}
-
 app::Finished finishedOf(const Json &result)
 {
     app::Finished finished;
@@ -106,6 +96,16 @@ std::vector<app::Model> modelsOf(const Json &result)
     return models;
 }
 
+}
+
+app::Usage usageOf(const Json &usage)
+{
+    return {.inputTokens = intAt(usage, "inputTokens"),
+            .outputTokens = intAt(usage, "outputTokens"),
+            .cachedInputTokens = intAt(usage, "cachedInputTokens"),
+            .cacheWriteTokens = intAt(usage, "cacheWriteTokens"),
+            .cacheWriteHourTokens = intAt(usage, "cacheWriteHourTokens"),
+            .reportedCost = numberAt(usage, "reportedCost")};
 }
 
 app::Error requestError(const SidecarFailure &failure)
