@@ -217,6 +217,35 @@ private slots:
         QVERIFY(!runtime.process(QStringLiteral("com.example.hello")));
     }
 
+    void restrictedPluginsStartSandboxedAndFullTrustOnesDoNot()
+    {
+        install(QStringLiteral("com.example.hello"), QStringLiteral("Hello"),
+                "hikari.commands.register('greet', function() hikari.notify('confined') end)");
+        install(QStringLiteral("com.example.native"), QStringLiteral("Native"),
+                "hikari.commands.register('greet', function() hikari.notify(io and 'full' or 'none') end)", true,
+                R"(, "tier": "unrestricted")");
+        ui::LogController log;
+        QSignalSpy noticed(&log, &ui::LogController::noticed);
+        app::PluginRuntime::Wiring w{QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {}};
+        w.sandbox = true;
+        app::PluginRuntime runtime(w);
+        runtime.sync();
+        QVERIFY(runtime.process(QStringLiteral("com.example.hello"))->sandboxed());
+        QVERIFY(!runtime.process(QStringLiteral("com.example.native"))->sandboxed());
+        QCOMPARE(runtime.sandboxed(), backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete());
+        QVERIFY(runtime.run(kGreet));
+        QVERIFY(runtime.run(QStringLiteral("plugin.com.example.native.greet")));
+        QTRY_COMPARE_WITH_TIMEOUT(noticed.size(), 2, 10'000);
+        QStringList said;
+        for (const Notice &notice : notices(noticed))
+            said << notice.title + QStringLiteral(": ") + notice.text;
+        said.sort();
+        QCOMPARE(said, (QStringList{QStringLiteral("Hello: confined"), QStringLiteral("Native: full")}));
+
+        app::PluginRuntime unconfined({QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {}});
+        QVERIFY(!unconfined.sandboxed());
+    }
+
     void aRunawayPluginIsStoppedAndACrashTakesDownOnlyItsHelper()
     {
         install(QStringLiteral("com.example.hello"), QStringLiteral("Hello"),

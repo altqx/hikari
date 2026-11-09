@@ -11275,6 +11275,10 @@ Failed to copy %2 fonts.</source>
         <translation>권한</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub는 이 플러그인을 이 권한 안으로 제한하지만, 이 시스템에서는 샌드박스에서 실행되지 않습니다.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>기억한 폴더</translation>
     </message>
