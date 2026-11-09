@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLoggingCategory>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -23,6 +24,8 @@
 namespace hikari::app {
 
 namespace {
+
+Q_LOGGING_CATEGORY(lcPluginPanels, "hikari.plugins.panels")
 
 using api::Json;
 
@@ -122,10 +125,10 @@ void PluginUi::writeLoadedPanels()
     }
     QDir().mkpath(QFileInfo(m_loadedPanelsFile).absolutePath());
     QSaveFile out(m_loadedPanelsFile);
-    if (out.open(QIODevice::WriteOnly)) {
-        out.write(QJsonDocument(QJsonObject{{QStringLiteral("loaded"), loaded}, {QStringLiteral("held"), held}}).toJson());
-        out.commit();
-    }
+    if (!out.open(QIODevice::WriteOnly) ||
+        out.write(QJsonDocument(QJsonObject{{QStringLiteral("loaded"), loaded}, {QStringLiteral("held"), held}}).toJson()) < 0 ||
+        !out.commit())
+        qCWarning(lcPluginPanels) << "Couldn't save" << m_loadedPanelsFile << out.errorString();
 }
 
 void PluginUi::noticeHeld()

@@ -5,12 +5,15 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickItem>
+#include <QRegularExpression>
+#include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -315,6 +318,24 @@ private slots:
         runtime.sync();
         QVERIFY2(runtime.ui()->panel(kBoard)->held(), "a hold lasts until Load again");
         QCOMPARE(logged(added), QStringList());
+    }
+
+    void aLoadedPanelsFileThatCantBeSavedIsLogged()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("Windows ignores a folder's read-only attribute");
+#endif
+        const QString folder = m_dir.filePath(QStringLiteral("locked"));
+        const QString file = QDir(folder).filePath(QStringLiteral("plugin-panels.json"));
+        write(file, R"({"held": ["com.example.board"]})");
+        QVERIFY(QFile::setPermissions(folder, QFile::ReadOwner | QFile::ExeOwner));
+        const auto unlock = qScopeGuard([&] { QFile::setPermissions(folder, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner); });
+        if (QFileInfo(folder).isWritable())
+            QSKIP("permissions don't apply to this user");
+
+        QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("^Couldn't save .*plugin-panels\\.json")));
+        app::PluginUi ui([](const std::string &, const std::string &, const std::string &, const std::string &) { return true; });
+        ui.keepLoadedPanelsIn(file);
     }
 
     void aPanelsWarningsReachTheLogAtMostTwentyAMinute()
