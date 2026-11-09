@@ -35,6 +35,9 @@ public:
     std::vector<DocumentId> allTabs() const;
     // `a` and `b` index tabs(); the roles stay with their Documents.
     bool swapTabs(std::size_t a, std::size_t b);
+    // The tab moves to `window` at `index` of that window's tabs (or last) and becomes the editing target there,
+    // as if chosen. The window it left passes its current tab on as remove() does.
+    bool moveTab(DocumentId id, int window, std::size_t index);
 
     // The editing target is the current tab of the active window.
     std::optional<DocumentId> editingTarget() const { return m_target; }
