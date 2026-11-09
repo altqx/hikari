@@ -340,6 +340,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_KEEP_ALL_AI_CHANGES", 5249},
         {"GLOBAL_UNDO_ALL_AI_CHANGES", 5250},
         {"GLOBAL_SHOW_AI_REVIEW", 5251},
+        {"GLOBAL_SHOW_AI_AGENT", 5252},
+        {"GLOBAL_NEW_AI_THREAD", 5253},
 };
 
 struct NameRow {
@@ -645,6 +647,8 @@ constexpr NameRow kNames[] = {
         {5249, "Keep all AI changes"},
         {5250, "Undo all AI changes"},
         {5251, "Review panel"},
+        {5252, "Agent panel"},
+        {5253, "New agent thread"},
 };
 
 struct DefaultRow {

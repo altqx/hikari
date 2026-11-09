@@ -75,6 +75,7 @@
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
+#include "hikari/app/agent_controller.h"
 #include "hikari/app/review_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -782,6 +783,7 @@ public:
     AiFeatures *ai() const { return m_ai.get(); }
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
+    AgentController *agent() const { return m_agent.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
     Q_PROPERTY(hikari::app::PluginMarketplace *pluginMarketplace READ pluginMarketplace CONSTANT)
@@ -1090,6 +1092,7 @@ private:
     std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
+    std::unique_ptr<AgentController> m_agent;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;

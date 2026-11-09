@@ -329,7 +329,7 @@ protected:
             AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
             o.arguments = {QStringLiteral("--build-id"), QString::fromLatin1(kBuildId), QStringLiteral("--api-version"),
-                           QString::number(hikari::api::kApiVersion)};
+                           QString::number(hikari::api::kApiVersion), QStringLiteral("--mode"), sidecarMode};
             o.workingDirectory = dir.filePath(QStringLiteral("ai/work"));
             o.buildId = kBuildId;
             o.shutdownMs = 600;
@@ -411,6 +411,7 @@ protected:
     std::unique_ptr<ThreadStore> store;
     AgentThreads::Defaults defaults;
     std::int64_t clock = 0;
+    QString sidecarMode = QStringLiteral("ok");
     std::unique_ptr<AgentThreads> threads;
 };
 
@@ -569,6 +570,19 @@ TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
     EXPECT_EQ(at(items(id, "ask")[0], "status"), "withdrawn");
     EXPECT_EQ(notice(id), "stopped");
     EXPECT_EQ(receivedAs("session/cancel").size(), 1u);
+}
+
+TEST_F(AgentThreadsTest, StopBeforeTheSidecarAnswersItsHandshakeEndsTheTurn)
+{
+    sidecarMode = QStringLiteral("silent");
+    const std::string id = threads->create();
+    threads->send(id, "Hello");
+    ASSERT_TRUE(threads->running(id));
+    ASSERT_EQ(sidecar()->state(), AiSidecarHost::State::Starting);
+    threads->stop(id);
+    EXPECT_FALSE(threads->running(id));
+    EXPECT_EQ(notice(id), "stopped");
+    EXPECT_TRUE(items(id, "text").empty());
 }
 
 TEST_F(AgentThreadsTest, TheThreadCapStopsTheTurnAndRaisingItLetsTheNextOneRun)

@@ -307,6 +307,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep all AI changes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo all AI changes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Review panel"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Agent panel"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "New agent thread"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

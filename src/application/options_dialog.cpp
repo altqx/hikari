@@ -153,6 +153,10 @@ constexpr OptionsBinding kBindings[] = {
     {"video.hdrWarning", Check, Video},
     {"audio.playMono", Check, Audio},
     {"plugins.network", Check, Updates},
+    {"ai.agent.mode", Text, Ai},
+    {"ai.agent.threadCapCents", Number, Ai, 0, 100000},
+    {"ai.agent.dailyCapCents", Number, Ai, 0, 1000000},
+    {"ai.agent.costMeter", Check, Ai},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

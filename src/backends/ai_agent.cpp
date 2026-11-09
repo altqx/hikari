@@ -1049,6 +1049,8 @@ void AgentThreads::stopFor(AgentThread &thread, const std::string &why)
     if (run == m_runs.end() || !run->second->stoppedFor.empty())
         return;
     run->second->stoppedFor = why;
+    if (m_host && m_host->state() != AiSidecarHost::State::Ready)
+        return m_host->cancel(run->second->request);
     if (m_host)
         m_host->notify("session/cancel", Json::object({{"sessionId", thread.id}}));
     closeAsks(thread.id, why == "stopped" ? "The user stopped the turn." : "The cost cap stopped the turn.");

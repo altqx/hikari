@@ -775,6 +775,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                           refusalText(refusal));
         },
         [this] { refreshViews(); }});
+    m_agent = std::make_unique<AgentController>(AgentController::Wiring{
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {}});
     const auto hideAiCommands = [this] {
         m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
     };
@@ -2217,6 +2219,8 @@ void Application::refreshViews()
     refreshComparison();
     if (m_review)
         m_review->refreshed();
+    if (m_agent)
+        m_agent->refreshed();
     shell().setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
     shell().refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
@@ -6310,6 +6314,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
             {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
+            {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 
