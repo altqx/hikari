@@ -20,8 +20,10 @@ DialogWindow {
         Layout.preferredWidth: 412
         Image {
             Layout.alignment: Qt.AlignTop
-            source: "qrc:/hikari/ui/app-icon.png"
-            sourceSize: Qt.size(64, 64)
+            source: "qrc:/hikari/ui/app-icon.svg"
+            sourceSize: Qt.size(128, 128)
+            fillMode: Image.PreserveAspectFit
+            mipmap: true
             Layout.preferredWidth: 64
             Layout.preferredHeight: 64
             Accessible.ignored: true

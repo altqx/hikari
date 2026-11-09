@@ -103,6 +103,39 @@ TEST(PluginManifest, APanelDocksInTheAreaItNames)
     EXPECT_EQ(p.at, "/contributes/panels/0/area");
 }
 
+TEST(PluginManifest, OnlyAFullTrustManifestShipsAQmlPanel)
+{
+    Json json = minimal();
+    json["tier"] = "unrestricted";
+    json["contributes"] = *Json::parse(R"({"panels": [{"id": "board", "title": "Board"},
+        {"id": "notes", "title": "Notes", "qml": "qml/Notes.qml"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m);
+    EXPECT_EQ(m->panels[0].qml, "");
+    EXPECT_EQ(m->panels[1].qml, "qml/Notes.qml");
+    EXPECT_TRUE(m->hasQmlPanels());
+
+    for (const char *tier : {"", "restricted"}) {
+        Json restricted = json;
+        if (*tier)
+            restricted["tier"] = tier;
+        else
+            std::erase_if(restricted.asObject(), [](const Json::Member &m) { return m.key == "tier"; });
+        const ManifestProblem p = problem(restricted);
+        EXPECT_EQ(p.kind, Kind::QmlNeedsFullTrust) << tier;
+        EXPECT_EQ(p.at, "/contributes/panels/1/qml") << tier;
+    }
+
+    for (const char *path : {"qml/Notes.js", "/qml/Notes.qml", "../Notes.qml", "qml/"}) {
+        Json bad = json;
+        bad["contributes"]["panels"].asArray()[1]["qml"] = path;
+        const ManifestProblem p = problem(bad);
+        EXPECT_EQ(p.kind, Kind::Schema) << path;
+        EXPECT_EQ(p.at, "/contributes/panels/1/qml") << path;
+    }
+    EXPECT_FALSE(parse(minimal())->hasQmlPanels());
+}
+
 TEST(PluginManifest, SchemaFailuresNameTheField)
 {
     Json missing = minimal();

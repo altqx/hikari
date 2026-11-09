@@ -7782,5 +7782,41 @@ Styles deleted:
         <source>Delete unused ASS styles</source>
         <translation>사용하지 않는 ASS 스타일 삭제</translation>
     </message>
+    <message>
+        <source>Letter spacing to positioned clusters</source>
+        <translation>자간을 위치 지정된 문자 묶음으로</translation>
+    </message>
+    <message>
+        <source>Replace \fsp letter spacing with one positioned line per character cluster, keeping marks on their base characters</source>
+        <translation>\fsp 자간을 문자 묶음마다 위치가 지정된 줄 하나로 바꾸어, 결합 부호가 기본 문자에 붙어 있게 합니다</translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation>자간</translation>
+    </message>
+    <message>
+        <source>Pixels added after each character cluster</source>
+        <translation>각 문자 묶음 뒤에 더할 픽셀</translation>
+    </message>
+    <message>
+        <source>Use the &amp;line’s spacing</source>
+        <translation>줄의 자간 사용[&amp;L]</translation>
+    </message>
+    <message>
+        <source>Use &amp;this value</source>
+        <translation>이 값 사용[&amp;T]</translation>
+    </message>
+    <message>
+        <source>Spacing line %d of %d</source>
+        <translation>줄 %d / %d 자간 처리 중</translation>
+    </message>
+    <message>
+        <source>Lines with \move or a drawing were left as they are.</source>
+        <translation>\move 또는 그림이 있는 줄은 그대로 두었습니다.</translation>
+    </message>
+    <message>
+        <source>Letter spacing to positioned clusters…</source>
+        <translation>자간을 위치 지정된 문자 묶음으로…</translation>
+    </message>
 </context>
 </TS>

@@ -355,15 +355,15 @@ void Application::openIntoTabArrangement(application::DocumentId old, applicatio
         layoutFor(replacement).setFileArrangement(replacement.value, *file);
 }
 
-void Application::showTabArrangement()
+void Application::showTabArrangement(int shellWindow)
 {
     registerTabArrangements();
-    const auto target = m_workspace.editingTarget();
-    const int window = m_workspace.activeWindow();
-    if (const auto shown = m_layoutDocuments.find(window); !target || (shown != m_layoutDocuments.end() && shown->second == *target))
+    const auto current = m_workspace.currentTab(shellWindow);
+    if (const auto shown = m_layoutDocuments.find(shellWindow);
+        !current || (shown != m_layoutDocuments.end() && shown->second == *current))
         return;
-    m_layoutDocuments[window] = *target;
-    layoutOf(window).showTab(target->value, tabStart(*target));
+    m_layoutDocuments[shellWindow] = *current;
+    layoutOf(shellWindow).showTab(current->value, tabStart(*current));
 }
 
 void Application::trackTabMedia()
@@ -582,19 +582,19 @@ void Application::setSessionRestore(int value)
     emit sessionRestoreChanged();
 }
 
-bool Application::saveLastSession(bool closing, const QString &path)
+application::Session Application::sessionOf(std::optional<int> shellWindow)
 {
-    const QString file = path.isEmpty() ? lastSessionPath() : path;
-    if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
-        return false;
-    const auto target = m_workspace.editingTarget();
+    const auto target = shellWindow ? m_workspace.currentTab(*shellWindow) : m_workspace.editingTarget();
     registerTabArrangements();
     application::Session session;
     session.header = "HikariSub " HIKARI_VERSION;
     auto &tabs = session.tabs;
-    const std::vector<int> windows = sessionWindows();
+    const std::vector<int> windows = shellWindow ? std::vector<int>{*shellWindow} : sessionWindows();
     for (std::size_t w = 0; w < windows.size(); ++w) {
-        auto window = sessionWindow(windows[w]);
+        application::SessionWindow window;
+        if (!shellWindow)
+            window = sessionWindow(windows[w]);
+        window.project = m_projects->root(windows[w]).toStdString();
         const auto current = m_workspace.currentTab(windows[w]);
         for (const auto id : m_workspace.tabs(windows[w])) {
             if (id == target)
@@ -648,8 +648,24 @@ bool Application::saveLastSession(bool closing, const QString &path)
         }
         session.windows.push_back(window);
     }
+    return session;
+}
+
+void Application::keepProjectTabs(int shellWindow)
+{
+    if (const QString root = m_projects->root(shellWindow); !root.isEmpty())
+        m_projects->keepTabs(root, sessionOf(shellWindow));
+}
+
+bool Application::saveLastSession(bool closing, const QString &path)
+{
+    const QString file = path.isEmpty() ? lastSessionPath() : path;
+    if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
+        return false;
+    application::Session session = sessionOf(std::nullopt);
     if (const auto &only = session.windows.front();
-        session.windows.size() == 1 && !only.geometry && !only.maximized && only.unknown.empty())
+        session.windows.size() == 1 && !only.geometry && !only.maximized && only.unknown.empty() &&
+        only.project.empty())
         session.windows.clear();
     const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath());
@@ -662,6 +678,9 @@ bool Application::saveLastSession(bool closing, const QString &path)
 
 void Application::endSession()
 {
+    for (const auto &[window, shell] : m_shellWindows)
+        keepProjectTabs(window);
+    keepProjectTabs(0);
     saveLastSession(true);
 }
 
@@ -795,8 +814,16 @@ QVariantMap Application::reviewSessionRead(std::optional<application::Session> s
     };
     if (!session)
         return result(false, problem);
+    PendingSession pending = stageSession(std::move(*session));
+    const QVariantList rows = reviewClose(QStringLiteral("session"));
+    m_pendingSession = std::move(pending);
+    return result(true, QString(), rows);
+}
+
+Application::PendingSession Application::stageSession(application::Session session)
+{
     PendingSession pending;
-    for (const auto &tab : session->tabs) {
+    for (const auto &tab : session.tabs) {
         std::optional<application::StagedOpen> staged;
         const QString subtitles = qs(tab.subtitles);
         const QFileInfo info(subtitles);
@@ -806,12 +833,10 @@ QVariantMap Application::reviewSessionRead(std::optional<application::Session> s
         pending.stamps.emplace_back(staged ? info.lastModified() : QDateTime(), staged ? info.size() : -1);
         pending.staged.push_back(std::move(staged));
     }
-    pending.tabs = std::move(session->tabs);
-    pending.activeTab = session->activeTab;
-    pending.windows = std::move(session->windows);
-    const QVariantList rows = reviewClose(QStringLiteral("session"));
-    m_pendingSession = std::move(pending);
-    return result(true, QString(), rows);
+    pending.tabs = std::move(session.tabs);
+    pending.activeTab = session.activeTab;
+    pending.windows = std::move(session.windows);
+    return pending;
 }
 
 void Application::selectRow(application::DocumentId document, int row)
@@ -832,27 +857,29 @@ void Application::applySession()
         return;
     PendingSession pending = std::move(*m_pendingSession);
     m_pendingSession.reset();
-    m_comparison.remove();
-    for (const auto id : m_workspace.documents()) {
-        discardRecovery(id);
-        m_files->close(id);
-        m_workspace.remove(id);
+    if (!pending.intoWindow) {
+        m_comparison.remove();
+        for (const auto id : m_workspace.documents()) {
+            discardRecovery(id);
+            m_files->close(id);
+            m_workspace.remove(id);
+        }
+        m_tabMedia.clear();
+        for (auto *layout : layouts())
+            layout->forgetTabs();
+        m_layoutDocuments.clear();
+        m_originalColumns.clear();
+        m_unresolved.clear();
+        showFirstWindow();
+        std::vector<int> closing;
+        for (const auto &[shellWindow, shell] : m_shellWindows)
+            if (shell.window && !shell.closing)
+                closing.push_back(shellWindow);
+        for (const int shellWindow : closing)
+            forgetShellWindow(shellWindow);
     }
-    m_tabMedia.clear();
-    for (auto *layout : layouts())
-        layout->forgetTabs();
-    m_layoutDocuments.clear();
-    m_originalColumns.clear();
-    m_unresolved.clear();
-    showFirstWindow();
-    std::vector<int> closing;
-    for (const auto &[shellWindow, shell] : m_shellWindows)
-        if (shell.window && !shell.closing)
-            closing.push_back(shellWindow);
-    for (const int shellWindow : closing)
-        forgetShellWindow(shellWindow);
-    std::vector<int> windows{0};
-    if (QQmlEngine *engine = m_firstWindow ? qmlEngine(m_firstWindow.data()) : nullptr)
+    std::vector<int> windows{pending.intoWindow.value_or(0)};
+    if (QQmlEngine *engine = m_firstWindow && !pending.intoWindow ? qmlEngine(m_firstWindow.data()) : nullptr)
         for (std::size_t k = 1; k < pending.windows.size(); ++k)
             if (const auto opened = shellWindowOf(openShellWindow(*engine)))
                 windows.push_back(*opened);
@@ -928,8 +955,12 @@ void Application::applySession()
         if (pending.activeTab == i)
             active = id;
     }
-    for (std::size_t k = 0; k < windows.size(); ++k)
-        m_windowPlaces[windows[k]].unknown = k < pending.windows.size() ? pending.windows[k].unknown : std::string();
+    if (!pending.intoWindow)
+        for (std::size_t k = 0; k < windows.size(); ++k) {
+            const auto *saved = k < pending.windows.size() ? &pending.windows[k] : nullptr;
+            m_windowPlaces[windows[k]].unknown = saved ? saved->unknown : std::string();
+            m_projects->set(windows[k], saved ? ProjectWindows::canonicalFolder(qs(saved->project)) : QString());
+        }
     for (std::size_t k = 0; k < windows.size() && k < pending.windows.size(); ++k) {
         std::optional<application::DocumentId> current, saved;
         for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
@@ -942,13 +973,13 @@ void Application::applySession()
         if (saved)
             current = saved;
         if (current && m_workspace.setEditingTarget(*current))
-            showTabArrangement();
+            showTabArrangement(m_workspace.activeWindow());
     }
     if (active || last)
         m_workspace.setEditingTarget(active ? *active : *last);
-    else
+    else if (!pending.intoWindow)
         newDocument();
-    for (std::size_t k = 0; k < windows.size() && k < pending.windows.size(); ++k)
+    for (std::size_t k = 0; k < windows.size() && k < pending.windows.size() && !pending.intoWindow; ++k)
         if (QQuickWindow *window = shellQuickWindow(windows[k]))
             placeShellWindow(*window, pending.windows[k]);
     refreshViews();

@@ -5,6 +5,7 @@
 #include "fake_host.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QLocalSocket>
@@ -15,6 +16,12 @@
 #include <algorithm>
 #include <optional>
 #include <string>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <aclapi.h>
+#include <sddl.h>
+#endif
 
 using namespace hikari::backends::ai;
 using hikari::api::Json;
@@ -45,6 +52,63 @@ std::string toolText(const Json &result)
         out += c.find("text")->asString();
     return out;
 }
+
+#ifdef _WIN32
+struct FileAcl {
+    bool isProtected = false;
+    std::vector<std::wstring> allowed;
+    std::wstring sddl;
+};
+
+std::wstring sidText(PSID sid)
+{
+    LPWSTR text = nullptr;
+    if (!ConvertSidToStringSidW(sid, &text))
+        return {};
+    std::wstring out(text);
+    LocalFree(text);
+    return out;
+}
+
+std::wstring currentUser()
+{
+    HANDLE token = nullptr;
+    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    DWORD size = 0;
+    GetTokenInformation(token, TokenUser, nullptr, 0, &size);
+    std::vector<char> user(size);
+    GetTokenInformation(token, TokenUser, user.data(), size, &size);
+    CloseHandle(token);
+    return sidText(reinterpret_cast<TOKEN_USER *>(user.data())->User.Sid);
+}
+
+FileAcl aclOf(const QString &file)
+{
+    FileAcl acl;
+    PACL dacl = nullptr;
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    if (GetNamedSecurityInfoW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(file).utf16()), SE_FILE_OBJECT,
+                              DACL_SECURITY_INFORMATION, nullptr, nullptr, &dacl, nullptr, &descriptor) != ERROR_SUCCESS)
+        return acl;
+    SECURITY_DESCRIPTOR_CONTROL control = 0;
+    DWORD revision = 0;
+    GetSecurityDescriptorControl(descriptor, &control, &revision);
+    acl.isProtected = (control & SE_DACL_PROTECTED) != 0;
+    for (DWORD i = 0; dacl && i < dacl->AceCount; ++i) {
+        void *ace = nullptr;
+        if (GetAce(dacl, i, &ace) && static_cast<ACE_HEADER *>(ace)->AceType == ACCESS_ALLOWED_ACE_TYPE)
+            acl.allowed.push_back(sidText(&static_cast<ACCESS_ALLOWED_ACE *>(ace)->SidStart));
+    }
+    LPWSTR sddl = nullptr;
+    if (ConvertSecurityDescriptorToStringSecurityDescriptorW(descriptor, SDDL_REVISION_1, DACL_SECURITY_INFORMATION,
+                                                             &sddl, nullptr)) {
+        acl.sddl = sddl;
+        LocalFree(sddl);
+    }
+    LocalFree(descriptor);
+    return acl;
+}
+#endif
 
 struct HttpAnswer {
     int status = 0;
@@ -85,7 +149,7 @@ protected:
 
     /// Each line the bridge wrote to the agent, parsed.
     std::vector<Json> bridged;
-    std::unique_ptr<McpBridge> bridge()
+    std::unique_ptr<McpBridge> bridge(const QByteArray &token = kToken)
     {
         auto b = std::make_unique<McpBridge>([this, buffer = std::make_shared<QByteArray>()](const QByteArray &bytes) {
             *buffer += bytes;
@@ -93,7 +157,7 @@ protected:
                 bridged.push_back(Json::parse(buffer->left(end).toStdString()).value_or(Json()));
         });
         QString error;
-        EXPECT_TRUE(b->open({server->socketName(), kToken, 0}, &error)) << error.toStdString();
+        EXPECT_TRUE(b->open({server->socketName(), token, 0}, &error)) << error.toStdString();
         return b;
     }
 
@@ -259,10 +323,53 @@ TEST_F(AiMcpTest, TheEndpointFileRoundTripsAndOnlyTheUserCanReadIt)
     EXPECT_EQ(read->socket, QStringLiteral("hikarisub-mcp-1"));
     EXPECT_EQ(read->token, token);
     EXPECT_EQ(read->port, 4242);
-#ifndef _WIN32
+#ifdef _WIN32
+    const FileAcl created = aclOf(file);
+    EXPECT_TRUE(created.isProtected);
+    EXPECT_EQ(created.allowed, std::vector<std::wstring>{currentUser()});
+#endif
+
+    const QByteArray reset = newMcpToken();
+    ASSERT_TRUE(writeMcpEndpoint(file, {QStringLiteral("hikarisub-mcp-1"), reset, 4242}));
+    EXPECT_EQ(readMcpEndpoint(file)->token, reset);
+#ifdef _WIN32
+    EXPECT_EQ(aclOf(file).sddl, created.sddl);
+#else
     EXPECT_EQ(QFile::permissions(file) & ~(QFile::ReadUser | QFile::WriteUser | QFile::ReadOwner | QFile::WriteOwner),
               QFile::Permissions());
 #endif
+}
+
+TEST_F(AiMcpTest, ANewTokenDropsTheAgentsAndOnlyItConnects)
+{
+    ASSERT_TRUE(server->listenHttp(0));
+    const QByteArray list = "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/list\", \"params\": {"
+                            + QByteArray::fromStdString(kModern) + "}}";
+    ASSERT_EQ(post(list, authorised("tools/list")).status, 200);
+    const std::string initialize = R"({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+        "protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {"name": "codex", "version": "1"}}})";
+    auto before = bridge();
+    bool dropped = false;
+    QObject::connect(before.get(), &McpBridge::finished, [&] { dropped = true; });
+    ASSERT_TRUE(ask(*before, initialize).find("serverInfo"));
+
+    const QByteArray token = newMcpToken();
+    server->setToken(token);
+    EXPECT_TRUE(waitFor([&] { return dropped; }));
+    EXPECT_EQ(post(list, authorised("tools/list")).status, 401);
+    QByteArray fresh = authorised("tools/list");
+    fresh.replace(kToken, token);
+    EXPECT_EQ(post(list, fresh).status, 200);
+
+    McpBridge old([](const QByteArray &) {});
+    bool refused = false;
+    QObject::connect(&old, &McpBridge::finished, [&] { refused = true; });
+    ASSERT_TRUE(old.open({server->socketName(), kToken, 0}));
+    old.fromAgent(R"({"jsonrpc": "2.0", "id": 1, "method": "ping"})" "\n");
+    EXPECT_TRUE(waitFor([&] { return refused; }));
+
+    auto renewed = bridge(token);
+    EXPECT_TRUE(ask(*renewed, initialize).find("serverInfo"));
 }
 
 TEST_F(AiMcpTest, TheBridgeSaysWhatToDoWhenNothingListens)

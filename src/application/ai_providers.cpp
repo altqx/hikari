@@ -50,6 +50,10 @@ constexpr std::pair<ErrorKind, std::string_view> kErrorKinds[] = {
     {ErrorKind::Rejected, "rejected"}, {ErrorKind::Server, "server"},
     {ErrorKind::Malformed, "malformed"}, {ErrorKind::Cancelled, "cancelled"},
 };
+constexpr std::pair<SearchService, std::string_view> kSearchServices[] = {
+    {SearchService::Brave, "brave"}, {SearchService::Tavily, "tavily"}, {SearchService::Exa, "exa"},
+    {SearchService::Firecrawl, "firecrawl"},
+};
 constexpr std::pair<Role, std::string_view> kRoleIds[] = {
     {Role::Chat, "chat"}, {Role::Translator, "translator"}, {Role::Reviewer, "reviewer"},
     {Role::Vision, "vision"}, {Role::Judge, "judge"},
@@ -77,6 +81,26 @@ std::string_view presetId(Preset preset) { return toId(kPresets, preset); }
 std::optional<Preset> presetFromId(std::string_view id) { return fromId(kPresets, id); }
 std::string_view roleId(Role role) { return toId(kRoleIds, role); }
 std::optional<Role> roleFromId(std::string_view id) { return fromId(kRoleIds, id); }
+std::string_view searchServiceId(SearchService service) { return toId(kSearchServices, service); }
+std::optional<SearchService> searchServiceFromId(std::string_view id) { return fromId(kSearchServices, id); }
+std::string searchKeyEntry(SearchService service) { return "search:" + std::string(searchServiceId(service)); }
+
+bool searchesNatively(const Provider &provider)
+{
+    switch (provider.preset) {
+    case Preset::Anthropic:
+        return provider.wire == Wire::AnthropicMessages;
+    case Preset::OpenAI:
+        return provider.wire == Wire::Responses;
+    case Preset::Gemini:
+        return provider.wire == Wire::Gemini;
+    case Preset::OpenRouter:
+        return provider.wire == Wire::ChatCompletions;
+    case Preset::Custom:
+        return false;
+    }
+    return false;
+}
 std::optional<StopReason> stopReasonFromId(std::string_view id) { return fromId(kStopReasons, id); }
 std::string_view errorKindId(ErrorKind kind) { return toId(kErrorKinds, kind); }
 std::optional<ErrorKind> errorKindFromId(std::string_view id) { return fromId(kErrorKinds, id); }
@@ -340,6 +364,48 @@ void Providers::readKey(const std::string &providerId, std::function<void(std::o
             return;
         }
         m_keyCache[providerId] = *key;
+        done(*key);
+    });
+}
+
+void SearchKeys::store(SearchService service, std::string key, std::function<void(std::optional<SaveError>)> done)
+{
+    if (key.empty()) {
+        done(SaveError::Key);
+        return;
+    }
+    m_keys.write(searchKeyEntry(service), key,
+                 [this, service, key, done = std::move(done)](std::optional<KeyError> error) {
+                     if (error) {
+                         done(saveErrorOf(*error));
+                         return;
+                     }
+                     m_cache[service] = key;
+                     done(std::nullopt);
+                 });
+}
+
+void SearchKeys::remove(SearchService service, std::function<void(std::optional<SaveError>)> done)
+{
+    m_cache.erase(service);
+    m_keys.remove(searchKeyEntry(service), [done = std::move(done)](std::optional<KeyError> error) {
+        done(error && *error != KeyError::NotFound ? std::optional(saveErrorOf(*error)) : std::nullopt);
+    });
+}
+
+void SearchKeys::read(SearchService service, std::function<void(std::optional<std::string>)> done)
+{
+    if (const auto it = m_cache.find(service); it != m_cache.end()) {
+        done(it->second);
+        return;
+    }
+    m_keys.read(searchKeyEntry(service), [this, service, done = std::move(done)](KeyResult result) {
+        auto *key = std::get_if<std::string>(&result);
+        if (!key || key->empty()) {
+            done(std::nullopt);
+            return;
+        }
+        m_cache[service] = *key;
         done(*key);
     });
 }

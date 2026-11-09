@@ -70,6 +70,15 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
+    test("offers the frame tools in typeset, with full instead of maxPixels on video_frame", () => {
+        const typeset = kOwn.entries.filter((e) => e.group === "typeset").map((e) => e.tool.name).sort();
+        expect(typeset).toEqual(["video_colours", "video_frame", "video_ink_bounds", "video_keyframes"]);
+        const frame = kOwn.entries.find((e) => e.tool.name === "video_frame")!.tool.inputSchema as any;
+        expect(Object.keys(frame.properties).sort()).toEqual(["crop", "document", "frame", "full", "line", "maxEdge", "subtitles"]);
+        expect(frame.properties.full.type).toBe("boolean");
+        expect(frame.additionalProperties).toBe(false);
+    });
+
     test("names tools, not HA1 operations, in every description", () => {
         const operations = reference.operations.map((op) => op.name);
         for (const { tool } of kOwn.entries) {

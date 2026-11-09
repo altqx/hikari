@@ -1508,6 +1508,10 @@ TEST_F(LuaHelper, NativePreloadsMatchTheLegacyModules)
                                            "false,true"}));
     EXPECT_EQ(logOf("RegexTraced"), (QStringList{"0"}));
     EXPECT_EQ(logOf("Unicode"), (QStringList{QStringLiteral("STRASSE,àéî,strasse"), "3,26085"}));
+    EXPECT_EQ(logOf("Graphemes"), (QStringList{QStringLiteral("กิ|น|น้ำ,e\u0301|a,"),
+                                               QStringLiteral("👨‍👩‍👧|!,🇹🇭|🇯🇵|🇹"), "1 2 1,1 1,3 2", "1"}));
+    EXPECT_EQ(logOf("GraphemesFallback"),
+              (QStringList{QStringLiteral("true,กิ|น|น้ำ,e\u0301|a"), QStringLiteral("👨‍👩‍👧|!,3 2")}));
     EXPECT_EQ(logOf("Lpeg"), (QStringList{"4,0.10"}));
     EXPECT_EQ(logOf("Luabins"), (QStringList{"true,1,two,3"}));
     EXPECT_EQ(logOf("Lfs"), (QStringList{"true", "directory,nil", "true", "file,0,nil", "a.txt", "nil,nil",
@@ -1590,7 +1594,7 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     for (const char *firstParty : {"macro-1-edgeblur.lua", "macro-2-mkfullwitdh.lua", "strip-tags.lua",
                                    "cleantags-autoload.lua", "karaoke-auto-leadin.lua", "kara-templater.lua",
                                    "select-overlaps.moon", "BezierToText.lua", "gradient-factory.lua",
-                                   "skew gradient.lua", "a-mo.Aegisub-Motion.moon",
+                                   "skew gradient.lua", "fsp-to-pos.lua", "a-mo.Aegisub-Motion.moon",
                                    "l0.DependencyControl.Toolbox.moon"}) {
         const auto it = results.find(QString::fromLatin1(firstParty));
         ASSERT_NE(it, results.end()) << firstParty;

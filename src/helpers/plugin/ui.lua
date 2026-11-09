@@ -27,6 +27,10 @@ hikari.panels = {
         needId("hikari.panels.on", panel)
         listen("panel:" .. panel, fn)
     end,
+    post = function(panel, data)
+        needId("hikari.panels.post", panel)
+        return answered(ui("panels.post", { panel = panel, data = data })).delivered
+    end,
 }
 
 hikari.dialogs = {

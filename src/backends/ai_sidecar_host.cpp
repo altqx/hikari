@@ -354,8 +354,12 @@ void AiSidecarHost::receive(const QByteArray &line)
         if (method->asString() == kCancelRequest) {
             if (const api::Json *request = params ? params->find("requestId") : nullptr)
                 cancelIncoming(*request);
-        } else if (m_onNotification && m_state == State::Ready) {
-            m_onNotification(method->asString(), params ? *params : api::Json());
+        } else if (m_state == State::Ready) {
+            const bool session = method->asString() == "session/update" && params && params->find("sessionId");
+            if (session && m_onSessionUpdate)
+                m_onSessionUpdate(method->asString(), *params);
+            else if (!session && m_onNotification)
+                m_onNotification(method->asString(), params ? *params : api::Json());
         }
         return;
     }
@@ -438,6 +442,39 @@ void AiSidecarHost::callApi(const api::Json &params, std::shared_ptr<SidecarRequ
         return request->fail(rpc::kInvalidParams, "_hikari/api.call needs an operation");
     if (!m_hikari)
         return failApi(*request, {std::string(api::errors::kUnavailable), "Hikari's API isn't available", {}});
+    const api::Json *operationParams = params.find("params");
+    const api::Json callParams = operationParams ? *operationParams : api::Json();
+    if (const api::Json *session = params.find("session")) {
+        if (!session->isString() || !m_sessionGate)
+            return failApi(*request, {std::string(api::errors::kUnavailable), "No agent thread takes this call", {}});
+        auto withdrawn = std::make_shared<bool>(false);
+        auto admit = [this, alive = std::weak_ptr(m_alive), request, withdrawn, name = operation->asString(),
+                      callParams](std::expected<Admission, api::Error> admitted) {
+            if (*withdrawn || !alive.lock() || !request->open())
+                return;
+            if (!admitted)
+                return failApi(*request, std::move(admitted.error()));
+            m_hikari->call(admitted->caller, name, callParams,
+                           [request, ran = std::move(admitted->ran)](api::Result result) {
+                               if (ran)
+                                   ran(result);
+                               if (result)
+                                   return request->respond(std::move(*result));
+                               failApi(*request, std::move(result.error()));
+                           });
+        };
+        auto onWithdraw = [weak = std::weak_ptr(request), withdrawn](std::function<void()> then) {
+            if (const auto held = weak.lock())
+                held->onCancel([weak, withdrawn, then = std::move(then)] {
+                    *withdrawn = true;
+                    if (then)
+                        then();
+                    if (const auto open = weak.lock(); open && open->open())
+                        open->fail(rpc::kRequestCancelled, "cancelled");
+                });
+        };
+        return m_sessionGate(session->asString(), operation->asString(), callParams, std::move(admit), std::move(onWithdraw));
+    }
     api::Caller caller = m_caller;
     if (const api::Json *mcp = params.find("mcp")) {
         if (!m_mcpGate)
@@ -446,9 +483,12 @@ void AiSidecarHost::callApi(const api::Json &params, std::shared_ptr<SidecarRequ
         if (!gated)
             return failApi(*request, std::move(gated.error()));
         caller = std::move(*gated);
+    } else if (m_sessionGate) {
+        const api::Operation *op = api::Api::registry().find(operation->asString());
+        if (op && op->access == api::Access::Write)
+            return failApi(*request, {std::string(api::errors::kRefused), "A write needs an agent thread.", {}});
     }
-    const api::Json *operationParams = params.find("params");
-    m_hikari->call(caller, operation->asString(), operationParams ? *operationParams : api::Json(),
+    m_hikari->call(caller, operation->asString(), callParams,
                    [request = std::move(request)](api::Result result) {
                        if (result)
                            return request->respond(std::move(*result));

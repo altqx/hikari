@@ -3,7 +3,11 @@
 #include "hikari/app/ai_features.h"
 #include "settings_store.h"
 
+#include <QCoreApplication>
 #include <QDebug>
+#include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace hikari::app {
 
@@ -64,6 +68,62 @@ void AiMcp::apply()
     } else if (!http) {
         m_server->closeHttp();
     }
+    save();
+    emit changed();
+}
+
+QString AiMcp::program()
+{
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    return QDir::toNativeSeparators(appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage);
+}
+
+namespace {
+
+QString tomlString(QString text)
+{
+    text.replace(QLatin1Char('\\'), QStringLiteral("\\\\")).replace(QLatin1Char('"'), QStringLiteral("\\\""));
+    return QLatin1Char('"') + text + QLatin1Char('"');
+}
+
+}
+
+QString AiMcp::claudeCodeSetup() const
+{
+    return QStringLiteral("claude mcp add hikari -- \"%1\" --mcp").arg(program());
+}
+
+QString AiMcp::codexSetup() const
+{
+    return QStringLiteral("[mcp_servers.hikari]\ncommand = %1\nargs = [\"--mcp\"]\n").arg(tomlString(program()));
+}
+
+QString AiMcp::httpSetup() const
+{
+    if (!m_server || m_server->httpPort() == 0)
+        return {};
+    const QJsonObject hikari{
+        {QStringLiteral("type"), QStringLiteral("http")},
+        {QStringLiteral("url"), QStringLiteral("http://127.0.0.1:%1/mcp").arg(m_server->httpPort())},
+        {QStringLiteral("headers"),
+         QJsonObject{{QStringLiteral("Authorization"), QStringLiteral("Bearer ") + QString::fromLatin1(m_endpoint.token)}}}};
+    const QJsonObject servers{{QStringLiteral("mcpServers"), QJsonObject{{QStringLiteral("hikari"), hikari}}}};
+    return QString::fromUtf8(QJsonDocument(servers).toJson(QJsonDocument::Indented));
+}
+
+QVariantMap AiMcp::setup() const
+{
+    return {{QStringLiteral("claudeCode"), claudeCodeSetup()},
+            {QStringLiteral("codex"), codexSetup()},
+            {QStringLiteral("json"), httpSetup()},
+            {QStringLiteral("port"), int(m_endpoint.port)}};
+}
+
+void AiMcp::resetToken()
+{
+    m_endpoint.token = backends::ai::newMcpToken();
+    if (m_server)
+        m_server->setToken(m_endpoint.token);
     save();
     emit changed();
 }
