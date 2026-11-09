@@ -3833,6 +3833,61 @@
    ]
   },
   {
+   "role": "motion-apply",
+   "file": "motion-apply.svg",
+   "label": "Apply motion data",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "motion-revert",
+   "file": "motion-revert.svg",
+   "label": "Revert motion data",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "motion-copy",
+   "file": "motion-copy.svg",
+   "label": "Copy motion data from lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "motion-extend",
+   "file": "motion-extend.svg",
+   "label": "Extend tracked lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "move-extend",
+   "file": "move-extend.svg",
+   "label": "Extrapolate \\move to the line",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "frame-copy-subtitles",
    "file": "frame-copy-subtitles.svg",
    "label": "Copy frame with subtitles to clipboard",

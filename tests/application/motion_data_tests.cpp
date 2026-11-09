@@ -572,7 +572,9 @@ TEST(MotionData, ExtendTrackFitsEverySeriesOnBothEnds)
     EXPECT_NEAR(out.track.y.back(), 110, 1e-9);
     EXPECT_NEAR(out.track.scaleX.back(), 100, 1e-9);
     EXPECT_NEAR(out.track.rotation.front(), 4, 1e-9);
-    EXPECT_EQ(out.confidence, app::FitConfidence::Good);
+    EXPECT_EQ(out.confidence(), app::FitConfidence::Good);
+    ASSERT_TRUE(out.before && out.after);
+    EXPECT_EQ((*out.before)[0].degree(), 1);
 }
 
 TEST(MotionData, ExtendTrackedLinesGrowsTheEndLineAndTracksIt)
@@ -583,9 +585,13 @@ TEST(MotionData, ExtendTrackedLinesGrowsTheEndLineAndTracksIt)
         app::EditSession session = trackedSign(times, trackOf(frames, 10, 0, 0));
         selectAll(session);
         const auto steps = session.historySize();
-        const auto confidence = app::extendTrackedLines(session, times, 2, at, false);
-        ASSERT_TRUE(confidence);
-        EXPECT_EQ(*confidence, app::FitConfidence::Good);
+        const auto checked = app::checkExtend(session, times, 2, at);
+        ASSERT_TRUE(checked);
+        EXPECT_EQ(session.historySize(), steps);
+        const auto fits = app::extendTrackedLines(session, times, 2, at, false);
+        ASSERT_TRUE(fits);
+        EXPECT_EQ(app::worstConfidence(*fits), app::FitConfidence::Good);
+        EXPECT_EQ((*fits)[0].degree(), 1);
         EXPECT_EQ(session.historySize(), steps + 1);
         EXPECT_EQ(lastStep(session), "Extend tracked lines");
         const auto texts = textsOf(session.document());

@@ -9,6 +9,7 @@
 #include "hikari/json/json.h"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cmath>
 #include <cstdio>
@@ -590,29 +591,57 @@ std::expected<MotionTrack, DeriveFailure> deriveMotion(const EditSession &sessio
     return out;
 }
 
+namespace {
+
+constexpr std::array kSeries{&MotionTrack::x, &MotionTrack::y, &MotionTrack::scaleX, &MotionTrack::scaleY,
+                             &MotionTrack::rotation};
+
+SeriesFits extendSeries(MotionTrack &out, const MotionTrack &given, int frames, ExtendAt at, bool keepGiven)
+{
+    SeriesFits fits;
+    for (std::size_t i = 0; i < kSeries.size(); ++i) {
+        const std::vector<double> &values = given.*kSeries[i];
+        Extension e = extendValues(values, frames, at);
+        fits[i] = e.fit;
+        std::vector<double> &target = out.*kSeries[i];
+        if (!keepGiven) {
+            target = std::move(e.values);
+        } else if (at == ExtendAt::Start) {
+            e.values.pop_back();
+            target.insert(target.begin(), e.values.begin(), e.values.end());
+        } else {
+            target.insert(target.end(), e.values.begin() + 1, e.values.end());
+        }
+    }
+    return fits;
+}
+
+}
+
+FitConfidence worstConfidence(const SeriesFits &fits)
+{
+    FitConfidence out = FitConfidence::Good;
+    for (const auto &fit : fits)
+        out = std::max(out, fit.confidence());
+    return out;
+}
+
+FitConfidence ExtendedTrack::confidence() const
+{
+    return std::max(before ? worstConfidence(*before) : FitConfidence::Good,
+                    after ? worstConfidence(*after) : FitConfidence::Good);
+}
+
 ExtendedTrack extendTrack(const MotionTrack &track, int before, int after)
 {
     ExtendedTrack out;
     out.track = track;
-    for (auto member : {&MotionTrack::x, &MotionTrack::y, &MotionTrack::scaleX, &MotionTrack::scaleY, &MotionTrack::rotation}) {
-        const std::vector<double> &given = track.*member;
-        std::vector<double> values;
-        const auto extend = [&](int frames, ExtendAt at) {
-            Extension e = extendValues(given, frames, at);
-            out.confidence = std::max(out.confidence, e.fit.confidence());
-            return e.values;
-        };
-        if (before > 0 && !given.empty()) {
-            values = extend(before, ExtendAt::Start);
-            values.pop_back();
-        }
-        values.insert(values.end(), given.begin(), given.end());
-        if (after > 0 && !given.empty()) {
-            const auto tail = extend(after, ExtendAt::End);
-            values.insert(values.end(), tail.begin() + 1, tail.end());
-        }
-        out.track.*member = std::move(values);
-    }
+    if (track.frames() == 0)
+        return out;
+    if (before > 0)
+        out.before = extendSeries(out.track, track, before, ExtendAt::Start, true);
+    if (after > 0)
+        out.after = extendSeries(out.track, track, after, ExtendAt::End, true);
     return out;
 }
 
@@ -628,18 +657,22 @@ bool animated(std::string_view text)
     return false;
 }
 
-}
+struct ExtendPlan {
+    const core::LineRecord *target = nullptr;
+    core::LineRecord grown;
+    MotionTrack track;
+    SeriesFits fits;
+};
 
-std::expected<FitConfidence, ExtendFailure> extendTrackedLines(EditSession &session, const AegisubFrameTimes &times,
-                                                               int frames, ExtendAt at, bool origin,
-                                                               const LineVisible &visible)
+std::expected<ExtendPlan, ExtendFailure> planExtend(const EditSession &session, const AegisubFrameTimes &times,
+                                                    int frames, ExtendAt at, const LineVisible &visible)
 {
     const auto lines = trackedLines(session, visible);
     const core::Document &doc = session.document();
     if (lines.size() < 2 || frames < 1)
         return std::unexpected(ExtendFailure{ExtendProblem::TooFewLines});
     const auto styles = stylesOf(doc);
-    std::vector<double> x, y, scaleX, scaleY, angle;
+    MotionTrack given;
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto *l = lines[i];
         const std::string text = narrow(l->text);
@@ -655,49 +688,61 @@ std::expected<FitConfidence, ExtendFailure> extendTrackedLines(EditSession &sess
             return std::unexpected(ExtendFailure{ExtendProblem::NoPosition, rowOf(doc, l)});
         const auto style = styles.find(narrow(l->style));
         const motion::Props props = style != styles.end() ? style->second : motion::Props{};
-        x.push_back((*block.pos)[0]);
-        y.push_back((*block.pos)[1]);
-        scaleX.push_back(block.scaleX.value_or(props.scaleX));
-        scaleY.push_back(block.scaleY.value_or(props.scaleY));
-        angle.push_back(block.angle.value_or(props.angle));
+        given.x.push_back((*block.pos)[0]);
+        given.y.push_back((*block.pos)[1]);
+        given.scaleX.push_back(block.scaleX.value_or(props.scaleX));
+        given.scaleY.push_back(block.scaleY.value_or(props.scaleY));
+        given.rotation.push_back(-block.angle.value_or(props.angle));
     }
-    MotionTrack track;
+    ExtendPlan plan;
     const Resolution res = scriptResolution(doc);
-    track.width = res.width;
-    track.height = res.height;
-    track.fps = times.fps();
-    FitConfidence confidence = FitConfidence::Good;
-    for (auto [values, member] : {std::pair{&x, &MotionTrack::x}, std::pair{&y, &MotionTrack::y},
-                                  std::pair{&scaleX, &MotionTrack::scaleX}, std::pair{&scaleY, &MotionTrack::scaleY},
-                                  std::pair{&angle, &MotionTrack::rotation}}) {
-        Extension e = extendValues(*values, frames, at);
-        confidence = std::max(confidence, e.fit.confidence());
-        track.*member = std::move(e.values);
-    }
-    std::ranges::transform(track.rotation, track.rotation.begin(), [](double a) { return -a; });
-
-    const core::LineRecord *target = at == ExtendAt::Start ? lines.front() : lines.back();
-    core::LineRecord grown = *target;
+    plan.track.width = res.width;
+    plan.track.height = res.height;
+    plan.track.fps = times.fps();
+    plan.fits = extendSeries(plan.track, given, frames, at, false);
+    plan.target = at == ExtendAt::Start ? lines.front() : lines.back();
+    plan.grown = *plan.target;
     if (at == ExtendAt::Start) {
-        const std::int64_t frame = times.frameFromMs(msOf(target->start.value)) - frames;
+        const std::int64_t frame = times.frameFromMs(msOf(plan.target->start.value)) - frames;
         if (frame <= 0)
-            return std::unexpected(ExtendFailure{ExtendProblem::BeforeVideo, rowOf(doc, target)});
-        grown.start.value = timeOf(times.msFromFrame(frame));
+            return std::unexpected(ExtendFailure{ExtendProblem::BeforeVideo, rowOf(doc, plan.target)});
+        plan.grown.start.value = timeOf(times.msFromFrame(frame));
     } else {
-        grown.end.value = timeOf(times.msFromFrame(times.frameFromMs(msOf(target->end.value)) + frames));
+        plan.grown.end.value = timeOf(times.msFromFrame(times.frameFromMs(msOf(plan.target->end.value)) + frames));
     }
-    const std::int64_t first = times.frameFromMs(msOf(grown.start.value));
-    if (times.frameFromMs(msOf(grown.end.value)) - first != track.frames())
-        return std::unexpected(ExtendFailure{ExtendProblem::Refused, rowOf(doc, target)});
+    return plan;
+}
 
+}
+
+std::expected<SeriesFits, ExtendFailure> checkExtend(const EditSession &session, const AegisubFrameTimes &times,
+                                                     int frames, ExtendAt at, const LineVisible &visible)
+{
+    const auto plan = planExtend(session, times, frames, at, visible);
+    if (!plan)
+        return std::unexpected(plan.error());
+    return plan->fits;
+}
+
+std::expected<SeriesFits, ExtendFailure> extendTrackedLines(EditSession &session, const AegisubFrameTimes &times,
+                                                            int frames, ExtendAt at, bool origin,
+                                                            const LineVisible &visible)
+{
+    const auto plan = planExtend(session, times, frames, at, visible);
+    if (!plan)
+        return std::unexpected(plan.error());
+    const core::Document &doc = session.document();
+    const std::int64_t first = times.frameFromMs(msOf(plan->grown.start.value));
+    if (times.frameFromMs(msOf(plan->grown.end.value)) - first != plan->track.frames())
+        return std::unexpected(ExtendFailure{ExtendProblem::Refused, rowOf(doc, plan->target)});
     MotionOptions options;
     options.main.relativeFrame = at == ExtendAt::Start ? frames + 1 : 1;
     options.main.rotation = true;
     options.origin = origin;
-    const auto outputs = trackedOutputs(doc, {&grown}, first, times, track, options);
-    if (!replaceLines(session, "Extend tracked lines", {target}, outputs))
-        return std::unexpected(ExtendFailure{ExtendProblem::Refused, rowOf(doc, target)});
-    return confidence;
+    const auto outputs = trackedOutputs(doc, {&plan->grown}, first, times, plan->track, options);
+    if (!replaceLines(session, "Extend tracked lines", {plan->target}, outputs))
+        return std::unexpected(ExtendFailure{ExtendProblem::Refused, rowOf(doc, plan->target)});
+    return plan->fits;
 }
 
 std::optional<std::u8string> extrapolateMove(std::u8string_view text, std::int64_t durationMs)

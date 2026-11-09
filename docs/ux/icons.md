@@ -46,6 +46,8 @@ IC3 ([#778](https://github.com/altqx/hikari/issues/778)) reviewed the roles draw
 
 KE1 ([#283](https://github.com/altqx/hikari/issues/283)) drew render-cost for "Show / hide render cost" in the Video menu and the video's context menu: a stopwatch whose accent hand marks the time the frame's subtitles took to draw.
 
+AU8 ([#842](https://github.com/altqx/hikari/issues/842)) drew five roles for Video › Tracking. motion-apply is three track points leading to an accent sign. motion-revert is the sign back at its start, with an accent arrow returning to it. motion-copy is Copy's two sheets with the track points in the accent. motion-extend is the track points carried on by two accent rings. move-extend is a `\move`'s two points with accent arrows past both ends. Copy Power-Pin track from lines takes perspective-plane, and Perspective tracking keeps tool-perspective. IC5 ([#860](https://github.com/altqx/hikari/issues/860)) reviews them with the rest of the set.
+
 ## Geometry
 
 - **Grid.** A 16 × 16 `viewBox` (`0 0 16 16`). Every coordinate, length and radius is a multiple of 0.25 unit.

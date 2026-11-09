@@ -6631,6 +6631,30 @@ Failed to copy %2 fonts.</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
+        <source>Apply motion data…</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>ย้อนกลับข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>คัดลอกข้อมูลการเคลื่อนไหวจากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>ขยายบรรทัดที่ติดตาม…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7469,6 +7493,14 @@ Failed to copy %2 fonts.</source>
         <translation>ตรวจการสะกด</translation>
     </message>
     <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>ต่อ %1 ที่กำหนดเวลาไว้ของแต่ละบรรทัดที่เลือกด้วยความเร็วเท่าเดิม ตั้งแต่ต้นจนจบบรรทัด</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>ประมาณค่า %1 นอกช่วงให้เต็มบรรทัด</translation>
+    </message>
+    <message>
         <source>Install, turn on and off, and uninstall plugins</source>
         <translation>ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
     </message>
@@ -7791,6 +7823,18 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>การติดตาม</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>ใช้ข้อมูลการเคลื่อนไหว After Effects จาก Mocha หรือ Blender กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้…</translation>
+    </message>
+    <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>ใช้ข้อมูลการติดตาม Power-Pin กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
     </message>
@@ -7809,6 +7853,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reload video</source>
         <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>เปลี่ยนบรรทัดที่ติดตามในส่วนที่เลือกกลับเป็นบรรทัดเดิมที่ใช้สร้าง</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>ย้อนกลับข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>คัดลอกตำแหน่ง มาตราส่วน และการหมุนของบรรทัดแบบทีละเฟรมที่เลือกเป็นข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>คัดลอกข้อมูลการเคลื่อนไหวจากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>คัดลอกระนาบเพอร์สเปกทีฟของบรรทัดที่เลือกเป็นข้อมูล Power-Pin โดยเป็นสี่เหลี่ยมหนึ่งรูปต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>ประมาณการเคลื่อนไหวของบรรทัดแบบทีละเฟรมที่เลือก แล้วต่อการเคลื่อนไหวนั้นไปอีกหลายเฟรม</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>ขยายบรรทัดที่ติดตาม…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -16780,6 +16856,320 @@ Styles deleted:
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>มาตราส่วน</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>เลือกบรรทัดตั้งแต่สองบรรทัดขึ้นไป เฟรมละหนึ่งบรรทัด</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>บรรทัด %1 ไม่ใช่เฟรมถัดไปของป้าย: แต่ละบรรทัดต้องครอบคลุมหนึ่งเฟรมและต่อจากบรรทัดก่อนหน้า โดยมีข้อความและชั้นเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>บรรทัด %1 มีแอนิเมชัน (\t, \move, \fad หรือคาราโอเกะ) ให้ขยายบรรทัดที่อยู่นิ่งในแต่ละเฟรม</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>บรรทัด %1 ไม่มี \pos</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>วิดีโอมีน้อยกว่า %n เฟรมก่อนบรรทัด %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>ขยายบรรทัดไม่ได้</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>วางข้อมูลคีย์เฟรม After Effects ที่ส่งออกจาก Mocha หรือ Blender ปุ่มนำไปใช้จะอ่านตำแหน่ง มาตราส่วน และการหมุนจากข้อมูลนั้น</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>นี่ไม่ใช่ข้อมูลการเคลื่อนไหว: ไม่พบข้อมูลคีย์เฟรม After Effects ที่มีตำแหน่ง มาตราส่วน และการหมุน</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>ข้อมูลเริ่มที่เฟรม %1 และเลยเฟรมสุดท้ายของส่วนที่เลือก เลือกจุดเริ่มที่เร็วกว่านี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>ข้อมูล %n เฟรมสำหรับ %1 เฟรม: ประมาณค่านอกช่วงก่อนหน้า %2 เฟรม หลัง %3 เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1 เข้ากันได้ไม่ดีในช่วงต้น ตรวจสอบเฟรม %2–%3</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1 เข้ากันได้ไม่ดีในช่วงท้าย ตรวจสอบเฟรม %2–%3</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>ข้อมูลมี %n เฟรม แต่บรรทัดที่เลือกครอบคลุม %1 เฟรม (%2–%3) เลือกบรรทัดที่ครอบคลุมเฟรมที่ติดตาม หรือประมาณค่านอกช่วง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>วางข้อมูลที่คลิปจะเคลื่อนตาม</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>นี่ไม่ใช่ข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>ข้อมูลคลิปมี %n เฟรม แต่ข้อมูลการเคลื่อนไหวมี %1 เฟรม</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n เฟรม ย้ายคลิปตั้งแต่เฟรม %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>ข้อมูลไม่ครอบคลุมเฟรมของบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>ไม่มีบรรทัดที่เลือกที่มีข้อมูลการเคลื่อนไหวให้ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการเคลื่อนไหวเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>เลือกบรรทัดของป้ายเดียวกันตั้งแต่สองบรรทัดขึ้นไป ทีละเฟรม</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>บรรทัด %1 ไม่ได้ต่อจากบรรทัดก่อนหน้าที่มีข้อความและชั้นเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>บรรทัด %1 ไม่มี \pos หรือ \move</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>คัดลอกข้อมูลการเคลื่อนไหว %n เฟรมแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>เลือกบรรทัดที่จะคัดลอก</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>บรรทัด %1 ซ้อนทับกับบรรทัดอื่นที่เลือก คัดลอกทีละป้าย</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>บรรทัด %1 มี \move ซึ่งแทร็ก Power-Pin เก็บไว้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>วัดขนาดข้อความของบรรทัด %1 ไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>คัดลอกข้อมูล Power-Pin %n เฟรมแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>ประมาณค่า \move นอกช่วงใน %n บรรทัดแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>ไม่มีบรรทัดที่เลือกที่มี \move พร้อมเวลาเริ่มและเวลาสิ้นสุด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>ประมาณตำแหน่ง มาตราส่วน และการหมุนจาก %n บรรทัดที่เลือก (ดีกรี %1 ความคลาดเคลื่อน %2 px)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1 เข้ากันได้ไม่ดี (ความคลาดเคลื่อน %2) ตรวจสอบเฟรมใหม่</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>ไฟล์ใหญ่เกินกว่าจะเป็นข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>อ่านไฟล์ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>วาง</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>เปิดไฟล์…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>เปิดข้อมูลการติดตาม</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>ข้อมูลการติดตาม (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>ข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>ข้อมูลคลิป</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>เคลื่อนตาม</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>ค่าสัมบูรณ์</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>ตำแหน่ง x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>ตำแหน่ง y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>ตัวคูณความเบลอ เป็นเปอร์เซ็นต์</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>คลิปสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>คลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>สี่เหลี่ยมเป็นเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>เฉพาะคลิป</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>ติดตามคลิปด้วยข้อมูลอื่น</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>ตรึงการแปลงและการจาง</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>บรรทัดเดียวด้วย %1 และ %2</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>ประมาณค่าเลยช่วงข้อมูล</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>ข้อมูลเริ่มที่เฟรม</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>ขยายบรรทัดที่ติดตาม</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>เพิ่ม</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>จำนวนเฟรมที่จะเพิ่ม</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>เฟรม</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>ก่อนบรรทัดแรก</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>หลังบรรทัดสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>ตำแหน่งที่จะเพิ่ม</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>ย้ายจุดศูนย์กลาง (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>ขยาย</translation>
     </message>
 </context>
 <context>

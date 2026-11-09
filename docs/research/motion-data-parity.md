@@ -15,7 +15,7 @@ AU8 #842. What the bundled Aegisub-Motion 1.0.9 (`a-mo.Aegisub-Motion.moon`, Mot
 
 ## Results
 
-"Match" means native output equals the golden after the tags are sorted. **D*n*** is a proposed ledger departure (`docs/compatibility-decisions.md`).
+"Match" means native output equals the golden after the tags are sorted. **D*n*** is a ledgered departure, accepted 2026-11-09 (Q201–Q206): [AU8-motion-data](../compatibility-decisions.md#au8-motion-data). A case that departs keeps a native golden in `tests/fixtures/motion-data/native/` that names its departures.
 
 ### Data and options
 
@@ -62,7 +62,7 @@ Values are rounded to 2 decimals and written with `%g`, so trailing zeros are dr
 | Behaviour | a-mo | Native |
 |---|---|---|
 | Style values | When missing from the first block, it adds `\fscx` `\fscy` (when scaling), `\bord`, `\shad` (style value ≠ 0) and `\frz` (when rotating, even `\frz0`). The same goes after each `\r`, with that style's values (`style-reset`, `no-outline-style`). | Match |
-| Alphas, with **Interpolate transforms** (on by default) | Adds `\1a` `\3a` `\4a` (and `\2a` with karaoke) or `\alpha&H00&`, even when the Line has no fade (`defaults`, `karaoke`, `no-outline-style`) | Match. Dropping them when there's no `\fad`/`\fade` would be cleaner, but it's a departure; I'm asking. |
+| Alphas, with **Interpolate transforms** (on by default) | Adds `\1a` `\3a` `\4a` (and `\2a` with karaoke) or `\alpha&H00&`, even when the Line has no fade (`defaults`, `karaoke`, `no-outline-style`) | **D13**: added only when the Line has a fade to bake. 27 cases differ from a-mo by these alphas alone. |
 | **Clip only** | Clips move. `\pos` stays, but the style tags above are still added (`clip-only`). | Match |
 
 ### Clips
@@ -129,7 +129,7 @@ These four scripts aren't bundled (Q186), so they set no byte-identical target. 
 | petzku.ExtrapolateMove | A 6-argument `\move` (the first one); 4-argument moves are left alone | `\move(%.2f,%.2f,%.2f,%.2f)`: the move's velocity carried back to time 0 and on to the Line's duration, so the 4-argument move covers the whole Line. Equal t1 and t2 divide by zero. | **Extrapolate \move to the line**: the same formula and format; equal times are refused. |
 | phos.ExtrapolateTracking | Frame-by-frame Lines (same layer and text, touching times, no animation); their effective `\pos`, `\fscx`, `\fscy` and `\frz` | For each value it fits degree 1–3 by k-fold cross-validation (k = 80 % of the points), stopping at RMSE < 0.01. While RMSE ≥ 0.003 and there are at least 8 points, it halves the window towards the extended end. RMSE > 0.2 is "LOW CONFIDENCE", > 5 "VERY LOW". It then extends the first or last Line by N frames and runs a-mo's Apply on it (Interpolate transforms, origin optional, every other option on). Numbers go through Lua `tostring`. | **Extend tracked lines…**, plus the dialog's **Extrapolate past the data** for data shorter than the Lines. Same fit and thresholds; the confidence shows in the status line. The grown Line goes through the whole native Apply, so style tags are added and tags deduped as in Apply. phos calls a-mo's frame step without its preparation and clean-up passes. Lines must cover one frame each; `\t`, `\move`, `\fad` and `\k` are refused. One step, "Extend tracked lines". |
 
-## Proposed departures
+## Departures
 
 | Id | Departure |
 |---|---|
@@ -145,3 +145,4 @@ These four scripts aren't bundled (Q186), so they set no byte-identical target. 
 | D10 | Fixed tag order (N1) and fixed callback order (N2) |
 | D11 | Export Power Pin is one command: the saved plane, else the tags (arch has two) |
 | D12 | Derive and Export write the video's fps, not a fixed 23.976 |
+| D13 | With Bake transforms on, the Style's alphas are added only when a fade is baked |

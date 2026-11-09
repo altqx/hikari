@@ -956,6 +956,19 @@ COPY_FRONT = rect(2.5, 4.5, 8, 10, 1)
 icon("frame-snapshot-subtitles", "Save frame with subtitles as PNG", [], [VIDEOMENU],
      CAMERA_TALL + circle(8, 7, 1.75) + accent(stroke("M4.5 10.5h7M6 12.5h4")))
 icon("frame-copy", "Copy frame to clipboard", [], [VIDEOMENU], COPY_BACK + COPY_FRONT + accent(circle(6.5, 9.5, 2)))
+TRACK_POINTS = dot(2.5, 13.5, 1) + dot(4.75, 11.25, 1) + dot(7, 9, 1)
+icon("motion-apply", "Apply motion data", [], [VIDEO],
+     TRACK_POINTS + accent(rect(8.5, 2.5, 6, 4.5, 1), stroke("M10.5 4.75h2")))
+icon("motion-revert", "Revert motion data", [], [VIDEO],
+     rect(1.5, 9.5, 6, 4.5, 1) + dot(11, 10.5, 1) + dot(13.5, 13, 1)
+     + accent(stroke("M6.5 1.5l-2 2 2 2"), stroke("M4.5 3.5h6a3 3 0 0 1 3 3v1")))
+icon("motion-copy", "Copy motion data from lines", [], [VIDEO],
+     COPY_BACK + COPY_FRONT + accent(dot(4.75, 12, 1), dot(6.5, 9.75, 1), dot(8.25, 7.5, 1)))
+icon("motion-extend", "Extend tracked lines", [], [VIDEO],
+     TRACK_POINTS + accent(circle(10, 6.5, 1), circle(13, 3.5, 1)))
+icon("move-extend", "Extrapolate \\move to the line", [], [VIDEO],
+     stroke("M5.5 8h5") + dot(5.5, 8, 1.5) + dot(10.5, 8, 1.5)
+     + accent(stroke("M1.5 8h2M12.5 8h2M3 6.5L1.5 8 3 9.5M13 6.5l1.5 1.5-1.5 1.5")))
 icon("frame-copy-subtitles", "Copy frame with subtitles to clipboard", [], [VIDEOMENU],
      COPY_BACK + COPY_FRONT + circle(6.5, 7.5, 1.5) + accent(stroke("M4.5 10.5h4M5.5 12.5h2")))
 icon("subtitles-snapshot", "Save subtitles as PNG", [], ["video-context-menu"],

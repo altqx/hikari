@@ -38,6 +38,7 @@
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_drawing.h"
 #include "hikari/application/grid_split.h"
+#include "hikari/application/motion_data.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -9074,6 +9075,140 @@ private slots:
         QCOMPARE(session->selection().selected.size(), std::size_t(frames));
         QVERIFY(application->video().unloadVideo());
         QTRY_VERIFY(!action->property("enabled").toBool());
+        application->editor().discard();
+    }
+
+    void motionDataAppliesCopiesExtendsAndReverts()
+    {
+        const QString path = dir.filePath(QStringLiteral("motion.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.20,Default,,0,0,0,,{\\pos(320,180)}Sign\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto selectAll = [&] {
+            application::Selection all;
+            for (const auto *l : session->document().lines())
+                all.selected.insert(l->id);
+            all.active = *all.selected.begin();
+            session->setSelection(all);
+        };
+        const auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        const auto action = [&](const char *item) {
+            return root->findChild<QObject *>(QLatin1String(item))->property("action").value<QObject *>();
+        };
+        selectAll();
+        QObject *apply = action("applyMotionDataMenuItem");
+        QVERIFY(apply);
+        QVERIFY(!apply->property("enabled").toBool());
+        QVERIFY(action("revertMotionDataMenuItem")->property("enabled").toBool());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(apply->property("enabled").toBool(), 20000);
+        const int frames = application->motionDataValues().value(QStringLiteral("frames")).toInt();
+        QVERIFY(frames > 2);
+        const auto data = [](int count) {
+            QString out = QStringLiteral("Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t25\n\tSource Width\t640\n"
+                                         "\tSource Height\t360\n\nPosition\n\tFrame\tX pixels\tY pixels\tZ pixels\n");
+            for (int i = 0; i < count; ++i)
+                out += QStringLiteral("\t%1\t%2\t180\t0\n").arg(i).arg(320 + 4 * i);
+            out += QStringLiteral("\nScale\n\tFrame\tX percent\tY percent\tZ percent\n");
+            for (int i = 0; i < count; ++i)
+                out += QStringLiteral("\t%1\t100\t100\t100\n").arg(i);
+            out += QStringLiteral("\nRotation\n\tFrame\tDegrees\n");
+            for (int i = 0; i < count; ++i)
+                out += QStringLiteral("\t%1\t0\n").arg(i);
+            return out + QStringLiteral("\nEnd of Keyframe Data\n");
+        };
+        QGuiApplication::clipboard()->setText(data(frames));
+        QVERIFY(QMetaObject::invokeMethod(apply, "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("motionDataDialog"))) &&
+                    dialog->property("visible").toBool());
+        QQuickItem *box = dialogItem("motionDataDialog", "motionDataText");
+        QCOMPARE(box->property("text").toString(), data(frames));
+        QQuickItem *applyButton = dialogItem("motionDataDialog", "motionDataApply");
+        QVERIFY(applyButton->property("enabled").toBool());
+        QQuickItem *extrapolate = dialogItem("motionDataDialog", "motionDataExtrapolate");
+        QVERIFY(!extrapolate->property("enabled").toBool());
+        box->setProperty("text", data(frames - 1));
+        QTRY_VERIFY(!applyButton->property("enabled").toBool());
+        QVERIFY(dialogItem("motionDataDialog", "motionDataStatus")->property("text").toString().contains(QStringLiteral("extrapolate")));
+        QTRY_VERIFY(extrapolate->property("enabled").toBool());
+        extrapolate->setProperty("checked", true);
+        QTRY_VERIFY(applyButton->property("enabled").toBool());
+        extrapolate->setProperty("checked", false);
+        box->setProperty("text", data(frames));
+        QTRY_VERIFY(applyButton->property("enabled").toBool());
+        auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(applyButton, "click"));
+        QTRY_VERIFY2(!dialog->property("visible").toBool(),
+                     qPrintable(dialogItem("motionDataDialog", "motionDataStatus")->property("text").toString()));
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Apply motion data"));
+        QCOMPARE(session->document().lines().size(), std::size_t(frames));
+        QCOMPARE(session->selection().selected.size(), std::size_t(frames));
+        QVERIFY2(text(1).contains(QStringLiteral("\\pos(324,180)")), qPrintable(text(1)));
+
+        selectAll();
+        QVERIFY(QMetaObject::invokeMethod(action("copyMotionDataMenuItem"), "trigger"));
+        const QByteArray copied = QGuiApplication::clipboard()->text().toUtf8();
+        const auto track = application::parseMotionData(
+            std::u8string_view(reinterpret_cast<const char8_t *>(copied.constData()), std::size_t(copied.size())));
+        QVERIFY(track);
+        QCOMPARE(track->frames(), frames);
+        QCOMPARE(track->x.back(), 320.0 + 4 * (frames - 1));
+
+        QVERIFY(QMetaObject::invokeMethod(action("extendTrackedLinesMenuItem"), "trigger"));
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("extendTrackingDialog"))) &&
+                    dialog->property("visible").toBool());
+        dialogItem("extendTrackingDialog", "extendTrackingFrames")->setProperty("value", 2);
+        dialogItem("extendTrackingDialog", "extendTrackingAt")->setProperty("currentIndex", 1);
+        QTRY_VERIFY(dialogItem("extendTrackingDialog", "extendTrackingStatus")->property("text").toString().contains(QStringLiteral("degree 1")));
+        before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("extendTrackingDialog", "extendTrackingApply"), "click"));
+        QTRY_VERIFY2(!dialog->property("visible").toBool(),
+                     qPrintable(dialogItem("extendTrackingDialog", "extendTrackingStatus")->property("text").toString()));
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Extend tracked lines"));
+        QCOMPARE(session->document().lines().size(), std::size_t(frames + 2));
+        QVERIFY2(text(std::size_t(frames + 1)).contains(QStringLiteral("\\pos(%1,180)").arg(320 + 4 * (frames + 1))),
+                 qPrintable(text(std::size_t(frames + 1))));
+
+        selectAll();
+        QVERIFY(QMetaObject::invokeMethod(action("revertMotionDataMenuItem"), "trigger"));
+        QCOMPARE(session->history().back().name, std::string("Revert motion data"));
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+        QCOMPARE(text(0), QStringLiteral("{\\pos(320,180)}Sign"));
+
+        const core::LineId only = session->document().lines()[0]->id;
+        QVERIFY(session->run(application::Command{"Edit", session->revision(), {only}, [&](core::Document &d) {
+            return d.editLine(only, [](core::LineRecord &l) { l.text = u8"{\\move(100,100,200,100,100,200)}Sign"; });
+        }}));
+        selectAll();
+        const auto *line = session->document().lines()[0];
+        const auto expected = application::extrapolateMove(line->text, (line->end.value.microseconds() - line->start.value.microseconds()) / 1000);
+        QVERIFY(expected);
+        QVERIFY(QMetaObject::invokeMethod(action("extrapolateMoveMenuItem"), "trigger"));
+        QCOMPARE(session->history().back().name, std::string("Extrapolate \\move"));
+        QCOMPARE(session->document().lines()[0]->text, *expected);
+
+        QVERIFY(application->video().unloadVideo());
+        QTRY_VERIFY(!apply->property("enabled").toBool());
+        QVERIFY(action("extrapolateMoveMenuItem")->property("enabled").toBool());
         application->editor().discard();
     }
 
@@ -20246,7 +20381,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 297);
+        QCOMPARE(hotkeyRows().size(), 303);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

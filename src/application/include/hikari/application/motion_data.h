@@ -5,6 +5,7 @@
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/motion_fit.h"
 
+#include <array>
 #include <cstdint>
 #include <expected>
 #include <optional>
@@ -74,11 +75,16 @@ struct DeriveFailure {
 std::expected<MotionTrack, DeriveFailure> deriveMotion(const EditSession &session, const AegisubFrameTimes &times,
                                                       const LineVisible &visible = {});
 
-// The track with `before` frames fitted ahead of its first and `after` behind its last, each
-// series on its own fit; the worst fit's confidence.
+// One fit a series: x, y, scale x, scale y, rotation.
+using SeriesFits = std::array<PolynomialFit, 5>;
+FitConfidence worstConfidence(const SeriesFits &fits);
+
+// The track with `before` frames fitted ahead of its first and `after` behind its last, each series on
+// its own fit.
 struct ExtendedTrack {
     MotionTrack track;
-    FitConfidence confidence = FitConfidence::Good;
+    std::optional<SeriesFits> before, after;
+    FitConfidence confidence() const;
 };
 ExtendedTrack extendTrack(const MotionTrack &track, int before, int after);
 
@@ -87,12 +93,15 @@ struct ExtendFailure {
     ExtendProblem problem;
     int row = 0;
 };
-// The selected frame-by-frame Lines' first-block \pos, \fscx, \fscy and \frz fitted on past the
-// first or last Line by `frames`; that Line grows to cover them and has the fit applied as motion
+// The selected frame-by-frame Lines' first-block \pos, \fscx, \fscy and \frz, one Line a frame, fitted
+// on past the first or last Line by `frames`.
+std::expected<SeriesFits, ExtendFailure> checkExtend(const EditSession &session, const AegisubFrameTimes &times,
+                                                     int frames, ExtendAt at, const LineVisible &visible = {});
+// checkExtend's fit, then that Line grows to cover the new frames and has the fit applied as motion
 // data. One step, "Extend tracked lines".
-std::expected<FitConfidence, ExtendFailure> extendTrackedLines(EditSession &session, const AegisubFrameTimes &times,
-                                                               int frames, ExtendAt at, bool origin,
-                                                               const LineVisible &visible = {});
+std::expected<SeriesFits, ExtendFailure> extendTrackedLines(EditSession &session, const AegisubFrameTimes &times,
+                                                            int frames, ExtendAt at, bool origin,
+                                                            const LineVisible &visible = {});
 
 // The first six-argument \move carried on at the same speed to the whole Line: \move(x1,y1,x2,y2)
 // to two decimals. nullopt without one, or when its times are equal.
