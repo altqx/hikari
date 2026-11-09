@@ -488,12 +488,16 @@ export type VideoTimeOfFrameResult = {
     time: number;
 };
 
-/** One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge. */
+/** One video frame as BGRA pixels in base64, with every Line, one Line or none drawn on it, optionally cropped, scaled to fit maxEdge and maxPixels. */
 export type VideoFrameParams = {
-    /** Default: the frame shown. */
+    /** Default: the frame shown, or with line the Line's first frame when it is not on the frame shown. */
     frame?: number;
     /** Render the subtitles on it. Default true. */
     subtitles?: boolean;
+    /** line's Document. Defaults to the active Document. */
+    document?: DocumentId;
+    /** Draw this Line alone. */
+    line?: LineId;
     crop?: {
         x: number;
         y: number;
@@ -502,15 +506,84 @@ export type VideoFrameParams = {
     };
     /** Default 1024. */
     maxEdge?: number;
+    /** The most pixels the image may have. No limit when omitted. */
+    maxPixels?: number;
 };
 
 export type VideoFrameResult = {
     frame: number;
     width: number;
     height: number;
+    crop: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
     format: "bgra";
     /** width * 4 bytes per row, top row first, base64. */
     data: string;
+};
+
+/** Where one Line's ink, or every Line's, lies on a video frame, in video pixels. */
+export type VideoInkBoundsParams = {
+    /** Default: the frame shown, or with line the Line's first frame when it is not on the frame shown. */
+    frame?: number;
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** This Line alone. Every Line when omitted. */
+    line?: LineId;
+};
+
+export type VideoInkBoundsResult = {
+    frame: number;
+    /** Null when nothing is drawn. */
+    bounds: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    } | null;
+};
+
+/** The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it. */
+export type VideoColoursParams = {
+    /** Default: the frame shown. */
+    frame?: number;
+    points: ({
+        x: number;
+        y: number;
+    })[];
+    /** Default 0, the pixel alone. */
+    radius?: number;
+    /** Sample with the subtitles drawn. Default false. */
+    subtitles?: boolean;
+};
+
+export type VideoColoursResult = {
+    frame: number;
+    colours: ({
+        x: number;
+        y: number;
+        colour: string;
+    })[];
+};
+
+/** The keyframes from one time to another, each with its start time. */
+export type VideoKeyframesParams = {
+    /** Milliseconds. Default 0. */
+    from?: number;
+    /** Milliseconds. Default: the end. */
+    to?: number;
+};
+
+export type VideoKeyframesResult = {
+    keyframes: ({
+        frame: number;
+        time: number;
+    })[];
+    /** Every keyframe in the range; the first 500 are listed. */
+    total: number;
 };
 
 /** Whether audio is open and loaded, its duration and sample rate. */
@@ -669,6 +742,9 @@ export interface Operations {
     "video.frame_at_time": { access: "read"; params: VideoFrameAtTimeParams; result: VideoFrameAtTimeResult };
     "video.time_of_frame": { access: "read"; params: VideoTimeOfFrameParams; result: VideoTimeOfFrameResult };
     "video.frame": { access: "read"; params: VideoFrameParams; result: VideoFrameResult };
+    "video.ink_bounds": { access: "read"; params: VideoInkBoundsParams; result: VideoInkBoundsResult };
+    "video.colours": { access: "read"; params: VideoColoursParams; result: VideoColoursResult };
+    "video.keyframes": { access: "read"; params: VideoKeyframesParams; result: VideoKeyframesResult };
     "audio.info": { access: "read"; params: AudioInfoParams; result: AudioInfoResult };
     "audio.peaks": { access: "read"; params: AudioPeaksParams; result: AudioPeaksResult };
     "files.list": { access: "read"; params: FilesListParams; result: FilesListResult };
