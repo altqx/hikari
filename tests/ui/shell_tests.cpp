@@ -17824,11 +17824,11 @@ private slots:
             QTRY_VERIFY((show = named(at("panelShow", dock).constData())));
             QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
         }
-        QObject *boardDock = nullptr;
+        QPointer<QObject> boardDock;
         QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && boardDock->property("isOpen").toBool());
         QCOMPARE(boardDock->property("title").toString(), QStringLiteral("Board"));
         QQuickItem *body = item(at("pluginPanelBody_", board).constData());
-        QQuickItem *root = nullptr;
+        QPointer<QQuickItem> root;
         QTRY_VERIFY((root = findItem(body, QStringLiteral("board"))));
         QCOMPARE(root->parentItem(), findItem(body, QStringLiteral("pluginQmlHost")));
         QVERIFY(root->isVisible());
@@ -17841,11 +17841,11 @@ private slots:
         QCOMPARE(QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists(), true);
 
         QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
-        QTRY_VERIFY(boardDock->property("isFloating").toBool());
+        QTRY_VERIFY(boardDock && boardDock->property("isFloating").toBool());
         QTRY_VERIFY(findItem(body, QStringLiteral("board")));
         QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
-        QTRY_VERIFY(!boardDock->property("isFloating").toBool());
-        QCOMPARE(findItem(body, QStringLiteral("board")), root);
+        QTRY_VERIFY(boardDock && !boardDock->property("isFloating").toBool());
+        QCOMPARE(findItem(body, QStringLiteral("board")), root.data());
 
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         if (!out.isEmpty()) {
@@ -17857,6 +17857,7 @@ private slots:
                 settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
                 QTRY_COMPARE(main->property("palette").value<QObject *>()->property("window").value<QColor>(),
                              ui::theme::current().roles.panel);
+                QVERIFY(root);
                 QTRY_COMPARE(root->property("accent").value<QColor>(), ui::theme::current().roles.accent);
                 QTest::qWait(400);
                 QVERIFY(window->grabWindow().save(out + QStringLiteral("/qml-panel-") + ui::theme::codeName(code) +
