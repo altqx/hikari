@@ -22,7 +22,7 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 tarball=$dist/hikarisub-$version-linux-x86_64.tar.gz
 [ $published = 1 ] || [ -f "$tarball" ] || fail "no $tarball"
 
-pacman -Syu --noconfirm --needed base-devel namcap sudo python xorg-server-xvfb xorg-xauth mesa desktop-file-utils appstream \
+pacman -Syu --noconfirm --needed base-devel namcap sudo python xorg-server-xvfb xorg-xauth mesa desktop-file-utils appstream xdg-utils \
     > /dev/null
 id builder > /dev/null 2>&1 || useradd -m builder
 printf 'builder ALL=(ALL) NOPASSWD: /usr/bin/pacman\n' > /etc/sudoers.d/builder
@@ -94,13 +94,16 @@ pacman -U --noconfirm "$pkgfile" > /dev/null
 [ ! -e /usr/share/polkit-1/actions/io.github.altqx.HikariSub.update.policy ] || fail "the AUR package ships the polkit policy"
 [ -f /usr/share/licenses/hikarisub-beta-bin/LICENSE ] || fail "no license"
 [ "$(cat /opt/hikarisub/aur-channel.txt)" = beta ] || fail "aur-channel.txt is not beta"
-grep -q '^Exec=hikarisub %f$' /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "Exec="
+grep -q '^Exec=hikarisub %u$' /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "Exec="
 desktop-file-validate /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "desktop-file-validate"
+update-desktop-database -q /usr/share/applications
+[ "$(xdg-mime query default x-scheme-handler/hikarisub)" = io.github.altqx.HikariSub.desktop ] ||
+    fail "xdg-mime query default x-scheme-handler/hikarisub"
 appstreamcli validate --no-net /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml || fail "appstreamcli"
 unresolved=$(find /opt/hikarisub -type f \( -name '*.so*' -o -perm -u+x \) -print0 | xargs -0 -r ldd 2>/dev/null |
              grep 'not found' | sort -u || true)
 [ -z "$unresolved" ] || fail "missing after pacman -U: $unresolved"
-pass "pacman -U: markers arch and beta, no helper or policy, every library resolves, desktop files valid"
+pass "pacman -U: markers arch and beta, no helper or policy, every library resolves, desktop files valid, hikarisub:// handler"
 
 home=/home/tester
 as_tester() { runuser -u tester -- env HOME=$home "$@"; }

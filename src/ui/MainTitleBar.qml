@@ -279,8 +279,10 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         Image {
             anchors.centerIn: parent
-            source: "qrc:/hikari/ui/app-icon.png"
-            sourceSize: Qt.size(16, 16)
+            source: "qrc:/hikari/ui/app-icon.svg"
+            sourceSize: Qt.size(32, 32)
+            fillMode: Image.PreserveAspectFit
+            mipmap: true
             width: 16
             height: 16
             opacity: bar.active ? 1 : 0.55

@@ -354,6 +354,19 @@ int main(int argc, char **argv)
                                                            {"data", Json::object({{"kind", "rateLimited"},
                                                                                   {"httpStatus", 429},
                                                                                   {"detail", "slow down"}})}})}}));
+            } else if (modelId == "cites") {
+                respond(*id, Json::object({{"reason", "end"}, {"text", "Sung by Aimer [1]."}, {"toolCalls", Json::array()},
+                                           {"usage", Json::object({{"inputTokens", 1}, {"outputTokens", 1},
+                                                                   {"cachedInputTokens", 0}, {"cacheWriteTokens", 0},
+                                                                   {"cacheWriteHourTokens", 0}})},
+                                           {"citations", Json::array({Json::object({{"index", 1},
+                                                                                    {"url", "https://example.org/a"},
+                                                                                    {"title", "A"},
+                                                                                    {"quote", "Aimer"}})})},
+                                           {"searchSuggestions", "<div>chips</div>"},
+                                           {"providerState", Json::object({{"type", "providerState"},
+                                                                           {"wire", "gemini"},
+                                                                           {"json", "[]"}})}}));
             } else {
                 const Json *stream = arg.find("stream");
                 send(Json::object({{"jsonrpc", "2.0"}, {"method", "session/update"},
@@ -364,6 +377,22 @@ int main(int argc, char **argv)
                                                                    {"cachedInputTokens", 0}, {"cacheWriteTokens", 2},
                                                                    {"cacheWriteHourTokens", 1}})}}));
             }
+        } else if (name == "_hikari/search.test") {
+            const Json *service = arg.find("service");
+            const std::string chosen = service && service->isString() ? service->asString() : std::string();
+            const auto refuse = [&](const char *kind, int status, const char *detail) {
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
+                                   {"error", Json::object({{"code", -32010}, {"message", detail},
+                                                           {"data", Json::object({{"kind", kind},
+                                                                                  {"httpStatus", status},
+                                                                                  {"detail", detail}})}})}}));
+            };
+            if (chosen == "exa")
+                refuse("unauthorized", 401, "invalid key");
+            else if (chosen == "tavily")
+                refuse("rateLimited", 432, "plan limit exceeded");
+            else
+                respond(*id, nullptr);
         } else if (name == "_hikari/models.list") {
             respond(*id, Json::object({{"models", Json::array({Json::object({{"id", "b/model"}, {"name", "B"}})})}}));
         } else if (name == "echo") {

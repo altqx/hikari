@@ -348,6 +348,8 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
+        {"ai.webSearch", "", Bool, Profile, Mapped, false, true},
+        {"ai.searchService", "", String, Profile, Mapped, false, std::string()},
         {"ai.agent.mode", "", String, Profile, Mapped, false, std::string("auto")},
         {"ai.agent.threadCapCents", "", Int, Profile, Mapped, false, std::int64_t{200}},
         {"ai.agent.dailyCapCents", "", Int, Profile, Mapped, false, std::int64_t{1000}},

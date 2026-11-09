@@ -153,6 +153,8 @@ constexpr OptionsBinding kBindings[] = {
     {"video.hdrWarning", Check, Video},
     {"audio.playMono", Check, Audio},
     {"plugins.network", Check, Updates},
+    {"ai.webSearch", Check, Ai},
+    {"ai.searchService", Text, Ai},
     {"ai.agent.mode", Text, Ai},
     {"ai.agent.threadCapCents", Number, Ai, 0, 100000},
     {"ai.agent.dailyCapCents", Number, Ai, 0, 1000000},

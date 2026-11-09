@@ -9,8 +9,11 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 | AI features | **Turn off all AI features** (`ai.off`, off by default) | On OK or Apply, like every other setting |
 | Providers | Add, edit, test and delete providers | At once (see below) |
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
+| Web search | **Let AI search the web** (`ai.webSearch`, on by default), how each provider searches, and **Search service** (`ai.searchService`: None, Brave Search, Tavily, Exa or Firecrawl) with its key | The switch and the service on OK or Apply; the key once its test passes, or on Add anyway |
 | External agents | Codex: found on `PATH` with its version, and HikariSub's own ChatGPT sign-in for it (AI6) | At once (see below) |
 | Privacy | **Use prompt caching** (`ai.promptCaching`, on by default), the What is sent to providers link, and a line that says whether the AI component runs in its sandbox here; "isn’t sandboxed on this system" shows in the warning colour where the sandbox can’t apply ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) | On OK or Apply |
+
+The owner approved the Web search [mockup](https://github.com/altqx/hikari/issues/742#issuecomment-6686712813) on 2026-11-06, with the switch on by default ([AI23 #742](https://github.com/altqx/hikari/issues/742)).
 
 The Agent and MCP sections arrive with AI7 and AI3/AI13, below Models and above Privacy, as drawn in the mockup. External agents has only the Codex row so far; AI15 adds Claude Code and ACP agents, their detection, Choose… and their run errors.
 
@@ -29,6 +32,16 @@ With AI off, `AiSettings` lists no providers and refuses every action, and nothi
 - **Each row** shows the wire and host, the last test ("Connected · N models", the error, or "Not tested · N models"), where the key is ("Key in keychain" or "No key"), and Test connection, Edit and Delete. A rejected key says "Replace the key with Edit". Delete asks first and removes the key from the keychain; roles that used the provider go back to the chat model.
 - **OpenRouter can sign in** ([AI6 #434](https://github.com/altqx/hikari/issues/434)): "Sign in with OpenRouter…" sits next to the key field, "or paste a key". It opens openrouter.ai in the browser, which makes a key for HikariSub; the key goes to the keychain like a pasted one, and the provider is added and tested at once. The row then says "Signed in (OpenRouter)", and a rejected key says "Sign in again with Edit". Edit offers Sign out, which deletes the key from this computer and leaves the provider without one; the key stays in the user's OpenRouter keys until they delete it there. Pasting a key over a signed-in one makes it a pasted key.
 - **Test connection** in the form lists the provider's catalogue with the typed key through `AiRequests::probe`, and saves nothing. Add then stores the provider with that catalogue. A provider added without a test fetches its catalogue right after. The first catalogue fills the chat role while it is empty.
+
+## Web search
+
+- **The switch.** **Let AI search the web** is on at first. With it off, `AiRequests` drops `webSearch` from every request and tells the sidecar no search service ([AI providers](ai-providers.md#web-search)). Nothing searches while AI is off.
+- **How each provider searches.** With the switch on and a provider added, a list names each provider with "Its own search, and reads pages" (Anthropic, OpenRouter, OpenAI on Responses), "Google Search, and reads pages" (Gemini), the chosen service, or "Needs a search service" in the warning colour. A note says Gemini answers that searched show Google's search suggestions, as Google's terms require.
+- **Search service** is for providers without their own search: None, Brave Search (search only), Tavily, Exa or Firecrawl. Brave can't read a page, which the menu and the note under it say. Qt never fetches a page for the agent: the relay reaches only the chosen service's host.
+- **The key** row opens under the menu once a service is chosen: the key (masked, with Show key), Test connection and a link to the service's key page. Test connection runs one search through `_hikari/search.test` with the typed key, which counts against the plan. The relay serves the typed key from Qt for that test only; the sidecar never holds it. The key goes to the keychain, as `ai-provider/search:<service>`, only when the test passes. When it fails, the row shows why and an **Add anyway** button, which saves the key regardless and keeps the failure on show. Add anyway hides again if the typed key changes. The test reaches the service before OK or Apply chooses it. Provider keys still save at once ([owner Q121](https://github.com/altqx/hikari/issues/742), 2026-11-07).
+- **Stored key.** The row then shows the last test ("Connected", "Not tested", "Key rejected (401)" with Replace key…, or "Searches used up (429)", also 402, 432 or 433), Test connection and Remove key, which asks first. Without a provider, the test says to add one.
+- **What the sidecar gets.** The service reaches the sidecar only while the switch is on and its key is in the keychain, so a provider without its own search is never offered a search that can't run.
+- **Privacy.** Once a service is chosen, the Privacy line says "Requests go only to the providers you add and to <service>."
 
 ## External agents: Codex
 
@@ -52,12 +65,13 @@ Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-o
 - `AiSettings` (`src/app/ai_settings.*`) is the page's model: provider rows, model choices, role values, the form's state, the download and the Codex row. It uses only what `AiFeatures` built.
 - `AiSignIn` (`src/backends/ai_signin.*`) runs the sign-ins with `QNetworkAccessManager` and a `QTcpServer` on 127.0.0.1, and keeps the Codex session: import, refresh and sign-out.
 - `SettingsAiPage.qml` is the page. `SettingsDialog` hands it the `ai` object, and calls `commit()` on OK and Apply to save the staged role models.
-- `ai.off` and `ai.promptCaching` are bound to the `ai` page (`OptionsPage::Ai`), so Reset page and settings import and export cover them.
+- `ai.off`, `ai.promptCaching`, `ai.webSearch` and `ai.searchService` are bound to the `ai` page (`OptionsPage::Ai`), so Reset page and settings import and export cover them.
 
 ## Tests
 
 - `hikari_ui_ai_settings_tests`: adding Gemini after a test, keys and addresses a new provider needs, a refused keychain, editing with and without a new key, deleting, testing, roles that wait for Apply, the one-time download and a failed one, AI off, and the caching switch reaching every request.
-- `hikari_ui_shell_tests` (`settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff`): the page in the app, with fake AI ports: the switch folds the page, the Gemini form, adding through it, and roles saved only by OK.
+- `hikari_ui_shell_tests` (`settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff`): the page in the app, with fake AI ports: the switch folds the page, the Gemini form, adding through it, roles saved only by OK, and an Exa key that fails its test kept out of the keychain until Add anyway, a Brave key tested and then stored from the Web search section, named in the Privacy line and chosen by OK.
+- `hikari_ui_ai_settings_tests` also covers web search: a key stored only after its one search passes, and removed; a rejected key and a used-up plan kept out of the keychain, and Add anyway storing the rejected one; no test without a provider, with Add anyway still storing the key; the service reaching the sidecar only with the switch on and its key stored; and which providers search on their own.
 - `hikari_ui_ai_settings_tests` also covers the Codex row: found on `PATH`, the code, its page opened only when asked, cancel, the browser, a workspace without codes, sign-out, import, refresh; and the OpenRouter sign-in, its refusal and sign-out.
 - `hikari_backends_ai_signin_tests` runs the flows against a fake auth.openai.com and openrouter.ai (`tests/support/fake_auth_server.h`): the device code's polling, its 3 s floor, 404 codes off, denials, expiry, 429 and server errors; the browser's state check and its busy port; OpenRouter's random callback path; refresh, a refused refresh, cancelling, a refusing keychain, the URL allow-list, import leaving `auth.json` untouched, and sign-out.
 - `hikari_application_ai_providers_tests`, `hikari_backends_ai_requests_tests` and the sidecar's `caching.test.ts` cover `update`, `unassign`, the first catalogue, `probe` and `caching: false`.
