@@ -25,6 +25,7 @@ struct SignInProgress;
 namespace hikari::app {
 
 class AiFeatures;
+class AiMcp;
 
 /// Settings › AI: the providers, their keys and catalogues, and the role models. Providers and keys are saved at
 /// once; role models wait for OK or Apply (applyRoles).
@@ -51,9 +52,11 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QVariantMap search READ search NOTIFY searchChanged)
     /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
     Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
+    /// The MCP server's AiMcp, for its Copy setup; null without one.
+    Q_PROPERTY(QObject *mcp READ mcp CONSTANT FINAL)
 
 public:
-    explicit AiSettings(AiFeatures &features, QObject *parent = nullptr);
+    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, QObject *parent = nullptr);
     ~AiSettings() override;
 
     bool on() const;
@@ -65,6 +68,7 @@ public:
     QVariantMap codex() const;
     QVariantMap search() const { return m_search; }
     bool sandboxed() const;
+    QObject *mcp() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
@@ -147,6 +151,7 @@ private:
     void runSearchTest(const QString &service, std::optional<std::string> typedKey);
 
     AiFeatures &m_features;
+    AiMcp *m_mcp = nullptr;
     std::map<std::string, Status, std::less<>> m_status;
     QVariantMap m_draft;
     struct Probed {

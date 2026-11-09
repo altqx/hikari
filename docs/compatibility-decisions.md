@@ -107,3 +107,7 @@ Resample subtitles with "Stretch" scales text by the smaller of the two resoluti
 ## TH2-bezier-clusters
 
 The bundled BezierToText ("Bezier Curve Imposition", now 1.1) places one Line per grapheme cluster instead of per code point, so a Thai vowel or tone mark, or any combining mark, stays in its base character's Line instead of being placed and rotated on its own. A mark that an override block separates from its base joins the base's Line too, with that block before it. Text without combining marks gives the same output as 1.0. The 2.3 rewrite in Jibrill's copy is not adopted. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decisions Q143 and Q145.
+
+## TH3-thai-auto-split
+
+Auto split gives each Thai grapheme cluster its own syllable, sharing the Line's time equally: `กินน้ำ` becomes `กิ|น|น้ำ`, and ำ stays in its cluster. Before, a Thai word stayed one syllable and only spaces split it, as Aegisub's split at spaces does. Settings › Audio › Karaoke › "Split Thai into character clusters" is on by default; off keeps each Thai word whole. Text without Thai splits as before. Clusters aren't Thai syllables (`กิน` is one syllable); real Thai syllable breaks are a later card. This replaces bundling th2syl.lua. [TH3 #831](https://github.com/altqx/hikari/issues/831), owner decision Q144.

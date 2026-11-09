@@ -131,6 +131,7 @@
 #include <thread>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+Q_IMPORT_QML_PLUGIN(Hikari_PluginPlugin)
 
 using namespace hikari;
 
@@ -988,8 +989,8 @@ private slots:
         press(Qt::Key_Escape);
         QTRY_VERIFY(!item<QObject>("homeRowMenu")->property("visible").toBool());
         list->forceActiveFocus(Qt::TabFocusReason);
-        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpen"),
-                                QStringLiteral("homeNew")};
+        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpenFolder"),
+                                QStringLiteral("homeOpen"), QStringLiteral("homeNew")};
         for (const QString &name : order) {
             press(Qt::Key_Tab, Qt::ShiftModifier);
             QQuickItem *focused = window->activeFocusItem();
@@ -6406,6 +6407,7 @@ private slots:
             {QStringLiteral("Automation macro"), named("automationMacroMenu")},
             {QStringLiteral("Automation recommended script"), named("recommendedMenu")},
             {QStringLiteral("Home row"), named("homeRowMenu")},
+            {QStringLiteral("Home project row"), named("homeProjectsRowMenu")},
             {QStringLiteral("Reference tray"), named("referenceOccurrenceMenu")},
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
             {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
@@ -16666,6 +16668,7 @@ private slots:
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
               {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"},
+              {"audio.karaokeThaiClusters", "Split Thai into character clusters"},
               {"audio.karaokeKfThreshold", nullptr},
               {"audio.ramCache", "Load audio into RAM"},
               {"audio.cacheFilesLimit", nullptr}}},
@@ -16689,6 +16692,8 @@ private slots:
              {{"ai.off", "Turn off all AI features"},
               {"ai.webSearch", "Let AI search the web"},
               {"ai.searchService", nullptr},
+              {"ai.mcp.server", "Let agents outside HikariSub edit through MCP"},
+              {"ai.mcp.http", nullptr},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
@@ -16991,6 +16996,55 @@ private slots:
                      QStringLiteral("No key"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        auto *mcp = qobject_cast<app::AiMcp *>(application->aiSettings()->mcp());
+        QVERIFY(mcp && !mcp->server());
+        auto *http = dialogItem("settingsDialog", "setting_ai.mcp.http");
+        auto *copySetup = dialogItem("settingsDialog", "aiMcpCopySetup");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcp")->isVisible());
+        QVERIFY(!http->isVisible() && !copySetup->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
+        QTRY_VERIFY(http->isVisible() && copySetup->isVisible());
+        QCOMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1"));
+        QVERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("needs “Also listen on")));
+        QVERIFY(!mcp->server());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(mcp->server());
+
+        const auto copyEntry = [&](const char *name) { return page->findChild<QObject *>(QLatin1String(name)); };
+        QVERIFY(copyEntry("aiMcpCopyClaudeCode") && copyEntry("aiMcpCopyCodex") && copyEntry("aiMcpCopyJson"));
+        QVERIFY(!copyEntry("aiMcpCopyJson")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyClaudeCode"), "triggered"));
+        QCOMPARE(QGuiApplication::clipboard()->text(),
+                 QStringLiteral("claude mcp add hikari -- \"%1\" --mcp").arg(app::AiMcp::program()));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(),
+                     QStringLiteral("Copied. Run it in a terminal."));
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyCodex"), "triggered"));
+        QVERIFY(QGuiApplication::clipboard()->text().startsWith(QStringLiteral("[mcp_servers.hikari]\ncommand = ")));
+        QCOMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(),
+                 QStringLiteral("Copied. Paste it into the agent’s settings."));
+
+        QVERIFY(QMetaObject::invokeMethod(http, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("press OK or Apply")));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(mcp->server()->httpPort() != 0);
+        const quint16 port = mcp->server()->httpPort();
+        QTRY_COMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1:%1").arg(port));
+        QTRY_VERIFY(copyEntry("aiMcpCopyJson")->property("enabled").toBool());
+        QVERIFY(!dialogItem("settingsDialog", "aiMcpJsonNote")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyJson"), "triggered"));
+        const QString json = QGuiApplication::clipboard()->text();
+        QVERIFY2(json.contains(QStringLiteral("http://127.0.0.1:%1/mcp").arg(port)), qPrintable(json));
+        QVERIFY(json.contains(QStringLiteral("Bearer ") + QString::fromLatin1(mcp->endpoint().token)));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
+        QTRY_VERIFY(!http->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!mcp->server());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()
@@ -17790,6 +17844,86 @@ private slots:
         body = item(at("pluginPanelBody_").constData());
         QCOMPARE(findItem(body, QStringLiteral("pluginPanelPlaceholderText"))->property("text").toString(),
                  QStringLiteral("Notes helper isn’t installed."));
+    }
+    void aQmlPanelDocksBesideADeclarativeOne()
+    {
+        QTemporaryDir home;
+        const QString source = QStringLiteral(HIKARI_PLUGIN_FIXTURES "/qml-board");
+        QDirIterator files(source, QDir::Files, QDirIterator::Subdirectories);
+        while (files.hasNext()) {
+            const QString from = files.next();
+            const QString to = home.filePath(QStringLiteral("plugins/com.example.board/") + QDir(source).relativeFilePath(from));
+            QVERIFY(QDir().mkpath(QFileInfo(to).absolutePath()));
+            QVERIFY(QFile::copy(from, to));
+        }
+        QFile registry(home.filePath(QStringLiteral("plugins.json")));
+        QVERIFY(registry.open(QIODevice::WriteOnly));
+        registry.write(R"({"format": 1, "plugins": {"com.example.board": {"version": "1.0.0", "enabled": true}}})");
+        registry.close();
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        restartWith(options);
+        window->resize(1600, 900);
+        QVERIFY(application->openFile(writeFile(dir, "qml-panel.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hi\n"
+                                                                      "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,There\n")));
+
+        const QString board = QStringLiteral("plugin:com.example.board/board");
+        const QString notes = QStringLiteral("plugin:com.example.board/notes");
+        const auto at = [](const char *prefix, const QString &dock) { return (QLatin1String(prefix) + dock).toUtf8(); };
+        for (const QString &dock : {board, notes}) {
+            QObject *show = nullptr;
+            QTRY_VERIFY((show = named(at("panelShow", dock).constData())));
+            QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
+        }
+        QPointer<QObject> boardDock;
+        QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && boardDock->property("isOpen").toBool());
+        QCOMPARE(boardDock->property("title").toString(), QStringLiteral("Board"));
+        QQuickItem *body = item(at("pluginPanelBody_", board).constData());
+        QPointer<QQuickItem> root;
+        QTRY_VERIFY((root = findItem(body, QStringLiteral("board"))));
+        QCOMPARE(root->parentItem(), findItem(body, QStringLiteral("pluginQmlHost")));
+        QVERIFY(root->isVisible());
+        QVERIFY(!findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(root, "countLines"));
+        QTRY_COMPARE(root->property("lines").toString(), QStringLiteral("2"));
+        QQuickItem *said = nullptr;
+        QQuickItem *notesBody = item(at("pluginPanelBody_", notes).constData());
+        QTRY_VERIFY((said = findItem(notesBody, QStringLiteral("pluginPanelTree"))) && said->isVisible());
+        QCOMPARE(QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists(), true);
+
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
+        QTRY_VERIFY(boardDock && boardDock->property("isFloating").toBool());
+        QTRY_VERIFY(findItem(body, QStringLiteral("board")));
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
+        QTRY_VERIFY(boardDock && !boardDock->property("isFloating").toBool());
+        QCOMPARE(findItem(body, QStringLiteral("board")), root.data());
+
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (!out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            auto *main = engine->rootObjects().first();
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTRY_COMPARE(main->property("palette").value<QObject *>()->property("window").value<QColor>(),
+                             ui::theme::current().roles.panel);
+                QVERIFY(root);
+                QTRY_COMPARE(root->property("accent").value<QColor>(), ui::theme::current().roles.accent);
+                QTest::qWait(400);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/qml-panel-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+            }
+        }
+
+        QCOMPARE(application->pluginManager()->setEnabled(QStringLiteral("com.example.board"), false), QString());
+        QTRY_VERIFY(!findItem(body, QStringLiteral("board")));
+        QTRY_VERIFY(findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
+        QTRY_VERIFY(!QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists());
+        restartWith(app::Application::Options());
     }
     void pluginPanelScreenshots()
     {
@@ -20328,7 +20462,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 301);
+        QCOMPARE(hotkeyRows().size(), 303);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
