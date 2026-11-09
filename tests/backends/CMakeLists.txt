@@ -215,6 +215,7 @@ target_compile_definitions(hikari_backends_automation_thirdparty_tests PRIVATE
     HIKARI_AUTOMATION_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua")
+target_include_directories(hikari_backends_automation_thirdparty_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_automation_thirdparty_tests hikari_lua_helper hikari_automation_stage)
 
 hikari_add_qttest(hikari_backends_general_player_tests SOURCES general_player_tests.cpp

@@ -5,6 +5,7 @@
 #include "hikari/core/ass_load.h"
 
 #include "canonical_tags.h"
+#include "stage_paths.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -255,7 +256,7 @@ protected:
         if (!refusals.isEmpty())
             out.record.insert("refusal", refusals.join(QLatin1Char('\n')));
         if (!ok && !message.isEmpty())
-            out.record.insert("message", QString(message).replace(QStringLiteral(HIKARI_AUTOMATION_STAGE_DIR), QStringLiteral("<stage>"))
+            out.record.insert("message", hikari::testing::normalizedPaths(message, {QStringLiteral(HIKARI_AUTOMATION_STAGE_DIR)})
                                              .section(QLatin1Char('\n'), 0, 1));
         if (ok && host.lastResult()) {
             const auto steps = session.historySize();
