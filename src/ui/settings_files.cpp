@@ -540,6 +540,12 @@ void migrateIni(QVariantMap &ini)
     for (const auto id : application::retiredSettings())
         for (const auto *scope : {"profile/", "workspace/"})
             ini.remove(QLatin1String(scope) + qs(id));
+    for (const auto &renamed : application::renamedSettings()) {
+        const QString from = targetKey(renamed.to).section(QLatin1Char('/'), 0, 0) + QLatin1Char('/') + qs(renamed.from);
+        if (ini.contains(from) && !ini.contains(targetKey(renamed.to)))
+            ini.insert(targetKey(renamed.to), ini.value(from));
+        ini.remove(from);
+    }
     if (ini.value(QStringLiteral("registry/schema"), 0).toInt() >= 1)
         return;
     for (const auto &interim : application::interimKeys()) {
@@ -734,6 +740,15 @@ void SettingsFiles::load()
             m_writable[file] = !loaded.problem->keptAs.empty();
             m_problems.push_back(std::move(*loaded.problem));
         }
+    }
+    for (const auto &renamed : application::renamedSettings()) {
+        const auto *old = tomlNode(m_settings, renamed.from);
+        if (!old)
+            continue;
+        if (!tomlNode(m_settings, renamed.to))
+            tomlParent(m_settings, renamed.to, true)->insert(idSegments(renamed.to).back(), *old);
+        eraseToml(m_settings, renamed.from);
+        changed(Settings);
     }
     // MUST KILL: settings.toml is written at a first start only so that its existence marks later starts
     if (!QFileInfo::exists(path(Settings)) &&

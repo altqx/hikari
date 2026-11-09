@@ -601,6 +601,45 @@ DialogWindow {
                         }
                     }
                     SettingsSection {
+                        objectName: "settingsTrustedFolders"
+                        title: qsTr("Trusted folders")
+                        SettingNote { text: qsTr("HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.") }
+                        Label {
+                            objectName: "settingsTrustedFoldersEmpty"
+                            visible: (dialog.values["trust.folders"] || []).length === 0
+                            text: qsTr("No trusted folders")
+                            color: Theme.muted
+                            Layout.leftMargin: 24
+                        }
+                        Repeater {
+                            model: dialog.values["trust.folders"] || []
+                            delegate: RowLayout {
+                                id: trustedRow
+                                required property string modelData
+                                spacing: 8
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 24
+                                Label {
+                                    text: trustedRow.modelData
+                                    textFormat: Text.PlainText
+                                    elide: Text.ElideMiddle
+                                    Layout.fillWidth: true
+                                    ToolTip.text: trustedRow.modelData
+                                    ToolTip.visible: truncated && trustedHover.hovered
+                                    HoverHandler { id: trustedHover }
+                                }
+                                Button {
+                                    objectName: "settingsUntrustFolder"
+                                    text: qsTr("Remove")
+                                    Accessible.description: qsTr("Stop trusting %1").arg(trustedRow.modelData)
+                                    onClicked: dialog.put("trust.folders",
+                                                          (dialog.values["trust.folders"] || [])
+                                                              .filter(f => f !== trustedRow.modelData))
+                                }
+                            }
+                        }
+                    }
+                    SettingsSection {
                         objectName: "settingsLegacyGroup"
                         title: qsTr("Legacy")
                         SettingsRow {
@@ -1372,45 +1411,6 @@ DialogWindow {
                                 text: qsTr("Clear last answers…")
                                 enabled: (dialog.values["automation.dialogAnswers"] || []).length > 0
                                 onClicked: dialog.clearLastAnswers()
-                            }
-                        }
-                    }
-                    SettingsSection {
-                        objectName: "settingsTrustedFolders"
-                        title: qsTr("Trusted script folders")
-                        SettingNote { text: qsTr("Scripts a subtitle file names load without asking when they are in one of these folders.") }
-                        Label {
-                            objectName: "settingsTrustedFoldersEmpty"
-                            visible: (dialog.values["automation.trustedFolders"] || []).length === 0
-                            text: qsTr("No trusted folders")
-                            color: Theme.muted
-                            Layout.leftMargin: 24
-                        }
-                        Repeater {
-                            model: dialog.values["automation.trustedFolders"] || []
-                            delegate: RowLayout {
-                                id: trustedRow
-                                required property string modelData
-                                spacing: 8
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 24
-                                Label {
-                                    text: trustedRow.modelData
-                                    textFormat: Text.PlainText
-                                    elide: Text.ElideMiddle
-                                    Layout.fillWidth: true
-                                    ToolTip.text: trustedRow.modelData
-                                    ToolTip.visible: truncated && trustedHover.hovered
-                                    HoverHandler { id: trustedHover }
-                                }
-                                Button {
-                                    objectName: "settingsUntrustFolder"
-                                    text: qsTr("Remove")
-                                    Accessible.description: qsTr("Stop trusting %1").arg(trustedRow.modelData)
-                                    onClicked: dialog.put("automation.trustedFolders",
-                                                          (dialog.values["automation.trustedFolders"] || [])
-                                                              .filter(f => f !== trustedRow.modelData))
-                                }
                             }
                         }
                     }

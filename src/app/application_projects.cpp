@@ -32,7 +32,7 @@ bool Application::projectTrusted(const QString &root) const
     constexpr bool windows = false;
 #endif
     std::vector<std::string> trusted;
-    for (const QString &folder : m_settings->list("automation.trustedFolders"))
+    for (const QString &folder : m_settings->list("trust.folders"))
         trusted.push_back(QDir::toNativeSeparators(folder).toStdString());
     return application::folderTrusted(root.toStdString(), trusted, windows);
 }

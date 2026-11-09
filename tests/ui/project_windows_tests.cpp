@@ -308,7 +308,7 @@ private slots:
     {
         start();
         const QString show = folder("show", true);
-        application->settingsStore()->setValue(QStringLiteral("automation.trustedFolders"),
+        application->settingsStore()->setValue(QStringLiteral("trust.folders"),
                                                QStringList{QFileInfo(dir.path()).canonicalFilePath()});
         QSignalSpy offered(application, &app::Application::projectOffered);
         QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));

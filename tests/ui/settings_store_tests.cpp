@@ -572,6 +572,38 @@ private slots:
         QVERIFY(text.contains("audioBoxHeight"));
     }
 
+    void trustedScriptFoldersBecomeTrustedFoldersOnce()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        writeAll(file, "version = 1\n\n[automation]\nrunLogTimes = true\ntrustedFolders = [\"/subs/kfx\"]\n");
+        {
+            SettingsStore store(file);
+            QCOMPARE(store.list("trust.folders"), QStringList{QStringLiteral("/subs/kfx")});
+        }
+        const QByteArray text = readAll(file);
+        QVERIFY(!text.contains("trustedFolders"));
+        QVERIFY(text.contains("[trust]\nfolders = [ \"/subs/kfx\" ]"));
+        QVERIFY(text.contains("runLogTimes = true"));
+
+        writeAll(file, "version = 1\n\n[automation]\ntrustedFolders = [\"/old\"]\n\n[trust]\nfolders = [\"/new\"]\n");
+        SettingsStore store(file);
+        QCOMPARE(store.list("trust.folders"), QStringList{QStringLiteral("/new")});
+    }
+
+    void anInisTrustedScriptFoldersBecomeTrustedFolders()
+    {
+        QTemporaryDir dir;
+        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        {
+            QSettings s(ini, QSettings::IniFormat);
+            s.setValue(QStringLiteral("registry/schema"), 1);
+            s.setValue(QStringLiteral("profile/automation.trustedFolders"), QStringList{QStringLiteral("/subs/kfx")});
+        }
+        SettingsStore store(dir.filePath(QStringLiteral("settings.toml")));
+        QCOMPARE(store.list("trust.folders"), QStringList{QStringLiteral("/subs/kfx")});
+    }
+
     void aBrokenFileIsKeptAndItsSettingsAreDefaults()
     {
         QTemporaryDir dir;

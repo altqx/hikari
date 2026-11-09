@@ -359,7 +359,7 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
                            "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
-                           "automation.trustedFolders", "program.theme", "program.font", "shortcuts.hotkeys",
+                           "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
                            "scriptProperties.linkResolutions", "translation.showOriginal"})
         EXPECT_FALSE(findSetting(id)->projectable) << id;
     for (const auto &setting : settingDefinitions())

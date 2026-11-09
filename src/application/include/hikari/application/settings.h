@@ -138,6 +138,12 @@ inline constexpr std::string_view kAutomationHotkeysSetting = "shortcuts.automat
 inline constexpr std::string_view kHotkeysSetting = "shortcuts.hotkeys";
 inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys";
 
+// Setting ids that moved; a stored value moves to the new id once.
+struct RenamedSetting {
+    std::string_view from;
+    std::string_view to;
+};
+std::span<const RenamedSetting> renamedSettings();
 // Withdrawn setting ids a profile may still hold (the INI store drops them).
 std::span<const std::string_view> retiredSettings();
 // "#RRGGBB" or "#RRGGBBAA" as 0xAARRGGBB; nullopt otherwise.

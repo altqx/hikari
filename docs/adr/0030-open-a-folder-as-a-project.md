@@ -94,7 +94,7 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 
 ## Trust
 
-- **One Trusted folders list** replaces Automation's Trusted script folders.
+- **One Trusted folders list** replaces Automation's Trusted script folders. It sits on the General page and is kept as `trust.folders`; the old `automation.trustedFolders` moves there once (owner, 2026-11-10).
 - **An untrusted Project** still applies its styles, dictionaries, layouts and settings that only restrict. It loads no scripts, changes no plugin on/off, and doesn't widen AI permissions.
 - **The trust question** comes on first open only when `.hikari/` holds scripts or plugin settings.
 

@@ -6391,7 +6391,7 @@ void Application::settingChanged(const QString &id)
 {
     if (id.startsWith(QLatin1String("grammar.")) || id == QLatin1String("editor.spellchecker"))
         applyGrammarSettings();
-    if (id == QLatin1String("automation.trustedFolders") && m_projects)
+    if (id == QLatin1String("trust.folders") && m_projects)
         for (const int window : sessionWindows())
             if (const QString root = m_projects->root(window);
                 !root.isEmpty() && projectTrusted(root) != views(window).settings->trusted())
@@ -6632,7 +6632,7 @@ QVariantMap Application::openSettingsDialog()
     addAppearance(values);
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
-    values.insert(QStringLiteral("automation.trustedFolders"), m_settings->list("automation.trustedFolders"));
+    values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
         rendererLabels << subtitleRendererLabel(name);
@@ -6726,12 +6726,12 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         m_settings->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
         m_automation->forgetRepeat();
     }
-    if (const auto trusted = values.constFind(QStringLiteral("automation.trustedFolders")); trusted != values.cend()) {
-        const QStringList kept = m_settings->list("automation.trustedFolders");
+    if (const auto trusted = values.constFind(QStringLiteral("trust.folders")); trusted != values.cend()) {
+        const QStringList kept = m_settings->list("trust.folders");
         QStringList list = trusted->toStringList();
         list.removeIf([&](const QString &folder) { return !kept.contains(folder); });
         if (list != kept)
-            m_settings->setValue(QStringLiteral("automation.trustedFolders"), list);
+            m_settings->setValue(QStringLiteral("trust.folders"), list);
     }
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
     const auto wrote = [&](std::string_view id) { return std::ranges::find(written, id) != written.end(); };
@@ -6964,7 +6964,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                 keep(b.sizeSetting);
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
-    refreshed.insert(QStringLiteral("automation.trustedFolders"), QStringList());
+    refreshed.insert(QStringLiteral("trust.folders"), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
 }
@@ -6993,7 +6993,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     if (*which == application::OptionsPage::General)
         out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     if (*which == application::OptionsPage::Automation)
-        out.insert(QStringLiteral("automation.trustedFolders"), QStringList());
+        out.insert(QStringLiteral("trust.folders"), QStringList());
     return out;
 }
 

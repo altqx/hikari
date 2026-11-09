@@ -351,8 +351,6 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // Native absolute folders whose scripts a subtitle file may load without asking.
-        {"automation.trustedFolders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
@@ -376,6 +374,8 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // Native absolute folders whose scripts and Projects HikariSub trusts, subfolders included.
+        {"trust.folders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
@@ -452,6 +452,12 @@ std::optional<std::uint32_t> parseSettingColour(std::string_view text)
     if (text.size() == 7)
         return 0xFF000000u | rgba;
     return (rgba & 0xFFu) << 24 | rgba >> 8; // #RRGGBBAA
+}
+
+std::span<const RenamedSetting> renamedSettings()
+{
+    static constexpr RenamedSetting renamed[] = {{"automation.trustedFolders", "trust.folders"}};
+    return renamed;
 }
 
 std::span<const std::string_view> retiredSettings()
