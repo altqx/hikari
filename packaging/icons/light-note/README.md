@@ -1,0 +1,1 @@
+Light Note is an unused alternative to Dawn Peek, traced the same way (see `../dawn-peek/README.md`), with the hairpin's copy on the left lock redrawn as hair and Geologica Black badge letters; nothing in the app, packaging, build or tests uses these files.

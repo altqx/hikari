@@ -7,6 +7,7 @@ import { type Collector, schemaObject } from "./collector";
 import { kKeyPlaceholder } from "./relay";
 import { ProviderError, streamError, wrapsProviderError } from "./errors";
 import { sdk as loadSdk } from "./sdks";
+import { nativeSearch } from "./search";
 import type { Message, Part, ProviderConfig, Request, StopReason } from "./types";
 
 type Json = Record<string, unknown>;
@@ -37,6 +38,14 @@ function takesCacheMarks(config: ProviderConfig, model: string): boolean {
 }
 
 const detail = (value: unknown, key: string) => Number((value as Json | undefined)?.[key] ?? 0);
+
+function addAnnotations(out: Collector, annotations: unknown): void {
+    for (const a of (Array.isArray(annotations) ? annotations : []) as Json[]) {
+        const c = (a.type === "url_citation" ? a.url_citation : undefined) as Json | undefined;
+        if (c)
+            out.addCitation(String(c.url ?? ""), String(c.title ?? ""), typeof c.content === "string" ? c.content : undefined);
+    }
+}
 
 function chatMessages(request: Request, markCache: boolean): Json[] {
     const out: Json[] = [];
@@ -97,11 +106,14 @@ function chatClient(options: ClientOptions): Client {
             }
             if (request.maxOutputTokens !== undefined)
                 body.max_tokens = request.maxOutputTokens;
-            if (request.tools?.length)
-                body.tools = sortedTools(request).map((t) => ({
-                    type: "function",
-                    function: { name: t.name, description: t.description, parameters: schemaObject(t.parametersJson) },
-                }));
+            const tools: Json[] = sortedTools(request).map((t) => ({
+                type: "function",
+                function: { name: t.name, description: t.description, parameters: schemaObject(t.parametersJson) },
+            }));
+            if (nativeSearch(options.config, request))
+                tools.push({ type: "openrouter:web_search" }, { type: "openrouter:web_fetch" });
+            if (tools.length)
+                body.tools = tools;
             let stop: StopReason | undefined;
             try {
                 const stream = await client.chat.completions.create(body as never, { signal });
@@ -120,6 +132,8 @@ function chatClient(options: ClientOptions): Client {
                         continue;
                     const delta = (choice.delta ?? {}) as Json;
                     out.addText(typeof delta.content === "string" ? delta.content : undefined);
+                    addAnnotations(out, delta.annotations);
+                    addAnnotations(out, (choice.message as Json | undefined)?.annotations);
                     for (const call of (delta.tool_calls as Json[] | undefined) ?? []) {
                         const index = Number(call.index ?? 0);
                         const fn = (call.function ?? {}) as Json;
@@ -187,11 +201,14 @@ function responsesClient(options: ClientOptions): Client {
                 body.prompt_cache_key = request.cacheKey;
             if (request.maxOutputTokens !== undefined)
                 body.max_output_tokens = request.maxOutputTokens;
-            if (request.tools?.length)
-                body.tools = sortedTools(request).map((t) => ({
-                    type: "function", name: t.name, description: t.description,
-                    parameters: schemaObject(t.parametersJson), strict: false,
-                }));
+            const tools: Json[] = sortedTools(request).map((t) => ({
+                type: "function", name: t.name, description: t.description,
+                parameters: schemaObject(t.parametersJson), strict: false,
+            }));
+            if (nativeSearch(options.config, request))
+                tools.push({ type: "web_search" });
+            if (tools.length)
+                body.tools = tools;
             let hasCalls = false;
             try {
                 const stream = await client.responses.create(body as never, { signal });
@@ -200,6 +217,12 @@ function responsesClient(options: ClientOptions): Client {
                     case "response.output_text.delta":
                         out.addText(String(event.delta ?? ""));
                         break;
+                    case "response.output_text.annotation.added": {
+                        const a = (event.annotation ?? {}) as Json;
+                        if (a.type === "url_citation")
+                            out.addCitation(String(a.url ?? ""), String(a.title ?? ""));
+                        break;
+                    }
                     case "response.output_item.added": {
                         const item = (event.item ?? {}) as Json;
                         if (item.type === "function_call") {

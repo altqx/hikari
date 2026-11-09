@@ -228,6 +228,11 @@ bool fitsSocket(const QString &path)
 
 }
 
+bool isAppLink(const QString &argument)
+{
+    return argument.startsWith(QLatin1String("hikarisub:"), Qt::CaseInsensitive);
+}
+
 QStringList launchFiles(const QStringList &arguments, const QString &workingDirectory)
 {
     std::vector<std::string> utf8;
@@ -239,6 +244,10 @@ QStringList launchFiles(const QStringList &arguments, const QString &workingDire
         QString path = QString::fromStdString(argument);
         if (path.isEmpty())
             continue;
+        if (isAppLink(path)) {
+            files << path;
+            continue;
+        }
         if (path.startsWith(QLatin1String("file:"), Qt::CaseInsensitive)) {
             const QUrl url(path);
             if (!url.isLocalFile())
