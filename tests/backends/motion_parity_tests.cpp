@@ -1,5 +1,6 @@
 #include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/motion_data.h"
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 
@@ -130,6 +131,31 @@ app::EditSession corpusSession(const QString &name)
     std::vector<std::byte> bytes(static_cast<std::size_t>(data.size()));
     std::memcpy(bytes.data(), data.data(), bytes.size());
     return app::EditSession(hikari::core::loadAss(bytes).document);
+}
+
+void selectRows(app::EditSession &session, const QJsonArray &rows)
+{
+    const auto snapshot = app::snapshotForMacro(session);
+    app::Selection selection;
+    for (const auto &row : rows)
+        selection.selected.insert(hikari::core::LineId{snapshot->dialogues.at(row.toInt() - 1).id});
+    selection.active = *selection.selected.begin();
+    session.setSelection(selection);
+}
+
+void selectTracked(app::EditSession &session)
+{
+    app::Selection tracked;
+    for (const auto &d : app::snapshotForMacro(session)->dialogues)
+        if (std::ranges::contains(d.extra, std::string("a-mo"), &std::pair<std::string, std::string>::first))
+            tracked.selected.insert(hikari::core::LineId{d.id});
+    tracked.active = *tracked.selected.begin();
+    session.setSelection(tracked);
+}
+
+QJsonArray documentEvents(app::EditSession &session)
+{
+    return events(*app::snapshotForMacro(session));
 }
 
 class MotionParity : public ::testing::Test {
@@ -317,6 +343,52 @@ TEST_F(MotionParity, AegisubMotionMatchesItsGoldens)
         ASSERT_TRUE(out.open(QIODevice::WriteOnly)) << path.toStdString();
         out.write(QJsonDocument(golden).toJson());
     }
+}
+
+
+TEST_F(MotionParity, EitherRevertUndoesEitherApply)
+{
+    const QJsonObject corpus = QJsonDocument::fromJson(readFile(corpusDir() + QStringLiteral("/cases.json"))).object();
+    const QByteArray data = readFile(corpusDir() + QStringLiteral("/main.txt"));
+    const auto track = app::parseMotionData(std::u8string(reinterpret_cast<const char8_t *>(data.constData()), data.size()));
+    ASSERT_TRUE(track);
+    int checked = 0;
+    for (const auto &value : corpus.value("cases").toArray()) {
+        const QJsonObject spec = value.toObject();
+        const QString name = spec.value("name").toString();
+        if (name != QStringLiteral("revert") && name != QStringLiteral("several-lines"))
+            continue;
+        ++checked;
+        const QJsonArray dialogs = spec.value("dialogs").toArray();
+        app::MotionOptions options;
+        options.main.rotation = true;
+        options.main.relativeFrame = dialogs.first().toObject().value("values").toObject().value("startFrame").toInt(5);
+
+        app::EditSession native = corpusSession(corpus.value("document").toString());
+        selectRows(native, spec.value("selection").toArray());
+        ASSERT_TRUE(app::applyMotion(native, *video.frameTimes(), *track, options)) << name.toStdString();
+
+        freshAutomationFolder(name + QStringLiteral("-apply"));
+        app::EditSession amo = corpusSession(corpus.value("document").toString());
+        selectRows(amo, spec.value("selection").toArray());
+        ASSERT_EQ(run(amo, QStringLiteral("Aegisub-Motion/Apply"), dialogs).record.value("outcome").toString(),
+                  QStringLiteral("ok"));
+
+        for (auto *applied : {&native, &amo}) {
+            const std::string what = name.toStdString() + (applied == &native ? ", native Apply" : ", a-mo Apply");
+            app::EditSession byNative(applied->document());
+            selectTracked(byNative);
+            ASSERT_TRUE(app::revertMotion(byNative)) << what;
+            selectTracked(*applied);
+            freshAutomationFolder(name + QStringLiteral("-revert") + QString::number(++runs));
+            const Run reverted = run(*applied, QStringLiteral("Aegisub-Motion/Revert"), {});
+            ASSERT_EQ(reverted.record.value("outcome").toString(), QStringLiteral("ok")) << what;
+            EXPECT_EQ(QJsonDocument(documentEvents(byNative)).toJson().toStdString(),
+                      QJsonDocument(documentEvents(*applied)).toJson().toStdString())
+                << what;
+        }
+    }
+    EXPECT_EQ(checked, 2);
 }
 
 }

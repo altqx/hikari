@@ -1,0 +1,347 @@
+{
+  "apply": {
+    "events": [
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.87\\clip(509.84,292.4,794.98,414.6)\\frz-1.88\\fscx93.52\\fscy93.52\\pos(597.09,375.48)\\shad0.94}Rect clip"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.9\\clip(504.92,296.2,787.49,417.3)\\frz-1.41\\fscx95.14\\fscy95.14\\pos(606.18,371.52)\\shad0.95}Rect clip"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.94\\clip(500,300,780,420)\\frz-0.94\\fscx96.76\\fscy96.76\\pos(616.36,367.61)\\shad0.97}Rect clip"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.97\\clip(495.08,303.8,772.51,422.7)\\frz-0.47\\fscx98.38\\fscy98.38\\pos(627.64,363.77)\\shad0.98}Rect clip"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2\\clip(490.16,307.6,765.02,425.4)\\frz0\\fscx100\\fscy100\\pos(640,360)\\shad1}Rect clip"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.03\\clip(485.23,311.41,757.54,428.11)\\frz0.47\\fscx101.62\\fscy101.62\\pos(653.46,356.29)\\shad1.02}Rect clip"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.06\\clip(480.31,315.21,750.05,430.81)\\frz0.94\\fscx103.24\\fscy103.24\\pos(668.01,352.64)\\shad1.03}Rect clip"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.1\\clip(475.39,319.01,742.56,433.51)\\frz1.41\\fscx104.86\\fscy104.86\\pos(683.65,349.06)\\shad1.05}Rect clip"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.13\\clip(470.47,322.81,735.07,436.21)\\frz1.88\\fscx106.48\\fscy106.48\\pos(700.38,345.54)\\shad1.06}Rect clip"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.16\\clip(465.55,326.61,727.58,438.91)\\frz2.35\\fscx108.09\\fscy108.09\\pos(718.2,342.09)\\shad1.08}Rect clip"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.19\\clip(460.62,330.41,720.1,441.62)\\frz2.82\\fscx109.71\\fscy109.71\\pos(737.12,338.69)\\shad1.1}Rect clip"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.23\\clip(455.7,334.22,712.61,444.32)\\frz3.29\\fscx111.33\\fscy111.33\\pos(757.13,335.36)\\shad1.11}Rect clip"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.26\\clip(450.78,338.02,705.12,447.02)\\frz3.76\\fscx112.95\\fscy112.95\\pos(778.23,332.1)\\shad1.13}Rect clip"
+      },
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.87\\clip(m 506.9 296.82 l 791.92 288.86 795.33 411.01 510.31 418.97)\\frz-1.88\\fscx93.52\\fscy93.52\\pos(597.09,375.48)\\shad0.94}Vector clip"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.9\\clip(m 503.45 298.38 l 785.99 294.43 787.68 415.52 505.14 419.47)\\frz-1.41\\fscx95.14\\fscy95.14\\pos(606.18,371.52)\\shad0.95}Vector clip"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.94\\clip(m 500 300 l 780 300 780 420 500 420)\\frz-0.94\\fscx96.76\\fscy96.76\\pos(616.36,367.61)\\shad0.97}Vector clip"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.97\\clip(m 496.55 301.68 l 773.96 305.56 772.3 424.44 494.89 420.57)\\frz-0.47\\fscx98.38\\fscy98.38\\pos(627.64,363.77)\\shad0.98}Vector clip"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2\\clip(m 493.11 303.42 l 767.87 311.1 764.58 428.85 489.82 421.18)\\frz0\\fscx100\\fscy100\\pos(640,360)\\shad1}Vector clip"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.03\\clip(m 489.67 305.22 l 761.73 316.63 756.84 433.22 484.78 421.82)\\frz0.47\\fscx101.62\\fscy101.62\\pos(653.46,356.29)\\shad1.02}Vector clip"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.06\\clip(m 486.23 307.08 l 755.54 322.14 749.09 437.56 479.77 422.5)\\frz0.94\\fscx103.24\\fscy103.24\\pos(668.01,352.64)\\shad1.03}Vector clip"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.1\\clip(m 482.78 309 l 749.3 327.64 741.31 441.86 474.79 423.23)\\frz1.41\\fscx104.86\\fscy104.86\\pos(683.65,349.06)\\shad1.05}Vector clip"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.13\\clip(m 479.33 310.98 l 743.01 333.12 733.52 446.13 469.85 423.99)\\frz1.88\\fscx106.48\\fscy106.48\\pos(700.38,345.54)\\shad1.06}Vector clip"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.16\\clip(m 475.88 313.02 l 736.67 338.59 725.71 450.36 464.93 424.79)\\frz2.35\\fscx108.09\\fscy108.09\\pos(718.2,342.09)\\shad1.08}Vector clip"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.19\\clip(m 472.43 315.12 l 730.28 344.04 717.89 454.55 460.03 425.63)\\frz2.82\\fscx109.71\\fscy109.71\\pos(737.12,338.69)\\shad1.1}Vector clip"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.23\\clip(m 468.97 317.27 l 723.85 349.47 710.05 458.7 455.17 426.5)\\frz3.29\\fscx111.33\\fscy111.33\\pos(757.13,335.36)\\shad1.11}Vector clip"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(m 500 300 l 780 300 780 420 500 420)}Vector clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.26\\clip(m 465.5 319.48 l 717.36 354.88 702.19 462.82 450.33 427.42)\\frz3.76\\fscx112.95\\fscy112.95\\pos(778.23,332.1)\\shad1.13}Vector clip"
+      }
+    ],
+    "outcome": "ok",
+    "unchanged": 12,
+    "undo_steps": 1
+  }
+}

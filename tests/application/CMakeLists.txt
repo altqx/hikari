@@ -236,3 +236,8 @@ hikari_add_gtest(hikari_application_timecodes_file_tests SOURCES timecodes_file_
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_timecodes_file_tests PRIVATE
     HIKARI_TIMECODES_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timecodes")
+hikari_add_gtest(hikari_application_motion_data_tests SOURCES motion_data_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_motion_data_tests PRIVATE
+    HIKARI_MOTION_CORPUS="${PROJECT_SOURCE_DIR}/tests/fixtures/motion-data")
+target_include_directories(hikari_application_motion_data_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
