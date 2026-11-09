@@ -67,6 +67,15 @@ The HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418
 - **Install.** HikariSub downloads the listed version's `url`, which must be on the marketplace's origin and no larger than `size`. Then it checks `size` and `sha256`, runs the package checks, and checks that the manifest has the listed id, version, tier and API. The manifest's `publicKey` must be the listing's `publicKey` and, for an installed plugin, the pinned key. The marketplace packages carry no `.minisig`: the signed index vouches for the listing's author key. A downgrade is refused, except Install <last good> after a revocation. The install question always opens first, except for an [automatic update](#updates-roll-back-and-revocation).
 - **Source.** `plugins.json` records `"source": "marketplace"` for a marketplace install; a missing `source` means a file. Installing from a file over a marketplace copy makes it a file install again.
 
+### Installing from the website
+
+The marketplace website's Install in HikariSub opens `hikarisub://plugin/install?id=<id>` (MK1 [#667](https://github.com/altqx/hikari/issues/667)). [Distribution](distribution.md#packages) says how each package registers the scheme.
+
+- **The only link.** HikariSub takes exactly that form, with an id that fits the manifest's pattern and 100 characters at most. It ignores anything else (another action, an extra parameter, a fragment, a percent-encoded character) and only notes it in the `hikari.links` log. The link names nothing but the id.
+- **Where it goes.** A start with a link hands it to the HikariSub already running, like a file, and the last active window takes it. A start that opens the first window takes it once that window is up. Of several links that come together, only the last counts.
+- **What it does.** HikariSub opens the plugin manager at the Marketplace view and fetches the index again, so a plugin listed a minute ago is found. Then it chooses the listing and starts the same download as Install, which ends in the install question. When the newest version this HikariSub can run is already installed, it only chooses the listing. A plugin the index doesn't list, or one this HikariSub can't run, gets "<id> isn’t in the marketplace for this HikariSub.", and an index that doesn't arrive gets the usual message.
+- **Plugin updates off.** While "Check for plugin updates" is off, a link only asks: "<id> can’t be installed while plugin updates are off.", with Close and Turn on plugin updates. Turning them on carries on as above; nothing is fetched before that.
+
 ### Updates, roll back and revocation
 
 - **Automatic updates.** After each index HikariSub accepts, it installs the newest version a marketplace plugin can run when "Install updates automatically" (`plugins.autoUpdate`, on by default, under "Check for plugin updates") and the plugin's own switch are both on. The download gets the same checks as Install. File installs never update by themselves.

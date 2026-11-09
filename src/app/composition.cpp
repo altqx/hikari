@@ -36,6 +36,7 @@
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <functional>
 #include <memory>
@@ -281,7 +282,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     }
 #endif
     Application application(options);
-    application.setStartedWithPaths(!files.isEmpty());
+    application.setStartedWithPaths(std::ranges::any_of(files, [](const QString &file) { return !isAppLink(file); }));
     crash::install(options.crashReports.crashRecord, QCoreApplication::applicationDirPath(), QStringLiteral(HIKARI_VERSION));
     std::unique_ptr<HangWatchdog> watchdog;
     {

@@ -106,6 +106,32 @@ DialogWindow {
         open()
         list.forceActiveFocus()
     }
+    function followLink(id) {
+        if (!marketAvailable)
+            return
+        if (settings.value("plugins.checkUpdates") !== true) {
+            const listed = listings.find(l => l.id === id)
+            messages.ask({
+                title: qsTr("Install plugin"),
+                text: qsTr("“%1” can’t be installed while plugin updates are off.").arg(listed ? listed.name : id),
+                detail: qsTr("The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first."),
+                choices: [{ id: "turnOn", text: qsTr("Turn on plugin updates"), role: "accept", isDefault: true },
+                          { id: "close", text: qsTr("Close"), role: "reject" }]
+            }, answer => {
+                if (answer !== "turnOn")
+                    return
+                dialog.settings.setValue("plugins.checkUpdates", true)
+                dialog.followLink(id)
+            })
+            return
+        }
+        search = ""
+        category = ""
+        open()
+        showView("market")
+        chosenListingId = id
+        market.follow(id)
+    }
     function tell(title, text) {
         messages.ask({
             title: title,
