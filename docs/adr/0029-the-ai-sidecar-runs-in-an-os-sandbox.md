@@ -41,7 +41,7 @@ It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
 ## Network
 
 - **The sidecar has no network.** All of its egress goes to Qt as `_hikari/http.request {stream, target, method, url, headers, body}`. Qt answers with `_hikari/http.response {stream, status, headers}` and `_hikari/http.data {stream, data}` notifications as the body arrives, then `{}`. A failure is code -32010 with the provider error, and `$/cancel_request` aborts the request.
-- **An allowlist of targets.** A target is a kind and an id. The only kind today is `provider`, which Qt maps to that provider's base URL and key. The request is refused when:
+- **An allowlist of targets.** A target is a kind and an id. `provider` maps to that provider's base URL and key. `search` maps to the user's chosen search service and its key, and only while web search is on, or to a service under Test connection with the key typed for it ([AI23 #742](https://github.com/altqx/hikari/issues/742)). The request is refused when:
   - the URL isn't under that base, or it has dot segments;
   - the method isn't GET, POST, PUT, PATCH, DELETE or HEAD.
 - **What the relay does to a request:**
@@ -49,7 +49,7 @@ It adds to ADR 0026's Agents and Tests sections. The rest of ADR 0026 stands.
   - It drops hop-by-hop, `Host`, `Content-Length`, `Accept-Encoding`, proxy and cookie headers.
   - It honours the system proxy.
   - It applies AI5's plain-HTTP key rule: the host is resolved, checked and pinned, and the name goes in `Host`.
-- **New kinds are Qt's decision.** A card that needs another host adds a target kind in Qt, for example a web-search fallback API. The sidecar can't name a URL outside the targets.
+- **New kinds are Qt's decision.** A card that needs another host adds a target kind in Qt, as AI23 did with `search`. The sidecar can't name a URL outside the targets.
 - **This is now a boundary.** Wherever the sandbox applies, a malicious dependency in the sidecar can reach nothing but the relay.
 
 ## Agents

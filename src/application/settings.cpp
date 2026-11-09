@@ -270,6 +270,8 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
         // On: so|ma|t|ta; off: so|mat|ta.
         {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
+        // On: กิ|น; off: a Thai word is one syllable.
+        {"audio.karaokeThaiClusters", "", Bool, Profile, Mapped, false, true},
         // Centiseconds.
         {"audio.karaokeKfThreshold", "", Int, Profile, Mapped, false, std::int64_t{100}},
         // speedPercent: 25, 33, 50, 75 or 100; tapLatency in ms.
@@ -301,6 +303,9 @@ const std::vector<SettingDefinition> &definitions()
         {"video.alignTolerance", "", Int, Profile, Mapped, false, std::int64_t{20}},
         // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"recent.projects", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "<ms since the epoch> <path>" per entry of recent.projects.
+        {"recent.projectsOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
         {"plugins.checkUpdates", "", Bool, Profile, Mapped, false, true},
         {"plugins.autoUpdate", "", Bool, Profile, Mapped, false, true},
@@ -348,6 +353,8 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
+        {"ai.webSearch", "", Bool, Profile, Mapped, false, true},
+        {"ai.searchService", "", String, Profile, Mapped, false, std::string()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},

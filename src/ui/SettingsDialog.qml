@@ -319,12 +319,16 @@ DialogWindow {
     component SettingCheck: CheckBox {
         id: check
         required property string setting
+        property string tip
         objectName: "setting_" + setting
         leftPadding: 1
         spacing: 9
         Layout.fillWidth: text.length > 0
         Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
         Accessible.name: text
+        Accessible.description: tip
+        ToolTip.text: tip
+        ToolTip.visible: hovered && tip !== ""
         function refresh() { checked = dialog.values[setting] === true }
         Component.onCompleted: {
             if (contentItem && contentItem.wrapMode !== undefined)
@@ -1232,6 +1236,11 @@ DialogWindow {
                         SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every “n” with the previous syllable") }
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
                         SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
+                        SettingCheck {
+                            setting: "audio.karaokeThaiClusters"
+                            text: qsTr("Split Thai into character clusters")
+                            tip: qsTr("Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.")
+                        }
                         SettingsRow {
                             iconRole: "karaoke"
                             text: qsTr("Long syllables for %1").arg("\\kf")

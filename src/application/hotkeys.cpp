@@ -333,6 +333,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_NEXT_QC_NOTE", 5242},
         {"GLOBAL_PREVIOUS_QC_NOTE", 5243},
         {"GLOBAL_ADD_QC_NOTE", 5254},
+        {"GLOBAL_MOVE_TAB_TO_NEW_WINDOW", 5221},
+        {"GLOBAL_MOVE_TAB_TO_WINDOW", 5222},
         {"GLOBAL_KEEP_AI_CHANGE", 5245},
         {"GLOBAL_UNDO_AI_CHANGE", 5246},
         {"GLOBAL_NEXT_AI_CHANGE", 5247},
@@ -340,6 +342,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_KEEP_ALL_AI_CHANGES", 5249},
         {"GLOBAL_UNDO_ALL_AI_CHANGES", 5250},
         {"GLOBAL_SHOW_AI_REVIEW", 5251},
+        {"GLOBAL_OPEN_FOLDER", 5255},
+        {"GLOBAL_CLOSE_PROJECT", 5256},
         {"GLOBAL_NODE_EFFECTS", 5244},
 };
 
@@ -639,6 +643,8 @@ constexpr NameRow kNames[] = {
         {5242, "Next QC note"},
         {5243, "Previous QC note"},
         {5254, "Add QC note"},
+        {5221, "Move tab to new window"},
+        {5222, "Move tab to window"},
         {5245, "Keep AI change"},
         {5246, "Undo AI change"},
         {5247, "Next AI change"},
@@ -646,6 +652,8 @@ constexpr NameRow kNames[] = {
         {5249, "Keep all AI changes"},
         {5250, "Undo all AI changes"},
         {5251, "Review panel"},
+        {5255, "Open folder…"},
+        {5256, "Close project"},
         {5244, "Node effects"},
 };
 

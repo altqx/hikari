@@ -333,6 +333,7 @@ void AudioController::splitKaraoke()
     application::KaraokeSplitRules rules;
     rules.everyN = m_store && m_store->boolean("audio.mergeEveryNWithSyllable");
     rules.doubleConsonantApart = m_store && m_store->boolean("audio.karaokeDoubleConsonantApart");
+    rules.thaiClusters = m_store && m_store->boolean("audio.karaokeThaiClusters");
     rules.hyphenation = &karaokeHyphenation();
     m_karaoke.split({m_activeText, line.startMs, line.endMs}, m_karaAuto, rules, m_classes);
 }

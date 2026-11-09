@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7399,6 +7407,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>การออกแบบและการพัฒนา</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -10022,6 +10034,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แยกพยัญชนะซ้อนเป็นพยางค์ของตัวเอง (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>แยกภาษาไทยเป็นกลุ่มอักขระ</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>แบ่งอัตโนมัติจะให้กลุ่มอักขระภาษาไทยแต่ละกลุ่มเป็นพยางค์ของตัวเอง กิน จึงกลายเป็น กิ|น ปิดตัวเลือกนี้เพื่อให้คำภาษาไทยแต่ละคำเป็นพยางค์เดียว</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>พยางค์ยาวสำหรับ %1</translation>
     </message>
@@ -11667,6 +11687,102 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>ให้เอเจนต์ภายนอก HikariSub แก้ไขผ่าน MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex และเอเจนต์อื่นอ่านเอกสารที่เปิดอยู่ การแก้ไขของเอเจนต์จะรออยู่ในการตรวจทานจนกว่าคุณจะเก็บไว้หรือเลิกทำ</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>คอมโพเนนต์ทำงานเฉพาะเมื่อเอเจนต์ใช้ HikariSub และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>ต้องใช้คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP ยังปิดอยู่ %1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1:%1 ด้วย</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP เข้าถึงได้จากคอมพิวเตอร์เครื่องนี้เท่านั้น และต้องมีโทเค็น</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>คัดลอกการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>รีเซ็ตโทเค็น</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>บันทึกโทเค็นใหม่แล้ว</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>คัดลอกแล้ว เรียกใช้ในเทอร์มินัล</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>คัดลอกแล้ว วางลงในการตั้งค่าของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>คำสั่ง Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON พร้อมที่อยู่และโทเค็น</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>มีโทเค็นของคุณอยู่ โปรดเก็บไว้เป็นความลับ</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>รีเซ็ตโทเค็น จะสร้างโทเค็นใหม่ เอเจนต์ที่ตั้งค่าด้วยโทเค็นเดิมจะหยุดทำงานจนกว่าคุณจะคัดลอกการตั้งค่าอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>ใช้การแคชพรอมต์</translation>
     </message>
@@ -11689,6 +11805,126 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
+        <source>Web search</source>
+        <translation>การค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>ให้ AI ค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>เอเจนต์ค้นหาชื่อ คำศัพท์ เนื้อเพลง และข้อมูลอ้างอิงได้ และบอกว่าพบจากที่ใด ผู้ให้บริการหรือบริการค้นหาของคุณจะได้รับคำค้นทุกคำที่เอเจนต์เขียนและหน้าที่เอเจนต์เปิด</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google Search และอ่านหน้าเว็บได้</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>ค้นหาเอง และอ่านหน้าเว็บได้</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>ต้องใช้บริการค้นหา</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>คำตอบของ Gemini ที่มีการค้นหาจะแสดงคำแนะนำการค้นหาของ Google ตามข้อกำหนดของ Google</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>บริการค้นหา</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (ค้นหาอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search ค้นหาได้อย่างเดียว ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะใช้บริการนี้อ่านหน้าเว็บไม่ได้</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>สำหรับผู้ให้บริการที่ไม่มีการค้นหาของตัวเอง Anthropic, Google Gemini, OpenAI และ OpenRouter ค้นหาได้โดยไม่ต้องใช้</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>คีย์ %1</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>แทนที่คีย์…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>เพิ่มอยู่ดี</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>นำคีย์ออก</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>รับคีย์ %1</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>เชื่อมต่อแล้ว</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>ใช้การค้นหาหมดแล้ว (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>เพิ่มผู้ให้บริการเพื่อทดสอบคีย์</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>เชื่อมต่อ %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>บริการค้นหาผิดพลาด (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>ยังไม่ได้ทดสอบ</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>บันทึกในพวงกุญแจ HikariSub ส่งเฉพาะคำค้นที่เอเจนต์เขียน ไม่ส่งไฟล์ของคุณ ทดสอบการเชื่อมต่อจะค้นหาหนึ่งครั้ง ซึ่งนับรวมในแพ็กเกจ %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 ปฏิเสธคีย์ วางคีย์ใหม่จากแดชบอร์ด %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>แพ็กเกจ %1 ของคุณไม่มีการค้นหาเหลือแล้ว จนกว่าจะรีเซ็ต ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะตอบโดยไม่ค้นหาและแจ้งให้ทราบ</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>คีย์อยู่ในพวงกุญแจ ผู้ให้บริการคิดค่าการค้นหาของตัวเองเพิ่มจากโทเค็น %1 คิดค่าการค้นหาตามแพ็กเกจ %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>ลบคีย์ %1 ไหม</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>คีย์จะถูกลบออกจากพวงกุญแจ ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะหยุดค้นหาจนกว่าคุณจะเพิ่มคีย์</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
 </context>
 <context>
@@ -11718,6 +11954,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ปลั๊กอินนี้ต้องใช้ Hikari API %1 แต่ HikariSub นี้มี API %2 อัปเดต HikariSub เพื่อติดตั้งปลั๊กอินนี้</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>เฉพาะปลั๊กอินที่เชื่อถือเต็มที่เท่านั้นที่มีแผง QML ได้</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json ไม่ผ่านสคีมาปลั๊กอินที่ %1: %2</translation>
     </message>
@@ -11736,6 +11976,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>แพ็กเกจไม่เป็นไปตามกฎของสื่อ: %1 %2</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>แพ็กเกจไม่มีไฟล์แผง %1</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 นำเข้า %2 ซึ่งแผงของปลั๊กอินใช้ไม่ได้</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -11768,6 +12016,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>เชื่อถือเต็มที่: อาจเรียกใช้โค้ดเนทีฟนอกขอบเขตที่ HikariSub จำกัดไว้</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>แสดงแผงของตัวเองภายใน HikariSub</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11868,6 +12120,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install plugin</source>
         <translation>ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>ติดตั้ง “%1” ไม่ได้ขณะที่ปิดการอัปเดตปลั๊กอินอยู่</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>ลิงก์นี้มาจากเว็บไซต์มาร์เก็ตเพลส HikariSub ค้นหาปลั๊กอินในรายการที่ลงนามของตัวเอง จึงต้องตรวจสอบมาร์เก็ตเพลสก่อน</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>เปิดการอัปเดตปลั๊กอิน</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -12190,6 +12454,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>สิทธิ์</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub จำกัดปลั๊กอินนี้ไว้ที่สิทธิ์เหล่านี้ แต่ระบบนี้ไม่ได้รันปลั๊กอินในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>โฟลเดอร์ที่จำไว้</translation>
     </message>
@@ -12342,6 +12610,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แสดง</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของ %1 เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>โหลดแผงไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>แผงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>โหลดอีกครั้ง</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>ไม่ได้ติดตั้ง %1</translation>
     </message>
@@ -12436,6 +12720,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของปลั๊กอินนี้เปิดอยู่ แผงจึงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>รากของแผงไม่ใช่ Item</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>โหลดแผง “%1” ไม่ได้: %2</translation>
     </message>
 </context>
 <context>
@@ -12667,6 +12963,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open a subtitle file to keep QC notes in it.</source>
         <translation>เปิดไฟล์คำบรรยายเพื่อเก็บโน้ต QC ไว้ในไฟล์</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
     </message>
     <message>
         <source>Paste notes</source>
@@ -16007,6 +16307,10 @@ Styles deleted:
         <translation>สลับไปที่</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
@@ -16091,6 +16395,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>วิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
     </message>
 </context>
 <context>

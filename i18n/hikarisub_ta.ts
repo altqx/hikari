@@ -6681,6 +6681,14 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7451,6 +7459,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>வடிவமைப்பு மற்றும் மேம்பாடு</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -10089,6 +10101,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>இரட்டை மெய்யெழுத்துக்குத் தனி அசை கொடு (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>தாய் மொழியை எழுத்துக் கொத்துகளாகப் பிரி</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>தானியங்கு பிரிப்பு ஒவ்வொரு தாய் எழுத்துக் கொத்துக்கும் தனி அசை கொடுக்கும், எனவே กิน என்பது กิ|น ஆகும். ஒவ்வொரு தாய் சொல்லையும் ஒரே அசையாக வைக்க இதை அணைக்கவும்.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>%1 க்கான நீண்ட அசைகள்</translation>
     </message>
@@ -11740,6 +11760,102 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>மீண்டும் முயல்</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>HikariSub க்கு வெளியே உள்ள முகவர்கள் MCP வழியாகத் திருத்த அனுமதி</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex மற்றும் பிற முகவர்கள் திறந்த ஆவணங்களைப் படிக்கும். நீங்கள் வைத்துக்கொள்ளும் வரை அல்லது செயல்தவிர்க்கும் வரை அவற்றின் திருத்தங்கள் மதிப்பாய்வில் காத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>ஒரு முகவர் HikariSub ஐப் பயன்படுத்தும்போது மட்டுமே இயங்கும், AI அணைக்கப்பட்டிருக்கும்போது ஒருபோதும் இயங்காது.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>பதிவிறக்கு</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>இதற்கு AI கூறு தேவை</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP அணைந்தே இருக்கும். %1.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>http://127.0.0.1 இலும் கேள்</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>http://127.0.0.1:%1 இலும் கேள்</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>HTTP வழியாக இணையும் முகவர்களுக்கு. இந்தக் கணினி மட்டுமே, டோக்கனுடன் மட்டுமே இதை அணுக முடியும்.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>அமைப்பை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>டோக்கனை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>புதிய டோக்கன் சேமிக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>நகலெடுக்கப்பட்டது. அதை முனையத்தில் இயக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>நகலெடுக்கப்பட்டது. அதை முகவரின் அமைப்புகளில் ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Claude Code கட்டளை</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>முகவரியும் டோக்கனும் உள்ள JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>உங்கள் டோக்கன் இதில் உள்ளது; அதைத் தனிப்பட்டதாக வைத்திருங்கள்.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>டோக்கனை மீட்டமை ஒரு புதிய டோக்கனை உருவாக்கும். பழைய டோக்கனுடன் அமைக்கப்பட்ட முகவர்கள், நீங்கள் அமைப்பை மீண்டும் நகலெடுக்கும் வரை வேலை செய்யாது.</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>JSON அமைப்பு HTTP வழியாக இணையும் முகவர்களுக்கானது, எனவே “http://127.0.0.1 இலும் கேள்” இயக்கப்பட வேண்டும்.</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>ப்ராம்ப்ட் தற்காலிகச் சேமிப்பைப் பயன்படுத்து</translation>
     </message>
@@ -11762,6 +11878,126 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
+    </message>
+    <message>
+        <source>Web search</source>
+        <translation>இணையத் தேடல்</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>AI இணையத்தில் தேட அனுமதி</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>முகவர் பெயர்கள், சொற்கள், பாடல் வரிகள், குறிப்புகளைத் தேடி, அவற்றை எங்கே கண்டது என்று சொல்லும். முகவர் எழுதும் ஒவ்வொரு தேடலும் அது திறக்கும் பக்கங்களும் வழங்குநருக்கோ உங்கள் தேடல் சேவைக்கோ செல்லும்.</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google தேடல், பக்கங்களையும் படிக்கும்</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>சொந்தத் தேடல், பக்கங்களையும் படிக்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>தேடல் சேவை தேவை</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>தேடலைப் பயன்படுத்திய Gemini பதில்கள், Google விதிமுறைகளின்படி Google தேடல் பரிந்துரைகளைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>தேடல் சேவை</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (தேடல் மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search தேடல் மட்டுமே செய்யும்: சொந்தத் தேடல் இல்லாத வழங்குநர்கள் இதன் மூலம் பக்கத்தைப் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>சொந்தத் தேடல் இல்லாத வழங்குநர்களுக்கு. Anthropic, Google Gemini, OpenAI, OpenRouter ஆகியவை இது இல்லாமலே தேடும்.</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>%1 விசை</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>விசையை மாற்று…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>இருந்தாலும் சேர்</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>விசையை அகற்று</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>%1 விசையைப் பெறு</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>இணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>தேடல்கள் தீர்ந்துவிட்டன (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>விசையைச் சோதிக்க ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>%1-ஐ அடைய முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>தேடல் சேவைப் பிழை (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>சோதிக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>விசைக்கொத்தில் சேமிக்கப்படும். முகவர் எழுதும் தேடல்களை மட்டுமே HikariSub அனுப்பும், உங்கள் கோப்புகளை ஒருபோதும் அனுப்பாது. இணைப்பைச் சோதித்தல் ஒரு தேடலை இயக்கும், அது உங்கள் %1 திட்டத்தில் கணக்கிடப்படும்.</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 விசையை நிராகரித்தது. உங்கள் %1 கட்டுப்பாட்டுப் பலகத்திலிருந்து புதியதை ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>உங்கள் %1 திட்டத்தில் தேடல்கள் இல்லை. அது மீட்டமைக்கப்படும் வரை, சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேடாமல் பதிலளித்து அதைச் சொல்லும்.</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>விசை விசைக்கொத்தில் உள்ளது. வழங்குநர்கள் டோக்கன்களுடன் தங்கள் சொந்தத் தேடல்களுக்கும் கட்டணம் வசூலிப்பார்கள். %1 தேடல்களை உங்கள் %1 திட்டத்தில் கணக்கிடும்.</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>%1 விசையை அகற்றவா?</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>இது விசைக்கொத்திலிருந்து நீக்கப்படும். நீங்கள் விசையைச் சேர்க்கும் வரை சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேட மாட்டார்கள்.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அடைகிறது.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -11791,6 +12027,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>முழு நம்பிக்கை செருகுநிரல்கள் மட்டுமே QML பலகங்களைக் கொண்டிருக்க முடியும்.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
     </message>
@@ -11809,6 +12049,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>தொகுப்பு ஊடக விதிகளை மீறுகிறது: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>தொகுப்பில் அதன் பலகக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1, செருகுநிரல் பலகங்கள் பயன்படுத்த முடியாத %2 ஐ இறக்குகிறது.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -11841,6 +12089,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub இனுள் தனது சொந்தப் பலகங்களைக் காட்டுகிறது</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11941,6 +12193,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Install plugin</source>
         <translation>செருகுநிரலை நிறுவு</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகள் அணைக்கப்பட்டிருக்கும்போது “%1”-ஐ நிறுவ முடியாது.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>இந்த இணைப்பு சந்தை இணையதளத்திலிருந்து வந்தது. HikariSub தன் சொந்தக் கையொப்பமிட்ட பட்டியலில் செருகுநிரலைத் தேடுகிறது, எனவே முதலில் சந்தையைச் சரிபார்க்க வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>செருகுநிரல் புதுப்பிப்புகளை இயக்கு</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -12263,6 +12527,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனுமதிகள்</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub இதை இந்த அனுமதிகளுக்குள் மட்டுமே வைத்திருக்கிறது, ஆனால் இந்த அமைப்பில் இது சாண்ட்பாக்ஸில் இயங்கவில்லை.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>நினைவில் வைத்த கோப்புறைகள்</translation>
     </message>
@@ -12417,6 +12685,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>காட்டு</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1 இன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>பலகத்தை ஏற்ற முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 நிறுவப்படவில்லை.</translation>
     </message>
@@ -12511,6 +12795,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>இதன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டதால், நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>இதன் மூலம் Item அல்ல.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
     </message>
 </context>
 <context>
@@ -12754,6 +13050,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open a subtitle file to keep QC notes in it.</source>
         <translation>QC குறிப்புகளை வைக்க ஒரு வசனக் கோப்பைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>ASS மற்றும் SSA கோப்புகள் மட்டுமே QC குறிப்புகளை வைத்திருக்க முடியும். குறிப்புகளைச் சேர்க்க இந்தக் கோப்பை ASS ஆகச் சேமிக்கவும்.</translation>
     </message>
     <message>
         <source>Paste notes</source>
@@ -16127,6 +16427,10 @@ Styles deleted:
         <translation>இதற்கு மாறு</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>மூடு</translation>
     </message>
@@ -16212,6 +16516,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>வீடியோ மட்டும்</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
     </message>
 </context>
 <context>

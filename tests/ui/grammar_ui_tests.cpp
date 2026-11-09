@@ -501,7 +501,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("grammar.language")),
                                           Q_ARG(QVariant, 2)));
         QTRY_VERIFY(group->isEnabled());
-        QVERIFY(item("settingsGrammarLicence")->property("text").toString().contains(QStringLiteral("Harper 3.0.0")));
+        QVERIFY(item("settingsGrammarLicence")->property("text").toString().contains(QStringLiteral("Harper 3.1.0")));
         QVERIFY(QMetaObject::invokeMethod(dialog, "creditsRequested"));
         auto *credits = named(QStringLiteral("creditsDialog"));
         QTRY_VERIFY(credits->property("visible").toBool());
@@ -514,7 +514,7 @@ private slots:
         int rules = 0;
         for (const QVariant &g : groups)
             rules += g.toMap().value(QStringLiteral("rules")).toInt();
-        QCOMPARE(rules, 936);
+        QCOMPARE(rules, 961);
     }
 
     void panelWalksTheFileInTheBackground()

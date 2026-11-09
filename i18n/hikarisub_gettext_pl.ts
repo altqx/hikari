@@ -7794,5 +7794,41 @@ Usunięte style:
         <source>Delete unused ASS styles</source>
         <translation>Oczyść napisy z nieużywanych stylów</translation>
     </message>
+    <message>
+        <source>Letter spacing to positioned clusters</source>
+        <translation>Odstępy między literami jako pozycjonowane klastry</translation>
+    </message>
+    <message>
+        <source>Replace \fsp letter spacing with one positioned line per character cluster, keeping marks on their base characters</source>
+        <translation>Zastępuje odstępy między literami \fsp jedną pozycjonowaną linijką na każdy klaster znaków, tak aby znaki diakrytyczne zostały przy swoich literach bazowych</translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation>Odstępy między literami</translation>
+    </message>
+    <message>
+        <source>Pixels added after each character cluster</source>
+        <translation>Piksele dodawane po każdym klastrze znaków</translation>
+    </message>
+    <message>
+        <source>Use the &amp;line’s spacing</source>
+        <translation>Użyj odstępów z &amp;linijki</translation>
+    </message>
+    <message>
+        <source>Use &amp;this value</source>
+        <translation>Użyj &amp;tej wartości</translation>
+    </message>
+    <message>
+        <source>Spacing line %d of %d</source>
+        <translation>Odstępy w linijce %d z %d</translation>
+    </message>
+    <message>
+        <source>Lines with \move or a drawing were left as they are.</source>
+        <translation>Linijki z \move lub rysunkiem pozostawiono bez zmian.</translation>
+    </message>
+    <message>
+        <source>Letter spacing to positioned clusters…</source>
+        <translation>Odstępy między literami jako pozycjonowane klastry…</translation>
+    </message>
 </context>
 </TS>

@@ -32,8 +32,8 @@ export function errorDetail(body: string): string {
         return "";
     const { error, message } = parsed as { error?: unknown; message?: unknown };
     if (typeof error === "object" && error !== null) {
-        const inner = (error as { message?: unknown }).message;
-        return typeof inner === "string" ? inner : "";
+        const { message: inner, detail } = error as { message?: unknown; detail?: unknown };
+        return typeof inner === "string" ? inner : typeof detail === "string" ? detail : "";
     }
     if (typeof error === "string")
         return error;
