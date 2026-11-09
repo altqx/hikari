@@ -20,7 +20,21 @@ Qt never parses MCP. It passes each message to `_hikari/mcp.message`, and writes
 - **The sidecar starts** with the first message, not when the server starts listening. The MCP server needs no provider.
 - **Streamable HTTP** listens only while `ai.mcp.http` is on as well.
 
-The Settings › AI check boxes and the **Copy setup** menu come with the MCP section of the Settings › AI tab ([AI20 #649](https://github.com/altqx/hikari/issues/649)).
+## Settings › AI
+
+The MCP section sits between External agents and Privacy, as the [Settings › AI mockup](https://github.com/altqx/hikari/issues/649#issuecomment-6612977714) draws it. Both check boxes take effect on OK or Apply, like every other setting.
+
+- **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`) turns the server on.
+- **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`) shows under it while it is on. It names the last port once the server has listened over HTTP.
+- **Copy setup** copies one of three texts (`AiMcp::setup`):
+
+| Entry | Copies |
+| --- | --- |
+| Claude Code command | `claude mcp add hikari -- "<program>" --mcp` |
+| Codex config.toml | `[mcp_servers.hikari]` with `command = "<program>"` and `args = ["--mcp"]` |
+| JSON with the address and token | `{"mcpServers": {"hikari": {"type": "http", "url": "http://127.0.0.1:<port>/mcp", "headers": {"Authorization": "Bearer <token>"}}}}` |
+
+`<program>` is `$APPIMAGE` when HikariSub runs from an AppImage, and the executable otherwise (`AiMcp::program`). The JSON entry is disabled until HikariSub listens on 127.0.0.1, and a line under the button says why: the HTTP box is off, or it waits for OK or Apply.
 
 `<user folder>/ai/mcp.json` holds `{socket, token, port}`, and only the user can read it.
 - `socket` is set while the server listens, and cleared when it stops or HikariSub quits. After a crash the bridge finds nothing at it and says the server is off.
@@ -69,7 +83,7 @@ Replies are `application/json`, never SSE. A notification gets 202. The sidecar 
 `McpServer::callerFor` sets the caller for an MCP connection's calls:
 - the caller sees every open Document (`allDocuments`), as the user asked for when they turned the server on;
 - its label, which names undo steps, is the client's `title` or `name` from `clientInfo`;
-- its edits wait in the review ([AI2 #430](https://github.com/altqx/hikari/issues/430), [AI review](ai-review.md)) as `reviewed`, in a turn of its own for each connection.
+- its edits wait in the review ([AI2 #430](https://github.com/altqx/hikari/issues/430), [AI review](ai-review.md)) as `reviewed`, in a turn of its own for each connection. The Review panel lists each one under the client's name, and Keep and Undo act on it as on the sidecar's.
 
 `document.apply` is the only write. Every other write is refused with `refused`: "Through MCP, only document.apply writes; its edits land in the review." The permission modes reach MCP with the agent panel ([AI7 #435](https://github.com/altqx/hikari/issues/435)).
 
@@ -96,4 +110,6 @@ A local socket connection is `local-<n>`; all HTTP requests share `http`. The sa
   - a client without the token is dropped;
   - HTTP accepts the token from this Origin only, and refuses another Host;
   - the endpoint file round-trips, and only the user can read it.
-- `hikari_ui_ai_features_tests`: no listener unless `ai.mcp.server` is on, never with AI off, and the token and port survive a restart.
+- `hikari_ui_ai_features_tests`: no listener unless `ai.mcp.server` is on, never with AI off, the token and port survive a restart, and Copy setup's three texts.
+- `hikari_ui_ai_mcp_review_tests`: in the app, a client on the bridge edits through the real sidecar as Claude Code. The edit waits in the Review panel under that name, Keep clears it with no step, and Undo puts the Line back as one step.
+- `hikari_ui_shell_tests` (`settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff`): the MCP check boxes, Apply starting and stopping the server, and each Copy setup entry's text on the clipboard.

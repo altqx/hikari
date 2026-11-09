@@ -10632,6 +10632,62 @@ Failed to copy %2 fonts.</source>
         <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>ให้เอเจนต์ภายนอก HikariSub แก้ไขผ่าน MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex และเอเจนต์อื่นอ่านเอกสารที่เปิดอยู่ การแก้ไขของเอเจนต์จะรออยู่ในการตรวจทานจนกว่าคุณจะเก็บไว้หรือเลิกทำ</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1:%1 ด้วย</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP เข้าถึงได้จากคอมพิวเตอร์เครื่องนี้เท่านั้น และต้องมีโทเค็น</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>คัดลอกการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>คัดลอกแล้ว เรียกใช้ในเทอร์มินัล</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>คัดลอกแล้ว วางลงในการตั้งค่าของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>คำสั่ง Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON พร้อมที่อยู่และโทเค็น</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>ใช้การแคชพรอมต์</translation>
     </message>

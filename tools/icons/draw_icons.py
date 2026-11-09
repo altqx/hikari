@@ -1145,7 +1145,6 @@ for card, roles in {
     "AI21 #725": ["compact"],
     "AI23 #742": ["web-search"],
     "AI24 #744": ["update"],
-    "PL5 #417": ["network"],
     "PL7 #419": ["plugin-sandbox"],
 }.items():
     for role in roles:
