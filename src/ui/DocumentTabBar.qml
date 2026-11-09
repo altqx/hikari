@@ -111,7 +111,21 @@ Item {
         return { tabId: String(row.id), tabLabel: row.label, tabTitle: row.title, tabModified: row.modified,
                  tabCurrent: row.current, tabTip: row.tip, tabReference: !!row.reference, tabReview: row.review ?? 0 }
     }
+    property bool syncing: false
+    // A Repeater crashes if its model changes while it removes a delegate, and that removal can move focus and resync.
     function syncTabs() {
+        if (syncing) {
+            Qt.callLater(bar.syncTabs)
+            return
+        }
+        syncing = true
+        try {
+            updateTabModel()
+        } finally {
+            syncing = false
+        }
+    }
+    function updateTabModel() {
         const rows = bar.app.windowTabs(bar.shellWindow)
         let same = rows.length === tabModel.count
         for (let i = 0; same && i < rows.length; ++i) {
