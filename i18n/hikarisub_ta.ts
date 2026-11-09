@@ -10001,11 +10001,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
+        <translation type="vanished">GitHub-இல் HikariSub-க்கு நட்சத்திரம் இடப் பரிந்துரை</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
+        <translation type="vanished">பல நாட்கள் HikariSub-ஐப் பயன்படுத்திய பிறகு, அதிகபட்சம் இரண்டு முறை. எண்ணிக்கைகள் இந்தக் கணினியிலேயே இருக்கும்.</translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>

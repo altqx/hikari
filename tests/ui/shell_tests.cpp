@@ -16665,7 +16665,6 @@ private slots:
               {"privacy.alwaysSendCrashReports", "Always send crash reports"},
               {"privacy.discordPresence", "Show what I am doing in Discord"},
               {"privacy.discordFileName", "Include the file name"},
-              {"privacy.starPrompt", "Suggest starring HikariSub on GitHub"},
               {"plugins.network", "Let plugins connect to the internet"}}},
         };
         std::set<std::string> shown;

@@ -10060,11 +10060,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+        <translation type="vanished">Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
+        <translation type="vanished">Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>

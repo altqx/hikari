@@ -286,7 +286,6 @@ const std::vector<SettingDefinition> &definitions()
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordPresence", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordFileName", "", Bool, Profile, Mapped, false, false},
-        {"privacy.starPrompt", "", Bool, Profile, Mapped, false, true},
         // The star prompt's counters: lastDay is an ISO date, snoozedUntil seconds since the epoch.
         {"starPrompt.days", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"starPrompt.lastDay", "", String, Profile, Mapped, false, std::string()},

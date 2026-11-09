@@ -9942,11 +9942,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>GitHub에서 HikariSub에 별표 주기 제안</translation>
+        <translation type="vanished">GitHub에서 HikariSub에 별표 주기 제안</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
+        <translation type="vanished">HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>

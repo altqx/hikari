@@ -4,10 +4,12 @@
 #include "settings_store.h"
 
 #include <QCoreApplication>
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QKeyEvent>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
@@ -22,6 +24,7 @@ class StarPromptTest : public QObject {
     bool editing = true;
     std::unique_ptr<hikari::ui::SettingsStore> settings;
     std::unique_ptr<Analytics> analytics;
+    QTemporaryDir dir;
 
     StarPrompt::Config config()
     {
@@ -38,6 +41,15 @@ class StarPromptTest : public QObject {
     }
     void advance(qint64 seconds) { t = t.addSecs(seconds); }
     qint64 counter(const char *id) const { return settings->integer64(id); }
+    void useSettings(const QString &file)
+    {
+        analytics.reset();
+        settings = std::make_unique<hikari::ui::SettingsStore>(file);
+        Analytics::Config a;
+        a.key = QStringLiteral("phc_test");
+        a.firstFlushMs = a.flushIntervalMs = 60 * 60 * 1000;
+        analytics = std::make_unique<Analytics>(*settings, a);
+    }
     QStringList queuedEvents() const
     {
         QStringList events;
@@ -51,11 +63,7 @@ private slots:
     {
         t = QDateTime(QDate(2026, 11, 2), QTime(9, 0));
         editing = true;
-        settings = std::make_unique<hikari::ui::SettingsStore>();
-        Analytics::Config a;
-        a.key = QStringLiteral("phc_test");
-        a.firstFlushMs = a.flushIntervalMs = 60 * 60 * 1000;
-        analytics = std::make_unique<Analytics>(*settings, a);
+        useSettings({});
     }
     void cleanup()
     {
@@ -63,9 +71,8 @@ private slots:
         settings.reset();
     }
 
-    void onByDefaultWithNothingCounted()
+    void startsWithNothingCounted()
     {
-        QVERIFY(settings->boolean("privacy.starPrompt"));
         for (const char *id : {"starPrompt.days", "starPrompt.editingSeconds", "starPrompt.shown", "starPrompt.snoozedUntil"})
             QVERIFY2(counter(id) == 0, id);
         QVERIFY(!settings->boolean("starPrompt.starred"));
@@ -216,17 +223,22 @@ private slots:
         QVERIFY(!prompt.offer(false, false, false));
     }
 
-    void theSettingTurnsItOff()
+    void anOldTurnedOffSettingIsIgnored()
     {
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("version = 1\n[privacy]\nstarPrompt = false\n");
+        }
+        useSettings(file);
         StarPrompt prompt(*settings, *analytics, config());
         QSignalSpy due(&prompt, &StarPrompt::due);
         makeReady();
-        settings->set("privacy.starPrompt", false);
         advance(60 * 60);
         prompt.tick();
-        QCOMPARE(due.size(), 0);
-        QVERIFY(!prompt.offer(false, false, false));
-        QCOMPARE(counter("starPrompt.editingSeconds"), 3 * 60 * 60);
+        QCOMPARE(due.size(), 1);
+        QVERIFY(prompt.offer(false, false, false));
     }
 
     void recordsTwoBareUsageEvents()
