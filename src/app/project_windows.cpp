@@ -145,7 +145,9 @@ void ProjectWindows::keepTabs(const QString &root, application::Session session)
     const QString file = tabsFile(root);
     if (file.isEmpty() || session.tabs.empty())
         return;
-    session.project = root.toStdString();
+    if (session.windows.empty())
+        session.windows.emplace_back();
+    session.windows.front().project = root.toStdString();
     QDir().mkpath(QFileInfo(file).absolutePath());
     QSaveFile out(file);
     if (out.open(QIODevice::WriteOnly)) {
@@ -161,7 +163,7 @@ std::optional<application::Session> ProjectWindows::lastTabs(const QString &root
         return std::nullopt;
     const QByteArray bytes = in.readAll();
     auto session = readSession(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())));
-    if (!session || session->project != root.toStdString() || session->tabs.empty())
+    if (!session || session->windows.empty() || session->windows.front().project != root.toStdString() || session->tabs.empty())
         return std::nullopt;
     return session;
 }

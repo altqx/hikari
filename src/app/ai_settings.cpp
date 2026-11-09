@@ -2,9 +2,12 @@
 
 #include "hikari/app/ai_features.h"
 #include "hikari/backends/ai_requests.h"
-#include "hikari/backends/ai_sidecar_download.h"
+#include "hikari/backends/ai_sidecar_updater.h"
+#include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
 
+#include <QDateTime>
+#include <QFileInfo>
 #include <QUrl>
 
 #include <algorithm>
@@ -84,6 +87,11 @@ AiSettings::~AiSettings()
     *m_alive = false;
 }
 
+bool AiSettings::sandboxed() const
+{
+    return m_features.sandboxed();
+}
+
 bool AiSettings::on() const
 {
     return m_features.on();
@@ -104,6 +112,7 @@ QVariantList AiSettings::providers() const
                                   {QStringLiteral("wire"), qs(ai::wireId(p.wire))},
                                   {QStringLiteral("baseUrl"), qs(p.baseUrl)},
                                   {QStringLiteral("needsKey"), p.needsKey},
+                                  {QStringLiteral("signedIn"), p.signedIn},
                                   {QStringLiteral("models"), int(p.models.size())},
                                   {QStringLiteral("state"), status.state},
                                   {QStringLiteral("error"), status.error},
@@ -162,7 +171,8 @@ QVariantMap AiSettings::form(const QString &providerId) const
             {QStringLiteral("name"), qs(p->name)},
             {QStringLiteral("baseUrl"), qs(p->baseUrl)},
             {QStringLiteral("wire"), qs(ai::wireId(p->wire))},
-            {QStringLiteral("needsKey"), p->needsKey}};
+            {QStringLiteral("needsKey"), p->needsKey},
+            {QStringLiteral("signedIn"), p->signedIn}};
 }
 
 std::optional<ai::Provider> AiSettings::draftProvider(const QVariantMap &form) const
@@ -175,6 +185,8 @@ std::optional<ai::Provider> AiSettings::draftProvider(const QVariantMap &form) c
     ai::Provider p;
     if (const ai::Provider *existing = id.empty() ? nullptr : providers->config().provider(id)) {
         p = *existing;
+        if (!key.empty())
+            p.signedIn = false;
     } else {
         const auto preset = ai::presetFromId(str(form.value(QStringLiteral("preset"))));
         if (!preset)
@@ -220,13 +232,14 @@ void AiSettings::prepareDownload()
 {
     if (m_download || !m_features.on())
         return;
-    m_download = m_features.sidecarDownload();
-    if (!m_download)
+    backends::ai::AiSidecarUpdater *updater = m_features.updater();
+    if (!updater || updater->current())
         return;
-    using backends::ai::AiSidecarDownload;
-    connect(m_download.get(), &AiSidecarDownload::described, this, [this](const backends::ai::SidecarAsset &asset) {
+    m_download = updater;
+    using backends::ai::AiSidecarUpdater;
+    connect(updater, &AiSidecarUpdater::described, this, [this](qint64 bytes) {
         m_describing = false;
-        m_downloadSize = asset.size;
+        m_downloadSize = bytes;
         if (m_installWanted) {
             m_installWanted = false;
             m_installing = true;
@@ -234,22 +247,23 @@ void AiSettings::prepareDownload()
         }
         emit downloadChanged();
     });
-    connect(m_download.get(), &AiSidecarDownload::progress, this, [this](qint64 received, qint64 total) {
+    connect(updater, &AiSidecarUpdater::progress, this, [this](qint64 received, qint64 total) {
         m_downloadReceived = received;
         if (total > 0)
             m_downloadSize = total;
         emit downloadChanged();
     });
-    connect(m_download.get(), &AiSidecarDownload::installed, this, [this](const QString &) {
+    connect(updater, &AiSidecarUpdater::installed, this, [this] {
         auto waiting = std::exchange(m_afterDownload, {});
-        m_download.release()->deleteLater();
+        m_download->disconnect(this);
+        m_download = nullptr;
         m_installing = false;
         m_downloadError.clear();
         emit downloadChanged();
         for (auto &then : waiting)
             then(true);
     });
-    connect(m_download.get(), &AiSidecarDownload::failed, this,
+    connect(updater, &AiSidecarUpdater::failed, this,
             [this](backends::ai::SidecarDownloadError error, const QString &) {
                 const bool wasInstalling = m_installing || m_installWanted;
                 m_describing = m_installing = m_installWanted = false;
@@ -270,8 +284,9 @@ void AiSettings::dropDownload()
     m_afterDownload.clear();
     if (m_download) {
         m_download->disconnect(this);
-        m_download->abort();
-        m_download.release()->deleteLater();
+        if (m_describing || m_installing)
+            m_download->abort();
+        m_download = nullptr;
     }
     m_describing = m_installing = m_installWanted = false;
     m_downloadReceived = 0;
@@ -308,6 +323,8 @@ void AiSettings::openDraft()
 
 void AiSettings::closeDraft()
 {
+    if (m_draft.value(QStringLiteral("state")) == QLatin1String("signingIn"))
+        cancelSignIn();
     m_probed.reset();
     setDraft({});
     m_features.setDrafting(false);
@@ -377,14 +394,20 @@ void AiSettings::saveDraft(const QVariantMap &form)
         setDraft(QStringLiteral("failed"), QStringLiteral("form"));
         return;
     }
+    saveProvider(std::move(*provider), str(form.value(QStringLiteral("key"))));
+}
+
+void AiSettings::saveProvider(ai::Provider provider, const std::string &key)
+{
     ai::Providers *providers = m_features.providers();
-    const std::string key = str(form.value(QStringLiteral("key")));
-    const bool editing = providers->config().provider(provider->id) != nullptr;
-    const bool probed = m_probed && sameEndpoint(m_probed->provider, *provider);
+    if (!providers)
+        return;
+    const bool editing = providers->config().provider(provider.id) != nullptr;
+    const bool probed = m_probed && sameEndpoint(m_probed->provider, provider);
     if (probed)
-        provider->models = m_probed->models;
+        provider.models = m_probed->models;
     setDraft(QStringLiteral("saving"));
-    auto done = [this, alive = std::weak_ptr(m_alive), id = provider->id, probed](std::optional<ai::SaveError> error) {
+    auto done = [this, alive = std::weak_ptr(m_alive), id = provider.id, probed](std::optional<ai::SaveError> error) {
         if (!alive.lock())
             return;
         if (error) {
@@ -404,9 +427,222 @@ void AiSettings::saveDraft(const QVariantMap &form)
             test(qs(id));
     };
     if (editing)
-        providers->update(*provider, key.empty() ? std::nullopt : std::optional(key), std::move(done));
+        providers->update(provider, key.empty() ? std::nullopt : std::optional(key), std::move(done));
     else
-        providers->add(*provider, key, std::move(done));
+        providers->add(provider, key, std::move(done));
+}
+
+void AiSettings::signInDraft(const QVariantMap &form)
+{
+    auto provider = draftProvider(form);
+    if (!provider || provider->preset != ai::Preset::OpenRouter || !m_features.signIn()) {
+        setDraft(QStringLiteral("failed"), QStringLiteral("form"));
+        return;
+    }
+    m_probed.reset();
+    setDraft(QStringLiteral("signingIn"));
+    m_features.setDrafting(true);
+    const auto alive = std::weak_ptr(m_alive);
+    m_features.signIn()->start(
+        backends::ai::SignInFlow::OpenRouter,
+        [this, alive](const backends::ai::SignInProgress &progress) {
+            if (alive.lock())
+                signInProgress(progress);
+        },
+        [this, alive, provider = *provider](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) mutable {
+            if (!alive.lock())
+                return;
+            m_signInPage.clear();
+            if (!result) {
+                if (result.error().kind == "cancelled")
+                    setDraft({});
+                else
+                    setDraft(QStringLiteral("failed"), QStringLiteral("signIn"), 0, qs(result.error().kind));
+                return;
+            }
+            provider.signedIn = true;
+            saveProvider(std::move(provider), result->key);
+        });
+}
+
+void AiSettings::signOutProvider(const QString &providerId)
+{
+    ai::Providers *providers = m_features.providers();
+    if (!providers)
+        return;
+    const std::string id = providerId.toStdString();
+    providers->signOut(id, [this, alive = std::weak_ptr(m_alive), id](std::optional<ai::SaveError> error) {
+        if (!alive.lock())
+            return;
+        m_status[id] = {QStringLiteral("failed"), error ? saveErrorId(*error) : QStringLiteral("key"), 0, {}};
+        emit providersChanged();
+    });
+}
+
+QVariantMap AiSettings::codex() const
+{
+    return {{QStringLiteral("found"), m_codex.found},
+            {QStringLiteral("path"), m_codex.path},
+            {QStringLiteral("version"), m_codex.version},
+            {QStringLiteral("canImport"), m_codex.canImport},
+            {QStringLiteral("signedIn"), m_codex.signedIn},
+            {QStringLiteral("email"), m_codex.email},
+            {QStringLiteral("state"), m_codex.state},
+            {QStringLiteral("userCode"), m_codex.userCode},
+            {QStringLiteral("expiresAt"), m_codex.expiresAt},
+            {QStringLiteral("browserAvailable"), m_codex.browserAvailable},
+            {QStringLiteral("error"), m_codex.error},
+            {QStringLiteral("host"), m_codex.host}};
+}
+
+void AiSettings::checkCodex()
+{
+    backends::ai::AiSignIn *signIn = m_features.signIn();
+    if (!signIn)
+        return;
+    const AiFeatures::Ports &ports = m_features.ports();
+    m_codex.canImport = !ports.codexAuthPath.isEmpty() && QFileInfo::exists(ports.codexAuthPath);
+    emit codexChanged();
+    if (ports.findCodex)
+        ports.findCodex([this, alive = std::weak_ptr(m_alive)](std::optional<backends::ai::CodexCli> cli) {
+            if (!alive.lock())
+                return;
+            m_codex.found = cli.has_value();
+            m_codex.path = cli ? cli->path : QString();
+            m_codex.version = cli ? cli->version : QString();
+            emit codexChanged();
+        });
+    signIn->codexSession([this, alive = std::weak_ptr(m_alive)](std::optional<backends::ai::CodexSession> session) {
+        if (!alive.lock())
+            return;
+        m_codex.signedIn = session.has_value();
+        m_codex.email = session ? qs(session->email) : QString();
+        emit codexChanged();
+        backends::ai::AiSignIn *signIn = m_features.signIn();
+        if (!session || !signIn || signIn->running() || session->expiresAt == 0 ||
+            session->expiresAt > QDateTime::currentMSecsSinceEpoch())
+            return;
+        signIn->refreshCodex([this, alive](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) {
+            if (!alive.lock() || result || result.error().kind != "expired")
+                return;
+            m_codex.signedIn = false;
+            setCodexFailure(result.error());
+            emit codexChanged();
+        });
+    });
+}
+
+void AiSettings::signInCodex(bool browser)
+{
+    if (!m_features.signIn())
+        return;
+    m_codex.state = QStringLiteral("starting");
+    m_codex.userCode.clear();
+    m_codex.error.clear();
+    m_codex.host.clear();
+    emit codexChanged();
+    const auto alive = std::weak_ptr(m_alive);
+    m_features.signIn()->start(
+        browser ? backends::ai::SignInFlow::CodexBrowser : backends::ai::SignInFlow::CodexDevice,
+        [this, alive](const backends::ai::SignInProgress &progress) {
+            if (!alive.lock())
+                return;
+            m_codex.state = qs(progress.step);
+            m_codex.userCode = qs(progress.userCode);
+            m_codex.expiresAt = progress.expiresAt;
+            m_codex.browserAvailable = progress.browserAvailable;
+            signInProgress(progress);
+            emit codexChanged();
+        },
+        [this, alive](std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) {
+            if (!alive.lock())
+                return;
+            m_signInPage.clear();
+            m_codex.state.clear();
+            m_codex.userCode.clear();
+            if (result) {
+                m_codex.signedIn = true;
+                m_codex.email = qs(result->email);
+            } else if (result.error().kind != "cancelled") {
+                setCodexFailure(result.error());
+            }
+            emit codexChanged();
+        });
+}
+
+void AiSettings::signInProgress(const backends::ai::SignInProgress &progress)
+{
+    m_signInPage = progress.openUrl;
+    if (progress.step == "browser" && backends::ai::AiSignIn::openable(m_signInPage))
+        backends::desktop::openUrl(m_signInPage);
+}
+
+void AiSettings::setCodexFailure(const backends::ai::SignInFailure &failure)
+{
+    m_codex.error = qs(failure.kind);
+    m_codex.host = qs(failure.host);
+}
+
+void AiSettings::cancelSignIn()
+{
+    if (backends::ai::AiSignIn *signIn = m_features.signIn(); signIn && signIn->running()) {
+        signIn->cancel();
+        return;
+    }
+    if (!m_codex.state.isEmpty() || !m_codex.error.isEmpty()) {
+        m_codex.state.clear();
+        m_codex.error.clear();
+        m_codex.host.clear();
+        emit codexChanged();
+    }
+    if (m_draft.value(QStringLiteral("state")) == QLatin1String("signingIn"))
+        setDraft({});
+}
+
+void AiSettings::signOutCodex()
+{
+    backends::ai::AiSignIn *signIn = m_features.signIn();
+    if (!signIn)
+        return;
+    signIn->signOutCodex([this, alive = std::weak_ptr(m_alive)](std::optional<ai::KeyError> error) {
+        if (!alive.lock())
+            return;
+        if (error) {
+            m_codex.error = QStringLiteral("keychain");
+        } else {
+            m_codex.signedIn = false;
+            m_codex.email.clear();
+            m_codex.error.clear();
+        }
+        emit codexChanged();
+    });
+}
+
+void AiSettings::importCodex()
+{
+    backends::ai::AiSignIn *signIn = m_features.signIn();
+    if (!signIn)
+        return;
+    signIn->importCodex(m_features.ports().codexAuthPath,
+                        [this, alive = std::weak_ptr(m_alive)](
+                            std::expected<backends::ai::SignedIn, backends::ai::SignInFailure> result) {
+                            if (!alive.lock())
+                                return;
+                            if (result) {
+                                m_codex.signedIn = true;
+                                m_codex.email = qs(result->email);
+                                m_codex.error.clear();
+                            } else {
+                                setCodexFailure(result.error());
+                            }
+                            emit codexChanged();
+                        });
+}
+
+void AiSettings::openSignInPage() const
+{
+    if (backends::ai::AiSignIn::openable(m_signInPage))
+        backends::desktop::openUrl(m_signInPage);
 }
 
 void AiSettings::test(const QString &providerId)
@@ -497,8 +733,16 @@ void AiSettings::openGeminiKeys() const
     backends::desktop::openUrl(geminiKeysUrl());
 }
 
+void AiSettings::openOpenRouterKeys() const
+{
+    backends::desktop::openUrl(openRouterKeysUrl());
+}
+
 void AiSettings::reset()
 {
+    m_codex = {};
+    m_signInPage.clear();
+    emit codexChanged();
     m_status.clear();
     m_probed.reset();
     dropDownload();

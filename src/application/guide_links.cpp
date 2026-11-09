@@ -25,6 +25,8 @@ constexpr std::array kLinks{
     GuideLink{Panel, "Spellchecker", "/en/docs/checking/spelling"},
     GuideLink{Panel, "Spellchecker.grammar", "/en/docs/checking/grammar"},
     GuideLink{Panel, "Template", "/en/docs/karaoke/template-editor"},
+    GuideLink{Panel, "QcNotes", "/en/docs/checking/qc-notes"},
+    GuideLink{Panel, "Review", "/en/docs/ai/review"},
     GuideLink{Window, "allTagsEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "automation", "/en/docs/automation/running-scripts"},
     GuideLink{Window, "dummyVideo", "/en/docs/basics/video"},
@@ -37,12 +39,14 @@ constexpr std::array kLinks{
     GuideLink{Window, "karaokeCheck", "/en/docs/karaoke/karaoke-check"},
     GuideLink{Window, "manageLayouts", "/en/docs/customize/layouts"},
     GuideLink{Window, "resample", "/en/docs/basics/files-and-formats"},
+    GuideLink{Window, "restoreCheckpoint", "/en/docs/ai/review"},
     GuideLink{Window, "saveLayout", "/en/docs/customize/layouts"},
     GuideLink{Window, "scriptProperties", "/en/docs/basics/files-and-formats"},
     GuideLink{Window, "settings", "/en/docs/customize/settings"},
     GuideLink{Window, "settingsImport", "/en/docs/get-started/moving-from-legacy"},
     GuideLink{Window, "shapesEdition", "/en/docs/typesetting/shapes-and-tags-editors"},
     GuideLink{Window, "styleManager", "/en/docs/basics/styles"},
+    GuideLink{Window, "videoDetails", "/en/docs/basics/video"},
 };
 
 }

@@ -5,6 +5,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_projects.cpp
     application_comparison.cpp
     application_video.cpp
+    application_timecodes.cpp
     application_reference.cpp
     application_tab_menu.cpp
     application_karaoke.cpp
@@ -21,11 +22,16 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     user_folder.cpp include/hikari/app/user_folder.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h
     kanji_timer_controller.cpp include/hikari/app/kanji_timer_controller.h
+    align_to_video_controller.cpp include/hikari/app/align_to_video_controller.h
+    qc_notes_controller.cpp include/hikari/app/qc_notes_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
-    ai_features.cpp include/hikari/app/ai_features.h
+    ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
     ai_settings.cpp include/hikari/app/ai_settings.h
-    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    review_controller.cpp include/hikari/app/review_controller.h
+    plugin_manager.cpp include/hikari/app/plugin_manager.h
+    plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
@@ -42,7 +48,8 @@ target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER=
     HIKARI_VERSION="${HIKARI_VERSION}" HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_plugin_helper hikari_automation_stage)
 if(HIKARI_AI_LOCAL_SIDECAR)
-    target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_SIDECAR="${HIKARI_AI_SIDECAR_FILE}")
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_AI_LOCAL_RUNTIME="${HIKARI_AI_RUNTIME_FILE}"
+        HIKARI_AI_LOCAL_BUNDLE="${HIKARI_AI_BUNDLE_FILE}")
     add_dependencies(hikari_composition hikari_ai_sidecar)
 endif()
 option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)
@@ -112,6 +119,7 @@ target_sources(hikari_composition PRIVATE single_instance.cpp include/hikari/app
     forwarded_launches.cpp include/hikari/app/forwarded_launches.h)
 target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
 target_sources(hikari_composition PRIVATE application_video_timing.cpp)
+target_sources(hikari_composition PRIVATE application_tracking.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
 target_sources(hikari_composition PRIVATE application_grammar.cpp)

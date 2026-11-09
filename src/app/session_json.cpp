@@ -6,6 +6,9 @@
 #include <QJsonObject>
 #include <QStringList>
 
+#include <algorithm>
+#include <utility>
+
 namespace hikari::app {
 
 namespace {
@@ -77,10 +80,50 @@ std::optional<application::Session> readJson(std::string_view bytes, application
     if (!closed.isBool() && !closed.isUndefined())
         return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“closed” is not true or false."))});
     session.closed = closed.toBool(true);
-    const QJsonValue project = o.value(QStringLiteral("project"));
-    if (!project.isString() && !project.isUndefined())
-        return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“project” is not text."))});
-    session.project = project.toString().toStdString();
+    if (const QJsonValue windows = o.value(QStringLiteral("windows")); !windows.isUndefined()) {
+        if (!windows.isArray())
+            return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "“windows” is not a list."))});
+        for (const QJsonValue &value : windows.toArray()) {
+            const QString where = QString::number(session.windows.size() + 1);
+            auto wrongType = [&](const char *key) {
+                return fail({0, 0,
+                             message(QT_TRANSLATE_NOOP("HikariSub.Session", "Window %1: “%2” has the wrong type."),
+                                     {where, QLatin1String(key)})});
+            };
+            if (!value.isObject())
+                return fail({0, 0, message(QT_TRANSLATE_NOOP("HikariSub.Session", "Window %1 is not an object."), {where})});
+            const QJsonObject w = value.toObject();
+            application::SessionWindow window;
+            application::SessionGeometry geometry;
+            int found = 0;
+            for (auto [key, out] : {std::pair{"x", &geometry.x}, std::pair{"y", &geometry.y},
+                                    std::pair{"width", &geometry.width}, std::pair{"height", &geometry.height}}) {
+                const QJsonValue v = w.value(QLatin1String(key));
+                if (v.isUndefined())
+                    continue;
+                if (!v.isDouble() || v.toDouble() != static_cast<double>(v.toInt()))
+                    return wrongType(key);
+                *out = v.toInt();
+                ++found;
+            }
+            if (found == 4 && geometry.width > 0 && geometry.height > 0)
+                window.geometry = geometry;
+            const QJsonValue maximized = w.value(QStringLiteral("maximized"));
+            if (!maximized.isBool() && !maximized.isUndefined())
+                return wrongType("maximized");
+            window.maximized = maximized.toBool();
+            const QJsonValue project = w.value(QStringLiteral("project"));
+            if (!project.isString() && !project.isUndefined())
+                return wrongType("project");
+            window.project = project.toString().toStdString();
+            QJsonObject unknown = w;
+            for (const char *key : {"x", "y", "width", "height", "maximized", "project"})
+                unknown.remove(QLatin1String(key));
+            if (!unknown.isEmpty())
+                window.unknown = QJsonDocument(unknown).toJson(QJsonDocument::Compact).toStdString();
+            session.windows.push_back(window);
+        }
+    }
     const QJsonArray tabs = o.value(QStringLiteral("tabs")).toArray();
     for (qsizetype i = 0; i < tabs.size(); ++i) {
         const QString where = QString::number(i + 1);
@@ -108,6 +151,7 @@ std::optional<application::Session> readJson(std::string_view bytes, application
         integer("position", tab.position);
         text("audio", tab.audio);
         text("keyframes", tab.keyframes);
+        text("timecodes", tab.timecodes);
         integer("activeLine", tab.active);
         integer("scroll", tab.scroll);
         if (const QJsonValue layout = t.value(QStringLiteral("layout")); layout.isObject())
@@ -117,12 +161,25 @@ std::optional<application::Session> readJson(std::string_view bytes, application
         const QJsonValue active = t.value(QStringLiteral("active"));
         if (!active.isBool() && !active.isUndefined() && wrong.empty())
             wrong = "active";
+        int window = 0;
+        integer("window", window);
+        if (window < 0 && wrong.empty())
+            wrong = "window";
+        const QJsonValue current = t.value(QStringLiteral("current"));
+        if (!current.isBool() && !current.isUndefined() && wrong.empty())
+            wrong = "current";
         if (!wrong.empty())
             return fail({0, 0,
                          message(QT_TRANSLATE_NOOP("HikariSub.Session", "Tab %1: “%2” has the wrong type."),
                                  {where, QString::fromStdString(wrong)})});
+        const auto index = static_cast<std::size_t>(i);
         if (active.toBool() && !session.activeTab)
-            session.activeTab = static_cast<std::size_t>(i);
+            session.activeTab = index;
+        if (static_cast<std::size_t>(window) < session.windows.size()) {
+            tab.window = static_cast<std::size_t>(window);
+            if (current.toBool() && !session.windows[tab.window].currentTab)
+                session.windows[tab.window].currentTab = index;
+        }
         session.tabs.push_back(std::move(tab));
     }
     return session;
@@ -137,14 +194,33 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
     o.insert(QStringLiteral("program"), qs(session.header));
     if (closed)
         o.insert(QStringLiteral("closed"), *closed);
-    if (!session.project.empty())
-        o.insert(QStringLiteral("project"), qs(session.project));
+    if (!session.windows.empty()) {
+        QJsonArray windows;
+        for (const auto &window : session.windows) {
+            QJsonObject w = QJsonDocument::fromJson(QByteArray::fromStdString(window.unknown)).object();
+            if (const auto &g = window.geometry) {
+                w.insert(QStringLiteral("x"), g->x);
+                w.insert(QStringLiteral("y"), g->y);
+                w.insert(QStringLiteral("width"), g->width);
+                w.insert(QStringLiteral("height"), g->height);
+            }
+            w.insert(QStringLiteral("maximized"), window.maximized);
+            if (!window.project.empty())
+                w.insert(QStringLiteral("project"), qs(window.project));
+            windows.append(w);
+        }
+        o.insert(QStringLiteral("windows"), windows);
+    }
     QJsonArray tabs;
     for (std::size_t i = 0; i < session.tabs.size(); ++i) {
         const auto &tab = session.tabs[i];
         QJsonObject t;
         if (session.activeTab == i)
             t.insert(QStringLiteral("active"), true);
+        if (tab.window > 0)
+            t.insert(QStringLiteral("window"), static_cast<qint64>(tab.window));
+        if (std::ranges::any_of(session.windows, [i](const auto &w) { return w.currentTab == i; }))
+            t.insert(QStringLiteral("current"), true);
         t.insert(QStringLiteral("subtitles"), qs(tab.subtitles));
         t.insert(QStringLiteral("video"), qs(tab.video));
         t.insert(QStringLiteral("position"), tab.position);
@@ -152,6 +228,8 @@ QByteArray writeSessionJson(const application::Session &session, std::optional<b
             t.insert(QStringLiteral("audio"), qs(tab.audio));
         if (!tab.keyframes.empty())
             t.insert(QStringLiteral("keyframes"), qs(tab.keyframes));
+        if (!tab.timecodes.empty())
+            t.insert(QStringLiteral("timecodes"), qs(tab.timecodes));
         t.insert(QStringLiteral("activeLine"), tab.active);
         t.insert(QStringLiteral("scroll"), tab.scroll);
         if (const QJsonDocument layout = QJsonDocument::fromJson(QByteArray::fromStdString(tab.layout));

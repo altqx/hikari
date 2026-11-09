@@ -14,6 +14,7 @@ HikariSub.Styles	238 - Central European (Polish)	title-case	the ASS encoding’s
 HikariSub.Video	%1 event(s), %2 bitmap(s), %3 Mpx	title-case	Mpx is the megapixel unit symbol in the render-cost readout
 HikariSub.VisualTools	How each line's number changes the value	quotes	pending #596 Menus
 HikariSub.VisualTools	Add B-spline	title-case	pending #596 Menus
+HikariSub.Hotkeys	Vector clip: add B-spline	title-case	pending #596 Menus
 HikariSub.VisualTools	After-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Before-center	spelling	pending #596 Menus
 HikariSub.VisualTools	Bottom-center	spelling	pending #596 Menus
@@ -30,6 +31,7 @@ HikariSub.Automation	The script has no such macro	leading-the	status line under 
 HikariSub.Automation	The script or its macro changed	leading-the	status line under a macro name; its siblings are sentences without a full stop
 HikariSub.Automation	Show in Scripts	title-case	Scripts is the Automation panel view’s name
 HikariSub.Documents	Associated files:	colon	heading line of the association offer; the files are listed under it
+HikariSub.Documents	Linked files not found:	colon	heading line of the association offer; the missing files are listed under it
 HikariSub.Fonts	In styles:\n	colon	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	In styles:\n	whitespace	font collector log layout; clicking a number goes to its style or line
 HikariSub.Fonts	 tabs: 	colon	font collector log layout; clicking a number goes to its style or line
@@ -41,4 +43,9 @@ HikariSub.Options	Chat Completions	title-case	the OpenAI API’s name, beside Re
 HikariSub.Options	Get a key in Google AI Studio	title-case	Google AI Studio is the product’s name
 HikariSub.Options	AI in Getting started and What’s new	title-case	names the Getting started and What’s new windows
 HikariSub.Options	Replace the key with Edit	title-case	names the row’s Edit button
+HikariSub.Options	Sign in again with Edit	title-case	names the row’s Edit button
 HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name
+HikariSub.QcNotes	The clipboard	leading-the	fills %1 at the start of a sentence
+HikariSub.Review	Show in Review panel	title-case	Review is the panel’s name
+HikariSub.Review	Show the Review panel	title-case	Review is the panel’s name
+HikariSub.Workspace	The layout is locked	leading-the	pending #596 Docking

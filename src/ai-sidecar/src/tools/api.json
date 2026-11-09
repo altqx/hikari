@@ -1505,7 +1505,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "Names the undo step, after the caller's name."
+            "description": "A few words naming the change, as the user reads it in the review and in History after the caller's name."
           },
           "edits": {
             "type": "array",
@@ -2114,6 +2114,58 @@
         },
         "required": [
           "nodes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "nodes.validate",
+      "access": "read",
+      "summary": "Checks a node-effect graph; each problem names its node and port or field.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "valid",
+          "problems"
         ],
         "additionalProperties": false
       }

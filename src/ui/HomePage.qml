@@ -124,7 +124,7 @@ FocusScope {
             }
             IconTextButton {
                 objectName: "homeOpenFolder"
-                iconRole: "folder-open"
+                iconRole: "open-project"
                 text: qsTr("Open folder…")
                 onClicked: home.openFolderRequested()
             }
@@ -288,7 +288,7 @@ FocusScope {
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
                         spacing: 12
-                        Icon { iconRole: "folder-open"; size: 20 }
+                        Icon { iconRole: "project"; size: 20 }
                         ColumnLayout {
                             spacing: 0
                             Layout.fillWidth: true
@@ -331,7 +331,8 @@ FocusScope {
                     noMatchText: qsTr("No matching projects")
                     filterName: qsTr("Filter recent projects")
                     removeMissingText: qsTr("Remove missing folders")
-                    openIconRole: "folder-open"
+                    iconRole: "recent-projects"
+                    openIconRole: "open-project"
                     Layout.fillWidth: true
                     Layout.minimumHeight: 120
                     Layout.preferredHeight: Math.min(naturalHeight, 260)
@@ -351,6 +352,7 @@ FocusScope {
                     noMatchText: qsTr("No matching files")
                     filterName: qsTr("Filter recent files")
                     removeMissingText: qsTr("Remove missing files")
+                    iconRole: "recent-subtitles"
                     openIconRole: "open-subtitles"
                     Layout.fillWidth: true
                     Layout.fillHeight: true

@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { kCompileFlags } from "../tools/bundle";
+import { kCompileFlags, kRoot } from "../tools/bundle";
 
 const dir = mkdtempSync(join(tmpdir(), "hikari-ai-compile-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -34,5 +34,18 @@ describe("the compiled sidecar", () => {
 
     test("would read the .env without the autoload flags, so the check above means something", () => {
         expect(compileAndRun(["--compile"])).toMatchObject({ dotenv: "leaked" });
+    }, 60_000);
+
+    test("the runtime reads neither when it runs a bundle", () => {
+        const runtime = join(dir, `runtime${process.platform === "win32" ? ".exe" : ""}`);
+        const build = Bun.spawnSync([process.execPath, "build", join(kRoot, "src", "runtime.ts"), ...kCompileFlags,
+            `--outfile=${runtime}`], { stdio: ["ignore", "ignore", "inherit"] });
+        expect(build.exitCode).toBe(0);
+        const bundle = join(dir, "bundle", "probe.js");
+        const bundled = Bun.spawnSync([process.execPath, "build", probe, "--target=bun", "--format=cjs", "--bytecode",
+            `--outdir=${join(dir, "bundle")}`], { stdio: ["ignore", "ignore", "inherit"] });
+        expect(bundled.exitCode).toBe(0);
+        const run = Bun.spawnSync([runtime, bundle], { cwd: work, env: { PATH: process.env.PATH ?? "" } });
+        expect(JSON.parse(run.stdout.toString())).toEqual({ dotenv: null, bunfig: null });
     }, 60_000);
 });

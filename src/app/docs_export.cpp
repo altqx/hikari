@@ -6,6 +6,7 @@
 #include "hikari/app/application.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/local_only_network.h"
+#include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/guide_links.h"
 #include "hikari/application/hotkeys.h"
@@ -359,6 +360,8 @@ bool exportDocs(const QString &dir, QString *error)
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
+    attachAlignToVideoStill(engine, application.alignToVideo());
+    attachMarketplaceImages(engine, *application.pluginMarketplace());
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())

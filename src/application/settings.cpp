@@ -261,6 +261,8 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.outputDevice", "", String, Profile, Mapped, false, std::string()},
         {"audio.outputDeviceName", "", String, Profile, Mapped, false, std::string()},
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
+        // PortAudio output only: general playback keeps the file's channels.
+        {"audio.playMono", "", Bool, Profile, Mapped, false, false},
         // An AUDIO_HOTKEY symbol.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
         // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",
@@ -296,12 +298,15 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.kanjiTimerFurigana", "", Bool, Profile, Mapped, false, false},
         // Windows only: 0 the built-in player, 1 the DirectShow adapter; never a fallback.
         {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.alignTolerance", "", Int, Profile, Mapped, false, std::int64_t{20}},
         // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"recent.projects", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // "<ms since the epoch> <path>" per entry of recent.projects.
         {"recent.projectsOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        {"plugins.checkUpdates", "", Bool, Profile, Mapped, false, true},
+        {"plugins.autoUpdate", "", Bool, Profile, Mapped, false, true},
         // Without a "v"; empty: none.
         {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
         {"shiftTimes.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -311,6 +316,8 @@ const std::vector<SettingDefinition> &definitions()
         {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
         {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
+        {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},
+        {"qcNotes.lastSection", "", String, Profile, Mapped, false, std::string("General")},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -339,8 +346,12 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
+        {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
+        {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.closedCompounds", "", Bool, Profile, Mapped, false, true},
@@ -358,6 +369,16 @@ const std::vector<SettingDefinition> &definitions()
         {"grammar.group.miscellaneous", "", Bool, Profile, Mapped, false, true},
         // One "<document file>\t<JSON>" row per document, last used first, at most 100; "" holds the last export.
         {"export.choices", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // Percent of HikariSub legacy's size.
+        {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        // application::VideoPropertyAction values; video.missingLayoutRes adds 3, set to the PlayRes.
+        {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        {"video.missingLayoutRes", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        // application::LayoutResMismatch values.
+        {"video.layoutResMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
+        {"video.untaggedMatrixWarning", "", Bool, Profile, Mapped, false, true},
+        {"video.hdrWarning", "", Bool, Profile, Mapped, false, true},
     };
     return table;
 }

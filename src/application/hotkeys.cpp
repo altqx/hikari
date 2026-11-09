@@ -293,6 +293,15 @@ constexpr HotkeyAction kActions[] = {
         {"VIDEO_TOOL_POSITION_SHIFTER", 2031},
         {"VIDEO_TOOL_HYDRA", 2032},
         {"VIDEO_TOOL_PERSPECTIVE", 2033},
+        {"VIDEO_VECTOR_CLIP_DRAG", 2034},
+        {"VIDEO_VECTOR_CLIP_LINE", 2035},
+        {"VIDEO_VECTOR_CLIP_BEZIER", 2036},
+        {"VIDEO_VECTOR_CLIP_BSPLINE", 2037},
+        {"VIDEO_VECTOR_CLIP_POINT", 2038},
+        {"VIDEO_VECTOR_CLIP_DELETE", 2039},
+        {"VIDEO_VECTOR_CLIP_INVERT", 2040},
+        {"VIDEO_COPY_SUBTITLES_TO_CLIPBOARD", 2041},
+        {"VIDEO_SAVE_SUBTITLES_TO_PNG", 2042},
         {"GLOBAL_CHECK_KARAOKE", 5172},
         {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         {"GLOBAL_KANJI_TIMER", 5174},
@@ -308,8 +317,29 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END", 5220},
         {"GLOBAL_INSERT_HARD_SPACE", 5228},
         {"GLOBAL_PLUGINS", 5231},
+        {"GLOBAL_RELOAD_VIDEO", 5232},
+        {"GLOBAL_RELOAD_AUDIO", 5233},
         {"GLOBAL_CENTER_TIMES_IN_FRAMES", 5229},
+        {"GLOBAL_ALIGN_TO_VIDEO", 5238},
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
+        {"GLOBAL_TOGGLE_LOCK_LAYOUT", 5230},
+        {"GLOBAL_OPEN_TIMECODES", 5234},
+        {"GLOBAL_SAVE_TIMECODES", 5235},
+        {"GLOBAL_CLOSE_TIMECODES", 5236},
+        {"GLOBAL_VIDEO_DETAILS", 5237},
+        {"GLOBAL_CONVERT_FOLDS_TO_GROUPS", 5239},
+        {"GLOBAL_PERSPECTIVE_TRACKING", 5240},
+        {"GLOBAL_SHOW_QC_NOTES", 5241},
+        {"GLOBAL_NEXT_QC_NOTE", 5242},
+        {"GLOBAL_PREVIOUS_QC_NOTE", 5243},
+        {"GLOBAL_ADD_QC_NOTE", 5254},
+        {"GLOBAL_KEEP_AI_CHANGE", 5245},
+        {"GLOBAL_UNDO_AI_CHANGE", 5246},
+        {"GLOBAL_NEXT_AI_CHANGE", 5247},
+        {"GLOBAL_PREVIOUS_AI_CHANGE", 5248},
+        {"GLOBAL_KEEP_ALL_AI_CHANGES", 5249},
+        {"GLOBAL_UNDO_ALL_AI_CHANGES", 5250},
+        {"GLOBAL_SHOW_AI_REVIEW", 5251},
         {"GLOBAL_OPEN_FOLDER", 5255},
         {"GLOBAL_CLOSE_PROJECT", 5256},
 };
@@ -438,11 +468,6 @@ constexpr NameRow kNames[] = {
         {5114, "Check for updates"},
         {5110, "About"},
         {5113, "Report an issue"},
-        {5020, "Convert to ASS"},
-        {5021, "Convert to SRT"},
-        {5023, "Convert to MDVD"},
-        {5024, "Convert to MPL2"},
-        {5022, "Convert to TMP"},
         {5018, "Open audio from video"},
         {5036, "Load script"},
         {5037, "Refresh autoload scripts"},
@@ -575,6 +600,15 @@ constexpr NameRow kNames[] = {
         {2031, "Position shifter"},
         {2032, "Hydra"},
         {2033, "Perspective"},
+        {2034, "Vector clip: move points"},
+        {2035, "Vector clip: add line"},
+        {2036, "Vector clip: add Bézier curve"},
+        {2037, "Vector clip: add B-spline"},
+        {2038, "Vector clip: add separate point"},
+        {2039, "Vector clip: delete point"},
+        {2040, "Vector clip: invert"},
+        {2041, "Copy subtitles to clipboard"},
+        {2042, "Save subtitles as PNG"},
         {5172, "Check karaoke"},
         {5173, "Repeat last run"},
         {5174, "Kanji timer"},
@@ -590,8 +624,29 @@ constexpr NameRow kNames[] = {
         {5220, "Shift following lines by frames: end at video"},
         {5228, "Insert hard space"},
         {5231, "Plugins"},
+        {5232, "Reload video"},
+        {5233, "Reload audio"},
         {5229, "Centre times within frames"},
+        {5238, "Align to video…"},
         {5223, "Import legacy settings…"},
+        {5230, "Lock layout"},
+        {5234, "Open timecodes"},
+        {5235, "Save timecodes"},
+        {5236, "Close timecodes"},
+        {5237, "Video details…"},
+        {5239, "Convert Aegisub folds to line groups"},
+        {5240, "Perspective tracking…"},
+        {5241, "QC notes panel"},
+        {5242, "Next QC note"},
+        {5243, "Previous QC note"},
+        {5254, "Add QC note"},
+        {5245, "Keep AI change"},
+        {5246, "Undo AI change"},
+        {5247, "Next AI change"},
+        {5248, "Previous AI change"},
+        {5249, "Keep all AI changes"},
+        {5250, "Undo all AI changes"},
+        {5251, "Review panel"},
         {5255, "Open folder…"},
         {5256, "Close project"},
 };
@@ -607,11 +662,6 @@ constexpr DefaultRow kMainDefaults[] = {
         {5301, GlobalHotkey, "Open new tab", "Ctrl-T"},
         {5302, GlobalHotkey, "Close current tab", "Ctrl-W"},
         {5030, GlobalHotkey, "Time shift window", "Ctrl-I"},
-        {5020, GlobalHotkey, "Convert to ASS", "F9"},
-        {5021, GlobalHotkey, "Convert to SRT", "F8"},
-        // No F10 for Convert to MDVD: F10 puts the keyboard on the menus.
-        {5024, GlobalHotkey, "Convert to MPL2", "F11"},
-        {5022, GlobalHotkey, "Convert to TMP", "Ctrl-F12"},
         {5026, GlobalHotkey, "Style manager", "Ctrl-M"},
         {5101, GlobalHotkey, "Open video", "Ctrl-Shift-O"},
         {5009, GlobalHotkey, "Find", "Ctrl-F"},
@@ -641,6 +691,10 @@ constexpr DefaultRow kMainDefaults[] = {
         {5155, GlobalHotkey, "Previous tab", "Ctrl-PgUp"},
         {5166, GlobalHotkey, "Select line at current video position", "F2"},
         {5228, GlobalHotkey, "Insert hard space", "Ctrl-Shift-Space"},
+        {5245, GlobalHotkey, "Keep AI change", "Ctrl-Shift-Enter"},
+        {5246, GlobalHotkey, "Undo AI change", "Ctrl-Shift-Backspace"},
+        {5247, GlobalHotkey, "Next AI change", "Ctrl-Alt-Down"},
+        {5248, GlobalHotkey, "Previous AI change", "Ctrl-Alt-Up"},
         {5112, GlobalHotkey, "User guide", "F1"},
         {4527, GridHotkey, "Duplicate lines", "Ctrl-D"},
         {4554, GridHotkey, "Copy columns", "Ctrl-Shift-C"},
@@ -856,6 +910,12 @@ int hotkeyIdOf(std::string_view symbol)
     return 0;
 }
 
+bool aiCommand(int id)
+{
+    const std::string_view symbol = hotkeySymbol(id);
+    return symbol.ends_with("_AI") || symbol.find("_AI_") != std::string_view::npos;
+}
+
 std::string_view hotkeySymbol(int id)
 {
     for (const auto &a : kActions)
@@ -881,6 +941,7 @@ bool isRetiredHotkey(int id)
     return id == 5015
            || id == 5039
            || id == 5104
+           || (id >= 5020 && id <= 5024)
            || (id >= 5031 && id <= 5035)
            || id == 5109
            || id == 5012;
@@ -1233,7 +1294,7 @@ void HotkeyList::append(std::string text, std::string name, std::string accel, H
     m_filtered.push_back(row);
 }
 
-void HotkeyList::build(const HotkeyMap &live)
+void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> &hidden)
 {
     HotkeyMap mapped = live;
     const auto &names = hotkeyNames();
@@ -1259,6 +1320,9 @@ void HotkeyList::build(const HotkeyMap &live)
         }
         if (mapped.empty())
             break;
+        lastType = htype;
+        if (hidden && hidden(cur->first))
+            continue;
         std::string accel;
         const auto it = mapped.find(HotkeyId{cur->first, htype});
         if (it != mapped.end()) {
@@ -1267,7 +1331,6 @@ void HotkeyList::build(const HotkeyMap &live)
         }
         append(std::string(hotkeyWindowName(htype)) + " " + cur->second, cur->second, accel,
                HotkeyId{cur->first, htype});
-        lastType = htype;
     }
     m_history.push_back(m_rows);
     m_sel = findShown(0);

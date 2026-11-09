@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Dialogs as Dialogs
 import Hikari.Ui
 
-Dialogs.FileDialog {
+FileChooser {
     id: dialog
     required property AutomationFilePickerController picker
 

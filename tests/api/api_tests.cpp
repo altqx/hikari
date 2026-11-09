@@ -47,7 +47,7 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
                              "info.list", "selection.get", "commands.list", "panels.list", "settings.list",
                              "settings.get", "api.version", "video.info", "video.frame_at_time",
                              "video.time_of_frame", "video.frame", "audio.info", "audio.peaks", "files.list",
-                             "files.read", "nodes.catalogue"}) {
+                             "files.read", "nodes.catalogue", "nodes.validate"}) {
         const Operation *op = Api::registry().find(name);
         ASSERT_TRUE(op) << name;
         EXPECT_EQ(op->access, Access::Read) << name;
@@ -207,6 +207,25 @@ TEST_F(ApiScripts, OneWriteIsOneUndoStep)
     EXPECT_EQ(documentText(*session), before);
     EXPECT_EQ(session->document().scriptInfo(u8"Title"), std::optional<std::u8string>(u8"alpha"));
     EXPECT_FALSE(session->canUndo());
+}
+
+TEST_F(ApiScripts, AReviewedCallersWriteWaitsInTheReviewAndAPluginsDoesNot)
+{
+    auto *session = host.target();
+    const hikari::application::DocumentId target = *host.workspace().editingTarget();
+    Caller reviewed = aiCaller();
+    reviewed.reviewed = true;
+    ASSERT_TRUE(client.call(reviewed, "document.apply",
+                            applyAt(session->revision(), R"([{"op": "set_line", "line": 1, "fields": {"text": "one"}}])")));
+    const auto changes = host.review.changes(target);
+    ASSERT_EQ(changes.size(), 1u);
+    EXPECT_EQ(changes[0]->caller, "Test AI");
+    EXPECT_EQ(changes[0]->name, "Batch");
+    EXPECT_EQ(host.review.pendingLines(target, session->document()), 1u);
+
+    ASSERT_TRUE(client.call(pluginCaller(), "document.apply",
+                            applyAt(session->revision(), R"([{"op": "set_line", "line": 2, "fields": {"text": "two"}}])")));
+    EXPECT_EQ(host.review.changes(target).size(), 1u);
 }
 
 TEST_F(ApiScripts, AStaleRevisionChangesNothing)

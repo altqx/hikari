@@ -51,6 +51,17 @@ namespace {
 Q_LOGGING_CATEGORY(lcDocking, "hikari.docking")
 QPointer<QQmlEngine> g_attached;
 bool g_everAttached = false;
+bool g_layoutLocked = false;
+QList<Docking *> g_dockings;
+
+bool refuseWhileLocked()
+{
+    if (!g_layoutLocked)
+        return false;
+    for (Docking *docking : std::as_const(g_dockings))
+        emit docking->layoutChangeRefused();
+    return true;
+}
 
 using KDDockWidgets::DropLocation;
 
@@ -431,12 +442,42 @@ private:
     QPointer<QQuickWindow> m_dragged;
 };
 
+// KDDW floats a panel on a header double-click unless Flag_DisableDoubleClick, which it won't change once docks exist.
+class LockedHeaderClicks final : public QObject {
+public:
+    using QObject::QObject;
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (!g_layoutLocked || event->type() != QEvent::MouseButtonDblClick)
+            return false;
+        auto *window = qobject_cast<QQuickWindow *>(watched);
+        if (!window)
+            return false;
+        QQuickItem *item = window->contentItem();
+        QPointF at = static_cast<QMouseEvent *>(event)->position();
+        while (QQuickItem *child = item->childAt(at.x(), at.y())) {
+            at = item->mapToItem(child, at);
+            item = child;
+        }
+        for (; item; item = item->parentItem()) {
+            if (item->objectName() == u"dockHeader" || item->objectName() == u"dockTitleBar")
+                return refuseWhileLocked();
+        }
+        return false;
+    }
+};
+
 void configureEngine()
 {
     using KDDockWidgets::Config;
     Config &config = Config::self();
     config.setFlags(Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs);
     config.setDropIndicatorAllowedFunc(dropKeepsItsGroup);
+    config.setDragAboutToStartFunc([](KDDockWidgets::Core::Draggable *) { return !refuseWhileLocked(); });
+    if (!g_everAttached)
+        qApp->installEventFilter(new LockedHeaderClicks(qApp));
     config.setSeparatorThickness(1);
     config.setDraggedWindowOpacity(0.7);
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);
@@ -519,6 +560,22 @@ bool attachDocking(QQmlEngine &engine)
     return true;
 }
 
+QList<QWindow *> hideFloatingPanelsOf(const QWindow *main)
+{
+    QList<QWindow *> hidden;
+    if (!main || !KDDockWidgets::Core::Platform::instance())
+        return hidden;
+    for (auto *floating : KDDockWidgets::DockRegistry::self()->floatingWindows()) {
+        QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(floating->view());
+        QWindow *window = item ? item->window() : nullptr;
+        if (!window || !window->isVisible() || window->transientParent() != main)
+            continue;
+        window->hide();
+        hidden << window;
+    }
+    return hidden;
+}
+
 int keepFloatingPanelsOnScreen()
 {
     if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")) || !KDDockWidgets::Core::Platform::instance())
@@ -527,54 +584,73 @@ int keepFloatingPanelsOnScreen()
     if (screens.isEmpty())
         return 0;
     const int kStrip = dockchrome::floatingShadow() + dockchrome::kHeaderHeight;
-    constexpr int kMinimumWidth = 80;
+    QList<QRect> available;
+    for (QScreen *s : screens)
+        available << s->availableGeometry();
     int moved = 0;
     for (auto *floating : KDDockWidgets::DockRegistry::self()->floatingWindows()) {
         QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(floating->view());
         QWindow *window = item ? item->window() : nullptr;
         if (!window || !window->isVisible())
             continue;
-        const QRect frame = window->frameGeometry();
-        const QRect strip(frame.topLeft(), QSize(frame.width(), std::min(frame.height(), kStrip)));
-        const bool reachable = std::any_of(screens.begin(), screens.end(), [&](QScreen *s) {
-            const QRect on = s->availableGeometry().intersected(strip);
-            return on.width() >= std::min(kMinimumWidth, strip.width()) && on.height() > 0;
-        });
-        qCDebug(lcDocking) << "floating window" << window->title() << frame << "reachable" << reachable << "screens"
-                           << [&] {
-                                  QStringList out;
-                                  for (QScreen *s : screens)
-                                      out << QStringLiteral("%1 %2,%3 %4x%5").arg(s->name()).arg(s->availableGeometry().x())
-                                                 .arg(s->availableGeometry().y()).arg(s->availableGeometry().width())
-                                                 .arg(s->availableGeometry().height());
-                                  return out;
-                              }();
-        if (reachable)
-            continue;
         QWindow *main = window->transientParent();
         QScreen *target = main && screens.contains(main->screen()) ? main->screen() : QGuiApplication::primaryScreen();
         if (!target)
             target = screens.first();
-        const QRect available = target->availableGeometry();
-        const QMargins frameMargins = window->frameMargins();
-        QSize size = window->size();
-        size.setWidth(std::min(size.width(), available.width() - frameMargins.left() - frameMargins.right()));
-        size.setHeight(std::min(size.height(), available.height() - frameMargins.top() - frameMargins.bottom()));
+        const QRect frame = window->frameGeometry();
+        const QRect fitted = fitOnScreens(frame, kStrip, available, target->availableGeometry());
+        qCDebug(lcDocking) << "floating window" << window->title() << frame << "fitted" << fitted << "screens" << available;
+        if (fitted == frame)
+            continue;
+        const QSize size = fitted.size().shrunkBy(window->frameMargins());
         if (size != window->size())
             window->resize(size);
-        const QSize outer = size.grownBy(frameMargins);
-        const int x = std::clamp(frame.x(), available.left(), std::max(available.left(), available.right() + 1 - outer.width()));
-        const int y = std::clamp(frame.y(), available.top(), std::max(available.top(), available.bottom() + 1 - outer.height()));
-        window->setFramePosition(QPoint(x, y));
-        qCDebug(lcDocking) << "moved onto" << target->name() << "at" << QPoint(x, y);
+        window->setFramePosition(fitted.topLeft());
+        qCDebug(lcDocking) << "moved onto" << target->name() << "at" << fitted.topLeft();
         ++moved;
     }
     return moved;
 }
 
+QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, const QRect &fallback)
+{
+    constexpr int kMinimumWidth = 80;
+    const QRect top(frame.topLeft(), QSize(frame.width(), std::min(frame.height(), strip)));
+    const bool reachable = std::ranges::any_of(screens, [&](const QRect &screen) {
+        const QRect on = screen.intersected(top);
+        return on.width() >= std::min(kMinimumWidth, top.width()) && on.height() > 0;
+    });
+    if (reachable)
+        return frame;
+    const QSize outer(std::min(frame.width(), fallback.width()), std::min(frame.height(), fallback.height()));
+    const int x = std::clamp(frame.x(), fallback.left(), std::max(fallback.left(), fallback.right() + 1 - outer.width()));
+    const int y = std::clamp(frame.y(), fallback.top(), std::max(fallback.top(), fallback.bottom() + 1 - outer.height()));
+    return {QPoint(x, y), outer};
+}
+
+void setLayoutLocked(bool locked)
+{
+    if (locked == g_layoutLocked)
+        return;
+    g_layoutLocked = locked;
+    for (Docking *docking : std::as_const(g_dockings))
+        emit docking->layoutLockedChanged();
+}
+
+bool layoutLocked()
+{
+    return g_layoutLocked;
+}
+
+Docking::~Docking()
+{
+    g_dockings.removeAll(this);
+}
+
 Docking::Docking(QObject *parent)
     : QObject(parent)
 {
+    g_dockings.append(this);
     connect(windowdecorations::notifier(), &windowdecorations::Notifier::changed, this, [this] {
         ++m_windowTitleRevision;
         emit windowSystemTitlesChanged();
@@ -976,7 +1052,7 @@ void Docking::setOpenMenu(const QString &uniqueName)
 bool Docking::toggleFloating(const QString &uniqueName)
 {
     KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
-    if (!dock)
+    if (!dock || refuseWhileLocked())
         return false;
     return dock->setFloating(!dock->isFloating());
 }
@@ -1034,7 +1110,7 @@ bool Docking::moveTab(const QString &uniqueName, int step)
 {
     KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
     KDDockWidgets::Core::Group *group = groupOf(dock);
-    if (!group || step == 0)
+    if (!group || step == 0 || g_layoutLocked)
         return false;
     const int from = group->indexOfDockWidget(dock);
     const int to = from + step;

@@ -1,0 +1,6 @@
+# timecode format v1
+Assume 25
+# a comment
+0,4,50
+
+12,15,12.5

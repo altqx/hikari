@@ -23,10 +23,20 @@ bool attachDocking(QQmlEngine &engine);
 
 // Not on Wayland, where the compositor places windows.
 int keepFloatingPanelsOnScreen();
+// Hides the visible floating panels of `main` and returns them.
+QList<QWindow *> hideFloatingPanelsOf(const QWindow *main);
+
+// `frame` as it is when the strip at its top reaches one of `screens`; otherwise moved whole onto
+// `fallback`, shrunk to fit it.
+QRect fitOnScreens(const QRect &frame, int strip, const QList<QRect> &screens, const QRect &fallback);
 
 int fitFloatingLayouts();
 
 void refreshDockConstraints();
+
+// While locked KDDW starts no panel drag and the header's float gestures do nothing.
+void setLayoutLocked(bool locked);
+bool layoutLocked();
 
 namespace dockchrome {
 inline constexpr int kHeaderHeight = 35;
@@ -56,8 +66,10 @@ class Docking : public QObject {
     Q_PROPERTY(int headerRevision READ headerRevision NOTIFY headersChanged FINAL)
     Q_PROPERTY(QString openMenu READ openMenu WRITE setOpenMenu NOTIFY openMenuChanged FINAL)
     Q_PROPERTY(int windowTitleRevision READ windowTitleRevision NOTIFY windowSystemTitlesChanged FINAL)
+    Q_PROPERTY(bool layoutLocked READ isLayoutLocked NOTIFY layoutLockedChanged FINAL)
 public:
     explicit Docking(QObject *parent = nullptr);
+    ~Docking() override;
 
     static int floatingShadow() { return dockchrome::floatingShadow(); }
     static int resizeGrip() { return dockchrome::kResizeGrip; }
@@ -65,6 +77,7 @@ public:
     QString openMenu() const { return m_openMenu; }
     void setOpenMenu(const QString &uniqueName);
     int windowTitleRevision() const { return m_windowTitleRevision; }
+    static bool isLayoutLocked() { return layoutLocked(); }
 
     // A Wayland compositor may frame a floating panel's window although it asked for no frame.
     Q_INVOKABLE bool windowSystemTitle(QWindow *window) const;
@@ -108,6 +121,8 @@ signals:
     void menuRequested(const QString &uniqueName, QQuickItem *anchor);
     void openMenuChanged();
     void windowSystemTitlesChanged();
+    void layoutLockedChanged();
+    void layoutChangeRefused();
 
 private:
     struct Header {

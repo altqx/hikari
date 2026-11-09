@@ -792,6 +792,8 @@ StartupArguments parseStartupArguments(const std::vector<std::string> &arguments
         const std::string &argument = *it;
         if (argument == "--version")
             out.printVersion = true;
+        else if (argument == "--mcp")
+            out.mcp = true;
         else if (argument == exportDocs)
             out.exportDocs = std::next(it) != arguments.end() ? *++it : std::string();
         else if (argument.starts_with(exportDocs) && argument[exportDocs.size()] == '=')

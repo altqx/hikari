@@ -257,6 +257,7 @@ struct PlaybackPipeline::State {
     std::uint64_t serial = 0;
     bool on = false;
     std::optional<std::pair<int, int>> screen; // nullopt: the video's size
+    std::shared_ptr<const TimeMap> timeMap;
     Counters counters;
     struct AheadRequest {
         std::int64_t timeUs;
@@ -338,6 +339,22 @@ void PlaybackPipeline::setScreenSize(std::optional<std::pair<int, int>> size)
     m_state->screen = size;
 }
 
+void PlaybackPipeline::setTimeMap(TimeMap map)
+{
+    auto shared = map ? std::make_shared<const TimeMap>(std::move(map)) : nullptr;
+    std::lock_guard lock(m_state->mutex);
+    m_state->timeMap = std::move(shared);
+}
+
+namespace {
+
+std::int64_t subtitleUs(const std::shared_ptr<const PlaybackPipeline::TimeMap> &map, std::int64_t us)
+{
+    return map ? (*map)(us) : us;
+}
+
+}
+
 PlaybackPipeline::Counters PlaybackPipeline::counters() const
 {
     std::lock_guard lock(m_state->mutex);
@@ -365,11 +382,13 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
     std::uint64_t serial = 0;
     bool on = false;
     std::optional<std::pair<int, int>> screen;
+    std::shared_ptr<const TimeMap> timeMap;
     {
         std::lock_guard lock(m_state->mutex);
         serial = m_state->serial;
         on = m_state->on;
         screen = m_state->screen;
+        timeMap = m_state->timeMap;
     }
     if (!serial) {
         unused(false);
@@ -391,7 +410,7 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
             return out;
         }
     unused(false);
-    if (auto overlay = renderOverlay(m_renderer, core::DocumentTime(input.startUs), size)) {
+    if (auto overlay = renderOverlay(m_renderer, core::DocumentTime(subtitleUs(timeMap, input.startUs)), size)) {
         out.overlayBounds = overlayBounds(*overlay);
         out.overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
     }
@@ -406,6 +425,7 @@ void PlaybackPipeline::run()
         std::optional<Input> input;
         std::optional<State::AheadRequest> ahead;
         std::uint64_t serial = 0;
+        std::shared_ptr<const TimeMap> timeMap;
         {
             std::unique_lock lock(state->mutex);
             state->wake.wait(lock, [&] { return state->stop || state->input || !state->aheadRequests.empty(); });
@@ -417,13 +437,14 @@ void PlaybackPipeline::run()
                 ahead = state->aheadRequests.front();
                 state->aheadRequests.erase(state->aheadRequests.begin());
                 serial = state->on ? state->serial : 0;
+                timeMap = state->timeMap;
             }
         }
         if (ahead) {
             if (!serial)
                 continue;
             State::Ahead made{*ahead, serial, nullptr, std::nullopt};
-            if (auto overlay = renderOverlay(m_renderer, core::DocumentTime(ahead->timeUs), ahead->size)) {
+            if (auto overlay = renderOverlay(m_renderer, core::DocumentTime(subtitleUs(timeMap, ahead->timeUs)), ahead->size)) {
                 made.bounds = overlayBounds(*overlay);
                 made.overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
             }

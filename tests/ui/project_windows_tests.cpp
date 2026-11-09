@@ -10,6 +10,9 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QPointer>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -109,6 +112,18 @@ class ProjectWindowsTests : public QObject {
         QVERIFY(s->editDraftText(line, std::u8string(reinterpret_cast<const char8_t *>(text))));
         QVERIFY(s->commitDraft());
     }
+    bool load(const QUrl &file)
+    {
+        const QVariantMap review = application->reviewSession(file);
+        if (!review.value(QStringLiteral("ok")).toBool())
+            return false;
+        const QVariantList rows = review.value(QStringLiteral("rows")).toList();
+        if (rows.isEmpty())
+            application->finishClose();
+        else
+            application->resolveClose(discardAll(rows));
+        return true;
+    }
     static void closeShell(int id)
     {
         QPointer<QQuickWindow> opened = shell(id);
@@ -130,26 +145,68 @@ private slots:
         forwarded = nullptr;
         delete application;
         application = nullptr;
-        for (const char *name : {"settings.toml", "hotkeys.toml", "state.json", "last-session.json"})
+        for (const char *name : {"settings.toml", "hotkeys.toml", "state.json", "last-session.json", "projects.hksession",
+                                 "gone.hksession"})
             QFile::remove(home.filePath(QLatin1String(name)));
         QDir(home.filePath(QStringLiteral("projects"))).removeRecursively();
         QDir(dir.path()).removeRecursively();
         QDir().mkpath(dir.path());
     }
 
-    void theSessionKeepsTheProject()
+    void aWindowRowKeepsItsProject()
     {
         application::Session session{"HikariSub", true, {}, 0};
-        session.project = "/subs/Show S01";
+        session.windows.resize(2);
+        session.windows[1].project = "/subs/Show S01";
         const QByteArray bytes = app::writeSessionJson(session);
-        QVERIFY(bytes.contains("\"project\""));
+        const QJsonObject o = QJsonDocument::fromJson(bytes).object();
+        QVERIFY(!o.contains(QStringLiteral("project")));
+        const QJsonArray rows = o.value(QStringLiteral("windows")).toArray();
+        QCOMPARE(rows.size(), 2);
+        QVERIFY(!rows[0].toObject().contains(QStringLiteral("project")));
+        QCOMPARE(rows[1].toObject().value(QStringLiteral("project")).toString(), QStringLiteral("/subs/Show S01"));
         const auto read = app::readSession(std::string_view(bytes.constData(), std::size_t(bytes.size())));
         QVERIFY(read);
-        QCOMPARE(read->project, session.project);
-        QVERIFY(!app::writeSessionJson(application::Session{"HikariSub", true, {}, 0}).contains("\"project\""));
+        QCOMPARE(read->windows, session.windows);
+        QVERIFY(read->windows[1].unknown.empty());
         application::ParseFailure failure;
-        QVERIFY(!app::readSession(R"({"version":1,"program":"HikariSub","project":5,"tabs":[]})", &failure));
-        QCOMPARE(failure.message, std::string("“project” is not text."));
+        QVERIFY(!app::readSession(R"({"version":1,"program":"HikariSub","windows":[{"project":5}],"tabs":[]})", &failure));
+        QCOMPARE(failure.message, std::string("Window 1: “project” has the wrong type."));
+    }
+
+    void aSessionGivesEachWindowItsProjectBack()
+    {
+        start();
+        const QString show = folder("show");
+        application->openFolder(show, 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
+        const QString saved = home.filePath(QStringLiteral("projects.hksession"));
+        QCOMPARE(application->saveSessionTo(QUrl::fromLocalFile(saved)), QString());
+        QFile file(saved);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonArray rows = QJsonDocument::fromJson(file.readAll()).object().value(QStringLiteral("windows")).toArray();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows.first().toObject().value(QStringLiteral("project")).toString(), canonical(show));
+
+        QVERIFY(application->reviewCloseProject(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(titles(0).isEmpty());
+        QVERIFY(application->projectRoot(0).isEmpty());
+        QVERIFY(load(QUrl::fromLocalFile(saved)));
+        QTRY_COMPARE(titles(0), QStringList{QStringLiteral("ep01.ass")});
+        QCOMPARE(application->projectRoot(0), canonical(show));
+
+        const QString gone = home.filePath(QStringLiteral("gone.hksession"));
+        QFile out(gone);
+        QVERIFY(out.open(QIODevice::WriteOnly));
+        out.write(QJsonDocument(QJsonObject{{QStringLiteral("version"), 1},
+                                            {QStringLiteral("windows"),
+                                             QJsonArray{QJsonObject{{QStringLiteral("project"), dir.filePath(QStringLiteral("gone"))}}}},
+                                            {QStringLiteral("tabs"), QJsonArray{}}})
+                      .toJson());
+        out.close();
+        QVERIFY(load(QUrl::fromLocalFile(gone)));
+        QTRY_VERIFY(application->projectRoot(0).isEmpty());
     }
 
     void anEmptyWindowTakesTheFolder()

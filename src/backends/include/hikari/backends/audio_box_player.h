@@ -70,6 +70,9 @@ public:
     void setEndPosition(std::int64_t end) override;
     void setVolume(double volume) override;
     double volume() const;
+    // Every output channel plays the average of the source channels.
+    void setMono(bool mono);
+    bool mono() const;
     void setSpeed(double speed) override;
     double speed() const;
     // How far SoundTouch at `speed` brings an onset forward, in ms of the audio; 0 at speed 1.
@@ -135,6 +138,7 @@ private:
     bool m_started = false;
     bool m_oneShot = false;
     double m_volume = 1.0;
+    bool m_mono = false;
     std::int64_t m_start = 0, m_end = 0;
     std::int64_t m_next = 0;
     std::int64_t m_written = 0;

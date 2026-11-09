@@ -231,6 +231,16 @@ QString retiredNotice(int id)
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Open shortcut mapping window” was removed: the window is gone and each macro’s shortcut is set in the Automation panel.");
     case 5012:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.");
+    case 5020:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.");
+    case 5021:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.");
+    case 5022:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.");
+    case 5023:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.");
+    case 5024:
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.");
     case 5104:
         return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.");
     default:
@@ -299,9 +309,17 @@ void HotkeysController::saveAudio()
     m_settings.set(kAudioSetting, qLines(application::hotkeyLines(m_live, true)));
 }
 
+void HotkeysController::setHidden(std::function<bool(int id)> hidden)
+{
+    m_hidden = std::move(hidden);
+    setAccels();
+}
+
 void HotkeysController::setAccels()
 {
     m_installed = m_live;
+    if (m_hidden)
+        std::erase_if(m_installed, [this](const auto &binding) { return m_hidden(binding.first.id); });
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     m_scripts.install();
     logInvalid();
@@ -489,7 +507,7 @@ void HotkeysController::beginOptions()
 {
     m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
-    m_list->build(listed());
+    m_list->build(listed(), m_hidden);
     emit rowsChanged();
 }
 
@@ -541,6 +559,8 @@ HotkeyMap HotkeysController::listed() const
             next = std::max(next, key.id + 1);
     for (const auto &name : m_scripts.unboundMacros())
         out[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
+    if (m_hidden)
+        std::erase_if(out, [this](const auto &binding) { return m_hidden(binding.first.id); });
     return out;
 }
 
@@ -753,7 +773,7 @@ QVariantMap HotkeysController::importLegacyScripts(const QString &path)
         // MUST KILL: m_copy must be cleared, or the next edit stages from the pre-import bindings.
         m_copy.clear();
         m_list->clear();
-        m_list->build(listed());
+        m_list->build(listed(), m_hidden);
         m_list->filter(mode);
         emit rowsChanged();
     }
@@ -770,9 +790,13 @@ void HotkeysController::commitOptions()
         if (r.keyModified && r.key.id >= application::kFirstScriptHotkey && !r.accel.empty())
             mapped.push_back(qs(r.name));
     }
-    const auto committed = m_list->commit();
+    auto committed = m_list->commit();
     if (!committed)
         return;
+    if (m_hidden)
+        for (const auto &[key, hotkey] : m_live)
+            if (m_hidden(key.id))
+                (*committed)[key] = hotkey;
     split(*committed);
     saveMain();
     saveAudio();
@@ -787,7 +811,7 @@ void HotkeysController::resetDefaults()
     split(application::defaultHotkeys());
     if (m_list) {
         m_list->clear();
-        m_list->build(listed());
+        m_list->build(listed(), m_hidden);
     }
     emit rowsChanged();
 }

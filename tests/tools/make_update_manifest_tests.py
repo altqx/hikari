@@ -76,25 +76,8 @@ class ManifestTest(unittest.TestCase):
                                              "legacy_support": "continues", "pitch": PITCH})
         self.assertNotIn("offer", self.made("0.1.0-beta.1"))
 
-    def test_the_ai_sidecar_member_names_each_platforms_asset_and_adds_only(self):
-        sidecars = ("hikari-ai-0.1.0-linux-x64.gz", "hikari-ai-0.1.0-windows-x64.gz")
-        manifest = self.made("0.1.0", extra=sidecars)
-        self.assertEqual(manifest["schema"], 1)
-        self.assertEqual(sorted(manifest["ai_sidecar"]), ["linux-x64", "windows-x64"])
-        data = b"stand-in hikari-ai-0.1.0-linux-x64.gz"
-        self.assertEqual(manifest["ai_sidecar"]["linux-x64"], {"name": sidecars[0], "size": len(data),
-                                                               "sha256": hashlib.sha256(data).hexdigest()})
-        self.assertNotIn("hikari-ai-0.1.0-linux-x64.gz", json.dumps(manifest["packages"]))
-        for name in sidecars:
-            os.remove(os.path.join(self.path("release"), name))
-        self.assertNotIn("ai_sidecar", self.made("0.1.0"))
-
-    def test_an_ai_sidecar_that_differs_from_its_asset_is_refused(self):
-        assets = self.release("0.1.0", ("hikari-ai-0.1.0-linux-x64.gz",))
-        with open(os.path.join(self.path("release"), "hikari-ai-0.1.0-linux-x64.gz"), "ab") as file:
-            file.write(b"tampered")
-        self.refused(run("--tag", "v0.1.0", "--dir", self.path("release"), "--assets-json", assets,
-                         "--output", self.path("out.json")), "hikari-ai-0.1.0-linux-x64.gz")
+    def test_no_ai_sidecar_member_since_the_sidecar_has_its_own_channel(self):
+        self.assertNotIn("ai_sidecar", self.made("0.1.0", extra=("hikari-ai-0.1.0-linux-x64.gz",)))
 
     def test_hikarisub_offer_to_must_be_exactly_qt(self):
         for offer_to in ("qt,legacy", "legacy,qt", "legacy", "qt,qt"):

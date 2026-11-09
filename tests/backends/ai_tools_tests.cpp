@@ -58,7 +58,8 @@ protected:
     {
         fake.api = &api;
         AiSidecarHost::Options o;
-        o.program = QStringLiteral(HIKARI_AI_SIDECAR_FILE);
+        o.program = QStringLiteral(HIKARI_AI_RUNTIME_FILE);
+        o.arguments = {QStringLiteral(HIKARI_AI_BUNDLE_FILE)};
         o.workingDirectory = dir.filePath(QStringLiteral("work"));
         o.buildId = HIKARI_AI_BUILD_ID;
         o.handshakeMs = 30'000;

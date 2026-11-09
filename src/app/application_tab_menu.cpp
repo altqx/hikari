@@ -181,7 +181,7 @@ application::TabMediaPaths Application::tabMediaPaths(application::DocumentId do
         return {};
     const TabMedia &m = it->second;
     const QString audio = !m.audio.isEmpty() ? m.audio : m.audioFromVideo ? m.video : QString();
-    return {m.video.toStdString(), audio.toStdString(), m.keyframes.toStdString()};
+    return {m.video.toStdString(), audio.toStdString(), m.keyframes.toStdString(), m.timecodes.toStdString()};
 }
 
 void Application::offerAssociations(application::DocumentId document)
@@ -198,7 +198,7 @@ void Application::offerAssociations(application::DocumentId document)
     auto associations = application::resolveMediaAssociations(
         session->document(), path,
         [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, kWindows);
-    for (auto *reference : {&associations.video, &associations.audio, &associations.keyframes})
+    for (auto *reference : {&associations.video, &associations.audio, &associations.keyframes, &associations.timecodes})
         if (*reference && (*reference)->resolved)
             (*reference)->resolved = QDir::toNativeSeparators(qs(*(*reference)->resolved)).toStdString();
     QString directoryVideo;
@@ -227,6 +227,8 @@ void Application::showAssociationOffer()
             prompt += QCoreApplication::translate("HikariSub.Documents", "Audio: %1").arg(qs(offer.audio)) + u'\n';
         if (!offer.keyframes.empty())
             prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: %1").arg(qs(offer.keyframes)) + u'\n';
+        if (!offer.timecodes.empty())
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Timecodes: %1").arg(qs(offer.timecodes)) + u'\n';
         prompt.prepend(QCoreApplication::translate("HikariSub.Documents", "Associated files:") + u'\n');
     }
     if (!offer.directoryVideo.empty()) {
@@ -234,6 +236,30 @@ void Application::showAssociationOffer()
             prompt += u'\n';
         prompt += QCoreApplication::translate("HikariSub.Documents",
                                               "Video from directory: %1").arg(QFileInfo(qs(offer.directoryVideo)).fileName());
+    }
+    if (!offer.missing.empty()) {
+        if (!prompt.isEmpty())
+            prompt += u'\n';
+        //: Heading of the association bar's list of files the subtitle file links but that do not exist
+        prompt += QCoreApplication::translate("HikariSub.Documents", "Linked files not found:");
+        for (const auto &missing : offer.missing) {
+            const QString path = qs(missing.path);
+            prompt += u'\n';
+            switch (missing.kind) {
+            case application::MediaKind::Video:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Video: %1").arg(path);
+                break;
+            case application::MediaKind::Audio:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Audio: %1").arg(path);
+                break;
+            case application::MediaKind::Keyframes:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: %1").arg(path);
+                break;
+            case application::MediaKind::Timecodes:
+                prompt += QCoreApplication::translate("HikariSub.Documents", "Timecodes: %1").arg(path);
+                break;
+            }
+        }
     }
     const bool both = offer.associated() && !offer.directoryVideo.empty();
     const QString yes = QCoreApplication::translate("HikariSub.Documents", "Yes");
@@ -276,6 +302,19 @@ void Application::loadAssociations(application::DocumentId document, const appli
             media.keyframes = keyframes;
         }
     }
+    if (!load.timecodes.empty()) {
+        const QString path = qs(load.timecodes);
+        QString problem;
+        if (shown) {
+            problem = openTimecodesFile(path);
+        } else if (auto times = readTimecodes(path)) {
+            loadTabTimecodes(media, path, *times);
+        } else {
+            problem = times.error();
+        }
+        if (!problem.isEmpty())
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), problem);
+    }
 }
 
 void Application::answerAssociation(int answer, bool applyToAll)
@@ -291,7 +330,7 @@ void Application::answerAssociation(int answer, bool applyToAll)
     const auto load = application::associationLoad(it->second.offer, kind);
     m_offers.erase(it);
     loadAssociations(*target, load);
-    bool loaded = !load.video.empty() || !load.audio.empty() || !load.keyframes.empty();
+    bool loaded = load.loadsAnything();
     if (applyToAll)
         for (auto other = m_offers.begin(); other != m_offers.end();) {
             if (other->second.batch != batch) {
@@ -302,7 +341,7 @@ void Application::answerAssociation(int answer, bool applyToAll)
             const application::DocumentId id{other->first};
             other = m_offers.erase(other);
             loadAssociations(id, otherLoad);
-            loaded = loaded || !otherLoad.video.empty() || !otherLoad.audio.empty() || !otherLoad.keyframes.empty();
+            loaded = loaded || otherLoad.loadsAnything();
         }
     if (loaded)
         saveLastSession();
@@ -448,7 +487,8 @@ bool Application::targetUntouched() const
     if (!session || !targetUntitled() || session->isDirty() || session->historySize() != 1 || m_audio->hasAudio())
         return false;
     if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end() &&
-        (!it->second.video.isEmpty() || !it->second.audio.isEmpty() || !it->second.keyframes.isEmpty()))
+        (!it->second.video.isEmpty() || !it->second.audio.isEmpty() || !it->second.keyframes.isEmpty() ||
+         !it->second.timecodes.isEmpty()))
         return false;
     return std::none_of(m_unresolved.begin(), m_unresolved.end(),
                         [&](const UnresolvedRestore &u) { return u.document == *target; });

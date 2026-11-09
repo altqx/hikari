@@ -3,6 +3,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/node_graph.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/backends/karaoke_preview_runner.h"
@@ -48,6 +49,19 @@ core::Document loadFile(const QString &name)
     std::vector<std::byte> bytes(static_cast<std::size_t>(data.size()));
     std::memcpy(bytes.data(), data.constData(), bytes.size());
     return core::loadAss(bytes).document;
+}
+
+core::LineRecord luaGraphLine(std::string_view code, bool withLua = true)
+{
+    const std::string lua = withLua ? R"(, {"id": "double", "type": "lua.code", "fields": {"code": ")" +
+                                          std::string(code) +
+                                          R"(", "inputs": [{"name": "i", "type": "Number"}],
+                                          "outputs": [{"name": "out", "type": "Number"}]}})"
+                                    : std::string();
+    const auto graph = application::parseGraph(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"}, {"id": "emit", "type": "output.emit"})" + lua + R"(],
+        "wires": [{"from": "syl.units", "to": "emit.units"}]})");
+    return application::graphLine(u8"doubled", u8"Default", graph.value());
 }
 
 HostServiceReply textExtents(const HostServiceRequest &r)
@@ -234,6 +248,15 @@ class TemplateEditorTests : public QObject {
             if (application::isKaraokeLine(*l))
                 return l->id;
         return std::nullopt;
+    }
+
+    bool setGraphLine(const core::LineRecord &replacement)
+    {
+        return change([&](core::Document &doc) {
+            for (const auto &g : application::documentGraphs(doc))
+                return doc.editLine(g.line, [&](core::LineRecord &l) { l.text = replacement.text; });
+            return doc.appendLine(replacement).has_value();
+        });
     }
 
     bool change(std::function<bool(core::Document &)> apply)
@@ -1165,6 +1188,69 @@ private slots:
         QCOMPARE(argument.value(QStringLiteral("className")).toString(), QStringLiteral("char"));
         QCOMPARE(argument.value(QStringLiteral("modifiers")).toStringList(),
                  (QStringList{QStringLiteral("fx"), QStringLiteral("line")}));
+    }
+
+    void aGraphsLuaSharesTheTemplatesTrustChoice()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        QVERIFY(doc.appendLine(luaGraphLine("out = i * 2")));
+        openDocument(std::move(doc), false);
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+
+        QVERIFY(editor->editKeepingTrust([&] { return setGraphLine(luaGraphLine("out = i * 3")); }));
+        QVERIFY(editor->trusted());
+        QVERIFY(session->undo());
+        editor->refresh();
+        QVERIFY(editor->trusted());
+
+        QVERIFY(setGraphLine(luaGraphLine("out = i * 4")));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+    }
+
+    void graphEditsThatLeaveLuaAloneKeepTheChoice()
+    {
+        core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
+        doc.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
+        QVERIFY(doc.appendLine(luaGraphLine("out = i * 2")));
+        openDocument(std::move(doc), false);
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+
+        QVERIFY(change([](core::Document &d) {
+            for (const auto *l : d.lines())
+                if (application::isKaraokeLine(*l))
+                    return d.editLine(l->id, [](core::LineRecord &r) { r.actor = u8"someone"; });
+            return false;
+        }));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+
+        QVERIFY(setGraphLine(luaGraphLine("", false)));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+    }
+
+    void aGraphWithoutLuaNeverAsks()
+    {
+        core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
+        doc.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
+        openDocument(std::move(doc), true);
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(setGraphLine(luaGraphLine("", false)));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(setGraphLine(luaGraphLine("out = i")));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
     }
 
     void aFilesTemplatesRunOnlyOnceTheUserPreviewsIt()

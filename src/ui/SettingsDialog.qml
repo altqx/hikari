@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -400,18 +399,16 @@ DialogWindow {
         required property string sizeSetting
         property string name
         spacing: 8
-        ComboBox {
+        FontFamilyBox {
             id: family
             objectName: "setting_" + fontRow.setting
-            editable: true
-            model: Qt.fontFamilies()
+            families: Qt.fontFamilies()
             Accessible.name: fontRow.name
             Layout.preferredWidth: 200
-            function refresh() { editText = dialog.values[fontRow.setting] ?? "" }
+            function refresh() { text = dialog.values[fontRow.setting] ?? "" }
             Component.onCompleted: refresh()
             Connections { target: dialog; function onReloaded() { family.refresh() } }
-            onActivated: dialog.put(fontRow.setting, currentText)
-            onAccepted: dialog.put(fontRow.setting, editText)
+            onPicked: name => dialog.put(fontRow.setting, name)
         }
         SpinBox {
             id: size
@@ -580,7 +577,7 @@ DialogWindow {
                                 Accessible.name: qsTr("User folder")
                             }
                             IconTextButton {
-                                iconRole: "folder-open"
+                                iconRole: "show-in-folder"
                                 objectName: "settingsOpenUserFolder"
                                 text: qsTr("Open")
                                 Accessible.name: qsTr("Open user folder")
@@ -1099,10 +1096,46 @@ DialogWindow {
                         }
                     }
                     SettingsSection {
+                        title: qsTr("Visual tools")
+                        SettingsRow {
+                            iconRole: "vector-point"
+                            text: qsTr("Handle size")
+                            SettingNumber {
+                                setting: "video.handleSize"; from: 50; to: 400; unit: "%"
+                                name: qsTr("Handle size"); tip: qsTr("Size of the visual tools’ handles. Range from 50 to 400")
+                            }
+                        }
+                    }
+                    SettingsSection {
                         title: qsTr("Script resolution")
                         SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off the visual tools warning") }
                         SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don’t warn about a resolution mismatch") }
                         SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                        Repeater {
+                            model: [
+                                { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
+                                  choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
+                                  choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
+                                { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),
+                                  choices: [qsTr("Never ask"), qsTr("Ask when the aspect ratio differs"), qsTr("Always ask")] }
+                            ]
+                            SettingsRow {
+                                required property var modelData
+                                iconRole: "script-properties"
+                                text: modelData.text
+                                SettingChoice {
+                                    setting: modelData.setting
+                                    model: modelData.choices
+                                    Accessible.name: modelData.text
+                                }
+                            }
+                        }
+                        SettingNote { text: qsTr("Checked when a video opens.") }
+                        SettingCheck { setting: "video.untaggedMatrixWarning"; text: qsTr("Warn when the video has no colour matrix tag") }
+                        SettingCheck { setting: "video.hdrWarning"; text: qsTr("Warn when the video has HDR or wide-gamut colours") }
                     }
                 }
 
@@ -1164,6 +1197,8 @@ DialogWindow {
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
+                        SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
                     }
                     SettingsSection {
                         title: qsTr("Display")
@@ -1690,6 +1725,8 @@ DialogWindow {
                         }
                         SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
                         SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
+                        SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
+                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }
                 }
             }
@@ -1697,7 +1734,7 @@ DialogWindow {
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
     }
 
-    FolderDialog {
+    FolderChooser {
         id: fontsFolderDialog
         objectName: "fontsFolderDialog"
         title: qsTr("Choose external font folder")
@@ -1708,7 +1745,7 @@ DialogWindow {
         }
     }
 
-    FileDialog {
+    FileChooser {
         id: legacyHotkeysFile
         objectName: "legacyHotkeysFile"
         title: qsTr("Import legacy shortcuts")

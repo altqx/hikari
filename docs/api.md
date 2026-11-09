@@ -8,7 +8,7 @@ The current version is **1**.
 
 An operation has a dotted name (`lines.list`), a **read** or **write** mark, a one-line summary, and a JSON Schema for its parameters and its result. A read changes no state at all; a write changes Document content, the selection, a panel, a setting, a file, or runs a command. The mark maps onto MCP's `readOnlyHint` and the AI approval policy.
 
-Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern` (ECMAScript, matched anywhere in the string), `minItems`, `maxItems`, `oneOf`, `anyOf` and `$ref` into the shared `$defs` (`Line`, `Style`, `DocumentId`, `LineId`, `Revision`, `SettingValue`, …). Every operation refuses unknown parameters. `integer` takes only whole JSON numbers written without a fraction or exponent.
+Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `additionalProperties`, `patternProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern` (ECMAScript, matched anywhere in the string), `minItems`, `maxItems`, `oneOf`, `anyOf` and `$ref` into the shared `$defs` (`Line`, `Style`, `DocumentId`, `LineId`, `Revision`, `SettingValue`, …). Every operation refuses unknown parameters. `integer` takes only whole JSON numbers written without a fraction or exponent.
 
 | Operation | Mark | What it gives |
 | --- | --- | --- |
@@ -31,12 +31,15 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
 | `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
+| `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
 | `files.write` | write | Replaces a file granted for writing. |
+
+Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
 
 Lines are addressed by their stable Line id, never by row ([document model](document-model.md)). Times are milliseconds. In Translation mode `text` is the original text and `translation` the translated text.
 
@@ -48,11 +51,11 @@ One write runs at a time; another write meanwhile gets `busy`.
 
 ## Files
 
-A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. The plugin and AI cards decide when the user grants files; HA1 provides the table and the operations.
+A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
 
 ## Node catalogue
 
-`api::nodeCatalogue()` holds the node types of the node-effect editor (NE1): an id, a category, a summary, input and output ports, and a parameter schema. It is empty until NE1 registers its nodes; `nodes.catalogue` and the reference list them.
+`api::nodeCatalogue()` holds the node types of the node-effect editor: an id, a category, a summary, input and output ports, and a parameter schema. It starts with the engine's nodes ([node effects](node-effects.md)), and `nodes.catalogue` and the reference list them. `nodes.validate` checks a graph in the [graph format](node-effects.md#the-graph-format) and returns `{valid, problems}`.
 
 ## Events
 

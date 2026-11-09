@@ -150,6 +150,35 @@ TEST_F(Files, MalformedLyricsSayWhereAndChangeNothing)
     EXPECT_EQ(service.session(doc)->draftText(), u8"work");
 }
 
+TEST_F(Files, YouTubeTimedTextOpensAsAnUntitledImport)
+{
+    disk.files["/clip.ytt"] = bytesOf(R"(<timedtext format="3"><body><p t="1000" d="2000">Hello <s t="500">there</s></p></body></timedtext>)");
+    auto staged = service.stageOpen({"/clip.ytt"});
+    ASSERT_TRUE(staged);
+    EXPECT_TRUE(staged->imported);
+    const auto doc = service.activate(std::move(*staged));
+    ASSERT_TRUE(doc);
+    EXPECT_TRUE(service.destination(*doc)->value.empty());
+    EXPECT_TRUE(service.session(*doc)->isDirty());
+    ASSERT_EQ(service.session(*doc)->document().lines().size(), 1u);
+    EXPECT_EQ(service.session(*doc)->document().lines()[0]->style, u8"YTPlainBox");
+    EXPECT_EQ(service.session(*doc)->document().lines()[0]->text,
+              u8"{\\c&HFFFFFF&\\1a&H0&\\3c&H080808&\\3a&H3F&\\k50}Hello {\\k150}there");
+}
+
+TEST_F(Files, RefusedYouTubeTimedTextSaysWhyAndChangesNothing)
+{
+    const auto doc = open("/a.ass");
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"work"));
+    disk.files["/bad.srv3"] = bytesOf("<timedtext><body><p>x</s></body></timedtext>");
+    const auto failed = service.stageOpen({"/bad.srv3"});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().reason, OpenError::MalformedSrv3);
+    ASSERT_TRUE(failed.error().srv3);
+    EXPECT_TRUE(failed.error().srv3->starts_with("The 'p' start tag does not match the end tag of 's'.")) << *failed.error().srv3;
+    EXPECT_EQ(service.session(doc)->draftText(), u8"work");
+}
+
 TEST_F(Files, ReloadIsStagedAndRejectedWhenStale)
 {
     const auto doc = open("/a.ass");
@@ -429,5 +458,41 @@ TEST_F(Files, OnlyAssSavesWriteTheLayout)
     ASSERT_TRUE(plan);
     EXPECT_FALSE(asked);
     EXPECT_FALSE(plan->layout);
+    EXPECT_EQ(text(plan->bytes), "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+}
+
+TEST_F(Files, SaveAppliesTheProjectGarbageEditsForItsDestination)
+{
+    std::vector<std::string> destinations;
+    std::vector<ProjectGarbageEdit> edits{{u8"Timecodes File", u8"tc/a.txt"}};
+    service.setProjectGarbageSource([&](DocumentId, const DestinationKey &destination) {
+        destinations.push_back(destination.value);
+        return edits;
+    });
+    const auto doc = open("/a.ass");
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_NE(text(plan->bytes).find("\n[Aegisub Project Garbage]\nTimecodes File: tc/a.txt\n"), std::string::npos);
+    ASSERT_TRUE(service.startSave(*plan));
+    finish(WriteOutcome::Written);
+    EXPECT_FALSE(service.session(doc)->document().projectGarbage(u8"Timecodes File"));
+
+    ASSERT_TRUE(service.prepareSave(doc, DestinationKey{"/b/c.ass"}));
+    EXPECT_EQ(destinations, (std::vector<std::string>{"/a.ass", "/b/c.ass"}));
+
+    edits = {{u8"Timecodes File", std::nullopt}};
+    disk.files["/g.ass"] =
+        bytesOf(kAss + "\n[Aegisub Project Garbage]\nAudio File: a.wav\nTimecodes File: old.txt\n");
+    plan = service.prepareSave(open("/g.ass"));
+    ASSERT_TRUE(plan);
+    EXPECT_NE(text(plan->bytes).find("[Aegisub Project Garbage]\nAudio File: a.wav\n"), std::string::npos);
+    EXPECT_EQ(text(plan->bytes).find("Timecodes File"), std::string::npos);
+
+    disk.files["/srt.srt"] = bytesOf("1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+    destinations.clear();
+    edits = {{u8"Timecodes File", u8"x.txt"}};
+    plan = service.prepareSave(open("/srt.srt"));
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(destinations.empty());
     EXPECT_EQ(text(plan->bytes), "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
 }

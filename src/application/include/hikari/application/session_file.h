@@ -20,8 +20,31 @@ struct SessionTab {
     int scroll = 0;        // "Scroll: ", the Grid's first row
     std::string audio;     // "Audio: "; written only when not "" and not the video
     std::string keyframes; // "Keyframes: "
+    std::string timecodes; // JSON only
     std::string layout;    // "Layout: ", the arrangement's compact JSON
+    std::size_t window = 0; // an index into Session::windows
     bool operator==(const SessionTab &) const = default;
+};
+
+// In device-independent pixels.
+struct SessionGeometry {
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    bool operator==(const SessionGeometry &) const = default;
+};
+
+struct SessionWindow {
+    // The window's normal geometry, kept while it is maximised.
+    std::optional<SessionGeometry> geometry;
+    bool maximized = false;
+    // An index into Session::tabs.
+    std::optional<std::size_t> currentTab;
+    std::string project; // the window's Project folder; "" for none
+    // The keys this build doesn't know, as a compact JSON object, written back as they were.
+    std::string unknown;
+    bool operator==(const SessionWindow &) const = default;
 };
 
 struct Session {
@@ -30,7 +53,8 @@ struct Session {
     std::vector<SessionTab> tabs;
     // Only the JSON session file marks it; nullopt: the last tab.
     std::optional<std::size_t> activeTab;
-    std::string project; // JSON only: the window's Project folder; "" for none
+    // Empty for one window, as legacy sessions and those from before ADR 0025 are read.
+    std::vector<SessionWindow> windows;
 };
 
 // A UTF-8, UTF-16 or UTF-32 BOM decides (and is dropped); otherwise CRLF becomes

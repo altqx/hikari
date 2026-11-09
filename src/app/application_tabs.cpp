@@ -12,7 +12,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QLockFile>
+#include <QQmlEngine>
 #include <QSaveFile>
+#include <QScopedValueRollback>
 
 namespace hikari::app {
 
@@ -60,7 +62,7 @@ QStringList networkHosts(const application::Session &session)
 {
     QStringList hosts;
     for (const auto &tab : session.tabs)
-        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes})
+        for (const std::string *path : {&tab.subtitles, &tab.video, &tab.audio, &tab.keyframes, &tab.timecodes})
             if (const QString target = networkTarget(QString::fromStdString(*path));
                 !target.isEmpty() && !hosts.contains(target, Qt::CaseInsensitive))
                 hosts << target;
@@ -118,7 +120,8 @@ QVariantList Application::windowTabs(int shellWindow) const
                             {QStringLiteral("current"), target == id},
                             {QStringLiteral("reference"), m_workspace.reference() == id},
                             {QStringLiteral("tip"), name + QLatin1Char('\n') + video},
-                            {QStringLiteral("video"), video}};
+                            {QStringLiteral("video"), video},
+                            {QStringLiteral("review"), m_review ? m_review->waitingIn(id) : 0}};
     }
     return rows;
 }
@@ -139,6 +142,8 @@ bool Application::windowHome(int shellWindow) const
 
 void Application::activateShellWindow(int shellWindow)
 {
+    if (shellWindow == 0 && m_firstWindowHidden)
+        return;
     if (m_workspace.activateWindow(shellWindow))
         refreshViews();
 }
@@ -302,6 +307,10 @@ constexpr const char *kLayoutInFile = "subtitles.layoutInFile";
 
 void Application::setUpFileArrangements()
 {
+    m_files->setProjectGarbageSource(
+        [this](application::DocumentId document, const application::DestinationKey &destination) {
+            return timecodesGarbage(document, destination);
+        });
     m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
         if (!m_settings->boolean(kLayoutInFile))
             return std::nullopt;
@@ -372,6 +381,7 @@ void Application::trackTabMedia()
             media.video = path;
             emit tabsChanged();
         }
+        warnShortTimecodes(media);
         if (m_pendingTabSeek && !m_tabSeekQueued && m_pendingTabSeek->first == path && video.frameCount() > 0) {
             m_tabSeekQueued = true;
             // MUST KILL: queued to land after the session's own pending seek on Ready
@@ -449,6 +459,7 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
             m_pendingKeyframes.clear();
         if (document && previous)
             m_tabMedia[document->value];
+        showTabTimecodes(document);
         emit tabShown(0);
         return;
     }
@@ -463,8 +474,10 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
         m_pendingTabSeek = std::pair(media.video, media.position);
         if (!media.audio.isEmpty())
             m_keepTabAudio = media.video;
+        const QScopedValueRollback entering(m_enteringTabMedia, true);
         m_video->openVideo(media.video);
     }
+    showTabTimecodes(document);
     const QString shown = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
     if (!media.audio.isEmpty()) {
         if (shown != media.audio)
@@ -576,49 +589,64 @@ application::Session Application::sessionOf(std::optional<int> shellWindow)
     application::Session session;
     session.header = "HikariSub " HIKARI_VERSION;
     auto &tabs = session.tabs;
-    for (const auto id : shellWindow ? m_workspace.tabs(*shellWindow) : m_workspace.allTabs()) {
-        if (id == target)
-            session.activeTab = tabs.size();
-        application::SessionTab tab;
-        TabMedia media;
-        if (const auto it = m_tabMedia.find(id.value); it != m_tabMedia.end())
-            media = it->second;
-        auto unresolved = [&](const char *kind) -> const UnresolvedRestore * {
-            for (const auto &u : m_unresolved)
-                if (u.document == id && u.kind == QLatin1String(kind))
-                    return &u;
-            return nullptr;
-        };
-        tab.video = utf8(media.video);
-        tab.position = media.position;
-        if (id == target && !media.video.isEmpty() && !m_pendingTabSeek &&
-            m_video->session().state() == application::VideoSession::State::Ready &&
-            QString::fromStdString(m_video->session().path()) == media.video)
-            tab.position = targetVideoPosition();
-        if (const auto *u = unresolved("video"); u && media.video.isEmpty()) {
-            tab.video = utf8(u->path);
-            tab.position = u->position;
+    const std::vector<int> windows = shellWindow ? std::vector<int>{*shellWindow} : sessionWindows();
+    for (std::size_t w = 0; w < windows.size(); ++w) {
+        application::SessionWindow window;
+        if (!shellWindow)
+            window = sessionWindow(windows[w]);
+        window.project = m_projects->root(windows[w]).toStdString();
+        const auto current = m_workspace.currentTab(windows[w]);
+        for (const auto id : m_workspace.tabs(windows[w])) {
+            if (id == target)
+                session.activeTab = tabs.size();
+            if (id == current)
+                window.currentTab = tabs.size();
+            application::SessionTab tab;
+            TabMedia media;
+            if (const auto it = m_tabMedia.find(id.value); it != m_tabMedia.end())
+                media = it->second;
+            auto unresolved = [&](const char *kind) -> const UnresolvedRestore * {
+                for (const auto &u : m_unresolved)
+                    if (u.document == id && u.kind == QLatin1String(kind))
+                        return &u;
+                return nullptr;
+            };
+            tab.video = utf8(media.video);
+            tab.position = media.position;
+            if (id == target && !media.video.isEmpty() && !m_pendingTabSeek &&
+                m_video->session().state() == application::VideoSession::State::Ready &&
+                QString::fromStdString(m_video->session().path()) == media.video)
+                tab.position = targetVideoPosition();
+            if (const auto *u = unresolved("video"); u && media.video.isEmpty()) {
+                tab.video = utf8(u->path);
+                tab.position = u->position;
+            }
+            if (const auto destination = m_files->destination(id); destination && !destination->value.empty())
+                tab.subtitles = utf8(QDir::toNativeSeparators(qs(destination->value)));
+            else if (const auto *u = unresolved("subtitles"))
+                tab.subtitles = utf8(u->path);
+            if (auto *session = m_files->session(id); session && session->selection().active) {
+                const auto lines = session->document().lines();
+                for (std::size_t row = 0; row < lines.size(); ++row)
+                    if (lines[row]->id == *session->selection().active)
+                        tab.active = static_cast<int>(row);
+            }
+            tab.scroll = media.scroll;
+            tab.audio = utf8(media.audio);
+            if (const auto *u = unresolved("audio"); u && media.audio.isEmpty())
+                tab.audio = utf8(u->path);
+            tab.keyframes = utf8(media.keyframes);
+            if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
+                tab.keyframes = utf8(u->path);
+            tab.timecodes = utf8(media.timecodes);
+            if (const auto *u = unresolved("timecodes"); u && media.timecodes.isEmpty())
+                tab.timecodes = utf8(u->path);
+            if (const auto arrangement = layoutFor(id).tabArrangement(id.value))
+                tab.layout = arrangement->serialise().toStdString();
+            tab.window = w;
+            tabs.push_back(std::move(tab));
         }
-        if (const auto destination = m_files->destination(id); destination && !destination->value.empty())
-            tab.subtitles = utf8(QDir::toNativeSeparators(qs(destination->value)));
-        else if (const auto *u = unresolved("subtitles"))
-            tab.subtitles = utf8(u->path);
-        if (auto *session = m_files->session(id); session && session->selection().active) {
-            const auto lines = session->document().lines();
-            for (std::size_t row = 0; row < lines.size(); ++row)
-                if (lines[row]->id == *session->selection().active)
-                    tab.active = static_cast<int>(row);
-        }
-        tab.scroll = media.scroll;
-        tab.audio = utf8(media.audio);
-        if (const auto *u = unresolved("audio"); u && media.audio.isEmpty())
-            tab.audio = utf8(u->path);
-        tab.keyframes = utf8(media.keyframes);
-        if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
-            tab.keyframes = utf8(u->path);
-        if (const auto arrangement = layoutFor(id).tabArrangement(id.value))
-            tab.layout = arrangement->serialise().toStdString();
-        tabs.push_back(std::move(tab));
+        session.windows.push_back(window);
     }
     return session;
 }
@@ -634,7 +662,11 @@ bool Application::saveLastSession(bool closing, const QString &path)
     const QString file = path.isEmpty() ? lastSessionPath() : path;
     if (file.isEmpty() || (path.isEmpty() && !m_lastSessionWritable))
         return false;
-    const application::Session session = sessionOf(std::nullopt);
+    application::Session session = sessionOf(std::nullopt);
+    if (const auto &only = session.windows.front();
+        session.windows.size() == 1 && !only.geometry && !only.maximized && only.unknown.empty() &&
+        only.project.empty())
+        session.windows.clear();
     const QByteArray bytes = writeSessionJson(session, path.isEmpty() ? std::optional<bool>(closing) : std::nullopt);
     QDir().mkpath(QFileInfo(file).absolutePath());
     QSaveFile out(file);
@@ -803,6 +835,7 @@ Application::PendingSession Application::stageSession(application::Session sessi
     }
     pending.tabs = std::move(session.tabs);
     pending.activeTab = session.activeTab;
+    pending.windows = std::move(session.windows);
     return pending;
 }
 
@@ -837,10 +870,24 @@ void Application::applySession()
         m_layoutDocuments.clear();
         m_originalColumns.clear();
         m_unresolved.clear();
+        showFirstWindow();
+        std::vector<int> closing;
+        for (const auto &[shellWindow, shell] : m_shellWindows)
+            if (shell.window && !shell.closing)
+                closing.push_back(shellWindow);
+        for (const int shellWindow : closing)
+            forgetShellWindow(shellWindow);
     }
+    std::vector<int> windows{pending.intoWindow.value_or(0)};
+    if (QQmlEngine *engine = m_firstWindow && !pending.intoWindow ? qmlEngine(m_firstWindow.data()) : nullptr)
+        for (std::size_t k = 1; k < pending.windows.size(); ++k)
+            if (const auto opened = shellWindowOf(openShellWindow(*engine)))
+                windows.push_back(*opened);
+    std::vector<application::DocumentId> opened;
     std::optional<application::DocumentId> last, active;
     for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
         const auto &tab = pending.tabs[i];
+        m_workspace.activateWindow(tab.window < windows.size() ? windows[tab.window] : 0);
         const QString subtitles = qs(tab.subtitles);
         std::optional<application::DocumentId> id;
         if (pending.staged[i]) {
@@ -871,6 +918,15 @@ void Application::applySession()
             else
                 m_unresolved.push_back({*id, QStringLiteral("keyframes"), keyframes, 0, 0});
         }
+        if (const QString timecodes = qs(tab.timecodes); !timecodes.isEmpty()) {
+            if (!isFile(timecodes))
+                m_unresolved.push_back({*id, QStringLiteral("timecodes"), timecodes, 0, 0});
+            else if (auto times = readTimecodes(timecodes))
+                loadTabTimecodes(media, timecodes, *times);
+            else
+                m_log->notice(ui::LogController::Warning,
+                              QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), times.error());
+        }
         if (const QString video = qs(tab.video); !video.isEmpty()) {
             const bool dummy = application::isDummyVideo(video.toStdString()) &&
                                application::parseDummyVideo(video.toStdString());
@@ -894,15 +950,41 @@ void Application::applySession()
             layoutFor(*id).setTabArrangement(id->value, QByteArray::fromStdString(tab.layout),
                                                  title ? qs(*title) : QString());
         }
+        opened.push_back(*id);
         last = id;
         if (pending.activeTab == i)
             active = id;
+    }
+    if (!pending.intoWindow)
+        for (std::size_t k = 0; k < windows.size(); ++k) {
+            const auto *saved = k < pending.windows.size() ? &pending.windows[k] : nullptr;
+            m_windowPlaces[windows[k]].unknown = saved ? saved->unknown : std::string();
+            m_projects->set(windows[k], saved ? ProjectWindows::canonicalFolder(qs(saved->project)) : QString());
+        }
+    for (std::size_t k = 0; k < windows.size() && k < pending.windows.size(); ++k) {
+        std::optional<application::DocumentId> current, saved;
+        for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
+            if (m_workspace.window(opened[i]) != windows[k])
+                continue;
+            current = opened[i];
+            if (pending.windows[k].currentTab == i)
+                saved = current;
+        }
+        if (saved)
+            current = saved;
+        if (current && m_workspace.setEditingTarget(*current))
+            showTabArrangement();
     }
     if (active || last)
         m_workspace.setEditingTarget(active ? *active : *last);
     else if (!pending.intoWindow)
         newDocument();
+    for (std::size_t k = 0; k < windows.size() && k < pending.windows.size() && !pending.intoWindow; ++k)
+        if (QQuickWindow *window = shellQuickWindow(windows[k]))
+            placeShellWindow(*window, pending.windows[k]);
     refreshViews();
+    if (QQuickWindow *window = windows.size() > 1 ? shellQuickWindow(m_workspace.activeWindow()) : nullptr)
+        window->requestActivate();
     trimAudioCache();
     saveLastSession();
     emit unresolvedRestoresChanged();
@@ -988,6 +1070,7 @@ bool Application::retryRestore(int row)
                 m_pendingTabSeek = std::pair(native, entry.position);
                 if (!media.audio.isEmpty())
                     m_keepTabAudio = native;
+                const QScopedValueRollback entering(m_enteringTabMedia, true);
                 m_video->openVideo(native);
             }
         } else if (entry.kind == QLatin1String("audio")) {
@@ -999,6 +1082,17 @@ bool Application::retryRestore(int row)
             if (isTarget())
                 if (const QString problem = openKeyframes(QUrl::fromLocalFile(entry.path)); !problem.isEmpty())
                     m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
+        } else if (entry.kind == QLatin1String("timecodes")) {
+            if (auto times = readTimecodes(entry.path)) {
+                loadTabTimecodes(media, entry.path, *times);
+                if (isTarget()) {
+                    showTabTimecodes(entry.document);
+                    warnShortTimecodes(media);
+                }
+            } else {
+                m_log->notice(ui::LogController::Warning,
+                              QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), times.error());
+            }
         }
     }
     refreshViews();

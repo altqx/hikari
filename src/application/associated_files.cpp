@@ -67,6 +67,8 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
         audio = associations.audio->authored;
     const std::string keyframes =
         associations.keyframes && associations.keyframes->resolved ? *associations.keyframes->resolved : "";
+    const std::string timecodes =
+        associations.timecodes && associations.timecodes->resolved ? *associations.timecodes->resolved : "";
     offer.audioIsVideo = !audio.empty() && audio == video;
     if (!video.empty() && tab.video != video)
         offer.video = video;
@@ -74,6 +76,20 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
         offer.audio = audio;
     if (!keyframes.empty() && tab.keyframes != keyframes)
         offer.keyframes = keyframes;
+    if (!timecodes.empty() && tab.timecodes != timecodes)
+        offer.timecodes = timecodes;
+    const auto missing = [](const std::optional<MediaReference> &reference) {
+        return reference && !reference->resolved && !startsWith(reference->authored, "dummy");
+    };
+    if (missing(associations.video) && tab.video.empty())
+        offer.missing.push_back({MediaKind::Video, associations.video->authored});
+    if (missing(associations.audio) && tab.audio.empty() &&
+        !(missing(associations.video) && associations.audio->authored == associations.video->authored))
+        offer.missing.push_back({MediaKind::Audio, associations.audio->authored});
+    if (missing(associations.keyframes) && tab.keyframes.empty())
+        offer.missing.push_back({MediaKind::Keyframes, associations.keyframes->authored});
+    if (missing(associations.timecodes) && tab.timecodes.empty())
+        offer.missing.push_back({MediaKind::Timecodes, associations.timecodes->authored});
     if (!directoryVideo.empty()) {
         if (tab.video == directoryVideo)
             return {};
@@ -85,7 +101,7 @@ AssociationOffer associationOffer(const MediaAssociations &associations, const s
 AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer answer)
 {
     AssociationLoad load;
-    if (!offer.asks() || answer == AssociationAnswer::No)
+    if (!offer.loads() || answer == AssociationAnswer::No)
         return load;
     if (answer == AssociationAnswer::LoadFromDirectory) {
         load.video = offer.directoryVideo;
@@ -97,6 +113,7 @@ AssociationLoad associationLoad(const AssociationOffer &offer, AssociationAnswer
         load.audio = offer.audio;
     load.videoAudio = !ownAudio;
     load.keyframes = offer.keyframes;
+    load.timecodes = offer.timecodes;
     return load;
 }
 

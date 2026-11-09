@@ -15,6 +15,7 @@ DialogWindow {
     property string details: ""
     property bool plainText: false
     property bool offerDontAsk: false
+    property string dontAskText: ""
     property var choices: []
     property var done: null
     property bool showDetails: false
@@ -31,7 +32,8 @@ DialogWindow {
         plainText = o.plainText === true
         severity = o.severity || "info"
         offerDontAsk = o.dontAsk === true
-        dontAskBox.checked = false
+        dontAskText = o.dontAskText || ""
+        dontAskBox.checked = o.dontAskChecked === true
         showDetails = false
         choices = o.choices || [{ id: "ok", text: qsTr("OK"), role: "accept", isDefault: true }]
         done = callback || null
@@ -112,7 +114,7 @@ DialogWindow {
                 id: dontAskBox
                 objectName: "messageBoxDontAsk"
                 visible: box.offerDontAsk
-                text: qsTr("Don’t ask again")
+                text: box.dontAskText || qsTr("Don’t ask again")
                 Layout.topMargin: 8
             }
         }

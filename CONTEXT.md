@@ -116,6 +116,10 @@ _Avoid_: Grid filter as a synonym.
 The one typed, versioned set of operations over the running application that plugins, AI tools, the MCP server and node-editor nodes call.
 _Avoid_: Automation API or Lua API, which name Aegisub automation's interface.
 
+**Node effect**:
+A graph of typed nodes, stored in its Document as a `graph <name>` Comment Line, that turns karaoke Lines into generated Lines marked `fx <name>`.
+_Avoid_: Template or effector, which name the stock karaoke templater's Lines and Kara Effector.
+
 **Plugin**:
 A `.hikariplugin` package that extends HikariSub through the Hikari API, installed per user and run in its own helper.
 _Avoid_: Automation script or macro, which name Aegisub automation; extension or add-on.
@@ -141,6 +145,10 @@ _Avoid_: Operation as a synonym; tool target, which names a tool's Document.
 
 **Attached Document**:
 A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
+
+**MCP server**:
+HikariSub serving its AI tools and the open Documents over MCP to agents outside it, such as Claude Code. It is off until the user turns it on, and never on with AI off.
+_Avoid_: MCP client, which is the sidecar reaching other servers.
 
 ### Files
 

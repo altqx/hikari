@@ -1,11 +1,11 @@
-import Anthropic, { APIError } from "@anthropic-ai/sdk";
 
 import { cacheControl, markLast, marksCache, prefixTexts, sortedTools } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
-import { kNoKey } from "./egress";
+import { kKeyPlaceholder } from "./relay";
 import { ProviderError, wrapsProviderError } from "./errors";
+import { sdk } from "./sdks";
 import type { ErrorKind, Request, StopReason, Usage } from "./types";
 
 type Json = Record<string, unknown>;
@@ -66,11 +66,11 @@ function sdkBase(baseUrl: string): string {
     return baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
 }
 
-export function anthropicClient({ config, key, fetch }: ClientOptions): Client {
-    const client = new Anthropic({
-        apiKey: key || kNoKey,
+export function anthropicClient({ config, fetch }: ClientOptions): Client {
+    const client = new (sdk("anthropic").default)({
+        apiKey: kKeyPlaceholder,
         // The SDK sends the key as a bearer token; Anthropic-compatible servers expect x-api-key.
-        defaultHeaders: { "x-api-key": key || kNoKey, Authorization: null },
+        defaultHeaders: { "x-api-key": kKeyPlaceholder, Authorization: null },
         baseURL: sdkBase(config.baseUrl),
         fetch,
         maxRetries: 0,
@@ -133,7 +133,7 @@ export function anthropicClient({ config, key, fetch }: ClientOptions): Client {
                     }
                 }
             } catch (error) {
-                if (error instanceof APIError && error.status === undefined && !wrapsProviderError(error)) {
+                if (error instanceof sdk("anthropic").APIError && error.status === undefined && !wrapsProviderError(error)) {
                     const e = ((error.error as Json | undefined)?.error ?? {}) as Json;
                     throw new ProviderError(kErrorKinds[String(e.type)] ?? "server",
                         typeof e.message === "string" ? e.message : messageInside(error.message));

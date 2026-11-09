@@ -211,6 +211,16 @@ TEST(PluginManifest, RepeatedIdsAndBadDefaultsAreRefused)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, AFolderRequestCantTakeTheNameOfThePluginsOwnFolders)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"files": [{"id": "out", "title": "Out", "reason": "r"}, {"id": "cache", "title": "C", "reason": "r"}]})");
+    const ManifestProblem reserved = problem(json);
+    EXPECT_EQ(reserved.kind, Kind::Schema);
+    EXPECT_EQ(reserved.at, "/permissions/files/1/id");
+    EXPECT_EQ(reserved.detail, "\xE2\x80\x9C" "cache\xE2\x80\x9D names the plugin's own folder");
+}
+
 TEST(PluginManifest, TextThatIsNotJsonIsRefused)
 {
     const auto result = parseManifest("{\"id\": ", 1);
@@ -229,6 +239,46 @@ TEST(PluginManifest, VersionsCompareBySemver)
     EXPECT_LT(compareVersions("1.0.0-2", "1.0.0-10"), 0);
     EXPECT_LT(compareVersions("1.0.0-9", "1.0.0-a"), 0);
     EXPECT_GT(compareVersions("1.0.0-beta", "1.0.0-alpha.9"), 0);
+}
+
+TEST(PluginManifest, ListedPermissionsOfTheWrongShapeAreLeftOut)
+{
+    const Permissions p = readPermissions(*Json::parse(
+        R"({"documents.all": 1, "network": {"hosts": ["api.example.com", 2], "reason": "Looks words up"},
+            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}]})"));
+    EXPECT_FALSE(p.allDocuments);
+    EXPECT_EQ(p.networkHosts, std::vector<std::string>{"api.example.com"});
+    EXPECT_EQ(p.networkReason, "Looks words up");
+    ASSERT_EQ(p.files.size(), 1u);
+    EXPECT_FALSE(p.files.front().writable);
+    EXPECT_EQ(p.files.front().reason, "");
+    EXPECT_TRUE(readPermissions(*Json::parse(R"({"network": {"hosts": "x"}, "files": {}})")).networkHosts.empty());
+}
+
+TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
+{
+    Manifest current;
+    current.permissions.networkHosts = {"api.example.com"};
+    current.permissions.files = {{"fonts", "Fonts", false, "r"}, {"out", "Out", true, "r"}};
+    EXPECT_FALSE(permissionIncrease(current, current).any());
+
+    Manifest fewer = current;
+    fewer.permissions.networkHosts.clear();
+    fewer.permissions.files = {{"fonts", "Fonts", false, "r"}, {"out", "Out", false, "r"}};
+    EXPECT_FALSE(permissionIncrease(current, fewer).any());
+
+    Manifest more = current;
+    more.tier = Tier::Unrestricted;
+    more.permissions.allDocuments = "Compares scripts";
+    more.permissions.networkHosts = {"api.example.com", "cdn.example.com"};
+    more.permissions.files = {{"fonts", "Fonts", true, "r"}, {"out", "Out", true, "r"}, {"logs", "Logs", false, "r"}};
+    const PermissionIncrease increase = permissionIncrease(current, more);
+    EXPECT_TRUE(increase.any());
+    EXPECT_TRUE(increase.unrestricted);
+    EXPECT_TRUE(increase.allDocuments);
+    EXPECT_EQ(increase.networkHosts, std::vector<std::string>{"cdn.example.com"});
+    EXPECT_EQ(increase.files, (std::vector<std::string>{"fonts", "logs"}));
+    EXPECT_FALSE(permissionIncrease(more, more).any());
 }
 
 }

@@ -715,6 +715,121 @@ private slots:
         QVERIFY(!application->video().offering());
     }
 
+    void aTimecodesFileIsOfferedAndKeptInTheProjectGarbage()
+    {
+        const QString folder = dir.filePath(QStringLiteral("tcassoc"));
+        QDir().mkpath(folder + QStringLiteral("/tc"));
+        QFile::remove(folder + QStringLiteral("/ep.mkv"));
+        QVERIFY(QFile::copy(media("cfr.mkv"), folder + QStringLiteral("/ep.mkv")));
+        {
+            QFile t(folder + QStringLiteral("/tc/ep.txt"));
+            QVERIFY(t.open(QIODevice::WriteOnly));
+            t.write("# timestamp format v2\n0\n100\n200\n300\n400\n");
+        }
+        QFile::remove(folder + QStringLiteral("/ep.ass"));
+        const QString subs = writeAss(folder + QStringLiteral("/ep.ass"),
+                                      "Video File: ep.mkv\n\n[Aegisub Project Garbage]\nAudio File: ep.mkv\n"
+                                      "Timecodes File: tc/ep.txt\n",
+                                      "ep");
+        const QString n = QDir::toNativeSeparators(folder);
+        const QChar sep = QDir::separator();
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(),
+                 QStringLiteral("Associated files:\nVideo: %1%2ep.mkv\nTimecodes: %1%2tc%2ep.txt\n\nVideo from directory: ep.mkv")
+                     .arg(n, sep));
+        application->video().loadAssociated();
+        QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTRY_COMPARE(application->log().lastMessage(),
+                     QStringLiteral("The timecodes file ends before the video does (frame 5 of %1). Later frames continue "
+                                    "at its average frame rate.")
+                         .arg(application->video().session().frameCount()));
+        QCOMPARE(application->timecodesFile(), n + sep + QStringLiteral("tc") + sep + QStringLiteral("ep.txt"));
+        auto *details = named("videoDetailsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(details && QMetaObject::invokeMethod(details, "trigger"));
+        QTRY_VERIFY(named("videoDetailsFrameTimes"));
+        const auto detail = [this](const char *name, const char *property = "text") {
+            return named(name)->property(property);
+        };
+        QCOMPARE(detail("videoDetailsFrameRateName").toString(), QStringLiteral("Video stream frame rate"));
+        QVERIFY(detail("videoDetailsFrameTimes", "visible").toBool());
+        QCOMPARE(detail("videoDetailsFrameTimes").toString(), application->timecodesFile());
+
+        const auto written = [this] {
+            const auto last = application->files().lastSave(*application->workspace().editingTarget());
+            return last && last->outcome == hikari::application::WriteOutcome::Written;
+        };
+        const QString moved = folder + QStringLiteral("/out/ep.ass");
+        QDir().mkpath(folder + QStringLiteral("/out"));
+        QVERIFY(application->saveAs(moved));
+        QTRY_VERIFY(written());
+        QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\nTimecodes File: ../tc/ep.txt\n"));
+        application->closeTimecodes();
+        QTRY_COMPARE(detail("videoDetailsFrameRateName").toString(), QStringLiteral("Frame rate"));
+        QVERIFY(!detail("videoDetailsFrameTimes", "visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("videoDetailsDialog"), "reject"));
+        QVERIFY(application->saveAs(moved));
+        QTRY_VERIFY(written());
+        QVERIFY(!readAll(moved).contains("Timecodes File"));
+        QVERIFY(readAll(moved).contains("[Aegisub Project Garbage]\nAudio File: ep.mkv\n"));
+
+        const QString untouched = writeAss(folder + QStringLiteral("/untouched.ass"),
+                                           "\n[Aegisub Project Garbage]\nTimecodes File: gone.txt\n", "u");
+        QVERIFY(application->openFile(untouched));
+        QCOMPARE(titles().last(), QStringLiteral("untouched.ass"));
+        application->selectTab(int(titles().size()) - 1);
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(), QStringLiteral("Linked files not found:\nTimecodes: gone.txt"));
+        application->video().dismissOffer();
+        QVERIFY(application->timecodesFile().isEmpty());
+        QVERIFY(application->saveAs(untouched));
+        QTRY_VERIFY(written());
+        QVERIFY(readAll(untouched).contains("[Aegisub Project Garbage]\nTimecodes File: gone.txt\n"));
+    }
+
+    void missingLinkedFilesAreReported()
+    {
+        const QString folder = dir.filePath(QStringLiteral("missing"));
+        QDir().mkpath(folder);
+        QFile::remove(folder + QStringLiteral("/gone.mkv"));
+        {
+            QFile k(folder + QStringLiteral("/gone_keyframes.txt"));
+            QVERIFY(k.open(QIODevice::WriteOnly));
+            k.write("# keyframe format v1\nfps 0\n0\n24\n");
+        }
+        const QString subs = writeAss(folder + QStringLiteral("/gone.ass"),
+                                      "Video File: gone.mkv\nAudio File: audio/gone.flac\nKeyframes File: gone_keyframes.txt\n",
+                                      "gone");
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(),
+                 QStringLiteral("Associated files:\nKeyframes: %1%2gone_keyframes.txt\n"
+                                "\nLinked files not found:\nVideo: gone.mkv\nAudio: audio/gone.flac")
+                     .arg(QDir::toNativeSeparators(folder), QDir::separator()));
+        QCOMPARE(application->video().offerAssociatedLabel(), QStringLiteral("Yes"));
+        QCOMPARE(visualItem(QStringLiteral("dismissAssociation"))->property("text").toString(), QStringLiteral("No"));
+        application->video().dismissOffer();
+        QVERIFY(!application->video().offering());
+
+        QFile::remove(folder + QStringLiteral("/gone_keyframes.txt"));
+        const QString only = writeAss(folder + QStringLiteral("/only.ass"), "Video File: gone.mkv\n", "only");
+        QVERIFY(application->openFile(only));
+        application->selectTab(1);
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(), QStringLiteral("Linked files not found:\nVideo: gone.mkv"));
+        QQuickItem *ok = visualItem(QStringLiteral("dismissAssociation"));
+        QVERIFY(ok && ok->isVisible());
+        QCOMPARE(ok->property("text").toString(), QStringLiteral("OK"));
+        QVERIFY(!visualItem(QStringLiteral("loadAssociated"))->isVisible());
+        QVERIFY(!visualItem(QStringLiteral("loadFromDirectory"))->isVisible());
+        QVERIFY(!visualItem(QStringLiteral("associationApplyToAll"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(ok, "clicked"));
+        QVERIFY(!application->video().offering());
+        QTest::qWait(200);
+        QVERIFY(!application->video().hasVideo());
+    }
+
     void theFoldersVideoAndApplyToAll()
     {
         const QString folder = dir.filePath(QStringLiteral("dirvideo"));

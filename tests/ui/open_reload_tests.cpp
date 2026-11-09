@@ -107,6 +107,45 @@ private slots:
         QCOMPARE(values.value(QStringLiteral("extension")).toString(), QStringLiteral("ass"));
     }
 
+    void youTubeTimedTextOpensAsAnUntitledAssDocument()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "kept.ass", "kept")));
+        QFile ytt(dir.filePath(QStringLiteral("clip.ytt")));
+        QVERIFY(ytt.open(QIODevice::WriteOnly));
+        ytt.write(R"(<timedtext format="3"><body><p t="1000" d="2000">Hello</p></body></timedtext>)");
+        ytt.close();
+        const auto result = a.reviewOpen(ytt.fileName());
+        QVERIFY(result.value(QStringLiteral("ok")).toBool());
+        a.finishClose();
+        QCOMPARE(targetTitle(a), std::string("clip.ass"));
+        QCOMPARE(targetText(a), std::string("{\\c&HFFFFFF&\\1a&H0&\\3c&H080808&\\3a&H3F&}Hello"));
+        QVERIFY(target(a)->isDirty());
+        QVERIFY(a.targetUntitled());
+        const auto values = a.saveDialogValues();
+        QCOMPARE(values.value(QStringLiteral("file")).toUrl().toLocalFile(), dir.filePath(QStringLiteral("clip")));
+        QCOMPARE(values.value(QStringLiteral("extension")).toString(), QStringLiteral("ass"));
+    }
+
+    void refusedYouTubeTimedTextNamesTheReasonAndChangesNothing()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "kept.ass", "kept")));
+        edit(a, u8"unsaved");
+        QFile ytt(dir.filePath(QStringLiteral("edge.ytt")));
+        QVERIFY(ytt.open(QIODevice::WriteOnly));
+        ytt.write(R"(<timedtext><head><pen id="1" et="9"/></head></timedtext>)");
+        ytt.close();
+        const auto result = a.reviewOpen(ytt.fileName());
+        QVERIFY(!result.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(result.value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("Could not import edge.ytt as YouTube timed text. Specified argument was out of the range of "
+                                "valid values. Nothing was imported."));
+        QCOMPARE(targetTitle(a), std::string("kept.ass"));
+        QCOMPARE(targetText(a), std::string("unsaved"));
+        QCOMPARE(a.workspace().documents().size(), std::size_t(1));
+    }
+
     void malformedLyricsNameTheLineAndChangeNothing()
     {
         app::Application a;

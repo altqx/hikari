@@ -68,7 +68,7 @@ public:
     {
         return videoOpen ? std::optional(frame * 40) : std::nullopt;
     }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return std::nullopt; }
+    std::optional<application::AegisubFrameTimes> frameTimes() const override { return std::nullopt; }
     std::optional<VideoSize> videoSize() const override
     {
         return videoOpen ? std::optional(VideoSize{64, 36, 16, 9}) : std::nullopt;
@@ -153,7 +153,7 @@ public:
         return id;
     }
 
-    Host host() { return Host{this, this, this, &settings, &media, &files}; }
+    Host host() { return Host{this, this, this, &settings, &media, &files, &review}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -250,6 +250,7 @@ public:
     application::Settings settings{storage};
     FakeMedia media;
     FakeFiles files;
+    application::AiReview review;
 };
 
 }

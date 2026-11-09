@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). Documents and selections (PL3), panels and the full plugin manager (PL4), and files and network (PL5) come later.
+A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)), and the marketplace with its automatic updates, roll back and revocation (PL6, [#418](https://github.com/altqx/hikari/issues/418)).
 
 ## The package
 
@@ -28,7 +28,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `icon` | no | A package file: a 256 × 256 px PNG or a square SVG. |
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
-| `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`). |
+| `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`; the ids `data` and `cache` are the plugin's own). See [Files](#files) and [Network](#network). |
 | `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, and `area`: `left`, `right` or `bottom`, where the panel docks when first shown; `right` by default), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
 
 Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`.
@@ -53,7 +53,27 @@ An author signs the `.hikariplugin` file with minisign and ships the `.minisig` 
 - **First install.** A signature is checked against the manifest's `publicKey`, and that key is pinned in `plugins.json`. A package with a signature but no `publicKey` is refused.
 - **Update.** A signature is checked against the pinned key first. A signature by another key, valid against the new manifest's `publicKey`, needs the user to trust the new key; so does an unsigned package over a signed install. Re-trusting pins the new key, or none.
 - **Refused outright.** A signature that does not match the package or its trusted comment, whatever the user trusts.
-- **Unverified.** Every plugin installed from a file is a sideload and shows as unverified, signed or not; it never updates by itself. A signed one shows its key id, as minisign prints it (16 hex digits). Listed plugins, automatic updates, permission-increase consent, roll back and revocation come from the HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418)), which checks its signed index and then this same pinned author key.
+- **Unverified.** Every plugin installed from a file is a sideload and shows as unverified, signed or not; it never updates by itself. A signed one shows its key id, as minisign prints it (16 hex digits). Plugins from the [marketplace](#the-marketplace) are checked against its signed index instead, and then against this same pinned author key.
+
+## The marketplace
+
+The HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418)) lists plugins from [altqx/hikari-plugins](https://github.com/altqx/hikari-plugins). Its index is `https://marketplace.hikarisub.org/index.json`, signed by `index.json.minisig`. The index format is [docs/schemas/marketplace-index.schema.json](schemas/marketplace-index.schema.json), a copy of the registry's `schemas/index.schema.json`.
+
+- **The marketplace key.** The index must verify with the marketplace key, `EF622DD4D472E463`, compiled into HikariSub (`plugins::kMarketplaceKey`). It is not the release key that signs HikariSub's own updates.
+- **The trusted comment** must be `file:index.json serial:<serial> generated:<generated>`, matching the index's own fields, so a signature for another file or another index can't stand in.
+- **Rollback.** HikariSub keeps the highest serial it has accepted in `<user folder>/marketplace.json` and refuses a lower one.
+- **Privacy.** HikariSub downloads the whole index and never sends which plugins are installed: two GETs with no query string, no cookies and no cache. Icons and screenshots come only from the marketplace's own origin, and only while the Marketplace view shows them. HikariSub fetches each one itself, with the same request rules, checks it against the media rules above, and keeps it in memory only.
+- **When.** At start and every 24 hours while "Check for plugin updates" (`plugins.checkUpdates`, on by default) is on, and whenever the Marketplace view or Check for updates asks.
+- **Install.** HikariSub downloads the listed version's `url`, which must be on the marketplace's origin and no larger than `size`. Then it checks `size` and `sha256`, runs the package checks, and checks that the manifest has the listed id, version, tier and API. The manifest's `publicKey` must be the listing's `publicKey` and, for an installed plugin, the pinned key. The marketplace packages carry no `.minisig`: the signed index vouches for the listing's author key. A downgrade is refused, except Install <last good> after a revocation. The install question always opens first, except for an [automatic update](#updates-roll-back-and-revocation).
+- **Source.** `plugins.json` records `"source": "marketplace"` for a marketplace install; a missing `source` means a file. Installing from a file over a marketplace copy makes it a file install again.
+
+### Updates, roll back and revocation
+
+- **Automatic updates.** After each index HikariSub accepts, it installs the newest version a marketplace plugin can run when "Install updates automatically" (`plugins.autoUpdate`, on by default, under "Check for plugin updates") and the plugin's own switch are both on. The download gets the same checks as Install. File installs never update by themselves.
+- **When it applies.** Only while the plugin isn't running a command or an event. An update that finishes downloading during one waits for it to end. One still waiting at quit is fetched again at the next start.
+- **Asking for more.** An update that asks for more than the installed version waits for the user instead. It asks for more when it moves to Full trust, asks for every open document, adds a network host, or adds a folder or makes one writable. `plugins.json` keeps its version as `held`. Review… opens the update question, which marks each permission New or allowed now and shows the listing's changelog. Keep <installed> drops it, and automatic updates then pass over that version.
+- **Roll back.** An install over another version keeps the replaced copy in `<user folder>/plugins/.previous/<id>/`, one step back. Roll back to <version> swaps the two copies. Automatic updates pass over the version left (`skip`), and the toast's Undo swaps them again and clears that. Data, settings and folder grants stay; the cache is cleared.
+- **Revocation.** When the index revokes the installed version, or the whole plugin, HikariSub turns the plugin off, says so in a toast, and records `revoked` in `plugins.json`. The plugin can't be turned back on unless a later index lifts the revocation. Its details offer Install <last good>, the newest version it can run that isn't revoked, and Uninstall. Installing any other version clears the mark and turns it back on. Revocation applies only when the installed key is the listing's key.
 
 ## Folders and `plugins.json`
 
@@ -62,19 +82,24 @@ An author signs the `.hikariplugin` file with minisign and ships the `.minisig` 
 | `<user folder>/plugins/<id>/` | The installed files. An install stages them in `.staging-<id>` and swaps them in, so a failed install leaves the old copy. |
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
-| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants` and the `settings` a plugin or the user changed. |
+| `<user folder>/plugins/.previous/<id>/` | The version the last update replaced, for Roll back. |
+| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`; for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
+| `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
 
 ## The plugin manager
 
-Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window: the installed plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu.
+Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin>… in that plugin's panel menu. Installed counts the updates that wait for the user, and the newer versions that won't install automatically. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates" and "Install updates automatically".
 
-- **The list.** Each row shows the package icon, name, version and signer. It shows a state only when the plugin isn't simply running: Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
-- **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off.
+- **The list.** Each row shows the package icon, name, version and signer (From the marketplace for a marketplace install). It shows a state only when the plugin isn't simply running: Revoked, <version> waits for you, Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
+- **The details.** What the plugin is and who made it, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically", and Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
+- **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** A form built from `contributes.settings`: a check box for `boolean`, a field for `integer`, `number` and `string`, and a drop-down for `choice`. A change is kept at once, the same way `hikari.settings.set` keeps it, and a running plugin's `hikari.settings.get` sees it.
 - **Errors.** A plugin that didn't start, crashed or hit the time limit shows the error and its traceback, with Start again and Copy.
-- **Actions.** Install from file… for a new plugin, then per plugin Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
+- **Actions.** Install from file… for a new plugin, then per plugin Update to <version> (a marketplace install with a newer listed version), Update from file…, Open data folder and Uninstall…. Update from file… refuses a package with a different id.
+- **Move to the marketplace.** A file install whose id the marketplace lists, signed with the listing's author key and not newer than the listed version, offers "Move to the marketplace", which installs the listed version as a marketplace install, or "Not now".
+- **Marketplace.** Search matches name, summary and author, and the box narrows to one category. A listing shows the newest version this HikariSub can run, its description, screenshots, permissions, what it needs ("HikariSub <version> or later"), licence, last update and source. Install or Update to <version> downloads it and opens the install question, which says it was signed by the author and checked against the marketplace. A plugin with full access warns that it gets full access to the computer and asks for Install with full access.
 
 ## Running a plugin
 
@@ -85,11 +110,11 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 - **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
 - **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
 
-These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)).
+These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)), which reuses the AI sidecar's `hikari_sandbox` module ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
 
 ### The helper protocol
 
-The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 3) has two requests, `Load` and `Run`, plus events and seven services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock` and `Ui`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `dialogs.show`, `dialogs.ask`, `dialogs.close`) with JSON parameters, and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
+The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 4) has two requests, `Load` and `Run`, plus events and nine services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock`, `Ui`, `Files` and `Net`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `dialogs.show`, `dialogs.ask`, `dialogs.close`), `Files` the file operations (`files.pick`, `files.folder`, `files.open`, `files.entries`) and `Net` `net.fetch`. Each takes JSON parameters and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
 
 ## The `hikari` global
 
@@ -107,6 +132,8 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
 | `hikari.selection.get(document)`, `hikari.selection.set(selected, active, document)` | The selected Lines and the active Line, as `selection.get` and `selection.set` give and take them. |
 | `hikari.panels.render(panel, tree)`, `hikari.panels.show(panel)`, `hikari.panels.on(panel, fn)` | Draws a panel from `contributes.panels`, opens it, and calls `fn(event)` for its events. See [Panels and dialogs](#panels-and-dialogs). |
+| `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
+| `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
 
 Tables go to HikariSub as JSON: a table with keys 1 to n is an array, one with text keys an object. Numbers must be finite, text must be UTF-8, and a table that holds itself is refused.
@@ -159,7 +186,7 @@ end)
 
 The [Line tools sample](examples/line-tools/) draws a reading-speed panel with a chart, a list, a menu and a dialog.
 
-A panel's root may carry `menu = {{id, text, checked, disabled}}`. Those rows lead the panel's ⋯ menu, and choosing one sends the event `{kind = "menu", widget = id}`.
+A panel's root may carry `menu = {{id, text, checked, disabled}}`. Those rows lead the panel's ⋯ menu, and choosing one sends the event `{kind = "menu", widget = id}`. With `drop = true` on the root, the panel takes files dropped on it. See [Files](#files).
 
 ### Widgets
 
@@ -213,3 +240,58 @@ A dialog spec is `{title, body, buttons, width, height}`, with 1 to 4 buttons `{
 ### When the plugin isn't there
 
 A layout can keep a place for a panel whose plugin is missing, turned off or stopped. The panel keeps the title the layout saved and shows why, with the one action that helps: Open Plugins… when the plugin isn't installed, Turn on when it is off, and Start again with Details when it stopped. When the plugin comes back, its panel fills the place. Closing a placeholder for a plugin that isn't installed, or View › Panels › <panel> › Remove from the layout, forgets the place.
+
+## Files
+
+A restricted plugin never names a path on disk. It reaches a file only through a handle, and HikariSub hands one out only for a file the plugin may use:
+
+- **Its own folders.** `data` is `<user folder>/plugin-data/<id>/` and `cache` is `<cache>/plugins/<id>/`. Both are writable, and HikariSub makes them when first used.
+- **Folders the user chose.** Each `permissions.files` request `{id, title, writable, reason}` names a folder the plugin asks for, such as `{id = "fonts", title = "Font folder", writable = false, reason = "Reads fonts to measure lines"}`.
+- **Files the user picked or dropped.** `hikari.files.pick` opens the system file dialog, and a panel with `drop = true` takes dropped files.
+
+```lua
+local note = hikari.files.open("data", "notes/today.txt")
+hikari.files.write(note, "hello")
+if hikari.files.folder("fonts") then
+    for _, entry in ipairs(hikari.files.entries("fonts", "")) do
+        print(entry.name, entry.folder)
+    end
+end
+```
+
+`hikari.files.open(place, path)` returns `{file, name, access}`: the handle, the path asked for, and `"read"` or `"write"`. `place` is `"data"`, `"cache"` or a folder id. A writable place makes the missing folders on the way. `hikari.files.entries(place, path)` lists a folder in name order as `{name, folder}`, at most 4096 entries. `hikari.files.read(file, encoding)` and `hikari.files.write(file, data, encoding)` take a handle or the table that holds one, as [`files.read` and `files.write`](api.md) do, up to 16 MiB; `encoding` is `"utf8"` (the default) or `"base64"`. `hikari.files.list()` lists the handles the plugin holds.
+
+A `path` is relative, with `/` between its parts, at most 1024 bytes of UTF-8. A part that is empty, `.` or `..`, that holds a control character or one of `\ : * ? " < > |`, that ends with a dot or a space, or that Windows reserves (`CON`, `NUL`, `COM1` and so on) is refused with `not_granted`, as is a path whose links lead outside the place. An empty path is `invalid_params` for `open` and the place itself for `entries`.
+
+`hikari.files.folder(id)` asks the user for the folder the first time and returns whether the plugin has it. The question shows the plugin's name, the request's `title` and `reason`, and **Remember this folder for <plugin>**, checked. A remembered folder is kept in `plugins.json` `grants` and is used without asking from then on, until the user forgets it in the plugin manager or uninstalls the plugin. Otherwise the folder lasts until the plugin stops. A request with `writable = false` is read-only whatever the folder allows. Opening a place the plugin doesn't have yet asks for it the same way, and declining gives `not_granted` with `reason = "declined"`.
+
+`hikari.files.pick{title, save, name, filters}` opens the file dialog and returns `{file, name, access}`, or `nil` when the user cancels. `save = true` asks for a file to write, with `name` as the suggestion. `filters` is a list of up to 16 `{name, patterns}`, where a pattern is `*` or `*.ext`. A file dropped on a panel with `drop = true` sends `{kind = "drop", files = {{file, name, access}}}`, read-only. A pick or drop grants that one file only.
+
+A plugin that stops, crashes or is turned off loses its handles, its folders for this run, and any file dialog still open for it.
+
+## Network
+
+A plugin can't open sockets. `hikari.net.fetch` asks HikariSub to make the request:
+
+```lua
+local response, err = hikari.net.fetch({
+    url = "https://api.example.com/v1/translate",
+    method = "POST",
+    headers = {["content-type"] = "application/json"},
+    body = '{"text": "Hello"}',
+})
+if response then
+    print(response.status, response.body)
+end
+```
+
+A request is a URL, or `{url, method, headers, body, encoding}`. `method` is `GET` (the default), `HEAD`, `POST`, `PUT`, `PATCH` or `DELETE`. `headers` are text, and HikariSub refuses `host`, `cookie`, `connection`, `content-length`, `transfer-encoding`, `upgrade`, `te`, `trailer`, `keep-alive`, `expect` and `proxy-…`, and any value with a line break. `body` is at most 16 MiB, never on `GET` or `HEAD`, and `encoding = "base64"` sends and returns bytes. The answer is `{status, url, headers, encoding, body}`, with lower-case header names. A header that comes more than once is one value, joined with `, `, except `set-cookie`, joined with line breaks. An HTTP error status is an answer too.
+
+HikariSub refuses the request, with the error `refused` and its `reason`, or `not_granted`:
+
+- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because nothing sandboxes it yet (PL7 [#419](https://github.com/altqx/hikari/issues/419)).
+- **`not_https`.** The URL isn't `https://`. **`port`.** It names a port other than 443.
+- **`not_granted`**, with `host`. The host isn't one of the manifest's `permissions.network.hosts`, matched exactly. The plugin manager shows those hosts, and so does the install.
+- **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).
+
+Redirects are followed up to 5 times, each checked the same way. HikariSub sends no cookies and keeps no cache. Requests still running when the plugin stops are dropped.

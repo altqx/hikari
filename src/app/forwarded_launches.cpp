@@ -50,8 +50,17 @@ ForwardedLaunches::ForwardedLaunches(Application &application, QObject *parent)
         if (m_quitToken.isEmpty() || m_quitTokenReview != m_application.quitReviews())
             return;
         m_quitTokenReview = 0;
-        activate(m_window, std::exchange(m_quitToken, QString()));
+        activate(target(), std::exchange(m_quitToken, QString()));
     });
+}
+
+QWindow *ForwardedLaunches::target() const
+{
+    if (!m_window)
+        return nullptr;
+    if (QQuickWindow *used = m_application.lastUsedShellWindow())
+        return used;
+    return m_application.firstWindowHidden() ? nullptr : m_window.data();
 }
 
 void ForwardedLaunches::setWindow(QWindow *window)
@@ -59,7 +68,7 @@ void ForwardedLaunches::setWindow(QWindow *window)
     m_window = window;
     if (m_activate) {
         m_activate = false;
-        activate(window, std::exchange(m_token, QString()));
+        activate(target(), std::exchange(m_token, QString()));
     }
     if (!m_files.isEmpty())
         m_timer.start(kGatherMs);
@@ -76,7 +85,7 @@ void ForwardedLaunches::take(const SingleInstance::Request &request)
         m_quitTokenReview = m_application.quitReviews();
     }
     if (m_window)
-        activate(m_window, token);
+        activate(target(), token);
     else {
         m_activate = true;
         m_token = token;
@@ -105,7 +114,7 @@ QStringList ForwardedLaunches::takeUnopened()
 
 bool ForwardedLaunches::busy() const
 {
-    return m_application.forwardedOpenWaits() || QGuiApplication::modalWindow() || modalPopupOpen(m_window);
+    return m_application.forwardedOpenWaits() || QGuiApplication::modalWindow() || modalPopupOpen(target());
 }
 
 void ForwardedLaunches::open()
@@ -120,9 +129,9 @@ void ForwardedLaunches::open()
         m_application.openForwarded(std::exchange(m_files, QStringList()), static_cast<int>(std::exchange(m_request, application::WindowRequest::Default)));
     const QString kind = result.value(QStringLiteral("kind")).toString();
     if (kind == QLatin1String("video"))
-        openStartVideo(m_window, result.value(QStringLiteral("path")).toString());
+        openStartVideo(target(), result.value(QStringLiteral("path")).toString());
     else if (kind == QLatin1String("session"))
-        QMetaObject::invokeMethod(m_window, "openSessionFile", Q_ARG(QVariant, result.value(QStringLiteral("path"))));
+        QMetaObject::invokeMethod(target(), "openSessionFile", Q_ARG(QVariant, result.value(QStringLiteral("path"))));
 }
 
 void ForwardedLaunches::activate(QWindow *window, const QString &activationToken)

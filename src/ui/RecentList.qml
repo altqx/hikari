@@ -13,6 +13,7 @@ Rectangle {
     required property string noMatchText
     required property string filterName
     required property string removeMissingText
+    required property string iconRole
     required property string openIconRole
     property var rows: []
     property alias list: recentList
@@ -62,6 +63,7 @@ Rectangle {
                 Layout.leftMargin: 12
                 Layout.rightMargin: 12
                 spacing: 12
+                Icon { iconRole: recent.iconRole; size: 20 }
                 Label {
                     text: recent.title
                     font.bold: true
@@ -300,7 +302,7 @@ Rectangle {
         }
         ShellMenuItem {
             objectName: recent.prefix + "MenuCopyPath"
-            iconRole: "edit-copy"
+            iconRole: "copy-path"
             text: qsTr("Copy path")
             onTriggered: recent.page.app.copyText(rowMenu.row.path)
         }

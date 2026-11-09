@@ -1,5 +1,5 @@
-add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp workspace.cpp document_files.cpp
-    automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp
+add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp ai_review.cpp word_diff.cpp workspace.cpp document_files.cpp
+    automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp fold_groups.cpp timecodes_file.cpp
     dialog_memory.cpp)
 target_sources(hikari_application PRIVATE hotkeys.cpp)
 target_sources(hikari_application PRIVATE audio_timing.cpp)
@@ -13,6 +13,14 @@ target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/applica
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
+target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
+target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp node_layout.cpp
+    node_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
+    include/hikari/application/node_graph.h include/hikari/application/node_graph_library.h
+    include/hikari/application/node_effects.h)
+# Generated Lines must be byte-identical on every platform.
+set_source_files_properties(node_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
 target_include_directories(hikari_application PUBLIC include)
@@ -32,8 +40,8 @@ if(WIN32)
     target_link_libraries(hikari_application PRIVATE shlwapi)
 endif()
 target_sources(hikari_application PRIVATE update_signature.cpp include/hikari/application/update_signature.h)
-target_link_libraries(hikari_application PUBLIC hikari_core hikari_minisign)
-hikari_module(hikari_application ALLOW hikari_core hikari_minisign)
+target_link_libraries(hikari_application PUBLIC hikari_core hikari_json hikari_minisign)
+hikari_module(hikari_application ALLOW hikari_core hikari_json hikari_minisign)
 target_sources(hikari_application PRIVATE session_file.cpp)
 target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE macro_validation.cpp)
@@ -64,11 +72,14 @@ set_source_files_properties(visual_drawing.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_sources.cpp)
 set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
-target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp subtitle_render.cpp)
+target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp video_details.cpp video_properties.cpp subtitle_render.cpp)
 set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE video_fullscreen.cpp)
 target_sources(hikari_application PRIVATE video_timing.cpp)
 target_sources(hikari_application PRIVATE center_times.cpp)
+target_sources(hikari_application PRIVATE align_to_video.cpp)
+target_sources(hikari_application PRIVATE qc_notes.cpp)
+target_sources(hikari_application PRIVATE perspective_tracking.cpp)
 target_sources(hikari_application PRIVATE translation_mode.cpp)
 target_sources(hikari_application PRIVATE owned_file.cpp include/hikari/application/owned_file.h)

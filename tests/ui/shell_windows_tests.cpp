@@ -1,16 +1,25 @@
+#include "hikari/app/api_host.h"
 #include "hikari/app/application.h"
+#include "hikari/app/forwarded_launches.h"
 #include "hikari/app/hotkeys_controller.h"
 
 #include "docking.h"
+#include "qtest_parts.h"
+#include "status_bar_controller.h"
 #include "workspace_layout.h"
 
+#include <QAccessible>
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QPointer>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -26,7 +35,7 @@ namespace {
 const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock",  "editorDock", "gridDock",
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
-                               "postprocessorDock"};
+                               "postprocessorDock", "qcNotesDock", "reviewDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -196,6 +205,120 @@ class ShellWindowsTest : public QObject {
     static QString misspelling(QQuickWindow *window) { return item(window, "spellMisspell")->property("text").toString(); }
     static QStringList kanjiStyles(QQuickWindow *window) { return controller(window, "kanjiTimer")->property("styles").toStringList(); }
     static int templates(QQuickWindow *window) { return controller(window, "templateEditor")->property("templateCount").toInt(); }
+    void loadFirstWindow()
+    {
+        engine = std::make_unique<QQmlApplicationEngine>();
+        QVERIFY(ui::attachDocking(*engine));
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QTest::qWaitForWindowExposed(first()));
+        QTRY_VERIFY(first()->property("arrangementSettled").toBool());
+    }
+    static int shellId(QQuickWindow *window) { return window->property("shellWindow").toInt(); }
+    QStringList titles(int window) const
+    {
+        QStringList out;
+        for (const QVariant &row : application->windowTabs(window))
+            out << row.toMap().value(QStringLiteral("title")).toString() +
+                       (row.toMap().value(QStringLiteral("current")).toBool() ? u"*" : u"");
+        return out;
+    }
+    QQuickWindow *otherShellWindow(QWindow *besides) const
+    {
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (auto *shell = qobject_cast<QQuickWindow *>(w); shell && shell != besides && shell->isVisible() && shellId(shell) > 0)
+                return shell;
+        return nullptr;
+    }
+    QJsonObject saveSession(const QString &file)
+    {
+        if (application->saveSessionTo(QUrl::fromLocalFile(file)) != QString())
+            return {};
+        QFile f(file);
+        return f.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(f.readAll()).object() : QJsonObject();
+    }
+    static void writeJson(const QString &file, const QJsonObject &json)
+    {
+        QFile f(file);
+        QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        f.write(QJsonDocument(json).toJson());
+    }
+    void restartWith(const QJsonObject &lastSession)
+    {
+        const QString last = application->lastSessionPath();
+        second->close();
+        QTRY_VERIFY(!second);
+        application->endSession();
+        engine.reset();
+        application.reset();
+        writeJson(last, lastSession);
+        relaunch();
+    }
+    void relaunch()
+    {
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("settings.toml"));
+        options.playbackAudio = false;
+        application = std::make_unique<app::Application>(options);
+        loadFirstWindow();
+    }
+    void edit(application::DocumentId id)
+    {
+        auto *session = application->files().session(id);
+        QVERIFY(session);
+        QVERIFY(session->editDraftText(session->document().lines().front()->id, u8"edited"));
+        QVERIFY(session->commitDraft());
+        QTRY_VERIFY(modified(id));
+    }
+    static QObject *unsaved(QQuickWindow *window) { return window->findChild<QObject *>(QStringLiteral("unsavedChanges")); }
+    static QVariantList reviewed(QQuickWindow *window) { return unsaved(window)->property("rows").toList(); }
+    void closeDiscarding(QQuickWindow *window)
+    {
+        QVariantList choices;
+        for (const QVariant &row : application->reviewCloseWindow(shellId(window)))
+            choices << QVariantMap{{QStringLiteral("id"), row.toMap().value(QStringLiteral("id"))}, {QStringLiteral("save"), false}};
+        if (choices.isEmpty())
+            application->finishClose();
+        else
+            application->resolveClose(choices);
+    }
+    static QWindow *floatingOf(const QWindow *main)
+    {
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (w != main && w->isVisible() && w->transientParent() == main)
+                return w;
+        return nullptr;
+    }
+    void tearDownAfterQuit()
+    {
+        delete second.data();
+        engine.reset();
+        application.reset();
+    }
+    void hideFirst()
+    {
+        first()->close();
+        QTRY_VERIFY(!first()->isVisible());
+    }
+    void quitFrom(QQuickWindow *window)
+    {
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "globalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_QUIT"))));
+        QVERIFY(ran.toBool());
+    }
+    void loadSession(const QString &file)
+    {
+        const QPointer<QQuickWindow> before = second;
+        const QVariantMap review = application->reviewSession(QUrl::fromLocalFile(file));
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(!before);
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_VERIFY(second->property("arrangementSettled").toBool());
+    }
 
 private slots:
     void init()
@@ -215,13 +338,7 @@ private slots:
                                                      "Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template line,"
                                                      "{\\fad(100,100)}\n")));
         firstTab = *target();
-        engine = std::make_unique<QQmlApplicationEngine>();
-        QVERIFY(ui::attachDocking(*engine));
-        engine->setInitialProperties(application->qmlProperties());
-        engine->loadFromModule("Hikari.Ui", "Main");
-        QVERIFY(!engine->rootObjects().isEmpty());
-        QVERIFY(QTest::qWaitForWindowExposed(first()));
-        QTRY_VERIFY(first()->property("arrangementSettled").toBool());
+        loadFirstWindow();
 
         second = application->openShellWindow(*engine);
         QVERIFY(second);
@@ -235,9 +352,11 @@ private slots:
     }
     void cleanup()
     {
-        if (second)
-            second->close();
-        QTRY_VERIFY(!second);
+        if (second && !application->quitApproved()) {
+            closeDiscarding(second);
+            QTRY_VERIFY(!second);
+        }
+        application->setSessionRestore(0);
         application->endSession();
         engine.reset();
         application.reset();
@@ -272,6 +391,31 @@ private slots:
             QCOMPARE(controller(second, "shell")->property("editingTitle").toString(), QStringLiteral("second.ass"));
             QVERIFY2(statusFields(first()).contains(QStringLiteral("640 x 360")), qPrintable(statusFields(first()).join(u'|')));
             QVERIFY2(statusFields(second).contains(QStringLiteral("1280 x 720")), qPrintable(statusFields(second).join(u'|')));
+        }
+    }
+
+    void eachWindowsStatusBarNamesItsTabsTimecodesAndEveryEditorIsTimed()
+    {
+        const QString timecodes = dir.filePath(QStringLiteral("second-timecodes.txt"));
+        {
+            QFile file(timecodes);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("# timecode format v2\n0\n100\n200\n300\n");
+        }
+        const auto fpsTip = [](QQuickWindow *window) {
+            return controller(window, "statusBar")->property("tooltips").toStringList()[ui::StatusBarController::FramesPerSecond];
+        };
+        const auto timed = [](QQuickWindow *window) { return controller(window, "editor")->property("framesShown").toBool(); };
+        for (QQuickWindow *window : {first(), second.data()})
+            QVERIFY(controller(window, "editor")->setProperty("showFrames", true));
+        QCOMPARE(application->openTimecodesFile(timecodes), QString());
+        for (const int active : {1, 0, 1}) {
+            application->activateShellWindow(active);
+            QCOMPARE(application->workspace().activeWindow(), active);
+            QVERIFY2(fpsTip(second).contains(QStringLiteral("second-timecodes.txt")), qPrintable(fpsTip(second)));
+            QVERIFY2(!fpsTip(first()).contains(QStringLiteral("second-timecodes.txt")), qPrintable(fpsTip(first())));
+            QTRY_COMPARE(timed(first()), active == 1);
+            QTRY_COMPARE(timed(second), active == 1);
         }
     }
 
@@ -539,7 +683,316 @@ private slots:
         QTRY_COMPARE(firstClose->property("keysText").toString(), before);
         QCOMPARE(secondClose->property("keysText").toString(), before);
     }
+
+    void aSessionReopensEachWindowWithItsTabsAndPlace()
+    {
+        const QRect firstPlace(30, 60, 900, 650);
+        const QRect secondPlace(100, 120, 900, 650);
+        first()->setGeometry(firstPlace);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        application->activateShellWindow(0);
+        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("third.ass")), "third", 640)));
+        application->selectTab(0);
+        QCOMPARE(titles(0), (QStringList{"first.ass*", "third.ass"}));
+        application->activateShellWindow(1);
+        const QString file = dir.filePath(QStringLiteral("two.hksession"));
+        const QJsonObject saved = saveSession(file);
+        QCOMPARE(saved.value(QStringLiteral("windows")).toArray().size(), 2);
+
+        first()->setGeometry(QRect(10, 10, 700, 500));
+        application->activateShellWindow(0);
+        loadSession(file);
+        QTRY_COMPARE(first()->geometry(), firstPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(titles(0), (QStringList{"first.ass*", "third.ass"}));
+        QCOMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+        QCOMPARE(application->workspace().title(*target()) ? *application->workspace().title(*target()) : std::string(),
+                 std::string("second.ass"));
+    }
+
+    void quittingBringsEveryWindowBack()
+    {
+        const QRect secondPlace(100, 120, 900, 650);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        application->setSessionRestore(2);
+        QVERIFY(application->reviewClose(QStringLiteral("quit")).isEmpty());
+        application->finishClose();
+        QVERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+        tearDownAfterQuit();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+    }
+
+    void aCrashRestoreReopensEveryWindow()
+    {
+        const QRect secondPlace(100, 120, 900, 650);
+        second->setGeometry(secondPlace);
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QJsonObject crashed = saveSession(dir.filePath(QStringLiteral("crashed.hksession")));
+        QVERIFY(!crashed.isEmpty());
+        crashed.insert(QStringLiteral("closed"), false);
+        restartWith(crashed);
+
+        QCOMPARE(application->startupOffer(), QStringLiteral("crash"));
+        const QVariantMap review = application->reviewStartupSession();
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        application->finishClose();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_COMPARE(second->geometry(), secondPlace);
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+        QCOMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+    }
+
+    void startingWithTheLastSessionOpensEachWindowOnce()
+    {
+        application->setSessionRestore(2);
+        QJsonObject closed = saveSession(dir.filePath(QStringLiteral("closed.hksession")));
+        QVERIFY(!closed.isEmpty());
+        closed.insert(QStringLiteral("closed"), true);
+        restartWith(closed);
+
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        const int reopened = shellId(second);
+        QTest::qWait(500);
+        QCOMPARE(otherShellWindow(first()), second.data());
+        QCOMPARE(shellId(second), reopened);
+        QVERIFY(!otherShellWindow(second));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+    }
+
+    void aWindowOffEveryScreenComesBackWholeOnThePrimary()
+    {
+        const QString file = dir.filePath(QStringLiteral("gone.hksession"));
+        QJsonObject session = saveSession(file);
+        QJsonArray windows = session.value(QStringLiteral("windows")).toArray();
+        QCOMPARE(windows.size(), 2);
+        const QRect primary = QGuiApplication::primaryScreen()->availableGeometry();
+        QJsonObject gone = windows[1].toObject();
+        gone.insert(QStringLiteral("x"), primary.right() + 2000);
+        gone.insert(QStringLiteral("y"), primary.top() + 100);
+        windows[1] = gone;
+        QJsonObject maximized = windows[0].toObject();
+        maximized.insert(QStringLiteral("maximized"), true);
+        windows[0] = maximized;
+        session.insert(QStringLiteral("windows"), windows);
+        writeJson(file, session);
+
+        loadSession(file);
+        QTRY_VERIFY(primary.contains(second->frameGeometry()));
+        QVERIFY(!(second->windowStates() & Qt::WindowMaximized));
+        QTRY_VERIFY(first()->windowStates() & Qt::WindowMaximized);
+    }
+
+    void quittingKeepsTheActiveWindowsArrangementForTheNextStart()
+    {
+        auto *secondLayout = qobject_cast<ui::WorkspaceLayoutController *>(second->property("workspaceLayout").value<QObject *>());
+        QVERIFY(secondLayout);
+        QVERIFY(secondLayout->applyPreset(QStringLiteral("Timing")));
+        QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Editing"));
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        QVERIFY(application->saveLayoutForQuit());
+        QByteArray text;
+        {
+            QFile layout(dir.filePath(QStringLiteral("layout.json")));
+            QVERIFY(layout.open(QIODevice::ReadOnly));
+            text = layout.readAll();
+        }
+        QVERIFY(QFile::remove(dir.filePath(QStringLiteral("layout.json"))));
+        QString problem, preset;
+        QVERIFY(ui::WorkspaceLayoutController::payloadOf(text, &problem, &preset));
+        QCOMPARE(preset, QStringLiteral("Timing"));
+        QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Editing"));
+    }
+
+    void closingAWindowReviewsOnlyItsTabs()
+    {
+        edit(firstTab);
+        edit(secondTab);
+        second->close();
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QCOMPARE(reviewed(second).first().toMap().value(QStringLiteral("id")).toULongLong(), secondTab.value);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "cancel"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "close"));
+        QVERIFY(second && second->isVisible());
+        QVERIFY(dock(second, "gridDock")->property("isOpen").toBool());
+        QVERIFY(modified(secondTab));
+
+        second->close();
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(!second);
+        QVERIFY(first()->isVisible());
+        QVERIFY(!application->quitApproved());
+        QCOMPARE(application->workspace().allTabs(), (std::vector{firstTab}));
+        QCOMPARE(application->workspace().activeWindow(), 0);
+        QVERIFY(modified(firstTab));
+    }
+
+    void aClosedWindowLeavesTheCrashSession()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        QFile file(application->lastSessionPath());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject saved = QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(saved.value(QStringLiteral("closed")).toBool(true), false);
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        const QJsonArray tabs = saved.value(QStringLiteral("tabs")).toArray();
+        QCOMPARE(tabs.size(), 1);
+        QVERIFY(tabs.first().toObject().value(QStringLiteral("subtitles")).toString().endsWith(QStringLiteral("first.ass")));
+    }
+
+    void closingTheLastWindowQuits()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        edit(firstTab);
+        first()->close();
+        QTRY_COMPARE(reviewed(first()).size(), 1);
+        QCOMPARE(application->closeKind(), QStringLiteral("quit"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(first()), "discardAll"));
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+    }
+
+    void quitFromAnyWindowReviewsEveryWindowOnce()
+    {
+        application->setSessionRestore(2);
+        edit(firstTab);
+        edit(secondTab);
+        const int reviews = application->quitReviews();
+        quitFrom(second);
+        QTRY_COMPARE(reviewed(second).size(), 2);
+        QCOMPARE(application->closeKind(), QStringLiteral("quit"));
+        QCOMPARE(application->quitReviews(), reviews + 1);
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(first()->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second->isVisible());
+        tearDownAfterQuit();
+
+        relaunch();
+        QTRY_VERIFY((second = otherShellWindow(first())));
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+    }
+
+    void closingTheFirstWindowHidesItAsTheHost()
+    {
+        application->activateShellWindow(0);
+        edit(firstTab);
+        first()->close();
+        QTRY_COMPARE(reviewed(first()).size(), 1);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(first()), "discardAll"));
+        QTRY_VERIFY(!first()->isVisible());
+        QVERIFY(QGuiApplication::focusWindow() != first());
+        QAccessibleInterface *a11y = QAccessible::queryAccessibleInterface(first());
+        QVERIFY(!a11y || a11y->state().invisible);
+        QVERIFY(second->isVisible());
+        QVERIFY(!application->quitApproved());
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+        QCOMPARE(application->workspace().allTabs(), (std::vector{secondTab}));
+
+        application->activateShellWindow(0);
+        QCOMPARE(application->workspace().activeWindow(), shellId(second));
+        application->addPage(false);
+        QCOMPARE(application->workspace().tabs(shellId(second)).size(), 2u);
+        QVERIFY(application->workspace().tabs(0).empty());
+        QVERIFY(!first()->isVisible());
+    }
+
+    void aHiddenFirstWindowLeavesTheSessionAndTheLastVisibleWindowQuits()
+    {
+        hideFirst();
+        application->setSessionRestore(2);
+        const QJsonObject saved = saveSession(dir.filePath(QStringLiteral("hidden.hksession")));
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        QCOMPARE(saved.value(QStringLiteral("tabs")).toArray().size(), 1);
+        QVERIFY(!saved.value(QStringLiteral("tabs")).toArray().first().toObject().contains(QStringLiteral("window")));
+
+        second->close();
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!second->isVisible());
+        for (QWindow *window : QGuiApplication::topLevelWindows())
+            QVERIFY2(!window->isVisible(), qPrintable(window->title()));
+        tearDownAfterQuit();
+
+        relaunch();
+        QTest::qWait(500);
+        QVERIFY(!otherShellWindow(first()));
+        QCOMPARE(titles(0), (QStringList{"second.ass*"}));
+    }
+
+    void aSessionOpenedLaterShowsTheFirstWindowWithItsFloatingPanels()
+    {
+        QVERIFY(dock(first(), "audioDock")->setProperty("isFloating", true));
+        QWindow *floating = nullptr;
+        QTRY_VERIFY((floating = floatingOf(first())));
+        const QString twoWindows = dir.filePath(QStringLiteral("two.hksession"));
+        QVERIFY(!saveSession(twoWindows).isEmpty());
+        hideFirst();
+        QVERIFY(!floating->isVisible());
+        QVERIFY(!floatingOf(first()));
+
+        loadSession(twoWindows);
+        QTRY_VERIFY(first()->isVisible());
+        QTRY_VERIFY(floatingOf(first()));
+        QCOMPARE(titles(0), (QStringList{"first.ass*"}));
+        QCOMPARE(titles(shellId(second)), (QStringList{"second.ass*"}));
+    }
+
+    void theApiActsOnTheWindowLastUsed()
+    {
+        auto *api = application->apiHost();
+        application->activateShellWindow(0);
+        QVERIFY(api->setOpen("Log", true));
+        QTRY_VERIFY(dock(first(), "logDock")->property("isOpen").toBool());
+        QVERIFY(api->setOpen("Log", false));
+        QTRY_VERIFY(!dock(first(), "logDock")->property("isOpen").toBool());
+
+        hideFirst();
+        QVERIFY(api->setOpen("Log", true));
+        QTRY_VERIFY(dock(second, "logDock")->property("isOpen").toBool());
+        QVERIFY(api->focus("Log"));
+        QVERIFY(api->run("GLOBAL_SEARCH"));
+        QTRY_VERIFY(dock(second, "searchDock")->property("isOpen").toBool());
+        const auto panels = api->panels();
+        QVERIFY(std::ranges::any_of(panels, [](const api::PanelState &p) { return p.id == "Log" && p.open; }));
+        for (const char *name : {"logDock", "searchDock"})
+            QVERIFY2(!dock(first(), name)->property("isOpen").toBool(), name);
+        QVERIFY(!first()->isVisible());
+        QVERIFY(!floatingOf(first()));
+    }
+
+    void aForwardedLaunchOpensInTheWindowLastUsed()
+    {
+        app::ForwardedLaunches forwarded(*application);
+        forwarded.setWindow(first());
+        hideFirst();
+        const QString third = writeSubtitles(dir.filePath(QStringLiteral("third.ass")), "third", 640);
+        forwarded.take({QStringList{third}, QString()});
+        QTRY_COMPARE(titles(shellId(second)), (QStringList{"second.ass", "third.ass*"}));
+        QVERIFY(application->workspace().tabs(0).empty());
+        QVERIFY(!first()->isVisible());
+    }
 };
 
-QTEST_MAIN(ShellWindowsTest)
+HIKARI_QTEST_MAIN_IN_PARTS(ShellWindowsTest)
 #include "shell_windows_tests.moc"

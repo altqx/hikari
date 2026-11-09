@@ -3,7 +3,6 @@ pragma Translator: "HikariSub.SettingsImport"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Dialogs as Dialogs
 import Hikari.Ui
 
 DialogWindow {
@@ -76,7 +75,7 @@ DialogWindow {
         objectName: "settingsImportMessages"
         settings: dialog.settings
     }
-    Dialogs.FolderDialog {
+    FolderChooser {
         id: folderDialog
         objectName: "settingsImportFolderDialog"
         title: qsTr("Choose the folder of a legacy installation")

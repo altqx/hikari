@@ -1,7 +1,12 @@
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_sidecar_updater.h"
+#include "hikari/backends/sandbox.h"
+#include "local_release.h"
+#include "minisign_signer.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -30,6 +35,7 @@ struct Counts {
     int keyReads = 0;
     int configStores = 0;
     int sidecarHosts = 0;
+    int agentLists = 0;
 };
 
 class CountingKeyStore final : public ai::KeyStore {
@@ -77,7 +83,7 @@ protected:
         static QCoreApplication app(argc, argv);
     }
 
-    app::AiFeatures::Ports ports(bool withProvider)
+    app::AiFeatures::Ports ports(bool withProvider, bool updates = false)
     {
         ai::Config config;
         if (withProvider)
@@ -91,23 +97,63 @@ protected:
             ++counts.configStores;
             return std::make_unique<FixedConfigStore>(config);
         };
-        p.sidecarHost = [this] {
+        p.sidecarHost = [this](const backends::ai::SidecarInstall &install) {
             ++counts.sidecarHosts;
             backends::ai::AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
-            o.arguments = {QStringLiteral("--mode"), QStringLiteral("ok"), QStringLiteral("--build-id"),
-                           QStringLiteral("test"), QStringLiteral("--api-version"),
-                           QString::number(api::kApiVersion)};
+            o.arguments = {install.bundle};
             o.workingDirectory = dir.filePath(QStringLiteral("ai/work"));
-            o.buildId = "test";
+            o.handshakeMs = 3'000;
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
+        if (updates) {
+            p.sidecarUpdater = [this] { return updater(); };
+            p.autoUpdateOffByPolicy = [this] { return policyOff; };
+            p.timing = {.checkMs = 60'000, .idleMs = 300, .pollMs = 20, .crashWindowMs = 60'000};
+        } else {
+            const QString flags = dir.filePath(QStringLiteral("local-bundle"));
+            QFile file(flags);
+            if (!file.open(QIODevice::WriteOnly) || file.write("--mode ok") != 9)
+                ADD_FAILURE() << "can't write " << flags.toStdString();
+            p.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
+        }
+        p.agents = [this](backends::ai::AgentBroker &) { ++counts.agentLists; };
         return p;
     }
+
+    std::unique_ptr<backends::ai::AiSidecarUpdater> updater() const
+    {
+        return std::make_unique<backends::ai::AiSidecarUpdater>(
+            dir.filePath(QStringLiteral("ai/sidecar")), backends::ai::SidecarCompat{1, api::kApiVersion},
+            backends::ai::SidecarSource::local(release.base(), {signer.publicKey()}));
+    }
+
+    void publish(const QString &version, const QByteArray &bundle = "--mode ok")
+    {
+        channel.addRelease({.version = version, .bundle = bundle});
+        channel.publish(signer);
+    }
+
+    void installNewest()
+    {
+        auto store = updater();
+        bool done = false;
+        QObject::connect(store.get(), &backends::ai::AiSidecarUpdater::downloaded, [&] { done = true; });
+        QObject::connect(store.get(), &backends::ai::AiSidecarUpdater::failed, [&] { done = true; });
+        store->check(true);
+        ASSERT_TRUE(waitFor([&] { return done; }));
+        ASSERT_TRUE(store->switchToStaged());
+    }
+
+    void SetUp() override { channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), "runtime"); }
 
     QTemporaryDir dir;
     ui::SettingsStore settings;
     Counts counts;
+    test::LocalRelease release;
+    test::FakeChannel channel{release};
+    test::MinisignSigner signer;
+    bool policyOff = false;
 };
 
 TEST_F(AiFeaturesTest, WithAiOffNothingIsBuiltAcrossStartupAndASession)
@@ -124,6 +170,7 @@ TEST_F(AiFeaturesTest, WithAiOffNothingIsBuiltAcrossStartupAndASession)
     EXPECT_EQ(counts.keyReads, 0);
     EXPECT_EQ(counts.configStores, 0);
     EXPECT_EQ(counts.sidecarHosts, 0);
+    EXPECT_EQ(counts.agentLists, 0);
 }
 
 TEST_F(AiFeaturesTest, WithoutAProviderNoSidecarIsBuiltOrStarted)
@@ -133,6 +180,7 @@ TEST_F(AiFeaturesTest, WithoutAProviderNoSidecarIsBuiltOrStarted)
     EXPECT_EQ(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.sidecarHosts, 0);
     EXPECT_EQ(counts.keyReads, 0);
+    EXPECT_EQ(counts.agentLists, 0);
 }
 
 TEST_F(AiFeaturesTest, StartupAndOpeningSettingsDontBuildTheSidecar)
@@ -147,8 +195,10 @@ TEST_F(AiFeaturesTest, StartupAndOpeningSettingsDontBuildTheSidecar)
 TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsOnDemand)
 {
     app::AiFeatures features(settings, ports(true));
+    EXPECT_EQ(features.sandboxed(), backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete());
     auto *host = features.sidecarForAction();
     ASSERT_NE(host, nullptr);
+    EXPECT_FALSE(features.sandboxed()) << "the test host starts its sidecar without a profile";
     bool answered = false;
     host->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
     ASSERT_TRUE(waitFor([&] { return answered; }));
@@ -169,20 +219,195 @@ TEST_F(AiFeaturesTest, TurningAiOffAtRuntimeStopsTheSidecarAndTurningItOnBuildsO
     EXPECT_NE(features.sidecarForAction(), nullptr);
     EXPECT_EQ(counts.keyStores, 2);
     EXPECT_EQ(counts.sidecarHosts, 2);
+    EXPECT_EQ(counts.agentLists, 2);
 }
 
-TEST(AiCommands, NoCommandOrMenuEntryIsAnAiOneWhileAiHasNoCommands)
+TEST_F(AiFeaturesTest, ASidecarStartedForMcpServesAiActionsWithItsRelayAndAgents)
+{
+    app::AiFeatures features(settings, ports(false));
+    auto *host = features.sidecarForMcp();
+    ASSERT_NE(host, nullptr);
+    EXPECT_EQ(counts.agentLists, 1);
+    EXPECT_EQ(features.sidecarForAction(), host);
+    EXPECT_EQ(counts.sidecarHosts, 1);
+    EXPECT_EQ(counts.agentLists, 1);
+}
+
+TEST_F(AiFeaturesTest, NoMcpListenerUnlessTheUserTurnsItOnAndNeverWithAiOff)
+{
+    const QString file = backends::ai::mcpEndpointFile(dir.path());
+    settings.set(app::AiFeatures::kOffSetting, true);
+    settings.set(app::AiMcp::kSetting, true);
+    settings.set(app::AiMcp::kHttpSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    app::AiMcp mcp(settings, features, file);
+    EXPECT_EQ(mcp.server(), nullptr);
+    EXPECT_FALSE(QFile::exists(file));
+
+    settings.set(app::AiFeatures::kOffSetting, false);
+    ASSERT_NE(mcp.server(), nullptr);
+    EXPECT_FALSE(mcp.server()->socketName().isEmpty());
+    EXPECT_NE(mcp.server()->httpPort(), 0);
+    EXPECT_EQ(counts.sidecarHosts, 0);
+    const auto listening = backends::ai::readMcpEndpoint(file);
+    ASSERT_TRUE(listening);
+    EXPECT_EQ(listening->socket, mcp.server()->socketName());
+    EXPECT_EQ(listening->port, mcp.server()->httpPort());
+
+    settings.set(app::AiMcp::kSetting, false);
+    EXPECT_EQ(mcp.server(), nullptr);
+    EXPECT_TRUE(backends::ai::readMcpEndpoint(file)->socket.isEmpty());
+    settings.set(app::AiMcp::kSetting, true);
+    ASSERT_NE(mcp.server(), nullptr);
+    settings.set(app::AiFeatures::kOffSetting, true);
+    EXPECT_EQ(mcp.server(), nullptr);
+    EXPECT_TRUE(backends::ai::readMcpEndpoint(file)->socket.isEmpty());
+}
+
+TEST_F(AiFeaturesTest, TheMcpTokenAndPortSurviveARestartAndHttpTurnsOffAlone)
+{
+    const QString file = backends::ai::mcpEndpointFile(dir.path());
+    settings.set(app::AiMcp::kSetting, true);
+    settings.set(app::AiMcp::kHttpSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    QByteArray token;
+    quint16 port = 0;
+    {
+        app::AiMcp mcp(settings, features, file);
+        token = mcp.endpoint().token;
+        port = mcp.server()->httpPort();
+        settings.set(app::AiMcp::kHttpSetting, false);
+        ASSERT_NE(mcp.server(), nullptr);
+        EXPECT_EQ(mcp.server()->httpPort(), 0);
+        EXPECT_EQ(backends::ai::readMcpEndpoint(file)->port, port);
+        settings.set(app::AiMcp::kHttpSetting, true);
+    }
+    EXPECT_TRUE(backends::ai::readMcpEndpoint(file)->socket.isEmpty());
+    app::AiMcp again(settings, features, file);
+    EXPECT_EQ(again.endpoint().token, token);
+    EXPECT_EQ(again.server()->httpPort(), port);
+}
+
+TEST_F(AiFeaturesTest, ASidecarThatFailsItsHandshakeRollsBackToThePreviousOne)
+{
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    publish(QStringLiteral("1.2.0"), "--required-api 99");
+    installNewest();
+    policyOff = true;
+    app::AiFeatures features(settings, ports(false, true));
+    ASSERT_EQ(features.updater()->current()->version, QStringLiteral("1.2.0"));
+    std::optional<QString> rolledBack;
+    QObject::connect(&features, &app::AiFeatures::rolledBack, [&](const QString &v) { rolledBack = v; });
+
+    features.sidecarForMcp()->request("echo", api::Json(1), [](backends::ai::SidecarResult) {});
+    ASSERT_TRUE(waitFor([&] { return rolledBack.has_value(); }));
+    EXPECT_EQ(*rolledBack, QStringLiteral("1.2.0"));
+    EXPECT_EQ(features.updater()->current()->version, QStringLiteral("1.1.0"));
+    EXPECT_EQ(features.sidecar(), nullptr);
+
+    bool answered = false;
+    features.sidecarForMcp()->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
+    ASSERT_TRUE(waitFor([&] { return answered; }));
+    EXPECT_EQ(counts.sidecarHosts, 2);
+}
+
+TEST_F(AiFeaturesTest, WithoutAPreviousSidecarAFailingOneKeepsRunning)
+{
+    publish(QStringLiteral("1.1.0"), "--required-api 99");
+    installNewest();
+    policyOff = true;
+    app::AiFeatures features(settings, ports(false, true));
+    bool rolledBack = false;
+    QObject::connect(&features, &app::AiFeatures::rolledBack, [&] { rolledBack = true; });
+    std::optional<backends::ai::SidecarResult> result;
+    features.sidecarForMcp()->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    EXPECT_FALSE(*result);
+    EXPECT_FALSE(rolledBack);
+    EXPECT_EQ(features.updater()->current()->version, QStringLiteral("1.1.0"));
+}
+
+TEST_F(AiFeaturesTest, ANewSidecarSwitchesInOnlyOnceNothingHasBeenBusyForTheIdleTime)
+{
+    settings.set(app::AiFeatures::kAutoUpdateSetting, true);
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    app::AiFeatures features(settings, ports(false, true));
+    ASSERT_TRUE(waitFor([&] { return !features.updater()->busy(); }));
+    bool answered = false;
+    features.sidecarForMcp()->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
+    ASSERT_TRUE(waitFor([&] { return answered; }));
+
+    bool turn = true;
+    const int source = features.addBusySource([&] { return turn; });
+    publish(QStringLiteral("1.2.0"));
+    features.checkNow();
+    ASSERT_TRUE(waitFor([&] { return features.updater()->staged().has_value(); }));
+    waitFor([] { return false; }, 800);
+    EXPECT_EQ(features.updater()->current()->version, QStringLiteral("1.1.0"));
+    EXPECT_NE(features.sidecar(), nullptr);
+
+    turn = false;
+    QElapsedTimer idle;
+    idle.start();
+    ASSERT_TRUE(waitFor([&] { return features.updater()->current()->version == QLatin1String("1.2.0"); }));
+    EXPECT_GE(idle.elapsed(), 250);
+    EXPECT_EQ(features.sidecar(), nullptr);
+    EXPECT_EQ(features.updater()->previous(), QStringLiteral("1.1.0"));
+    features.removeBusySource(source);
+}
+
+TEST_F(AiFeaturesTest, ThePolicyKeepsChecksButNeverDownloads)
+{
+    settings.set(app::AiFeatures::kAutoUpdateSetting, true);
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    publish(QStringLiteral("1.2.0"));
+    policyOff = true;
+    app::AiFeatures features(settings, ports(false, true));
+    EXPECT_FALSE(features.autoUpdate());
+    ASSERT_TRUE(waitFor([&] { return features.updater()->available() == QLatin1String("1.2.0"); }));
+    ASSERT_TRUE(waitFor([&] { return !features.updater()->busy(); }));
+    EXPECT_FALSE(features.updater()->staged());
+    EXPECT_EQ(release.fetches(".zip"), 1);
+}
+
+TEST(AiAutoUpdatePolicy, ReadsTheEnvironmentAndThePolicyFile)
+{
+    QTemporaryDir dir;
+    const QString file = dir.filePath(QStringLiteral("policy.json"));
+    const auto write = [&](const QByteArray &json) {
+        QFile out(file);
+        ASSERT_TRUE(out.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        out.write(json);
+    };
+    EXPECT_FALSE(app::aiAutoUpdateOffByPolicy({}, file));
+    EXPECT_TRUE(app::aiAutoUpdateOffByPolicy(QStringLiteral("0"), file));
+    write(R"({"ai_auto_update": false})");
+    EXPECT_TRUE(app::aiAutoUpdateOffByPolicy({}, file));
+    write(R"({"ai_auto_update": true})");
+    EXPECT_FALSE(app::aiAutoUpdateOffByPolicy({}, file));
+    write(R"({"ai_auto_update": 0})");
+    EXPECT_FALSE(app::aiAutoUpdateOffByPolicy({}, file));
+}
+
+TEST(AiCommands, TheSwitchTakesEveryCommandWithAnAiToken)
 {
     const QRegularExpression aiToken(QStringLiteral("(^|_)AI(_|$)"));
     for (const auto &action : application::hotkeyActions())
-        EXPECT_FALSE(aiToken.match(QString::fromLatin1(action.symbol.data(), action.symbol.size())).hasMatch())
+        EXPECT_EQ(aiToken.match(QString::fromLatin1(action.symbol.data(), action.symbol.size())).hasMatch(),
+                  application::aiCommand(action.id))
             << action.symbol;
     QFile ledger(QStringLiteral(HIKARI_MENU_LEDGER));
     ASSERT_TRUE(ledger.open(QIODevice::ReadOnly | QIODevice::Text));
-    const QRegularExpression aiEntry(QStringLiteral("^AI\\b|\\[[A-Z_]*\\bAI_[A-Z_]*\\]|\\[[A-Z_]*_AI\\]"));
+    const QRegularExpression command(QStringLiteral(R"(\[([A-Z0-9_]+)\]$)"));
     while (!ledger.atEnd()) {
         const QString line = QString::fromUtf8(ledger.readLine()).trimmed();
-        EXPECT_FALSE(aiEntry.match(line).hasMatch()) << line.toStdString();
+        const auto found = command.match(line);
+        if (found.hasMatch() && aiToken.match(found.captured(1)).hasMatch())
+            EXPECT_TRUE(application::aiCommand(application::hotkeyIdOf(found.captured(1).toStdString())))
+                << line.toStdString();
     }
 }
 

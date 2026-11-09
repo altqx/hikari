@@ -137,7 +137,7 @@ bool Application::reopenProjectTabs(int shellWindow)
         return false;
     activateShellWindow(shellWindow);
     PendingSession pending = stageSession(std::move(*session));
-    pending.intoWindow = true;
+    pending.intoWindow = shellWindow;
     m_pendingSession = std::move(pending);
     applySession();
     return true;

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "hikari/api/api.h"
+#include "hikari/app/plugin_files.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_network.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/installer.h"
 
+#include <QNetworkAccessManager>
 #include <QObject>
 #include <QTimer>
 #include <QVariantList>
@@ -41,6 +44,10 @@ public:
         std::size_t memoryLimit = 256u << 20;
         // How long a plugin waits for another plugin's edit before it is told HikariSub is busy.
         int transactionWaitMs = 5000;
+        // The global plugin network switch; unset: off.
+        std::function<bool()> networkAllowed;
+        // Null: the runtime makes its own.
+        QNetworkAccessManager *network = nullptr;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -57,10 +64,16 @@ public:
     // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
     void settingChanged(const QString &pluginId, const QString &setting, const QString &json);
     PluginUi *ui() const { return m_ui; }
+    // The plugin's file handles and the folders granted for this run end, as when it stops.
+    Q_INVOKABLE void endFileAccess(const QString &pluginId);
     backends::PluginProcess *process(const QString &pluginId) const;
+    // Running a command or an event right now.
+    bool busy(const QString &pluginId) const;
 
 signals:
     void commandsChanged();
+    // The plugin finished a command or an event, or stopped.
+    void idle(const QString &pluginId);
 
 private:
     struct Running;
@@ -72,6 +85,7 @@ private:
     void lock(Running &plugin, backends::PluginProcess::ServiceReply reply);
     void unlock(Running &plugin);
     void releaseLock(Running &plugin);
+    void endAccess(Running &plugin);
 
     struct LockWaiter {
         Running *plugin = nullptr;
@@ -86,6 +100,9 @@ private:
     std::deque<LockWaiter> m_lockWaiters;
     QVariantList m_commands;
     PluginUi *m_ui = nullptr;
+    std::unique_ptr<QNetworkAccessManager> m_ownNetwork;
+    PluginNetwork *m_network = nullptr;
+    std::unique_ptr<PluginFiles> m_files;
 };
 
 }

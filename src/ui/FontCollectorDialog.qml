@@ -63,6 +63,27 @@ DialogWindow {
             })
         }
     }
+    function applyFonts() {
+        const existing = collector.existingFiles()
+        if (existing.length === 0) {
+            collector.apply(acknowledge.checked, false)
+            return
+        }
+        const shown = existing.slice(0, 10).join("\n")
+        const extra = existing.length - 10
+        messages.ask({
+            title: dialog.title,
+            text: qsTr("%n font files already exist in “%1”.", "", existing.length).arg(collector.copyPath),
+            detail: extra > 0 ? shown + "\n" + qsTr("and %n more", "", extra) : shown,
+            severity: "warning",
+            choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
+                      { id: "keep", text: qsTr("Keep existing"), role: "action" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => {
+            if (id === "replace" || id === "keep")
+                dialog.collector.apply(acknowledge.checked, id === "keep")
+        })
+    }
     function choosePath() {
         const s = collector.chooserStart(path.text)
         if (collector.action === 1) {
@@ -240,7 +261,7 @@ DialogWindow {
                 objectName: "fontCollectorApply"
                 text: dialog.collector.action === 2 ? qsTr("Write archive") : qsTr("Copy fonts")
                 enabled: !dialog.collector.reviewIncomplete || acknowledge.checked
-                onClicked: dialog.collector.apply(acknowledge.checked)
+                onClicked: dialog.applyFonts()
             }
         }
     }
@@ -290,13 +311,13 @@ DialogWindow {
         objectName: "fontCollectorMessages"
         settings: dialog.settings
     }
-    Dialogs.FolderDialog {
+    FolderChooser {
         id: folderDialog
         objectName: "fontCollectorFolderDialog"
         title: qsTr("Choose save folder")
         onAccepted: dialog.chosen(dialog.collector.localPath(selectedFolder))
     }
-    Dialogs.FileDialog {
+    FileChooser {
         id: archiveDialog
         objectName: "fontCollectorArchiveDialog"
         title: qsTr("Select the name of the archive")

@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 #include <optional>
+#include <string_view>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -142,21 +143,43 @@ TEST_F(AiSidecarHostTest, NoAnswerToInitializeInTimeIsACrash)
     EXPECT_EQ(h->state(), AiSidecarHost::State::Idle);
 }
 
-TEST_F(AiSidecarHostTest, RefusesASidecarFromAnotherBuildUntilReset)
+TEST_F(AiSidecarHostTest, RunsASidecarFromAnotherBuildAndKeepsWhatItReports)
 {
     auto o = options();
     o.buildId = "0.1.0+other";
+    auto h = host(o);
+    ASSERT_TRUE(call(*h, "echo"));
+    EXPECT_EQ(h->info().version, "9.9.9");
+    EXPECT_EQ(h->info().versions.at("openai"), "7.45.0");
+}
+
+TEST_F(AiSidecarHostTest, RefusesASidecarThatNeedsANewerApiUntilReset)
+{
+    auto o = options();
+    o.arguments << QStringLiteral("--required-api") << QString::number(hikari::api::kApiVersion + 1);
     auto h = host(o);
     QSignalSpy refused(h.get(), &AiSidecarHost::refused);
     auto result = call(*h, "echo");
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().error, SidecarError::Refused);
     EXPECT_EQ(refused.count(), 1);
-    EXPECT_TRUE(refused.at(0).at(0).toString().contains(QStringLiteral("build id")));
+    EXPECT_TRUE(refused.at(0).at(0).toString().contains(QStringLiteral("newer HikariSub")));
     result = call(*h, "echo");
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().error, SidecarError::Refused);
     EXPECT_EQ(h->processId(), 0);
+}
+
+TEST_F(AiSidecarHostTest, InitializeCarriesTheAppsApiReference)
+{
+    auto h = host(options());
+    const auto sent = call(*h, "initialized");
+    ASSERT_TRUE(sent);
+    const Json *reference = sent->find("hikariApi");
+    ASSERT_NE(reference, nullptr);
+    EXPECT_EQ(*reference->find("version"), Json(hikari::api::kApiVersion));
+    EXPECT_FALSE(reference->find("operations")->asArray().empty());
+    EXPECT_EQ(reference->find("nodes"), nullptr);
 }
 
 TEST_F(AiSidecarHostTest, RefusesAnotherProtocolVersion)
@@ -301,6 +324,40 @@ TEST_F(AiSidecarHostTest, TheSidecarGetsACleanedEnvironmentAndAPrivateWorkingDir
 #ifndef _WIN32
     EXPECT_EQ(QFileInfo(o.workingDirectory).permissions() & (QFile::ReadGroup | QFile::ReadOther), 0);
 #endif
+}
+
+TEST_F(AiSidecarHostTest, ASandboxedSidecarAnswersKeepsItsTemporaryFilesInItsWorkFolderAndDiesWithTheHost)
+{
+    auto o = options(QStringLiteral("ignore-eof"));
+    hikari::backends::sandbox::Profile profile;
+    profile.name = QStringLiteral("HikariSub.Test.Sidecar");
+    profile.readExecute = {QFileInfo(QStringLiteral(HIKARI_FAKE_AI_SIDECAR)).absolutePath()};
+    profile.readWrite = {o.workingDirectory};
+    o.sandbox = profile;
+    auto h = host(o);
+    const auto result = call(*h, "environment");
+    ASSERT_TRUE(result) << result.error().message << h->diagnostics().toStdString();
+    const Json &env = *result->find("environment");
+    const QString temporary = QDir::toNativeSeparators(o.workingDirectory + QStringLiteral("/tmp"));
+    for (const char *name : {"TMPDIR", "TEMP", "TMP"}) {
+        ASSERT_TRUE(env.find(name)) << name;
+        const QString value = QString::fromStdString(env.find(name)->asString());
+#ifdef _WIN32
+        // Windows gives every AppContainer process its own TEMP and TMP in the container's profile.
+        if (std::string_view(name) != "TMPDIR") {
+            EXPECT_TRUE(value.endsWith(QStringLiteral("\\AC\\Temp"), Qt::CaseInsensitive)) << name << ' ' << value.toStdString();
+            continue;
+        }
+#endif
+        EXPECT_EQ(value, temporary) << name;
+    }
+    EXPECT_TRUE(QFileInfo(temporary).isDir());
+    const auto spawned = call(*h, "spawn");
+    ASSERT_TRUE(spawned);
+    const qint64 child = spawned->find("pid")->asInt();
+    const qint64 sidecar = h->processId();
+    h.reset();
+    EXPECT_TRUE(waitFor([&] { return !processAlive(sidecar) && !processAlive(child); }, 3'000));
 }
 
 QStringList g_log;

@@ -34,6 +34,7 @@ public:
 private:
     void open();
     bool busy() const;
+    QWindow *target() const;
 
     Application &m_application;
     QPointer<QWindow> m_window;

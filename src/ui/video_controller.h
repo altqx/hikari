@@ -12,6 +12,7 @@
 #include <QTimer>
 
 #include <functional>
+#include <optional>
 #include <QString>
 #include <QUrl>
 #include <QVariantList>
@@ -108,6 +109,8 @@ public:
     bool loaded() const { return m_session.state() != application::VideoSession::State::Closed; }
     bool dummy() const { return m_session.dummy(); }
     Q_INVOKABLE bool unloadVideo();
+    // Opens the same file again at the frame shown. False with no video or a dummy one.
+    Q_INVOKABLE bool reloadVideo();
     int streamCount() const { return static_cast<int>(m_session.audioTracks().size()); }
     Q_INVOKABLE QVariantList streams() const;
     Q_INVOKABLE bool selectStream(int index);
@@ -116,6 +119,9 @@ public:
     Q_INVOKABLE bool seekChapter(int index);
     Q_INVOKABLE bool nextChapter();
     Q_INVOKABLE bool previousChapter();
+    // Video > Video details: file, resolution, frameRate, length, colourSpace, matrix
+    // and scriptMatrix (empty when the subtitles use the video's); empty without video.
+    Q_INVOKABLE QVariantMap details() const;
 
     void retranslate() { emit textsChanged(); }
 
@@ -129,7 +135,7 @@ signals:
     void seekBarSought(int frame);
 
 private:
-    void open(const QString &path);
+    void open(const QString &path, std::optional<core::DocumentTime> at = std::nullopt);
 
     application::VideoSession m_session;
     QPointer<VideoPresenter> m_presenter;

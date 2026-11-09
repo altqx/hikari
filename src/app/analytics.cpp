@@ -70,20 +70,22 @@ const std::map<QString, QString> kPanels{
     {QStringLiteral("Spellchecker"), QStringLiteral("spellchecker")},
 };
 const QStringList kDialogs{
-    QStringLiteral("about"),          QStringLiteral("allTagsEdition"), QStringLiteral("aspectRatio"),
-    QStringLiteral("autosaves"),      QStringLiteral("columns"),        QStringLiteral("conversion"),
+    QStringLiteral("about"),          QStringLiteral("alignToVideo"),   QStringLiteral("allTagsEdition"),
+    QStringLiteral("aspectRatio"),
+    QStringLiteral("autosaves"),      QStringLiteral("columns"),
     QStringLiteral("crashReport"),    QStringLiteral("credits"),        QStringLiteral("dummyVideo"),
     QStringLiteral("fontCatalogClashes"),
     QStringLiteral("fontCatalogs"),   QStringLiteral("fontCollector"),  QStringLiteral("fontPicker"),
     QStringLiteral("fontsFromSubtitles"), QStringLiteral("gettingStarted"), QStringLiteral("history"),
     QStringLiteral("hotkeyCapture"),  QStringLiteral("kanjiTimer"),     QStringLiteral("karaokeCheck"),
     QStringLiteral("listChooser"),    QStringLiteral("manageLayouts"),  QStringLiteral("movePanel"),
+    QStringLiteral("perspectiveTracking"),
     QStringLiteral("reportIssue"),    QStringLiteral("resample"),       QStringLiteral("saveLayout"),     QStringLiteral("scriptProperties"),
     QStringLiteral("selectLines"),    QStringLiteral("setNewFps"),      QStringLiteral("settings"),
     QStringLiteral("settingsImport"), QStringLiteral("shapesEdition"),  QStringLiteral("spellAddedWords"),
     QStringLiteral("styleClashes"),   QStringLiteral("styleManager"),   QStringLiteral("translationShift"),
-    QStringLiteral("unsavedChanges"), QStringLiteral("updateAvailable"), QStringLiteral("whatsNew"),
-    QStringLiteral("automation_script")};
+    QStringLiteral("unsavedChanges"), QStringLiteral("updateAvailable"), QStringLiteral("videoDetails"),
+    QStringLiteral("whatsNew"),       QStringLiteral("automation_script")};
 const QStringList kLanguages{QStringLiteral("en"), QStringLiteral("ko_KR"), QStringLiteral("pl"), QStringLiteral("ta"),
                              QStringLiteral("th_TH")};
 const QStringList kPages{QStringLiteral("language"), QStringLiteral("import"), QStringLiteral("look"),

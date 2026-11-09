@@ -10,6 +10,7 @@ DialogWindow {
     id: dialog
     objectName: "exportDialog"
     required property var app
+    required property ColourPickerController colourPicker
     settings: app.settings
     dialogId: "export"
     title: qsTr("Export as")
@@ -27,7 +28,8 @@ DialogWindow {
         { id: "mpl2", text: "MPL2" },
         { id: "tmp", text: "TMPlayer" },
         { id: "ttml", text: "TTML (IMSC1)" },
-        { id: "dfxp", text: "DFXP" }
+        { id: "dfxp", text: "DFXP" },
+        { id: "srv3", text: qsTr("YouTube timed text (srv3)") }
     ]
     readonly property string format: formats[Math.max(0, formatChoice.currentIndex)].id
     readonly property var lineChoices: ["all", "selected", "shown"]
@@ -38,6 +40,23 @@ DialogWindow {
     readonly property bool ttml: format === "ttml" || format === "dfxp"
     readonly property bool usesFrames: format === "mdvd" || (ttml && (ttmlNetflix.checked || ttmlFrames.checked))
     readonly property bool fpsValid: !usesFrames || (fpsNumber() >= 1 && fpsNumber() <= 1000)
+    property var srv3Rows: []
+    property int srv3Revision: 0
+    readonly property int srv3Hidden: {
+        srv3Revision
+        return srv3Rows.filter(r => !r[lineChoices[Math.max(0, linesChoice.currentIndex)]]).length
+    }
+    readonly property var srv3Shadows: [
+        { bit: 1, text: qsTr("Glow"), name: qsTr("Glow shadow for %1") },
+        { bit: 4, text: qsTr("Soft"), name: qsTr("Soft shadow for %1") },
+        { bit: 2, text: qsTr("Hard"), name: qsTr("Hard shadow for %1") },
+        { bit: 8, text: qsTr("Bevel"), name: qsTr("Bevel shadow for %1") }
+    ]
+    readonly property var srv3Colours: [
+        { key: "text", icon: "colour-primary", tip: qsTr("Current word text"), name: qsTr("Current word text colour for %1") },
+        { key: "outline", icon: "colour-outline", tip: qsTr("Current word outline"), name: qsTr("Current word outline colour for %1") },
+        { key: "shadow", icon: "colour-shadow", tip: qsTr("Current word shadow"), name: qsTr("Current word shadow colour for %1") }
+    ]
 
     function openDialog() {
         setup = app.exportSetup()
@@ -45,6 +64,9 @@ DialogWindow {
             return
         report = null
         problem = ""
+        srv3Rows = JSON.parse(JSON.stringify(setup.srv3Styles || []))
+        srv3All.checked = false
+        ++srv3Revision
         const o = setup.options
         formatChoice.currentIndex = Math.max(0, formats.findIndex(f => f.id === setup.format))
         linesChoice.currentIndex = Math.max(0, lineChoices.indexOf(o.lines))
@@ -86,8 +108,27 @@ DialogWindow {
             srtAlignmentTags: srtAlignment.checked, vttPositions: vttPositions.checked, vttStyles: vttStyles.checked,
             vttKaraoke: vttKaraoke.checked, textTimes: textTimes.checked, textActors: textActors.checked,
             ttmlNetflix: ttmlNetflix.checked, ttmlFrames: ttmlFrames.checked, language: language.text.trim(),
-            fps: fpsNumber(), replace: replace
+            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows
         }
+    }
+    function srv3Set(index, key, value) {
+        srv3Rows[index].value[key] = value
+        ++srv3Revision
+    }
+    function srv3Changed(row) {
+        return JSON.stringify(row.value) !== JSON.stringify(row["default"])
+    }
+    function srv3Reset(index) {
+        srv3Rows[index].value = JSON.parse(JSON.stringify(srv3Rows[index]["default"]))
+        ++srv3Revision
+    }
+    function srv3Hex(c) {
+        return "#" + [c.r, c.g, c.b].map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase()
+    }
+    function pickSrv3Colour(swatch, index, key, name) {
+        srv3Colour.index = index
+        srv3Colour.key = key
+        srv3Popover.openFor(swatch, srv3Colour, () => srv3Colour.begin(), { title: name, alpha: false, clear: true, focus: swatch })
     }
     function run(replace) {
         const result = app.exportTo(app.fileUrl(destination.text.trim()), format, choice(replace))
@@ -172,8 +213,9 @@ DialogWindow {
                 Layout.minimumWidth: 300
                 Accessible.name: qsTr("Save to")
             }
-            Button {
+            IconTextButton {
                 objectName: "exportBrowse"
+                iconRole: "folder-open"
                 text: qsTr("Browse…")
                 onClicked: {
                     const path = destination.text
@@ -193,6 +235,218 @@ DialogWindow {
         ColumnLayout {
             spacing: 6
             Layout.fillWidth: true
+            Frame {
+                objectName: "exportSrv3Styles"
+                visible: dialog.format === "srv3" && dialog.srv3Rows.length > 0
+                Layout.fillWidth: true
+                padding: 1
+                background: Rectangle { color: Theme.field; border.color: Theme.line }
+                Accessible.role: Accessible.Table
+                Accessible.name: qsTr("srv3 style options")
+                ColumnLayout {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: 0
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 10
+                        Layout.rightMargin: 6
+                        Layout.preferredHeight: 28
+                        spacing: 10
+                        Label { text: qsTr("Style"); color: Theme.muted; font: dialog.fontAt(12); Layout.fillWidth: true }
+                        Label { text: qsTr("Shadow"); color: Theme.muted; font: dialog.fontAt(12); Layout.preferredWidth: 220 }
+                        Label { text: qsTr("Karaoke"); color: Theme.muted; font: dialog.fontAt(12); Layout.preferredWidth: 62 }
+                        Row {
+                            spacing: 6
+                            Layout.preferredWidth: 102
+                            Repeater {
+                                model: dialog.srv3Colours
+                                Item {
+                                    required property var modelData
+                                    width: 30
+                                    height: 16
+                                    Icon { anchors.centerIn: parent; iconRole: parent.modelData.icon; size: 14 }
+                                    HoverHandler { id: colourHover }
+                                    ToolTip.visible: colourHover.hovered
+                                    ToolTip.text: modelData.tip
+                                }
+                            }
+                        }
+                        Item { Layout.preferredWidth: 26 }
+                    }
+                    Repeater {
+                        model: dialog.srv3Rows.length
+                        FocusScope {
+                            id: srv3Row
+                            required property int index
+                            readonly property var row: { dialog.srv3Revision; return dialog.srv3Rows[index] }
+                            readonly property var value: { dialog.srv3Revision; return Object.assign({}, row.value) }
+                            readonly property bool changed: { dialog.srv3Revision; return dialog.srv3Changed(row) }
+                            function step(from, delta) {
+                                const controls = [glow.itemAt(0), glow.itemAt(1), glow.itemAt(2), glow.itemAt(3), karaoke,
+                                                  swatches.itemAt(0), swatches.itemAt(1), swatches.itemAt(2), reset]
+                                const usable = controls.filter(c => c && c.enabled && c.visible)
+                                const at = usable.indexOf(from)
+                                const next = usable[at + delta]
+                                if (next)
+                                    next.forceActiveFocus(Qt.TabFocusReason)
+                            }
+                            objectName: "exportSrv3Row" + index
+                            visible: srv3All.checked || row[dialog.lineChoices[Math.max(0, linesChoice.currentIndex)]] === true
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 34
+                            Rectangle { anchors.fill: parent; color: srv3Row.activeFocus ? Theme.select : "transparent" }
+                            Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Theme.line }
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 6
+                                spacing: 10
+                                RowLayout {
+                                    spacing: 6
+                                    Layout.fillWidth: true
+                                    Rectangle {
+                                        width: 6; height: 6; radius: 3
+                                        color: srv3Row.changed ? Theme.accent : "transparent"
+                                    }
+                                    Label {
+                                        text: srv3Row.row.name
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: srv3Row.row.builtIn !== true
+                                        Layout.maximumWidth: implicitWidth
+                                    }
+                                    Label {
+                                        visible: srv3Row.row.builtIn === true
+                                        text: "YTSubConverter"
+                                        color: Theme.muted
+                                        font: dialog.fontAt(11)
+                                        leftPadding: 6
+                                        rightPadding: 6
+                                        background: Rectangle { color: "transparent"; border.color: Theme.line; radius: height / 2 }
+                                    }
+                                    Item { Layout.fillWidth: true; visible: srv3Row.row.builtIn === true }
+                                }
+                                Row {
+                                    spacing: 3
+                                    Layout.preferredWidth: 220
+                                    Repeater {
+                                        id: glow
+                                        model: dialog.srv3Shadows
+                                        Button {
+                                            required property var modelData
+                                            required property int index
+                                            objectName: "exportSrv3Shadow" + modelData.bit
+                                            width: 52
+                                            height: 24
+                                            checkable: true
+                                            enabled: srv3Row.row.hasShadow === true
+                                            checked: (srv3Row.value.shadows & modelData.bit) !== 0
+                                            text: modelData.text
+                                            font: dialog.fontAt(12)
+                                            activeFocusOnTab: index === 0 && srv3Row.row.hasShadow === true
+                                            Accessible.name: modelData.name.arg(srv3Row.row.name)
+                                            ToolTip.visible: hovered && !enabled
+                                            ToolTip.text: qsTr("%1 has no shadow (its Shadow is 0), so no shadow type applies.").arg(srv3Row.row.name)
+                                            onToggled: {
+                                                dialog.srv3Set(srv3Row.index, "shadows", checked ? srv3Row.value.shadows | modelData.bit
+                                                                                                 : srv3Row.value.shadows & ~modelData.bit)
+                                                checked = Qt.binding(() => (srv3Row.value.shadows & modelData.bit) !== 0)
+                                            }
+                                            Keys.onLeftPressed: srv3Row.step(this, -1)
+                                            Keys.onRightPressed: srv3Row.step(this, 1)
+                                        }
+                                    }
+                                }
+                                CheckBox {
+                                    id: karaoke
+                                    objectName: "exportSrv3Karaoke"
+                                    Layout.preferredWidth: 62
+                                    checked: srv3Row.value.karaoke === true
+                                    activeFocusOnTab: srv3Row.row.hasShadow !== true
+                                    Accessible.name: qsTr("Karaoke for %1").arg(srv3Row.row.name)
+                                    onToggled: {
+                                        dialog.srv3Set(srv3Row.index, "karaoke", checked)
+                                        checked = Qt.binding(() => srv3Row.value.karaoke === true)
+                                    }
+                                    Keys.onLeftPressed: srv3Row.step(this, -1)
+                                    Keys.onRightPressed: srv3Row.step(this, 1)
+                                }
+                                Row {
+                                    spacing: 6
+                                    Layout.preferredWidth: 102
+                                    Repeater {
+                                        id: swatches
+                                        model: dialog.srv3Colours
+                                        Button {
+                                            id: swatch
+                                            required property var modelData
+                                            readonly property string colour: srv3Row.value[modelData.key] || ""
+                                            objectName: "exportSrv3Colour_" + modelData.key
+                                            width: 30
+                                            height: 22
+                                            enabled: srv3Row.value.karaoke === true
+                                            activeFocusOnTab: false
+                                            Accessible.name: modelData.name.arg(srv3Row.row.name)
+                                                             + ", " + (colour.length > 0 ? colour : qsTr("no colour"))
+                                            ToolTip.visible: hovered
+                                            ToolTip.text: colour.length > 0 ? modelData.tip + " " + colour : modelData.tip + ": " + qsTr("no colour")
+                                            onClicked: dialog.pickSrv3Colour(swatch, srv3Row.index, modelData.key, modelData.tip + " · " + srv3Row.row.name)
+                                            Keys.onLeftPressed: srv3Row.step(this, -1)
+                                            Keys.onRightPressed: srv3Row.step(this, 1)
+                                            contentItem: Item {}
+                                            background: Rectangle {
+                                                color: swatch.colour.length > 0 ? swatch.colour : Theme.field
+                                                border.color: swatch.activeFocus ? Theme.focus : Theme.line
+                                                border.width: swatch.activeFocus ? 2 : 1
+                                                radius: 2
+                                                opacity: swatch.enabled ? 1 : 0.45
+                                                clip: true
+                                                Rectangle {
+                                                    visible: swatch.colour.length === 0
+                                                    anchors.centerIn: parent
+                                                    width: parent.width * 1.2
+                                                    height: 1
+                                                    rotation: -35
+                                                    color: Theme.danger
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                IconToolButton {
+                                    id: reset
+                                    objectName: "exportSrv3Reset"
+                                    Layout.preferredWidth: 26
+                                    iconRole: "restore-default"
+                                    text: qsTr("Reset %1").arg(srv3Row.row.name)
+                                    opacity: srv3Row.changed ? 1 : 0
+                                    enabled: srv3Row.changed
+                                    activeFocusOnTab: false
+                                    onClicked: dialog.srv3Reset(srv3Row.index)
+                                    Keys.onLeftPressed: srv3Row.step(this, -1)
+                                    Keys.onRightPressed: srv3Row.step(this, 1)
+                                }
+                            }
+                        }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        Layout.margins: 6
+                        Layout.leftMargin: 10
+                        wrapMode: Text.Wrap
+                        color: Theme.muted
+                        font: dialog.fontAt(12)
+                        text: qsTr("Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.")
+                        Rectangle { anchors.bottom: parent.top; anchors.bottomMargin: 6; width: parent.width + 16; x: -10; height: 1; color: Theme.line }
+                    }
+                }
+            }
+            CheckBox {
+                id: srv3All
+                objectName: "exportSrv3All"
+                visible: dialog.format === "srv3" && dialog.srv3Hidden > 0
+                text: qsTr("Show all styles (%1)").arg(dialog.srv3Rows.length)
+            }
             CheckBox {
                 id: srtAlignment
                 objectName: "exportSrtAlignment"
@@ -284,8 +538,9 @@ DialogWindow {
                     Accessible.name: qsTr("Frame rate")
                 }
                 Label { text: qsTr("fps"); color: Theme.muted }
-                Button {
+                IconTextButton {
                     objectName: "exportFpsFromVideo"
+                    iconRole: "fps-from-video"
                     visible: (dialog.setup.videoFps ?? 0) > 0
                     text: qsTr("Use video frame rate")
                     onClicked: fps.text = Number(dialog.setup.videoFps).toFixed(3).replace(/\.?0+$/, "")
@@ -298,6 +553,15 @@ DialogWindow {
             Hint {
                 visible: dialog.format === "tmp"
                 text: qsTr("TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.")
+            }
+            Hint {
+                objectName: "exportSrv3Hint"
+                visible: dialog.format === "srv3"
+                text: qsTr("Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.")
+            }
+            Hint {
+                visible: dialog.format === "srv3" && dialog.srv3Rows.length > 0
+                text: qsTr("Changed options are saved in the subtitle file when you export.")
             }
             Hint {
                 visible: dialog.format === "sbv" || dialog.format === "txt"
@@ -333,6 +597,11 @@ DialogWindow {
                 dialog.report.comments > 0 ? qsTr("%n comment line(s) skipped.", "", dialog.report.comments) : "",
                 dialog.report.empty > 0 ? qsTr("%n line(s) with nothing to show skipped.", "", dialog.report.empty) : ""
             ].filter(s => s.length > 0).join(" ")
+        }
+        Hint {
+            objectName: "exportSrv3Saved"
+            visible: dialog.reported && (dialog.report.srv3Styles ?? 0) > 0
+            text: dialog.reported ? qsTr("Style options for %n style(s) saved in the subtitle file.", "", dialog.report.srv3Styles ?? 0) : ""
         }
         Label {
             visible: dialog.reported && dialog.report.notes.length > 0
@@ -420,7 +689,34 @@ DialogWindow {
         }
     ]
 
-    FileDialog {
+    ColourPopover {
+        id: srv3Popover
+        objectName: "exportSrv3ColourPopover"
+        picker: dialog.colourPicker
+    }
+    QtObject {
+        id: srv3Colour
+        property int index: 0
+        property string key: "text"
+        property string before: ""
+        function begin() {
+            before = dialog.srv3Rows[index].value[key] || ""
+            const c = before.length === 7 ? before : "#FFFFFF"
+            return { r: parseInt(c.slice(1, 3), 16), g: parseInt(c.slice(3, 5), 16), b: parseInt(c.slice(5, 7), 16), a: 0 }
+        }
+        function changeColour(c) {
+            dialog.srv3Set(index, key, dialog.srv3Hex(c))
+            return true
+        }
+        function clearColour() {
+            dialog.srv3Set(index, key, "")
+        }
+        function endDialog(accepted) {
+            if (!accepted)
+                dialog.srv3Set(index, key, before)
+        }
+    }
+    FileChooser {
         id: picker
         objectName: "exportPicker"
         fileMode: FileDialog.SaveFile

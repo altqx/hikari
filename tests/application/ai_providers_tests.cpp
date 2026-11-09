@@ -228,6 +228,24 @@ TEST_F(AiProvidersTest, RemovingAProviderDropsItsKeyAndRoles)
     EXPECT_FALSE(keys.keys.contains("or"));
 }
 
+TEST_F(AiProvidersTest, SigningOutDeletesTheKeyAndKeepsTheProviderAndItsRoles)
+{
+    Providers providers(configs, keys);
+    Provider signedIn = openRouter();
+    signedIn.signedIn = true;
+    ASSERT_EQ(add(providers, signedIn, "sk-or-v1-signed"), std::nullopt);
+    ASSERT_TRUE(providers.assign(Role::Vision, {"or", "v"}));
+    std::optional<std::optional<SaveError>> done;
+    providers.signOut("or", [&](std::optional<SaveError> e) { done = e; });
+    ASSERT_TRUE(done.has_value());
+    EXPECT_EQ(*done, std::nullopt);
+    EXPECT_FALSE(keys.keys.contains("or"));
+    EXPECT_EQ(readKey(providers, "or"), std::nullopt);
+    ASSERT_EQ(configs.stored.providers.size(), 1u);
+    EXPECT_FALSE(configs.stored.providers[0].signedIn);
+    EXPECT_EQ(configs.stored.roles.at(Role::Vision), (ModelRef{"or", "v"}));
+}
+
 TEST_F(AiProvidersTest, EditingAProviderKeepsItsPlaceRolesAndKeyUnlessGivenANewOne)
 {
     Providers providers(configs, keys);

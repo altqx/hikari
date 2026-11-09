@@ -1691,6 +1691,10 @@ Output device: %2</source>
         <translation>0은 불투명, 255는 완전 투명</translation>
     </message>
     <message>
+        <source>No colour</source>
+        <translation>색 없음</translation>
+    </message>
+    <message>
         <source>Less</source>
         <translation>접기</translation>
     </message>
@@ -1886,94 +1890,6 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>목록</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>모든 줄에 이 스타일이 적용됩니다.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>시작 태그</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>모든 줄의 시작 부분에 추가됩니다.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>해상도</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>너비</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>높이</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>새 파일의 스크립트 해상도입니다.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>프레임 속도</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>프레임</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>1에서 1000 사이의 프레임 속도를 입력하십시오.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD는 프레임 단위로 계산합니다. 시간은 이 속도에 따라 프레임으로 변환됩니다.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>종료 시간</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>글자당</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>줄의 길이는 글자 수 × 이 값이며, 최소 1초이고 다음 줄이 시작하는 곳에서 끝납니다.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>변경 내용</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>프레임 속도를 올바르게 입력할 때까지 표시할 내용이 없습니다.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>새로운 종료 시간</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>변환</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -2065,18 +1981,6 @@ Output device: %2</source>
             <numerusform>회전된 줄 %n개가 모양을 유지하지 못했습니다.</numerusform>
         </translation>
     </message>
-    <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>이 문서는 해당 형식으로 변환할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>잘못된 프레임 속도입니다. 설정에서 수정하고 다시 시도하십시오.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>스크립트 속성과 스타일이 제거됩니다.</translation>
-    </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
@@ -2118,12 +2022,6 @@ Output device: %2</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>줄 %n개에서 레이어, 스타일, 배우, 여백 또는 효과가 제거됩니다.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>줄 %n개에서 책갈피, 숨긴 줄 및 그룹이 제거됩니다.</numerusform>
@@ -2156,6 +2054,10 @@ Output device: %2</source>
     <message>
         <source>No</source>
         <translation>아니오</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -2192,6 +2094,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>내 변경 사항 유지</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>저장하기 전에 “%1”을(를) ASS로 변환할까요?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS로 변환</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -2234,6 +2144,10 @@ Output device: %2</source>
         <translation>단어별 타이밍 가사 (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>자막이 포함된 영상 (*.mkv *.ogm)</translation>
     </message>
@@ -2260,6 +2174,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>새 자막</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>%1(을)를 YouTube 시간 지정 텍스트로 가져올 수 없습니다. %2 아무것도 가져오지 않았습니다.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -2322,6 +2240,14 @@ Output device: %2</source>
         <translation>새 자막을 저장할 위치를 선택하십시오.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>설정 › 변환의 프레임 속도가 올바르지 않습니다. 수정한 다음 다시 저장하십시오.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>ASS로 저장</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>문서를 저장하지 못해 아무것도 닫지 않았습니다.</translation>
     </message>
@@ -2336,6 +2262,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1(을)를 열 수 없습니다. 아무것도 변경되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>ASS 자막 (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2362,12 +2292,21 @@ Output device: %2</source>
         <translation>키 프레임: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>타임코드: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>연결된 파일:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>폴더에 있는 영상: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>찾을 수 없는 연결된 파일:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2446,6 +2385,10 @@ Output device: %2</source>
     <message>
         <source>Close tab</source>
         <translation>탭 닫기</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>창 닫기</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -3010,8 +2953,16 @@ Output device: %2</source>
         <translation>글꼴, 크기, 비율 또는 자간 태그 제거됨</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>크기 비율 또는 자간 태그 제거됨</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>테두리, 그림자, 흐림, 투명도 또는 다른 색 제거됨</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>테두리, 그림자 또는 흐림 태그 제거됨</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -3020,6 +2971,10 @@ Output device: %2</source>
     <message>
         <source>Some bold, italic, underline or strikeout removed</source>
         <translation>일부 굵게, 기울임, 밑줄 또는 취소선 제거됨</translation>
+    </message>
+    <message>
+        <source>Strikeout removed</source>
+        <translation>취소선 제거됨</translation>
     </message>
     <message>
         <source>Position or alignment removed</source>
@@ -3062,6 +3017,14 @@ Output device: %2</source>
         <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
     </message>
     <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>이 파일에는 스타일 옵션을 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>이 파일로 YouTube 시간 지정 텍스트를 만들 수 없습니다: %1</translation>
+    </message>
+    <message>
         <source>Couldn’t write %1: %2</source>
         <translation>%1 파일을 쓸 수 없습니다: %2</translation>
     </message>
@@ -3072,6 +3035,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>일반 텍스트</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>YouTube 시간 지정 텍스트(srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>글로우</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>%1의 글로우 그림자</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>부드럽게</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>%1의 부드러운 그림자</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>선명하게</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>%1의 선명한 그림자</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>베벨</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>%1의 베벨 그림자</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>현재 단어 글자</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>%1의 현재 단어 글자 색</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>현재 단어 외곽선</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>%1의 현재 단어 외곽선 색</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>현재 단어 그림자</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>%1의 현재 단어 그림자 색</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -3132,6 +3155,46 @@ Output device: %2</source>
     <message>
         <source>Options</source>
         <translation>옵션</translation>
+    </message>
+    <message>
+        <source>srv3 style options</source>
+        <translation>srv3 스타일 옵션</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>가라오케</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1에는 그림자가 없으므로(그림자 0) 그림자 종류가 적용되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>%1의 가라오케</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>색 없음</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>%1 초기화</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>그림자는 YouTube가 스타일의 그림자를 그리는 방식입니다. 외곽선은 항상 글로우로 그려집니다. 현재 단어 색은 가라오케 줄에 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>모든 스타일 보기(%1)</translation>
     </message>
     <message>
         <source>Alignment as %1 tags</source>
@@ -3198,6 +3261,14 @@ Output device: %2</source>
         <translation>TMPlayer에는 종료 시간이 없으므로 겹치는 줄은 병합되고, 빈 자막이 화면을 지웁니다.</translation>
     </message>
     <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>YTSubConverter 1.6.5와 똑같이 변환합니다. 파일에 첨부된 글꼴과 그래픽은 내보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>변경한 옵션은 내보낼 때 자막 파일에 저장됩니다.</translation>
+    </message>
+    <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
     </message>
@@ -3217,6 +3288,12 @@ Output device: %2</source>
         <source>%n line(s) with nothing to show skipped.</source>
         <translation>
             <numerusform>표시할 내용이 없는 %n줄을 건너뛰었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>스타일 %n개의 옵션을 자막 파일에 저장했습니다.</numerusform>
         </translation>
     </message>
     <message>
@@ -3557,6 +3634,22 @@ Output device: %2</source>
     <message>
         <source>Writing the new archive replaces it.</source>
         <translation>새 압축 파일을 쓰면 기존 파일을 대체합니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>“%1”에 글꼴 파일 %n개가 이미 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>외 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>기존 파일 유지</translation>
     </message>
     <message>
         <source>Action</source>
@@ -4086,6 +4179,10 @@ Output device: %2</source>
         <translation>이 수집은 완전하지 않습니다. 이를 확인한 경우에만 쓰며, 출력은 불완전함으로 표시됩니다.</translation>
     </message>
     <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1”(이)가 폴더에 이미 있어 그대로 두었습니다.</translation>
+    </message>
+    <message>
         <source>Cannot create folder.</source>
         <translation>폴더를 만들 수 없음.</translation>
     </message>
@@ -4198,6 +4295,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add fonts</source>
         <translation>글꼴 추가</translation>
+    </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4776,6 +4881,10 @@ Failed to copy %2 fonts.</source>
         <translation>다음 줄과</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>영상에 보이는 줄 선택</translation>
     </message>
@@ -4800,6 +4909,32 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>설명 추가</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Aegisub 접기</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>이 파일에 Aegisub 접기가 %n개 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>줄 그룹으로 변환</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>Aegisub 접기 %n개를 줄 그룹으로 바꿨습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>접기 %n개를 건너뛰었습니다. 줄 그룹과 겹치거나 짝이 맞지 않습니다.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -4934,6 +5069,12 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>bookmarked</source>
         <translation>책갈피</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>QC 메모 %n개</numerusform>
+        </translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -5312,6 +5453,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>“사소한 오류 수정 (실험적)”의 단축키 %1(이)가 제거되었습니다. 이 기능은 제거되었습니다.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>“ASS로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 이름으로 저장에서 ASS를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>“SRT로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>“TMP로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>“MDVD로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>“MPL2로 변환”의 단축키 %1이(가) 제거되었습니다. 대신 파일 › 다른 형식으로 내보내기를 사용하십시오.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
@@ -5756,26 +5917,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>문제 보고</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6350,6 +6491,42 @@ Failed to copy %2 fonts.</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Vector clip: move points</source>
+        <translation>벡터 클립: 점 이동</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>벡터 클립: 직선 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>벡터 클립: 베지어 곡선 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>벡터 클립: B-스플라인 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>벡터 클립: 별도 점 추가</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>벡터 클립: 점 삭제</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>벡터 클립: 반전</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>자막 복사(클립보드)</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>PNG 파일로 자막 저장</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>노래방 검사</translation>
     </message>
@@ -6394,12 +6571,92 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>영상 다시 불러오기</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>소리 다시 불러오기</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>이전 버전 설정 가져오기…</translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>타임코드 열기</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>타임코드 저장</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>타임코드 닫기</translation>
+    </message>
+    <message>
+        <source>QC notes panel</source>
+        <translation>QC 메모 패널</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>다음 QC 메모</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>이전 QC 메모</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>QC 메모 추가</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>원근 추적…</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global</source>
@@ -6432,6 +6689,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>You cannot use the program exit shortcut.</source>
         <translation>프로그램 종료 단축키는 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>영상에 맞추기…</translation>
     </message>
 </context>
 <context>
@@ -6824,26 +7085,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>시작 시간</translation>
     </message>
@@ -7216,10 +7457,6 @@ Failed to copy %2 fonts.</source>
         <translation>스크립트 속성</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>변환</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>글꼴 수집기</translation>
     </message>
@@ -7308,26 +7545,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>MicroDVD로 변환하기</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>TMPlayer(권하지 않음)로 변환</translation>
     </message>
     <message>
         <source>Sort by start time</source>
@@ -7486,6 +7703,14 @@ Failed to copy %2 fonts.</source>
         <translation>조건식으로 줄을 선택합니다</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>QC 검토 메모를 파일에 저장하고 메모가 가리키는 줄을 표시합니다</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>QC 메모(&amp;Q)…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>자막 시간의 프레임 속도를 바꿉니다</translation>
     </message>
@@ -7500,6 +7725,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set FPS from video</source>
         <translation>영상에서 프레임 속도 설정</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>VFR 타임코드 v1, v2, v4 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>타임코드 열기</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>열었던 타임코드</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>VFR 타임코드 v2 파일로 저장합니다</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>타임코드 저장</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>지금 열린 타임코드 파일을 닫습니다</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>타임코드 닫기</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -7538,8 +7791,32 @@ Failed to copy %2 fonts.</source>
         <translation>뒤따르는 줄, 끝을 영상에</translation>
     </message>
     <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>선택한 줄에 Power-Pin 추적 데이터를 적용하여 프레임마다 줄을 하나씩 만듭니다</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>먼저 영상을 여세요: 추적 데이터는 프레임 단위입니다.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>원근 추적…</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>영상 정보…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>영상 다시 불러오기</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>렌더링 비용</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>소리 다시 불러오기</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7548,6 +7825,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>소리 선택 영역으로 이전 줄과 잇기</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>태그 없는 영상</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>영상에 사용하는 색상 매트릭스가 명시되어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub은 %1(으)로 추정하지만 다른 플레이어는 다르게 추정할 수 있으므로, 영상의 색상과 그에 맞춘 자막 색상이 플레이어마다 다르게 보일 수 있습니다. 모든 플레이어에서 똑같이 보이도록 영상에 색상 매트릭스 태그를 지정하십시오.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>HDR 또는 광색역 영상</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>영상이 HDR 또는 광색역 색상을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>일반 자막은 문제없이 쓸 수 있지만, 자막 색상을 영상 색상과 일치시킬 수는 없습니다.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>YCbCr 매트릭스를 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>자막에 YCbCr 매트릭스가 없습니다.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>이 영상용 자막이면 영상 값(%1)으로 설정하십시오. 다른 영상용이면 그 영상을 열 때까지 설정하지 마십시오.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>설정 안 함</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>%1(으)로 설정</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>YCbCr 매트릭스 불일치</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>영상의 YCbCr 매트릭스(%1)가 자막의 매트릭스(%2)와 다릅니다.</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>이 영상의 색상이 자막을 만든 원래 영상의 색상과 같아 보이면 자막의 매트릭스를 영상 값으로 설정하십시오.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>레이아웃 해상도를 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>자막에 레이아웃 해상도가 없습니다.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>이 영상용 자막이면 영상 값(%1)으로 설정하십시오. 오래된 파일이면 그 파일을 만든 영상의 해상도로 설정하십시오. 대개 스크립트 해상도(%2)와 같습니다.</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>영상 값(%1)으로 설정</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>스크립트 해상도(%1)로 설정</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>레이아웃 해상도 불일치</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>영상 해상도는 %1이고 자막의 레이아웃 해상도는 %2입니다.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>가로 세로 비율이 다릅니다. 레이아웃 해상도를 영상 값으로 설정하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>대개는 문제없습니다. 자막에 아직 이렇다 할 서식이 없고 이 영상에서 서식을 지정할 예정이면 레이아웃 해상도를 영상 값으로 설정하십시오.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7680,10 +8053,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens Script properties</source>
         <translation>스크립트 속성을 엽니다</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>다른 자막 형식으로 변환</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -8286,6 +8655,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>사소한 오류 수정 기능이 제거되었습니다. 규칙은 %1에 그대로 남아 있지만 사용되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>선택한 지점이 색을 유지하는, 영상 프레임 주변의 프레임에 맞춰 활성 줄의 시간을 정합니다</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>영상에 맞추기…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>영상에 맞추기</translation>
     </message>
 </context>
 <context>
@@ -9112,6 +9493,18 @@ Failed to copy %2 fonts.</source>
         <translation>시작 확대 비율</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>시각 도구</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>핸들 크기</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>시각 도구 핸들의 크기는 50에서 400까지 설정할 수 있습니다</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>스크립트 해상도</translation>
     </message>
@@ -9122,6 +9515,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>해상도 불일치 경고 안 함</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>자막에 YCbCr 매트릭스 없음</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>설정하지 않음</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>묻기</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>영상 값으로 설정</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>영상과 다른 YCbCr 매트릭스</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>자막 값 유지</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>자막에 레이아웃 해상도 없음</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>스크립트 해상도로 설정</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>영상과 다른 레이아웃 해상도</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>묻지 않음</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>가로 세로 비율이 다를 때 묻기</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>항상 묻기</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>영상을 열 때 확인합니다.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>영상에 색상 매트릭스 태그가 없으면 경고</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>영상이 HDR 또는 광색역 색상이면 경고</translation>
     </message>
     <message>
         <source>Output</source>
@@ -9146,6 +9599,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>줄 변경 후 재생 안 함</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>모노로 재생</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>소리 패널과 편집 재생의 채널을 하나로 섞습니다. 일반 영상 재생은 파일의 채널을 그대로 유지합니다.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -9488,6 +9949,14 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>플러그인의 인터넷 연결 허용</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>요청은 모두 HikariSub가 HTTPS로 보내며, 설치할 때 플러그인이 밝힌 호스트에만 연결합니다. 끄면 HikariSub를 거치는 플러그인 요청을 모두 거부합니다. 전체 신뢰 플러그인은 여전히 직접 연결할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>Shortcuts (Hotkeys.txt)</source>
         <translation>단축키 (Hotkeys.txt)</translation>
     </message>
@@ -9683,6 +10152,42 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API</translation>
     </message>
     <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai에서 로그인을 거부했습니다.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com에서 로그인을 거부했습니다. 사용할 ChatGPT 계정으로 HikariSub의 요청을 승인한 뒤 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>ChatGPT 워크스페이스에서 로그인 코드를 껐습니다. 대신 브라우저로 로그인하세요.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>코드를 입력하기 전에 만료되었습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>브라우저를 기다리다 로그인 시간이 초과되었습니다.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>다른 앱이 포트 1455를 쓰는 동안에는 브라우저 로그인을 사용할 수 없습니다. 사용하려면 그 앱의 로그인을 닫으세요.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>%1에 연결할 수 없습니다. 연결을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex에 가져올 ChatGPT 로그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>로그인하지 못했습니다. 다시 시도하세요.</translation>
+    </message>
+    <message>
         <source>Key rejected (%1)</source>
         <translation>키가 거부됨(%1)</translation>
     </message>
@@ -9775,12 +10280,32 @@ Failed to copy %2 fonts.</source>
         <translation>Gemini API 키</translation>
     </message>
     <message>
+        <source>OpenRouter key</source>
+        <translation>OpenRouter 키</translation>
+    </message>
+    <message>
         <source>API key (optional)</source>
         <translation>API 키(선택 사항)</translation>
     </message>
     <message>
         <source>API key</source>
         <translation>API 키</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>OpenRouter로 로그인…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>로그인됨(OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>로그아웃</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>또는 키 붙여넣기</translation>
     </message>
     <message>
         <source>Saved in the keychain. Type a new key to replace it</source>
@@ -9801,6 +10326,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
         <translation>Google AI Studio에서 받은 키입니다. Vertex AI와 Google Cloud 로그인은 지원하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>로그인하면 브라우저에서 openrouter.ai가 열리고 HikariSub용 키가 만들어집니다. 이 키는 붙여넣은 키처럼 키체인에 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>로그아웃하면 이 컴퓨터에서 키가 삭제됩니다. 키는 %1에서 직접 삭제할 때까지 그곳에 남아 있습니다.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>내 OpenRouter 키</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>브라우저에서 openrouter.ai를 기다리는 중</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>페이지 다시 열기</translation>
     </message>
     <message>
         <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
@@ -9923,6 +10468,10 @@ Failed to copy %2 fonts.</source>
         <translation>편집에서 키를 바꾸세요</translation>
     </message>
     <message>
+        <source>Sign in again with Edit</source>
+        <translation>편집에서 다시 로그인하세요</translation>
+    </message>
+    <message>
         <source>Key in keychain</source>
         <translation>키체인에 키 있음</translation>
     </message>
@@ -9963,6 +10512,114 @@ Failed to copy %2 fonts.</source>
         <translation>자체 모델이 없는 역할은 채팅 모델을 사용합니다. 비전에는 이미지를 읽는 모델만 표시됩니다.</translation>
     </message>
     <message>
+        <source>External agents</source>
+        <translation>외부 에이전트</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>PATH에서 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Found on PATH · %1.</source>
+        <translation>PATH에서 찾음 · %1.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>PATH에서 찾음.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>로그인하지 않음</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ChatGPT로 로그인…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>~/.codex에서 가져오기(읽기 전용)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>ChatGPT 로그인 가져오기</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>~/.codex에서 ChatGPT 로그인을 가져올까요? 그러면 HikariSub와 터미널의 Codex가 로그인 하나를 함께 쓰게 되며, 한쪽이 로그인을 새로 고치면 다른 쪽은 다시 로그인해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub는 ~/.codex의 로그인과 별도로 Codex용 ChatGPT 로그인을 따로 유지하므로 서로 로그아웃시키지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>%1(으)로 로그인됨</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex는 이 로그인으로 실행됩니다. 여기서 로그아웃해도 터미널의 Codex는 로그인된 상태로 남습니다.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>로그인이 만료됨</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>다시 로그인…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>비밀번호 변경이나 모든 기기에서 로그아웃한 경우 등으로 ChatGPT가 HikariSub의 세션을 끝냈습니다. Codex를 계속 쓰려면 다시 로그인하세요.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ChatGPT로 로그인</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>auth.openai.com을 열고 ChatGPT에 로그인한 뒤 이 코드를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>auth.openai.com 열기</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>브라우저에 auth.openai.com이 열려 있습니다. 거기서 로그인하세요. 페이지에 닫아도 된다고 나오면 HikariSub가 마무리합니다.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>코드를 기다리는 중 · %1 후 만료</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>브라우저를 기다리는 중</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>코드를 쓸 수 없나요? 브라우저로 로그인</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>브라우저로 로그인</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>새 코드 받기</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>프롬프트 캐싱 사용</translation>
     </message>
@@ -9975,8 +10632,16 @@ Failed to copy %2 fonts.</source>
         <translation>공급자에게 보내는 내용</translation>
     </message>
     <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>요청은 추가한 공급자에게만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
+    </message>
+    <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation>요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
+        <translation type="vanished">요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -10034,6 +10699,10 @@ Failed to copy %2 fonts.</source>
         <translation>사용자 폴더의 plugins.json을 읽을 수 없습니다: %1</translation>
     </message>
     <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>다운로드한 파일이 마켓플레이스에 등록된 플러그인이 아닙니다: %1.</translation>
+    </message>
+    <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
         <translation>패키지가 매니페스트에 지정되지 않은 키로 서명되었습니다.</translation>
     </message>
@@ -10070,6 +10739,10 @@ Failed to copy %2 fonts.</source>
         <translation>읽을 폴더 요청, %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>마켓플레이스가 이 버전을 철회했습니다. 켜려면 다른 버전을 설치하세요.</translation>
+    </message>
+    <message>
         <source>Command: %1</source>
         <translation>명령: %1</translation>
     </message>
@@ -10088,6 +10761,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>HikariSub can’t read %1.</source>
         <translation>HikariSub이 %1(을)를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>업데이트를 내려받는 동안 플러그인이 바뀌었습니다.</translation>
     </message>
     <message>
         <source>This package is “%1”, not an update of “%2”.</source>
@@ -10112,6 +10789,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Stopped</source>
         <translation>중지됨</translation>
+    </message>
+    <message>
+        <source>From the marketplace</source>
+        <translation>마켓플레이스에서 설치</translation>
     </message>
     <message>
         <source>OK</source>
@@ -10178,12 +10859,28 @@ Failed to copy %2 fonts.</source>
         <translation>활성 자막 파일 외에는 권한을 요청하지 않습니다.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>%1을(를) 신뢰할 때만 설치하세요. 이 플러그인은 컴퓨터에 대한 모든 권한을 갖습니다.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>%1이(가) 서명했고 마켓플레이스와 대조해 확인했습니다.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>신뢰하고 설치</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>모든 권한으로 설치</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>모든 플러그인은 작업 중인 문서를 읽고 편집할 수 있으며, 편집은 한 번에 실행 취소됩니다.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -10212,6 +10909,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plugin not uninstalled</source>
         <translation>플러그인 설치를 제거하지 못함</translation>
+    </message>
+    <message>
+        <source>Installed %1</source>
+        <translation>설치됨 %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>설치됨</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>마켓플레이스</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>업데이트 확인</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>플러그인 업데이트</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -10250,12 +10967,160 @@ Failed to copy %2 fonts.</source>
         <translation>전체 신뢰</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>철회됨</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 확인 대기 중</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>새로 요청</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>현재 허용됨</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>%1보다 많은 권한을 요청합니다</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>%1의 변경 사항</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>플러그인 검색</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>모든 분류</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>분류</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>마켓플레이스를 불러오는 중…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>마켓플레이스에 아직 플러그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>검색과 일치하는 플러그인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>마켓플레이스 플러그인</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>%1(으)로 업데이트</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>설치</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>HikariSub %1 이상이 필요합니다. 설치하려면 HikariSub를 업데이트하세요.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>기본 권한 외에는 없음: 네트워크, 폴더, 다른 문서에 접근하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>%1의 새로운 점</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>필요</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 이상</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>라이선스</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>업데이트 날짜</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>소스</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1”이(가) 같은 키로 서명되어 마켓플레이스에 있습니다. 업데이트를 받으려면 마켓플레이스로 옮기세요.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>나중에</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>마켓플레이스로 옮기기</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>마켓플레이스가 버전 %1(을)를 철회해 HikariSub가 껐습니다: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>%1 설치</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1(은)는 %2보다 많은 권한을 요청하므로 확인을 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>검토…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>%1(으)로 되돌리기</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>플러그인을 되돌리지 못함</translation>
+    </message>
+    <message>
         <source>On</source>
         <translation>켜기</translation>
     </message>
     <message>
         <source>Plugin not changed</source>
         <translation>플러그인을 변경하지 않음</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>업데이트 자동 설치</translation>
     </message>
     <message>
         <source>It didn’t start.</source>
@@ -10276,6 +11141,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Permissions</source>
         <translation>권한</translation>
+    </message>
+    <message>
+        <source>Remembered folders</source>
+        <translation>기억한 폴더</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>잊기</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>다음에 이 폴더가 필요할 때 %1이(가) 다시 묻습니다</translation>
     </message>
     <message>
         <source>What it adds</source>
@@ -10304,6 +11185,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install from file…</source>
         <translation>파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>플러그인 업데이트 확인</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>시작할 때와 하루에 한 번. HikariSub는 전체 목록을 내려받고, 어떤 플러그인이 있는지는 보내지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>마켓플레이스 플러그인에만 적용되며, 하던 작업을 마친 뒤 설치합니다. 더 많은 권한을 요청하는 업데이트는 확인을 기다립니다.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -10378,6 +11271,30 @@ Failed to copy %2 fonts.</source>
         <translation>%1 정보…</translation>
     </message>
     <message>
+        <source>%1 rolled back to %2</source>
+        <translation>%1(을)를 %2(으)로 되돌림</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>자동 업데이트는 되돌리기 전 버전을 건너뜁니다.</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>%1 꺼짐</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>마켓플레이스가 버전 %1(을)를 철회했습니다: %2.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1이(가) 설치되어 있지 않습니다.</translation>
     </message>
@@ -10412,6 +11329,355 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Details</source>
         <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>마켓플레이스 목록이 마켓플레이스 키로 서명되지 않아 HikariSub가 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>마켓플레이스 서명이 다른 파일의 것이라 HikariSub가 목록을 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>마켓플레이스가 HikariSub가 이미 본 목록보다 오래된 목록을 보내 HikariSub가 무시했습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>마켓플레이스 목록을 읽지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub가 마켓플레이스에 연결하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1”은(는) 이 HikariSub용 마켓플레이스에 없습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>마켓플레이스가 자체 사이트 밖의 다운로드를 등록해 HikariSub가 가져오지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>플러그인을 다운로드하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1이(가) 읽고 쓸 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1이(가) 읽을 폴더를 요청합니다: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>%1에 이 폴더 기억하기</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>폴더 선택…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: 파일 저장</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: 파일 선택</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC 메모</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>더 이상 메모가 없습니다</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>메모 파일 가져오기…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>클립보드에서 메모 가져오기</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>메모 내보내기…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>모두 완료 안 됨으로 표시</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>모든 메모 제거…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>QC 메모 추가…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1에 메모가 없습니다. 메모는 3:24나 0:03:24처럼 시간으로 시작하는 줄입니다.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>클립보드에 메모가 없습니다. 메모는 3:24나 0:03:24처럼 시간으로 시작하는 줄입니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>메모 %n개를 가져왔습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n개는 이미 파일에 있었습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>메모 %n개는 시간에서 15초 안에 줄이 없습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>클립보드</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>QC 메모 가져오기</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1에 메모 %n개가 있습니다</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>(구역 %n개).</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>이 파일에는 이미 메모 %n개가 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>추가할 때 이미 있는 메모 %n개는 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>메모 %n개 추가</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>이 파일의 메모 바꾸기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>%1을(를) 읽을 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>모든 메모 제거</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>이 파일에서 QC 메모 %n개를 모두 제거할까요?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>실행 취소하면 되돌아옵니다.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>모두 제거</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>메모 파일 가져오기</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>QC 메모 (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>QC 메모 내보내기</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>메모 %n개를 내보냈습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>메모를 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>이 파일</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>메모 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>메모 추가</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>완료된 메모 포함</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>선택한 구역만 (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>선택한 구역만</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>메모 %n개 내보내기…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>전체</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1/%2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>%1번 줄</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>줄 없음</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>완료 안 됨</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>줄 없음</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>여기에 메모 파일을 끌어다 놓으세요</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>QC 메모를 저장할 자막 파일을 여세요.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>메모 붙여 넣기</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>메모는 시간으로 시작합니다: 3:24 - …
+[구역] 줄로 묶습니다.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>이전</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>다음</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>완료된 메모 숨기기</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>시간</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>비디오 시간</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>줄 시작</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>구역</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>메모</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>고칠 점</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter 저장 · Esc 취소</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>저장</translation>
     </message>
 </context>
 <context>
@@ -10838,6 +12104,229 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>“충돌 보고서 항상 보내기”가 켜져 있습니다. 보낸 내용은 다음과 같습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">검토</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">줄</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">%1번 줄</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">새로 만들기</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">복원</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">실행 취소</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">유지</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%1/%2</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11710,6 +13199,10 @@ because it was edited.</source>
         <translation>키 프레임</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>타임코드</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>이 탭의 자막 파일 %1(을)를 찾을 수 없습니다.</translation>
     </message>
@@ -11724,6 +13217,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>이 탭의 키 프레임 파일 %1(을)를 찾을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>이 탭의 타임코드 파일 %1(을)를 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11744,6 +13241,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>키 프레임 파일 (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>타임코드 파일 (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -11892,6 +13393,18 @@ because it was edited.</source>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” 값이 true 또는 false가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” 값이 목록이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>창 %1(은)는 객체가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>창 %1: “%2”의 형식이 잘못되었습니다.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -12609,6 +14122,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>초당 프레임</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>초당 프레임, 타임코드 파일 %1의 평균</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -15149,6 +16666,123 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>%1번 줄</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>%1–%2번 줄</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>After Effects나 Blender에서 내보낸 Power-Pin 데이터를 붙여 넣으세요. 적용하면 CC Power Pin의 네 모서리를 읽습니다.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>Power-Pin 데이터가 아닙니다: CC Power Pin 모서리를 찾지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>추적할 줄을 선택하세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>데이터에는 프레임이 %n개 있지만 선택한 줄은 %1개 프레임(%2–%3)에 걸쳐 있습니다. 추적한 프레임에 걸치는 줄을 선택하세요.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>%1 프레임에 표시되는 선택한 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>줄이 겹치지만 %1번 줄은 %2 프레임에 표시되지 않습니다. 모든 줄이 표시되는 프레임을 고르거나 하나씩 적용하세요.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>%1 × %2 크기로 추적했지만 영상은 %3 × %4입니다. 모서리를 영상 크기에 맞춰 조정합니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%1 fps의 프레임 %n개, %2 × %3 크기로 추적했습니다. 선택 영역의 %4–%5 프레임에 해당합니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>프레임 %n개. 선택 영역의 %1–%2 프레임에 해당합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>추적할 수 없는 줄이 있습니다: 텍스트를 측정할 수 없거나 평면이 줄을 뒤집습니다.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>원근 추적</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Power-Pin 데이터</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>기준 프레임</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>/ %1 · 영상 프레임 %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>원점</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>중앙</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>%1 없음</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>유지</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>평평한 줄을 먼저 평면에 맞추기</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>클립을 평면과 함께 이동</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>외곽선과 그림자 크기 조정</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>평면은 원근 도구와 Derive Perspective Track에서 쓸 수 있도록 각 줄에 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · 프레임 %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Translation</name>
     <message>
         <source>Translation</source>
@@ -15626,6 +17260,14 @@ Styles deleted:
         <translation>키 프레임 파일 선택</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>타임코드 파일 (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>타임코드 파일 저장</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
     </message>
@@ -15713,6 +17355,14 @@ Styles deleted:
     <message>
         <source>Copy with subtitles</source>
         <translation>자막과 함께 복사</translation>
+    </message>
+    <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>자막만 PNG로 저장…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>자막만 복사</translation>
     </message>
     <message>
         <source>Audio track</source>
@@ -15967,6 +17617,69 @@ or codecs or a splitter may be missing</source>
         <translation>프레임 %1/%2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>PC 범위</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>TV 범위</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>더미 영상</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>가변</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n프레임 (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>알 수 없음</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1비트</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>회색조, %1비트</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1비트</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2비트</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (태그 없음, 크기로 추정)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>가로 세로 비율: %1</translation>
     </message>
@@ -16000,6 +17713,196 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>열기</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>영상에 맞추기</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>먼저 영상을 여세요.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>먼저 맞출 줄을 선택하세요.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>영상의 프레임 하나를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>자막이 읽기 전용입니다.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>줄이 보여야 하는 동안 색이 유지되는 지점을 클릭하세요. 이 프레임 주변에서 그 색이 유지되는 모든 프레임에 줄의 시간이 맞춰집니다.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>영상 프레임</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>화살표 키로 지점을 옮기고, Enter로 맞춥니다</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>지점 X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>지점 Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>색상 %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>허용 오차</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>색이 얼마나 달라져도 같은 색으로 볼지, 0부터 255까지</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>검색 중… 프레임 %n개 확인함</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>맞추기</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>타임코드 파일 열기</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>알 수 없는 타임코드 형식</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>잘못된 타임코드 줄</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>타임코드가 두 개 이상 있어야 합니다</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>타임코드 파일이 10000000개 항목 제한을 넘습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>타임코드의 순서가 맞지 않습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>타임코드가 모두 같습니다</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>음수 프레임에는 프레임 레이트를 지정할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>끝 프레임은 시작 프레임보다 크거나 같아야 합니다</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>V1 타임코드 범위가 10000000 프레임 제한을 넘습니다</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS는 0보다 커야 합니다</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS는 1000보다 클 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>재정의 범위가 겹치면 안 됩니다</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>타임코드가 지원되는 시간 범위를 넘습니다</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번째 줄: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>타임코드 파일을 해석하지 못했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>타임코드 파일 %1을(를) 열 수 없습니다</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>타임코드 파일이 영상보다 먼저 끝납니다(%2개 중 %1번째 프레임). 이후 프레임은 파일의 평균 프레임 레이트로 이어집니다.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>저장할 프레임 시간이 없습니다</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>타임코드 파일 %1을(를) 저장할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation type="vanished">타임코드 파일을 찾을 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>영상 정보</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>해상도</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>영상 스트림 프레임 속도</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>프레임 시간 출처</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>길이</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>색 공간</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>색 매트릭스</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>자막에 사용</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
     </message>
 </context>
 <context>
@@ -17098,6 +19001,26 @@ do not work on comments</source>
         <translation>패널</translation>
     </message>
     <message>
+        <source>Dock floating panels to lock the layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock it to move panels. Resizing still works.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tab with</source>
         <translation>탭으로 묶기</translation>
     </message>
@@ -17286,8 +19209,16 @@ do not work on comments</source>
         <translation>레이아웃: %1</translation>
     </message>
     <message>
+        <source>Layout: %1, locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Layout of this tab</source>
         <translation>이 탭의 레이아웃</translation>
+    </message>
+    <message>
+        <source>Layout of this tab, locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save layout as…</source>
