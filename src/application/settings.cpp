@@ -303,6 +303,9 @@ const std::vector<SettingDefinition> &definitions()
         {"video.alignTolerance", "", Int, Profile, Mapped, false, std::int64_t{20}},
         // "<ms since the epoch> <path>" per entry of recent.subtitles.
         {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"recent.projects", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "<ms since the epoch> <path>" per entry of recent.projects.
+        {"recent.projectsOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
         {"plugins.checkUpdates", "", Bool, Profile, Mapped, false, true},
         {"plugins.autoUpdate", "", Bool, Profile, Mapped, false, true},

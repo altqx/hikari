@@ -226,7 +226,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     }
 #endif
     SingleInstance instance(mode == StartupMode::Run ? SingleInstance::forSession() : SingleInstance::Location{});
-    const SingleInstance::Role role = instance.claim({files, activationToken}, startup.healthFile.empty());
+    const SingleInstance::Role role =
+        instance.claim({files, activationToken, startup.window}, startup.healthFile.empty());
     if (role == SingleInstance::Role::Forwarded)
         return 0;
     QTimer reclaim;
@@ -312,7 +313,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                                                                                                    : QString();
     const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
     if (startPath.isEmpty() && !files.isEmpty())
-        forwarded.take({files, {}});
+        forwarded.take({files, {}, startup.window});
 
     hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;

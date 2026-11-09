@@ -342,6 +342,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_KEEP_ALL_AI_CHANGES", 5249},
         {"GLOBAL_UNDO_ALL_AI_CHANGES", 5250},
         {"GLOBAL_SHOW_AI_REVIEW", 5251},
+        {"GLOBAL_OPEN_FOLDER", 5255},
+        {"GLOBAL_CLOSE_PROJECT", 5256},
 };
 
 struct NameRow {
@@ -649,6 +651,8 @@ constexpr NameRow kNames[] = {
         {5249, "Keep all AI changes"},
         {5250, "Undo all AI changes"},
         {5251, "Review panel"},
+        {5255, "Open folder…"},
+        {5256, "Close project"},
 };
 
 struct DefaultRow {

@@ -1108,6 +1108,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_spellingLoader = options.spellingBackend;
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened"));
+    m_projects = std::make_unique<ProjectWindows>(
+        *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
+    connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_editRefresh = new QTimer(this);
@@ -2117,8 +2121,10 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     m_workspace.add(*id, (imported ? QFileInfo(saveAs).fileName() : file.fileName()).toStdString(), asReference);
     takeFileArrangement(*id);
     recordFileTime(*id);
-    if (!asReference)
+    if (!asReference) {
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
+        offerProjectFor(*id, path);
+    }
     if (const auto *session = m_files->session(*id); session && !asReference)
         if (const auto folds = application::foldConversion(session->document()).converted)
             emit aegisubFoldsFound(id->value, static_cast<int>(folds));
@@ -2501,6 +2507,8 @@ QVariantList Application::reviewClose(const QString &then)
         m_closingTabs.clear();
         m_tabAfterClose.reset();
     }
+    if (then != QLatin1String("project"))
+        m_projectClosing.reset();
     m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset();
@@ -2510,6 +2518,8 @@ QVariantList Application::reviewClose(const QString &then)
         scope = m_closingTabs;
     else if (then == QLatin1String("all"))
         scope = m_workspace.allTabs();
+    else if (then == QLatin1String("project") && m_projectClosing)
+        scope = m_workspace.tabs(*m_projectClosing);
     else if (then == QLatin1String("window"))
         std::ranges::copy_if(m_workspace.documents(), std::back_inserter(scope),
                              [&](application::DocumentId id) { return m_workspace.window(id) == m_closingWindow; });
@@ -2680,7 +2690,7 @@ void Application::finishClose()
         return;
     }
     const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
-        && then != QLatin1String("all") && then != QLatin1String("window");
+        && then != QLatin1String("all") && then != QLatin1String("window") && then != QLatin1String("project");
     if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
         if (!m_workspace.setEditingTarget(*reviewed)) {
             m_closeThen = then;
@@ -2739,6 +2749,9 @@ void Application::finishClose()
             refreshViews();
     } else if (then == QLatin1String("all")) {
         closeAllTabs();
+    } else if (then == QLatin1String("project")) {
+        if (const auto window = std::exchange(m_projectClosing, std::nullopt))
+            closeProject(*window);
     } else if (then == QLatin1String("window")) {
         m_closeApproved = std::exchange(m_closingWindow, std::nullopt);
     } else if (then == QLatin1String("files")) {
@@ -3031,17 +3044,7 @@ namespace {
 
 bool recentMissing(const std::string &path)
 {
-    return application::isMissingLocalFile(
-        path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
-        [](char drive) {
-#ifdef _WIN32
-            const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
-            return ::GetDriveTypeW(root) == DRIVE_REMOTE;
-#else
-            (void)drive;
-            return false;
-#endif
-        });
+    return recentPathMissing(path, false);
 }
 
 }
@@ -6266,6 +6269,8 @@ void Application::forgetShellWindow(int shellWindow)
         m_shellWindows.erase(found);
         return;
     }
+    keepProjectTabs(shellWindow);
+    m_projects->forget(shellWindow);
     found->second.closing = true;
     leaveShellWindow(shellWindow);
     closeShellWindowDocuments(shellWindow);

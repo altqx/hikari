@@ -4349,8 +4349,7 @@
    "surfaces": [
     "menu:file",
     "home"
-   ],
-   "pending": "PJ2 #770"
+   ]
   },
   {
    "role": "recent-projects",
@@ -4362,8 +4361,7 @@
    "surfaces": [
     "menu:file",
     "home"
-   ],
-   "pending": "PJ2 #770"
+   ]
   },
   {
    "role": "close-project",
@@ -4374,8 +4372,7 @@
    "legacy": [],
    "surfaces": [
     "menu:file"
-   ],
-   "pending": "PJ2 #770"
+   ]
   },
   {
    "role": "project",
@@ -4388,8 +4385,7 @@
     "title-bar",
     "home",
     "tier-chips"
-   ],
-   "pending": "PJ2 #770"
+   ]
   },
   {
    "role": "mine",
