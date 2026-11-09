@@ -54,6 +54,7 @@
 
 // The UI module is a static QML module; its plugin must be imported explicitly.
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+Q_IMPORT_QML_PLUGIN(Hikari_PluginPlugin)
 
 namespace hikari::app {
 

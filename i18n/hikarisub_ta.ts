@@ -10735,6 +10735,10 @@ Failed to copy %2 fonts.</source>
         <translation>இந்தச் செருகுநிரலுக்கு Hikari API %1 தேவை, ஆனால் இந்த HikariSub இல் API %2 உள்ளது. இதை நிறுவ HikariSub ஐப் புதுப்பிக்கவும்.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>முழு நம்பிக்கை செருகுநிரல்கள் மட்டுமே QML பலகங்களைக் கொண்டிருக்க முடியும்.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>%1 இல் hikari-plugin.json செருகுநிரல் ச்கீமாவுக்கு இணங்கவில்லை: %2</translation>
     </message>
@@ -10753,6 +10757,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>தொகுப்பு ஊடக விதிகளை மீறுகிறது: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>தொகுப்பில் அதன் பலகக் கோப்பான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1, செருகுநிரல் பலகங்கள் பயன்படுத்த முடியாத %2 ஐ இறக்குகிறது.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10785,6 +10797,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>முழு நம்பிக்கை: இது HikariSub இன் வரம்புகளுக்கு வெளியே நேட்டிவ் குறியீட்டை இயக்கக்கூடும்.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub இனுள் தனது சொந்தப் பலகங்களைக் காட்டுகிறது</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11365,6 +11381,22 @@ Failed to copy %2 fonts.</source>
         <translation>காட்டு</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1 இன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>பலகத்தை ஏற்ற முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 நிறுவப்படவில்லை.</translation>
     </message>
@@ -11459,6 +11491,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>இதன் பலகம் திறந்திருந்தபோது HikariSub மூடப்பட்டதால், நீங்கள் மீண்டும் ஏற்று என்பதைத் தேர்வுசெய்யும் வரை இதன் பலகங்கள் மூடியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>இதன் மூலம் Item அல்ல.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
     </message>
 </context>
 <context>

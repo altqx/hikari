@@ -3,6 +3,8 @@
 #include "media.h"
 #include "names.h"
 
+#include "hikari/plugins/qml_imports.h"
+
 #include <algorithm>
 #include <set>
 
@@ -35,6 +37,21 @@ bool goodPath(std::string_view path)
             return true;
         path.remove_prefix(slash + 1);
     }
+}
+
+std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    if (!manifest.hasQmlPanels())
+        return std::nullopt;
+    for (const Panel &panel : manifest.panels)
+        if (!panel.qml.empty() && std::ranges::none_of(files, [&](const PackageFile &f) { return f.path == panel.qml; }))
+            return PackageProblem{Kind::MissingPanel, panel.qml, {}, {}};
+    for (const PackageFile &file : files)
+        if (isQmlSource(file.path))
+            if (auto refused = qmlImportProblem(file.path, {reinterpret_cast<const char *>(file.data.data()), file.data.size()}))
+                return PackageProblem{Kind::QmlImport, file.path, {}, std::move(*refused)};
+    return std::nullopt;
 }
 
 }
@@ -73,6 +90,8 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     if (std::none_of(files.begin(), files.end(), [&](const PackageFile &f) { return f.path == manifest->main; }))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
     if (auto problem = mediaProblem(*manifest, files))
+        return std::unexpected(std::move(*problem));
+    if (auto problem = qmlProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
 }

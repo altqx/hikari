@@ -52,6 +52,8 @@ public:
         QNetworkAccessManager *network = nullptr;
         // Restricted plugins start in pluginProfile's sandbox; unrestricted ones never do.
         bool sandbox = false;
+        // A QML panel's api.setSetting: the refusal, or "" once kept. Unset: the runtime keeps it itself.
+        std::function<QString(const QString &plugin, const QString &setting, const QString &json)> setSetting;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -91,6 +93,8 @@ private:
     void unlock(Running &plugin);
     void releaseLock(Running &plugin);
     void endAccess(Running &plugin);
+    void wireQmlPanels();
+    std::optional<std::string> setSetting(const std::string &plugin, const std::string &setting, const api::Json &value);
 
     struct LockWaiter {
         Running *plugin = nullptr;

@@ -29,9 +29,9 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
 | `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`; the ids `data` and `cache` are the plugin's own). See [Files](#files) and [Network](#network). |
-| `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, and `area`: `left`, `right` or `bottom`, where the panel docks when first shown; `right` by default), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
+| `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, `area`: `left`, `right` or `bottom`, where the panel docks when first shown, `right` by default; and for a Full trust plugin `qml`, a package `.qml` file that makes it a [QML panel](#qml-panels)), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
 
-Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`.
+Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`. A `qml` panel in a manifest that isn't `unrestricted` is refused with "Only Full trust plugins can ship QML panels." A package with QML panels must hold each panel's file, and every `.qml`, `.js` and `.mjs` file in it must keep to the [import rule](#qml-panels).
 
 ### Media and README
 
@@ -106,7 +106,7 @@ Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with
 Each enabled plugin runs in its own `hikari-plugin-helper` process, started when HikariSub starts or when the plugin is turned on, installed or updated. The helper uses the same framing and endpoint as the automation helper. A plugin's crash ends only its own helper.
 
 - **Restricted (the default).** A fresh LuaJIT state with `string` (without `dump`), `table`, `math`, `bit`, `coroutine` and the base functions, minus `dofile`, `loadfile` and `module`. `load` and `loadstring` take text only, so bytecode never loads. There's no `ffi`, `io`, `os`, `debug`, `jit` or `package`, so no `package.loadlib` either. `require "a.b"` reads only `lua/a/b.lua` or `lua/a/b/init.lua` in the package, and only as text.
-- **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning.
+- **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning. Only these plugins can ship [QML panels](#qml-panels), and the warning then adds "Shows its own panels inside HikariSub".
 - **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
 - **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
 - **The sandbox.** A restricted plugin's helper starts in an operating-system sandbox, `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)): Landlock and seccomp on Linux, an AppContainer on Windows. Its profile is `HikariSub.Plugin.<the first 32 hex digits of the id's SHA-256>`: the helper's folder to read and execute, the plugin's package folder to read, nothing else, and no network. The helper needs no more, because HikariSub itself opens the files a plugin was granted (`hikari.files`) and makes its requests (`hikari.net.fetch`).
@@ -115,7 +115,7 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 
 ### The helper protocol
 
-The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 4) has two requests, `Load` and `Run`, plus events and nine services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock`, `Ui`, `Files` and `Net`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `dialogs.show`, `dialogs.ask`, `dialogs.close`), `Files` the file operations (`files.pick`, `files.folder`, `files.open`, `files.entries`) and `Net` `net.fetch`. Each takes JSON parameters and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
+The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backends/helper_protocol.h)) has an `Event` frame (17) in which the host pushes application events to a helper. It waits behind the helper's running work and is answered like a request, so an event handler can call back into HikariSub. A helper without an event handler answers `Unsupported`. The plugin protocol ([`plugin_protocol.h`](../src/backends/include/hikari/backends/plugin_protocol.h), version 4) has two requests, `Load` and `Run`, plus events and nine services: `Call`, `Notify`, `SetSetting`, `Subscribe`, `Lock`, `Unlock`, `Ui`, `Files` and `Net`. `Ui` carries the panel and dialog operations (`panels.render`, `panels.show`, `panels.post`, `dialogs.show`, `dialogs.ask`, `dialogs.close`), `Files` the file operations (`files.pick`, `files.folder`, `files.open`, `files.entries`) and `Net` `net.fetch`. Each takes JSON parameters and is answered like `Call`. When several events of one name wait, only the newest is delivered. Panel and dialog events merge more finely: only text edits, slider drags and pointer moves of one widget replace each other.
 
 ## The `hikari` global
 
@@ -133,6 +133,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.document.list()`, `hikari.document.read(document)`, `hikari.document.edit(name, fn, options)` | The open Documents, a snapshot of one, and one edit applied as one undo step. See [Documents and selections](#documents-and-selections). |
 | `hikari.selection.get(document)`, `hikari.selection.set(selected, active, document)` | The selected Lines and the active Line, as `selection.get` and `selection.set` give and take them. |
 | `hikari.panels.render(panel, tree)`, `hikari.panels.show(panel)`, `hikari.panels.on(panel, fn)` | Draws a panel from `contributes.panels`, opens it, and calls `fn(event)` for its events. See [Panels and dialogs](#panels-and-dialogs). |
+| `hikari.panels.post(panel, data)` | Sends `data` to a [QML panel](#qml-panels)'s `api.received`. It returns `true` when the panel is loaded, and `false` otherwise. |
 | `hikari.files.open(place, path)`, `hikari.files.entries(place, path)`, `hikari.files.pick(options)`, `hikari.files.folder(id)`, `hikari.files.list()`, `hikari.files.read(file, encoding)`, `hikari.files.write(file, data, encoding)` | Files in the plugin's own folders, in folders the user chose, and that the user picked or dropped. See [Files](#files). |
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
@@ -241,6 +242,55 @@ A dialog spec is `{title, body, buttons, width, height}`, with 1 to 4 buttons `{
 ### When the plugin isn't there
 
 A layout can keep a place for a panel whose plugin is missing, turned off or stopped. The panel keeps the title the layout saved and shows why, with the one action that helps: Open Plugins… when the plugin isn't installed, Turn on when it is off, and Start again with Details when it stopped. When the plugin comes back, its panel fills the place. Closing a placeholder for a plugin that isn't installed, or View › Panels › <panel> › Remove from the layout, forgets the place.
+
+### QML panels
+
+A Full trust plugin may draw a panel itself, in QML, by naming a package file in the panel's `qml` field. Everything above about docking, the dock id, View › Panels, the first `area` and the placeholders still holds. Restricted plugins keep the widget tree.
+
+```qml
+import QtQuick
+import QtQuick.Controls
+import Hikari.Plugin
+
+Column {
+    required property var api
+    implicitWidth: 240
+    Label { text: qsTr("Count: %1").arg(api.settings.count) }
+    IconButton {
+        name: "restart"
+        text: qsTr("Count lines")
+        onClicked: api.call("lines.list", {}).then(result => api.send({ lines: result.lines.length }))
+    }
+    Connections {
+        target: api
+        function onReceived(data) { console.log(data.echo) }
+    }
+}
+```
+
+- **Loading.** The file loads when the panel is first shown, not when HikariSub starts, so a closed panel costs nothing. Its root item fills the panel. Its `Layout.minimumWidth` and `Layout.minimumHeight`, or else its implicit size, set the panel's smallest size, from 160 × 80 up to 320 × 120 px. The panel is destroyed when its plugin stops, is turned off, uninstalled or updated. An update loads the new version in its place.
+- **`api`.** The root item declares `required property var api`, the only supported way into HikariSub:
+  - `api.call(operation, params)` returns a Promise of a [Hikari API](api.md) result, called as the plugin with the same permissions as `hikari.call`. It rejects with an `Error` whose `code` is the API's error code.
+  - `api.send(data)` gives the plugin's `hikari.panels.on` handler the event `{kind = "message", data}`, and `api.received(data)` is the signal for each `hikari.panels.post`. Logic and state belong in the helper, and the panel is its view.
+  - `api.settings` holds the plugin's settings by id and follows every change. `api.setSetting(id, value)` keeps one, and throws when the setting's type, options or bounds refuse the value.
+  - `api.theme` is the current palette (`text`, `muted`, `accent`, `panel`, `field`, `line`, `warning`, `danger`), and `api.locale` HikariSub's language (`"en"`, `"ko"`, …).
+  - HikariSub's own objects, documents as live objects, file dialogs and the network aren't in `api`. A panel gets files and the network through its helper, with `hikari.files` and `hikari.net.fetch`.
+- **The engine.** The panel runs in HikariSub's own QML engine, in a context of its own. HikariSub refuses remote URLs there too, so no image, XHR or import comes from the network.
+- **Imports.** A panel may import `QtQuick`, `QtQuick.Controls`, `QtQuick.Layouts` and `Hikari.Plugin`, and paths inside its package (`import "parts"`, `.import "util.js" as Util`, `import … from "./a.mjs"`). Any other module, `Hikari.Ui` included, and any absolute path, URL or path that climbs out of the package is refused, both at install and at each load. This keeps plugins on an API HikariSub supports. It isn't a security boundary: Full trust code can do anything HikariSub can.
+- **When it can't load.** A missing file, a syntax error, a refused import or a component error shows in the panel: "The panel couldn’t load.", the first error with its package path and line, Copy, and Load again. The whole error goes to the Log panel under the plugin's name. The helper and the plugin's other panels keep running.
+- **Warnings.** Exceptions and binding errors in the package's files go to the Log panel under the plugin's name, at most 20 a minute; the rest are left out. The panel stays up.
+- **Crashes and hangs.** A QML panel runs on HikariSub's UI thread, so a crash or an endless loop in it ends or freezes HikariSub. HikariSub keeps `plugin-panels.json` beside `plugins.json`, naming the plugins whose QML panels are loaded. When HikariSub didn't close cleanly with one loaded, the next start logs that it closed while the plugin's panel was open. That plugin's QML panels then say "HikariSub closed while <plugin>’s panel was open." and stay closed until the user chooses Load again in one of them, even across later starts.
+
+### The `Hikari.Plugin` module
+
+`import Hikari.Plugin` gives QML panels HikariSub's look, and its types are a supported API:
+
+| Type | Properties |
+| --- | --- |
+| `Icon` | `name`, one of HikariSub's icon roles (`plugins`, `restart`, `edit-copy`, …), `size` in px (16 by default), and `color`. It follows the theme and right-to-left mirroring. |
+| `IconButton` | `name` as for `Icon`, and `text`, its tooltip and accessible name. It shows only the icon. |
+
+`QtQuick.Controls` already takes HikariSub's style, so a panel's buttons, fields and lists match the app.
 
 ## Files
 

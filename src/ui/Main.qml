@@ -507,7 +507,7 @@ ApplicationWindow {
                 id: pluginPanel
                 objectName: "pluginPanel_" + pluginDock.uniqueName
                 dockName: pluginDock.uniqueName
-                minimumBodySize: Qt.size(160, 120)
+                minimumBodySize: pluginBody.minimumBodySize
                 anchors.fill: parent
                 title: pluginDock.title
                 PluginPanelBody {
@@ -523,6 +523,7 @@ ApplicationWindow {
                     onTurnOn: plugin => root.app.pluginManager.setEnabled(plugin, true)
                     onRestart: plugin => root.app.pluginRuntime.restart(plugin)
                     onDetails: root.showPanel(logDock)
+                    onCopy: text => root.app.copyText(text)
                     // KDDW deletes these children inside ~DockWidget; a binding on pluginBody would then call into the dying dock.
                     onPluginNameChanged: pluginDock.pluginName = pluginName
                     onTitleChanged: pluginDock.knownTitle = title
