@@ -9137,6 +9137,7 @@ private slots:
         QVERIFY(application->property("includesVsfilter").toBool());
 #endif
         QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
+        QCOMPARE(dialogItem("creditsDialog", "creditsThaiSupport")->property("name").toString(), QStringLiteral("Jibrill"));
         QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
         QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
         QVERIFY(list);

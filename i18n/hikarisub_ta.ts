@@ -7449,6 +7449,10 @@ Failed to copy %2 fonts.</source>
         <translation>வடிவமைப்பு மற்றும் மேம்பாடு</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>மொழிபெயர்ப்பு</translation>
     </message>

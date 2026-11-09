@@ -7397,6 +7397,10 @@ Failed to copy %2 fonts.</source>
         <translation>디자인 및 개발</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>자동화 스크립트의 태국어 지원</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>번역</translation>
     </message>

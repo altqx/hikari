@@ -7397,6 +7397,10 @@ Failed to copy %2 fonts.</source>
         <translation>การออกแบบและการพัฒนา</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>การแปล</translation>
     </message>
