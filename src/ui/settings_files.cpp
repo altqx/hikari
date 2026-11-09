@@ -43,18 +43,6 @@ fs::path pathOf(const QString &path)
     return fs::path(path.toStdU16String());
 }
 
-std::vector<std::string_view> segments(std::string_view id)
-{
-    std::vector<std::string_view> out;
-    for (std::size_t start = 0;;) {
-        const auto dot = id.find('.', start);
-        out.push_back(id.substr(start, dot == std::string_view::npos ? dot : dot - start));
-        if (dot == std::string_view::npos)
-            return out;
-        start = dot + 1;
-    }
-}
-
 bool rememberedByTheApp(std::string_view id)
 {
     static const std::set<std::string_view> ids{
@@ -68,83 +56,6 @@ bool rememberedByTheApp(std::string_view id)
 bool chosenWorkspaceSetting(std::string_view id)
 {
     return id == "toolbar.actions" || id == "toolbar.alignment" || id == "program.tabTextMaxChars";
-}
-
-std::optional<SettingValue> fromToml(const toml::node &node)
-{
-    if (const auto *v = node.as_boolean())
-        return v->get();
-    if (const auto *v = node.as_integer())
-        return v->get();
-    if (const auto *v = node.as_floating_point())
-        return static_cast<std::int64_t>(std::llround(v->get()));
-    if (const auto *v = node.as_string())
-        return v->get();
-    if (const auto *array = node.as_array()) {
-        StringList out;
-        for (const auto &entry : *array) {
-            if (const auto *s = entry.as_string())
-                out.push_back(s->get());
-            else if (const auto value = fromToml(entry); value && !std::holds_alternative<StringList>(*value))
-                out.push_back(std::get<std::string>(application::convertSetting(*value, SettingType::String)));
-        }
-        return out;
-    }
-    return std::nullopt;
-}
-
-void putToml(toml::table &table, std::string_view key, const SettingValue &value)
-{
-    std::visit(
-        [&](const auto &v) {
-            using T = std::decay_t<decltype(v)>;
-            if constexpr (std::is_same_v<T, StringList>) {
-                toml::array array;
-                for (const auto &entry : v)
-                    array.push_back(entry);
-                table.insert_or_assign(key, std::move(array));
-            } else
-                table.insert_or_assign(key, v);
-        },
-        value);
-}
-
-toml::table *tomlParent(toml::table &root, std::string_view id, bool create)
-{
-    const auto parts = segments(id);
-    toml::table *table = &root;
-    for (std::size_t i = 0; i + 1 < parts.size(); ++i) {
-        auto *next = table->get(parts[i]);
-        if (!next || !next->is_table()) {
-            if (!create)
-                return nullptr;
-            table->insert_or_assign(parts[i], toml::table());
-            next = table->get(parts[i]);
-        }
-        table = next->as_table();
-    }
-    return table;
-}
-
-const toml::node *tomlNode(const toml::table &root, std::string_view id)
-{
-    auto *parent = tomlParent(const_cast<toml::table &>(root), id, false);
-    return parent ? parent->get(segments(id).back()) : nullptr;
-}
-
-void eraseToml(toml::table &root, std::string_view id)
-{
-    const auto parts = segments(id);
-    std::vector<toml::table *> chain{&root};
-    for (std::size_t i = 0; i + 1 < parts.size(); ++i) {
-        auto *next = chain.back()->get(parts[i]);
-        if (!next || !next->is_table())
-            return;
-        chain.push_back(next->as_table());
-    }
-    chain.back()->erase(parts.back());
-    for (std::size_t i = chain.size() - 1; i > 0 && chain[i]->empty(); --i)
-        chain[i - 1]->erase(parts[i - 1]);
 }
 
 QJsonValue toJson(const SettingValue &value)
@@ -190,7 +101,7 @@ std::optional<SettingValue> fromJson(const QJsonValue &value)
 
 QJsonValue jsonNode(const QJsonObject &root, std::string_view id)
 {
-    const auto parts = segments(id);
+    const auto parts = idSegments(id);
     QJsonObject object = root;
     for (std::size_t i = 0; i + 1 < parts.size(); ++i) {
         const QJsonValue next = object.value(qs(parts[i]));
@@ -223,7 +134,7 @@ void putJson(QJsonObject &object, std::span<const std::string_view> parts, const
 
 void putJson(QJsonObject &root, std::string_view id, const QJsonValue &value)
 {
-    const auto parts = segments(id);
+    const auto parts = idSegments(id);
     putJson(root, parts, value);
 }
 
@@ -1006,7 +917,7 @@ void SettingsFiles::put(const SettingDefinition &setting, const SettingValue &v)
     case Settings: {
         if (const int slot = tagButtonSlot(setting); slot >= 0) {
             auto *parent = tomlParent(m_settings, kTagButtonSlots, true);
-            const auto leaf = segments(kTagButtonSlots).back();
+            const auto leaf = idSegments(kTagButtonSlots).back();
             if (!parent->get(leaf) || !parent->get(leaf)->is_array())
                 parent->insert_or_assign(leaf, toml::array());
             auto &array = *parent->get(leaf)->as_array();
@@ -1016,7 +927,7 @@ void SettingsFiles::put(const SettingDefinition &setting, const SettingValue &v)
             break;
         }
         auto *parent = tomlParent(m_settings, setting.id, true);
-        const auto leaf = segments(setting.id).back();
+        const auto leaf = idSegments(setting.id).back();
         if (list && setting.id == "automation.dialogPresets")
             if (const auto rows = keyedRows(*list)) {
                 toml::table presets;
@@ -1063,7 +974,7 @@ void SettingsFiles::erase(const SettingDefinition &setting)
     case Settings:
         if (const int slot = tagButtonSlot(setting); slot >= 0) {
             auto *parent = tomlParent(m_settings, kTagButtonSlots, false);
-            const auto leaf = segments(kTagButtonSlots).back();
+            const auto leaf = idSegments(kTagButtonSlots).back();
             auto *node = parent ? parent->get(leaf) : nullptr;
             if (!node || !node->is_array())
                 break;

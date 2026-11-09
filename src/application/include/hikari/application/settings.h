@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
@@ -29,6 +30,8 @@ struct SettingDefinition {
     SettingDisposition disposition;
     bool legacyAudioFile;       // kept in AudioConfig.txt
     SettingValue defaultValue;
+    bool projectable = false;   // a Project may set it (ADR 0030)
+    bool widens = false;        // a Project's value applies only once its folder is trusted
 };
 
 // HikariSub legacy's settings first, then HikariSub's own.
@@ -36,6 +39,9 @@ std::span<const SettingDefinition> settingDefinitions();
 const SettingDefinition *findSetting(std::string_view id);
 const SettingDefinition *findLegacySetting(std::string_view legacyKey);
 std::string_view scopeName(SettingScope scope);
+
+// A trusted Project sets every projectable setting; an untrusted one only those that don't widen.
+bool projectMaySet(const SettingDefinition &setting, bool trusted);
 
 // Where a value is kept. read() returns the value converted to the setting's
 // type, or nothing when it was never stored.
@@ -55,6 +61,26 @@ public:
 
 private:
     std::map<std::string, SettingValue, std::less<>> m_values;
+};
+
+// Default < User < Project, per key. Writes go to the user's tier.
+class LayeredSettingsStorage final : public SettingsStorage {
+public:
+    explicit LayeredSettingsStorage(SettingsStorage &user) : m_user(user) {}
+
+    void setProject(std::shared_ptr<const SettingsStorage> project, bool trusted);
+    const SettingsStorage *project() const { return m_project.get(); }
+    bool trusted() const { return m_trusted; }
+    bool fromProject(const SettingDefinition &setting) const;
+
+    std::optional<SettingValue> read(const SettingDefinition &setting) const override;
+    void write(const SettingDefinition &setting, const SettingValue &value) override;
+    void remove(const SettingDefinition &setting) override;
+
+private:
+    SettingsStorage &m_user;
+    std::shared_ptr<const SettingsStorage> m_project;
+    bool m_trusted = false;
 };
 
 class Settings {
