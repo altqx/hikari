@@ -66,6 +66,8 @@ The frame tools are HA1's `video.*` operations ([AI4 #432](https://github.com/al
 | `chat-completions` | 2,048 | 1,048,576 (768 on the short side of a 16:9 frame) |
 | `gemini` | 1,536 | 2,359,296 (four 768 × 768 tiles) |
 
+The Gemini and Chat Completions rows are HikariSub's own caps, derived from each vendor's tiling rules. The vendors don't state them as limits.
+
 The agent sets the budget from the provider's wire. A caller whose provider isn't known, such as an external agent over MCP, gets the smallest of each.
 
 ## Documents
