@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes the AI channel's hikari-ai-update.json (ADR 0031): this build first, then the releases the channel already
-lists, with the runtimes they use and the versions src/ai-sidecar/channel.json blocks.
+lists, with the runtimes they use, and the versions and agent CLI limits src/ai-sidecar/channel.json names.
 
   make-ai-manifest.py --build <dir> --channel <channel.json> [--previous <hikari-ai-update.json>] --out <file>
       --uploads <file>
@@ -17,6 +17,7 @@ import sys
 
 PLATFORMS = ("linux-x64", "windows-x64")
 VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$")
+AGENTS = ("claude", "codex")
 RUNTIME = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+-[0-9a-f]{8}$")
 
 
@@ -30,6 +31,14 @@ def semver(version):
     numbers = tuple(int(part) for part in core.split("."))
     tail = tuple((0, int(p), "") if p.isdigit() else (1, 0, p) for p in pre.split(".")) if pre else None
     return numbers, tail is None, tail or ()
+
+
+def agent_limits(limits):
+    if not isinstance(limits, dict):
+        return False
+    minimum, broken = limits.get("minimum", "0.0.0"), limits.get("broken", [])
+    return isinstance(minimum, str) and bool(VERSION.match(minimum)) and isinstance(broken, list) \
+        and all(isinstance(v, str) and VERSION.match(v) for v in broken)
 
 
 def asset(directory, name):
@@ -61,6 +70,9 @@ def main():
     if not all(isinstance(v, str) and VERSION.match(v) for v in blocked):
         fail(f"{args.channel}: blocked must list versions")
     keep = channel.get("keep", 10)
+    agents = channel.get("agents", {})
+    if not isinstance(agents, dict) or not all(name in AGENTS and agent_limits(limits) for name, limits in agents.items()):
+        fail(f"{args.channel}: agents names claude or codex with a minimum version and broken versions")
 
     previous = {"runtimes": {}, "releases": []}
     if args.previous:
@@ -94,7 +106,8 @@ def main():
     for entry in releases[1:]:
         runtimes.setdefault(entry["runtime"], previous["runtimes"][entry["runtime"]])
 
-    manifest = {"schema": 1, "version": version, "runtimes": runtimes, "releases": releases, "blocked": blocked}
+    manifest = {"schema": 1, "version": version, "runtimes": runtimes, "releases": releases, "blocked": blocked,
+                "agents": agents}
     with open(args.out, "w", encoding="utf-8") as file:
         json.dump(manifest, file, indent=2)
         file.write("\n")

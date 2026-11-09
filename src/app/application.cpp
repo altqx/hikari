@@ -757,12 +757,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
         }});
-    m_ai = std::make_unique<AiFeatures>(
-        *m_settings, options.aiPorts ? std::move(*options.aiPorts)
-                                     : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
-                                                                options.appVersion.isEmpty()
-                                                                    ? QStringLiteral(HIKARI_VERSION)
-                                                                    : options.appVersion));
+    AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
+                                                : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
+                                                                           options.appVersion.isEmpty()
+                                                                               ? QStringLiteral(HIKARI_VERSION)
+                                                                               : options.appVersion);
+    aiPorts.reportRollback = [this](const QString &version, const QString &reason) {
+        if (m_analytics)
+            m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
+        return m_crashReports && m_crashReports->aiComponentFailed(version, reason);
+    };
+    m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
     m_aiSettings = std::make_unique<AiSettings>(*m_ai);
@@ -803,6 +808,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
+    m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
     m_presence->setMode(m_workspaceLayout->preset());

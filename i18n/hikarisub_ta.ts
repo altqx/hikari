@@ -10306,6 +10306,10 @@ Failed to copy %2 fonts.</source>
         <translation>AI கூறைப் பதிவிறக்க முடியவில்லை</translation>
     </message>
     <message>
+        <source>The update list failed its signature check</source>
+        <translation>புதுப்பிப்புப் பட்டியல் கையொப்பச் சரிபார்ப்பில் தோல்வியடைந்தது</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>பதிவிறக்கிய AI கூறு சேதமடைந்துள்ளது</translation>
     </message>
@@ -10316,6 +10320,160 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Test failed</source>
         <translation>சோதனை தோல்வியடைந்தது</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>புதுப்பித்த நிலையில் · இப்போதுதான் சரிபார்க்கப்பட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>புதுப்பித்த நிலையில் · %n நிமிடத்துக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+            <numerusform>புதுப்பித்த நிலையில் · %n நிமிடங்களுக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>புதுப்பித்த நிலையில் · %n மணிநேரத்துக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+            <numerusform>புதுப்பித்த நிலையில் · %n மணிநேரங்களுக்கு முன் சரிபார்க்கப்பட்டது</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>புதுப்பித்த நிலையில் · %1 அன்று சரிபார்க்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>சரிபார்க்கிறது…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>%1 பதிவிறக்குகிறது · %3 MB-இல் %2</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>சரிபார்க்க முடியவில்லை: இணைப்பு இல்லை</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 தயார் · AI 2 நிமிடங்கள் பயன்படுத்தப்படாதபோது தொடங்கும்</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>%1 கிடைக்கிறது · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>இந்த HikariSub இயக்கக்கூடிய புதியது</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>புதுப்பித்த நிலையில்</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>கடைசியாக %1 அன்று சரிபார்க்கப்பட்டது. HikariSub ஒரு மணிநேரத்தில் மீண்டும் முயலும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub ஒரு மணிநேரத்தில் மீண்டும் முயலும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub %1-ஐ வைத்துக்கொள்கிறது, அந்தப் பட்டியலிலிருந்து எதையும் நிறுவாது.</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>புதிய AI அம்சங்களைப் பெற HikariSub-ஐப் புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>Claude நிறுவி</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>Codex நிறுவி</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>%1 இயங்குகிறது. புதிய அமர்வுகள் புதிய பதிப்பைப் பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why:</source>
+        <translation>%2-க்குப் பிறகும் %1. ஏன் என்று பார்க்க அதை முனையத்தில் இயக்கவும்:</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why:</source>
+        <translation>%1 முடியவில்லை. ஏன் என்று பார்க்க அதை முனையத்தில் இயக்கவும்:</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>முகவர் பலகத்தில் ஒரு %1 அமர்வு இயங்குகிறது. அது முடியும் வரை இப்போது புதுப்பி காத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>%1 மூலம் நிறுவப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>%1 மூலம் நிறுவப்பட்டதால் HikariSub அதைப் புதுப்பிக்காது. இதை முனையத்தில் இயக்கவும்:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>%1 மூலம் நிறுவப்பட்டது; நிறுவிய முறையிலேயே புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>தெரியாத முறையில் நிறுவப்பட்டது; நிறுவிய முறையிலேயே புதுப்பிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>%1-இல் HikariSub முகவரைச் செயலிழக்கச் செய்யும் பிழை உள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>%1, HikariSub ஆதரிக்கும் மிகப் பழைய பதிப்பை (%2) விடப் பழையது.</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · %2 வெளிவந்துள்ளது · %3 மூலம் நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · %2 வெளிவந்துள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · %2 மூலம் நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · தெரியாத முறையில் நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>புதுப்பிக்கிறது…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>புதுப்பிப்பு பலிக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>புதுப்பிப்பு கிடைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>ஆதரிக்கப்படாத பதிப்பு</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>பிழை உள்ளதாக அறியப்பட்ட பதிப்பு</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>இப்போது புதுப்பி</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -10584,10 +10742,6 @@ Failed to copy %2 fonts.</source>
         <translation>PATH-இல் கிடைக்கவில்லை.</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>PATH-இல் கிடைத்தது · %1.</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>PATH-இல் கிடைத்தது.</translation>
     </message>
@@ -10682,6 +10836,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Try again</source>
         <translation>மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>AI கூறுகள்</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>புதிதாக என்ன</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>AI கூறு %1 வேலை செய்வதை நிறுத்தியதால் HikariSub %2-க்குத் திரும்பியது, %1-ஐ மீண்டும் நிறுவாது.</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>செயலிழப்பு அறிக்கை அனுப்பப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>நிராகரி</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>AI கூறு</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>இயங்குவது</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>வழங்குநர் நூலகங்கள்</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>இப்போது சரிபார்</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>AI கூறுகளைத் தானாகப் புதுப்பி</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>உங்கள் நிர்வாகி இந்தக் கணினியில் தானியங்கு புதுப்பிப்புகளை முடக்கியுள்ளார்.</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>AI இயக்கத்தில் இருக்கும்போது HikariSub ஒவ்வொரு மணிநேரமும் சரிபார்க்கிறது. புதிய பதிப்பு பின்னணியில் பதிவிறங்கி, AI 2 நிமிடங்கள் பயன்படுத்தப்படாதபோது தொடங்கும். அது தொடங்காவிட்டால் HikariSub முந்தைய பதிப்புக்குத் திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub இன்னும் ஒவ்வொரு மணிநேரமும் சரிபார்க்கிறது, இப்போது புதுப்பி என்பதை அழுத்தும்போது மட்டும் பதிவிறக்குகிறது.</translation>
     </message>
     <message>
         <source>Use prompt caching</source>

@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace hikari::backends::ai {
+class AgentUpdate;
 class AiSidecarUpdater;
 struct SignInFailure;
 struct SignInProgress;
@@ -48,6 +49,14 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QVariantMap codex READ codex NOTIFY codexChanged)
     /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
     Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
+    /// The AI components section: {present, version, runtime, anthropic, openai, google, available, availableBytes,
+    /// staged, newerNeedsApp, checkedAt, state, received, total, error, policyOff, rollback}. state is "", "checking"
+    /// or "downloading"; error is a download error's id; rollback is {version, to, reportSent} or empty.
+    Q_PROPERTY(QVariantMap components READ components NOTIFY componentsChanged)
+    /// "claude" and "codex" to {found, path, version, latest, badge, method, minimum, canUpdate, command, session,
+    /// state, outcome, lastLine}. badge is "", "current", "update", "unsupported" or "broken"; state "" or "updating";
+    /// outcome "", "updated", "unchanged", "failed", "timedOut" or "cancelled".
+    Q_PROPERTY(QVariantMap agents READ agents NOTIFY agentsChanged)
 
 public:
     explicit AiSettings(AiFeatures &features, QObject *parent = nullptr);
@@ -61,6 +70,8 @@ public:
     QVariantMap download() const;
     QVariantMap codex() const;
     bool sandboxed() const;
+    QVariantMap components() const;
+    QVariantMap agents() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
@@ -90,12 +101,26 @@ public:
     /// Deletes a signed-in provider's key; it stays, keyless, until the user signs in again or pastes a key.
     Q_INVOKABLE void signOutProvider(const QString &providerId);
     Q_INVOKABLE void openWhatIsSent() const;
+    Q_INVOKABLE void checkComponents();
+    /// Downloads the newest AI component, which starts at the next idle moment.
+    Q_INVOKABLE void updateComponents();
+    Q_INVOKABLE void cancelComponents();
+    Q_INVOKABLE void dismissComponentNotice();
+    Q_INVOKABLE void openWhatsNew() const;
+    /// Settings › AI opened: finds claude and codex, and the latest version each one's source offers.
+    Q_INVOKABLE void checkAgents();
+    /// Runs the agent's official update, unless a session of it is running.
+    Q_INVOKABLE void updateAgent(const QString &agent);
+    Q_INVOKABLE void cancelAgentUpdate(const QString &agent);
+    /// Re-reads whether each agent has a session, for Update now.
+    Q_INVOKABLE void refreshAgentSessions();
     Q_INVOKABLE void openGeminiKeys() const;
     Q_INVOKABLE void openOpenRouterKeys() const;
 
     static QUrl whatIsSentUrl() { return QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent#ai")); }
     static QUrl geminiKeysUrl() { return QUrl(QStringLiteral("https://aistudio.google.com/apikey")); }
     static QUrl openRouterKeysUrl() { return QUrl(QStringLiteral("https://openrouter.ai/settings/keys")); }
+    static QUrl whatsNewUrl() { return QUrl(QStringLiteral("https://github.com/altqx/hikari/releases/tag/ai-channel")); }
 
 signals:
     void switched();
@@ -103,6 +128,8 @@ signals:
     void draftChanged();
     void downloadChanged();
     void codexChanged();
+    void componentsChanged();
+    void agentsChanged();
     void draftSaved(const QString &providerId);
 
 private:
@@ -123,6 +150,8 @@ private:
     void reset();
     void signInProgress(const backends::ai::SignInProgress &progress);
     void setCodexFailure(const backends::ai::SignInFailure &failure);
+    void watchUpdater();
+    QVariantMap agentRow(const QString &name) const;
 
     AiFeatures &m_features;
     std::map<std::string, Status, std::less<>> m_status;
@@ -155,6 +184,13 @@ private:
         QString host;
     };
     Codex m_codex;
+    QPointer<backends::ai::AiSidecarUpdater> m_watched;
+    QString m_componentState;
+    qint64 m_componentReceived = 0;
+    qint64 m_componentTotal = 0;
+    QString m_componentError;
+    struct Agent;
+    std::map<QString, std::unique_ptr<Agent>> m_agents;
     QUrl m_signInPage;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };

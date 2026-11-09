@@ -90,6 +90,7 @@ public:
     void setNotify(Notify notify) { m_notify = std::move(notify); }
     void killAll();
     std::size_t running() const { return m_running.size(); }
+    std::size_t running(const std::string &agent) const;
 
     static constexpr std::size_t kMaxRunning = 8;
 

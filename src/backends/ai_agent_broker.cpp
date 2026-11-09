@@ -258,6 +258,7 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
 
 struct AgentBroker::Running {
     std::uint64_t id = 0;
+    std::string agent;
     std::unique_ptr<QProcess> process;
     std::unique_ptr<sandbox::Launcher> launcher;
     std::unique_ptr<AgentGuard> guard;
@@ -311,6 +312,12 @@ AgentBroker::AgentBroker(QObject *parent) : QObject(parent) {}
 AgentBroker::~AgentBroker()
 {
     killAll();
+}
+
+std::size_t AgentBroker::running(const std::string &agent) const
+{
+    return static_cast<std::size_t>(
+        std::ranges::count_if(m_running, [&](const auto &entry) { return entry.second->agent == agent; }));
 }
 
 void AgentBroker::add(const std::string &agent, AgentSpec spec)
@@ -418,6 +425,7 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
 
     auto running = std::make_unique<Running>();
     running->id = id;
+    running->agent = spec->first;
     running->process = std::make_unique<QProcess>();
     running->launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
     if (spec->second.guard)

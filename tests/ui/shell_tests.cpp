@@ -4,6 +4,7 @@
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
@@ -91,6 +92,7 @@
 #include <QJsonObject>
 #include <QGuiApplication>
 #include <QSignalSpy>
+#include <QHostAddress>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -98,6 +100,7 @@
 #include <QQmlProperty>
 #include <QRegularExpression>
 #include <QScopeGuard>
+#include <QTcpServer>
 #include <QTemporaryDir>
 #include <QTranslator>
 #include <QQuickItem>
@@ -16656,6 +16659,7 @@ private slots:
               {"automation.fillLastAnswers", "Fill in my last answers"}}},
             {"settingsPageAi",
              {{"ai.off", "Turn off all AI features"},
+              {"ai.autoUpdate", "Update AI components automatically"},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
@@ -16781,6 +16785,9 @@ private slots:
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, {}, {}};
+        ports.findAgent = [](const QString &, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
+            done(std::nullopt);
+        };
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("ai-page/hikari.ini"));
         options.playbackAudio = false;
@@ -16849,7 +16856,7 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         showSettingsPage("ai");
         QTRY_VERIFY(dialogItem("settingsDialog", "aiExternalAgents")->isVisible());
-        QCOMPARE(dialogItem("settingsDialog", "aiCodexFound")->property("text").toString(), QStringLiteral("Not found on PATH."));
+        QCOMPARE(dialogItem("settingsDialog", "aiAgentLine_codex")->property("text").toString(), QStringLiteral("Not found on PATH."));
         QVERIFY(!dialogItem("settingsDialog", "aiCodexImport")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiCodexSignIn"), "click"));
         QTRY_VERIFY(dialogItem("settingsDialog", "aiCodexSignedIn")->isVisible());
@@ -16910,6 +16917,165 @@ private slots:
                      QStringLiteral("No key"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    void settingsAiAgentsAndComponentsOfferTheirUpdates()
+    {
+        namespace ai = application::ai;
+        namespace bai = backends::ai;
+        class Keys final : public ai::KeyStore {
+        public:
+            void read(const std::string &, std::function<void(ai::KeyResult)> done) override
+            {
+                done(ai::KeyResult(ai::KeyError::NotFound));
+            }
+            void write(const std::string &, const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+            {
+                done(std::nullopt);
+            }
+            void remove(const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+            {
+                done(std::nullopt);
+            }
+        };
+        class Configs final : public ai::ConfigStore {
+        public:
+            ai::Config load() override { return {}; }
+            bool save(const ai::Config &) override { return true; }
+        };
+        const QString store = dir.filePath(QStringLiteral("ai-shots/ai/sidecar"));
+        const auto put = [](const QString &path, const QByteArray &bytes) {
+            QDir().mkpath(QFileInfo(path).absolutePath());
+            QFile file(path);
+            return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size();
+        };
+        QVERIFY(put(store + QStringLiteral("/runtime/1.3.2/") + bai::runtimeExecutableName(), "#!/bin/sh\n"));
+        QVERIFY(put(store + QStringLiteral("/bundle/1.1.0/") + QLatin1String(bai::kBundleEntry), "//\n"));
+        QVERIFY(put(store + QStringLiteral("/bundle/1.1.0/release.json"),
+                    QJsonDocument(QJsonObject{{QStringLiteral("runtime"), QStringLiteral("1.3.2")},
+                                              {QStringLiteral("packages"),
+                                               QJsonObject{{QStringLiteral("bun"), QStringLiteral("1.3.2")},
+                                                           {QStringLiteral("@anthropic-ai/sdk"), QStringLiteral("0.70.1")},
+                                                           {QStringLiteral("openai"), QStringLiteral("6.9.0")},
+                                                           {QStringLiteral("@google/genai"), QStringLiteral("1.30.0")}}}})
+                        .toJson()));
+        QVERIFY(put(store + QStringLiteral("/state.json"),
+                    QJsonDocument(QJsonObject{
+                                      {QStringLiteral("current"), QStringLiteral("1.1.0")},
+                                      {QStringLiteral("available"), QStringLiteral("1.2.0")},
+                                      {QStringLiteral("availableBytes"), 38'400'000},
+                                      {QStringLiteral("checked"),
+                                       QDateTime::currentDateTimeUtc().addSecs(-2 * 60 * 60).toString(Qt::ISODate)},
+                                      {QStringLiteral("agents"),
+                                       QJsonObject{{QStringLiteral("codex"),
+                                                    QJsonObject{{QStringLiteral("minimum"), QStringLiteral("0.60.0")}}}}}})
+                        .toJson()));
+        const QString home = QDir::homePath();
+        const std::map<QString, bai::AgentCli> clis{
+            {QStringLiteral("claude"),
+             {QStringLiteral("claude"), home + QStringLiteral("/.local/bin/claude"), {}, QStringLiteral("2.1.4")}},
+            {QStringLiteral("codex"),
+             {QStringLiteral("codex"), home + QStringLiteral("/.npm-global/bin/codex"), {}, QStringLiteral("0.58.0")}}};
+        app::AiFeatures::Ports ports;
+        ports.keyStore = [] { return std::make_unique<Keys>(); };
+        ports.configStore = [] { return std::make_unique<Configs>(); };
+        ports.sidecarHost = [this](const bai::SidecarInstall &) {
+            bai::AiSidecarHost::Options o;
+            o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
+            o.arguments = {QStringLiteral("--mode"), QStringLiteral("ok")};
+            o.workingDirectory = dir.filePath(QStringLiteral("ai-shots/ai/work"));
+            return std::make_unique<bai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
+        };
+        QTcpServer silentChannel;
+        QVERIFY(silentChannel.listen(QHostAddress::LocalHost));
+        ports.sidecarUpdater = [store, port = silentChannel.serverPort()] {
+            return std::make_unique<bai::AiSidecarUpdater>(
+                store, bai::SidecarCompat{1, api::kApiVersion},
+                bai::SidecarSource::local(QUrl(QStringLiteral("http://127.0.0.1:%1/").arg(port))));
+        };
+        ports.findAgent = [clis](const QString &agent, std::function<void(std::optional<bai::AgentCli>)> done) {
+            done(clis.at(agent));
+        };
+        ports.agentInstall = [](const bai::AgentCli &cli) {
+            if (cli.agent == QLatin1String("claude"))
+                return bai::AgentInstall{.method = bai::AgentInstallMethod::Native, .program = cli.path,
+                                         .arguments = {QStringLiteral("update")},
+                                         .manualCommand = QStringLiteral("claude update"),
+                                         .latest = bai::AgentLatestSource::ClaudeChannel};
+            return bai::AgentInstall{.method = bai::AgentInstallMethod::Npm, .program = QStringLiteral("npm"),
+                                     .arguments = {QStringLiteral("install"), QStringLiteral("-g"),
+                                                   QStringLiteral("@openai/codex@latest")},
+                                     .manualCommand = QStringLiteral("npm install -g @openai/codex@latest"),
+                                     .package = QStringLiteral("@openai/codex")};
+        };
+        ports.agentLatest = [](const bai::AgentInstall &install, std::function<void(QString)> done) {
+            done(install.method == bai::AgentInstallMethod::Native ? QStringLiteral("2.2.0") : QStringLiteral("0.61.0"));
+        };
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("ai-shots/hikari.ini"));
+        options.playbackAudio = false;
+        options.aiPorts = std::move(ports);
+        restartWith(options);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(window->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        showSettingsPage("ai");
+        auto *page = dialogItem("settingsDialog", "settingsPageAi");
+        QTRY_VERIFY(page->isVisible());
+        const auto shown = [&](const char *name) {
+            auto *item = dialogItem("settingsDialog", name);
+            return item && item->isVisible();
+        };
+        const auto text = [&](const char *name) {
+            auto *item = dialogItem("settingsDialog", name);
+            return item ? item->property("text").toString() : QString();
+        };
+        QTRY_COMPARE(text("aiAgentBadge_claude"), QStringLiteral("Update available"));
+        QCOMPARE(text("aiAgentBadge_codex"), QStringLiteral("Unsupported version"));
+        QVERIFY(shown("aiAgentUpdate_claude"));
+        QVERIFY(shown("aiAgentUpdate_codex"));
+        QVERIFY(!shown("aiAgentCommand_claude"));
+        QTRY_VERIFY(text("aiComponentStatus").startsWith(QStringLiteral("1.2.0 is available")));
+        QVERIFY(shown("aiComponentUpdate"));
+
+        const QString out = qEnvironmentVariable("HIKARI_SETTINGS_SHOT_DIR");
+        if (out.isEmpty()) {
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!window->isVisible());
+            return;
+        }
+        QVERIFY(QDir().mkpath(out));
+        auto *flick = page->property("contentItem").value<QQuickItem *>();
+        QVERIFY(flick);
+        const auto scrollTo = [&](const char *name) {
+            auto *item = dialogItem("settingsDialog", name);
+            QVERIFY2(item, name);
+            flick->setProperty("contentY", 0);
+            const qreal y = item->mapToItem(flick->property("contentItem").value<QQuickItem *>(), QPointF()).y();
+            flick->setProperty("contentY",
+                               std::clamp(y - 12, 0.0, flick->property("contentHeight").toReal() - flick->height()));
+        };
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            for (const char *section : {"aiAgent_claude", "aiComponents"}) {
+                scrollTo(section);
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(
+                    out + QStringLiteral("/ai24b-%1-%2.png").arg(QString::fromLatin1(section).mid(2).toLower(), code)));
+            }
+        }
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!window->isVisible());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()

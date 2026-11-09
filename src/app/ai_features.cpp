@@ -121,7 +121,18 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                 broker.add("codex", std::move(*spec));
     };
     ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
-    ports.findCodex = backends::ai::findCodexCli;
+    ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
+        backends::ai::probeAgentCli(agent, std::move(done));
+    };
+    ports.agentInstall = [](const backends::ai::AgentCli &cli) {
+        return backends::ai::detectAgentInstall(cli.agent, cli.path, cli.realPath, backends::ai::currentAgentHost());
+    };
+    ports.agentLatest = [ai, latest = std::shared_ptr<backends::ai::AgentLatestVersions>()](
+                            const backends::ai::AgentInstall &install, std::function<void(QString)> done) mutable {
+        if (!latest)
+            latest = std::make_shared<backends::ai::AgentLatestVersions>(ai + QStringLiteral("/agent-versions.json"));
+        latest->latest(install, backends::ai::claudeUpdateChannel(QDir::homePath()), std::move(done));
+    };
     ports.codexAuthPath = QDir::homePath() + QStringLiteral("/.codex/auth.json");
     return ports;
 }
@@ -336,17 +347,17 @@ void AiFeatures::watchHost(backends::ai::AiSidecarHost *host, const QString &ver
     });
     if (m_ports.localSidecar)
         return;
-    connect(host, &AiSidecarHost::refused, this, [this, version](const QString &reason) { failed(version, reason); });
-    connect(host, &AiSidecarHost::lost, this, [this, version](const QString &reason) {
+    connect(host, &AiSidecarHost::refused, this, [this, version] { failed(version, QStringLiteral("initialize")); });
+    connect(host, &AiSidecarHost::lost, this, [this, version] {
         if (!m_live->hostReady)
-            return failed(version, reason);
+            return failed(version, QStringLiteral("initialize"));
         m_live->hostReady = false;
         const qint64 now = m_live->clock.elapsed();
         m_live->crashes.push_back(now);
         while (now - m_live->crashes.front() > m_ports.timing.crashWindowMs)
             m_live->crashes.pop_front();
         if (m_live->crashes.size() >= 2)
-            failed(version, reason);
+            failed(version, QStringLiteral("crashed"));
     });
 }
 
@@ -357,7 +368,11 @@ void AiFeatures::failed(const QString &version, const QString &reason)
     if (!current || current->version != version || updater->previous().isEmpty())
         return;
     updater->reject(version);
+    const auto now = updater->current();
+    const QString to = now ? now->version : QString();
     replaceHost();
+    const bool reported = m_ports.reportRollback && m_ports.reportRollback(version, reason);
+    updater->setRollback(backends::ai::SidecarRollback{.version = version, .to = to, .reason = reason, .reportSent = reported});
     emit rolledBack(version, reason);
     emit componentsChanged();
 }
@@ -406,6 +421,26 @@ QString AiFeatures::sidecarVersion() const
         return QString::fromStdString(m_live->host->info().version);
     const auto install = runnable();
     return install ? install->version : QString();
+}
+
+QJsonObject AiFeatures::versionProperties() const
+{
+    const auto install = runnable();
+    if (!m_live || !install)
+        return {};
+    QJsonObject properties{{QStringLiteral("ai_component_version"), sidecarVersion()}};
+    for (const auto &[package, property] : {std::pair{"bun", "ai_runtime_version"},
+                                            std::pair{"@anthropic-ai/sdk", "ai_anthropic_version"},
+                                            std::pair{"openai", "ai_openai_version"},
+                                            std::pair{"@google/genai", "ai_google_version"}})
+        if (const auto it = install->packages.find(QLatin1String(package)); it != install->packages.end())
+            properties.insert(QLatin1String(property), it->second);
+    return properties;
+}
+
+std::size_t AiFeatures::agentSessions(const std::string &agent) const
+{
+    return m_live && m_live->agents ? m_live->agents->running(agent) : 0;
 }
 
 backends::ai::AiSignIn *AiFeatures::signIn() const
