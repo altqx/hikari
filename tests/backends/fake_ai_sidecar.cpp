@@ -8,8 +8,10 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -215,6 +217,24 @@ int main(int argc, char **argv)
                                            {"providerState", Json::object({{"type", "providerState"},
                                                                            {"wire", "gemini"},
                                                                            {"json", "[]"}})}}));
+            } else if (modelId == "cites-spans") {
+                const auto cited = [](int index, std::optional<std::pair<int, int>> span) {
+                    Json c = Json::object({{"index", index}, {"url", "https://example.org/" + std::to_string(index)},
+                                           {"title", std::to_string(index)}});
+                    if (span) {
+                        c["start"] = span->first;
+                        c["end"] = span->second;
+                    }
+                    return c;
+                };
+                respond(*id, Json::object({{"reason", "end"}, {"text", "ร้องโดย Aimer 🎤 [1] กับ LiSA [2]."},
+                                           {"toolCalls", Json::array()},
+                                           {"citations", Json::array({cited(1, std::pair(8, 16)),
+                                                                      cited(2, std::pair(25, 29)),
+                                                                      cited(3, std::pair(30, 99)),
+                                                                      cited(4, std::pair(15, 16)),
+                                                                      cited(5, std::pair(4, 2)),
+                                                                      cited(6, std::nullopt)})}}));
             } else {
                 const Json *stream = arg.find("stream");
                 send(Json::object({{"jsonrpc", "2.0"}, {"method", "session/update"},
