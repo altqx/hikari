@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="packaging/linux/icons/hicolor/128x128/apps/hikarisub.png" width="96" alt="">
+  <img src="packaging/linux/icons/hicolor/scalable/apps/hikarisub.svg" width="96" alt="">
 </p>
 
 <h1 align="center">HikariSub</h1>
