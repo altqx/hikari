@@ -14,6 +14,7 @@ A native version of arch1t3cht's Note Browser 1.3.6, whose notes live in the sub
 - Other properties and unchanged notes keep their bytes. A `Hikari QC <n>` key whose value isn't a note is left alone, and its number is skipped.
 - Why Script Info: Aegisub drops an unknown `[Section]` and unknown Project Garbage keys, and expires extradata no line uses; it keeps unknown Script Info keys in order. libass ignores unknown Script Info keys. See the addendum for the source references.
 - Each change is one undo step: Add QC note, Edit QC note, Delete QC note, Mark QC note done, Mark QC notes not done, Delete QC notes, Import QC notes. Effect and Text are never touched.
+- Only ASS and SSA files can keep notes. With an SRT or another format open, the panel says "Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes." Add, import and paste are disabled there, and Add QC note opens the panel to show that message ([#808](https://github.com/altqx/hikari/issues/808)).
 - Shift times and the postprocessor don't move notes. Export as writes no notes to SRT or the other formats without Script Info; SSA files keep them.
 
 ## The list

@@ -75,6 +75,11 @@ QVariantMap refused(const QString &message)
     return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), message}};
 }
 
+QVariantMap notListed(const QString &id)
+{
+    return refused(QCoreApplication::translate("HikariSub.Plugins", "“%1” isn’t in the marketplace for this HikariSub.").arg(id));
+}
+
 QSize fitted(QSize natural, QSize box, bool scalable)
 {
     if (scalable)
@@ -357,6 +362,7 @@ void PluginMarketplace::indexFinished()
     revoke();
     rebuild();
     queueUpdates();
+    followLink();
 }
 
 void PluginMarketplace::revoke()
@@ -446,6 +452,32 @@ void PluginMarketplace::fail(const QString &problem)
     m_status = QStringLiteral("failed");
     m_problem = problem;
     emit changed();
+    if (!std::exchange(m_link, QString()).isEmpty())
+        emit reviewed(refused(problem));
+}
+
+void PluginMarketplace::follow(const QString &id)
+{
+    if (!available()) {
+        emit reviewed(notListed(id));
+        return;
+    }
+    m_link = id;
+    refresh();
+}
+
+void PluginMarketplace::followLink()
+{
+    const QString id = std::exchange(m_link, QString());
+    if (id.isEmpty())
+        return;
+    const plugins::Listing *listing = m_index->find(id.toStdString());
+    const plugins::ListedVersion *runnable = listing ? listing->newest(api::kApiVersion) : nullptr;
+    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const auto installed = registry.find(id.toStdString());
+    if (runnable && installed != registry.end() && plugins::compareVersions(runnable->version, installed->second.version) <= 0)
+        return;
+    download(id);
 }
 
 void PluginMarketplace::rebuild()
@@ -574,7 +606,7 @@ void PluginMarketplace::offer(const QString &id, const QString &version, bool al
             if (text(candidate.version) == version && !candidate.revoked && candidate.api <= api::kApiVersion)
                 listed = &candidate;
     if (!listed) {
-        emit reviewed(refused(QCoreApplication::translate("HikariSub.Plugins", "“%1” isn’t in the marketplace for this HikariSub.").arg(id)));
+        emit reviewed(notListed(id));
         return;
     }
     const QUrl url(text(listed->url));
