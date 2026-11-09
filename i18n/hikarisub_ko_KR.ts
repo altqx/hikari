@@ -10943,6 +10943,18 @@ Failed to copy %2 fonts.</source>
         <translation>플러그인 설치</translation>
     </message>
     <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>플러그인 업데이트가 꺼져 있어 “%1”을(를) 설치할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>이 링크는 마켓플레이스 웹사이트에서 왔습니다. HikariSub는 자체 서명된 목록에서 플러그인을 찾으므로 먼저 마켓플레이스를 확인해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>플러그인 업데이트 켜기</translation>
+    </message>
+    <message>
         <source>Update plugin</source>
         <translation>플러그인 업데이트</translation>
     </message>
@@ -11261,6 +11273,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Permissions</source>
         <translation>권한</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub는 이 플러그인을 이 권한 안으로 제한하지만, 이 시스템에서는 샌드박스에서 실행되지 않습니다.</translation>
     </message>
     <message>
         <source>Remembered folders</source>
