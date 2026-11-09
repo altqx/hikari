@@ -17,6 +17,20 @@ ScrollView {
     property string editing: ""
     property var stagedRoles: ({})
     readonly property var codex: ai ? ai.codex : ({})
+    readonly property bool webSearchOn: dialog.values["ai.webSearch"] === true
+    readonly property string stagedService: dialog.values["ai.searchService"] ?? ""
+    readonly property var search: ai ? ai.search : ({})
+    readonly property bool searchKeySaved: search.service === stagedService && search.hasKey === true
+    readonly property string searchVia: webSearchOn && stagedService !== "" ? serviceName(stagedService) : ""
+    property bool replacingSearchKey: false
+    property string testedSearchKey: ""
+    readonly property var searchServices: [
+        {id: "", name: qsTr("None"), menuText: qsTr("None")},
+        {id: "brave", name: "Brave Search", menuText: qsTr("Brave Search (search only)")},
+        {id: "tavily", name: "Tavily", menuText: "Tavily"},
+        {id: "exa", name: "Exa", menuText: "Exa"},
+        {id: "firecrawl", name: "Firecrawl", menuText: "Firecrawl"}
+    ]
     property bool codexBrowser: false
     readonly property string codeFontFamily: {
         const marked = ["Cascadia Mono", "Consolas", "Menlo", "JetBrains Mono", "Noto Sans Mono"]
@@ -43,8 +57,65 @@ ScrollView {
     function reload() {
         stagedRoles = ai ? Object.assign({}, ai.roles) : {}
         closeForm()
-        if (ai && ai.on)
+        if (ai && ai.on) {
             ai.checkCodex()
+            ai.checkSearchKey(stagedService)
+        }
+    }
+    onStagedServiceChanged: {
+        replacingSearchKey = false
+        testedSearchKey = ""
+        searchKeyField.clear()
+        if (ai && ai.on)
+            ai.checkSearchKey(stagedService)
+    }
+    function serviceName(id) {
+        return searchServices.find(s => s.id === id)?.name ?? id
+    }
+    function searchHow(row) {
+        if (row.searchesNatively)
+            return row.preset === "gemini" ? qsTr("Google Search, and reads pages") : qsTr("Its own search, and reads pages")
+        return searchKeySaved ? serviceName(stagedService) : qsTr("Needs a search service")
+    }
+    function searchStatus() {
+        const name = serviceName(search.service ?? "")
+        switch (search.state) {
+        case "checking": return ""
+        case "saving": return qsTr("Saving…")
+        case "testing": return qsTr("Testing…")
+        case "ok": return qsTr("Connected")
+        case "failed":
+            switch (search.error) {
+            case "unauthorized": return qsTr("Key rejected (%1)").arg(search.httpStatus)
+            case "rateLimited": return qsTr("Searches used up (%1)").arg(search.httpStatus)
+            case "noProvider": return qsTr("Add a provider to test the key")
+            case "network": return qsTr("Can’t reach %1").arg(name)
+            case "server": return qsTr("Search service error (%1)").arg(search.httpStatus)
+            }
+            return failureText(search.error, search.httpStatus)
+        }
+        return qsTr("Not tested")
+    }
+    function searchNote() {
+        const name = serviceName(stagedService)
+        if (!searchKeySaved || replacingSearchKey)
+            return qsTr("Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.").arg(name)
+        if (search.state === "failed" && search.error === "unauthorized")
+            return qsTr("%1 refused the key. Paste a new one from your %1 dashboard.").arg(name)
+        if (search.state === "failed" && search.error === "rateLimited")
+            return qsTr("Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.").arg(name)
+        return qsTr("The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.").arg(name)
+    }
+    function askRemoveSearchKey() {
+        const name = serviceName(stagedService)
+        dialog.ask({
+            title: qsTr("Remove key"),
+            text: qsTr("Remove the %1 key?").arg(name),
+            detail: qsTr("It is deleted from the keychain. Providers without their own search stop searching until you add a key."),
+            severity: "warning",
+            choices: [{ id: "remove", text: qsTr("Remove"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, answer => { if (answer === "remove") page.ai.removeSearchKey(page.stagedService) })
     }
     function signInCodex(browser) {
         codexBrowser = browser
@@ -164,8 +235,17 @@ ScrollView {
                 contentItem.wrapMode = Text.Wrap
             refresh()
         }
+        property bool asksFirst: false
+        signal askedOn()
         Connections { target: page.dialog; function onReloaded() { check.refresh() } }
-        onToggled: page.dialog.put(setting, checked)
+        onToggled: {
+            if (asksFirst && checked) {
+                checked = false
+                askedOn()
+            } else {
+                page.dialog.put(setting, checked)
+            }
+        }
     }
     component Note: Label {
         color: Theme.muted
@@ -183,6 +263,61 @@ ScrollView {
             to: 360
             duration: 1200
             loops: Animation.Infinite
+        }
+    }
+    component DownloadNotice: Rectangle {
+        id: notice
+        property string title
+        property string text
+        default property alias actions: noticeActions.data
+        readonly property var download: page.ai ? page.ai.download : ({})
+        color: Theme.raised
+        border.color: Theme.line
+        implicitHeight: noticeRow.implicitHeight + 16
+        Layout.fillWidth: true
+        Rectangle { width: 3; height: parent.height; color: Theme.accent }
+        RowLayout {
+            id: noticeRow
+            x: 12
+            y: 8
+            width: parent.width - 22
+            spacing: 8
+            Icon { iconRole: "notice-info"; Layout.alignment: Qt.AlignTop }
+            ColumnLayout {
+                spacing: 4
+                Layout.fillWidth: true
+                Label {
+                    text: notice.title
+                    font.bold: true
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                Label {
+                    text: notice.text
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                RowLayout {
+                    visible: !!notice.download.active
+                    spacing: 8
+                    ProgressBar {
+                        objectName: notice.objectName + "Progress"
+                        from: 0
+                        to: Math.max(1, notice.download.size || 0)
+                        value: notice.download.received || 0
+                        Layout.preferredWidth: 180
+                    }
+                    Label {
+                        text: qsTr("%1 of %2 MB").arg(Math.round((notice.download.received || 0) / 1000000), page.megabytes(notice.download.size || 0))
+                        color: Theme.muted
+                    }
+                }
+                RowLayout {
+                    id: noticeActions
+                    visible: children.length > 0
+                    spacing: 8
+                }
+            }
         }
     }
     component StatusDot: Rectangle {
@@ -404,54 +539,13 @@ ScrollView {
                 Layout.leftMargin: 182
                 Layout.fillWidth: true
             }
-            Rectangle {
+            DownloadNotice {
                 objectName: "aiDownloadNotice"
                 visible: form.download.needed
-                color: Theme.raised
-                border.color: Theme.line
-                implicitHeight: noticeRow.implicitHeight + 16
-                Layout.fillWidth: true
-                Rectangle { width: 3; height: parent.height; color: Theme.accent }
-                RowLayout {
-                    id: noticeRow
-                    x: 12
-                    y: 8
-                    width: parent.width - 22
-                    spacing: 8
-                    Icon { iconRole: "notice-info"; Layout.alignment: Qt.AlignTop }
-                    ColumnLayout {
-                        spacing: 4
-                        Layout.fillWidth: true
-                        Label {
-                            text: form.download.size > 0
-                                  ? qsTr("Your first provider downloads the AI component once: %1 MB.").arg(page.megabytes(form.download.size))
-                                  : qsTr("Your first provider downloads the AI component once.")
-                            font.bold: true
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: qsTr("Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.")
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                        }
-                        RowLayout {
-                            visible: form.download.active
-                            spacing: 8
-                            ProgressBar {
-                                objectName: "aiDownloadProgress"
-                                from: 0
-                                to: Math.max(1, form.download.size)
-                                value: form.download.received
-                                Layout.preferredWidth: 180
-                            }
-                            Label {
-                                text: qsTr("%1 of %2 MB").arg(Math.round(form.download.received / 1000000), page.megabytes(form.download.size))
-                                color: Theme.muted
-                            }
-                        }
-                    }
-                }
+                title: form.download.size > 0
+                       ? qsTr("Your first provider downloads the AI component once: %1 MB.").arg(page.megabytes(form.download.size))
+                       : qsTr("Your first provider downloads the AI component once.")
+                text: qsTr("Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.")
             }
             RowLayout {
                 spacing: 8
@@ -777,6 +871,181 @@ ScrollView {
         }
 
         SettingsSection {
+            objectName: "aiWebSearch"
+            visible: page.live
+            title: qsTr("Web search")
+            AiCheck { setting: "ai.webSearch"; text: qsTr("Let AI search the web") }
+            Note { text: qsTr("The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.") }
+            Rectangle {
+                objectName: "aiSearchProviders"
+                visible: page.webSearchOn && page.providerList.length > 0
+                color: "transparent"
+                border.color: Theme.line
+                radius: 2
+                implicitHeight: searchList.implicitHeight + 2
+                Layout.fillWidth: true
+                Layout.leftMargin: 24
+                ColumnLayout {
+                    id: searchList
+                    x: 1
+                    y: 1
+                    width: parent.width - 2
+                    spacing: 0
+                    Repeater {
+                        model: page.providerList
+                        delegate: RowLayout {
+                            id: searchRow
+                            required property var modelData
+                            readonly property bool needsService: !modelData.searchesNatively && !page.searchKeySaved
+                            objectName: "aiSearchHow_" + modelData.id
+                            spacing: 8
+                            Layout.fillWidth: true
+                            Layout.margins: 6
+                            Layout.leftMargin: 10
+                            Label { text: searchRow.modelData.name; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Label {
+                                objectName: "aiSearchHow"
+                                text: page.searchHow(searchRow.modelData)
+                                color: searchRow.needsService ? Theme.warning : Theme.success
+                            }
+                        }
+                    }
+                }
+            }
+            Note {
+                objectName: "aiGeminiSuggestionsNote"
+                visible: page.webSearchOn && page.providerList.some(p => p.preset === "gemini" && p.searchesNatively)
+                text: qsTr("Gemini answers that searched show Google’s search suggestions, as Google’s terms require.")
+                Layout.topMargin: 0
+            }
+            SettingsRow {
+                id: serviceRow
+                text: qsTr("Search service")
+                labelWidth: 200
+                enabled: page.webSearchOn
+                ComboBox {
+                    id: serviceChoice
+                    objectName: "setting_ai.searchService"
+                    readonly property var docsValues: page.searchServices.map(s => ({value: s.id, label: s.menuText}))
+                    model: page.searchServices
+                    textRole: "menuText"
+                    valueRole: "id"
+                    Accessible.name: serviceRow.text
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 420
+                    function refresh() { currentIndex = Math.max(0, indexOfValue(page.stagedService)) }
+                    Component.onCompleted: refresh()
+                    Connections { target: page; function onStagedServiceChanged() { serviceChoice.refresh() } }
+                    onActivated: index => page.dialog.put("ai.searchService", valueAt(index))
+                }
+            }
+            Note {
+                text: page.stagedService === "brave"
+                      ? qsTr("Brave Search only searches: providers without their own search can’t read a page with it.")
+                      : qsTr("For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.")
+                enabled: page.webSearchOn
+                Layout.leftMargin: 208
+                Layout.topMargin: -2
+            }
+            SettingsRow {
+                id: searchKeyRow
+                objectName: "aiSearchKeyRow"
+                visible: page.webSearchOn && page.stagedService !== "" && page.search.state !== "checking"
+                text: qsTr("%1 key").arg(page.serviceName(page.stagedService))
+                labelWidth: 200
+                TextField {
+                    id: searchKeyField
+                    objectName: "aiSearchKey"
+                    visible: !page.searchKeySaved || page.replacingSearchKey
+                    echoMode: showSearchKey.checked ? TextInput.Normal : TextInput.Password
+                    Layout.fillWidth: true
+                    Accessible.name: searchKeyRow.text
+                    onAccepted: if (text.trim() !== "") saveSearchKey.clicked()
+                    Connections {
+                        target: page.ai
+                        function onSearchKeyStored() {
+                            searchKeyField.clear()
+                            page.testedSearchKey = ""
+                            page.replacingSearchKey = false
+                        }
+                    }
+                }
+                IconToolButton {
+                    id: showSearchKey
+                    visible: searchKeyField.visible
+                    iconRole: checked ? "hide" : "show"
+                    text: checked ? qsTr("Hide key") : qsTr("Show key")
+                    checkable: true
+                }
+                StatusDot {
+                    visible: searchStatusLabel.text !== ""
+                    status: page.search.state ?? ""
+                }
+                Label {
+                    id: searchStatusLabel
+                    objectName: "aiSearchStatus"
+                    text: page.search.service === page.stagedService ? page.searchStatus() : ""
+                    visible: text !== ""
+                    color: page.search.state === "ok" ? Theme.success
+                         : page.search.state === "failed" ? (page.search.error === "rateLimited" ? Theme.warning : Theme.danger)
+                         : Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: !searchKeyField.visible
+                }
+                IconTextButton {
+                    id: saveSearchKey
+                    objectName: "aiSearchTest"
+                    iconRole: "test-connection"
+                    text: qsTr("Test connection")
+                    enabled: page.search.state !== "testing" && page.search.state !== "saving"
+                             && (searchKeyField.visible ? searchKeyField.text.trim() !== "" : true)
+                    onClicked: {
+                        if (searchKeyField.visible) {
+                            page.testedSearchKey = searchKeyField.text
+                            page.ai.saveSearchKey(page.stagedService, searchKeyField.text)
+                        } else {
+                            page.ai.testSearchKey(page.stagedService)
+                        }
+                    }
+                }
+                Button {
+                    objectName: "aiSearchAddAnyway"
+                    visible: searchKeyField.visible && page.search.service === page.stagedService
+                             && page.search.canAddAnyway === true && searchKeyField.text === page.testedSearchKey
+                    text: qsTr("Add anyway")
+                    onClicked: page.ai.addSearchKeyAnyway(page.stagedService, searchKeyField.text)
+                }
+                Button {
+                    objectName: "aiSearchReplaceKey"
+                    visible: page.searchKeySaved && !page.replacingSearchKey && page.search.error === "unauthorized"
+                    text: qsTr("Replace key…")
+                    onClicked: page.replacingSearchKey = true
+                }
+                Button {
+                    objectName: "aiSearchRemoveKey"
+                    visible: page.searchKeySaved && !page.replacingSearchKey
+                    text: qsTr("Remove key")
+                    onClicked: page.askRemoveSearchKey()
+                }
+            }
+            Note {
+                objectName: "aiSearchKeyNote"
+                visible: searchKeyRow.visible
+                text: page.searchNote()
+                Layout.leftMargin: 208
+                Layout.topMargin: -2
+            }
+            LinkButton {
+                objectName: "aiSearchKeys"
+                visible: searchKeyRow.visible && (!page.searchKeySaved || page.replacingSearchKey)
+                iconRole: "open-link"
+                text: qsTr("Get a %1 key").arg(page.serviceName(page.stagedService))
+                Layout.leftMargin: 206
+                onClicked: page.ai.openSearchKeys(page.stagedService)
+            }
+        }
+
+        SettingsSection {
             objectName: "aiExternalAgents"
             visible: page.live
             title: qsTr("External agents")
@@ -1037,6 +1306,173 @@ ScrollView {
         }
 
         SettingsSection {
+            id: mcpSection
+            objectName: "aiMcp"
+            readonly property bool serverOn: page.dialog.values["ai.mcp.server"] === true
+            readonly property bool httpOn: serverOn && page.dialog.values["ai.mcp.http"] === true
+            readonly property var setup: page.ai && page.ai.mcp ? page.ai.mcp.setup : ({})
+            property string copied: ""
+            property bool offering: false
+            property string stayedOff: ""
+            function turnOn() {
+                page.dialog.put("ai.mcp.server", true)
+                mcpServerCheck.checked = true
+            }
+            function copy(kind) {
+                page.dialog.app.copyText(setup[kind])
+                copied = kind
+                copiedTimer.restart()
+            }
+            visible: page.live
+            title: qsTr("MCP")
+            Connections {
+                target: page.dialog
+                function onReloaded() {
+                    if (mcpSection.offering)
+                        page.ai.cancelComponent()
+                    mcpSection.offering = false
+                    mcpSection.stayedOff = ""
+                }
+            }
+            Connections {
+                target: page.ai
+                function onComponentReady(installed) {
+                    if (!mcpSection.offering)
+                        return
+                    mcpSection.offering = false
+                    if (installed)
+                        mcpSection.turnOn()
+                    else
+                        mcpSection.stayedOff = page.failureText(page.ai.download.error, 0, "")
+                }
+            }
+            AiCheck {
+                id: mcpServerCheck
+                setting: "ai.mcp.server"
+                asksFirst: true
+                text: qsTr("Let agents outside HikariSub edit through MCP")
+                onAskedOn: {
+                    mcpSection.stayedOff = ""
+                    if (page.ai.componentNeeded())
+                        mcpSection.offering = true
+                    else
+                        mcpSection.turnOn()
+                }
+            }
+            Note { text: qsTr("Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.") }
+            DownloadNotice {
+                objectName: "aiMcpDownload"
+                visible: mcpSection.offering
+                title: download.size > 0
+                       ? qsTr("MCP needs the AI component, downloaded once: %1 MB.").arg(page.megabytes(download.size))
+                       : qsTr("MCP needs the AI component, downloaded once.")
+                text: qsTr("It runs only while an agent uses HikariSub, and never while AI is turned off.")
+                PrimaryButton {
+                    objectName: "aiMcpDownloadStart"
+                    text: qsTr("Download")
+                    enabled: !page.ai.download.active
+                    onClicked: page.ai.installComponent()
+                }
+                Button {
+                    objectName: "aiMcpDownloadCancel"
+                    text: qsTr("Cancel")
+                    onClicked: {
+                        page.ai.cancelComponent()
+                        mcpSection.offering = false
+                        mcpSection.stayedOff = qsTr("It needs the AI component")
+                    }
+                }
+            }
+            Note {
+                objectName: "aiMcpStayedOff"
+                visible: mcpSection.stayedOff !== "" && !mcpSection.serverOn && !mcpSection.offering
+                color: Theme.danger
+                text: qsTr("MCP stays off. %1.").arg(mcpSection.stayedOff)
+            }
+            AiCheck {
+                property string docsLabel: qsTr("Also listen on http://127.0.0.1")
+                setting: "ai.mcp.http"
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 24
+                text: mcpSection.setup.port ? qsTr("Also listen on http://127.0.0.1:%1").arg(mcpSection.setup.port) : docsLabel
+            }
+            Note {
+                visible: mcpSection.serverOn
+                Layout.leftMargin: 48
+                text: qsTr("For agents that connect over HTTP. Only this computer can reach it, and only with the token.")
+            }
+            RowLayout {
+                visible: mcpSection.serverOn
+                spacing: 8
+                Layout.leftMargin: 22
+                Layout.fillWidth: true
+                IconTextButton {
+                    id: copySetupButton
+                    objectName: "aiMcpCopySetup"
+                    iconRole: "edit-copy"
+                    text: qsTr("Copy setup")
+                    onClicked: copySetupMenu.popup(copySetupButton, 0, copySetupButton.height)
+                }
+                IconTextButton {
+                    objectName: "aiMcpResetToken"
+                    iconRole: "refresh"
+                    text: qsTr("Reset token")
+                    onClicked: {
+                        page.ai.mcp.resetToken()
+                        mcpSection.copied = "token"
+                        copiedTimer.restart()
+                    }
+                }
+                Label {
+                    objectName: "aiMcpCopied"
+                    visible: mcpSection.copied !== ""
+                    text: mcpSection.copied === "token" ? qsTr("New token saved.")
+                        : mcpSection.copied === "claudeCode" ? qsTr("Copied. Run it in a terminal.")
+                        : qsTr("Copied. Paste it into the agent’s settings.")
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Timer { id: copiedTimer; interval: 4000; onTriggered: mcpSection.copied = "" }
+                }
+                ShellMenu {
+                    id: copySetupMenu
+                    objectName: "aiMcpCopyMenu"
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyClaudeCode"
+                        iconRole: "run-script"
+                        text: qsTr("Claude Code command")
+                        onTriggered: mcpSection.copy("claudeCode")
+                    }
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyCodex"
+                        iconRole: "settings"
+                        text: qsTr("Codex config.toml")
+                        onTriggered: mcpSection.copy("codex")
+                    }
+                    ShellMenuItem {
+                        objectName: "aiMcpCopyJson"
+                        iconRole: "network"
+                        enabled: !!mcpSection.setup.json
+                        text: qsTr("JSON with the address and token")
+                        reason: qsTr("Holds your token; keep it private.")
+                        onTriggered: mcpSection.copy("json")
+                    }
+                }
+            }
+            Note {
+                objectName: "aiMcpResetNote"
+                visible: mcpSection.serverOn
+                text: qsTr("Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.")
+            }
+            Note {
+                objectName: "aiMcpJsonNote"
+                visible: mcpSection.serverOn && !mcpSection.setup.json
+                text: mcpSection.httpOn ? qsTr("The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.")
+                                        : qsTr("The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.")
+            }
+        }
+
+        SettingsSection {
             objectName: "aiPrivacy"
             visible: page.live
             title: qsTr("Privacy")
@@ -1052,8 +1488,13 @@ ScrollView {
             Note {
                 objectName: "aiSandboxNote"
                 color: page.ai.sandboxed ? Theme.muted : Theme.warning
-                text: page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
-                                        : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+                text: {
+                    if (page.searchVia !== "")
+                        return page.ai.sandboxed ? qsTr("Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.").arg(page.searchVia)
+                                                 : qsTr("Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.").arg(page.searchVia)
+                    return page.ai.sandboxed ? qsTr("Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.")
+                                             : qsTr("Requests go only to the providers you add. The AI component isn’t sandboxed on this system.")
+                }
             }
         }
     }

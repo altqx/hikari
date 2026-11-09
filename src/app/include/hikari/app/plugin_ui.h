@@ -1,9 +1,12 @@
 #pragma once
 
+#include "hikari/api/api.h"
 #include "hikari/api/json.h"
 #include "hikari/plugins/manifest.h"
 
 #include <QObject>
+#include <QPointer>
+#include <QQuickItem>
 #include <QStringList>
 #include <QUrl>
 #include <QVariant>
@@ -18,7 +21,12 @@
 #include <string>
 #include <vector>
 
+class QQmlEngine;
+class QQmlError;
+
 namespace hikari::app {
+
+class PluginPanelApi;
 
 // What a plugin panel's place shows: the plugin's widget tree while it runs, else why it can't.
 class PluginPanelState : public QObject {
@@ -36,6 +44,14 @@ class PluginPanelState : public QObject {
     // The last tree hikari.panels.render gave, without its menu; null until the first render.
     Q_PROPERTY(QVariant tree READ tree NOTIFY treeChanged)
     Q_PROPERTY(QVariantList menu READ menu NOTIFY treeChanged)
+    // A Full trust plugin's QML panel rather than a widget tree.
+    Q_PROPERTY(bool qml READ qml NOTIFY qmlChanged)
+    // Why the QML didn't load, its first error; empty until Load again after one.
+    Q_PROPERTY(QString loadError READ loadError NOTIFY qmlChanged)
+    // HikariSub closed while the plugin's QML panels were open: they wait for Load again.
+    Q_PROPERTY(bool held READ held NOTIFY qmlChanged)
+    // The panel's loaded root item, or null.
+    Q_PROPERTY(QQuickItem *item READ item NOTIFY qmlChanged)
 
 public:
     PluginPanelState(QString dock, QString pluginId, QString panelId, QObject *parent);
@@ -50,13 +66,19 @@ public:
     QUrl packageRoot() const { return m_packageRoot; }
     QVariant tree() const { return m_tree; }
     QVariantList menu() const { return m_menu; }
+    bool qml() const { return m_qml; }
+    QString loadError() const { return m_loadError; }
+    bool held() const { return m_held; }
+    QQuickItem *item() const { return m_item; }
 
     void describe(QString status, QString reason, QString title, QString pluginName, QUrl packageRoot);
     void setTree(QVariant tree, QVariantList menu);
+    void setQml(bool qml, QString loadError, bool held, QQuickItem *item);
 
 signals:
     void changed();
     void treeChanged();
+    void qmlChanged();
 
 private:
     QString m_dock, m_pluginId, m_panelId;
@@ -65,6 +87,10 @@ private:
     QUrl m_packageRoot;
     QVariant m_tree;
     QVariantList m_menu;
+    bool m_qml = false;
+    QString m_loadError;
+    bool m_held = false;
+    QPointer<QQuickItem> m_item;
 };
 
 // One open hikari.dialogs.show or ask.
@@ -170,6 +196,8 @@ public:
         bool enabled = false;
         std::vector<plugins::Panel> panels;
         QUrl root;
+        bool unrestricted = false;
+        std::string version;
     };
     // Hands an event to a running plugin's helper; false when it isn't running.
     using Deliver = std::function<bool(const std::string &plugin, const std::string &event, const std::string &json,
@@ -186,6 +214,20 @@ public:
     };
     // {file, name, access} for a file dropped on one of the plugin's panels, or null.
     using GrantDrop = std::function<api::Json(const std::string &plugin, const QString &path)>;
+    // What a QML panel's api reaches, as its plugin.
+    struct QmlHooks {
+        std::function<void(const std::string &plugin, const std::string &operation, const api::Json &params,
+                           std::function<void(api::Result)> done)>
+            call;
+        std::function<std::optional<std::string>(const std::string &plugin, const std::string &setting, const api::Json &value)>
+            setSetting;
+        std::function<api::Json(const std::string &plugin)> settings;
+        std::function<QString()> locale;
+        // Under the plugin's name in the Log.
+        std::function<void(const QString &pluginName, const QString &text, bool error)> log;
+    };
+    // At most this many of a plugin's QML warnings reach the Log in a minute.
+    static constexpr int kQmlWarningsPerMinute = 20;
 
     explicit PluginUi(Deliver deliver, QObject *parent = nullptr);
     ~PluginUi() override;
@@ -200,6 +242,11 @@ public:
     // Queued behind other plugins' requests; never answered when the plugin stops first.
     void askForFile(const std::string &plugin, FileAsk ask, PluginFileRequest::Answer answer);
     void setGrantDrop(GrantDrop grant) { m_grantDrop = std::move(grant); }
+    void setQmlHooks(QmlHooks hooks) { m_qmlHooks = std::move(hooks); }
+    // The file that names the plugins whose QML panels are loaded. Read once: those of an earlier run that didn't
+    // close cleanly are held back until Load again.
+    void keepLoadedPanelsIn(const QString &file);
+    void settingsChanged(const std::string &plugin);
     PluginFileRequest *fileRequest() const { return m_fileRequests.empty() ? nullptr : m_fileRequests.front().second; }
     // Files dropped on a panel whose tree has `drop`: granted for reading and sent as a "drop" event.
     // False when the panel doesn't take drops.
@@ -211,6 +258,10 @@ public:
     // Made on first use for any plugin panel id, so a layout's placeholder has one too.
     Q_INVOKABLE hikari::app::PluginPanelState *panel(const QString &dock);
     Q_INVOKABLE void setShown(const QString &dock, bool shown);
+    // Where a QML panel's root item goes; it loads there once the panel is shown and its plugin runs.
+    Q_INVOKABLE void setQmlHost(const QString &dock, QQuickItem *host);
+    // After a load error or a hold: tries the plugin's QML panels again.
+    Q_INVOKABLE void loadAgain(const QString &dock);
     // A widget's event in a panel: {kind, widget, value, …}. "change" and "select" keep the value.
     Q_INVOKABLE void send(const QString &dock, const QVariantMap &event);
     Q_INVOKABLE void dialogEvent(const QString &key, const QVariantMap &event);
@@ -251,6 +302,26 @@ private:
     void answered(PluginFileRequest *request);
     void deliver(const std::string &plugin, const std::string &event, api::Json data, const std::string &key);
     void present(const std::string &plugin, const api::Json &params, std::optional<Reply> asked, const Reply &reply);
+    void post(const std::string &plugin, const api::Json &params, const Reply &reply);
+
+    struct QmlPanel {
+        QPointer<QQuickItem> host;
+        QPointer<QQuickItem> item;
+        // MUST KILL: a reload waits for this old item to be deleted
+        QPointer<QQuickItem> leaving;
+        QPointer<PluginPanelApi> api;
+        QString error;
+    };
+    void loadQml(const QString &dock);
+    void loadShownQmlOf(const std::string &plugin);
+    void unloadQml(const QString &dock);
+    void qmlGone(const QString &dock, QQuickItem *item);
+    void failQml(const QString &dock, const QString &error, const QString &details);
+    void watchWarnings(QQmlEngine *engine);
+    void qmlWarnings(const QList<QQmlError> &warnings);
+    void writeLoadedPanels();
+    void noticeHeld();
+    bool qmlLoaded(const std::string &plugin) const;
 
     Deliver m_deliver;
     std::map<std::string, Known> m_plugins;
@@ -261,6 +332,14 @@ private:
     QVariantList m_rows;
     std::deque<std::pair<std::string, PluginFileRequest *>> m_fileRequests;
     GrantDrop m_grantDrop;
+    QmlHooks m_qmlHooks;
+    std::map<QString, QmlPanel> m_qml;
+    QString m_loadedPanelsFile;
+    std::set<std::string> m_held;
+    std::set<std::string> m_heldUnnoticed;
+    std::map<std::string, std::deque<qint64>> m_warningTimes;
+    std::set<QQmlEngine *> m_watchedEngines;
+    int m_loads = 0;
 };
 
 }

@@ -1,8 +1,22 @@
 #include "hikari/backends/plugin_process.h"
 
+#include <QCryptographicHash>
+#include <QFileInfo>
+
 #include <algorithm>
 
 namespace hikari::backends {
+
+sandbox::Profile pluginProfile(const QString &helperPath, const QString &packageFolder, const std::string &id)
+{
+    const QByteArray hash = QCryptographicHash::hash(QByteArray::fromStdString(id), QCryptographicHash::Sha256).toHex();
+    return sandbox::Profile{
+        .name = QStringLiteral("HikariSub.Plugin.") + QString::fromLatin1(hash.left(32)),
+        .readExecute = {QFileInfo(helperPath).absolutePath()},
+        .read = {packageFolder},
+        .network = sandbox::Network::None,
+    };
+}
 
 using helper::HelperHost;
 using helper::Outcome;
@@ -62,6 +76,10 @@ void PluginProcess::startHelper()
     m_handled.clear();
     m_host = std::make_unique<HelperHost>(m_helperPath, QStringList(), plugin::kProtocolVersion);
     HelperHost *host = m_host.get();
+    // Windows grants a Launcher's access entries when it is made, and an update replaces the package folder.
+    m_launcher = m_sandbox ? std::make_unique<sandbox::Launcher>(m_sandbox) : nullptr;
+    if (m_launcher)
+        host->setPrepare([launcher = m_launcher.get()](QProcess &process) { launcher->prepare(process); });
     auto loadFailure = [this](const QString &message) {
         m_state = State::LoadFailed;
         m_loadError = message;

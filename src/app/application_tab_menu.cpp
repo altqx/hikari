@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/associated_files.h"
+#include "hikari/application/project.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -431,6 +432,7 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
                 m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             break;
+        case application::OpenKind::Folder: openFolder(file, m_workspace.activeWindow()); break;
         case application::OpenKind::Refused: break;
         }
         return openResult(QString());
@@ -458,6 +460,7 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         case application::OpenKind::Video:
         case application::OpenKind::Keyframes: pending.videos << QDir::toNativeSeparators(file); break;
         case application::OpenKind::Session:
+        case application::OpenKind::Folder:
         case application::OpenKind::Refused: break;
         }
     }
@@ -491,10 +494,22 @@ bool Application::targetUntouched() const
                         [&](const UnresolvedRestore &u) { return u.document == *target; });
 }
 
-QVariantMap Application::openForwarded(const QStringList &paths)
+QVariantMap Application::openForwarded(const QStringList &paths, int request)
 {
-    const QStringList files = sortedFiles(paths);
+    QStringList files;
+    bool folder = false;
+    for (const QString &path : sortedFiles(paths)) {
+        if (application::openKindOf(path.toStdString(), false) == application::OpenKind::Folder) {
+            openFolder(path, m_workspace.activeWindow(), request);
+            folder = true;
+        } else {
+            files << path;
+        }
+    }
     if (files.isEmpty())
+        return openResult(QString());
+    if (!folder && request == static_cast<int>(application::WindowRequest::New) &&
+        !openWindowBeside(m_workspace.activeWindow()))
         return openResult(QString());
     const auto before = m_workspace.documents();
     bool accepted = false;

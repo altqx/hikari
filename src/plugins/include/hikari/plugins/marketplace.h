@@ -106,4 +106,8 @@ std::optional<Revoked> revocation(const Listing &listing, std::string_view versi
 std::int64_t loadHighestSerial(const std::filesystem::path &file);
 bool saveHighestSerial(const std::filesystem::path &file, std::int64_t serial);
 
+// The plugin id of exactly `hikarisub://plugin/install?id=<id>`, an id fitting the manifest's pattern; the
+// only link the marketplace website sends. nullopt for anything else, including any extra or encoded part.
+std::optional<std::string> installLinkId(std::string_view link);
+
 }
