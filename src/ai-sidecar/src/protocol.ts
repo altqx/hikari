@@ -1,3 +1,4 @@
+import type { Message, Part, Usage } from "./providers/types";
 import type { Reference } from "./tools/catalogue";
 
 /** The link's major version; Qt refuses a sidecar whose major differs. */
@@ -34,11 +35,14 @@ export const Method = {
     sessionPrompt: "session/prompt",
     sessionCancel: "session/cancel",
     sessionUpdate: "session/update",
+    sessionSteer: "_hikari/session.steer",
+    sessionClose: "_hikari/session.close",
     requestPermission: "session/request_permission",
     providersSet: "_hikari/providers.set",
     modelsList: "_hikari/models.list",
     conversationEnd: "_hikari/conversation.end",
     complete: "_hikari/complete",
+    searchTest: "_hikari/search.test",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",
     httpRequest: "_hikari/http.request",
@@ -55,13 +59,6 @@ export const Method = {
     mcpMessage: "_hikari/mcp.message",
     mcpClosed: "_hikari/mcp.closed",
 } as const;
-
-/** Qt's requests that later cards implement. */
-export const kDeclaredMethods = [
-    Method.sessionNew,
-    Method.sessionPrompt,
-    Method.sessionCancel,
-] as const;
 
 export interface InitializeParams {
     protocolVersion: number;
@@ -88,6 +85,76 @@ export interface ApiCallParams {
     params?: unknown;
     /** The MCP connection the call is for; Qt runs it as that connection's caller. */
     mcp?: McpVia;
+    /** The agent session the call is for; Qt checks it against that thread's mode. */
+    session?: string;
+}
+
+/** The provider and model a session's turns run on. */
+export interface SessionModel {
+    providerId: string;
+    model: string;
+}
+
+/** Starts a session, or replaces one with the same id; `history` is the thread Qt saved. */
+export interface SessionNewParams {
+    sessionId: string;
+    model: SessionModel;
+    system?: string;
+    history?: Message[];
+    /** The same for every turn of the thread. */
+    cacheKey?: string;
+    caching?: boolean;
+    maxOutputTokens?: number;
+}
+
+export interface SessionPromptParams {
+    sessionId: string;
+    prompt: Part[];
+    /** Switches the session's model from this turn on. */
+    model?: SessionModel;
+    caching?: boolean;
+}
+
+/** ACP's stop reasons. */
+export type SessionStopReason = "end_turn" | "max_tokens" | "max_turn_requests" | "refusal" | "cancelled";
+
+export interface SessionPromptResult {
+    stopReason: SessionStopReason;
+}
+
+export interface SessionIdParams {
+    sessionId: string;
+}
+
+/** A message for the running turn; it joins at the turn's next tool call. */
+export interface SessionSteerParams {
+    sessionId: string;
+    prompt: Part[];
+}
+
+/** False when the turn ended before another tool call, so Qt sends the message as the next turn. */
+export interface SessionSteerResult {
+    taken: boolean;
+}
+
+export type ToolCallKind = "read" | "edit" | "other";
+export type ToolCallStatus = "in_progress" | "completed" | "failed";
+export type PlanStatus = "pending" | "in_progress" | "completed";
+
+/** ACP's session updates, plus `history`, which carries each message the session keeps, and `usage`. */
+export type SessionUpdate =
+    | { sessionUpdate: "agent_message_chunk"; content: { type: "text"; text: string } }
+    | { sessionUpdate: "tool_call"; toolCallId: string; title: string; kind: ToolCallKind; status: ToolCallStatus;
+        rawInput: unknown }
+    | { sessionUpdate: "tool_call_update"; toolCallId: string; status: ToolCallStatus;
+        content: { type: "content"; content: { type: "text"; text: string } }[] }
+    | { sessionUpdate: "plan"; entries: { content: string; priority: "medium"; status: PlanStatus }[] }
+    | { sessionUpdate: "usage"; usage: Usage }
+    | { sessionUpdate: "history"; message: Message };
+
+export interface SessionUpdateParams {
+    sessionId: string;
+    update: SessionUpdate;
 }
 
 export interface McpVia {
@@ -131,7 +198,8 @@ export interface CancelRequestParams {
 
 /** Where a relayed request goes; Qt knows its base URL and key. */
 export interface RelayTarget {
-    kind: "provider";
+    /** A provider by its id, or the chosen search service by its SearchService id. */
+    kind: "provider" | "search";
     id: string;
 }
 

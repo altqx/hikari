@@ -10,6 +10,9 @@
 # the 3.2.2 reference script keeps its original bytes.
 /tests/backends/karaoke-corpus/** -text
 
+# TH2: the bundled-macro corpus and its goldens are compared byte for byte, and the tests look for LF line ends.
+/tests/backends/macro-corpus/** -text
+
 # KE3: the preset fixture and its goldens are compared byte for byte.
 /tests/backends/karaoke-presets/** -text
 
@@ -37,3 +40,8 @@
 # PL1: signed fixtures; a converted line ending breaks the signature.
 /tests/minisign/fixtures/** -text
 /tests/plugins/fixtures/** -text
+
+# tools.app-icons pins the icon masters, tools/icons/app_icons.py and its stamp by SHA-256.
+/packaging/icons/** text eol=lf
+/packaging/linux/icons/hicolor/scalable/** text eol=lf
+/tools/icons/app_icons.* text eol=lf

@@ -100,6 +100,14 @@ When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix
 
 Resample subtitles with "Stretch" scales text by the smaller of the two resolution factors, and puts the rest on the axis that grew more: ScaleX and `\fscx` when the width grew more, ScaleY and `\fscy` when the height did. Drawings are scaled to match. Before, a taller change also went to ScaleX and `\fscx`, so stretched text came out wide when it should have been tall. A change that grows the width more resamples as before. [#738](https://github.com/altqx/hikari/issues/738), owner decision 2026-11-04.
 
+## TH2-unicode-graphemes
+
+`aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.
+
+## TH2-bezier-clusters
+
+The bundled BezierToText ("Bezier Curve Imposition", now 1.1) places one Line per grapheme cluster instead of per code point, so a Thai vowel or tone mark, or any combining mark, stays in its base character's Line instead of being placed and rotated on its own. A mark that an override block separates from its base joins the base's Line too, with that block before it. Text without combining marks gives the same output as 1.0. The 2.3 rewrite in Jibrill's copy is not adopted. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decisions Q143 and Q145.
+
 ## TH3-thai-auto-split
 
 Auto split gives each Thai grapheme cluster its own syllable, sharing the Line's time equally: `กินน้ำ` becomes `กิ|น|น้ำ`, and ำ stays in its cluster. Before, a Thai word stayed one syllable and only spaces split it, as Aegisub's split at spaces does. Settings › Audio › Karaoke › "Split Thai into character clusters" is on by default; off keeps each Thai word whole. Text without Thai splits as before. Clusters aren't Thai syllables (`กิน` is one syllable); real Thai syllable breaks are a later card. This replaces bundling th2syl.lua. [TH3 #831](https://github.com/altqx/hikari/issues/831), owner decision Q144.

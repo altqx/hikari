@@ -145,6 +145,24 @@ private slots:
         QVERIFY(app::launchFiles({QStringLiteral("--version")}, cwd).isEmpty());
     }
 
+    void launchFilesKeepLinksAsGiven()
+    {
+        const QString cwd = dir.filePath(QStringLiteral("work"));
+        const QString link = QStringLiteral("hikarisub://plugin/install?id=com.example.hello");
+        const QString odd = QStringLiteral("HikariSub:whatever?x=1");
+        QCOMPARE(app::launchFiles({link, QStringLiteral("hikarisub.ass"), odd}, cwd),
+                 (QStringList{link, QDir(cwd).filePath(QStringLiteral("hikarisub.ass")), odd}));
+        QVERIFY(app::isAppLink(link) && app::isAppLink(odd));
+        QVERIFY(!app::isAppLink(QDir(cwd).filePath(QStringLiteral("hikarisub.ass"))));
+        QVERIFY(!app::isAppLink(QStringLiteral("file:///tmp/a.ass")));
+    }
+
+    void launchFilesDecodeFileUrls()
+    {
+        QCOMPARE(app::launchFiles({QStringLiteral("file:///tmp/a%20b/%E5%AD%97%E5%B9%95.ass")}, dir.path()),
+                 QStringList{QDir::cleanPath(QDir(dir.path()).absoluteFilePath(QStringLiteral("/tmp/a b/字幕.ass")))});
+    }
+
     void aLaterStartHandsItsFilesOver()
     {
         app::SingleInstance holder(location);

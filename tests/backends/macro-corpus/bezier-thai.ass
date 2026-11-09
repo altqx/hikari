@@ -1,0 +1,18 @@
+[Script Info]
+Title: TH2 corpus bezier-thai
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+Style: Spaced,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,2,0,1,2,2,8,30,30,40,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)}กินข้าว น้ำ
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)}ก{\c&H0000FF&}ิน ที่นี่
+Dialogue: 0,0:00:10.00,0:00:15.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)}éte

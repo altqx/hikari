@@ -1,8 +1,10 @@
 #include "operations.h"
 
 #include "hikari/application/audio_display.h"
+#include "hikari/application/document_overlay.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace hikari::api::detail {
@@ -66,6 +68,11 @@ struct Rect {
     int x = 0, y = 0, width = 0, height = 0;
 };
 
+Json rectJson(Rect r)
+{
+    return Json::object({{"x", Json(r.x)}, {"y", Json(r.y)}, {"width", Json(r.width)}, {"height", Json(r.height)}});
+}
+
 std::optional<Rect> cropOf(const Json &params, int width, int height)
 {
     const Json *crop = params.find("crop");
@@ -94,32 +101,223 @@ std::string scaled(const MacroMediaPort::Frame &frame, Rect crop, int outWidth, 
     return out;
 }
 
+const core::LineRecord *findLine(const core::Document &document, core::LineId id)
+{
+    for (const core::LineRecord *line : document.lines())
+        if (line->id.value == id.value)
+            return line;
+    return nullptr;
+}
+
+std::unexpected<Error> noLine(core::LineId id)
+{
+    return fail(errors::kNotFound, "No Line has id " + std::to_string(id.value) + ".",
+                Json::object({{"line", Json(std::int64_t(id.value))}}));
+}
+
+std::unexpected<Error> cannotDraw()
+{
+    return fail(errors::kUnavailable, "Subtitles cannot be drawn apart from the video here.");
+}
+
+std::unexpected<Error> notDrawn(std::int64_t frame)
+{
+    return fail(errors::kUnavailable, "The subtitles of frame " + std::to_string(frame) + " could not be drawn.",
+                Json::object({{"frame", Json(frame)}}));
+}
+
+struct Drawn {
+    Target document;
+    std::optional<core::LineId> line;
+};
+
+std::expected<Drawn, Error> drawn(const Context &context, const Json &params)
+{
+    auto document = target(context, params);
+    if (!document)
+        return std::unexpected(document.error());
+    const Json *line = params.find("line");
+    if (!line)
+        return Drawn{*document, std::nullopt};
+    const core::LineId id{std::uint64_t(line->asInt())};
+    if (!findLine(document->session->document(), id))
+        return noLine(id);
+    return Drawn{*document, id};
+}
+
+std::int64_t frameOf(const MacroMediaPort &media, const Json &params, const core::LineRecord *record)
+{
+    if (const Json *frame = params.find("frame"))
+        return frame->asInt();
+    const auto project = media.project();
+    const std::int64_t shown = project ? project->videoFrameShown : 0;
+    if (!record)
+        return shown;
+    const std::int64_t start = record->start.value.microseconds() / 1000, end = record->end.value.microseconds() / 1000;
+    if (const auto at = media.msFromFrame(shown); at && *at >= start && *at < end)
+        return shown;
+    std::int64_t first = media.frameFromMs(start).value_or(0);
+    if (const auto at = media.msFromFrame(first); at && *at < start)
+        ++first;
+    return first;
+}
+
+std::optional<application::OverlayFrame> drawLines(const Host &host, application::DocumentId document,
+                                                   std::optional<core::LineId> line, std::int64_t frame, int width,
+                                                   int height)
+{
+    const application::EditSession *session = host.documents ? host.documents->session(document) : nullptr;
+    if (!session)
+        return std::nullopt;
+    if (!line)
+        return host.render->render(document, session->document(), frame, width, height);
+    return host.render->render(document, application::withOnlyLine(session->document(), *line), frame, width, height);
+}
+
 void videoFrame(const Context &context, const Json &params, Reply reply)
 {
     MacroMediaPort *media = context.host.media;
     if (!videoOpen(context))
         return reply(noVideo());
-    const auto project = media->project();
-    const std::int64_t index = params.find("frame") ? params.find("frame")->asInt() : project ? project->videoFrameShown : 0;
     const bool subtitles = params.find("subtitles") ? params.find("subtitles")->asBool() : true;
+    std::optional<Drawn> only;
+    if (params.find("line")) {
+        if (!subtitles)
+            return reply(fail(errors::kInvalidParams, "Parameter /line: subtitles is false, so no Line is drawn.",
+                              Json::object({{"pointer", Json("/line")}})));
+        if (!context.host.render)
+            return reply(cannotDraw());
+        auto found = drawn(context, params);
+        if (!found)
+            return reply(std::unexpected(found.error()));
+        only = *found;
+    }
+    const std::int64_t index =
+        frameOf(*media, params, only ? findLine(only->document.session->document(), *only->line) : nullptr);
     const int maxEdge = params.find("maxEdge") ? int(params.find("maxEdge")->asInt()) : 1024;
-    media->frame(index, subtitles, [params, index, maxEdge, reply](std::optional<MacroMediaPort::Frame> frame) {
+    const std::int64_t maxPixels = params.find("maxPixels") ? params.find("maxPixels")->asInt() : 0;
+    const std::optional<application::DocumentId> document = only ? std::optional(only->document.id) : std::nullopt;
+    const std::optional<core::LineId> line = only ? only->line : std::nullopt;
+    media->frame(index, subtitles && !only, [host = context.host, params, index, maxEdge, maxPixels, document, line,
+                                             reply](std::optional<MacroMediaPort::Frame> frame) {
         if (!frame || frame->width <= 0 || frame->height <= 0)
             return reply(fail(errors::kUnavailable, "Frame " + std::to_string(index) + " could not be decoded.",
                               Json::object({{"frame", Json(index)}})));
+        if (line) {
+            const auto overlay = drawLines(host, *document, line, index, frame->width, frame->height);
+            if (!overlay)
+                return reply(notDrawn(index));
+            application::compositeOverlay(*overlay, reinterpret_cast<std::uint8_t *>(frame->bgra.data()), frame->width,
+                                          frame->height, std::ptrdiff_t(frame->width) * 4);
+        }
         const auto crop = cropOf(params, frame->width, frame->height);
         if (!crop)
             return reply(fail(errors::kInvalidParams, "Parameter /crop: it lies outside the frame.",
                               Json::object({{"pointer", Json("/crop")}})));
-        const double scale = std::min(1.0, double(maxEdge) / std::max(crop->width, crop->height));
+        double scale = std::min(1.0, double(maxEdge) / std::max(crop->width, crop->height));
+        if (maxPixels > 0)
+            scale = std::min(scale, std::sqrt(double(maxPixels) / (double(crop->width) * crop->height)));
         const int width = std::max(1, int(crop->width * scale));
         const int height = std::max(1, int(crop->height * scale));
         reply(Json::object({{"frame", Json(index)},
                             {"width", Json(width)},
                             {"height", Json(height)},
+                            {"crop", rectJson(*crop)},
                             {"format", Json("bgra")},
                             {"data", Json(base64(scaled(*frame, *crop, width, height)))}}));
     });
+}
+
+Result inkBounds(const Context &context, const Json &params)
+{
+    MacroMediaPort *media = context.host.media;
+    if (!videoOpen(context))
+        return noVideo();
+    if (!context.host.render)
+        return cannotDraw();
+    const auto found = drawn(context, params);
+    if (!found)
+        return std::unexpected(found.error());
+    const std::int64_t index =
+        frameOf(*media, params, found->line ? findLine(found->document.session->document(), *found->line) : nullptr);
+    const auto size = media->videoSize();
+    const auto overlay = drawLines(context.host, found->document.id, found->line, index, size->width, size->height);
+    if (!overlay)
+        return notDrawn(index);
+    const auto bounds = application::inkBounds(*overlay);
+    return Json::object({{"frame", Json(index)},
+                         {"bounds", bounds ? rectJson({bounds->x, bounds->y, bounds->width, bounds->height}) : Json()}});
+}
+
+std::string assColour(int r, int g, int b)
+{
+    static constexpr char kHex[] = "0123456789ABCDEF";
+    std::string out = "&H";
+    for (const int channel : {b, g, r}) {
+        out += kHex[channel >> 4];
+        out += kHex[channel & 15];
+    }
+    return out + "&";
+}
+
+void videoColours(const Context &context, const Json &params, Reply reply)
+{
+    MacroMediaPort *media = context.host.media;
+    if (!videoOpen(context))
+        return reply(noVideo());
+    const auto size = media->videoSize();
+    const auto &points = params.find("points")->asArray();
+    for (std::size_t i = 0; i < points.size(); ++i)
+        if (points[i].find("x")->asInt() >= size->width || points[i].find("y")->asInt() >= size->height) {
+            const std::string pointer = "/points/" + std::to_string(i);
+            return reply(fail(errors::kInvalidParams, "Parameter " + pointer + ": it lies outside the frame.",
+                              Json::object({{"pointer", Json(pointer)}})));
+        }
+    const auto project = media->project();
+    const std::int64_t index = params.find("frame") ? params.find("frame")->asInt() : project ? project->videoFrameShown : 0;
+    const int radius = params.find("radius") ? int(params.find("radius")->asInt()) : 0;
+    const bool subtitles = params.find("subtitles") && params.find("subtitles")->asBool();
+    media->frame(index, subtitles, [points, index, radius, reply](std::optional<MacroMediaPort::Frame> frame) {
+        if (!frame || frame->width <= 0 || frame->height <= 0)
+            return reply(fail(errors::kUnavailable, "Frame " + std::to_string(index) + " could not be decoded.",
+                              Json::object({{"frame", Json(index)}})));
+        Json colours = Json::array();
+        for (const Json &point : points) {
+            const int x = int(point.find("x")->asInt()), y = int(point.find("y")->asInt());
+            std::int64_t sum[3] = {0, 0, 0}, count = 0;
+            for (int sy = std::max(0, y - radius); sy <= std::min(frame->height - 1, y + radius); ++sy)
+                for (int sx = std::max(0, x - radius); sx <= std::min(frame->width - 1, x + radius); ++sx) {
+                    const std::byte *p = frame->bgra.data() + (static_cast<std::size_t>(sy) * frame->width + sx) * 4;
+                    for (int c = 0; c < 3; ++c)
+                        sum[c] += std::to_integer<int>(p[c]);
+                    ++count;
+                }
+            const auto mean = [&](int c) { return int((sum[c] * 2 + count) / (count * 2)); };
+            colours.push(Json::object({{"x", Json(x)}, {"y", Json(y)}, {"colour", Json(assColour(mean(2), mean(1), mean(0)))}}));
+        }
+        reply(Json::object({{"frame", Json(index)}, {"colours", std::move(colours)}}));
+    });
+}
+
+constexpr std::size_t kMaxKeyframes = 500;
+
+Result videoKeyframes(const Context &context, const Json &params)
+{
+    MacroMediaPort *media = context.host.media;
+    if (!videoOpen(context))
+        return noVideo();
+    const std::int64_t from = params.find("from") ? params.find("from")->asInt() : 0;
+    const std::int64_t to = params.find("to") ? params.find("to")->asInt() : std::numeric_limits<std::int64_t>::max();
+    Json keyframes = Json::array();
+    std::int64_t total = 0;
+    for (const std::int64_t frame : media->keyframes().value_or(std::vector<std::int64_t>{})) {
+        const std::int64_t time = media->msFromFrame(frame).value_or(0);
+        if (time < from || time > to)
+            continue;
+        if (std::size_t(total++) < kMaxKeyframes)
+            keyframes.push(Json::object({{"frame", Json(frame)}, {"time", Json(time)}}));
+    }
+    return Json::object({{"keyframes", std::move(keyframes)}, {"total", Json(total)}});
 }
 
 Result audioInfo(const Context &context, const Json &)
@@ -182,6 +380,18 @@ Result audioPeaks(const Context &context, const Json &params)
                          {"max", std::move(highs)}});
 }
 
+constexpr std::string_view kRect = R"({"type": "object", "properties": {"x": {"type": "integer", "minimum": 0},
+    "y": {"type": "integer", "minimum": 0}, "width": {"type": "integer", "minimum": 1},
+    "height": {"type": "integer", "minimum": 1}}, "required": ["x", "y", "width", "height"], "additionalProperties": false})";
+
+std::string withRects(std::string_view text)
+{
+    std::string out(text);
+    for (std::size_t at = out.find("@rect"); at != std::string::npos; at = out.find("@rect", at + kRect.size()))
+        out.replace(at, 5, kRect);
+    return out;
+}
+
 }
 
 void addMediaOperations(Registry &registry)
@@ -209,22 +419,67 @@ void addMediaOperations(Registry &registry)
                      "required": ["time"], "additionalProperties": false})",
                  now(timeOfFrame));
     addOperation(registry, Access::Read, "video.frame",
-                 "One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge.",
-                 R"({"type": "object", "properties": {
-                     "frame": {"type": "integer", "minimum": 0, "description": "Default: the frame shown."},
+                 "One video frame as BGRA pixels in base64, with every Line, one Line or none drawn on it, optionally "
+                 "cropped, scaled to fit maxEdge and maxPixels.",
+                 withRects(R"({"type": "object", "properties": {
+                     "frame": {"type": "integer", "minimum": 0,
+                         "description": "Default: the frame shown, or with line the Line's first frame when it is not on the frame shown."},
                      "subtitles": {"type": "boolean", "description": "Render the subtitles on it. Default true."},
-                     "crop": {"type": "object", "properties": {"x": {"type": "integer", "minimum": 0},
-                         "y": {"type": "integer", "minimum": 0}, "width": {"type": "integer", "minimum": 1},
-                         "height": {"type": "integer", "minimum": 1}},
-                         "required": ["x", "y", "width", "height"], "additionalProperties": false},
-                     "maxEdge": {"type": "integer", "minimum": 16, "maximum": 4096, "description": "Default 1024."}},
-                     "additionalProperties": false})",
-                 R"({"type": "object", "properties": {"frame": {"type": "integer", "minimum": 0},
+                     "document": {"$ref": "#/$defs/DocumentId", "description": "line's Document. Defaults to the active Document."},
+                     "line": {"$ref": "#/$defs/LineId", "description": "Draw this Line alone."},
+                     "crop": @rect,
+                     "maxEdge": {"type": "integer", "minimum": 16, "maximum": 4096, "description": "Default 1024."},
+                     "maxPixels": {"type": "integer", "minimum": 256, "maximum": 16777216,
+                         "description": "The most pixels the image may have. No limit when omitted."}},
+                     "additionalProperties": false})"),
+                 withRects(R"({"type": "object", "properties": {"frame": {"type": "integer", "minimum": 0},
                      "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1},
+                     "crop": @rect,
                      "format": {"const": "bgra"},
                      "data": {"type": "string", "description": "width * 4 bytes per row, top row first, base64."}},
-                     "required": ["frame", "width", "height", "format", "data"], "additionalProperties": false})",
+                     "required": ["frame", "width", "height", "crop", "format", "data"], "additionalProperties": false})"),
                  videoFrame);
+    addOperation(registry, Access::Read, "video.ink_bounds",
+                 "Where one Line's ink, or every Line's, lies on a video frame, in video pixels.",
+                 R"({"type": "object", "properties": {
+                     "frame": {"type": "integer", "minimum": 0,
+                         "description": "Default: the frame shown, or with line the Line's first frame when it is not on the frame shown."},
+                     "document": {"$ref": "#/$defs/DocumentId", "description": "Defaults to the active Document."},
+                     "line": {"$ref": "#/$defs/LineId", "description": "This Line alone. Every Line when omitted."}},
+                     "additionalProperties": false})",
+                 withRects(R"({"type": "object", "properties": {"frame": {"type": "integer", "minimum": 0},
+                     "bounds": {"anyOf": [@rect, {"type": "null"}], "description": "Null when nothing is drawn."}},
+                     "required": ["frame", "bounds"], "additionalProperties": false})"),
+                 now(inkBounds));
+    addOperation(registry, Access::Read, "video.colours",
+                 "The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it.",
+                 R"({"type": "object", "properties": {
+                     "frame": {"type": "integer", "minimum": 0, "description": "Default: the frame shown."},
+                     "points": {"type": "array", "minItems": 1, "maxItems": 256, "items": {"type": "object",
+                         "properties": {"x": {"type": "integer", "minimum": 0}, "y": {"type": "integer", "minimum": 0}},
+                         "required": ["x", "y"], "additionalProperties": false}},
+                     "radius": {"type": "integer", "minimum": 0, "maximum": 32, "description": "Default 0, the pixel alone."},
+                     "subtitles": {"type": "boolean", "description": "Sample with the subtitles drawn. Default false."}},
+                     "required": ["points"], "additionalProperties": false})",
+                 R"({"type": "object", "properties": {"frame": {"type": "integer", "minimum": 0},
+                     "colours": {"type": "array", "items": {"type": "object", "properties": {
+                         "x": {"type": "integer"}, "y": {"type": "integer"},
+                         "colour": {"type": "string", "pattern": "^&H[0-9A-F]{6}&$"}},
+                         "required": ["x", "y", "colour"], "additionalProperties": false}}},
+                     "required": ["frame", "colours"], "additionalProperties": false})",
+                 videoColours);
+    addOperation(registry, Access::Read, "video.keyframes", "The keyframes from one time to another, each with its start time.",
+                 R"({"type": "object", "properties": {
+                     "from": {"type": "integer", "minimum": 0, "description": "Milliseconds. Default 0."},
+                     "to": {"type": "integer", "minimum": 0, "description": "Milliseconds. Default: the end."}},
+                     "additionalProperties": false})",
+                 R"({"type": "object", "properties": {
+                     "keyframes": {"type": "array", "maxItems": 500, "items": {"type": "object", "properties": {
+                         "frame": {"type": "integer", "minimum": 0}, "time": {"type": "integer"}},
+                         "required": ["frame", "time"], "additionalProperties": false}},
+                     "total": {"type": "integer", "minimum": 0, "description": "Every keyframe in the range; the first 500 are listed."}},
+                     "required": ["keyframes", "total"], "additionalProperties": false})",
+                 now(videoKeyframes));
     addOperation(registry, Access::Read, "audio.info", "Whether audio is open and loaded, its duration and sample rate.",
                  R"({"type": "object", "additionalProperties": false})",
                  R"({"type": "object", "properties": {"open": {"type": "boolean"}, "ready": {"type": "boolean"},

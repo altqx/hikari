@@ -376,6 +376,67 @@ private slots:
         QVERIFY(*audio == *api::Json::parse(R"({"open": false})"));
     }
 
+    void oneLineIsDrawnApartFromTheVideosSubtitles()
+    {
+        application->video().openVideo(QStringLiteral("?dummy:25.000000:250:320:180:47:163:254:"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        const auto first = session().document().lines().front()->id;
+        const auto box = call("document.apply", QStringLiteral(R"({"revision": %1, "name": "Box", "edits": [
+            {"op": "set_line", "line": %2, "fields": {"text": "{\\pos(20,20)\\an7\\bord0\\shad0\\p1}m 0 0 l 60 0 60 40 0 40"}}]})")
+                                                    .arg(session().revision())
+                                                    .arg(first.value)
+                                                    .toUtf8()
+                                                    .constData());
+        QVERIFY2(box, box ? "" : box.error().message.c_str());
+        QTest::qWait(100);
+        const std::uint64_t videoScripts = application->video().session().subtitleUpdates();
+
+        const auto ink = call("video.ink_bounds", QStringLiteral(R"({"frame": 0, "line": %1})").arg(first.value).toUtf8().constData());
+        QVERIFY2(ink, ink ? "" : ink.error().message.c_str());
+        const api::Json &bounds = *ink->find("bounds");
+        QVERIFY(bounds.isObject());
+        const int x0 = int(bounds.find("x")->asInt()), y0 = int(bounds.find("y")->asInt());
+        const int x1 = x0 + int(bounds.find("width")->asInt()), y1 = y0 + int(bounds.find("height")->asInt());
+        QVERIFY(x1 <= 320 && y1 <= 180 && x1 - x0 > 4 && y1 - y0 > 4);
+        const auto second = session().document().lines()[1]->id;
+        QVERIFY(*call("video.ink_bounds", QStringLiteral(R"({"frame": 0, "line": %1})").arg(second.value).toUtf8().constData())
+                     ->find("bounds") == api::Json());
+
+        const auto frameOf = [this](const QString &params) {
+            std::optional<api::Result> answer;
+            hikariApi().call(assistant(), "video.frame", *api::Json::parse(params.toStdString()),
+                             [&](api::Result r) { answer = std::move(r); });
+            QTest::qWaitFor([&] { return answer.has_value(); }, 20000);
+            return answer && *answer ? QByteArray::fromBase64(QByteArray::fromStdString((*answer)->find("data")->asString()))
+                                     : QByteArray();
+        };
+        const QByteArray drawn = frameOf(QStringLiteral(R"({"frame": 0, "line": %1, "maxEdge": 4096})").arg(first.value));
+        const QByteArray bare = frameOf(QStringLiteral(R"({"frame": 0, "subtitles": false, "maxEdge": 4096})"));
+        QCOMPARE(drawn.size(), 320 * 180 * 4);
+        QCOMPARE(bare.size(), drawn.size());
+        int inside = 0;
+        for (int y = 0; y < 180; ++y)
+            for (int x = 0; x < 320; ++x) {
+                const bool same = drawn.mid((y * 320 + x) * 4, 4) == bare.mid((y * 320 + x) * 4, 4);
+                if (x >= x0 && x < x1 && y >= y0 && y < y1)
+                    inside += same ? 0 : 1;
+                else
+                    QVERIFY2(same, qPrintable(QStringLiteral("%1,%2").arg(x).arg(y)));
+            }
+        QVERIFY(inside > 0);
+
+        std::optional<api::Result> sampled;
+        hikariApi().call(assistant(), "video.colours", *api::Json::parse(R"({"frame": 0, "points": [{"x": 300, "y": 170}]})"),
+                         [&](api::Result r) { sampled = std::move(r); });
+        QTRY_VERIFY_WITH_TIMEOUT(sampled.has_value(), 20000);
+        QVERIFY(*sampled);
+        const auto *pixel = reinterpret_cast<const unsigned char *>(bare.constData()) + (170 * 320 + 300) * 4;
+        QCOMPARE(QString::fromStdString((*sampled)->find("colours")->asArray().front().find("colour")->asString()),
+                 QStringLiteral("&H%1%2%3&").arg(pixel[0], 2, 16, QLatin1Char('0')).arg(pixel[1], 2, 16, QLatin1Char('0'))
+                     .arg(pixel[2], 2, 16, QLatin1Char('0')).toUpper());
+        QCOMPARE(application->video().session().subtitleUpdates(), videoScripts);
+    }
+
     void aUserCommandIsHeard()
     {
         shell(QStringLiteral("root.runItem(root.globalActions().GLOBAL_ABOUT)"));

@@ -138,6 +138,8 @@ public:
     // The handle files.* use for `path`; granting a path again updates `writable`.
     std::string grantFile(const std::string &callerId, const std::string &path, bool writable);
     void revokeFiles(const std::string &callerId);
+    // The path behind a caller's handle, if the caller holds it.
+    std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
 
 private:
     struct Subscription {

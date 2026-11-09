@@ -220,4 +220,47 @@ bool saveHighestSerial(const fs::path &file, std::int64_t serial)
     return !error;
 }
 
+namespace {
+
+constexpr std::size_t kMaxIdLength = 100;
+
+bool isIdWord(std::string_view word)
+{
+    if (word.empty() || word.front() == '-' || word.back() == '-' || word.find("--") != std::string_view::npos)
+        return false;
+    return std::ranges::all_of(word, [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; });
+}
+
+bool fitsManifestId(std::string_view id)
+{
+    if (id.size() > kMaxIdLength || id.find('.') == std::string_view::npos)
+        return false;
+    for (std::size_t start = 0;;) {
+        const std::size_t dot = id.find('.', start);
+        if (!isIdWord(id.substr(start, dot - start)))
+            return false;
+        if (dot == std::string_view::npos)
+            return true;
+        start = dot + 1;
+    }
+}
+
+bool startsCaseless(std::string_view text, std::string_view lowerPrefix)
+{
+    return text.size() >= lowerPrefix.size() &&
+           std::ranges::equal(text.substr(0, lowerPrefix.size()), lowerPrefix,
+                              [](char a, char b) { return (a >= 'A' && a <= 'Z' ? char(a - 'A' + 'a') : a) == b; });
+}
+
+}
+
+std::optional<std::string> installLinkId(std::string_view link)
+{
+    constexpr std::string_view scheme = "hikarisub://", action = "plugin/install?id=";
+    if (!startsCaseless(link, scheme) || !link.substr(scheme.size()).starts_with(action))
+        return std::nullopt;
+    const std::string_view id = link.substr(scheme.size() + action.size());
+    return fitsManifestId(id) ? std::optional<std::string>(id) : std::nullopt;
+}
+
 }
