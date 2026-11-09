@@ -267,6 +267,24 @@ TEST(SplitLines, LegacyPieces)
               (std::vector<std::u16string>{u"{\\i1}ab,", u" ", u"cd"}));
 }
 
+TEST(SplitLines, CharactersAreWholeGraphemeClusters)
+{
+    EXPECT_EQ(legacy::splitByChar(u"กินน้ำ"), (std::vector<std::u16string>{u"กิ", u"น", u"น้ำ"}));
+    EXPECT_EQ(legacy::splitByChar(u"e\u0301x\U0001F600\U0001F468\u200D\U0001F469\u200D\U0001F467"),
+              (std::vector<std::u16string>{u"e\u0301", u"x", u"\U0001F600", u"\U0001F468\u200D\U0001F469\u200D\U0001F467"}));
+    EXPECT_EQ(legacy::splitByChar(u"ก{\\b1}ิน"), (std::vector<std::u16string>{u"ก{\\b1}ิ", u"น"}));
+    EXPECT_EQ(legacy::splitByChar(u"a\\N\u0301"), (std::vector<std::u16string>{u"a", u"\\N", u"\u0301"}));
+    EXPECT_EQ(legacy::splitByChar(u"กิ น", false), (std::vector<std::u16string>{u"กิ", u"น"}));
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,กิน\n", SplitText::Characters),
+              (std::vector<std::u8string>{u8"{\\pos(305,470)\\an2}กิ", u8"{\\pos(350,470)\\an2}น"}));
+}
+
+TEST(SplitLines, CharactersWithoutMarksSplitAsBefore)
+{
+    EXPECT_EQ(legacy::splitByChar(u"漢字 a\\h{\\i1}b\\nc"),
+              (std::vector<std::u16string>{u"漢", u"字", u" ", u"a", u"\\", u"h", u"{\\i1}b", u"\\N", u"c"}));
+}
+
 TEST(SplitLines, BothPiecesKeepTheLinesExtradata)
 {
     EditSession session{load("[Events]\n"
