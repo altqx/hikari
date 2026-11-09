@@ -16,7 +16,7 @@ ApplicationWindow {
     title: {
         if (!shell.hasEditingTarget)
             return projectName.length > 0 ? qsTr("%1 - HikariSub").arg(projectName) : "HikariSub"
-        return projectName.length > 0 ? qsTr("%1 - %2 - HikariSub").arg(shell.editingTitle).arg(projectName)
+        return projectName.length > 0 ? qsTr("%1 - %2 - HikariSub").arg(shell.editingTitle, projectName)
                                       : qsTr("%1 - HikariSub").arg(shell.editingTitle)
     }
     color: Theme.background
