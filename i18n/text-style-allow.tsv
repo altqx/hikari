@@ -44,6 +44,7 @@ HikariSub.Options	Get a key in Google AI Studio	title-case	Google AI Studio is t
 HikariSub.Options	AI in Getting started and What’s new	title-case	names the Getting started and What’s new windows
 HikariSub.Options	Replace the key with Edit	title-case	names the row’s Edit button
 HikariSub.Options	Sign in again with Edit	title-case	names the row’s Edit button
+HikariSub.Options	Claude Code command	title-case	Claude Code is the product’s name
 HikariSub.Plugins	Open Plugins…	title-case	Plugins is the window’s name
 HikariSub.Options	Google Search, and reads pages	title-case	Google Search is the product’s name
 HikariSub.Options	Brave Search (search only)	title-case	Brave Search is the product’s name

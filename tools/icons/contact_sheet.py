@@ -3,7 +3,8 @@
 
 HIKARI_ICON_SHEET_ROLES limits it to those roles (comma-separated). HIKARI_ICON_SHEET_SECTIONS names a JSON
 file of [{"title": ..., "roles": [...]}] that groups the sheet. HIKARI_ICON_SHEET_BEFORE names a folder of
-earlier SVGs: a role whose earlier SVG differs gets a "before" row above its own.
+earlier SVGs: a role whose earlier SVG differs gets a "before" row above its own. HIKARI_ICON_SHEET_SIZES
+(comma-separated pixels, default 16,32) sets the sizes each cell shows before the disabled 16 px one.
 """
 
 import html
@@ -25,6 +26,7 @@ APPEARANCES = [
     ("highContrastBlack", "High contrast black", "HighContrastBlack"),
 ]
 SLOTS = ["normal", "accent", "disabled"]
+SIZES = [int(s) for s in os.environ.get("HIKARI_ICON_SHEET_SIZES", "16,32").split(",") if s]
 RGB = r'rgb\(0x([0-9A-Fa-f]{6})\)'
 
 
@@ -64,8 +66,9 @@ def inline(svg, size):
 
 def row(role, meta, svg, surfaces, cls=""):
     cells = "".join(
-        '<td class="sw %s"><span>%s</span><span>%s</span><span class="off">%s</span></td>'
-        % (aid, inline(svg, 16), inline(svg, 32), inline(svg, 16)) for aid, _, _ in APPEARANCES)
+        '<td class="sw %s">%s<span class="off">%s</span></td>'
+        % (aid, "".join("<span>%s</span>" % inline(svg, size) for size in SIZES), inline(svg, 16))
+        for aid, _, _ in APPEARANCES)
     return "<tr%s><td><code>%s</code><div class=meta>%s</div></td>%s<td class=meta>%s</td></tr>" % (
         cls, html.escape(role), meta, cells, html.escape(surfaces))
 
@@ -154,7 +157,7 @@ td.sw svg{display:block}
 </style></head><body>
 <h1>HikariSub icon set (K1)</h1>
 <p>%d icons drawn in house on a 16-unit grid (docs/ux/icons.md). Each appearance column shows the icon
-at 16 and 32 px, then disabled at 16 px, in the theme layer's colours (Light and Dark
+at %s px, then disabled at 16 px, in the theme layer's colours (Light and Dark
 with the default accent); the accent layer is the second colour. PNG sheets rendered by the
 application's Icon item: <span class=sheets>%s</span></p>
 %s
@@ -164,7 +167,7 @@ application's Icon item: <span class=sheets>%s</span></p>
 %s
 </tbody></table></div>
 </body></html>
-""" % ("".join(css), count, " ".join(sheets), "".join(swatches), "\n".join(rows))
+""" % ("".join(css), count, ", ".join(map(str, SIZES)), " ".join(sheets), "".join(swatches), "\n".join(rows))
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.write(page)

@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>원근 추적…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7395,6 +7403,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>디자인 및 개발</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>자동화 스크립트의 태국어 지원</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -8973,6 +8985,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>촉음을 별도 음절로 분리 (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>태국어를 문자 묶음으로 분리</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>자동 분할이 태국어 문자 묶음마다 음절을 하나씩 만들어 กิน이 กิ|น이 됩니다. 끄면 태국어 단어 하나가 음절 하나로 남습니다.</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -10618,6 +10638,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Try again</source>
         <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>HikariSub 밖의 에이전트가 MCP로 편집하도록 허용</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex 및 기타 에이전트가 열린 문서를 읽습니다. 에이전트의 편집은 유지하거나 실행 취소할 때까지 검토에서 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>http://127.0.0.1에서도 수신</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>http://127.0.0.1:%1에서도 수신</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>HTTP로 연결하는 에이전트용입니다. 이 컴퓨터에서만, 토큰이 있어야 연결할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>설정 복사</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>복사했습니다. 터미널에서 실행하세요.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>복사했습니다. 에이전트 설정에 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Claude Code 명령</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>주소와 토큰이 담긴 JSON</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>JSON 설정은 HTTP로 연결하는 에이전트용이므로 “http://127.0.0.1에서도 수신”이 켜져 있어야 합니다.</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -15144,6 +15220,10 @@ Styles deleted:
         <translation>전환</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -15228,6 +15308,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>영상만</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
     </message>
 </context>
 <context>

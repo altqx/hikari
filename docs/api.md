@@ -26,7 +26,10 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `settings.list`, `settings.get` | read | Settings with type, scope, default and value. |
 | `video.info` | read | Whether a video is open; its size, aspect ratio, the frame shown and the keyframes. |
 | `video.frame_at_time`, `video.time_of_frame` | read | Converts between milliseconds and frame numbers. |
-| `video.frame` | read | One frame as BGRA in base64, with or without subtitles, optionally cropped, scaled to fit `maxEdge`. |
+| `video.frame` | read | One frame as BGRA in base64, with every Line, one Line (`line`) or none drawn on it, optionally cropped, scaled to fit `maxEdge` and `maxPixels`; `crop` gives the part of the frame shown. |
+| `video.ink_bounds` | read | The [ink bounds](#drawing-apart-from-the-video) of one Line, or of every Line, on a frame. |
+| `video.colours` | read | The colours at up to 256 points of a frame as `&HBBGGRR&`, each the mean of a square of `radius` pixels, without subtitles unless asked. |
+| `video.keyframes` | read | The keyframes from one time to another, each with its start time; 500 at most, with the `total`. |
 | `audio.info` | read | Whether audio is open and loaded; duration, sample rate, channels. |
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
 | `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
@@ -52,6 +55,10 @@ One write runs at a time; another write meanwhile gets `busy`.
 ## Files
 
 A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
+
+## Drawing apart from the video
+
+`video.frame` with `line` and `video.ink_bounds` draw a Document in a render context of their own, through the host's `RenderHost`, so the video's subtitles are never prepared again. The context is prepared the way the video prepares its subtitles, with the same renderer, script and fonts, and is parsed again only when the script or fonts change. With `line`, every other Line is left out of the script. Without `frame`, both use the frame shown, or the Line's first frame when the Line isn't on it. The ink bounds are the smallest rectangle holding every pixel drawn, and null when nothing is. A host without the port answers `unavailable`.
 
 ## Node catalogue
 

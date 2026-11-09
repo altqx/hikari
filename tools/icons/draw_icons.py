@@ -69,6 +69,8 @@ FONT = {
     "L": ["100", "100", "100", "100", "111"],
     "2": ["110", "001", "010", "100", "111"],
     "F": ["111", "100", "110", "100", "100"],
+    "X": ["101", "101", "010", "101", "101"],
+    "Y": ["101", "101", "010", "010", "010"],
 }
 
 
@@ -1116,6 +1118,273 @@ icon("plugin-full-access", "Full access", [], ["plugin-manager"],
 icon("plugin-sandbox", "Sandboxed", [], ["plugin-manager"],
      stroke("M4.5 6h2a1 1 0 1 1 2 0h2v2a1 1 0 1 1 0 2v2.5h-6z") + accent(rect(1.5, 1.5, 13, 13, 1)))
 
+def pixels(rows, x, y):
+    """Filled pixel cells from a bitmap of "0"/"1" rows, one unit each, starting at (x, y)."""
+    d = []
+    for r, row in enumerate(rows):
+        for c, bit in enumerate(row):
+            if bit == "1":
+                d.append("M%s %sh1v1h-1z" % (q(x + c), q(y + r)))
+    return fill("".join(d))
+
+
+def tilted_a(cx, cy, angle, h=4, w=3):
+    """A stroked capital A standing on (cx, cy), tilted by angle (radians) from upright."""
+    nx, ny = math.sin(angle), -math.cos(angle)
+    tx, ty = math.cos(angle), math.sin(angle)
+    apex = (cx + nx * h, cy + ny * h)
+    left = (cx - tx * w / 2, cy - ty * w / 2)
+    right = (cx + tx * w / 2, cy + ty * w / 2)
+    bar_l = (left[0] + (apex[0] - left[0]) * .4 + tx * .75, left[1] + (apex[1] - left[1]) * .4 + ty * .75)
+    bar_r = (right[0] + (apex[0] - right[0]) * .4 - tx * .75, right[1] + (apex[1] - right[1]) * .4 - ty * .75)
+    return stroke("M%s %sL%s %sL%s %sM%s %sL%s %s" % tuple(q(v) for v in (
+        left + apex + right + bar_l + bar_r)))
+
+
+SQUARE_A = "M2.5 1.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"
+SQUARE_B = "M6.5 5.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"
+SQUARES_UNION = ("M2.5 1.5h7a1 1 0 0 1 1 1v3h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-3h-3"
+                 "a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z")
+CLIP_QUAD = "M3 2.5l9.5 1.5 1 8.5-9.5 1.5z"
+CLIP_HANDLES = (frect(1.5, 1, 3, 3), frect(11, 2.5, 3, 3), frect(12, 11, 3, 3), frect(3, 12.5, 3, 3))
+
+
+def grad_handle(x1, y1, x2, y2):
+    """The gradient tool's handle: a line from a round start to a square end."""
+    return accent(stroke("M%s %sL%s %s" % (q(x1), q(y1), q(x2), q(y2))), dot(x1, y1, 1.25),
+                  frect(x2 - 1.25, y2 - 1.25, 2.5, 2.5, .5))
+
+
+GRAD_FRAME = rect(1.5, 2.5, 13, 11, 1)
+DOWNLOAD_BADGE = accent(stroke("M12 9.5v3.5M10.25 11.25L12 13l1.75-1.75M9.5 14.5h5"))
+REPEAT_BADGE = accent(stroke("M9.5 11.5v-.5A1.5 1.5 0 0 1 11 9.5h3.5"), stroke("M13.5 8.5l1 1-1 1"),
+                      stroke("M14.5 12.5v.5A1.5 1.5 0 0 1 13 14.5H9.5"), stroke("M10.5 13.5l-1 1 1 1"))
+MINUS_BADGE = stroke("M9.5 12.5h5")
+BREAK_MARK = "M11.5 5.5v3h-6M7 7l-1.5 1.5L7 10"
+LAYERS_TOP = solid("M8 1.5l6.5 3.5L8 8.5 1.5 5z")
+KEY_DIAMOND_L, KEY_DIAMOND_R = diamond(4, 8, 2.75), diamond(12, 8, 2.75)
+START_EDGE_L, START_EDGE_R = stroke("M4.5 3.5h-2v9h2"), stroke("M13.5 3.5h-2v9h2")
+END_EDGE_L, END_EDGE_R = stroke("M2.5 3.5h2v9h-2"), stroke("M11.5 3.5h2v9h-2")
+ARROW_TO_LEFT = accent(stroke("M10.5 8h-3M9 6.5L7.5 8 9 9.5"))
+ARROW_TO_RIGHT = accent(stroke("M5.5 8h3M7 6.5L8.5 8 7 9.5"))
+TRACK = stroke("M3 13L5 8.5l4.5-2") + dot(3, 13, 1.5) + dot(5, 8.5, 1.5) + dot(9.5, 6.5, 1.5)
+GLOBE_BADGE = accent(circle(12, 12, 2.75), stroke("M9.25 12h5.5M12 9.25c-1 .75-1.25 1.75-1.25 2.75s.25 2 1.25 2.75"
+                                                 "c1-.75 1.25-1.75 1.25-2.75s-.25-2-1.25-2.75"))
+
+icon("remove-tags", "Remove tags", [], [GRIDMENU, EDITOR],
+     stroke("M5.5 2.5h-1a1 1 0 0 0-1 1v3L2.5 8l1 1.5v3a1 1 0 0 0 1 1h1") + stroke("M10.5 2.5h1a1 1 0 0 1 1 1V7")
+     + stroke("M6.5 5l2 4.5") + cross_badge())
+
+icon("shape-unite", "Unite", [], [VISUAL], accent(fill(SQUARES_UNION)) + stroke(SQUARES_UNION))
+icon("shape-subtract", "Subtract", [], [VISUAL],
+     accent(fill("M2.5 1.5h7a1 1 0 0 1 1 1v3h-4a1 1 0 0 0-1 1v4h-3a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"))
+     + stroke(SQUARE_A) + stroke(SQUARE_B))
+icon("shape-intersect", "Intersect", [], [VISUAL],
+     accent(frect(5.5, 5.5, 5, 5)) + stroke(SQUARE_A) + stroke(SQUARE_B))
+EXCLUDE_A = "M2.5 1.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"
+EXCLUDE_B = "M6.5 5.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"
+icon("shape-exclude", "Exclude", [], [VISUAL],
+     accent(fill(EXCLUDE_A + EXCLUDE_B, "evenodd")) + stroke(EXCLUDE_A) + stroke(EXCLUDE_B))
+icon("shape-offset", "Offset", [], [VISUAL],
+     stroke("M6.5 6.5h2.5l1 1.5-1 1.5H6.5L5.5 8z") + accent(stroke("M5 2.5h5a1.5 1.5 0 0 1 1.25.75l2.75 3.75a1.5 1.5 0 0 1 0 1.75"
+                                                        "l-2.75 4.25a1.5 1.5 0 0 1-1.25.5H5a1.5 1.5 0 0 1-1.25-.75L2 9"
+                                                        "a1.5 1.5 0 0 1 0-1.75l1.75-4a1.5 1.5 0 0 1 1.25-.75z")))
+icon("clip-to-shape", "Clip to shape", [], [VISUAL],
+     stroke(CLIP_QUAD) + "".join(CLIP_HANDLES) + accent(solid("M5.5 5.25l5.25 1 .5 4-5.25.75z")))
+icon("shape-to-clip", "Shape to clip", [], [VISUAL],
+     solid("M5.5 5.25l5.25 1 .5 4-5.25.75z") + accent(stroke(CLIP_QUAD), *CLIP_HANDLES))
+icon("shape-merge", "Merge drawings", [], [VISUAL],
+     stroke("M1.5 2.5h4v4h-4z") + circle(3.5, 12, 2) + stroke("M7 4.5l2.5 3.5M7 11.5L9.5 8")
+     + accent(stroke("M10.5 5.5h2v2.5"), circle(12.5, 9.5, 1.75)))
+
+icon("tool-gradient", "Gradient", [], [VISUAL],
+     GRAD_FRAME + accent(frect(2, 3, 3.5, 10), dot(7, 5, .75), dot(9, 5, .5), dot(7, 8, .75), dot(9, 8, .5),
+                         dot(7, 11, .75), dot(9, 11, .5), dot(8, 6.5, .75), dot(8, 9.5, .75), dot(11, 6.5, .5),
+                         dot(11, 9.5, .5)))
+icon("gradient-rect", "Rectangle strips", [], [VISUAL],
+     GRAD_FRAME + stroke("M5.5 2.5v11M8 2.5v11M10.5 2.5v11") + grad_handle(3.25, 8, 12.5, 8))
+icon("gradient-skew", "Skewed strips", [], [VISUAL],
+     stroke("M5 2.5h9.5l-3.5 11H1.5z") + stroke("M8.25 2.5L4.75 13.5M11.5 2.5L8 13.5") + grad_handle(3.75, 8, 12.25, 8))
+icon("gradient-rotated", "Rotated strips", [], [VISUAL],
+     GRAD_FRAME + stroke("M7 2.5L1.5 8M11.5 2.5L2.5 13.5M14.5 4l-8 9.5M14.5 9L10.5 13.5") + grad_handle(3.5, 4.5, 12, 11.5))
+icon("gradient-vector", "Wedge strips", [], [VISUAL],
+     stroke("M2.5 13.5V2.5a11 11 0 0 1 11 11z") + stroke("M2.5 13.5L8 3.75M2.5 13.5l9.5-5.5")
+     + accent(stroke("M2.5 6.5a7 7 0 0 1 7 7"), dot(2.5, 6.5, 1.25), frect(8.25, 12.25, 2.5, 2.5, .5)))
+icon("gradient-clip-edge", "Strips along the clip", [], [VISUAL],
+     stroke(CLIP_QUAD) + "".join(CLIP_HANDLES) + accent(stroke("M5.5 5.25l5.25 1 .5 4-5.25.75z")))
+icon("gradient-by-char", "By character", [], [VISUAL],
+     letters("A", 1.5, 2) + letters("A", 6.5, 2) + letters("A", 11.5, 2) + grad_handle(3, 12, 13, 12))
+icon("gradient-by-line", "By Line", [], [VISUAL],
+     stroke("M6.5 3.5h8M6.5 8h8M6.5 12.5h8") + accent(stroke("M2.5 3.5v8"), dot(2.5, 3.5, 1.25),
+                                                     frect(1.25, 11.25, 2.5, 2.5, .5)), mirror=True)
+icon("gradient-merge", "Merge strips", [], [VISUAL],
+     rect(1.5, 4.5, 13, 7, 1) + stroke("M5.5 4.5v7M10.5 4.5v7")
+     + accent(stroke("M5.5 2v-.5h5v.5M8 1.5v2M5.5 14v.5h5V14")))
+
+icon("graph-shake", "Shake", [], ["node-library"],
+     rect(4.5, 3.5, 7, 9, 1) + accent(stroke("M2.5 5.5v5M1 7v2M13.5 5.5v5M15 7v2")))
+icon("graph-wobble", "Wobble", [], ["node-library"],
+     stroke("M1.5 4.5c1.5-1.5 2.75-1.5 4.25 0s2.75 1.5 4.25 0 2.75-1.5 4.5 0M1.5 4.5v7M14.5 4.5v7")
+     + accent(stroke("M1.5 11.5c1.5-1.5 2.75-1.5 4.25 0s2.75 1.5 4.25 0 2.75-1.5 4.5 0")))
+icon("graph-bounce", "Bounce", [], ["node-library"],
+     stroke("M1.5 14.5h13") + stroke("M1.5 13c1-6 4-6 5 0 .75-3.5 3-3.5 3.75 0C10.5 10.5 11 8.5 11.75 7.25")
+     + accent(circle(12.5, 5, 2)))
+icon("graph-typewriter", "Typewriter", [], ["node-library"],
+     letters("T", 1.5, 5.5) + letters("A", 5.5, 5.5) + accent(stroke("M10.5 4v8M9.5 4h2M9.5 12h2")) + stroke("M13 12.5h1.5"),
+     mirror=True)
+icon("graph-fade-by-letter", "Fade by letter", [], ["node-library"],
+     letters("A", 1.5, 5.5) + accent(letters("A", 6.5, 5.5), pixels(["010", "000", "101", "000", "101"], 11.5, 5.5)),
+     mirror=True)
+icon("graph-focus-lines", "Focus lines", [], ["node-library"],
+     rect(1.5, 1.5, 13, 13, 1) + accent(stroke("M3.5 3.5l2.5 2.5M8 3.5v1.5M12.5 3.5l-1.75 1.75M12.5 8H10M12.5 12.5"
+                                                 "l-2.5-2.5M8 12.5V11M3.5 12.5l1.75-1.75M3.5 8H6")))
+icon("graph-grain", "Grain", [], ["node-library"],
+     rect(1.5, 1.5, 13, 13, 1) + accent(dot(4, 4.25, .75), dot(7.5, 3.75, .5), dot(11.5, 4.5, .75), dot(5.5, 7, .5),
+                                       dot(9.25, 6.75, .75), dot(12.25, 8, .5), dot(3.75, 9.5, .75), dot(7, 10, .75),
+                                       dot(10.5, 11, .5), dot(5, 12.25, .5), dot(12, 12, .75), dot(8.25, 12.75, .5)))
+icon("graph-chromatic-aberration", "Chromatic aberration", [], ["node-library"],
+     stroke("M1.5 13.5L5.5 2.5h1l4 11M3 9.5h6") + accent(stroke("M5 13.5L9 2.5h1l4.5 11M6.5 9.5h6.5")))
+icon("graph-randomove", "Random move", [], ["node-library"],
+     rect(1.5, 1.5, 8, 8, 1) + dot(3.75, 3.75, 1) + dot(5.5, 5.5, 1) + dot(7.25, 7.25, 1)
+     + accent(stroke("M10.5 10.5l4 4M11 14.5h3.5V11")))
+icon("graph-karaoke-to-alpha", "Karaoke to alpha", [], ["node-library"],
+     rect(1.5, 4.5, 13, 7, 1) + stroke("M5.5 4.5v7M10.5 4.5v7") + frect(2, 5, 3.5, 6)
+     + accent(frect(6, 5, 2, 2), frect(8, 7, 2, 2), frect(6, 9, 2, 2)))
+
+icon("select-overlapping", "Overlapping lines", [], ["select-lines"],
+     rect(1.5, 2.5, 9, 4, 1) + rect(5.5, 9.5, 9, 4, 1) + accent(frect(6, 3, 4, 3), frect(6, 10, 4, 3)))
+icon("split-tag-blocks", "Split at tag blocks", [], [GRIDMENU],
+     stroke("M7 8.5H2.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1H7M8.5 8.5h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5")
+     + stroke("M3 2l-1 1.75 1 1.75M5 2l1 1.75-1 1.75M10.5 2l-1 1.75 1 1.75M12.5 2l1 1.75-1 1.75")
+     + accent(stroke("M7.75 1.5v13")), mirror=True)
+icon("split-every-n", "Split every N frames", [], [GRIDMENU],
+     rect(1.5, 2.5, 13, 5, 1) + stroke("M5.5 11v3M10.5 11v3M5.5 12.5h5") + accent(stroke("M5.5 1.5v8M10.5 1.5v8")))
+
+icon("track-colour", "Track colour", [], [VIDEO],
+     stroke("M2.5 13.5c2-1 3.5-2.5 5-5") + dot(2.5, 13.5, 1) + dot(5.5, 11.25, 1) + dot(7.5, 8.5, 1)
+     + accent(solid("M12 1.5c1.25 1.75 2.5 3 2.5 4.5a2.5 2.5 0 0 1-5 0c0-1.5 1.25-2.75 2.5-4.5z")))
+icon("find-fade", "Find fade", [], [VIDEO],
+     stroke("M1.5 12.5h3l6-8h4") + accent(stroke("M4.5 14.5v-4M10.5 14.5v-12")))
+
+icon("tool-text-on-path", "Text on path", [], [VISUAL],
+     accent(stroke("M1.5 14C4 14 5 8.5 8 8.5s4 5.5 6.5 5.5")) + tilted_a(8, 8.5, 0, 6.5, 5))
+
+icon("reinstall-scripts", "Reinstall scripts", [], ["automation-reset"], SCRIPT_CUT + DOWNLOAD_BADGE)
+
+icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS],
+     LAYERS_TOP + accent(stroke("M1.5 8l6.5 3.5L14.5 8M1.5 11l6.5 3.5 6.5-3.5")))
+icon("layers-repeat", "Repeat blur and glow layers", [], [GRIDMENU, SUBS],
+     solid("M6 1.5l4.5 2.5L6 6.5 1.5 4z") + stroke("M1.5 6.5l4.5 2.5 2.5-1.25M1.5 9l4.5 2.5 1.5-.75") + REPEAT_BADGE)
+
+icon("snap-start-to-previous-keyframe", "Snap start to previous keyframe", [], [TIMING],
+     KEY_DIAMOND_L + START_EDGE_R + ARROW_TO_LEFT)
+icon("snap-start-to-next-keyframe", "Snap start to next keyframe", [], [TIMING],
+     START_EDGE_L + KEY_DIAMOND_R + ARROW_TO_RIGHT)
+icon("snap-end-to-previous-keyframe", "Snap end to previous keyframe", [], [TIMING],
+     KEY_DIAMOND_L + END_EDGE_R + ARROW_TO_LEFT)
+icon("snap-end-to-next-keyframe", "Snap end to next keyframe", [], [TIMING],
+     END_EDGE_L + KEY_DIAMOND_R + ARROW_TO_RIGHT)
+icon("lead-in-remove", "Remove lead-in", [], [TIMING],
+     stroke("M13.5 1.5h-2v8h2") + accent(stroke("M2.5 5.5h6.5M7 3.5l2 2-2 2"), MINUS_BADGE))
+icon("lead-out-remove", "Remove lead-out", [], [TIMING],
+     stroke("M2.5 1.5h2v8h-2") + accent(stroke("M13.5 5.5H7M9 3.5l-2 2 2 2"), MINUS_BADGE))
+icon("timing-assistant", "Assistant", [], ["timing-postprocessor"],
+     stroke("M6 9.5C4.75 8.75 4 7.5 4 6a4 4 0 0 1 8 0c0 1.5-.75 2.75-2 3.5V11H6z") + stroke("M6.5 13.5h3")
+     + accent(stroke("M2.5 3.5h-1v9h1M13.5 3.5h1v9h-1")))
+
+icon("line-break-insert", "Insert line break", [], [EDITOR, GRIDMENU],
+     stroke("M3.5 2.5h9M3.5 13.5h9") + accent(stroke(BREAK_MARK)), mirror=True)
+icon("line-break-left", "Move line break left", [], [EDITOR, GRIDMENU],
+     stroke("M1.5 2.5h6M1.5 13.5h13") + accent(stroke(BREAK_MARK)) + stroke("M4.5 8H1.5M3 6.5L1.5 8 3 9.5"), mirror=True)
+icon("line-break-right", "Move line break right", [], [EDITOR, GRIDMENU],
+     stroke("M1.5 2.5h13M1.5 13.5h6") + accent(stroke("M7.5 5.5v3h-6M3 7l-1.5 1.5L3 10"))
+     + stroke("M11.5 8h3M13 6.5l1.5 1.5-1.5 1.5"), mirror=True)
+icon("line-break-remove", "Remove line breaks", [], [EDITOR, GRIDMENU],
+     stroke("M1.5 2.5h13M1.5 6h9") + stroke("M7.5 9.5v2.5h-5M4 10.75L2.5 12 4 13.25") + cross_badge(),
+     mirror=True)
+
+CAP_A = "M1.5 13.5L5 2.5h1l3.5 11M3 9.5h5"
+LOW_A = circle(11.5, 11.25, 2.25), stroke("M13.75 8.5v5")
+CAP_B = "M10 13.5v-11h2.25a2.5 2.5 0 0 1 0 5H10h2.5a3 3 0 0 1 0 6z"
+LOW_B = stroke("M9.5 2.5v11"), circle(11.75, 11.25, 2.25)
+icon("change-case", "Change case", [], [EDITOR, GRIDMENU],
+     stroke(CAP_A) + accent(*LOW_A, stroke("M10 2.5h3.5M12 1l1.5 1.5L12 4")))
+icon("case-upper", "UPPER CASE", [], [EDITOR, GRIDMENU], stroke(CAP_A) + accent(stroke(CAP_B)))
+icon("case-lower", "lower case", [], [EDITOR, GRIDMENU],
+     circle(4.25, 11.25, 2.25) + stroke("M6.5 8.5v5") + accent(*LOW_B))
+icon("case-title", "Title Case", [], [EDITOR, GRIDMENU],
+     stroke("M5.5 6.5h9M5.5 13.5h9") + accent(letters("A", 1.5, 2), letters("A", 1.5, 9)), mirror=True)
+icon("case-sentence", "Sentence case", [], [EDITOR, GRIDMENU],
+     stroke("M5.5 6.5h9M1.5 13.5h13") + accent(letters("A", 1.5, 2)), mirror=True)
+icon("fullwidth", "Full-width", [], [EDITOR, GRIDMENU],
+     rect(1.5, 1.5, 13, 13, 1) + stroke("M3.5 12.5L7.5 3.5h1l4 9M5 9.5h6"))
+icon("halfwidth", "Half-width", [], [EDITOR, GRIDMENU],
+     rect(4.5, 1.5, 7, 13, 1) + stroke("M6 12.5l1.75-9h.5l1.75 9M6.5 9.5h3")
+     + accent(stroke("M1 8h2M2 7l1 1-1 1M15 8h-2M14 7l-1 1 1 1")))
+icon("dialogue-swap", "Swap dialogue", [], [EDITOR, GRIDMENU],
+     stroke("M1.5 4h6") + stroke("M2.5 9.5h-1v4h1M6.5 9.5h1v4h-1M3.5 11.5h2") + SWAP, mirror=True)
+
+icon("change-alignment", "Change alignment, keep position", [], [EDITOR, GRIDMENU],
+     frect(7, 2, 2, 2) + frect(12, 2, 2, 2) + frect(2, 7, 2, 2) + frect(12, 7, 2, 2) + frect(2, 12, 2, 2)
+     + frect(7, 12, 2, 2) + rect(1.5, 1.5, 3, 3, .5) + accent(frect(11.5, 11.5, 3, 3, .5), stroke("M5.5 5.5l4 4M7 9.5h2.5V7")))
+icon("align-left", "Align left", [], [VISUAL],
+     accent(stroke("M1.5 1v14")) + rect(3.5, 2.5, 10, 4, 1) + rect(3.5, 9.5, 6, 4, 1))
+icon("align-center", "Align centre", [], [VISUAL],
+     accent(stroke("M8 1v14")) + rect(2.5, 2.5, 11, 4, 1) + rect(4.5, 9.5, 7, 4, 1))
+icon("align-right", "Align right", [], [VISUAL],
+     accent(stroke("M14.5 1v14")) + rect(2.5, 2.5, 10, 4, 1) + rect(6.5, 9.5, 6, 4, 1))
+icon("align-top", "Align top", [], [VISUAL],
+     accent(stroke("M1 1.5h14")) + rect(2.5, 3.5, 4, 10, 1) + rect(9.5, 3.5, 4, 6, 1))
+icon("align-middle", "Align middle", [], [VISUAL],
+     accent(stroke("M1 8h14")) + rect(2.5, 2.5, 4, 11, 1) + rect(9.5, 4.5, 4, 7, 1))
+icon("align-bottom", "Align bottom", [], [VISUAL],
+     accent(stroke("M1 14.5h14")) + rect(2.5, 2.5, 4, 10, 1) + rect(9.5, 6.5, 4, 6, 1))
+icon("distribute-horizontal", "Distribute horizontally", [], [VISUAL],
+     accent(stroke("M1.5 1.5v13M14.5 1.5v13")) + frect(3, 4, 2, 8, .5) + frect(7, 3, 2, 10, .5) + frect(11, 5, 2, 6, .5))
+icon("distribute-vertical", "Distribute vertically", [], [VISUAL],
+     accent(stroke("M1.5 1.5h13M1.5 14.5h13")) + frect(4, 3, 8, 2, .5) + frect(3, 7, 10, 2, .5) + frect(5, 11, 6, 2, .5))
+icon("pos-to-margins", "Position to margins", [], [EDITOR, GRIDMENU],
+     rect(1.5, 1.5, 13, 13, 1) + dot(8, 6, 1.5)
+     + accent(stroke("M4.5 10.5h7M6 9l-1.5 1.5L6 12M10 9l1.5 1.5L10 12")))
+icon("margins-to-pos", "Margins to position", [], [EDITOR, GRIDMENU],
+     rect(1.5, 1.5, 13, 13, 1) + stroke("M4.5 10.5h7M4.5 9v3M11.5 9v3") + accent(dot(8, 6, 1.5)))
+icon("phantom", "Phantom", [], [EDITOR, GRIDMENU],
+     letters("A", 1.5, 5.5) + accent(stroke("M7.5 6V4.5H9M13 4.5h1.5V6M14.5 10v1.5H13M9 11.5H7.5V10"
+                                           "M10.5 4.5h1M10.5 11.5h1M7.5 7.5v1M14.5 7.5v1")), mirror=True)
+icon("cycle-values", "Cycle values", [], [EDITOR, "settings-dialog"],
+     ROWS3 + accent(stroke("M10.5 12.5h2a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-2M12 2l-1.5 1.5L12 5")), mirror=True)
+icon("shift-by-x", "Shift X", [], [VISUAL], letters("X", 2, 2) + accent(stroke("M1.5 11.5h12M11.5 9.5l2 2-2 2")))
+icon("shift-by-y", "Shift Y", [], [VISUAL], letters("Y", 2, 2) + accent(stroke("M11.5 2.5v11M9.5 11.5l2 2 2-2")))
+
+icon("interpolate-lines", "Interpolate across Lines", [], [GRIDMENU],
+     stroke("M1.5 1.5h4M1.5 13.5h13") + dot(5.5, 1.5, 1) + dot(14.5, 13.5, 1)
+     + accent(stroke("M1.5 5.5h7M1.5 9.5h10")), mirror=True)
+icon("import-lyrics", "Import lyrics", [], [FILE],
+     page(True) + stroke("M5.5 7.5h4.5M5.5 10h2")
+     + accent(fill("M13.5 12.75c0 .75-.75 1.5-1.75 1.5s-1.5-.5-1.5-1 .75-1.5 1.75-1.5 1.5.25 1.5 1z"),
+              stroke("M13.5 12.75V9c.5.75 1.5 1 1.5 2.25")))
+
+icon("builtin-script", "Built in", [], ["automation-manager"],
+     SCRIPT_CUT + accent(rect(10.5, 10.5, 3, 3, .5), stroke("M11.25 9v1.5M12.75 9v1.5M11.25 13.5V15M12.75 13.5V15"
+                                                           "M9 11.25h1.5M9 12.75h1.5M13.5 11.25H15M13.5 12.75H15")))
+
+icon("citations", "Sources", [], ["agent-panel"],
+     stroke("M7.5 4h7M7.5 8h7M7.5 12h5") + accent(stroke("M2.5 3.5v2.5L1.75 8M5.25 3.5v2.5L4.5 8")),
+     mirror=True)
+icon("web-page-read", "Read a page", [], ["agent-panel"], page(True) + GLOBE_BADGE)
+
+icon("motion-apply", "Apply motion data", [], [VIDEO], TRACK + accent(rect(11.5, 1.5, 3, 3, .5)))
+icon("motion-revert", "Revert motion data", [], [VIDEO],
+     stroke("M2.5 9L4.5 4.5 8.5 3") + dot(2.5, 9, 1.5) + dot(4.5, 4.5, 1.5) + dot(8.5, 3, 1.5)
+     + accent(stroke("M11.5 9.5l-2 2 2 2M9.5 11.5h3a1.5 1.5 0 0 1 0 3H11")))
+icon("motion-copy", "Copy motion data", [], [VIDEO],
+     COPY_BACK + COPY_FRONT + accent(stroke("M4.75 12.5L6 9.25l2.5-1.5"), dot(4.75, 12.5, 1.25), dot(6, 9.25, 1.25),
+                                     dot(8.5, 7.75, 1.25)))
+icon("motion-extend", "Extend tracked lines", [], [VIDEO],
+     TRACK + accent(stroke("M11.25 5.75l.5-.25"), circle(13.25, 4.75, 1.25)))
+icon("move-extend", "Extrapolate \\move", [], [VIDEO],
+     circle(3.5, 8, 2) + stroke("M5.5 8h3") + dot(9.5, 8, 1) + accent(stroke("M11.5 8h.5M13.5 8h1M13 6.5l1.5 1.5-1.5 1.5")))
+
 NOT_REPLACED = {
     "application and file-type icons (kept as they are)": [
         "HikariLargeIcon.ico", "HikariSmallIcon.ico", "HikariSmallIcon321.ico", "HikariSub_256x256_ass.png",
@@ -1143,12 +1412,34 @@ for card, roles in {
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
-    "MW2 #630": ["tab-to-new-window", "tab-to-window"],
     "AI21 #725": ["compact"],
-    "AI23 #742": ["web-search"],
     "AI24 #744": ["update"],
-    "PL5 #417": ["network"],
     "PL7 #419": ["plugin-sandbox"],
+    "AU4 #839": ["remove-tags"],
+    "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
+                 "shape-to-clip", "shape-merge"],
+    "AU7 #843": ["tool-gradient", "gradient-rect", "gradient-skew", "gradient-rotated", "gradient-vector",
+                 "gradient-clip-edge", "gradient-by-char", "gradient-by-line", "gradient-merge"],
+    "AU8 #842": ["motion-apply", "motion-revert", "motion-copy", "motion-extend", "move-extend"],
+    "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
+                 "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
+                 "graph-karaoke-to-alpha"],
+    "AU10 #841": ["select-overlapping", "split-tag-blocks", "split-every-n"],
+    "AU11 #846": ["track-colour", "find-fade"],
+    "AU14 #847": ["tool-text-on-path"],
+    "AU16 #850": ["reinstall-scripts"],
+    "AU18 #852": ["layers", "layers-repeat"],
+    "AU19 #853": ["snap-start-to-previous-keyframe", "snap-start-to-next-keyframe", "snap-end-to-previous-keyframe",
+                  "snap-end-to-next-keyframe", "lead-in-remove", "lead-out-remove", "timing-assistant"],
+    "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
+                  "case-upper", "case-lower", "case-title", "case-sentence", "fullwidth", "halfwidth", "dialogue-swap"],
+    "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",
+                  "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
+                  "phantom", "cycle-values", "shift-by-x", "shift-by-y"],
+    "AU22 #856": ["interpolate-lines"],
+    "AU23 #857": ["import-lyrics"],
+    "TH5 #833": ["builtin-script"],
+    "AI23b #800": ["web-search", "citations", "web-page-read"],
 }.items():
     for role in roles:
         PENDING[role] = card
