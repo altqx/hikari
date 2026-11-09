@@ -1,0 +1,25 @@
+Claude Code (claude -p, --strict-mcp-config, --allowedTools mcp__hikari) through `hikarisub --mcp`, run 2026-11-09
+mcp servers: [('hikari', 'connected')] | model claude-opus-5-5
+>> mcp__hikari__documents_get {}
+<< {"document":1,"title":"ep01.ass","path":"/home/altq/.t3/worktrees/hikari/w8-ai1/out/logs/e2e-ai3b/ep01.ass","format":"ass","revision":0,"editingTarget":true,"reference":false,"dirty":false,"readOnly":false,"lineCount":2,"styleCount":1,"draftLine":null}
+>> mcp__hikari__lines_list {"fields": ["text"]}
+<< {"revision":0,"total":2,"lines":[{"id":1,"row":1,"text":"Hello there"},{"id":2,"row":2,"text":"General Kenobi"}]}
+>> mcp__hikari__document_apply {"revision": 0, "name": "Add the period", "edits": [{"op": "set_line", "line": 1, "fields": {"text": "Hello there."}}]}
+<< {"revision":1,"inserted":[],"changed":true}
+>> mcp__hikari__documents_get {}
+<< {"document":1,"title":"ep01.ass","path":"/home/altq/.t3/worktrees/hikari/w8-ai1/out/logs/e2e-ai3b/ep01.ass","format":"ass","revision":1,"editingTarget":true,"reference":false,"dirty":true,"readOnly":false,"lineCount":2,"styleCount":1,"draftLine":null}
+>> mcp__hikari__document_apply {"revision": 1, "name": "Add the exclamation mark", "edits": [{"op": "set_line", "line": 2, "fields": {"text": "General Kenobi!"}}]}
+<< {"revision":2,"inserted":[],"changed":true}
+>> mcp__hikari__lines_list {"fields": ["text"]}
+<< {"revision":2,"total":2,"lines":[{"id":1,"row":1,"text":"Hello there."},{"id":2,"row":2,"text":"General Kenobi!"}]}
+says: I made the two edits in ep01.ass, and reading the Document back shows both:
+
+1. **Row 1 (Line id 1):** "Hello there" now reads "Hello there." This was the edit named "Add the period", which moved the revision from 0 to 1.
+2. **Row 2 (Line id 2):** "General Kenobi" now reads "General Kenobi!" Before this edit, named "Add the exclamation mark", I read the revision again (it was 1). The edit moved it to 2.
+
+The Document has only these two Lines, and nothing else changed. Each edit is its own undo step. The file now has unsaved changes.
+
+After the Review panel's Keep on Line 2 and Undo on Line 1, a scripted client read the Lines back:
+1 'Hello there'
+2 'General Kenobi!'
+
