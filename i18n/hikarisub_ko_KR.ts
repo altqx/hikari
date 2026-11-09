@@ -8975,6 +8975,14 @@ Failed to copy %2 fonts.</source>
         <translation>촉음을 별도 음절로 분리 (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>태국어를 문자 묶음으로 분리</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>자동 분할이 태국어 문자 묶음마다 음절을 하나씩 만들어 กิน이 กิ|น이 됩니다. 끄면 태국어 단어 하나가 음절 하나로 남습니다.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>%1의 긴 음절</translation>
     </message>
