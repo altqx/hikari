@@ -5,6 +5,7 @@
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/regex/regex.h"
+#include "lua_host_cache.h"
 #include "lua_native.h"
 #include "lua_nodes.h"
 
@@ -15,6 +16,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -63,6 +65,7 @@ Responder *g_services = nullptr;  // host services: the running request, or the 
 constexpr int kNoProgress = std::numeric_limits<int>::min();
 int g_lastProgress = kNoProgress;
 char g_cancelTag; // its address identifies aegisub.cancel()
+std::optional<hikari::application::HostServiceReply> askOrThrow(hikari::application::HostServiceRequest request);
 
 std::string toUtf8(const std::filesystem::path &p)
 {
@@ -874,6 +877,7 @@ void load(Reader &in, Responder &r)
     lua_setfield(L, LUA_REGISTRYINDEX, "filename");
     installAegisub(L);
     g_services = &r;
+    hikari::lua_host::beginRun(askOrThrow);
     struct EndServices {
         ~EndServices() { g_services = nullptr; }
     } endServices;
@@ -1625,6 +1629,36 @@ std::optional<HostServiceReply> askHost(HostServiceRequest request, Outcome *fai
     return reply;
 }
 
+int raiseHostFailure(lua_State *L, const char *name, Outcome failure)
+{
+    if (failure == Outcome::Cancelled)
+        cancelScript(L);
+    return luaL_error(L, "the host could not answer aegisub.%s", name);
+}
+
+std::optional<HostServiceReply> askOrThrow(HostServiceRequest request)
+{
+    if (!g_services)
+        return std::nullopt;
+    Outcome failure = Outcome::Ok;
+    auto reply = askHost(std::move(request), &failure);
+    if (!reply)
+        throw hikari::lua_host::HostFailure{failure};
+    if (reply->status == HostServiceReply::Status::Unavailable)
+        return std::nullopt;
+    return reply;
+}
+
+template <class F> std::optional<Outcome> failedHostCall(F &&call)
+{
+    try {
+        call();
+    } catch (const hikari::lua_host::HostFailure &e) {
+        return e.outcome;
+    }
+    return std::nullopt;
+}
+
 // From Lua: a cancelled run raises the cancellation, a failed call a script
 // error. std::nullopt means Unavailable (push nil).
 std::optional<HostServiceReply> callHost(lua_State *L, const char *name, HostService service,
@@ -1641,11 +1675,8 @@ std::optional<HostServiceReply> callHost(lua_State *L, const char *name, HostSer
     request.style = std::move(style);
     Outcome failure = Outcome::Ok;
     auto reply = askHost(std::move(request), &failure);
-    if (!reply) {
-        if (failure == Outcome::Cancelled)
-            cancelScript(L);
-        luaL_error(L, "the host could not answer aegisub.%s", name);
-    }
+    if (!reply)
+        raiseHostFailure(L, name, failure);
     if (reply->status == HostServiceReply::Status::Unavailable)
         return std::nullopt;
     return reply;
@@ -1688,24 +1719,31 @@ int subsScriptResolutionAsked(lua_State *L)
     return 2;
 }
 
+using hikari::application::AegisubFrameTimes;
+
+template <class Convert> int convertFrameTime(lua_State *L, const char *name, Convert convert)
+{
+    checkCancelled(L);
+    const int value = static_cast<int>(lua_tonumber(L, -1));
+    const std::optional<AegisubFrameTimes> *times = nullptr;
+    if (const auto failure = failedHostCall([&] { times = &hikari::lua_host::runFrameTimes().times(); }))
+        return raiseHostFailure(L, name, *failure);
+    if (!*times)
+        return pushNil(L);
+    lua_pushnumber(L, static_cast<double>(convert(**times, value)));
+    return 1;
+}
+
 int frameFromMs(lua_State *L)
 {
-    const int ms = static_cast<int>(lua_tonumber(L, -1));
-    const auto reply = callHost(L, "frame_from_ms", HostService::FrameFromMs, {ms});
-    if (!reply)
-        return pushNil(L);
-    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
-    return 1;
+    return convertFrameTime(L, "frame_from_ms",
+                            [](const AegisubFrameTimes &t, std::int64_t ms) { return t.frameFromMs(ms); });
 }
 
 int msFromFrame(lua_State *L)
 {
-    const int frame = static_cast<int>(lua_tonumber(L, -1));
-    const auto reply = callHost(L, "ms_from_frame", HostService::MsFromFrame, {frame});
-    if (!reply)
-        return pushNil(L);
-    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
-    return 1;
+    return convertFrameTime(L, "ms_from_frame",
+                            [](const AegisubFrameTimes &t, std::int64_t frame) { return t.msFromFrame(frame); });
 }
 
 int videoSize(lua_State *L)
@@ -1740,9 +1778,13 @@ int keyframes(lua_State *L)
 
 // get_frame's VideoFrame: BGRA rows, never flipped here.
 struct VideoFrame {
+    std::int64_t number = 0;
+    bool withSubtitles = false;
     std::size_t width = 0, height = 0;
+    int pixelReads = 0;
     std::vector<std::byte> data;
 };
+constexpr int kPixelReadsBeforeCopy = 64;
 
 VideoFrame *checkFrame(lua_State *L)
 {
@@ -1761,35 +1803,60 @@ int frameHeight(lua_State *L)
     return 1;
 }
 
-// The pixel at (x, y), the last two arguments; nil outside the frame.
-const unsigned char *framePixel(lua_State *L, VideoFrame *frame)
+bool copyFrame(lua_State *L, VideoFrame &frame)
+{
+    if (!frame.data.empty() || frame.width * frame.height == 0)
+        return true;
+    auto reply = callHost(L, "get_frame", HostService::Frame, {frame.number, frame.withSubtitles ? 1 : 0});
+    if (!reply || reply->pixels.size() != frame.width * frame.height * 4)
+        return false;
+    frame.data = std::move(reply->pixels);
+    return true;
+}
+
+using Bgr = std::array<unsigned char, 3>;
+
+// The pixel at (x, y), the last two arguments; nullopt outside the frame.
+std::optional<Bgr> framePixel(lua_State *L, VideoFrame &frame)
 {
     const auto x = static_cast<std::size_t>(lua_tointeger(L, -2));
     const auto y = static_cast<std::size_t>(lua_tointeger(L, -1));
     lua_pop(L, 2);
-    if (x >= frame->width || y >= frame->height)
-        return nullptr;
-    return reinterpret_cast<const unsigned char *>(frame->data.data()) + y * frame->width * 4 + x * 4;
+    if (x >= frame.width || y >= frame.height)
+        return std::nullopt;
+    if (frame.data.empty() && ++frame.pixelReads > kPixelReadsBeforeCopy)
+        copyFrame(L, frame);
+    if (!frame.data.empty()) {
+        const auto *p = reinterpret_cast<const unsigned char *>(frame.data.data()) + y * frame.width * 4 + x * 4;
+        return Bgr{p[0], p[1], p[2]};
+    }
+    const auto reply = callHost(L, "get_frame", HostService::FramePixel,
+                                {frame.number, frame.withSubtitles ? 1 : 0, static_cast<std::int64_t>(x),
+                                 static_cast<std::int64_t>(y)});
+    if (!reply || reply->integers.size() != 3)
+        return std::nullopt;
+    return Bgr{static_cast<unsigned char>(reply->integers[0]), static_cast<unsigned char>(reply->integers[1]),
+               static_cast<unsigned char>(reply->integers[2])};
 }
 
 int frameGetPixel(lua_State *L)
 {
-    const unsigned char *p = framePixel(L, checkFrame(L));
+    const auto p = framePixel(L, *checkFrame(L));
     if (!p)
         return pushNil(L);
-    lua_pushinteger(L, p[2]);
-    lua_pushinteger(L, p[1]);
-    lua_pushinteger(L, p[0]);
+    lua_pushinteger(L, (*p)[2]);
+    lua_pushinteger(L, (*p)[1]);
+    lua_pushinteger(L, (*p)[0]);
     return 3;
 }
 
 int frameGetPixelFormatted(lua_State *L)
 {
-    const unsigned char *p = framePixel(L, checkFrame(L));
+    const auto p = framePixel(L, *checkFrame(L));
     if (!p)
         return pushNil(L);
     char text[16];
-    std::snprintf(text, sizeof text, "&H%02X%02X%02X&", p[0], p[1], p[2]);
+    std::snprintf(text, sizeof text, "&H%02X%02X%02X&", (*p)[0], (*p)[1], (*p)[2]);
     lua_pushstring(L, text);
     return 1;
 }
@@ -1797,6 +1864,8 @@ int frameGetPixelFormatted(lua_State *L)
 int frameData(lua_State *L)
 {
     auto *frame = checkFrame(L);
+    if (!copyFrame(L, *frame))
+        return pushNil(L);
     lua_pushlightuserdata(L, frame->data.data());
     lua_pushinteger(L, static_cast<lua_Integer>(frame->width * 4));
     lua_pushboolean(L, false);
@@ -1826,13 +1895,12 @@ int getFrame(lua_State *L)
         luaL_register(L, nullptr, methods);
     }
     lua_pop(L, 1);
-    auto reply = callHost(L, "get_frame", HostService::Frame, {number, withSubtitles ? 1 : 0});
-    const auto width = reply ? static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 0))) : 0;
-    const auto height = reply ? static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 1))) : 0;
-    if (!reply || reply->pixels.size() != width * height * 4)
+    const auto reply = callHost(L, "get_frame", HostService::FrameSize, {number, withSubtitles ? 1 : 0});
+    if (!reply)
         return pushNil(L);
-    auto *frame = new (lua_newuserdata(L, sizeof(VideoFrame))) VideoFrame{width, height, std::move(reply->pixels)};
-    (void)frame;
+    const auto width = static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 0)));
+    const auto height = static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 1)));
+    new (lua_newuserdata(L, sizeof(VideoFrame))) VideoFrame{number, withSubtitles, width, height, 0, {}};
     luaL_getmetatable(L, "VideoFrame");
     lua_setmetatable(L, -2);
     return 1;
@@ -1943,18 +2011,64 @@ int textExtents(lua_State *L)
     if (!entry || !std::holds_alternative<MacroStyleLine>(*entry))
         return 0;
     const std::string text = lua_tostring(L, 2);
-    if (text.empty()) {
-        for (int i = 0; i < 4; ++i)
-            lua_pushnumber(L, 0);
-        return 4;
-    }
-    const auto reply =
-        callHost(L, "text_extents", HostService::TextExtents, {}, {text}, std::get<MacroStyleLine>(*entry).fields);
-    if (!reply || reply->numbers.size() != 4)
+    checkCancelled(L);
+    std::optional<hikari::application::TextExtents> extents;
+    const auto &style = std::get<MacroStyleLine>(*entry).fields;
+    if (const auto failure =
+            failedHostCall([&] { extents = hikari::lua_host::runExtents().measure(style, text).extents; }))
+        return raiseHostFailure(L, "text_extents", *failure);
+    if (!extents)
         return 0;
-    for (const double v : reply->numbers)
+    for (const double v : {extents->width, extents->height, extents->descent, extents->externalLeading})
         lua_pushnumber(L, v);
     return 4;
+}
+
+// aegisub.__karaskel_impl.measure_many(style, texts[, count]): text_extents of each text, flat, four numbers a
+// text; nil where text_extents would return nothing.
+int measureMany(lua_State *L)
+{
+    if (!lua_istable(L, 1)) {
+        lua_pushstring(L, "First argument of text_extents must be a table");
+        return lua_error(L);
+    }
+    luaL_checktype(L, 2, LUA_TTABLE);
+    const int count = std::max(0, lua_isnoneornil(L, 3) ? static_cast<int>(lua_objlen(L, 2)) : luaL_checkint(L, 3));
+    std::vector<std::string> texts;
+    texts.reserve(static_cast<std::size_t>(count));
+    for (int i = 1; i <= count; ++i) {
+        lua_rawgeti(L, 2, i);
+        if (!lua_isstring(L, -1)) {
+            lua_pushfstring(L, "Second argument of text_extents must be a string but is of type %s",
+                            lua_typename(L, lua_type(L, -1)));
+            return lua_error(L);
+        }
+        texts.emplace_back(lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+    lua_pushvalue(L, 1);
+    const auto entry = luaToLine(L);
+    lua_pop(L, 1);
+    lua_createtable(L, count * 4, 0);
+    if (!entry || !std::holds_alternative<MacroStyleLine>(*entry))
+        return 1;
+    checkCancelled(L);
+    std::vector<hikari::application::karaoke_layout::ExtentsCache::Result> extents;
+    const auto &style = std::get<MacroStyleLine>(*entry).fields;
+    if (const auto failure =
+            failedHostCall([&] { extents = hikari::lua_host::runExtents().measureMany(style, texts); }))
+        return raiseHostFailure(L, "text_extents", *failure);
+    for (std::size_t i = 0; i < extents.size(); ++i) {
+        if (!extents[i].extents)
+            continue;
+        const auto &e = *extents[i].extents;
+        int at = static_cast<int>(i * 4);
+        for (const double v : {e.width, e.height, e.descent, e.externalLeading}) {
+            lua_pushnumber(L, v);
+            lua_rawseti(L, -2, ++at);
+        }
+    }
+    return 1;
 }
 
 // Clipboard through LuaJIT FFI function pointers (aegisub.__init_clipboard,
@@ -2148,6 +2262,16 @@ void installHostServices(lua_State *L)
         lua_setfield(L, -2, name);
     }
     lua_setfield(L, -2, "gui");
+    lua_getfield(L, -1, "__karaskel_impl");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, "__karaskel_impl");
+    }
+    lua_pushcfunction(L, measureMany);
+    lua_setfield(L, -2, "measure_many");
+    lua_pop(L, 1);
 }
 
 // The first return is the answer; a runtime error answers false. Edits made while validating reach the macro,
@@ -2203,6 +2327,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     g_subs = &staged;
     g_responder = &r;
     g_services = &r;
+    hikari::lua_host::beginRun(askOrThrow);
     g_lastProgress = kNoProgress;
     installSink(L);
     lua_getglobal(L, "aegisub");

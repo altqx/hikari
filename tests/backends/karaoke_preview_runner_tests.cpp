@@ -4,6 +4,7 @@
 #include "hikari/backends/karaoke_preview_runner.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "fake_text_measure.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -59,22 +60,6 @@ core::Document loadText(const std::string &text)
     return core::loadAss(bytes).document;
 }
 
-// MUST KILL: a copy of karaoke_templater_tests' textExtents fake.
-HostServiceReply textExtents(const HostServiceRequest &r)
-{
-    const auto number = [&](std::size_t i) { return i < r.style.size() ? std::stod(r.style[i]) : 0.0; };
-    const double size = number(2), scaleX = number(11) / 100, scaleY = number(12) / 100, spacing = number(13);
-    double ems = 0;
-    int chars = 0;
-    for (const char32_t c : QString::fromStdString(r.strings.at(0)).toUcs4()) {
-        ems += c >= 0x2E80 ? 1.0 : 0.55;
-        ++chars;
-    }
-    HostServiceReply out;
-    out.numbers = {ems * size * scaleX + spacing * chars, size * scaleY, size * 0.21, 0};
-    return out;
-}
-
 std::string lineText(const core::LineRecord &l)
 {
     const auto text = core::legacy::assLineText(l);
@@ -96,7 +81,7 @@ protected:
     {
         runner.setServiceHandler([this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
             asked.push_back(r.service);
-            reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
+            reply(hikari::test::fakeMeasureReply(r));
         });
         runner.setScript(QStringLiteral(HIKARI_KARAOKE_TEMPLATER));
     }
@@ -118,7 +103,7 @@ protected:
         LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_KARAOKE_TEMPLATER),
                            QStringLiteral(HIKARI_LUA_INCLUDE));
         host.setServiceHandler([](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
-            reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
+            reply(hikari::test::fakeMeasureReply(r));
         });
         std::optional<LuaScriptHost::RunOutcome> outcome;
         QObject::connect(&host, &LuaScriptHost::finished,
