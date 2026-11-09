@@ -10,6 +10,9 @@
 # the 3.2.2 reference script keeps its original bytes.
 /tests/backends/karaoke-corpus/** -text
 
+# TH2: the bundled-macro corpus and its goldens are compared byte for byte, and the tests look for LF line ends.
+/tests/backends/macro-corpus/** -text
+
 # KE3: the preset fixture and its goldens are compared byte for byte.
 /tests/backends/karaoke-presets/** -text
 
