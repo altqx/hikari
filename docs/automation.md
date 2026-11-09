@@ -112,6 +112,14 @@ The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of a
 
 Stock modules always load from the shipped Include: a module or `include` file whose top-level name is in the shipped Include comes from there before the script's folder and the user's Include. The DependencyControl-managed packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) keep the script folder → user Include → shipped order, so DependencyControl's updates win, and a module the shipped Include lacks resolves as before. This covers `moonscript` as Aegisub 3.5 does by loading its support files by exact path.
 
+### Thai support (TH2, 2026-11-09)
+
+Thai support by Jibrill: the fixes from Jibrill's Aegisub scripts, carried over with Jibrill's permission ([TH0 #834](https://github.com/altqx/hikari/issues/834)).
+
+- `unicode.graphemes(s)` iterates grapheme clusters ([TH2-unicode-graphemes](compatibility-decisions.md#th2-unicode-graphemes)). The native `grapheme_end` in `aegisub.__unicode_impl` calls `core::graphemeEnd`, the same split the karaoke editor uses.
+- BezierToText places clusters, not code points ([TH2-bezier-clusters](compatibility-decisions.md#th2-bezier-clusters)).
+- "Letter spacing to positioned clusters…" (`fsp-to-pos.lua`, from Jibrill's "Fsp for thai char" 1.2) replaces `\fsp` with one `\pos` Line per cluster, so renderers can't space a mark away from its base. The spacing comes from the dialog or from the Line: its Style's spacing, then each `\fsp`. Lines wrap at the margins unless WrapStyle is 2. `\pos` and `\an` in the Line set the anchor. Each Line gets `\fsp0` when the Style has spacing. The original Line becomes a comment. Lines with `\move` or a drawing are left alone and logged. Unlike 1.2, it doesn't decompose ำ (Q140), keeps `\fn`, `\r` and `\b` resets, and treats `\n` as a space outside WrapStyle 2.
+
 ## Accepted cancellation and transaction policy (2026-09-29)
 
 altqx settled the remaining host choices in a live review, closing [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33).

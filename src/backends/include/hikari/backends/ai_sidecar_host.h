@@ -120,6 +120,17 @@ public:
     /// The caller an `_hikari/api.call` for an MCP connection runs as, given its `mcp` field and the operation, or
     /// the HA1 error that refuses it.
     using McpGate = std::function<std::expected<api::Caller, api::Error>(const api::Json &mcp, const std::string &operation)>;
+    /// An agent session's call that Qt let through: the thread's caller, and what to do with HA1's answer.
+    struct Admission {
+        api::Caller caller;
+        std::function<void(const api::Result &)> ran;
+    };
+    using Admit = std::function<void(std::expected<Admission, api::Error>)>;
+    /// Decides an `_hikari/api.call` for an agent session, at once or later (after the judge or the user). `admit`
+    /// runs once; `withdrawn` runs if the sidecar cancels the call first, and `admit` then does nothing.
+    using SessionGate = std::function<void(const std::string &session, const std::string &operation,
+                                           const api::Json &params, Admit admit,
+                                           std::function<void(std::function<void()> withdrawn)> onWithdraw)>;
 
     /// `hikari` answers `_hikari/api.call`; without it the sidecar's tool calls fail as unavailable.
     AiSidecarHost(Options options, api::Api *hikari, api::Caller caller, QObject *parent = nullptr);
@@ -139,12 +150,17 @@ public:
     void cancel(std::uint64_t request);
     void notify(const std::string &method, api::Json params);
     void onNotification(NotificationHandler handler) { m_onNotification = std::move(handler); }
+    /// Gets the `session/update` notifications that carry a `sessionId`, which onNotification's handler then doesn't.
+    void onSessionUpdate(NotificationHandler handler) { m_onSessionUpdate = std::move(handler); }
     /// Answers the sidecar's requests for `method`; `_hikari/api.call` is built in.
     void handle(const std::string &method, SidecarRequestHandler handler);
     /// The Documents the user attached with @; the sidecar's tools see them besides the editing target.
     void setAttachedDocuments(std::vector<application::DocumentId> documents) { m_caller.attached = std::move(documents); }
     /// Without a gate, calls for MCP connections fail as unavailable.
     void setMcpGate(McpGate gate) { m_mcpGate = std::move(gate); }
+    /// With a gate, a write that names neither a session nor an MCP connection is refused; without one, calls for
+    /// sessions fail as unavailable.
+    void setSessionGate(SessionGate gate) { m_sessionGate = std::move(gate); }
 
     /// Closes stdin, waits, then kills the sidecar's process tree. Pending requests fail with SidecarLost.
     void shutdown();
@@ -220,7 +236,9 @@ private:
     std::deque<qint64> m_crashes;
     QElapsedTimer m_clock;
     NotificationHandler m_onNotification;
+    NotificationHandler m_onSessionUpdate;
     McpGate m_mcpGate;
+    SessionGate m_sessionGate;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
     std::unique_ptr<sandbox::Launcher> m_launcher;
 };

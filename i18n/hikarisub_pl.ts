@@ -7501,6 +7501,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Projekt i programowanie</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>Tłumaczenie</translation>
     </message>
@@ -11401,6 +11405,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Permissions</source>
         <translation>Uprawnienia</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub ogranicza ją do tych uprawnień, ale w tym systemie nie działa w piaskownicy.</translation>
     </message>
     <message>
         <source>Remembered folders</source>

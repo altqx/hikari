@@ -7397,6 +7397,10 @@ Failed to copy %2 fonts.</source>
         <translation>การออกแบบและการพัฒนา</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>การแปล</translation>
     </message>
@@ -11273,6 +11277,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Permissions</source>
         <translation>สิทธิ์</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub จำกัดปลั๊กอินนี้ไว้ที่สิทธิ์เหล่านี้ แต่ระบบนี้ไม่ได้รันปลั๊กอินในแซนด์บ็อกซ์</translation>
     </message>
     <message>
         <source>Remembered folders</source>

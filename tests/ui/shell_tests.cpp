@@ -9138,6 +9138,7 @@ private slots:
         QVERIFY(application->property("includesVsfilter").toBool());
 #endif
         QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
+        QCOMPARE(dialogItem("creditsDialog", "creditsThaiSupport")->property("name").toString(), QStringLiteral("Jibrill"));
         QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
         QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
         QVERIFY(list);
@@ -17506,6 +17507,7 @@ private slots:
         QTRY_VERIFY((bar = dialogItem("pluginManagerDialog", "pluginMoveBar")) && bar->isVisible());
         QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerView")->isVisible());
         QVERIFY(!dialogItem("pluginManagerDialog", "pluginDetailsName")->property("truncated").toBool());
+        QCOMPARE(dialogItem("pluginManagerDialog", "pluginNotSandboxed")->isVisible(), !application->pluginRuntime()->sandboxed());
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginMove"), "click"));
         QQuickWindow *box = nullptr;

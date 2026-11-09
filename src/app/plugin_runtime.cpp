@@ -4,10 +4,13 @@
 
 #include <QCollator>
 #include <QCoreApplication>
+#include <QLoggingCategory>
 
 #include <algorithm>
 
 namespace hikari::app {
+
+Q_LOGGING_CATEGORY(lcPluginsSandbox, "hikari.plugins.sandbox")
 
 namespace {
 
@@ -93,6 +96,11 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
     if (!m_wiring.network) {
         m_ownNetwork = std::make_unique<QNetworkAccessManager>();
         m_wiring.network = m_ownNetwork.get();
+    }
+    if (m_wiring.sandbox) {
+        const backends::sandbox::Coverage coverage = backends::sandbox::systemCoverage(backends::sandbox::Network::None);
+        if (!coverage.complete())
+            qCWarning(lcPluginsSandbox) << "Restricted plugins run without a complete sandbox:" << coverage.missing;
     }
     m_network = new PluginNetwork(*m_wiring.network, m_wiring.networkAllowed, this);
     m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui);
@@ -182,6 +190,10 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     };
     raw->process = std::make_unique<PluginProcess>(m_wiring.helperPath, load, m_wiring.limits);
     PluginProcess *process = raw->process.get();
+    if (m_wiring.sandbox && m_installer && raw->manifest.tier == plugins::Tier::Restricted) {
+        const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+        process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
+    }
     process->setServiceHandler([this, raw](const PluginProcess::ServiceRequest &request, PluginProcess::ServiceReply reply) {
         serve(*raw, request, std::move(reply));
     });
@@ -460,6 +472,11 @@ void PluginRuntime::forceStop(const QString &pluginId)
 {
     if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())
         it->second->process->forceStop();
+}
+
+bool PluginRuntime::sandboxed() const
+{
+    return m_wiring.sandbox && backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete();
 }
 
 backends::PluginProcess *PluginRuntime::process(const QString &pluginId) const

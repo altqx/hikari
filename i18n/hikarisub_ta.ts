@@ -7449,6 +7449,10 @@ Failed to copy %2 fonts.</source>
         <translation>வடிவமைப்பு மற்றும் மேம்பாடு</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>மொழிபெயர்ப்பு</translation>
     </message>
@@ -11337,6 +11341,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Permissions</source>
         <translation>அனுமதிகள்</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub இதை இந்த அனுமதிகளுக்குள் மட்டுமே வைத்திருக்கிறது, ஆனால் இந்த அமைப்பில் இது சாண்ட்பாக்ஸில் இயங்கவில்லை.</translation>
     </message>
     <message>
         <source>Remembered folders</source>

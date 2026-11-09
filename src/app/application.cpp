@@ -756,7 +756,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
-        }});
+        },
+        [this]() -> const application::VideoSession * { return m_video ? &m_video->session() : nullptr; },
+        [this](const core::Document &document) { return rendererScript(document); },
+        [this](application::DocumentId document) { return subtitleFonts(document); },
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
     m_ai = std::make_unique<AiFeatures>(
         *m_settings, options.aiPorts ? std::move(*options.aiPorts)
                                      : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
@@ -792,6 +796,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    pluginWiring.sandbox = true;
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
