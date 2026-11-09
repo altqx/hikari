@@ -1,0 +1,51 @@
+[Script Info]
+Title: TH2 corpus bezier-latin
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+Style: Spaced,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,2,0,1,2,2,8,30,30,40,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)}It really works!
+Comment: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\an5\pos(640,360)\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&}Bend {\b1}this{\b0} text
+Comment: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30}two\Nrows
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(100.26342,588.82603)\frz87.283}I
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(102.37387,566.88787)\frz81.678}t
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(113.09145,524.36371)\frz69.977}r
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(121.67684,504.08851)\frz64.149}e
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(132.24175,484.77331)\frz58.543}a
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(144.55668,466.59691)\frz53.281}l
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(158.47395,449.53080)\frz48.394}l
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(173.68562,433.70693)\frz43.935}y
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(207.38196,405.49470)\frz36.193}w
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(225.55565,393.00787)\frz32.846}o
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(244.38669,381.55739)\frz29.806}r
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(263.73977,371.09227)\frz27.039}k
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(283.48992,361.56270)\frz24.512}s
+Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\an2\pos(303.76913,352.81925)\frz22.166}!
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\an2\pos(100.26342,588.82603)\frz87.283}B
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\an2\pos(102.37387,566.88787)\frz81.678}e
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\an2\pos(106.63609,545.38181)\frz75.876}n
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\an2\pos(113.09145,524.36371)\frz69.977}d
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\an2\pos(132.24175,484.77331)\frz58.543}t
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\an2\pos(144.55668,466.59691)\frz53.281}h
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\an2\pos(158.47395,449.53080)\frz48.394}i
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\an2\pos(173.68562,433.70693)\frz43.935}s
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\b0\an2\pos(207.38196,405.49470)\frz36.193}t
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\b0\an2\pos(225.55565,393.00787)\frz32.846}e
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\b0\an2\pos(244.38669,381.55739)\frz29.806}x
+Dialogue: 0,0:00:05.00,0:00:10.00,Default,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\c&H0000FF&\b1\b0\an2\pos(263.73977,371.09227)\frz27.039}t
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(100.18624,590.59489)\frz87.720}t
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(101.67236,572.11973)\frz83.046}w
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(104.67200,553.92000)\frz78.212}o
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(109.24804,535.92427)\frz73.245}\
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(131.83961,485.43313)\frz58.735}o
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(142.05442,470.01235)\frz54.266}w
+Dialogue: 0,0:00:10.00,0:00:15.00,Spaced,,0,0,0,,{\clip(m 100 600 b 100 200 1100 200 1100 600)\fs30\an2\pos(153.38426,455.43361)\frz50.076}s

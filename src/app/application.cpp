@@ -769,7 +769,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                     : options.appVersion));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
-    m_aiSettings = std::make_unique<AiSettings>(*m_ai);
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
         m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -2208,7 +2208,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     protectReference();
-    showTabArrangement();
+    showTabArrangement(m_workspace.activeWindow());
     if (m_workspace.editingTarget())
         spellChecker();
     reportGroupBreak();

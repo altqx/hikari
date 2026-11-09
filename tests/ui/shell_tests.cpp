@@ -9377,6 +9377,7 @@ private slots:
         QVERIFY(application->property("includesVsfilter").toBool());
 #endif
         QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
+        QCOMPARE(dialogItem("creditsDialog", "creditsThaiSupport")->property("name").toString(), QStringLiteral("Jibrill"));
         QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
         QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
         QVERIFY(list);
@@ -16928,6 +16929,8 @@ private slots:
              {{"ai.off", "Turn off all AI features"},
               {"ai.webSearch", "Let AI search the web"},
               {"ai.searchService", nullptr},
+              {"ai.mcp.server", "Let agents outside HikariSub edit through MCP"},
+              {"ai.mcp.http", nullptr},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
@@ -17230,6 +17233,55 @@ private slots:
                      QStringLiteral("No key"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        auto *mcp = qobject_cast<app::AiMcp *>(application->aiSettings()->mcp());
+        QVERIFY(mcp && !mcp->server());
+        auto *http = dialogItem("settingsDialog", "setting_ai.mcp.http");
+        auto *copySetup = dialogItem("settingsDialog", "aiMcpCopySetup");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcp")->isVisible());
+        QVERIFY(!http->isVisible() && !copySetup->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
+        QTRY_VERIFY(http->isVisible() && copySetup->isVisible());
+        QCOMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1"));
+        QVERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("needs “Also listen on")));
+        QVERIFY(!mcp->server());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(mcp->server());
+
+        const auto copyEntry = [&](const char *name) { return page->findChild<QObject *>(QLatin1String(name)); };
+        QVERIFY(copyEntry("aiMcpCopyClaudeCode") && copyEntry("aiMcpCopyCodex") && copyEntry("aiMcpCopyJson"));
+        QVERIFY(!copyEntry("aiMcpCopyJson")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyClaudeCode"), "triggered"));
+        QCOMPARE(QGuiApplication::clipboard()->text(),
+                 QStringLiteral("claude mcp add hikari -- \"%1\" --mcp").arg(app::AiMcp::program()));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(),
+                     QStringLiteral("Copied. Run it in a terminal."));
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyCodex"), "triggered"));
+        QVERIFY(QGuiApplication::clipboard()->text().startsWith(QStringLiteral("[mcp_servers.hikari]\ncommand = ")));
+        QCOMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(),
+                 QStringLiteral("Copied. Paste it into the agent’s settings."));
+
+        QVERIFY(QMetaObject::invokeMethod(http, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("press OK or Apply")));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(mcp->server()->httpPort() != 0);
+        const quint16 port = mcp->server()->httpPort();
+        QTRY_COMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1:%1").arg(port));
+        QTRY_VERIFY(copyEntry("aiMcpCopyJson")->property("enabled").toBool());
+        QVERIFY(!dialogItem("settingsDialog", "aiMcpJsonNote")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyJson"), "triggered"));
+        const QString json = QGuiApplication::clipboard()->text();
+        QVERIFY2(json.contains(QStringLiteral("http://127.0.0.1:%1/mcp").arg(port)), qPrintable(json));
+        QVERIFY(json.contains(QStringLiteral("Bearer ") + QString::fromLatin1(mcp->endpoint().token)));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
+        QTRY_VERIFY(!http->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!mcp->server());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()
@@ -20567,7 +20619,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 303);
+        QCOMPARE(hotkeyRows().size(), 305);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

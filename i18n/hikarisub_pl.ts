@@ -6755,6 +6755,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ekstrapoluj \move na całą linijkę</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7523,6 +7531,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Design and development</source>
         <translation>Projekt i programowanie</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -10822,6 +10834,62 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Try again</source>
         <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>Pozwól agentom spoza HikariSub edytować przez MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex i inni agenci czytają otwarte dokumenty. Ich zmiany czekają w przeglądzie, aż je zachowasz lub cofniesz.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1:%1</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>Dla agentów łączących się przez HTTP. Dostęp ma tylko ten komputer i tylko z tokenem.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>Kopiuj konfigurację</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>Skopiowano. Uruchom to w terminalu.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>Skopiowano. Wklej to do ustawień agenta.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Polecenie Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON z adresem i tokenem</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>Konfiguracja JSON jest dla agentów łączących się przez HTTP, więc wymaga opcji „Nasłuchuj także na http://127.0.0.1”.</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -15398,6 +15466,10 @@ Usunięte style:
         <translation>Przełącz na</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -15484,6 +15556,10 @@ Usunięte style:
     <message>
         <source>Video only</source>
         <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
     </message>
 </context>
 <context>
