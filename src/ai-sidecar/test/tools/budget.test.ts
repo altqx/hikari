@@ -10,7 +10,7 @@ import { Harness, TestRelay } from "../providers/harness";
 import { data, sse } from "../providers/mock";
 
 const h = new Harness().install();
-const kBudget = 3_000;
+const kBudget = 5_000;
 const kNoHa1: HikariCalls = { call: () => Promise.reject(new Error("no HA1 here")) };
 
 const kEnd: Record<Wire, string> = {
@@ -25,7 +25,7 @@ function upFront(): ToolDefinition[] {
     return tools.list().map((t) => ({ name: t.name, description: t.description ?? "", parametersJson: JSON.stringify(t.inputSchema) }));
 }
 
-test.each(Object.keys(kEnd) as Wire[])("the up-front tool block on %s stays within 3,000 tokens", async (wire) => {
+test.each(Object.keys(kEnd) as Wire[])("the up-front tool block on %s stays within 5,000 tokens", async (wire) => {
     const tokens = new Tiktoken(o200k);
     const request: Request = {
         model: "m", tools: upFront(), webSearch: true,

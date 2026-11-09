@@ -47,7 +47,7 @@ A tool's name is its operation's, with `.` as `_` (`lines.find` is `lines_find`)
 
 **Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. The web search is the first source; MCP-server and agent tools plug in the same way ([AI23b #800](https://github.com/altqx/hikari/issues/800)).
 
-**The up-front budget.** The tools offered before any search, with a search service chosen and a provider's own search tools added, must stay within 3,000 tokens (`o200k_base`) on every wire. A bun test measures the `tools` each wire sends. It is at 2,996 on Responses, so a new core tool or a longer description needs room made elsewhere.
+**The up-front budget.** The tools offered before any search, with a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends. It is at 3,009 on Responses.
 
 **Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only `commands.list` (behind `search_commands`) and `api.version` are left out on purpose. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
 
@@ -106,7 +106,7 @@ Qt calls the tools with two `_hikari/*` requests:
   - searches, routing, the worded errors and the PNG frame run against a fake HA1;
   - the two link methods;
   - each search service's requests, key headers, results and errors through a fake relay, and the `web` group appearing only while a service is chosen;
-  - the up-front tool block within 3,000 tokens on every wire.
+  - the up-front tool block within 5,000 tokens on every wire.
 - `hikari_backends_ai_tools_tests` runs the real `hikari-ai` against the real API over a fake host, with no provider and no network:
   - a scripted agent finds a Line, edits it, is refused a stale revision, then finds and runs a command;
   - `search_tools` offers `video_frame`;
