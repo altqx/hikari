@@ -118,8 +118,9 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 - **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning.
 - **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
 - **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
-
-These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)), which reuses the AI sidecar's `hikari_sandbox` module ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
+- **The sandbox.** A restricted plugin's helper starts in an operating-system sandbox, `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)): Landlock and seccomp on Linux, an AppContainer on Windows. Its profile is `HikariSub.Plugin.<the first 32 hex digits of the id's SHA-256>`: the helper's folder to read and execute, the plugin's package folder to read, nothing else, and no network. The helper needs no more, because HikariSub itself opens the files a plugin was granted (`hikari.files`) and makes its requests (`hikari.net.fetch`).
+- **Full trust plugins run outside the sandbox,** with the same access as HikariSub.
+- **Where the sandbox can't apply,** for example on a kernel without Landlock or seccomp, restricted plugins still run under the limits above. HikariSub logs what is missing under `hikari.plugins.sandbox`, and the plugin's details say "HikariSub keeps it to these permissions, but it isn’t sandboxed on this system."
 
 ### The helper protocol
 
@@ -298,7 +299,7 @@ A request is a URL, or `{url, method, headers, body, encoding}`. `method` is `GE
 
 HikariSub refuses the request, with the error `refused` and its `reason`, or `not_granted`:
 
-- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because nothing sandboxes it yet (PL7 [#419](https://github.com/altqx/hikari/issues/419)).
+- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because it runs outside the sandbox.
 - **`not_https`.** The URL isn't `https://`. **`port`.** It names a port other than 443.
 - **`not_granted`**, with `host`. The host isn't one of the manifest's `permissions.network.hosts`, matched exactly. The plugin manager shows those hosts, and so does the install.
 - **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).

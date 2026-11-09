@@ -11395,6 +11395,10 @@ Failed to copy %2 fonts.</source>
         <translation>அனுமதிகள்</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub இதை இந்த அனுமதிகளுக்குள் மட்டுமே வைத்திருக்கிறது, ஆனால் இந்த அமைப்பில் இது சாண்ட்பாக்ஸில் இயங்கவில்லை.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>நினைவில் வைத்த கோப்புறைகள்</translation>
     </message>
