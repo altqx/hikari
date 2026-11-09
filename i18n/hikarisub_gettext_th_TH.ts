@@ -7789,5 +7789,41 @@ Styles deleted:
         <source>Delete unused ASS styles</source>
         <translation>ลบสไตล์ ASS ที่ไม่ได้ใช้</translation>
     </message>
+    <message>
+        <source>Letter spacing to positioned clusters</source>
+        <translation>ระยะห่างตัวอักษรเป็นกลุ่มอักขระที่จัดตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Replace \fsp letter spacing with one positioned line per character cluster, keeping marks on their base characters</source>
+        <translation>แทนที่ระยะห่างตัวอักษร \fsp ด้วยบรรทัดที่จัดตำแหน่งหนึ่งบรรทัดต่อกลุ่มอักขระ โดยให้เครื่องหมายอยู่กับอักษรฐาน</translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation>ระยะห่างตัวอักษร</translation>
+    </message>
+    <message>
+        <source>Pixels added after each character cluster</source>
+        <translation>จำนวนพิกเซลที่เพิ่มหลังกลุ่มอักขระแต่ละกลุ่ม</translation>
+    </message>
+    <message>
+        <source>Use the &amp;line’s spacing</source>
+        <translation>ใช้ระยะห่างของ&amp;บรรทัด</translation>
+    </message>
+    <message>
+        <source>Use &amp;this value</source>
+        <translation>ใช้&amp;ค่านี้</translation>
+    </message>
+    <message>
+        <source>Spacing line %d of %d</source>
+        <translation>กำลังเว้นระยะบรรทัด %d จาก %d</translation>
+    </message>
+    <message>
+        <source>Lines with \move or a drawing were left as they are.</source>
+        <translation>บรรทัดที่มี \move หรือภาพวาดยังคงเดิม</translation>
+    </message>
+    <message>
+        <source>Letter spacing to positioned clusters…</source>
+        <translation>ระยะห่างตัวอักษรเป็นกลุ่มอักขระที่จัดตำแหน่ง…</translation>
+    </message>
 </context>
 </TS>

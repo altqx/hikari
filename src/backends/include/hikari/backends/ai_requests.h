@@ -43,6 +43,9 @@ public:
     void probe(const application::ai::Provider &provider, const std::string &key, std::function<void(Probed)> done);
     /// Off sends every request with `caching: false`.
     void setCaching(bool on) { m_caching = on; }
+    bool caching() const { return m_caching; }
+    /// The sidecar, told the current providers first; null when AI is off or no sidecar is installed.
+    AiSidecarHost *connected() { return connect(); }
     /// Off strips `webSearch` from every request and tells the sidecar no search service. The service searches for
     /// providers without their own search.
     void setWebSearch(bool on, std::optional<application::ai::SearchService> service);
@@ -95,5 +98,7 @@ private:
 
 /// The sidecar's answer to a failed request as the panel shows it.
 application::ai::Error requestError(const SidecarFailure &failure);
+/// The protocol's Usage object.
+application::ai::Usage usageOf(const api::Json &usage);
 
 }

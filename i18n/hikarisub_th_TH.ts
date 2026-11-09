@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7395,6 +7403,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>การออกแบบและการพัฒนา</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -15100,6 +15112,10 @@ Styles deleted:
         <translation>สลับไปที่</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
@@ -15184,6 +15200,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>วิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
     </message>
 </context>
 <context>

@@ -247,3 +247,60 @@ TEST(Workspace, RemovingAWindowDropsItsDocumentsAndReturnsToTheFirst)
     EXPECT_EQ(w.editingTarget(), a);
     EXPECT_EQ(w.allTabs(), std::vector{a});
 }
+
+TEST(Workspace, AMovedTabBecomesCurrentInItsNewWindowAtTheIndex)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    const auto c = w.add("c.ass");
+    w.setEditingTarget(b);
+    w.activateWindow(1);
+    const auto d = w.add("d.ass");
+    const auto e = w.add("e.ass");
+    w.setEditingTarget(b);
+    ASSERT_TRUE(w.moveTab(b, 1, 1));
+    EXPECT_EQ(w.tabs(1), (std::vector{d, b, e}));
+    EXPECT_EQ(w.tabs(0), (std::vector{a, c}));
+    EXPECT_EQ(w.activeWindow(), 1);
+    EXPECT_EQ(w.editingTarget(), b);
+    EXPECT_EQ(w.currentTab(0), c);
+    EXPECT_EQ(w.window(b), 1);
+}
+
+TEST(Workspace, AMovedTabPastTheEndGoesLastAndAnInactiveCurrentPassesOn)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    w.activateWindow(1);
+    const auto d = w.add("d.ass");
+    ASSERT_TRUE(w.moveTab(a, 1, 9));
+    EXPECT_EQ(w.tabs(1), (std::vector{d, a}));
+    EXPECT_EQ(w.currentTab(0), b);
+    ASSERT_TRUE(w.moveTab(b, 1, 0));
+    EXPECT_EQ(w.tabs(1), (std::vector{b, d, a}));
+    EXPECT_TRUE(w.tabs(0).empty());
+    EXPECT_FALSE(w.currentTab(0));
+}
+
+TEST(Workspace, MovingATabWithinItsWindowReordersIt)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    const auto c = w.add("c.ass");
+    ASSERT_TRUE(w.moveTab(a, 0, 2));
+    EXPECT_EQ(w.tabs(), (std::vector{b, c, a}));
+    EXPECT_EQ(w.editingTarget(), a);
+}
+
+TEST(Workspace, AHiddenReferenceIsNoTabToMove)
+{
+    Workspace w;
+    w.add("a.ass");
+    const DocumentId reference{40};
+    ASSERT_TRUE(w.add(reference, "reference.ass", true));
+    EXPECT_FALSE(w.moveTab(reference, 1, 0));
+    EXPECT_EQ(w.window(reference), 0);
+}

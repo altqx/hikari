@@ -1412,7 +1412,6 @@ for card, roles in {
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
-    "MW2 #630": ["tab-to-new-window", "tab-to-window"],
     "AI21 #725": ["compact"],
     "AI24 #744": ["update"],
     "PL5 #417": ["network"],

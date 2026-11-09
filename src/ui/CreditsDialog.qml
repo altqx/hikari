@@ -105,6 +105,7 @@ DialogWindow {
         Layout.preferredWidth: 492
         SectionLabel { text: qsTr("Development"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 6 }
         Person { objectName: "creditsDevelopment"; name: "altqx"; role: qsTr("Design and development"); Layout.fillWidth: true }
+        Person { objectName: "creditsThaiSupport"; name: "Jibrill"; role: qsTr("Thai support for automation scripts"); Layout.fillWidth: true }
         SectionLabel { text: qsTr("Translation"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }
         Person { objectName: "creditsTranslation"; name: "altqx"; role: qsTr("Korean, Polish, Tamil and Thai"); Layout.fillWidth: true }
         SectionLabel { text: qsTr("Built with"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }

@@ -6681,6 +6681,14 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7447,6 +7455,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>வடிவமைப்பு மற்றும் மேம்பாடு</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -15211,6 +15223,10 @@ Styles deleted:
         <translation>இதற்கு மாறு</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>மூடு</translation>
     </message>
@@ -15296,6 +15312,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>வீடியோ மட்டும்</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
     </message>
 </context>
 <context>
