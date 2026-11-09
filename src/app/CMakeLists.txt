@@ -8,6 +8,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_timecodes.cpp
     application_reference.cpp
     application_tab_menu.cpp
+    application_tab_moves.cpp
     application_karaoke.cpp
     application_export.cpp
     automation_shell.cpp include/hikari/app/automation_shell.h

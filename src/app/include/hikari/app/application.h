@@ -90,6 +90,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QObject>
+#include <QPointF>
 #include <QPointer>
 #include <QQuickWindow>
 #include <QUrl>
@@ -115,6 +116,7 @@ signals:
     void selectLinesDestroyed();
     void quitApprovedChanged();
     void lastUsedWindowChanged();
+    void tabDraggingChanged();
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
@@ -800,6 +802,8 @@ public:
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
     // The window the API and forwarded launches act on: the one last used, never a hidden first window.
     Q_PROPERTY(int lastUsedWindow READ lastUsedWindow NOTIFY lastUsedWindowChanged)
+    // A tab is being dragged and dropped between windows, as on Wayland.
+    Q_PROPERTY(bool tabDragging MEMBER m_tabDragging NOTIFY tabDraggingChanged)
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
@@ -906,6 +910,17 @@ public:
     // The two tabs trade places; endTabDrag writes the session once a drag swapped tabs.
     Q_INVOKABLE bool dragTab(int from, int to);
     Q_INVOKABLE void endTabDrag();
+    // The tab moves to the shell window at `index` of its tabs (-1: last) with its undo history, selection, scroll,
+    // media and arrangement; nothing is saved, reloaded or reviewed. A window left without tabs closes.
+    Q_INVOKABLE bool moveTab(qulonglong document, int shellWindow, int index);
+    // As moveTab, into a new window the size of the one it left: under `global` when `place`, else where
+    // the window manager puts it.
+    Q_INVOKABLE bool moveTabToNewWindow(qulonglong document, QPointF global, bool place);
+    // A tab dragged off its bar and released at `global`: over a shell window's tab bar it moves there,
+    // elsewhere over a shell window it stays, outside every window it gets a new window.
+    Q_INVOKABLE void dropTab(qulonglong document, QPointF global);
+    // [{window, title}]: the other open shell windows, named by their current tab.
+    Q_INVOKABLE QVariantList otherWindows(int shellWindow) const;
     // 0: none.
     Q_INVOKABLE qulonglong tabDocument(int index) const;
     // Rows as reviewClose's for every tab; with none, finishClose() closes them all.
@@ -1512,6 +1527,7 @@ private:
     std::optional<std::pair<QString, int>> m_pendingTabSeek;
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
+    bool m_tabDragging = false;
     bool m_startedWithPaths = false;
     std::optional<application::Session> m_startSession;
     bool m_lastSessionWritable = true;
@@ -1534,7 +1550,11 @@ private:
     void trackTabMedia();
     int targetVideoPosition() const;
     std::map<int, application::DocumentId> m_layoutDocuments;
-    void showTabArrangement();
+    void showTabArrangement(int shellWindow);
+    bool movableTab(application::DocumentId document) const;
+    bool usableShellWindow(int shellWindow) const;
+    void carryTabArrangement(application::DocumentId document, int from, int to);
+    void closeEmptiedWindow(int shellWindow);
     void registerTabArrangements();
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
                                ui::WorkspaceLayoutController::TabStart start);

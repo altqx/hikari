@@ -4508,8 +4508,7 @@
    "surfaces": [
     "tab-menu",
     "document-tabs"
-   ],
-   "pending": "MW2 #630"
+   ]
   },
   {
    "role": "tab-to-window",
@@ -4521,8 +4520,7 @@
    "surfaces": [
     "tab-menu",
     "document-tabs"
-   ],
-   "pending": "MW2 #630"
+   ]
   },
   {
    "role": "qc-notes",

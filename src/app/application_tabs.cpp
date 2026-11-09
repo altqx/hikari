@@ -355,15 +355,15 @@ void Application::openIntoTabArrangement(application::DocumentId old, applicatio
         layoutFor(replacement).setFileArrangement(replacement.value, *file);
 }
 
-void Application::showTabArrangement()
+void Application::showTabArrangement(int shellWindow)
 {
     registerTabArrangements();
-    const auto target = m_workspace.editingTarget();
-    const int window = m_workspace.activeWindow();
-    if (const auto shown = m_layoutDocuments.find(window); !target || (shown != m_layoutDocuments.end() && shown->second == *target))
+    const auto current = m_workspace.currentTab(shellWindow);
+    if (const auto shown = m_layoutDocuments.find(shellWindow);
+        !current || (shown != m_layoutDocuments.end() && shown->second == *current))
         return;
-    m_layoutDocuments[window] = *target;
-    layoutOf(window).showTab(target->value, tabStart(*target));
+    m_layoutDocuments[shellWindow] = *current;
+    layoutOf(shellWindow).showTab(current->value, tabStart(*current));
 }
 
 void Application::trackTabMedia()
@@ -973,7 +973,7 @@ void Application::applySession()
         if (saved)
             current = saved;
         if (current && m_workspace.setEditingTarget(*current))
-            showTabArrangement();
+            showTabArrangement(m_workspace.activeWindow());
     }
     if (active || last)
         m_workspace.setEditingTarget(active ? *active : *last);

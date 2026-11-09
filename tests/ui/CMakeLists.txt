@@ -277,8 +277,9 @@ hikari_add_qttest(hikari_ui_layout_migration_tests SOURCES layout_migration_test
 target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets
-    PARTS windows sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest
+    PARTS windows sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
+          moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt)
 target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
