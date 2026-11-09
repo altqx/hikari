@@ -227,3 +227,55 @@ TEST(Marketplace, KeepsTheHighestSerialSeen)
     EXPECT_EQ(loadHighestSerial(file), 0);
     fs::remove_all(dir);
 }
+
+TEST(InstallLink, TakesThePluginIdOfAnInstallLink)
+{
+    EXPECT_EQ(installLinkId("hikarisub://plugin/install?id=alice.karaoke-tools"), "alice.karaoke-tools");
+    EXPECT_EQ(installLinkId("HikariSub://plugin/install?id=com.example.hello"), "com.example.hello");
+    EXPECT_EQ(installLinkId("hikarisub://plugin/install?id=a1.b2-c3.d4"), "a1.b2-c3.d4");
+}
+
+TEST(InstallLink, RefusesOtherActionsAndSchemes)
+{
+    for (const char *link : {"hikarisub://plugin/uninstall?id=com.example.hello", "hikarisub://plugin/open?id=com.example.hello",
+                             "hikarisub://settings/install?id=com.example.hello", "hikarisub:plugin/install?id=com.example.hello",
+                             "hikarisub:///plugin/install?id=com.example.hello", "https://plugin/install?id=com.example.hello",
+                             "file:///plugin/install?id=com.example.hello", "hikarisub://Plugin/Install?id=com.example.hello",
+                             "hikarisub://plugin/install/?id=com.example.hello", "hikarisub://plugin/install?ID=com.example.hello",
+                             "hikarisub://", "hikarisub", ""})
+        EXPECT_FALSE(installLinkId(link)) << link;
+}
+
+TEST(InstallLink, RefusesIdsOutsideTheManifestPattern)
+{
+    for (const char *link : {"hikarisub://plugin/install?id=", "hikarisub://plugin/install?id=hello",
+                             "hikarisub://plugin/install?id=Com.Example.Hello", "hikarisub://plugin/install?id=com..hello",
+                             "hikarisub://plugin/install?id=.com.hello", "hikarisub://plugin/install?id=com.hello.",
+                             "hikarisub://plugin/install?id=com.-hello", "hikarisub://plugin/install?id=com.hello-",
+                             "hikarisub://plugin/install?id=com.he_llo", "hikarisub://plugin/install?id=com.hello/x",
+                             "hikarisub://plugin/install?id=com.h\xC3\xA9llo"})
+        EXPECT_FALSE(installLinkId(link)) << link;
+}
+
+TEST(InstallLink, RefusesExtraOrEncodedParts)
+{
+    for (const char *link : {"hikarisub://plugin/install?id=com.example.hello&id=evil.plugin",
+                             "hikarisub://plugin/install?id=com.example.hello&url=https://evil.test/p.hikariplugin",
+                             "hikarisub://plugin/install?id=com.example.hello#x", "hikarisub://plugin/install?id=com.example.hello/",
+                             "hikarisub://plugin/install?id=com%2Eexample.hello", "hikarisub://plugin/install?id=com.example.hello%00",
+                             "hikarisub://plugin%2Finstall?id=com.example.hello", "hikarisub://user@plugin/install?id=com.example.hello",
+                             "hikarisub://plugin:80/install?id=com.example.hello", " hikarisub://plugin/install?id=com.example.hello",
+                             "hikarisub://plugin/install?id=com.example.hello ", "hikarisub://plugin/install?id=com.example.hello\n",
+                             "hikarisub://plugin/install?=com.example.hello", "hikarisub://plugin/install?id=com.example.hello?"})
+        EXPECT_FALSE(installLinkId(link)) << link;
+    EXPECT_FALSE(installLinkId(std::string_view("hikarisub://plugin/install?id=com.example.hello\0x", 50)));
+}
+
+TEST(InstallLink, RefusesOversizedLinks)
+{
+    const std::string longest = "a." + std::string(98, 'b');
+    EXPECT_EQ(installLinkId("hikarisub://plugin/install?id=" + longest), longest);
+    EXPECT_FALSE(installLinkId("hikarisub://plugin/install?id=" + longest + "c"));
+    EXPECT_FALSE(installLinkId("hikarisub://plugin/install?id=a." + std::string(100000, 'b')));
+}
+

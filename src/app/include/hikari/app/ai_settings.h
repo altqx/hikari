@@ -26,6 +26,7 @@ struct SignInProgress;
 namespace hikari::app {
 
 class AiFeatures;
+class AiMcp;
 
 /// Settings › AI: the providers, their keys and catalogues, and the role models. Providers and keys are saved at
 /// once; role models wait for OK or Apply (applyRoles).
@@ -60,9 +61,11 @@ class AiSettings final : public QObject {
     /// state, outcome, lastLine}. badge is "", "current", "update", "unsupported" or "broken"; state "" or "updating";
     /// outcome "", "updated", "unchanged", "failed", "timedOut" or "cancelled".
     Q_PROPERTY(QVariantMap agents READ agents NOTIFY agentsChanged)
+    /// The MCP server's AiMcp, for its Copy setup; null without one.
+    Q_PROPERTY(QObject *mcp READ mcp CONSTANT FINAL)
 
 public:
-    explicit AiSettings(AiFeatures &features, QObject *parent = nullptr);
+    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, QObject *parent = nullptr);
     ~AiSettings() override;
 
     bool on() const;
@@ -76,12 +79,19 @@ public:
     bool sandboxed() const;
     QVariantMap components() const;
     QVariantMap agents() const;
+    QObject *mcp() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
     /// The add or edit form opened: reads what the download would be, without downloading.
     Q_INVOKABLE void openDraft();
     Q_INVOKABLE void closeDraft();
+    /// Whether turning MCP on needs the AI component first; reads its size into `download` without downloading.
+    Q_INVOKABLE bool componentNeeded();
+    /// Downloads the AI component without a provider; componentReady says how it went, and a failure sets
+    /// `download`'s error.
+    Q_INVOKABLE void installComponent();
+    Q_INVOKABLE void cancelComponent();
     /// form: {id (empty for a new one), preset, name, baseUrl, wire, key (empty keeps an edited one's key)}.
     Q_INVOKABLE void testDraft(const QVariantMap &form);
     Q_INVOKABLE void saveDraft(const QVariantMap &form);
@@ -148,6 +158,7 @@ signals:
     void searchChanged();
     void searchKeyStored(const QString &service);
     void draftSaved(const QString &providerId);
+    void componentReady(bool installed);
 
 private:
     struct Status {
@@ -176,6 +187,7 @@ private:
     void runSearchTest(const QString &service, std::optional<std::string> typedKey);
 
     AiFeatures &m_features;
+    AiMcp *m_mcp = nullptr;
     std::map<std::string, Status, std::less<>> m_status;
     QVariantMap m_draft;
     struct Probed {

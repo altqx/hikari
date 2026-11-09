@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>원근 추적…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7395,6 +7403,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>디자인 및 개발</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>자동화 스크립트의 태국어 지원</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -8975,6 +8987,14 @@ Failed to copy %2 fonts.</source>
         <translation>촉음을 별도 음절로 분리 (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>태국어를 문자 묶음으로 분리</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>자동 분할이 태국어 문자 묶음마다 음절을 하나씩 만들어 กิน이 กิ|น이 됩니다. 끄면 태국어 단어 하나가 음절 하나로 남습니다.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>%1의 긴 음절</translation>
     </message>
@@ -10244,6 +10264,10 @@ Failed to copy %2 fonts.</source>
         <translation>AI 구성 요소를 다운로드할 수 없습니다</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>확인할 수 없음: 잘못된 서명</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>다운로드한 AI 구성 요소가 손상되었습니다</translation>
     </message>
@@ -10330,6 +10354,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Running %1. New sessions use the new version.</source>
         <translation>%1 실행 중. 새 세션부터 새 버전을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>%2 후에도 여전히 %1입니다. 이유를 보려면 터미널에서 실행하세요.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1이(가) 끝나지 않았습니다. 이유를 보려면 터미널에서 실행하세요.</translation>
     </message>
     <message>
         <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
@@ -10522,18 +10554,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Saving…</source>
         <translation>저장하는 중…</translation>
-    </message>
-    <message>
-        <source>Couldn’t check: bad signature</source>
-        <translation>확인할 수 없음: 잘못된 서명</translation>
-    </message>
-    <message>
-        <source>Still %1 after %2. Run it in a terminal to see why.</source>
-        <translation>%2 후에도 여전히 %1입니다. 이유를 보려면 터미널에서 실행하세요.</translation>
-    </message>
-    <message>
-        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
-        <translation>%1이(가) 끝나지 않았습니다. 이유를 보려면 터미널에서 실행하세요.</translation>
     </message>
     <message numerus="yes">
         <source>Connected · %n model(s)</source>
@@ -10772,6 +10792,102 @@ Failed to copy %2 fonts.</source>
         <translation>다시 시도</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>HikariSub 밖의 에이전트가 MCP로 편집하도록 허용</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex 및 기타 에이전트가 열린 문서를 읽습니다. 에이전트의 편집은 유지하거나 실행 취소할 때까지 검토에서 기다립니다.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP를 사용하려면 AI 구성 요소가 필요합니다. 한 번만 다운로드합니다: %1MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP를 사용하려면 AI 구성 요소가 필요합니다. 한 번만 다운로드합니다.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>에이전트가 HikariSub를 사용할 때만 실행되며, AI가 꺼져 있을 때는 실행되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>다운로드</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>AI 구성 요소가 필요합니다</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP가 꺼진 상태로 유지됩니다. %1.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>http://127.0.0.1에서도 수신</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>http://127.0.0.1:%1에서도 수신</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>HTTP로 연결하는 에이전트용입니다. 이 컴퓨터에서만, 토큰이 있어야 연결할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>설정 복사</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>토큰 재설정</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>새 토큰을 저장했습니다.</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>복사했습니다. 터미널에서 실행하세요.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>복사했습니다. 에이전트 설정에 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Claude Code 명령</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>주소와 토큰이 담긴 JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>토큰이 들어 있으니 다른 사람에게 공유하지 마세요.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>토큰 재설정은 새 토큰을 만듭니다. 이전 토큰으로 설정한 에이전트는 설정을 다시 복사할 때까지 작동하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>JSON 설정은 HTTP로 연결하는 에이전트용이므로 “http://127.0.0.1에서도 수신”이 켜져 있어야 합니다.</translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>AI 구성 요소</translation>
     </message>
@@ -10999,6 +11115,10 @@ Failed to copy %2 fonts.</source>
         <translation>이 플러그인에는 Hikari API %1(이)가 필요하지만 이 HikariSub의 API는 %2입니다. 설치하려면 HikariSub을 업데이트하십시오.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>QML 패널은 전체 신뢰 플러그인만 제공할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json이 %1에서 플러그인 스키마를 통과하지 못했습니다: %2</translation>
     </message>
@@ -11017,6 +11137,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>패키지가 미디어 규칙을 어깁니다: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>패키지에 패널 파일 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1(이)가 플러그인 패널에서 쓸 수 없는 %2(을)를 가져옵니다.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -11049,6 +11177,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>전체 신뢰: HikariSub의 제한 밖에서 네이티브 코드를 실행할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub 안에 자체 패널을 표시합니다</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11149,6 +11281,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install plugin</source>
         <translation>플러그인 설치</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>플러그인 업데이트가 꺼져 있어 “%1”을(를) 설치할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>이 링크는 마켓플레이스 웹사이트에서 왔습니다. HikariSub는 자체 서명된 목록에서 플러그인을 찾으므로 먼저 마켓플레이스를 확인해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>플러그인 업데이트 켜기</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -11471,6 +11615,10 @@ Failed to copy %2 fonts.</source>
         <translation>권한</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub는 이 플러그인을 이 권한 안으로 제한하지만, 이 시스템에서는 샌드박스에서 실행되지 않습니다.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>기억한 폴더</translation>
     </message>
@@ -11623,6 +11771,22 @@ Failed to copy %2 fonts.</source>
         <translation>표시</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1의 패널이 열린 채로 HikariSub가 종료되었습니다.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>패널을 불러오지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>다시 불러오기를 선택할 때까지 패널이 닫혀 있습니다.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>다시 불러오기</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1이(가) 설치되어 있지 않습니다.</translation>
     </message>
@@ -11718,6 +11882,21 @@ Failed to copy %2 fonts.</source>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
     </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>패널이 열린 채로 HikariSub가 종료되어, 다시 불러오기를 선택할 때까지 패널이 닫혀 있습니다.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>루트가 Item이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
@@ -15292,6 +15471,10 @@ Styles deleted:
         <translation>전환</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -15376,6 +15559,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>영상만</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
     </message>
 </context>
 <context>

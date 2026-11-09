@@ -32,6 +32,8 @@ class PluginRuntime : public QObject {
     // by plugin name, then in manifest order.
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
+    // Restricted plugins run in an operating-system sandbox here.
+    Q_PROPERTY(bool sandboxed READ sandboxed CONSTANT)
 
 public:
     struct Wiring {
@@ -48,6 +50,10 @@ public:
         std::function<bool()> networkAllowed;
         // Null: the runtime makes its own.
         QNetworkAccessManager *network = nullptr;
+        // Restricted plugins start in pluginProfile's sandbox; unrestricted ones never do.
+        bool sandbox = false;
+        // A QML panel's api.setSetting: the refusal, or "" once kept. Unset: the runtime keeps it itself.
+        std::function<QString(const QString &plugin, const QString &setting, const QString &json)> setSetting;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -64,6 +70,7 @@ public:
     // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
     void settingChanged(const QString &pluginId, const QString &setting, const QString &json);
     PluginUi *ui() const { return m_ui; }
+    bool sandboxed() const;
     // The plugin's file handles and the folders granted for this run end, as when it stops.
     Q_INVOKABLE void endFileAccess(const QString &pluginId);
     backends::PluginProcess *process(const QString &pluginId) const;
@@ -86,6 +93,8 @@ private:
     void unlock(Running &plugin);
     void releaseLock(Running &plugin);
     void endAccess(Running &plugin);
+    void wireQmlPanels();
+    std::optional<std::string> setSetting(const std::string &plugin, const std::string &setting, const api::Json &value);
 
     struct LockWaiter {
         Running *plugin = nullptr;

@@ -756,7 +756,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
-        }});
+        },
+        [this]() -> const application::VideoSession * { return m_video ? &m_video->session() : nullptr; },
+        [this](const core::Document &document) { return rendererScript(document); },
+        [this](application::DocumentId document) { return subtitleFonts(document); },
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -770,7 +774,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
-    m_aiSettings = std::make_unique<AiSettings>(*m_ai);
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
         m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -797,6 +801,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    pluginWiring.sandbox = true;
+    pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
+        return m_pluginManager->setSetting(id, setting, json);
+    };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
@@ -1106,6 +1114,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_spellingLoader = options.spellingBackend;
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened"));
+    m_projects = std::make_unique<ProjectWindows>(
+        *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
+    connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_editRefresh = new QTimer(this);
@@ -2115,8 +2127,10 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     m_workspace.add(*id, (imported ? QFileInfo(saveAs).fileName() : file.fileName()).toStdString(), asReference);
     takeFileArrangement(*id);
     recordFileTime(*id);
-    if (!asReference)
+    if (!asReference) {
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
+        offerProjectFor(*id, path);
+    }
     if (const auto *session = m_files->session(*id); session && !asReference)
         if (const auto folds = application::foldConversion(session->document()).converted)
             emit aegisubFoldsFound(id->value, static_cast<int>(folds));
@@ -2209,7 +2223,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     protectReference();
-    showTabArrangement();
+    showTabArrangement(m_workspace.activeWindow());
     if (m_workspace.editingTarget())
         spellChecker();
     reportGroupBreak();
@@ -2499,6 +2513,8 @@ QVariantList Application::reviewClose(const QString &then)
         m_closingTabs.clear();
         m_tabAfterClose.reset();
     }
+    if (then != QLatin1String("project"))
+        m_projectClosing.reset();
     m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset();
@@ -2508,6 +2524,8 @@ QVariantList Application::reviewClose(const QString &then)
         scope = m_closingTabs;
     else if (then == QLatin1String("all"))
         scope = m_workspace.allTabs();
+    else if (then == QLatin1String("project") && m_projectClosing)
+        scope = m_workspace.tabs(*m_projectClosing);
     else if (then == QLatin1String("window"))
         std::ranges::copy_if(m_workspace.documents(), std::back_inserter(scope),
                              [&](application::DocumentId id) { return m_workspace.window(id) == m_closingWindow; });
@@ -2678,7 +2696,7 @@ void Application::finishClose()
         return;
     }
     const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
-        && then != QLatin1String("all") && then != QLatin1String("window");
+        && then != QLatin1String("all") && then != QLatin1String("window") && then != QLatin1String("project");
     if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
         if (!m_workspace.setEditingTarget(*reviewed)) {
             m_closeThen = then;
@@ -2737,6 +2755,9 @@ void Application::finishClose()
             refreshViews();
     } else if (then == QLatin1String("all")) {
         closeAllTabs();
+    } else if (then == QLatin1String("project")) {
+        if (const auto window = std::exchange(m_projectClosing, std::nullopt))
+            closeProject(*window);
     } else if (then == QLatin1String("window")) {
         m_closeApproved = std::exchange(m_closingWindow, std::nullopt);
     } else if (then == QLatin1String("files")) {
@@ -3029,17 +3050,7 @@ namespace {
 
 bool recentMissing(const std::string &path)
 {
-    return application::isMissingLocalFile(
-        path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
-        [](char drive) {
-#ifdef _WIN32
-            const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
-            return ::GetDriveTypeW(root) == DRIVE_REMOTE;
-#else
-            (void)drive;
-            return false;
-#endif
-        });
+    return recentPathMissing(path, false);
 }
 
 }
@@ -6264,6 +6275,8 @@ void Application::forgetShellWindow(int shellWindow)
         m_shellWindows.erase(found);
         return;
     }
+    keepProjectTabs(shellWindow);
+    m_projects->forget(shellWindow);
     found->second.closing = true;
     leaveShellWindow(shellWindow);
     closeShellWindowDocuments(shellWindow);

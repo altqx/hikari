@@ -156,6 +156,9 @@ constexpr OptionsBinding kBindings[] = {
     {"plugins.network", Check, Updates},
     {"ai.webSearch", Check, Ai},
     {"ai.searchService", Text, Ai},
+    {"ai.mcp.server", Check, Ai},
+    {"ai.mcp.http", Check, Ai},
+    {"audio.karaokeThaiClusters", Check, Audio},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

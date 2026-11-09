@@ -1,6 +1,7 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
@@ -165,7 +166,8 @@ struct AiSettings::Agent {
     QString lastLine;
 };
 
-AiSettings::AiSettings(AiFeatures &features, QObject *parent) : QObject(parent), m_features(features)
+AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, QObject *parent)
+    : QObject(parent), m_features(features), m_mcp(mcp)
 {
     for (const char *name : backends::ai::kAgentClis)
         m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
@@ -188,6 +190,11 @@ AiSettings::~AiSettings()
 bool AiSettings::sandboxed() const
 {
     return m_features.sandboxed();
+}
+
+QObject *AiSettings::mcp() const
+{
+    return m_mcp;
 }
 
 bool AiSettings::on() const
@@ -410,6 +417,26 @@ void AiSettings::withSidecar(std::function<void(bool)> then)
         m_download->install();
     }
     emit downloadChanged();
+}
+
+bool AiSettings::componentNeeded()
+{
+    prepareDownload();
+    return m_download != nullptr;
+}
+
+void AiSettings::installComponent()
+{
+    withSidecar([this, alive = std::weak_ptr(m_alive)](bool ready) {
+        if (alive.lock())
+            emit componentReady(ready);
+    });
+}
+
+void AiSettings::cancelComponent()
+{
+    if (m_installing || m_installWanted)
+        dropDownload();
 }
 
 void AiSettings::openDraft()

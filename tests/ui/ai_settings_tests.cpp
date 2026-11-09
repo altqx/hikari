@@ -1,6 +1,7 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -377,6 +378,55 @@ TEST_F(AiSettingsTest, TheFirstProviderDownloadsTheComponentOnceItsSizeIsShown)
     page.openDraft();
     EXPECT_FALSE(page.download().value(QStringLiteral("needed")).toBool());
     EXPECT_EQ(release.requested.size(), 6u);
+}
+
+TEST_F(AiSettingsTest, TurningMcpOnWithoutAProviderDownloadsTheComponentAndTheServerReachesIt)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiMcp mcp(settings, features, {});
+    app::AiSettings page(features, &mcp);
+    ASSERT_TRUE(stored.providers.empty());
+    EXPECT_TRUE(page.componentNeeded());
+    ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
+    EXPECT_EQ(hostsBuilt, 0);
+
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_TRUE(ready.front().front().toBool());
+    EXPECT_FALSE(page.componentNeeded());
+    settings.set(app::AiMcp::kSetting, true);
+    ASSERT_TRUE(mcp.server());
+    EXPECT_TRUE(features.sidecarForMcp());
+    EXPECT_EQ(hostsBuilt, 1);
+}
+
+TEST_F(AiSettingsTest, DecliningTheComponentForMcpDownloadsNothing)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(page.componentNeeded());
+    ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
+    page.cancelComponent();
+    EXPECT_TRUE(page.componentNeeded());
+    for (const QByteArray &path : release.requested)
+        EXPECT_FALSE(path.endsWith(".gz")) << path.constData();
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AFailedComponentDownloadForMcpSaysWhy)
+{
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(page.componentNeeded());
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_FALSE(ready.front().front().toBool());
+    EXPECT_EQ(page.download().value(QStringLiteral("error")).toString(), QStringLiteral("downloadManifest"));
+    EXPECT_EQ(hostsBuilt, 0);
 }
 
 TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)

@@ -1,11 +1,19 @@
 {"call": "video.info", "exact": {"open": true, "width": 64, "height": 36, "aspect": [16, 9], "frameShown": 7, "keyframes": [0, 10]}}
 {"call": "video.frame_at_time", "params": {"time": 1000}, "exact": {"frame": 25}}
 {"call": "video.time_of_frame", "params": {"frame": 25}, "exact": {"time": 1000}}
-{"call": "video.frame", "params": {"frame": 3, "crop": {"x": 1, "y": 0, "width": 2, "height": 1}}, "exact": {"frame": 3, "width": 2, "height": 1, "format": "bgra", "data": "AQAD/wIAA/8="}}
+{"call": "video.frame", "params": {"frame": 3, "crop": {"x": 1, "y": 0, "width": 2, "height": 1}}, "exact": {"frame": 3, "width": 2, "height": 1, "crop": {"x": 1, "y": 0, "width": 2, "height": 1}, "format": "bgra", "data": "AQAD/wIAA/8="}}
 {"call": "video.frame", "params": {"crop": {"x": 0, "y": 0, "width": 64, "height": 1}, "maxEdge": 16}, "result": {"frame": 7, "width": 16, "height": 1}}
 {"call": "video.frame", "params": {"crop": {"x": 64, "y": 0, "width": 1, "height": 1}}, "error": "invalid_params", "errorData": {"pointer": "/crop"}}
 {"call": "video.frame", "params": {"frame": 500}, "error": "unavailable", "errorData": {"frame": 500}}
 {"call": "video.frame", "params": {"maxEdge": 8}, "error": "invalid_params", "errorData": {"pointer": "/maxEdge"}}
+{"call": "video.frame", "params": {"maxPixels": 576}, "result": {"frame": 7, "width": 32, "height": 18, "crop": {"x": 0, "y": 0, "width": 64, "height": 36}}}
+{"call": "video.frame", "params": {"crop": {"x": 0, "y": 0, "width": 64, "height": 36}, "maxEdge": 32, "maxPixels": 100000}, "result": {"width": 32, "height": 18}}
+{"call": "video.colours", "params": {"frame": 3, "points": [{"x": 5, "y": 1}, {"x": 0, "y": 0}, {"x": 63, "y": 35}], "radius": 2}, "exact": {"frame": 3, "colours": [{"x": 5, "y": 1, "colour": "&H050003&"}, {"x": 0, "y": 0, "colour": "&H010003&"}, {"x": 63, "y": 35, "colour": "&H3E0003&"}]}}
+{"call": "video.colours", "params": {"points": [{"x": 16, "y": 0}]}, "exact": {"frame": 7, "colours": [{"x": 16, "y": 0, "colour": "&H100007&"}]}}
+{"call": "video.colours", "params": {"points": [{"x": 1, "y": 1}, {"x": 64, "y": 0}]}, "error": "invalid_params", "errorData": {"pointer": "/points/1"}}
+{"call": "video.colours", "params": {"points": []}, "error": "invalid_params"}
+{"call": "video.keyframes", "exact": {"keyframes": [{"frame": 0, "time": 0}, {"frame": 10, "time": 400}], "total": 2}}
+{"call": "video.keyframes", "params": {"from": 100, "to": 400}, "exact": {"keyframes": [{"frame": 10, "time": 400}], "total": 1}}
 {"call": "audio.info", "exact": {"open": true, "ready": true, "duration": 1000, "sampleRate": 2000, "channels": 1}}
 {"call": "audio.peaks", "params": {"start": 0, "end": 1000, "buckets": 100}, "result": {"start": 0, "end": 1000}}
 {"call": "audio.peaks", "params": {"start": 500, "end": 510, "buckets": 2}, "exact": {"start": 500, "end": 510, "min": [0, 10], "max": [9, 19]}}

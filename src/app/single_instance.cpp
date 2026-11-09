@@ -44,6 +44,7 @@ namespace {
 constexpr char kMagic[] = "HIKARISUB-OPEN\1";
 constexpr qsizetype kMagicSize = sizeof(kMagic) - 1;
 constexpr quint32 kVersion = 1;
+constexpr quint32 kWindowVersion = 2;
 constexpr quint32 kMaxPayload = 1 << 20;
 constexpr char kAck = '\1';
 // The commit: this byte, then the sender's receipt wait in ms (32-bit big-endian).
@@ -61,7 +62,10 @@ QByteArray encode(const SingleInstance::Request &request)
     QByteArray payload;
     QDataStream out(&payload, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_0);
-    out << kVersion << request.files << request.activationToken;
+    if (request.window == application::WindowRequest::Default)
+        out << kVersion << request.files << request.activationToken;
+    else
+        out << kWindowVersion << request.files << request.activationToken << static_cast<qint32>(request.window);
     QByteArray frame(kMagic, kMagicSize);
     QDataStream length(&frame, QIODevice::Append);
     length << quint32(payload.size());
@@ -94,7 +98,14 @@ bool decode(const QByteArray &buffer, SingleInstance::Request &request, bool &ba
     in.setVersion(QDataStream::Qt_6_0);
     quint32 version = 0;
     in >> version >> request.files >> request.activationToken;
-    if (in.status() != QDataStream::Ok || version != kVersion || !in.atEnd()) {
+    if (version == kWindowVersion) {
+        qint32 window = 0;
+        in >> window;
+        if (window < 0 || window > static_cast<qint32>(application::WindowRequest::Reuse))
+            version = 0;
+        request.window = static_cast<application::WindowRequest>(window);
+    }
+    if (in.status() != QDataStream::Ok || (version != kVersion && version != kWindowVersion) || !in.atEnd()) {
         bad = true;
         return false;
     }
@@ -228,6 +239,11 @@ bool fitsSocket(const QString &path)
 
 }
 
+bool isAppLink(const QString &argument)
+{
+    return argument.startsWith(QLatin1String("hikarisub:"), Qt::CaseInsensitive);
+}
+
 QStringList launchFiles(const QStringList &arguments, const QString &workingDirectory)
 {
     std::vector<std::string> utf8;
@@ -239,6 +255,10 @@ QStringList launchFiles(const QStringList &arguments, const QString &workingDire
         QString path = QString::fromStdString(argument);
         if (path.isEmpty())
             continue;
+        if (isAppLink(path)) {
+            files << path;
+            continue;
+        }
         if (path.startsWith(QLatin1String("file:"), Qt::CaseInsensitive)) {
             const QUrl url(path);
             if (!url.isLocalFile())

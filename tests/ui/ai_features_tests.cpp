@@ -10,8 +10,11 @@
 #include "settings_store.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QRegularExpression>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
@@ -286,6 +289,68 @@ TEST_F(AiFeaturesTest, TheMcpTokenAndPortSurviveARestartAndHttpTurnsOffAlone)
     app::AiMcp again(settings, features, file);
     EXPECT_EQ(again.endpoint().token, token);
     EXPECT_EQ(again.server()->httpPort(), port);
+}
+
+TEST_F(AiFeaturesTest, CopySetupStartsThisProgramAndGivesJsonOnlyWhileHttpListens)
+{
+    qunsetenv("APPIMAGE");
+    settings.set(app::AiMcp::kSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    app::AiMcp mcp(settings, features, backends::ai::mcpEndpointFile(dir.path()));
+    const QString program = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    EXPECT_EQ(app::AiMcp::program(), program);
+    EXPECT_EQ(mcp.claudeCodeSetup(), QStringLiteral("claude mcp add hikari -- \"%1\" --mcp").arg(program));
+    QString escaped = program;
+    escaped.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
+    EXPECT_EQ(mcp.codexSetup(), QStringLiteral("[mcp_servers.hikari]\ncommand = \"%1\"\nargs = [\"--mcp\"]\n").arg(escaped));
+    EXPECT_TRUE(mcp.httpSetup().isEmpty());
+    EXPECT_EQ(mcp.setup().value(QStringLiteral("port")).toInt(), 0);
+
+    int changed = 0;
+    QObject::connect(&mcp, &app::AiMcp::changed, [&] { ++changed; });
+    settings.set(app::AiMcp::kHttpSetting, true);
+    EXPECT_EQ(changed, 1);
+    const quint16 port = mcp.server()->httpPort();
+    const QJsonObject hikari = QJsonDocument::fromJson(mcp.httpSetup().toUtf8())
+                                   .object()
+                                   .value(QStringLiteral("mcpServers"))
+                                   .toObject()
+                                   .value(QStringLiteral("hikari"))
+                                   .toObject();
+    EXPECT_EQ(hikari.value(QStringLiteral("type")).toString(), QStringLiteral("http"));
+    EXPECT_EQ(hikari.value(QStringLiteral("url")).toString(), QStringLiteral("http://127.0.0.1:%1/mcp").arg(port));
+    EXPECT_EQ(hikari.value(QStringLiteral("headers")).toObject().value(QStringLiteral("Authorization")).toString(),
+              QStringLiteral("Bearer ") + QString::fromLatin1(mcp.endpoint().token));
+    EXPECT_EQ(mcp.setup().value(QStringLiteral("port")).toInt(), port);
+
+    qputenv("APPIMAGE", "/home/me/Apps/HikariSub.AppImage");
+    EXPECT_EQ(app::AiMcp::program(), QDir::toNativeSeparators(QStringLiteral("/home/me/Apps/HikariSub.AppImage")));
+    qunsetenv("APPIMAGE");
+}
+
+TEST_F(AiFeaturesTest, ResetTokenSavesANewOneThatTheServerAndTheJsonSetupUse)
+{
+    settings.set(app::AiMcp::kSetting, true);
+    settings.set(app::AiMcp::kHttpSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    const QString file = backends::ai::mcpEndpointFile(dir.path());
+    app::AiMcp mcp(settings, features, file);
+    const QByteArray old = mcp.endpoint().token;
+    int changed = 0;
+    QObject::connect(&mcp, &app::AiMcp::changed, [&] { ++changed; });
+
+    mcp.resetToken();
+    EXPECT_EQ(changed, 1);
+    const QByteArray token = mcp.endpoint().token;
+    EXPECT_EQ(token.size(), 64);
+    EXPECT_NE(token, old);
+    EXPECT_EQ(backends::ai::readMcpEndpoint(file)->token, token);
+    EXPECT_TRUE(mcp.httpSetup().contains(QString::fromLatin1(token)));
+    EXPECT_FALSE(mcp.httpSetup().contains(QString::fromLatin1(old)));
+#ifndef _WIN32
+    EXPECT_EQ(QFile::permissions(file) & ~(QFile::ReadUser | QFile::WriteUser | QFile::ReadOwner | QFile::WriteOwner),
+              QFile::Permissions());
+#endif
 }
 
 TEST_F(AiFeaturesTest, ASidecarThatFailsItsHandshakeRollsBackToThePreviousOne)

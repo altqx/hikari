@@ -11,12 +11,13 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
 | Web search | **Let AI search the web** (`ai.webSearch`, on by default), how each provider searches, and **Search service** (`ai.searchService`: None, Brave Search, Tavily, Exa or Firecrawl) with its key | The switch and the service on OK or Apply; the key once its test passes, or on Add anyway |
 | External agents | Claude Code and Codex: each found on `PATH` with its version, a badge and Update now (AI24b), and for Codex HikariSub's own ChatGPT sign-in (AI6) | At once (see below) |
+| MCP | **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`), which offers the AI component's download when it isn't installed; **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`); **Copy setup** and **Reset token** ([MCP server](ai-mcp.md#settings--ai)) | The check boxes on OK or Apply; the download and Reset token at once |
 | AI components | The AI component's version, its Bun and provider libraries, the update status with Check now and Update now, What's new, the rollback notice, and **Update AI components automatically** (`ai.autoUpdate`, on by default) (AI24b) | The switch on OK or Apply; the buttons at once |
 | Privacy | **Use prompt caching** (`ai.promptCaching`, on by default), the What is sent to providers link, and a line that says whether the AI component runs in its sandbox here; "isn’t sandboxed on this system" shows in the warning colour where the sandbox can’t apply ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) | On OK or Apply |
 
 The owner approved the Web search [mockup](https://github.com/altqx/hikari/issues/742#issuecomment-6686712813) on 2026-11-06, with the switch on by default ([AI23 #742](https://github.com/altqx/hikari/issues/742)).
 
-The Agent and MCP sections arrive with AI7 and AI3/AI13, below Models and above Privacy, as drawn in the mockup. AI15 adds ACP agents to External agents, with Choose… and their run errors. The owner approved AI24b's [design gate](https://github.com/altqx/hikari/issues/744#issuecomment-6731988977) on 2026-11-09.
+The Agent section arrives with AI7 below Models, and AI13 adds MCP servers to the MCP section, as drawn in the mockup. AI15 adds ACP agents to External agents, with Choose… and their run errors. The owner approved AI24b's [design gate](https://github.com/altqx/hikari/issues/744#issuecomment-6731988977) on 2026-11-09.
 
 ## Turn off all AI features
 
@@ -79,7 +80,7 @@ The section sits between External agents and Privacy, and folds away with the re
 
 ## The AI component download
 
-The sidecar isn't in the packages ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)). When no sidecar this app runs is installed, opening the add form reads the `ai-channel` manifest for the size of the runtime and bundle it would fetch, without downloading, and the form says: "Your first provider downloads the AI component once: N MB." Test connection or Add starts the download, with progress in the form, and a test waits for it. A failed download fails the test with its reason. A sign-in doesn't need it: only the test that follows an OpenRouter sign-in waits for the download. Nothing downloads while AI is off, and builds with `HIKARI_AI_LOCAL_SIDECAR` download nothing.
+The sidecar isn't in the packages ([ADR 0026](adr/0026-hikari-ai-runs-in-a-typescript-sidecar-on-bun.md)). When no sidecar this app runs is installed, opening the add form reads the `ai-channel` manifest for the size of the runtime and bundle it would fetch, without downloading, and the form says: "Your first provider downloads the AI component once: N MB." Test connection or Add starts the download, with progress in the form, and a test waits for it. A failed download fails the test with its reason. A sign-in doesn't need it: only the test that follows an OpenRouter sign-in waits for the download. Turning on MCP without a provider offers the same download, in the MCP section, with Download and Cancel ([MCP server](ai-mcp.md#settings--ai)). Nothing downloads while AI is off, and builds with `HIKARI_AI_LOCAL_SIDECAR` download nothing.
 
 Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)): `ai.autoUpdate`, on by default, lets the hourly check download a newer sidecar, which switches in at an idle moment.
 
@@ -89,7 +90,7 @@ Later versions arrive on their own ([ADR 0031](adr/0031-the-ai-sidecar-updates-o
 - `src/backends/ai_agent_cli.*` finds the agent CLIs, tells how each was installed, reads the latest versions and runs Update now.
 - `AiSignIn` (`src/backends/ai_signin.*`) runs the sign-ins with `QNetworkAccessManager` and a `QTcpServer` on 127.0.0.1, and keeps the Codex session: import, refresh and sign-out.
 - `SettingsAiPage.qml` is the page. `SettingsDialog` hands it the `ai` object, and calls `commit()` on OK and Apply to save the staged role models.
-- `ai.off`, `ai.autoUpdate`, `ai.promptCaching`, `ai.webSearch` and `ai.searchService` are bound to the `ai` page (`OptionsPage::Ai`), so Reset page and settings import and export cover them.
+- `ai.off`, `ai.autoUpdate`, `ai.promptCaching`, `ai.webSearch`, `ai.searchService`, `ai.mcp.server` and `ai.mcp.http` are bound to the `ai` page (`OptionsPage::Ai`), so Reset page and settings import and export cover them.
 
 ## Tests
 

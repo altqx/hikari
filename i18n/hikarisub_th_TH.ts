@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7395,6 +7403,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>การออกแบบและการพัฒนา</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -8975,6 +8987,14 @@ Failed to copy %2 fonts.</source>
         <translation>แยกพยัญชนะซ้อนเป็นพยางค์ของตัวเอง (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>แยกภาษาไทยเป็นกลุ่มอักขระ</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>แบ่งอัตโนมัติจะให้กลุ่มอักขระภาษาไทยแต่ละกลุ่มเป็นพยางค์ของตัวเอง กิน จึงกลายเป็น กิ|น ปิดตัวเลือกนี้เพื่อให้คำภาษาไทยแต่ละคำเป็นพยางค์เดียว</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>พยางค์ยาวสำหรับ %1</translation>
     </message>
@@ -10244,6 +10264,10 @@ Failed to copy %2 fonts.</source>
         <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่ได้</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>ตรวจสอบไม่ได้: ลายเซ็นไม่ถูกต้อง</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดมาเสียหาย</translation>
     </message>
@@ -10330,6 +10354,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Running %1. New sessions use the new version.</source>
         <translation>กำลังเรียกใช้ %1 เซสชันใหม่จะใช้เวอร์ชันใหม่</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>ยังเป็น %1 หลัง %2 ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 ทำงานไม่เสร็จ ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
     </message>
     <message>
         <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
@@ -10522,18 +10554,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Saving…</source>
         <translation>กำลังบันทึก…</translation>
-    </message>
-    <message>
-        <source>Couldn’t check: bad signature</source>
-        <translation>ตรวจสอบไม่ได้: ลายเซ็นไม่ถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Still %1 after %2. Run it in a terminal to see why.</source>
-        <translation>ยังเป็น %1 หลัง %2 ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
-    </message>
-    <message>
-        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
-        <translation>%1 ทำงานไม่เสร็จ ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
     </message>
     <message numerus="yes">
         <source>Connected · %n model(s)</source>
@@ -10772,6 +10792,102 @@ Failed to copy %2 fonts.</source>
         <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>ให้เอเจนต์ภายนอก HikariSub แก้ไขผ่าน MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex และเอเจนต์อื่นอ่านเอกสารที่เปิดอยู่ การแก้ไขของเอเจนต์จะรออยู่ในการตรวจทานจนกว่าคุณจะเก็บไว้หรือเลิกทำ</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>คอมโพเนนต์ทำงานเฉพาะเมื่อเอเจนต์ใช้ HikariSub และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>ต้องใช้คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP ยังปิดอยู่ %1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1:%1 ด้วย</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP เข้าถึงได้จากคอมพิวเตอร์เครื่องนี้เท่านั้น และต้องมีโทเค็น</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>คัดลอกการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>รีเซ็ตโทเค็น</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>บันทึกโทเค็นใหม่แล้ว</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>คัดลอกแล้ว เรียกใช้ในเทอร์มินัล</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>คัดลอกแล้ว วางลงในการตั้งค่าของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>คำสั่ง Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON พร้อมที่อยู่และโทเค็น</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>มีโทเค็นของคุณอยู่ โปรดเก็บไว้เป็นความลับ</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>รีเซ็ตโทเค็น จะสร้างโทเค็นใหม่ เอเจนต์ที่ตั้งค่าด้วยโทเค็นเดิมจะหยุดทำงานจนกว่าคุณจะคัดลอกการตั้งค่าอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>คอมโพเนนต์ AI</translation>
     </message>
@@ -10999,6 +11115,10 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอินนี้ต้องใช้ Hikari API %1 แต่ HikariSub นี้มี API %2 อัปเดต HikariSub เพื่อติดตั้งปลั๊กอินนี้</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>เฉพาะปลั๊กอินที่เชื่อถือเต็มที่เท่านั้นที่มีแผง QML ได้</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json ไม่ผ่านสคีมาปลั๊กอินที่ %1: %2</translation>
     </message>
@@ -11017,6 +11137,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>แพ็กเกจไม่เป็นไปตามกฎของสื่อ: %1 %2</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>แพ็กเกจไม่มีไฟล์แผง %1</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 นำเข้า %2 ซึ่งแผงของปลั๊กอินใช้ไม่ได้</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -11049,6 +11177,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>เชื่อถือเต็มที่: อาจเรียกใช้โค้ดเนทีฟนอกขอบเขตที่ HikariSub จำกัดไว้</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>แสดงแผงของตัวเองภายใน HikariSub</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11149,6 +11281,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install plugin</source>
         <translation>ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>ติดตั้ง “%1” ไม่ได้ขณะที่ปิดการอัปเดตปลั๊กอินอยู่</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>ลิงก์นี้มาจากเว็บไซต์มาร์เก็ตเพลส HikariSub ค้นหาปลั๊กอินในรายการที่ลงนามของตัวเอง จึงต้องตรวจสอบมาร์เก็ตเพลสก่อน</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>เปิดการอัปเดตปลั๊กอิน</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -11471,6 +11615,10 @@ Failed to copy %2 fonts.</source>
         <translation>สิทธิ์</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub จำกัดปลั๊กอินนี้ไว้ที่สิทธิ์เหล่านี้ แต่ระบบนี้ไม่ได้รันปลั๊กอินในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>โฟลเดอร์ที่จำไว้</translation>
     </message>
@@ -11623,6 +11771,22 @@ Failed to copy %2 fonts.</source>
         <translation>แสดง</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของ %1 เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>โหลดแผงไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>แผงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>โหลดอีกครั้ง</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>ไม่ได้ติดตั้ง %1</translation>
     </message>
@@ -11718,6 +11882,21 @@ Failed to copy %2 fonts.</source>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของปลั๊กอินนี้เปิดอยู่ แผงจึงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>รากของแผงไม่ใช่ Item</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>โหลดแผง “%1” ไม่ได้: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
@@ -15292,6 +15471,10 @@ Styles deleted:
         <translation>สลับไปที่</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
@@ -15376,6 +15559,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>วิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
     </message>
 </context>
 <context>

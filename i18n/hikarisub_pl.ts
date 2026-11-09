@@ -6731,6 +6731,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7499,6 +7507,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Design and development</source>
         <translation>Projekt i programowanie</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -9091,6 +9103,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wydzielaj podwojoną spółgłoskę w osobną sylabę (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>Dziel tajski na klastry znaków</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>Automatyczny podział daje każdemu tajskiemu klastrowi znaków osobną sylabę, więc กิน staje się กิ|น. Wyłącz, aby każde tajskie słowo było jedną sylabą.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>Długie sylaby dla %1</translation>
     </message>
@@ -10368,6 +10388,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie można pobrać komponentu AI</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>Nie udało się sprawdzić: zły podpis</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>Pobrany komponent AI jest uszkodzony</translation>
     </message>
@@ -10458,6 +10482,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Running %1. New sessions use the new version.</source>
         <translation>Trwa %1. Nowe sesje użyją nowej wersji.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>Nadal %1 po %2. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 się nie powiodło. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
     </message>
     <message>
         <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
@@ -10650,18 +10682,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Saving…</source>
         <translation>Zapisywanie…</translation>
-    </message>
-    <message>
-        <source>Couldn’t check: bad signature</source>
-        <translation>Nie udało się sprawdzić: zły podpis</translation>
-    </message>
-    <message>
-        <source>Still %1 after %2. Run it in a terminal to see why.</source>
-        <translation>Nadal %1 po %2. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
-    </message>
-    <message>
-        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
-        <translation>%1 się nie powiodło. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
     </message>
     <message numerus="yes">
         <source>Connected · %n model(s)</source>
@@ -10904,6 +10924,102 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Spróbuj ponownie</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>Pozwól agentom spoza HikariSub edytować przez MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex i inni agenci czytają otwarte dokumenty. Ich zmiany czekają w przeglądzie, aż je zachowasz lub cofniesz.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>Działa tylko wtedy, gdy agent korzysta z HikariSub, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>Potrzebuje komponentu AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP pozostaje wyłączone. %1.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1:%1</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>Dla agentów łączących się przez HTTP. Dostęp ma tylko ten komputer i tylko z tokenem.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>Kopiuj konfigurację</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>Zresetuj token</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>Zapisano nowy token.</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>Skopiowano. Uruchom to w terminalu.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>Skopiowano. Wklej to do ustawień agenta.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Polecenie Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON z adresem i tokenem</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>Zawiera twój token; nie udostępniaj go.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>Zresetuj token tworzy nowy token. Agenci skonfigurowani ze starym przestaną działać, dopóki nie skopiujesz konfiguracji ponownie.</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>Konfiguracja JSON jest dla agentów łączących się przez HTTP, więc wymaga opcji „Nasłuchuj także na http://127.0.0.1”.</translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>Komponenty AI</translation>
     </message>
@@ -11131,6 +11247,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>Tylko wtyczki z pełnym zaufaniem mogą zawierać panele QML.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
     </message>
@@ -11149,6 +11269,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>Pakiet narusza zasady dotyczące multimediów: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>W pakiecie brakuje pliku panelu, %1.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 importuje %2, czego panele wtyczek nie mogą używać.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -11181,6 +11309,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>Wyświetla własne panele w HikariSub</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11281,6 +11413,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Install plugin</source>
         <translation>Zainstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>Nie można zainstalować „%1”, gdy aktualizacje wtyczek są wyłączone.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>Link pochodzi ze strony katalogu wtyczek. HikariSub szuka wtyczki na własnej, podpisanej liście, więc najpierw musi sprawdzić katalog wtyczek.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>Włącz aktualizacje wtyczek</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -11603,6 +11747,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Uprawnienia</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub ogranicza ją do tych uprawnień, ale w tym systemie nie działa w piaskownicy.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>Zapamiętane foldery</translation>
     </message>
@@ -11759,6 +11907,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub zamknął się, gdy panel wtyczki %1 był otwarty.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>Nie udało się wczytać panelu.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>Jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>Wczytaj ponownie</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 nie jest zainstalowana.</translation>
     </message>
@@ -11854,6 +12018,21 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
     </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub zamknął się, gdy jej panel był otwarty, więc jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>Jego element główny nie jest typu Item.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
@@ -15518,6 +15697,10 @@ Usunięte style:
         <translation>Przełącz na</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -15604,6 +15787,10 @@ Usunięte style:
     <message>
         <source>Video only</source>
         <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
     </message>
 </context>
 <context>
