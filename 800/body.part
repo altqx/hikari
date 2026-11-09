@@ -1,0 +1,148 @@
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>Agent panel: web search</h1><span>AI23b #800 design gate, on the approved AI7 panel (#435) · <span id="tn">Dark</span> · 446 × 720</span></div>
+
+  <div class="band">Search in a thread <span>the globe toggle, the search rows and the citations</span></div>
+
+  <div>
+    <p class="cap"><b>1 · An answer that searched, on Anthropic.</b> The globe in the composer is on, as Settings › AI says. Searches and pages read show as quiet rows. Numbers in the answer link to the Sources under it.</p>
+    <div class="ap">
+      {{chrome:Romanise the Frieren place names}}
+      <div class="tl">
+        <div class="um"><div class="att"><span class="chip">{{i:open-subtitles}}Ep03.ass</span></div>How do the official subs romanise the place names? Make Lines 30–40 match.</div>
+        <div class="umf">10:14 · <span class="cpl">{{i:checkpoint}}Restore checkpoint</span></div>
+        <div class="tc">{{i:web-search}}<span>Searched the web <span class="x">“Frieren official subtitles place names”</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="tc">{{i:open-link}}<span>Read <span class="x">crunchyroll.com</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="tc">{{i:open-link}}<span>Read <span class="x">frieren-anime.jp</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="tc">{{i:pick-lines}}<span>Read <span class="x">Lines 30–40</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="edits">{{i:review-keep}}<span><b>Changed 4 Lines</b> · Ep03.ass</span><span class="lnk">Review</span></div>
+        <div class="am">
+          <p>The official English subs write <b>Aureole</b>, not “Ōreoru”<span class="cite">1</span>, and keep the long vowel in <b>Äußerst</b><span class="cite">2</span>. I changed Lines 31, 33, 36 and 39 to match.</p>
+          <div class="src">
+            <div class="h">{{i:link}}Sources</div>
+            <div class="r"><span class="n">1</span><span class="tt">Frieren: Beyond Journey's End, episode 3</span><span class="host">crunchyroll.com</span></div>
+            <div class="r"><span class="n">2</span><span class="tt">Glossary of places</span><span class="host">frieren-anime.jp</span></div>
+          </div>
+        </div>
+      </div>
+      {{composer:on:Claude Sonnet 5.5}}
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>2 · Hovering a citation.</b> The hover shows the page's title, its site and the quoted text when the provider gives one. A click opens the page in the browser. Nothing is fetched to draw it.</p>
+    <div class="ap">
+      {{chrome:Romanise the Frieren place names}}
+      <div class="tl">
+        <div class="tc">{{i:web-search}}<span>Searched the web <span class="x">“Frieren official subtitles place names”</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="tc">{{i:open-link}}<span>Read <span class="x">crunchyroll.com</span>, <span class="x">frieren-anime.jp</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="am">
+          <p>The official English subs write <b>Aureole</b>, not “Ōreoru”<span class="cite hot">1</span>, and keep the long vowel in <b>Äußerst</b><span class="cite">2</span>. I changed Lines 31, 33, 36 and 39 to match.</p>
+        </div>
+      </div>
+      <div class="pop" style="left:90px; top:214px">
+        <b>Frieren: Beyond Journey's End, episode 3</b>
+        <span class="host">crunchyroll.com</span>
+        <q>…the land of souls, Aureole, lies at the northern end of the continent…</q>
+        <span class="lnk">{{i:open-link}}Open in browser</span>
+      </div>
+      {{composer:on:Claude Sonnet 5.5}}
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>3 · Hovering the globe.</b> It shows whether search is on for this thread. On Anthropic, it also says that changing it mid-thread costs one cache miss (owner, Q116). Other providers don't show that line.</p>
+    <div class="ap">
+      {{chrome:Romanise the Frieren place names}}
+      <div class="tl">
+        <div class="am"><p>I changed Lines 31, 33, 36 and 39 to match.</p></div>
+      </div>
+      <div class="tip" style="left:30px; bottom:44px">Search the web: on for this thread<span class="mut">Changing it mid-thread costs one cache miss on Anthropic.</span></div>
+      {{composer:hover:Claude Sonnet 5.5}}
+    </div>
+  </div>
+
+  <div class="band">Providers and services <span>Gemini's suggestions, a search service, and when search can't run</span></div>
+
+  <div>
+    <p class="cap"><b>4 · Gemini with Google Search.</b> Google's search suggestions come right under the answer, as Google sends them, with nothing of ours inside (owner, Q114). A click opens the google.com page in the browser. Gemini's sources name only the site.</p>
+    <div class="ap">
+      {{chrome:Is “Himmel” a real German word?}}
+      <div class="tl">
+        <div class="um">Is “Himmel” a real German word, and should the subs translate it?</div>
+        <div class="umf">11:02 · <span class="cpl">{{i:checkpoint}}Restore checkpoint</span></div>
+        <div class="tc">{{i:web-search}}<span>Searched with Google <span class="x">“Himmel meaning German”</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="am">
+          <p>Yes: <b>Himmel</b> means “sky” or “heaven” in German<span class="cite">1</span>. It's the hero's name, so keep it as it is and don't translate it<span class="cite">2</span>.</p>
+          <div class="gsug"><span class="g"></span><span class="c">Himmel meaning German</span><span class="c">Frieren character names German</span></div>
+          <div class="src">
+            <div class="h">{{i:link}}Sources</div>
+            <div class="r"><span class="n">1</span><span class="tt">dwds.de</span></div>
+            <div class="r"><span class="n">2</span><span class="tt">fandom.com</span></div>
+          </div>
+        </div>
+      </div>
+      {{composer:on:Gemini 3 Pro}}
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>5 · A provider without its own search.</b> It searches through the service chosen in Settings › AI, which the row names. When the service's plan is used up, a notice says so, and the answer says it didn't search.</p>
+    <div class="ap">
+      {{chrome:Check the opening song's title}}
+      <div class="tl">
+        <div class="tc">{{i:web-search}}<span>Searched with Tavily <span class="x">“Frieren opening song title”</span></span><span class="r">{{i:chevron-right}}</span></div>
+        <div class="am"><p>The opening is <b>“Yūsha”</b> by YOASOBI<span class="cite">1</span>. Line 2's title card already matches.</p>
+          <div class="src"><div class="h">{{i:link}}Sources</div>
+            <div class="r"><span class="n">1</span><span class="tt">YOASOBI “Yūsha” release</span><span class="host">sonymusic.co.jp</span></div>
+          </div>
+        </div>
+        <div class="um">And the ending?</div>
+        <div class="note">{{i:notice-warning}}<span>Your Tavily plan has no searches left (432). The answer below didn't search.</span></div>
+        <div class="am"><p>I couldn't search just now, so I can't confirm the ending's title. Line 1180's title card reads “Anytime Anywhere”, which matches what I know.</p></div>
+      </div>
+      {{composer:on:Local · Qwen 3 32B}}
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>6 · When search can't run.</b> With the Settings switch off, the globe isn't shown. A provider without its own search and no search service chosen shows the globe dimmed, and its hover says where to choose one.</p>
+    <div class="ap">
+      {{chrome:New thread}}
+      <div class="tl">
+        <div class="empty"><span class="big">{{i:ai-assistant}}</span><p>Ask about the open subtitles, or attach a file with @.</p></div>
+      </div>
+      <div class="tip" style="left:30px; bottom:44px">This provider can't search the web on its own<span class="mut">Choose a search service in Settings › AI › Web search.</span></div>
+      {{composer:dis:Local · Qwen 3 32B}}
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app's own set: web-search for the globe and search rows, open-link for pages read, link for Sources. No new glyph.</span>
+    <span><b>Google's suggestions</b> are drawn as Google styles them, in every theme. HikariSub adds nothing inside them.</span>
+    <span><b>Colours</b> are theme.cpp's roles for this theme, default accent.</span>
+    <span><b>Pages, quotes and models</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>

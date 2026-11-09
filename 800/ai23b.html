@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent web search</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57;
+  --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --focus:#E8EDF2; --danger:#FFADAD; --warning:#E0A030; --success:#4DBA4D; --disabled:#75818D; --control:#7A8691;
+  --addbg:rgba(77,186,77,.24); --addfg:#B8EBB8; --delbg:rgba(255,173,173,.18); --delfg:#FFC2C2; --dangerbg:#5C2328; --ondanger:#FFE3E3;
+}
+[data-theme="light"] {
+  --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE;
+  --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --focus:#202832; --danger:#A51F31; --warning:#8A5A00; --success:#008000; --disabled:#74808B; --control:#76828D;
+  --addbg:#D3EFD3; --addfg:#0B4F0B; --delbg:#F8D7DA; --delfg:#8B1A2B; --dangerbg:#A51F31; --ondanger:#FFFFFF;
+}
+[data-theme="hcw"] {
+  --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000;
+  --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --focus:#000000; --danger:#A00000; --warning:#6B4500; --success:#005A00; --disabled:#6E6E6E; --control:#000000;
+  --addbg:#CCF2CC; --addfg:#003A00; --delbg:#FFD6D6; --delfg:#7A0000; --dangerbg:#A00000; --ondanger:#FFFFFF;
+}
+[data-theme="hcb"] {
+  --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF;
+  --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --focus:#FFFFFF; --danger:#FFADAD; --warning:#FFD54A; --success:#7CFC7C; --disabled:#8C8C8C; --control:#FFFFFF;
+  --addbg:#003A00; --addfg:#9CFF9C; --delbg:#3A0000; --delfg:#FFC0C0; --dangerbg:#FFADAD; --ondanger:#000000;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--text); font:13px/1.4 "Noto Sans","Segoe UI",system-ui,sans-serif; }
+svg { width:16px; height:16px; flex:none; display:block; }
+svg .acc { stroke:var(--accent); }
+svg .acc circle { fill:var(--accent); }
+.mono { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:12px; }
+
+.pick { display:flex; gap:6px; padding:12px 24px 0; }
+.pick button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:2px; padding:3px 10px; cursor:pointer; }
+.pick button[aria-pressed="true"] { background:var(--select); border-color:var(--accent); font-weight:600; }
+.shot .pick { display:none; }
+
+.sheet { padding:18px 24px 26px; display:grid; grid-template-columns:repeat(4, 446px); gap:22px 18px; align-items:start; width:1880px; }
+.head { grid-column:1 / -1; display:flex; align-items:baseline; gap:14px; }
+.head h1 { font-size:15px; margin:0; }
+.head span { color:var(--muted); font-size:12px; }
+.band { grid-column:1 / -1; font-size:13px; font-weight:700; border-bottom:1px solid var(--line); padding-bottom:4px; margin-top:4px; display:flex; gap:10px; align-items:baseline; }
+.band span { font-weight:400; font-size:12px; color:var(--muted); }
+.cap { font-size:12px; color:var(--muted); margin:0 0 6px; min-height:50px; }
+.cap b { color:var(--text); font-weight:600; }
+.mut { color:var(--muted); }
+.warn { color:var(--warning); }
+.ok { color:var(--success); }
+.bad { color:var(--danger); }
+.sp { flex:1; }
+
+.ap { width:446px; height:720px; background:var(--panel); border:1px solid var(--line); border-radius:3px; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+.dh { height:30px; display:flex; align-items:center; gap:8px; padding:0 4px 0 0; flex:none; }
+.dh .tabs { display:flex; align-self:stretch; }
+.dh .tabs span { display:flex; align-items:center; gap:6px; padding:0 12px; color:var(--muted); border-bottom:2px solid transparent; }
+.dh .tabs span.on { color:var(--text); font-weight:700; border-bottom-color:var(--accent); }
+.th { height:34px; display:flex; align-items:center; gap:4px; padding:0 4px 0 6px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); flex:none; }
+.th .t { flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:2px; }
+.ib { width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:2px; flex:none; }
+.ib.sm { width:22px; height:22px; }
+.ib.on { background:var(--select); }
+.btn { height:26px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--raised); white-space:nowrap; flex:none; }
+.btn.sm { height:22px; padding:0 8px; font-size:12px; }
+.btn.primary { background:var(--accent); color:var(--onaccent); border-color:var(--accent); font-weight:600; }
+.btn.primary svg path, .btn.primary svg .acc { stroke:var(--onaccent); }
+.btn.danger { background:var(--dangerbg); color:var(--ondanger); border-color:var(--dangerbg); font-weight:600; }
+.btn.ring, .ring { outline:1px solid var(--focus); outline-offset:2px; }
+.btn.dis { color:var(--disabled); border-color:var(--disabled); }
+.chip { display:inline-flex; align-items:center; gap:4px; height:20px; padding:0 7px; border:1px solid var(--line); border-radius:10px; font-size:11.5px; color:var(--muted); white-space:nowrap; }
+.chip svg { width:13px; height:13px; }
+.chip.acc { color:var(--accent); border-color:var(--accent); }
+.chip.warn { color:var(--warning); border-color:var(--warning); }
+.redbadge { display:inline-flex; align-items:center; gap:4px; height:20px; padding:0 7px; border-radius:10px; background:var(--dangerbg); color:var(--ondanger); font-size:11.5px; font-weight:700; white-space:nowrap; }
+.redbadge svg { width:13px; height:13px; }
+.redbadge svg path { stroke:var(--ondanger); }
+
+.tl { flex:1; min-height:0; overflow:hidden; padding:10px 10px 6px; display:flex; flex-direction:column; gap:8px; }
+.um { align-self:flex-end; max-width:88%; background:var(--raised); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
+.um .att { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:4px; }
+.umf { align-self:flex-end; display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); margin-top:-5px; }
+.cpl { display:inline-flex; align-items:center; gap:3px; color:var(--accent); text-decoration:underline; text-underline-offset:2px; }
+.cpl svg { width:13px; height:13px; }
+.am { font-size:13px; }
+.am p { margin:0 0 6px; }
+.am p:last-child { margin:0; }
+.caret { display:inline-block; width:7px; height:14px; background:var(--accent); vertical-align:-2px; margin-left:2px; }
+.tc { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); min-height:22px; }
+.tc .x { color:var(--text); }
+.tc .r { margin-left:auto; display:flex; gap:6px; align-items:center; }
+.edits { display:flex; align-items:center; gap:7px; font-size:12px; padding:5px 6px 5px 8px; border:1px solid var(--accent); border-left-width:3px; border-radius:2px; background:var(--select); }
+.edits.pend { border-style:dashed; border-left-style:solid; }
+.edits .lnk { color:var(--accent); text-decoration:underline; text-underline-offset:2px; margin-left:auto; white-space:nowrap; }
+.plan { border:1px solid var(--line); border-radius:3px; padding:6px 8px; font-size:12px; }
+.plan .h { font-weight:600; margin-bottom:3px; display:flex; gap:6px; align-items:center; }
+.plan .s { display:flex; align-items:center; gap:7px; min-height:20px; }
+.plan .s.done { color:var(--muted); text-decoration:line-through; }
+.plan .s .b { width:12px; height:12px; border:1px solid var(--control); border-radius:2px; flex:none; }
+.plan .s.done .b { background:var(--success); border-color:var(--success); }
+.plan .s.now .b { border-color:var(--accent); box-shadow:inset 0 0 0 2px var(--accent); }
+
+.ask { border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:2px; background:var(--raised); padding:8px 10px; font-size:12.5px; }
+.ask.w { border-left-color:var(--warning); }
+.ask.b { border-left-color:var(--danger); }
+.ask .h { display:flex; align-items:center; gap:7px; font-weight:700; margin-bottom:4px; }
+.ask .h .chip { font-weight:400; margin-left:auto; }
+.ask .why { color:var(--muted); font-size:12px; margin:4px 0 0; }
+.ask .act { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.ask .what { font-family:"JetBrains Mono","Cascadia Mono","DejaVu Sans Mono",monospace; font-size:11.5px; background:var(--field); border:1px solid var(--line); border-radius:2px; padding:4px 6px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.meter { display:flex; align-items:center; gap:8px; padding:4px 10px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--line); flex:none; }
+.tm { width:64px; height:6px; border:1px solid var(--control); border-radius:3px; overflow:hidden; flex:none; }
+.tm i { display:block; height:100%; background:var(--accent); }
+.meter.hot .tm { border-color:var(--warning); }
+.meter.hot .tm i { background:var(--warning); }
+.meter.hot .tk { color:var(--warning); font-weight:600; display:inline-flex; gap:4px; align-items:center; }
+.meter .cost { margin-left:auto; }
+.queued { display:flex; align-items:center; gap:6px; margin:0 8px 6px; padding:4px 4px 4px 8px; border:1px dashed var(--control); border-radius:3px; font-size:12px; flex:none; }
+.queued .q { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.comp { margin:0 8px 8px; border:1px solid var(--control); border-radius:3px; background:var(--field); flex:none; }
+.comp.focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+.comp .att { display:flex; gap:4px; flex-wrap:wrap; padding:6px 6px 0; }
+.comp .txt { min-height:40px; padding:6px 8px; }
+.comp .txt .ph { color:var(--muted); }
+.comp .bar { display:flex; align-items:center; gap:4px; padding:2px 4px 4px; }
+.cb { height:24px; display:inline-flex; align-items:center; gap:4px; padding:0 4px 0 7px; border-radius:2px; font-size:12px; white-space:nowrap; }
+.cb:hover, .cb.open { background:var(--raised); }
+.cb.open { outline:1px solid var(--accent); }
+.cb svg { width:14px; height:14px; }
+.cb.full { color:var(--danger); font-weight:600; }
+.send { width:28px; height:26px; border-radius:2px; background:var(--accent); display:inline-flex; align-items:center; justify-content:center; }
+.send svg path, .send svg .acc { stroke:var(--onaccent); }
+.send.stop { background:var(--raised); border:1px solid var(--control); }
+.send.stop svg path, .send.stop svg .acc { stroke:var(--text); }
+.send.dis { background:transparent; border:1px solid var(--disabled); }
+.send.dis svg path, .send.dis svg .acc { stroke:var(--disabled); }
+.cursor { display:inline-block; width:1px; height:15px; background:var(--text); vertical-align:-3px; }
+
+.menu { position:absolute; z-index:3; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:4px 0; width:290px; }
+.menu .mi { min-height:28px; display:flex; align-items:center; gap:10px; padding:0 12px; white-space:nowrap; }
+.menu .mi.two { align-items:flex-start; padding:5px 12px; white-space:normal; }
+.menu .mi.two .d { font-size:11.5px; color:var(--muted); }
+.menu .mi.hot { background:var(--select); }
+.menu .mi .k { margin-left:auto; color:var(--muted); font-size:12px; }
+.menu .mi .tick { width:16px; flex:none; color:var(--accent); font-weight:700; }
+.menu .sepr { height:1px; background:var(--line); margin:4px 0; }
+.menu .grp { font-size:11px; color:var(--muted); padding:4px 12px 2px; }
+
+.dvd { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11.5px; }
+.dvd::before, .dvd::after { content:""; flex:1; border-top:1px solid var(--line); }
+.dvd .in { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); border-radius:10px; padding:1px 8px; white-space:nowrap; }
+.sumbox { border:1px solid var(--line); border-radius:3px; background:var(--raised); padding:6px 10px; font-size:12px; }
+.sumbox h5 { margin:6px 0 2px; font-size:11.5px; color:var(--muted); font-weight:600; }
+.sumbox h5:first-child { margin-top:0; }
+.sumbox ul { margin:0; padding-left:16px; }
+
+.kids { border:1px solid var(--line); border-radius:3px; }
+.kids .gh { display:flex; align-items:center; gap:7px; padding:5px 8px; font-size:12px; font-weight:600; border-bottom:1px solid var(--line); }
+.kid { padding:6px 8px; display:grid; grid-template-columns:18px 1fr auto; gap:2px 8px; align-items:center; font-size:12px; }
+.kid + .kid { border-top:1px solid var(--line); }
+.kid .nm { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kid .sub { grid-column:2; color:var(--muted); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kid .acts { grid-column:3; grid-row:1 / 3; display:flex; gap:4px; align-items:center; }
+.kid.need { background:var(--raised); box-shadow:inset 3px 0 0 var(--warning); }
+.st { font-size:11.5px; white-space:nowrap; }
+
+.banner { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--raised); border-bottom:1px solid var(--line); font-size:12px; flex:none; }
+.brief { border:1px dashed var(--control); border-radius:4px; padding:6px 10px; font-size:12.5px; }
+.brief .lab { font-size:11px; color:var(--muted); display:flex; gap:5px; align-items:center; margin-bottom:2px; }
+
+.rv { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+.rvsum { display:flex; align-items:center; gap:6px; padding:6px 8px 8px; border-bottom:1px solid var(--line); flex:none; }
+.rvsum .t { flex:1; min-width:0; font-size:12px; }
+.rvsum .t b { display:block; font-size:13px; }
+.turn { padding:6px 8px 4px; }
+.turn .h { display:flex; align-items:center; gap:7px; }
+.turn .h .q { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chh { display:flex; align-items:center; gap:6px; margin:8px 0 2px 16px; font-size:12px; font-weight:600; }
+.chh .n { font-weight:400; color:var(--muted); white-space:nowrap; }
+.lr { display:flex; align-items:center; gap:8px; margin-left:16px; padding:0 2px 0 8px; height:24px; border-left:3px solid var(--accent); font-size:12px; }
+.lr .no { width:26px; color:var(--muted); text-align:right; flex:none; }
+.lr .tx { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lr.more { color:var(--muted); border-left-style:dotted; }
+
+.tlist .row { display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid var(--line); }
+.tlist .row .w { flex:1; min-width:0; }
+.tlist .row .w b { display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tlist .row .w span { font-size:11.5px; color:var(--muted); }
+.tlist .row.on { background:var(--select); box-shadow:inset 3px 0 0 var(--accent); }
+.tlist .grp { font-size:11px; color:var(--muted); padding:8px 10px 2px; }
+.search { margin:8px; height:26px; display:flex; align-items:center; gap:6px; border:1px solid var(--control); border-radius:2px; background:var(--field); padding:0 8px; color:var(--muted); }
+
+.empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:24px; text-align:center; }
+.empty .big svg { width:36px; height:36px; }
+.empty p { margin:0; color:var(--muted); font-size:12.5px; max-width:320px; }
+
+.dlg { position:absolute; z-index:5; left:18px; right:18px; top:170px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 12px 36px rgba(0,0,0,.5); }
+.dlg .title { height:32px; display:flex; align-items:center; gap:8px; padding:0 0 0 12px; font-weight:700; border-bottom:1px solid var(--line); }
+.dlg .title .x { width:36px; height:32px; display:flex; align-items:center; justify-content:center; margin-left:auto; }
+.dlg .body { padding:12px 14px 4px; font-size:12.5px; }
+.dlg .body p { margin:0 0 8px; }
+.dlg .body ul { margin:0 0 8px; padding-left:18px; }
+.dlg .foot { display:flex; gap:8px; padding:8px 14px 12px; }
+.scrim { position:absolute; inset:0; background:rgba(0,0,0,.35); z-index:4; }
+.check { display:flex; align-items:flex-start; gap:8px; }
+.box { width:16px; height:16px; border:1px solid var(--control); border-radius:2px; background:var(--field); display:inline-flex; flex:none; margin-top:1px; }
+
+.legend { grid-column:1 / -1; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; display:flex; gap:22px; flex-wrap:wrap; }
+.legend b { color:var(--text); }
+.sheet { grid-template-columns:repeat(3, 446px); width:1420px; }
+.ap.short { height:auto; min-height:0; }
+.cite { display:inline-flex; align-items:center; justify-content:center; min-width:15px; height:15px; padding:0 3px; margin:0 1px; border-radius:3px; border:1px solid var(--accent); color:var(--accent); font-size:10.5px; font-weight:700; vertical-align:2px; line-height:1; }
+.cite.hot { background:var(--accent); color:var(--onaccent); }
+.src { border-top:1px solid var(--line); margin-top:6px; padding-top:5px; font-size:12px; }
+.src .h { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:11.5px; margin-bottom:2px; }
+.src .r { display:flex; align-items:baseline; gap:7px; min-height:20px; }
+.src .r .n { color:var(--accent); font-weight:700; width:14px; text-align:right; flex:none; font-size:11.5px; }
+.src .r .tt { color:var(--accent); text-decoration:underline; text-underline-offset:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.src .r .host { color:var(--muted); font-size:11.5px; white-space:nowrap; flex:none; }
+.src .more { color:var(--accent); text-decoration:underline; text-underline-offset:2px; font-size:11.5px; margin-left:21px; }
+.pop { position:absolute; z-index:3; width:300px; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 24px rgba(0,0,0,.4); padding:8px 10px; font-size:12px; }
+.pop b { display:block; }
+.pop .host { color:var(--muted); font-size:11.5px; }
+.pop q { display:block; margin:6px 0; padding-left:8px; border-left:2px solid var(--line); color:var(--text); quotes:"“" "”"; }
+.pop .lnk { display:inline-flex; gap:5px; align-items:center; color:var(--accent); text-decoration:underline; text-underline-offset:2px; }
+.tip { position:absolute; z-index:3; max-width:300px; background:var(--raised); border:1px solid var(--line); border-radius:3px; box-shadow:0 6px 18px rgba(0,0,0,.35); padding:6px 9px; font-size:12px; }
+.tip .mut { display:block; margin-top:3px; }
+.ib.web.on { background:var(--select); outline:1px solid var(--accent); }
+.ib.web.dis svg { stroke:var(--disabled); }
+.ib.web.dis svg .acc { stroke:var(--disabled); }
+.gsug { margin-top:6px; border:1px solid #DADCE0; border-radius:16px; background:#FFFFFF; padding:6px 8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-family:Roboto,Arial,sans-serif; }
+.gsug .g { width:18px; height:18px; border-radius:50%; background:conic-gradient(#4285F4 0 25%, #34A853 0 50%, #FBBC05 0 75%, #EA4335 0); flex:none; }
+.gsug .c { height:26px; display:inline-flex; align-items:center; padding:0 12px; border:1px solid #DADCE0; border-radius:13px; color:#3C4043; font-size:12.5px; background:#F8F9FA; white-space:nowrap; }
+.note { display:flex; gap:7px; align-items:flex-start; font-size:12px; border:1px solid var(--line); border-left:3px solid var(--warning); border-radius:2px; padding:5px 8px; background:var(--raised); }
+.note svg { margin-top:1px; }
+</style>
+</head>
+<body>
+<div class="pick" role="group" aria-label="Theme">
+  <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="hcw">High contrast white</button><button data-t="hcb">High contrast black</button>
+</div>
+<div class="sheet">
+  <div class="head"><h1>Agent panel: web search</h1><span>AI23b #800 design gate, on the approved AI7 panel (#435) · <span id="tn">Dark</span> · 446 × 720</span></div>
+
+  <div class="band">Search in a thread <span>the globe toggle, the search rows and the citations</span></div>
+
+  <div>
+    <p class="cap"><b>1 · An answer that searched, on Anthropic.</b> The globe in the composer is on, as Settings › AI says. Searches and pages read show as quiet rows. Numbers in the answer link to the Sources under it.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div><div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><path d="M8 5.5v3l2.5 1.5"/></svg></span><span class="t">Romanise the Frieren place names</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um"><div class="att"><span class="chip"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></svg>Ep03.ass</span></div>How do the official subs romanise the place names? Make Lines 30–40 match.</div>
+        <div class="umf">10:14 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h4M10.5 8h4"/><g class="acc"><circle cx="8" cy="8" r="2.5"/></g></svg>Restore checkpoint</span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg><span>Searched the web <span class="x">“Frieren official subtitles place names”</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg><span>Read <span class="x">crunchyroll.com</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg><span>Read <span class="x">frieren-anime.jp</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h7M1.5 8h7M1.5 11.5h7"/><g class="acc"><circle cx="12.5" cy="4.5" r="2"/><path d="M12.5 6.5v7"/></g></svg><span>Read <span class="x">Lines 30–40</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="edits"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg><span><b>Changed 4 Lines</b> · Ep03.ass</span><span class="lnk">Review</span></div>
+        <div class="am">
+          <p>The official English subs write <b>Aureole</b>, not “Ōreoru”<span class="cite">1</span>, and keep the long vowel in <b>Äußerst</b><span class="cite">2</span>. I changed Lines 31, 33, 36 and 39 to match.</p>
+          <div class="src">
+            <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>Sources</div>
+            <div class="r"><span class="n">1</span><span class="tt">Frieren: Beyond Journey's End, episode 3</span><span class="host">crunchyroll.com</span></div>
+            <div class="r"><span class="n">2</span><span class="tt">Glossary of places</span><span class="host">frieren-anime.jp</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="comp"><div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div><div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="ib sm web on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>2 · Hovering a citation.</b> The hover shows the page's title, its site and the quoted text when the provider gives one. A click opens the page in the browser. Nothing is fetched to draw it.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div><div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><path d="M8 5.5v3l2.5 1.5"/></svg></span><span class="t">Romanise the Frieren place names</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg><span>Searched the web <span class="x">“Frieren official subtitles place names”</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg><span>Read <span class="x">crunchyroll.com</span>, <span class="x">frieren-anime.jp</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="am">
+          <p>The official English subs write <b>Aureole</b>, not “Ōreoru”<span class="cite hot">1</span>, and keep the long vowel in <b>Äußerst</b><span class="cite">2</span>. I changed Lines 31, 33, 36 and 39 to match.</p>
+        </div>
+      </div>
+      <div class="pop" style="left:90px; top:214px">
+        <b>Frieren: Beyond Journey's End, episode 3</b>
+        <span class="host">crunchyroll.com</span>
+        <q>…the land of souls, Aureole, lies at the northern end of the continent…</q>
+        <span class="lnk"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5h-4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-4"/><g class="acc"><path d="M9.5 1.5h5v5M14.5 1.5L8 8"/></g></svg>Open in browser</span>
+      </div>
+      <div class="comp"><div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div><div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="ib sm web on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>3 · Hovering the globe.</b> It shows whether search is on for this thread. On Anthropic, it also says that changing it mid-thread costs one cache miss (owner, Q116). Other providers don't show that line.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div><div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><path d="M8 5.5v3l2.5 1.5"/></svg></span><span class="t">Romanise the Frieren place names</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="am"><p>I changed Lines 31, 33, 36 and 39 to match.</p></div>
+      </div>
+      <div class="tip" style="left:30px; bottom:44px">Search the web: on for this thread<span class="mut">Changing it mid-thread costs one cache miss on Anthropic.</span></div>
+      <div class="comp"><div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div><div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="ib sm web on ring"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg></span><span class="cb">Claude Sonnet 5.5<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div></div>
+    </div>
+  </div>
+
+  <div class="band">Providers and services <span>Gemini's suggestions, a search service, and when search can't run</span></div>
+
+  <div>
+    <p class="cap"><b>4 · Gemini with Google Search.</b> Google's search suggestions come right under the answer, as Google sends them, with nothing of ours inside (owner, Q114). A click opens the google.com page in the browser. Gemini's sources name only the site.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div><div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><path d="M8 5.5v3l2.5 1.5"/></svg></span><span class="t">Is “Himmel” a real German word?</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="um">Is “Himmel” a real German word, and should the subs translate it?</div>
+        <div class="umf">11:02 · <span class="cpl"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h4M10.5 8h4"/><g class="acc"><circle cx="8" cy="8" r="2.5"/></g></svg>Restore checkpoint</span></div>
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg><span>Searched with Google <span class="x">“Himmel meaning German”</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="am">
+          <p>Yes: <b>Himmel</b> means “sky” or “heaven” in German<span class="cite">1</span>. It's the hero's name, so keep it as it is and don't translate it<span class="cite">2</span>.</p>
+          <div class="gsug"><span class="g"></span><span class="c">Himmel meaning German</span><span class="c">Frieren character names German</span></div>
+          <div class="src">
+            <div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>Sources</div>
+            <div class="r"><span class="n">1</span><span class="tt">dwds.de</span></div>
+            <div class="r"><span class="n">2</span><span class="tt">fandom.com</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="comp"><div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div><div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="ib sm web on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg></span><span class="cb">Gemini 3 Pro<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>5 · A provider without its own search.</b> It searches through the service chosen in Settings › AI, which the row names. When the service's plan is used up, a notice says so, and the answer says it didn't search.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div><div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><path d="M8 5.5v3l2.5 1.5"/></svg></span><span class="t">Check the opening song's title</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="tc"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg><span>Searched with Tavily <span class="x">“Frieren opening song title”</span></span><span class="r"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5L10 8l-3.5 3.5"/></svg></span></div>
+        <div class="am"><p>The opening is <b>“Yūsha”</b> by YOASOBI<span class="cite">1</span>. Line 2's title card already matches.</p>
+          <div class="src"><div class="h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>Sources</div>
+            <div class="r"><span class="n">1</span><span class="tt">YOASOBI “Yūsha” release</span><span class="host">sonymusic.co.jp</span></div>
+          </div>
+        </div>
+        <div class="um">And the ending?</div>
+        <div class="note"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg><span>Your Tavily plan has no searches left (432). The answer below didn't search.</span></div>
+        <div class="am"><p>I couldn't search just now, so I can't confirm the ending's title. Line 1180's title card reads “Anytime Anywhere”, which matches what I know.</p></div>
+      </div>
+      <div class="comp"><div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div><div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="ib sm web on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg></span><span class="cb">Local · Qwen 3 32B<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div></div>
+    </div>
+  </div>
+
+  <div>
+    <p class="cap"><b>6 · When search can't run.</b> With the Settings switch off, the globe isn't shown. A provider without its own search and no search service chosen shows the globe dimmed, and its hover says where to choose one.</p>
+    <div class="ap">
+      <div class="dh"><span class="tabs"><span class="on"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg>Agent</span><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4.5h9M1.5 8h6"/><g class="acc"><path d="M8.5 12l2 2 4-4.5"/></g></svg>Review</span></span><span class="sp"></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span></div><div class="th"><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 5.5-5.5"/><path d="M8 1L5.5 2.5 8 4z" fill="currentColor"/><path d="M8 5.5v3l2.5 1.5"/></svg></span><span class="t">New thread</span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></svg></span><span class="ib"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span></div>
+      <div class="tl">
+        <div class="empty"><span class="big"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2c.5 3 1.5 4.5 4.5 5.5-3 1-4 2.5-4.5 5.5-.5-3-1.5-4.5-4.5-5.5 3-1 4-2.5 4.5-5.5z"/><g class="acc"><path d="M12.5 1.5c.25 1.25.75 1.75 2 2-1.25.25-1.75.75-2 2-.25-1.25-.75-1.75-2-2 1.25-.25 1.75-.75 2-2z"/></g></svg></span><p>Ask about the open subtitles, or attach a file with @.</p></div>
+      </div>
+      <div class="tip" style="left:30px; bottom:44px">This provider can't search the web on its own<span class="mut">Choose a search service in Settings › AI › Web search.</span></div>
+      <div class="comp"><div class="txt"><span class="ph">Ask, or type @ to attach, / for commands</span></div><div class="bar"><span class="ib sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></svg></span><span class="ib sm web dis"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/><g class="acc"><path d="M2 6.5h9"/><path d="M6.5 2c-1.25 1.25-1.75 2.75-1.75 4.5s.5 3.25 1.75 4.5c1.25-1.25 1.75-2.75 1.75-4.5S7.75 3.25 6.5 2z"/></g></svg></span><span class="cb">Local · Qwen 3 32B<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="cb">Auto<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg></span><span class="sp"></span><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 7.5l13-6-4 13-3-5.5z"/><g class="acc"><path d="M7.5 9l7-7.5"/></g></svg></span></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Icons</b> are the app's own set: web-search for the globe and search rows, open-link for pages read, link for Sources. No new glyph.</span>
+    <span><b>Google's suggestions</b> are drawn as Google styles them, in every theme. HikariSub adds nothing inside them.</span>
+    <span><b>Colours</b> are theme.cpp's roles for this theme, default accent.</span>
+    <span><b>Pages, quotes and models</b> are examples.</span>
+  </div>
+</div>
+<script>
+(function () {
+  var names = { light: "Light", dark: "Dark", hcw: "High contrast white", hcb: "High contrast black" };
+  var q = new URLSearchParams(location.search);
+  if (q.has("shot")) document.documentElement.classList.add("shot");
+  function set(t) {
+    if (!names[t]) t = "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("tn").textContent = names[t];
+    document.querySelectorAll(".pick button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === t)); });
+  }
+  document.querySelectorAll(".pick button").forEach(function (b) { b.onclick = function () { set(b.dataset.t); }; });
+  set(q.get("theme") || "dark");
+})();
+</script>
+</body>
+</html>
