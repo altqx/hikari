@@ -735,8 +735,11 @@ ApplicationWindow {
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
     }
     function addQcNote(ms) {
-        if (!root.qcNotes.editable)
+        if (!root.qcNotes.editable) {
+            if (root.qcNotes.hasDocument && !root.qcNotes.canKeepNotes)
+                root.showPanel(qcNotesDock)
             return
+        }
         root.showPanel(qcNotesDock)
         qcNotesTool.startAdding(ms)
     }

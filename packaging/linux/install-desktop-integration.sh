@@ -30,9 +30,8 @@ uninstall()
 	rm -f "$data_home/applications/$app_id.desktop"
 	rm -f "$data_home/metainfo/$app_id.metainfo.xml"
 	rm -f "$data_home/mime/packages/hikarisub.xml"
-	find "$data_home/icons/hicolor" -name 'hikarisub.png' -delete 2>/dev/null || true
-	for name in text-x-ssa application-x-subrip text-x-microdvd; do
-		find "$data_home/icons/hicolor" -name "$name.png" -delete 2>/dev/null || true
+	for name in hikarisub text-x-ssa application-x-subrip text-x-microdvd; do
+		find "$data_home/icons/hicolor" \( -name "$name.png" -o -name "$name.svg" \) -delete 2>/dev/null || true
 	done
 	refresh
 	echo "Removed HikariSub desktop integration from $data_home"

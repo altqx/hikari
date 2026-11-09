@@ -10707,6 +10707,126 @@ Failed to copy %2 fonts.</source>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கு மட்டுமே செல்லும். இயக்க முறைமை இன்னும் AI கூறைத் தனிமைப்படுத்தவில்லை.</translation>
     </message>
+    <message>
+        <source>Web search</source>
+        <translation>இணையத் தேடல்</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>AI இணையத்தில் தேட அனுமதி</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>முகவர் பெயர்கள், சொற்கள், பாடல் வரிகள், குறிப்புகளைத் தேடி, அவற்றை எங்கே கண்டது என்று சொல்லும். முகவர் எழுதும் ஒவ்வொரு தேடலும் அது திறக்கும் பக்கங்களும் வழங்குநருக்கோ உங்கள் தேடல் சேவைக்கோ செல்லும்.</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google தேடல், பக்கங்களையும் படிக்கும்</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>சொந்தத் தேடல், பக்கங்களையும் படிக்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>தேடல் சேவை தேவை</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>தேடலைப் பயன்படுத்திய Gemini பதில்கள், Google விதிமுறைகளின்படி Google தேடல் பரிந்துரைகளைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>தேடல் சேவை</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (தேடல் மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search தேடல் மட்டுமே செய்யும்: சொந்தத் தேடல் இல்லாத வழங்குநர்கள் இதன் மூலம் பக்கத்தைப் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>சொந்தத் தேடல் இல்லாத வழங்குநர்களுக்கு. Anthropic, Google Gemini, OpenAI, OpenRouter ஆகியவை இது இல்லாமலே தேடும்.</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>%1 விசை</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>விசையை மாற்று…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>இருந்தாலும் சேர்</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>விசையை அகற்று</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>%1 விசையைப் பெறு</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>இணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>தேடல்கள் தீர்ந்துவிட்டன (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>விசையைச் சோதிக்க ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>%1-ஐ அடைய முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>தேடல் சேவைப் பிழை (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>சோதிக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>விசைக்கொத்தில் சேமிக்கப்படும். முகவர் எழுதும் தேடல்களை மட்டுமே HikariSub அனுப்பும், உங்கள் கோப்புகளை ஒருபோதும் அனுப்பாது. இணைப்பைச் சோதித்தல் ஒரு தேடலை இயக்கும், அது உங்கள் %1 திட்டத்தில் கணக்கிடப்படும்.</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 விசையை நிராகரித்தது. உங்கள் %1 கட்டுப்பாட்டுப் பலகத்திலிருந்து புதியதை ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>உங்கள் %1 திட்டத்தில் தேடல்கள் இல்லை. அது மீட்டமைக்கப்படும் வரை, சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேடாமல் பதிலளித்து அதைச் சொல்லும்.</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>விசை விசைக்கொத்தில் உள்ளது. வழங்குநர்கள் டோக்கன்களுடன் தங்கள் சொந்தத் தேடல்களுக்கும் கட்டணம் வசூலிப்பார்கள். %1 தேடல்களை உங்கள் %1 திட்டத்தில் கணக்கிடும்.</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>%1 விசையை அகற்றவா?</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>இது விசைக்கொத்திலிருந்து நீக்கப்படும். நீங்கள் விசையைச் சேர்க்கும் வரை சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேட மாட்டார்கள்.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அடைகிறது.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -11698,6 +11818,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open a subtitle file to keep QC notes in it.</source>
         <translation>QC குறிப்புகளை வைக்க ஒரு வசனக் கோப்பைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>ASS மற்றும் SSA கோப்புகள் மட்டுமே QC குறிப்புகளை வைத்திருக்க முடியும். குறிப்புகளைச் சேர்க்க இந்தக் கோப்பை ASS ஆகச் சேமிக்கவும்.</translation>
     </message>
     <message>
         <source>Paste notes</source>

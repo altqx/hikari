@@ -93,7 +93,8 @@ export interface Tool {
     description: string;
     inputSchema: JsonSchema;
     annotations: { readOnlyHint: boolean };
-    _meta: { "hikari/group": Group };
+    /** A catalogue group, or a ToolSource's. */
+    _meta: { "hikari/group": string };
 }
 
 export interface Entry {
@@ -120,13 +121,19 @@ export interface Reference {
 
 export const kOwnReference = reference as unknown as Reference;
 
+export function tool(name: string, description: string, inputSchema: JsonSchema, access: "read" | "write",
+    group: string): Tool {
+    return { name, description, inputSchema, annotations: { readOnlyHint: access === "read" }, _meta: { "hikari/group": group } };
+}
+
 function entry(name: string, description: string, inputSchema: JsonSchema, access: "read" | "write", group: Group,
     operation?: OperationName): Entry {
-    return {
-        tool: { name, description, inputSchema, annotations: { readOnlyHint: access === "read" }, _meta: { "hikari/group": group } },
-        group,
-        operation,
-    };
+    return { tool: tool(name, description, inputSchema, access, group), group, operation };
+}
+
+export interface ExtraGroup {
+    group: string;
+    description: string;
 }
 
 /** The tools one app offers: an operation that app's reference lacks is never offered. */
@@ -168,19 +175,24 @@ export class Catalogue {
             [...this.operations.keys()].some((name) => kPlacements[name as OperationName]?.group === group));
     }
 
-    private searchTools(): Entry {
-        const searchable = this.searchable();
-        const groups = searchable.map((group) => `${group} (${kGroups[group]})`).join("; ");
-        return entry("search_tools",
-            `Finds more tools by words in their names and descriptions, or by group, and offers them from then on. Groups: ${groups}.`,
+    /** search_tools, listing the catalogue's searchable groups and then `extra`. */
+    searchToolsTool(extra: readonly ExtraGroup[] = []): Tool {
+        const all = [...this.searchable().map((group) => ({ group, description: kGroups[group] as string })), ...extra];
+        const groups = all.map(({ group, description }) => `${group} (${description})`).join("; ");
+        return tool("search_tools",
+            `Finds more tools by words or by group and offers them from then on. Groups: ${groups}.`,
             {
                 type: "object",
                 properties: {
                     query: { type: "string", minLength: 1, description: "Words to look for, such as \"video frame\"." },
-                    group: { enum: searchable, description: "Every tool of one group." },
+                    group: { enum: all.map((g) => g.group), description: "Every tool of one group." },
                 },
                 additionalProperties: false,
             }, "read", "core");
+    }
+
+    private searchTools(): Entry {
+        return { tool: this.searchToolsTool(), group: "core" };
     }
 
     private searchCommands(list: Operation): Entry {

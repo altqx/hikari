@@ -18,3 +18,6 @@ set_tests_properties(tools.make-ai-manifest PROPERTIES LABELS "tools" TIMEOUT 60
 add_test(NAME tools.draw-icons
     COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/draw_icons_tests.py")
 set_tests_properties(tools.draw-icons PROPERTIES LABELS "tools" TIMEOUT 60)
+add_test(NAME tools.app-icons
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/app_icons_tests.py")
+set_tests_properties(tools.app-icons PROPERTIES LABELS "tools;packaging" TIMEOUT 60)
