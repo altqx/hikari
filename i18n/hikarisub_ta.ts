@@ -1270,6 +1270,14 @@ Output device: %2</source>
         <translation>எடிட்டரைத் தொடங்க முடியாது.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ஏற்றப்படவில்லை: இதன் குறுநிரல்கள் %1 உள்ளமைந்த Karaoke Templater-இன் குறுநிரல்கள்; அதுவே அவற்றை இயக்கும்.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>உள்ளமைந்தது</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
@@ -15510,8 +15518,8 @@ Styles deleted:
         <translation>வீடியோவில் முன்னோட்டமிடு</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>கரோக்கி வார்ப்புருவாக்கி, அதன் ச்கிரிப்ட் (kara-templater.lua) ஏற்றப்பட்டதும் திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>உள்ளமைந்த Karaoke Templater ஏற்றப்பட்டதும், கரோக்கி வார்ப்புருவாக்கி திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
     </message>
     <message>
         <source>Templates</source>

@@ -273,6 +273,8 @@ private:
     void addPickedScript(const std::string &path);
     void finishRunLastLoadedScript();
     void continueLastScript();
+    // Unloads a script whose macro names are the built-in Karaoke Templater's.
+    void dropBuiltinClashes();
     void startEditor(const QString &editor, const QString &script);
     bool waitingForUser() const;
     void updateCardTimer();
@@ -306,6 +308,7 @@ private:
     std::optional<RepeatRecord> m_repeat;
     application::DocumentScripts m_documentScripts;
     std::set<std::string> m_readScriptInfo;
+    std::set<std::string> m_builtinClashes; // reported once each
     std::optional<std::string> m_pendingLast;
     std::optional<TrustQuestion> m_trust;
     int m_trustSerial = 0;

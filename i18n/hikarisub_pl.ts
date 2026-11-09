@@ -1277,6 +1277,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie można uruchomić edytora.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>Nie wczytano: makra %1 należą do wbudowanego Karaoke Templater, który uruchamia je zamiast tego skryptu.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>Wbudowany</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>Makro zostało anulowane; nic nie zostało zmienione.</translation>
     </message>
@@ -15622,8 +15630,8 @@ Usunięte style:
         <translation>Podgląd na wideo</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>Templater karaoke działa na otwartym pliku napisów, gdy jego skrypt (kara-templater.lua) jest wczytany.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>Templater karaoke działa na otwartym pliku napisów, gdy wbudowany Karaoke Templater jest wczytany.</translation>
     </message>
     <message>
         <source>Templates</source>

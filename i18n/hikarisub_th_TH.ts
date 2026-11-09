@@ -1263,6 +1263,14 @@ Output device: %2</source>
         <translation>ไม่สามารถเรียกใช้ตัวแก้ไขได้</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ไม่ได้โหลด: แมโคร %1 ของสคริปต์นี้เป็นของ Karaoke Templater ในตัว ซึ่งจะทำงานแทน</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>แมโครถูกยกเลิก จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
     </message>
@@ -15398,8 +15406,8 @@ Styles deleted:
         <translation>แสดงตัวอย่างบนวิดีโอ</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลดสคริปต์ของมัน (kara-templater.lua) แล้ว</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลด Karaoke Templater ในตัวแล้ว</translation>
     </message>
     <message>
         <source>Templates</source>

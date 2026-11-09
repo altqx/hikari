@@ -67,9 +67,50 @@ struct Unit {
 
 enum class CharSplit { Graphemes, CodePoints };
 
+// A char template's characters: grapheme clusters, or code points as unicode.chars reads them.
+std::vector<std::string> charsOf(const std::string &text, CharSplit split);
+
 struct LineOptions {
     bool chars = false;
     CharSplit split = CharSplit::Graphemes;
+};
+
+struct Highlight {
+    double start = 0, end = 0, duration = 0;
+};
+
+// A syllable as karaskel's preproc_line leaves it in line.kara, before the templater rounds anything;
+// left, center and right are from the Line's left.
+struct KaraSyllable {
+    std::string text, stripped, spaceStripped, prespace, postspace, tag, inlineFx;
+    double start = 0, end = 0, duration = 0, kdur = 0;
+    int i = 0;
+    std::vector<Highlight> highlights;
+    std::vector<int> furi; // into Line::karaFuri
+    double width = 0, height = 0, prespaceWidth = 0, postspaceWidth = 0;
+    double left = 0, center = 0, right = 0;
+};
+
+// A furigana part as line.furi holds it. Its syllable is kara[i]; its one highlight is that syllable's
+// highlights[highlight]. Sizes and places are set only when the Line's Style has a "-furigana" Style.
+struct KaraFuri {
+    std::string text, tag, inlineFx;
+    double start = 0, end = 0, duration = 0, kdur = 0;
+    int i = 0;
+    std::size_t highlight = 0;
+    bool isBreak = false, spillback = false;
+    double width = 0, height = 0, left = 0, center = 0, right = 0;
+};
+
+// The Line's own karaskel fields, unrounded.
+struct KaraLine {
+    std::string textStripped;
+    double duration = 0;
+    double width = 0, height = 0, descent = 0, extlead = 0;
+    double left = 0, center = 0, right = 0, x = 0, top = 0, middle = 0, bottom = 0, y = 0;
+    int effMarginL = 0, effMarginR = 0, effMarginT = 0, effMarginB = 0, effMarginV = 0;
+    std::string halign, valign; // empty for an alignment outside 1 to 9
+    bool hasFuriStyle = false;
 };
 
 struct Line {
@@ -79,6 +120,9 @@ struct Line {
     std::vector<Unit> syls;               // 0..n, 0 the text before the first karaoke tag
     std::vector<std::vector<Unit>> chars; // per syllable, when LineOptions::chars
     std::vector<Unit> furi;
+    KaraLine kara;
+    std::vector<KaraSyllable> karaSyllables; // 0..syln
+    std::vector<KaraFuri> karaFuri;
     int syln = 0;
     double li = 0;
     std::string signature;
@@ -100,7 +144,7 @@ public:
 
 private:
     struct Extents {
-        double width = 0, height = 0;
+        double width = 0, height = 0, descent = 0, extlead = 0;
     };
     void addStyles(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles, Resolution written,
                    std::optional<Resolution> video);

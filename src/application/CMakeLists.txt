@@ -13,6 +13,7 @@ target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/applica
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
+target_sources(hikari_application PRIVATE karaoke_templates.cpp include/hikari/application/karaoke_templates.h)
 target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
 target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp karaoke_layout.cpp
     include/hikari/application/karaoke_layout.h node_effects.cpp include/hikari/application/node_catalogue.h

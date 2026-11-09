@@ -1,5 +1,6 @@
 #include "template_editor_controller.h"
 
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
 #include "hikari/application/macro_transaction.h"
@@ -134,7 +135,7 @@ public:
     explicit Templater(application::EditSession &session) : m_session(session)
     {
         runner.setServiceHandler(services);
-        runner.setScript(QStringLiteral(HIKARI_KARAOKE_TEMPLATER));
+        runner.setScript(QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater));
     }
     bool available() const override { return !down && runner.ready(); }
     void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
@@ -161,7 +162,7 @@ public:
     {
         ++applies;
         lastSelectedOnly = selectedOnly;
-        LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_KARAOKE_TEMPLATER),
+        LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater),
                            QStringLiteral(HIKARI_LUA_INCLUDE));
         host.setServiceHandler(services);
         std::optional<LuaScriptHost::RunOutcome> outcome;

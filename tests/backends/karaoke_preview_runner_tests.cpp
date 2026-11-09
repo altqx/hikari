@@ -1,3 +1,4 @@
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
@@ -98,7 +99,7 @@ protected:
             asked.push_back(r.service);
             reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
         });
-        runner.setScript(QStringLiteral(HIKARI_KARAOKE_TEMPLATER));
+        runner.setScript(QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater));
     }
 
     std::optional<KaraokeTemplaterPort::Preview> preview(const core::Document &doc, core::LineId source)
@@ -115,7 +116,7 @@ protected:
 
     std::map<core::LineId, std::vector<std::string>> applied(application::EditSession &session)
     {
-        LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_KARAOKE_TEMPLATER),
+        LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater),
                            QStringLiteral(HIKARI_LUA_INCLUDE));
         host.setServiceHandler([](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
             reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());

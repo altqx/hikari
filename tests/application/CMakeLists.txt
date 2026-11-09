@@ -238,3 +238,5 @@ target_compile_definitions(hikari_application_timecodes_file_tests PRIVATE
     HIKARI_TIMECODES_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timecodes")
 hikari_add_gtest(hikari_application_karaoke_layout_tests SOURCES karaoke_layout_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_templates_tests.cpp
+    LIBRARIES hikari_application LABELS application)

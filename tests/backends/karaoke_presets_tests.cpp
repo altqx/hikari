@@ -1,4 +1,5 @@
 // HIKARI_UPDATE_KARAOKE_GOLDENS=1 rewrites the goldens from the unchanged 3.2.2 script.
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/karaoke_presets.h"
@@ -60,7 +61,7 @@ QString pristineScript()
 
 QString bundledScript()
 {
-    return QStringLiteral(HIKARI_KARAOKE_TEMPLATER);
+    return QString::fromUtf8(hikari::application::kBuiltinKaraokeTemplater);
 }
 
 std::vector<std::byte> readBytes(const QString &path)

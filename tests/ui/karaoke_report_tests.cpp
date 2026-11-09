@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/automation_registry.h"
 #include "karaoke_report.h"
 
 #include <QDeadlineTimer>
@@ -28,11 +29,11 @@ int macroOrdinal(app::Application &a, const std::string &name)
 
 bool loadTemplater(app::Application &a)
 {
-    a.automation().load(HIKARI_KARAOKE_TEMPLATER);
+    a.automation().load(std::string(hikari::application::kBuiltinKaraokeTemplater));
     QDeadlineTimer deadline(30'000);
     while (!deadline.hasExpired()) {
         const auto scripts = a.automation().scripts();
-        if (std::ranges::any_of(scripts, [](const auto &s) { return s.path == HIKARI_KARAOKE_TEMPLATER; }) &&
+        if (std::ranges::any_of(scripts, [](const auto &s) { return s.path == std::string(hikari::application::kBuiltinKaraokeTemplater); }) &&
             std::ranges::none_of(scripts, [](const auto &s) {
                 return s.state == application::ScriptStatus::State::Loading;
             }))
@@ -65,7 +66,7 @@ class KaraokeReportTests : public QObject {
             !loadTemplater(a))
             return false;
         QSignalSpy done(&a.automation(), &app::AutomationShell::runCompleted);
-        if (!a.automation().run(HIKARI_KARAOKE_TEMPLATER, macroOrdinal(a, "Apply karaoke template")))
+        if (!a.automation().run(std::string(hikari::application::kBuiltinKaraokeTemplater), macroOrdinal(a, "Apply karaoke template")))
             return false;
         return done.wait(30'000) && done.first().at(0).toBool();
     }

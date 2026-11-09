@@ -1,10 +1,14 @@
 // One process per loaded script, its LuaJIT state living for the process; Lua calls to the host block.
 
 #include "hikari/backends/helper_endpoint.h"
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/karaoke_syllables.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/regex/regex.h"
+#include "kara_templater.h"
+#include "karaskel_tables.h"
+#include "lua_helper_internal.h"
 #include "lua_native.h"
 #include "lua_nodes.h"
 
@@ -753,6 +757,7 @@ void installAegisub(lua_State *L)
     lua_setfield(L, -2, "version");
     installHostServices(L);
     installHikari(L);
+    hikari::karaskel_tables::install(L);
     lua_setglobal(L, "aegisub");
 }
 
@@ -838,7 +843,10 @@ void load(Reader &in, Responder &r)
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
     // Each include directory ends with a separator. The shared ones come one per line, the shipped Include last.
-    g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP};
+    const bool builtinTemplater = hikari::application::isBuiltinScript(path);
+    g_script.includePath.clear();
+    if (!builtinTemplater)
+        g_script.includePath.push_back(toUtf8(g_script.path.parent_path()) + LUA_DIRSEP);
     for (std::size_t from = 0;;) {
         const std::size_t end = sharedInclude.find('\n', from);
         const std::string dir = sharedInclude.substr(from, end == std::string::npos ? std::string::npos : end - from);
@@ -878,7 +886,9 @@ void load(Reader &in, Responder &r)
         ~EndServices() { g_services = nullptr; }
     } endServices;
 
-    if (!loadFile(L, g_script.path))
+    if (builtinTemplater)
+        lua_pushcfunction(L, hikari::kara_templater::load);
+    else if (!loadFile(L, g_script.path))
         return fail(stringOrEmpty(L, -1));
     lua_pushcfunction(L, addStackTrace);
     lua_insert(L, -2);
@@ -1582,13 +1592,7 @@ int parseKaraokeData(lua_State *L)
         lua_pushstring(L, "You try to parse karaoke from non dialogue line");
         return lua_error(L);
     }
-    const auto &line = std::get<MacroDialogueLine>(*entry);
-    const std::string &raw = line.text.empty() ? line.translation : line.text;
-    const auto syllables = hikari::application::karaokeSyllables(raw, line.startMs, line.endMs);
-    for (std::size_t i = 0; i < syllables.size(); ++i) {
-        pushSyllable(L, syllables[i]);
-        lua_rawseti(L, -2, static_cast<int>(i));
-    }
+    hikari::lua_helper::fillKaraokeData(L, lua_gettop(L), std::get<MacroDialogueLine>(*entry));
     return 1;
 }
 
@@ -2298,6 +2302,102 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     g_responder = nullptr;
     g_services = nullptr;
     r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
+}
+
+}
+
+namespace hikari::lua_helper {
+
+const application::MacroSnapshot &staged()
+{
+    return g_subs->lists;
+}
+
+std::optional<application::MacroDialogueLine> dialogueOf(lua_State *L)
+{
+    auto entry = luaToLine(L);
+    if (!entry || !std::holds_alternative<MacroDialogueLine>(*entry))
+        return std::nullopt;
+    return std::get<MacroDialogueLine>(std::move(*entry));
+}
+
+std::vector<std::string> canonicalStyle(const std::vector<std::string> &fields)
+{
+    const MacroStyleLine s{fields};
+    const auto number = [&](std::size_t i) { return numberText(toDouble(field(s, i))); };
+    const auto integer = [&](std::size_t i) { return std::atoi(field(s, i).c_str()); };
+    const auto colour = [&](std::size_t i) {
+        const AssColor c = assColor(assOf(field(s, i)));
+        char text[16];
+        std::snprintf(text, sizeof text, "&H%02lX%02lX%02lX%02lX", c.a, c.b, c.g, c.r);
+        return std::string(text);
+    };
+    const auto flag = [&](std::size_t i) { return integer(i) != 0 ? std::string("-1") : std::string("0"); };
+    return {field(s, 0),
+            field(s, 1),
+            number(2),
+            colour(3),
+            colour(4),
+            colour(5),
+            colour(6),
+            flag(7),
+            flag(8),
+            flag(9),
+            flag(10),
+            numberText(integer(11)),
+            numberText(integer(12)),
+            number(13),
+            number(14),
+            std::to_string(integer(15)),
+            number(16),
+            number(17),
+            std::to_string(integer(18)),
+            std::to_string(integer(19)),
+            std::to_string(integer(20)),
+            std::to_string(integer(21)),
+            std::to_string(integer(22))};
+}
+
+std::optional<application::TextExtents> textExtents(lua_State *L, const std::vector<std::string> &style,
+                                                    const std::string &text)
+{
+    if (text.empty())
+        return application::TextExtents{};
+    const auto reply = callHost(L, "text_extents", HostService::TextExtents, {}, {text}, style);
+    if (!reply || reply->numbers.size() != 4)
+        return std::nullopt;
+    return application::TextExtents{reply->numbers[0], reply->numbers[1], reply->numbers[2], reply->numbers[3]};
+}
+
+application::MacroDialogueLine karaokeSource(application::MacroDialogueLine dialogue)
+{
+    if (dialogue.text.empty())
+        dialogue.text = dialogue.translation;
+    return dialogue;
+}
+
+void fillKaraokeData(lua_State *L, int line, const application::MacroDialogueLine &dialogue)
+{
+    const MacroDialogueLine source = karaokeSource(dialogue);
+    const auto syllables = application::karaokeSyllables(source.text, source.startMs, source.endMs);
+    lua_pushvalue(L, line);
+    for (std::size_t i = 0; i < syllables.size(); ++i) {
+        pushSyllable(L, syllables[i]);
+        lua_rawseti(L, -2, static_cast<int>(i));
+    }
+    lua_pop(L, 1);
+}
+
+void registerMacro(lua_State *L, const std::string &name, const std::string &description, lua_CFunction run,
+                   lua_CFunction validate)
+{
+    lua_createtable(L, 0, 2);
+    lua_pushcfunction(L, run);
+    lua_setfield(L, -2, "run");
+    lua_pushcfunction(L, validate);
+    lua_setfield(L, -2, "validate");
+    g_script.features.push_back(luaL_ref(L, LUA_REGISTRYINDEX));
+    g_script.info.macros.push_back({.name = name, .description = description, .hasValidate = true});
 }
 
 }

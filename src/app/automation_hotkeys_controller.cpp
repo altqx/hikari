@@ -1,12 +1,12 @@
 #include "hikari/app/automation_hotkeys_controller.h"
 
 #include "hikari/app/automation_shell.h"
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/hotkeys.h"
 
 #include <QCoreApplication>
 #include <QFile>
 #include <QKeySequence>
-#include <QFileInfo>
 #include <QVariantMap>
 
 #include <set>
@@ -22,7 +22,7 @@ QString qs(const std::string &s)
 
 QString fileNameOf(const std::string &path)
 {
-    return QFileInfo(QString::fromStdString(path)).fileName();
+    return QString::fromStdString(application::scriptFileName(path));
 }
 
 // Legacy files write modifiers as "Alt-Ctrl-K"; keys Qt cannot read stay as given.
@@ -284,7 +284,7 @@ void AutomationHotkeysController::install()
 
 QString AutomationHotkeysController::legacyNameFor(const QString &scriptPath, int ordinal) const
 {
-    return qs(application::legacyNameOf(QFileInfo(scriptPath).fileName().toStdString(), ordinal));
+    return qs(application::legacyNameOf(fileNameOf(scriptPath.toStdString()).toStdString(), ordinal));
 }
 
 QString AutomationHotkeysController::recordingProblem(const QString &legacyName) const

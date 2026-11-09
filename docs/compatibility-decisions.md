@@ -103,3 +103,27 @@ Resample subtitles with "Stretch" scales text by the smaller of the two resoluti
 ## TH4-grapheme-char-split
 
 Grid › "Split lines into characters" and the node-effect `char` units split text by grapheme cluster (UAX #29). A base character keeps its marks: `กินน้ำ` gives `กิ`, `น` and `น้ำ`, `é` written as e plus a combining accent stays whole, and an emoji or an emoji ZWJ sequence is one piece. A mark after an override block joins its base's piece together with the block. Before, the Grid split each UTF-16 unit, which cut marks off and broke surrogate pairs in two, and node effects split by code point. Text without combining marks or surrogate pairs splits as before. [TH4 #832](https://github.com/altqx/hikari/issues/832), owner decision Q146.
+
+## TH5b-builtin-templater
+
+The Karaoke Templater is built in. The Lua helper runs it natively. Lua runs only the templates' `code` Lines and `!expressions!`. The Script Manager lists it as built-in: it can be reloaded, but not edited or unloaded. Its macros keep their names, and shortcuts still know them as `kara-templater.lua:0` and `:1`. `kara-templater.lua` is no longer bundled in Autoload; it stays in the tests as the oracle. A loaded script whose macro names are the built-in's is unloaded, and the Runs log says so once. The "Karaoke template" export filter isn't available, because HikariSub has no export filters. To generate the lines, run the "Apply karaoke template" macro. [TH5b #833](https://github.com/altqx/hikari/issues/833), owner decisions Q178 and Q179.
+
+## TH5b-line-template-order
+
+Named line templates run after the unnamed ones, in the order their names first appear. Unnamed line templates run in file order, as before. 3.2.2 took named templates from a Lua table with `pairs`, and LuaJIT seeds its string hash at random, so their order could change from one run to the next. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-no-leaked-globals
+
+Evaluating an `!expression!` no longer sets the globals `f` and `err`. 3.2.2 compiled each expression into those two globals, so a template or `code` Line could read the last compiled expression's function or error. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-no-trace-lines
+
+The templater no longer writes its level 5 trace lines ("Applying template to one syllable with text: …" and similar), even at trace level 5. Problems are still logged at levels 2 and 3 as before. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-unmeasured-text
+
+When the host cannot measure a karaoke Line's text, the templater logs "Could not measure …" as a problem, counts that text as 0 wide and goes on. 3.2.2 stopped the run with a Lua error. [TH5b #833](https://github.com/altqx/hikari/issues/833).
+
+## TH5b-native-layout
+
+The templater lays karaoke Lines out from the Document's Styles as they were when the run started. A `code` Line that changes a Style table (`line.styleref`, the `styles` table) or replaces `aegisub.text_extents` no longer changes where later Lines' syllables go. `char` templates still measure each character with `aegisub.text_extents`, as 3.2.2 did. [TH5b #833](https://github.com/altqx/hikari/issues/833).

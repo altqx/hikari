@@ -1484,7 +1484,7 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     ASSERT_TRUE(out.open(QIODevice::WriteOnly));
     out.write(QJsonDocument(corpus).toJson());
     for (const char *firstParty : {"macro-1-edgeblur.lua", "macro-2-mkfullwitdh.lua", "strip-tags.lua",
-                                   "cleantags-autoload.lua", "karaoke-auto-leadin.lua", "kara-templater.lua",
+                                   "cleantags-autoload.lua", "karaoke-auto-leadin.lua",
                                    "select-overlaps.moon", "BezierToText.lua", "gradient-factory.lua",
                                    "skew gradient.lua", "a-mo.Aegisub-Motion.moon",
                                    "l0.DependencyControl.Toolbox.moon"}) {
