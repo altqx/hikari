@@ -31,6 +31,12 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
 }
 
+QByteArray readAll(const QString &path)
+{
+    QFile in(path);
+    return in.open(QIODevice::ReadOnly) ? in.readAll() : QByteArray();
+}
+
 QString errorsText(const QList<QQmlError> &errors, const QString &root)
 {
     QStringList lines;
@@ -89,15 +95,12 @@ void PluginPanelState::setQml(bool qml, QString loadError, bool held, QQuickItem
 void PluginUi::keepLoadedPanelsIn(const QString &file)
 {
     m_loadedPanelsFile = file;
-    QFile in(file);
-    if (in.open(QIODevice::ReadOnly)) {
-        const QJsonObject json = QJsonDocument::fromJson(in.readAll()).object();
-        for (const QJsonValue id : json.value(QStringLiteral("held")).toArray())
-            m_held.insert(id.toString().toStdString());
-        for (const QJsonValue id : json.value(QStringLiteral("loaded")).toArray()) {
-            m_held.insert(id.toString().toStdString());
-            m_heldUnnoticed.insert(id.toString().toStdString());
-        }
+    const QJsonObject json = QJsonDocument::fromJson(readAll(file)).object();
+    for (const QJsonValue id : json.value(QStringLiteral("held")).toArray())
+        m_held.insert(id.toString().toStdString());
+    for (const QJsonValue id : json.value(QStringLiteral("loaded")).toArray()) {
+        m_held.insert(id.toString().toStdString());
+        m_heldUnnoticed.insert(id.toString().toStdString());
     }
     writeLoadedPanels();
     noticeHeld();
