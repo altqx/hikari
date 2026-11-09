@@ -113,7 +113,8 @@ export class Sidecar {
             { name: "hikarisub", title: "HikariSub", version: build.buildId }, () => this.catalogue);
         this.sessions = new AgentSessions((id) => new ToolSet(new HikariApi(peer, undefined, id), this.catalogue, [this.web]),
             (params, signal, emit) => this.providers.complete(params, signal, emit),
-            (method, params) => peer.notify(method, params));
+            (method, params) => peer.notify(method, params),
+            (providerId) => this.providers.imageBudget(providerId));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         this.handle(Method.sessionNew, (params) => this.sessions.open(checkedNew(params)));
         this.handle(Method.sessionPrompt, (params) =>

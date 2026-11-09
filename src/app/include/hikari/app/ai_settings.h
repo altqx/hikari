@@ -75,6 +75,12 @@ public:
     /// The add or edit form opened: reads what the download would be, without downloading.
     Q_INVOKABLE void openDraft();
     Q_INVOKABLE void closeDraft();
+    /// Whether turning MCP on needs the AI component first; reads its size into `download` without downloading.
+    Q_INVOKABLE bool componentNeeded();
+    /// Downloads the AI component without a provider; componentReady says how it went, and a failure sets
+    /// `download`'s error.
+    Q_INVOKABLE void installComponent();
+    Q_INVOKABLE void cancelComponent();
     /// form: {id (empty for a new one), preset, name, baseUrl, wire, key (empty keeps an edited one's key)}.
     Q_INVOKABLE void testDraft(const QVariantMap &form);
     Q_INVOKABLE void saveDraft(const QVariantMap &form);
@@ -125,6 +131,7 @@ signals:
     void searchChanged();
     void searchKeyStored(const QString &service);
     void draftSaved(const QString &providerId);
+    void componentReady(bool installed);
 
 private:
     struct Status {

@@ -33,6 +33,8 @@ struct McpEndpoint {
 /// <userFolder>/ai/mcp.json
 QString mcpEndpointFile(const QString &userFolder);
 std::optional<McpEndpoint> readMcpEndpoint(const QString &file);
+/// Creates the file readable only by the user (0600, or on Windows a protected ACL for the user alone), then
+/// rewrites it in place, so it keeps those permissions.
 bool writeMcpEndpoint(const QString &file, const McpEndpoint &endpoint);
 /// 32 random bytes as hex.
 QByteArray newMcpToken();
@@ -60,6 +62,8 @@ public:
     bool listenHttp(quint16 port, QString *error = nullptr);
     void closeHttp();
     quint16 httpPort() const;
+    /// Drops every connected agent; from now on only `token` connects.
+    void setToken(QByteArray token);
 
     /// What an MCP connection's call runs as: every Document, under the client's name, with its edits in the
     /// review (one turn per connection). document.apply is the only write it may call.

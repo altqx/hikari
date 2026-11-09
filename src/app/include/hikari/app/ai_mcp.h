@@ -42,6 +42,8 @@ public:
     QString codexSetup() const;
     QString httpSetup() const;
     QVariantMap setup() const;
+    /// A new token, saved at once: connected agents are dropped, and HTTP agents need the JSON setup again.
+    Q_INVOKABLE void resetToken();
 
 signals:
     void changed();

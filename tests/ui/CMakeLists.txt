@@ -8,7 +8,8 @@ target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFAC
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp
+    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
           translation=translationModeStacksOriginalAboveTranslated
@@ -43,6 +44,7 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper hikari_plugin_helper
     hikari_lua_helper hikari_automation_stage hikari_lrelease hikari_fake_ai_sidecar)
 # MSVC: shell_tests.cpp outgrows an object file's default section count (C1128).
@@ -344,6 +346,11 @@ add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_me
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)

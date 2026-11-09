@@ -10856,6 +10856,30 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Claude Code, Codex i inni agenci czytają otwarte dokumenty. Ich zmiany czekają w przeglądzie, aż je zachowasz lub cofniesz.</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>Działa tylko wtedy, gdy agent korzysta z HikariSub, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>Potrzebuje komponentu AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP pozostaje wyłączone. %1.</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>Nasłuchuj także na http://127.0.0.1</translation>
     </message>
@@ -10870,6 +10894,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Copy setup</source>
         <translation>Kopiuj konfigurację</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>Zresetuj token</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>Zapisano nowy token.</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10890,6 +10922,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>JSON with the address and token</source>
         <translation>JSON z adresem i tokenem</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>Zawiera twój token; nie udostępniaj go.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>Zresetuj token tworzy nowy token. Agenci skonfigurowani ze starym przestaną działać, dopóki nie skopiujesz konfiguracji ponownie.</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>

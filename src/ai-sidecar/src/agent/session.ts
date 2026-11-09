@@ -17,6 +17,7 @@ import { ProviderError } from "../providers/errors";
 import type { CompleteParams, Finished, Message, Part, StopReason, ToolCall, ToolDefinition, Update } from "../providers/types";
 import { RpcError } from "../rpc";
 import type { Tool } from "../tools/catalogue";
+import { type ImageBudget, kDefaultImageBudget } from "../tools/images";
 import type { CallToolResult, ToolSet } from "../tools/toolset";
 
 /** One model request with its stream updates; ProviderService.complete in the sidecar. */
@@ -106,6 +107,7 @@ export class AgentSession {
         private readonly complete: Complete,
         private readonly send: (update: SessionUpdate) => void,
         private readonly nextStream: () => number,
+        private readonly imageBudget: (providerId: string) => ImageBudget,
     ) {
         this.history = [...(params.history ?? [])];
         this.model = params.model;
@@ -120,6 +122,7 @@ export class AgentSession {
             throw new RpcError(ErrorCode.busy, "A turn is already running in this session");
         if (params.model)
             this.model = params.model;
+        this.tools.imageBudget = this.imageBudget(this.model.providerId);
         const turn: Turn = { controller: new AbortController(), steers: [] };
         this.turn = turn;
         try {
@@ -262,13 +265,15 @@ export class AgentSessions {
         private readonly tools: (sessionId: string) => ToolSet,
         private readonly complete: Complete,
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
+        private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
     ) {}
 
     open(params: SessionNewParams): { sessionId: string } {
         this.sessions.get(params.sessionId)?.cancel();
         const id = params.sessionId;
         this.sessions.set(id, new AgentSession(id, params, this.tools(id), this.complete,
-            (update) => this.notify(Method.sessionUpdate, { sessionId: id, update }), () => this.stream++));
+            (update) => this.notify(Method.sessionUpdate, { sessionId: id, update }), () => this.stream++,
+            this.imageBudget));
         return { sessionId: id };
     }
 
