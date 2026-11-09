@@ -25,7 +25,7 @@ The sources are the raster masters in the icon source package: a 1024 px app mas
 
 1. The raster was denoised and its anti-aliased edges were sharpened.
 2. It was split into colour regions, and each region was traced with potrace.
-3. Each region is filled with a flat colour or a two- or three-stop linear gradient fitted to its pixels. Thin dark regions become flat outline strokes.
+3. Each region is filled with a flat colour or a two- or three-stop linear gradient fitted to its pixels. Thin dark regions become flat outline strokes. The face is the exception: all its regions share one radial gradient (`#face`) fitted to the source's soft highlight, so it has no banded edges.
 4. Paths use one decimal place and relative commands. The SVGs have no `<image>`, clip paths, masks or filters, so QtSvg renders them.
 
 The file-icon badge is drawn by hand, not traced. It is one path with a straight top edge and rounded bottom corners fitted to the page outline. The paws overlap its top edge, as in the source. The source has a faint page edge beside the badge, which is left out.
