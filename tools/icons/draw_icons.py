@@ -1407,7 +1407,6 @@ for card, roles in {
     "NE2 #424": ["node-editor", "node-library"],
     "AI7 #435": ["ai-send"],
     "AI2 #430": ["review-panel"],
-    "PJ2 #770": ["open-project", "recent-projects", "close-project", "project"],
     "PJ3 #771": ["trust"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],

@@ -41,6 +41,7 @@ private:
     Application &m_application;
     QPointer<QWindow> m_window;
     QStringList m_files;
+    application::WindowRequest m_request = application::WindowRequest::Default;
     QString m_link;
     QString m_token;
     bool m_activate = false;

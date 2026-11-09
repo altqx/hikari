@@ -10943,6 +10943,10 @@ Failed to copy %2 fonts.</source>
         <translation>이 플러그인에는 Hikari API %1(이)가 필요하지만 이 HikariSub의 API는 %2입니다. 설치하려면 HikariSub을 업데이트하십시오.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>QML 패널은 전체 신뢰 플러그인만 제공할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json이 %1에서 플러그인 스키마를 통과하지 못했습니다: %2</translation>
     </message>
@@ -10961,6 +10965,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>패키지가 미디어 규칙을 어깁니다: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>패키지에 패널 파일 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1(이)가 플러그인 패널에서 쓸 수 없는 %2(을)를 가져옵니다.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10993,6 +11005,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>전체 신뢰: HikariSub의 제한 밖에서 네이티브 코드를 실행할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>HikariSub 안에 자체 패널을 표시합니다</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11583,6 +11599,22 @@ Failed to copy %2 fonts.</source>
         <translation>표시</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>%1의 패널이 열린 채로 HikariSub가 종료되었습니다.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>패널을 불러오지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>다시 불러오기를 선택할 때까지 패널이 닫혀 있습니다.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>다시 불러오기</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1이(가) 설치되어 있지 않습니다.</translation>
     </message>
@@ -11677,6 +11709,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>패널이 열린 채로 HikariSub가 종료되어, 다시 불러오기를 선택할 때까지 패널이 닫혀 있습니다.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>루트가 Item이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
     </message>
 </context>
 <context>

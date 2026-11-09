@@ -1,9 +1,11 @@
 File
 File > Open… [GLOBAL_OPEN_SUBS]
+File > Open folder… [GLOBAL_OPEN_FOLDER]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
 File > Remove subtitles from the editor [GLOBAL_REMOVE_SUBS]
 File > Close [GLOBAL_CLOSE_PAGE]
+File > Close project [GLOBAL_CLOSE_PROJECT]
 File > Open video… [GLOBAL_OPEN_VIDEO]
 File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Save [GLOBAL_SAVE_SUBS]
