@@ -123,8 +123,8 @@ describe("citations", () => {
         expect(run.error).toBeUndefined();
         expect(run.finished!.text).toBe("Aimer.");
         expect(run.finished!.citations).toEqual([
-            { index: 1, url: "https://example.org/a", title: "A", quote: "Aimer sings it" },
-            { index: 2, url: "https://example.org/b", title: "https://example.org/b", quote: "B text" },
+            { index: 1, url: "https://example.org/a", title: "A", quote: "Aimer sings it", start: 0, end: 6 },
+            { index: 2, url: "https://example.org/b", title: "https://example.org/b", quote: "B text", start: 0, end: 6 },
         ]);
         expect(run.updates.filter((u) => u.kind === "citation")).toHaveLength(2);
 
@@ -164,8 +164,8 @@ describe("citations", () => {
         });
         const run = await h.stream("chat-completions", asking(true));
         expect(run.finished!.citations).toEqual([
-            { index: 1, url: "https://example.org/a", title: "A", quote: "Aimer" },
-            { index: 2, url: "https://example.org/b", title: "B" },
+            { index: 1, url: "https://example.org/a", title: "A", quote: "Aimer", start: 0, end: 3 },
+            { index: 2, url: "https://example.org/b", title: "B", start: 0, end: 3 },
         ]);
     });
 
@@ -179,7 +179,7 @@ describe("citations", () => {
             ],
         });
         const run = await h.stream("responses", asking(true));
-        expect(run.finished!.citations).toEqual([{ index: 1, url: "https://example.org/a", title: "A" }]);
+        expect(run.finished!.citations).toEqual([{ index: 1, url: "https://example.org/a", title: "A", start: 0, end: 6 }]);
     });
 
     test("Gemini cites the grounded sources, passes Google's suggestions on and keeps server tool parts", async () => {
@@ -205,7 +205,7 @@ describe("citations", () => {
         const run = await h.stream("gemini", asking(true));
         expect(run.error).toBeUndefined();
         expect(run.finished!.citations).toEqual([
-            { index: 1, url: "https://example.org/b", title: "b.org", quote: "Aimer sings it." },
+            { index: 1, url: "https://example.org/b", title: "b.org", quote: "Aimer sings it.", start: 0, end: 15 },
             { index: 2, url: "https://example.org/a", title: "a.org" },
         ]);
         expect(run.finished!.searchSuggestions).toBe("<div>chips</div>");

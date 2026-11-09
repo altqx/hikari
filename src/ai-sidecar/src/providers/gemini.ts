@@ -4,7 +4,7 @@ import { geminiModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { argumentsObject, schemaObject } from "./collector";
 import { kKeyPlaceholder } from "./relay";
-import type { Collector } from "./collector";
+import type { Collector, Placement } from "./collector";
 import { kindOfStatus, ProviderError } from "./errors";
 import { sdk } from "./sdks";
 import { nativeSearch, providerState } from "./search";
@@ -131,11 +131,15 @@ function addGrounding(out: Collector, metadata: Json | undefined): void {
         return;
     const chunks = ((metadata.groundingChunks as Json[] | undefined) ?? []).map((c) => (c.web ?? {}) as Json);
     for (const support of (metadata.groundingSupports as Json[] | undefined) ?? []) {
-        const quote = (support.segment as Json | undefined)?.text;
+        const segment = (support.segment ?? {}) as Json;
+        const quote = typeof segment.text === "string" ? segment.text : undefined;
+        // Google leaves out a zero startIndex.
+        const placement: Placement | undefined = quote !== undefined && typeof segment.endIndex === "number"
+            ? { unit: "utf8", base: 0, start: Number(segment.startIndex ?? 0), end: segment.endIndex, text: quote }
+            : undefined;
         for (const i of (support.groundingChunkIndices as number[] | undefined) ?? [])
             if (chunks[i])
-                out.addCitation(String(chunks[i].uri ?? ""), String(chunks[i].title ?? ""),
-                    typeof quote === "string" ? quote : undefined);
+                out.addCitation(String(chunks[i].uri ?? ""), String(chunks[i].title ?? ""), quote, placement);
     }
     for (const chunk of chunks)
         out.addCitation(String(chunk.uri ?? ""), String(chunk.title ?? ""));

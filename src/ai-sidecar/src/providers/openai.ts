@@ -3,7 +3,7 @@ import type OpenAI from "openai";
 import { cacheControl, markLast, marksCache, prefixTexts, sortedTools, usage } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
-import { type Collector, schemaObject } from "./collector";
+import { type Collector, type Placement, schemaObject } from "./collector";
 import { kKeyPlaceholder } from "./relay";
 import { ProviderError, streamError, wrapsProviderError } from "./errors";
 import { sdk as loadSdk } from "./sdks";
@@ -39,11 +39,19 @@ function takesCacheMarks(config: ProviderConfig, model: string): boolean {
 
 const detail = (value: unknown, key: string) => Number((value as Json | undefined)?.[key] ?? 0);
 
+/** OpenAI-style `start_index` and `end_index` count characters, as code points, from `base`. */
+function placement(c: Json, base: number): Placement | undefined {
+    return typeof c.start_index === "number" && typeof c.end_index === "number"
+        ? { unit: "codePoints", base, start: c.start_index, end: c.end_index }
+        : undefined;
+}
+
 function addAnnotations(out: Collector, annotations: unknown): void {
     for (const a of (Array.isArray(annotations) ? annotations : []) as Json[]) {
         const c = (a.type === "url_citation" ? a.url_citation : undefined) as Json | undefined;
         if (c)
-            out.addCitation(String(c.url ?? ""), String(c.title ?? ""), typeof c.content === "string" ? c.content : undefined);
+            out.addCitation(String(c.url ?? ""), String(c.title ?? ""), typeof c.content === "string" ? c.content : undefined,
+                placement(c, 0));
     }
 }
 
@@ -210,17 +218,23 @@ function responsesClient(options: ClientOptions): Client {
             if (tools.length)
                 body.tools = tools;
             let hasCalls = false;
+            const textStarts = new Map<string, number>();
+            const part = (event: Json) => `${String(event.item_id ?? "")}/${Number(event.content_index ?? 0)}`;
             try {
                 const stream = await client.responses.create(body as never, { signal });
                 for await (const event of stream as unknown as AsyncIterable<Json>) {
                     switch (event.type) {
                     case "response.output_text.delta":
+                        if (!textStarts.has(part(event)))
+                            textStarts.set(part(event), out.textLength);
                         out.addText(String(event.delta ?? ""));
                         break;
                     case "response.output_text.annotation.added": {
                         const a = (event.annotation ?? {}) as Json;
+                        const base = textStarts.get(part(event));
                         if (a.type === "url_citation")
-                            out.addCitation(String(a.url ?? ""), String(a.title ?? ""));
+                            out.addCitation(String(a.url ?? ""), String(a.title ?? ""), undefined,
+                                base === undefined ? undefined : placement(a, base));
                         break;
                     }
                     case "response.output_item.added": {
