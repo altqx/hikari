@@ -9121,6 +9121,14 @@ Failed to copy %2 fonts.</source>
         <translation>இரட்டை மெய்யெழுத்துக்குத் தனி அசை கொடு (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>தாய் மொழியை எழுத்துக் கொத்துகளாகப் பிரி</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>தானியங்கு பிரிப்பு ஒவ்வொரு தாய் எழுத்துக் கொத்துக்கும் தனி அசை கொடுக்கும், எனவே กิน என்பது กิ|น ஆகும். ஒவ்வொரு தாய் சொல்லையும் ஒரே அசையாக வைக்க இதை அணைக்கவும்.</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>%1 க்கான நீண்ட அசைகள்</translation>
     </message>

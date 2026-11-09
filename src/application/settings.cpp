@@ -270,6 +270,8 @@ const std::vector<SettingDefinition> &definitions()
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
         // On: so|ma|t|ta; off: so|mat|ta.
         {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
+        // On: กิ|น; off: a Thai word is one syllable.
+        {"audio.karaokeThaiClusters", "", Bool, Profile, Mapped, false, true},
         // Centiseconds.
         {"audio.karaokeKfThreshold", "", Int, Profile, Mapped, false, std::int64_t{100}},
         // speedPercent: 25, 33, 50, 75 or 100; tapLatency in ms.
