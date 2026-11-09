@@ -1,0 +1,270 @@
+{
+    "apply": {
+        "events": [
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(640,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Alt",
+                "text": "{\\fs30}Default position"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\frz-5\\org(500,200)\\pos(600,300)}Origin"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\move(600,300,700,350,0,300)}Moving"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\clip(500,300,780,420)\\pos(640,360)}Rect clip"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\iclip(2,m 1000 600 l 1560 600 1560 840 1000 840)\\pos(640,360)}Scaled vector clip"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\fad(100,150)\\pos(640,360)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\k10\\pos(640,360)}Ka{\\k20}ra{\\kf15}oke"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\fscx110\\pos(640,360)}Start {\\rAlt}reset {\\r}back"
+            },
+            {
+                "end": 4380,
+                "layer": 1,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\pos(640,360)}Early part"
+            },
+            {
+                "end": 4680,
+                "layer": 1,
+                "start": 4340,
+                "style": "Sign",
+                "text": "{\\pos(640,360)}Late part"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Flat",
+                "text": "{\\pos(640,360)}No outline"
+            },
+            {
+                "end": 4680,
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\clip(m 500 300 l 780 300 780 420 500 420)\\pos(640,360)}Vector clip"
+            },
+            {
+                "end": 4190,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4150,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.66\\frz354.35\\fscx83.21\\fscy82.39\\pos(480.92,387.23)\\shad0.83}Edge values"
+            },
+            {
+                "end": 4230,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4190,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.68\\frz354.82\\fscx84.66\\fscy83.81\\pos(488.1,384.43)\\shad0.84}Edge values"
+            },
+            {
+                "end": 4270,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4230,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.71\\frz355.29\\fscx86.1\\fscy85.24\\pos(496.38,381.73)\\shad0.86}Edge values"
+            },
+            {
+                "end": 4310,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4270,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.74\\frz355.76\\fscx87.54\\fscy86.66\\pos(505.77,379.13)\\shad0.87}Edge values"
+            },
+            {
+                "end": 4350,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4310,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.77\\frz356.23\\fscx88.98\\fscy88.09\\pos(516.26,376.62)\\shad0.89}Edge values"
+            },
+            {
+                "end": 4400,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4350,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.8\\frz356.7\\fscx90.42\\fscy89.52\\pos(527.86,374.21)\\shad0.9}Edge values"
+            },
+            {
+                "end": 4440,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4400,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.83\\frz357.17\\fscx91.86\\fscy90.94\\pos(540.56,371.9)\\shad0.91}Edge values"
+            },
+            {
+                "end": 4480,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4440,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.86\\frz357.64\\fscx93.3\\fscy92.37\\pos(554.37,369.68)\\shad0.93}Edge values"
+            },
+            {
+                "end": 4520,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4480,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.89\\frz358.11\\fscx94.74\\fscy93.8\\pos(569.28,367.55)\\shad0.94}Edge values"
+            },
+            {
+                "end": 4560,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4520,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.91\\frz358.58\\fscx96.18\\fscy95.22\\pos(585.3,365.52)\\shad0.96}Edge values"
+            },
+            {
+                "end": 4600,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4560,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.94\\frz359.05\\fscx97.62\\fscy96.65\\pos(602.43,363.59)\\shad0.97}Edge values"
+            },
+            {
+                "end": 4650,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4600,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord1.97\\frz359.52\\fscx99.06\\fscy98.07\\pos(620.66,361.75)\\shad0.99}Edge values"
+            },
+            {
+                "end": 4690,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\an1\\fscx100.5\\fscy99.5\\frz359.99}Edge values",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4650,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\an1\\bord2\\frz359.99\\fscx100.5\\fscy99.5\\pos(640,360)\\shad1}Edge values"
+            }
+        ],
+        "outcome": "ok",
+        "selected": [
+        ],
+        "undo_steps": 1
+    }
+}
