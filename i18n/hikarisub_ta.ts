@@ -2410,6 +2410,10 @@ Output device: %2</source>
         <translation>தாவலை மூடு</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>சாளரத்தை மூடு</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>திருத்தியிலிருந்து வசன வரிகளை அகற்று</translation>
     </message>

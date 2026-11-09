@@ -142,6 +142,8 @@ bool Application::windowHome(int shellWindow) const
 
 void Application::activateShellWindow(int shellWindow)
 {
+    if (shellWindow == 0 && m_firstWindowHidden)
+        return;
     if (m_workspace.activateWindow(shellWindow))
         refreshViews();
 }
@@ -842,12 +844,13 @@ void Application::applySession()
     m_layoutDocuments.clear();
     m_originalColumns.clear();
     m_unresolved.clear();
+    showFirstWindow();
     std::vector<int> closing;
     for (const auto &[shellWindow, shell] : m_shellWindows)
         if (shell.window && !shell.closing)
             closing.push_back(shellWindow);
     for (const int shellWindow : closing)
-        shellWindowClosed(shellWindow);
+        forgetShellWindow(shellWindow);
     std::vector<int> windows{0};
     if (QQmlEngine *engine = m_firstWindow ? qmlEngine(m_firstWindow.data()) : nullptr)
         for (std::size_t k = 1; k < pending.windows.size(); ++k)

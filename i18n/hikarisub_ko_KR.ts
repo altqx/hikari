@@ -2387,6 +2387,10 @@ Output device: %2</source>
         <translation>탭 닫기</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>창 닫기</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>편집기에서 자막 제거</translation>
     </message>

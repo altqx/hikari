@@ -77,6 +77,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <iterator>
 #include <QFileInfo>
 #include <QBuffer>
 #include <QLinearGradient>
@@ -2200,6 +2201,7 @@ void Application::protectReference()
 
 void Application::refreshViews()
 {
+    noteLastUsedWindow();
     protectReference();
     showTabArrangement();
     if (m_workspace.editingTarget())
@@ -2474,6 +2476,9 @@ QVariantList Application::reviewClose(const QString &then)
     if (then == QLatin1String("quit"))
         ++m_quitReviews;
     m_closing.clear();
+    m_closeApproved.reset();
+    if (then != QLatin1String("window"))
+        m_closingWindow.reset();
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
@@ -2497,6 +2502,9 @@ QVariantList Application::reviewClose(const QString &then)
         scope = m_closingTabs;
     else if (then == QLatin1String("all"))
         scope = m_workspace.allTabs();
+    else if (then == QLatin1String("window"))
+        std::ranges::copy_if(m_workspace.documents(), std::back_inserter(scope),
+                             [&](application::DocumentId id) { return m_workspace.window(id) == m_closingWindow; });
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
@@ -2664,7 +2672,7 @@ void Application::finishClose()
         return;
     }
     const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
-        && then != QLatin1String("all");
+        && then != QLatin1String("all") && then != QLatin1String("window");
     if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
         if (!m_workspace.setEditingTarget(*reviewed)) {
             m_closeThen = then;
@@ -2677,6 +2685,7 @@ void Application::finishClose()
     if (then == QLatin1String("quit")) {
         for (const auto id : m_workspace.documents())
             discardRecovery(id);
+        saveLayoutForQuit();
         m_quitApproved = true;
         emit quitApprovedChanged();
     } else if (then == QLatin1String("new")) {
@@ -2722,6 +2731,8 @@ void Application::finishClose()
             refreshViews();
     } else if (then == QLatin1String("all")) {
         closeAllTabs();
+    } else if (then == QLatin1String("window")) {
+        m_closeApproved = std::exchange(m_closingWindow, std::nullopt);
     } else if (then == QLatin1String("files")) {
         if (auto files = std::exchange(m_pendingFiles, std::nullopt))
             applyFiles(std::move(*files), false);
@@ -2738,6 +2749,7 @@ void Application::cancelClose()
     m_closing.clear();
     const bool quit = m_closeThen == QLatin1String("quit");
     m_closeThen.clear();
+    m_closingWindow.reset();
     if (quit)
         emit quitCancelled();
     m_pendingOpen.reset();
@@ -6103,13 +6115,17 @@ QQuickWindow *Application::shellQuickWindow(int shellWindow) const
 
 std::vector<int> Application::sessionWindows() const
 {
-    std::vector<int> out{0};
+    std::vector<int> out;
+    if (!m_firstWindowHidden)
+        out.push_back(0);
     for (const auto &[id, shell] : m_shellWindows)
         if (shell.window && !shell.closing)
             out.push_back(id);
     for (const auto tab : m_workspace.allTabs())
         if (const auto window = m_workspace.window(tab); window && std::ranges::find(out, *window) == out.end())
             out.push_back(*window);
+    if (out.empty())
+        out.push_back(0);
     return out;
 }
 
@@ -6152,8 +6168,85 @@ bool Application::saveLayoutForQuit()
     return m_workspaceLayout->saveForQuit();
 }
 
+QVariantList Application::reviewCloseWindow(int shellWindow)
+{
+    m_closingWindow = shellWindow;
+    return reviewClose(QStringLiteral("window"));
+}
+
+bool Application::otherShellWindowOpen(int shellWindow) const
+{
+    if (shellWindow != 0 && m_firstWindow && !m_firstWindowHidden && m_firstWindow->isVisible())
+        return true;
+    return std::ranges::any_of(m_shellWindows, [&](const auto &entry) {
+        const auto &[id, shell] = entry;
+        return id != shellWindow && shell.window && !shell.closing && shell.window->isVisible();
+    });
+}
+
+std::optional<int> Application::otherUsableWindow(int besides) const
+{
+    if (besides != 0 && m_firstWindow && !m_firstWindowHidden)
+        return 0;
+    for (const auto &[id, shell] : m_shellWindows)
+        if (id != besides && shell.window && !shell.closing)
+            return id;
+    return std::nullopt;
+}
+
+void Application::leaveShellWindow(int shellWindow)
+{
+    if (m_workspace.activeWindow() != shellWindow)
+        return;
+    if (const auto next = otherUsableWindow(shellWindow))
+        activateShellWindow(*next);
+}
+
+void Application::hideFirstWindow()
+{
+    if (!m_firstWindow || m_firstWindowHidden)
+        return;
+    leaveShellWindow(0);
+    m_firstWindowHidden = true;
+    m_closeApproved.reset();
+    m_windowPlaces.erase(0);
+    closeShellWindowDocuments(0);
+    m_hiddenFloating.clear();
+    for (QWindow *floating : ui::hideFloatingPanelsOf(m_firstWindow))
+        m_hiddenFloating << floating;
+    m_firstWindow->hide();
+    noteLastUsedWindow();
+    saveLastSession();
+}
+
+void Application::showFirstWindow()
+{
+    if (!m_firstWindowHidden)
+        return;
+    m_firstWindowHidden = false;
+    if (m_firstWindow)
+        m_firstWindow->show();
+    for (const auto &floating : std::exchange(m_hiddenFloating, {}))
+        if (floating)
+            floating->show();
+}
+
+void Application::noteLastUsedWindow()
+{
+    if (std::exchange(m_lastUsedWindow, m_workspace.activeWindow()) != m_workspace.activeWindow())
+        emit lastUsedWindowChanged();
+}
+
 void Application::shellWindowClosed(int shellWindow)
 {
+    forgetShellWindow(shellWindow);
+    saveLastSession();
+}
+
+void Application::forgetShellWindow(int shellWindow)
+{
+    if (m_closeApproved == shellWindow)
+        m_closeApproved.reset();
     const auto found = m_shellWindows.find(shellWindow);
     if (found == m_shellWindows.end())
         return;
@@ -6166,6 +6259,7 @@ void Application::shellWindowClosed(int shellWindow)
         return;
     }
     found->second.closing = true;
+    leaveShellWindow(shellWindow);
     closeShellWindowDocuments(shellWindow);
     connect(window, &QObject::destroyed, this, [this, shellWindow] {
         QMetaObject::invokeMethod(this, [this, shellWindow] { m_shellWindows.erase(shellWindow); }, Qt::QueuedConnection);
