@@ -9213,6 +9213,111 @@ private slots:
         application->editor().discard();
     }
 
+    void motionDataScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        application->setAskForBadResolution(false);
+        const QString path = dir.filePath(QStringLiteral("motion-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Sign,Arial,48,&H0000E0FF,&H000000FF,&H00202020,&H00000000,-1,0,0,0,100,100,0,0,1,3,"
+                    "0,5,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.40,Sign,,0,0,0,,{\\pos(200,180)}SIGN\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto selectAll = [&] {
+            application::Selection all;
+            for (const auto *l : session->document().lines())
+                all.selected.insert(l->id);
+            all.active = *all.selected.begin();
+            session->setSelection(all);
+        };
+        const auto action = [&](const char *item) {
+            return root->findChild<QObject *>(QLatin1String(item))->property("action").value<QObject *>();
+        };
+        selectAll();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QObject *apply = action("applyMotionDataMenuItem");
+        QTRY_VERIFY_WITH_TIMEOUT(apply->property("enabled").toBool(), 20000);
+        const QVariantMap values = application->motionDataValues();
+        const int frames = values.value(QStringLiteral("frames")).toInt();
+        const int first = values.value(QStringLiteral("firstFrame")).toInt();
+        QString data = QStringLiteral("Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t25\n\tSource Width\t640\n"
+                                      "\tSource Height\t360\n\nPosition\n\tFrame\tX pixels\tY pixels\tZ pixels\n");
+        for (int i = 0; i < frames; ++i)
+            data += QStringLiteral("\t%1\t%2\t%3\t0\n").arg(i).arg(200 + 24 * i).arg(180 - 6 * i);
+        data += QStringLiteral("\nScale\n\tFrame\tX percent\tY percent\tZ percent\n");
+        for (int i = 0; i < frames; ++i)
+            data += QStringLiteral("\t%1\t%2\t%2\t100\n").arg(i).arg(100 + 5 * i);
+        data += QStringLiteral("\nRotation\n\tFrame\tDegrees\n");
+        for (int i = 0; i < frames; ++i)
+            data += QStringLiteral("\t%1\t%2\n").arg(i).arg(-2 * i);
+        data += QStringLiteral("\nEnd of Keyframe Data\n");
+        QGuiApplication::clipboard()->setText(data);
+        const auto useTheme = [&](ui::theme::Code code) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto shoot = [&](const char *name, const char *trigger, const QString &file) {
+            QVERIFY(QMetaObject::invokeMethod(action(trigger), "trigger"));
+            QQuickWindow *dialog = nullptr;
+            QTRY_VERIFY((dialog = root->findChild<QQuickWindow *>(QLatin1String(name))) && dialog->isVisible());
+            QTest::qWait(300);
+            QVERIFY(dialog->grabWindow().save(out + file));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+            QTRY_VERIFY(!dialog->isVisible());
+        };
+        for (const auto code : ui::theme::kCodes) {
+            useTheme(code);
+            shoot("motionDataDialog", "applyMotionDataMenuItem",
+                  QStringLiteral("/au8-motion-data-") + ui::theme::codeName(code) + QStringLiteral(".png"));
+        }
+        useTheme(ui::theme::Code::Dark);
+        QVERIFY(application->video().showFrameAt(first));
+        QTest::qWait(500);
+        QVERIFY(window->grabWindow().save(out + QStringLiteral("/au8-sign-before.png")));
+        QVERIFY(QMetaObject::invokeMethod(apply, "trigger"));
+        QQuickWindow *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QQuickWindow *>(QStringLiteral("motionDataDialog"))) && dialog->isVisible());
+        dialogItem("motionDataDialog", "motionDataRotation")->setProperty("checked", true);
+        dialogItem("motionDataDialog", "motionDataFrame")->setProperty("value", 1);
+        QQuickItem *applyButton = dialogItem("motionDataDialog", "motionDataApply");
+        QTRY_VERIFY(applyButton->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(applyButton, "click"));
+        QTRY_VERIFY(!dialog->isVisible());
+        QCOMPARE(session->document().lines().size(), std::size_t(frames));
+        QVERIFY(application->video().showFrameAt(first + frames - 1));
+        QTest::qWait(500);
+        QVERIFY(window->grabWindow().save(out + QStringLiteral("/au8-sign-after.png")));
+        selectAll();
+        for (const auto code : ui::theme::kCodes) {
+            useTheme(code);
+            shoot("extendTrackingDialog", "extendTrackedLinesMenuItem",
+                  QStringLiteral("/au8-extend-") + ui::theme::codeName(code) + QStringLiteral(".png"));
+        }
+        QVERIFY(application->video().unloadVideo());
+        application->editor().discard();
+    }
+
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();
