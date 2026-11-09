@@ -139,10 +139,19 @@ public:
         m_lines.setChangeState(target);
         m_referenceLines.setChangeState(reference);
     }
+    void setReview(const LineTableModel::Review &target, const LineTableModel::Review &reference)
+    {
+        m_lines.setReview(target);
+        m_referenceLines.setReview(reference);
+    }
     void setSpelling(const LineTableModel::TagSpelling &spelling)
     {
         m_lines.setSpelling(spelling);
         m_referenceLines.setSpelling(spelling);
+    }
+    void setQcMarks(LineTableModel::QcMarks marks, std::optional<core::LineId> current)
+    {
+        m_lines.setQcMarks(std::move(marks), current);
     }
 
     bool foldGenerated() const { return m_lines.foldGenerated(); }

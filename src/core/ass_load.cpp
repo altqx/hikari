@@ -468,7 +468,8 @@ bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &chan
                 const std::uint64_t version = line->changeVersion;
                 change(*line);
                 line->edited = true;
-                line->changeVersion = mark == ChangeMark::Changed ? newChangeVersion() : version;
+                if (mark != ChangeMark::Restored)
+                    line->changeVersion = mark == ChangeMark::Changed ? newChangeVersion() : version;
                 return true;
             }
     return false;

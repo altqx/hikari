@@ -4,10 +4,14 @@
 #include "settings_store.h"
 #include "test_signer.h"
 
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#include <QImage>
 #include <QNetworkReply>
+#include <QQmlEngine>
+#include <QQuickAsyncImageProvider>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -39,7 +43,20 @@ struct Version {
     QByteArray package;
     QString extra;
     QString url;
+    QString icon = QStringLiteral("https://elsewhere.test/i.png");
+    QString screenshot = kBase + QStringLiteral("s.png");
 };
+
+QByteArray encoded(QSize size, const char *format)
+{
+    QImage image(size, QImage::Format_RGB32);
+    image.fill(Qt::darkCyan);
+    QByteArray data;
+    QBuffer buffer(&data);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, format);
+    return data;
+}
 
 QString versionJson(const Version &v)
 {
@@ -47,12 +64,12 @@ QString versionJson(const Version &v)
     return QStringLiteral("{\"version\": \"%1\", \"api\": 1, \"tier\": \"restricted\", \"name\": \"Hello\", \"summary\": \"Says hello\","
                           " \"license\": \"MIT\", \"authors\": [\"Ana\"], \"permissions\": {\"network\": {\"hosts\": [\"api.example.com\"],"
                           " \"reason\": \"Looks words up\"}}, \"url\": \"%2\", \"sha256\": \"%3\", \"size\": %4,"
-                          " \"published\": \"2026-11-01T10:00:00Z\", \"readme\": \"%5readme.md\", \"icon\": \"https://elsewhere.test/i.png\","
-                          " \"screenshots\": [{\"url\": \"%5s.png\", \"caption\": \"Main\", \"width\": 2, \"height\": 2}]%6}")
+                          " \"published\": \"2026-11-01T10:00:00Z\", \"readme\": \"%5readme.md\", \"icon\": \"%6\","
+                          " \"screenshots\": [{\"url\": \"%7\", \"caption\": \"Main\", \"width\": 1280, \"height\": 720}]%8}")
         .arg(v.number, v.url.isEmpty() ? kBase + QStringLiteral("p/com.example.hello/") + v.number + QStringLiteral(".hikariplugin") : v.url,
              hash)
         .arg(v.package.size())
-        .arg(kBase, v.extra);
+        .arg(kBase, v.icon, v.screenshot, v.extra);
 }
 
 }
@@ -136,6 +153,29 @@ class PluginMarketplaceTest : public QObject {
     }
 
     QString installedVersion() const { return row().value(QStringLiteral("version")).toString(); }
+
+    QImage shown(const QUrl &source, QSize size)
+    {
+        QQmlEngine engine;
+        attachMarketplaceImages(engine, *m_marketplace);
+        auto *provider = static_cast<QQuickAsyncImageProvider *>(engine.imageProvider(QStringLiteral("marketplace")));
+        const QString prefix = QStringLiteral("image://marketplace/");
+        const QString id = source.toString().startsWith(prefix) ? source.toString().mid(prefix.size()) : source.toString();
+        std::unique_ptr<QQuickImageResponse> response(provider->requestImageResponse(id, size));
+        QSignalSpy finished(response.get(), &QQuickImageResponse::finished);
+        if (!finished.wait(5000))
+            return {};
+        std::unique_ptr<QQuickTextureFactory> factory(response->textureFactory());
+        return factory ? factory->image() : QImage();
+    }
+
+    Version withMedia(const QString &icon, const QString &screenshot)
+    {
+        Version v = hello("1.1.0", "hello-1.1.0.hikariplugin");
+        v.icon = icon;
+        v.screenshot = screenshot;
+        return v;
+    }
 
     Version hello(const char *number, const char *file, const QString &extra = {})
     {
@@ -240,6 +280,59 @@ private slots:
         QCOMPARE(row.value(QStringLiteral("icon")).toUrl(), QUrl());
         QCOMPARE(row.value(QStringLiteral("screenshots")).toList().size(), 1);
         QCOMPARE(m_marketplace->categories(), QStringList{QStringLiteral("Timing")});
+    }
+
+    void sameOriginMediaShowsThroughTheMarketplaceOnly()
+    {
+        m_network->files.insert(kBase + QStringLiteral("m/icon.png"), encoded({256, 256}, "png"));
+        m_network->files.insert(kBase + QStringLiteral("m/main.jpg"), encoded({1280, 720}, "jpeg"));
+        publish(3, {withMedia(kBase + QStringLiteral("m/icon.png"), kBase + QStringLiteral("m/main.jpg"))});
+        QVERIFY(refreshed());
+        const QUrl icon = listing().value(QStringLiteral("icon")).toUrl();
+        const QUrl screenshot = listing().value(QStringLiteral("screenshots")).toList().value(0).toMap().value(QStringLiteral("url")).toUrl();
+        QCOMPARE(icon.scheme(), QStringLiteral("image"));
+        QCOMPARE(screenshot.host(), QStringLiteral("marketplace"));
+        QCOMPARE(m_network->requests.size(), 2);
+
+        QCOMPARE(shown(icon, {48, 48}).size(), QSize(48, 48));
+        QCOMPARE(shown(screenshot, {400, 224}).size(), QSize(398, 224));
+        QCOMPARE(m_network->requests.size(), 4);
+        const QNetworkRequest &request = m_network->requests.at(2);
+        QCOMPARE(request.url(), QUrl(kBase + QStringLiteral("m/icon.png")));
+        QCOMPARE(request.rawHeaderList().size(), 1);
+        QCOMPARE(request.rawHeader("User-Agent"), QByteArray("HikariSub/0.5.0"));
+        QCOMPARE(request.attribute(QNetworkRequest::CookieLoadControlAttribute).toInt(), int(QNetworkRequest::Manual));
+        QCOMPARE(request.attribute(QNetworkRequest::RedirectPolicyAttribute).toInt(), int(QNetworkRequest::ManualRedirectPolicy));
+        QCOMPARE(request.attribute(QNetworkRequest::CacheSaveControlAttribute).toBool(), false);
+
+        QCOMPARE(shown(icon, {32, 32}).size(), QSize(32, 32));
+        QCOMPARE(m_network->requests.size(), 4);
+    }
+
+    void offOriginMediaIsNeverRequested()
+    {
+        const QString elsewhere = QStringLiteral("https://elsewhere.test/");
+        m_network->files.insert(elsewhere + QStringLiteral("i.png"), encoded({256, 256}, "png"));
+        m_network->files.insert(elsewhere + QStringLiteral("s.png"), encoded({1280, 720}, "png"));
+        publish(3, {withMedia(elsewhere + QStringLiteral("i.png"), elsewhere + QStringLiteral("s.png"))});
+        QVERIFY(refreshed());
+        QCOMPARE(listing().value(QStringLiteral("icon")).toUrl(), QUrl());
+        QVERIFY(listing().value(QStringLiteral("screenshots")).toList().isEmpty());
+        QVERIFY(shown(QUrl(elsewhere + QStringLiteral("i.png")), {48, 48}).isNull());
+        QVERIFY(shown(QUrl(QStringLiteral("image://marketplace/icon/") + QString(64, QLatin1Char('0'))), {48, 48}).isNull());
+        QCOMPARE(m_network->requests.size(), 2);
+    }
+
+    void mediaThatBreaksThePackageRulesIsNotShown()
+    {
+        m_network->files.insert(kBase + QStringLiteral("m/icon.png"), encoded({128, 128}, "png"));
+        m_network->files.insert(kBase + QStringLiteral("m/main.png"), encoded({1280, 720}, "png") + QByteArray(2 * 1024 * 1024, 'x'));
+        publish(3, {withMedia(kBase + QStringLiteral("m/icon.png"), kBase + QStringLiteral("m/main.png"))});
+        QVERIFY(refreshed());
+        QVERIFY(shown(listing().value(QStringLiteral("icon")).toUrl(), {48, 48}).isNull());
+        const QVariantList screenshots = listing().value(QStringLiteral("screenshots")).toList();
+        QVERIFY(shown(screenshots.value(0).toMap().value(QStringLiteral("url")).toUrl(), {400, 224}).isNull());
+        QCOMPARE(m_network->requests.size(), 4);
     }
 
     void anIndexNotSignedForThisListIsIgnored()
@@ -522,5 +615,5 @@ private slots:
     }
 };
 
-QTEST_GUILESS_MAIN(PluginMarketplaceTest)
+QTEST_MAIN(PluginMarketplaceTest)
 #include "plugin_marketplace_tests.moc"

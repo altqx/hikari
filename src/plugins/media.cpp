@@ -317,6 +317,14 @@ private:
     bool m_rootSeen = false;
 };
 
+bool screenshotPixels(Pixels p)
+{
+    const auto drift = std::int64_t(p.width) * 9 - std::int64_t(p.height) * 16;
+    return p.width >= 1280 && p.width <= 1920 && p.height >= 720 && p.height <= 1080 && drift >= -16 && drift <= 16;
+}
+
+}
+
 Problem iconProblem(const PackageFile &icon)
 {
     if (icon.path.ends_with(".svg")) {
@@ -334,12 +342,6 @@ Problem iconProblem(const PackageFile &icon)
     if (size->width != 256 || size->height != 256)
         return "is " + pixels(*size) + ", not 256x256 px";
     return std::nullopt;
-}
-
-bool screenshotPixels(Pixels p)
-{
-    const auto drift = std::int64_t(p.width) * 9 - std::int64_t(p.height) * 16;
-    return p.width >= 1280 && p.width <= 1920 && p.height >= 720 && p.height <= 1080 && drift >= -16 && drift <= 16;
 }
 
 Problem screenshotProblem(const PackageFile &shot)
@@ -361,8 +363,6 @@ Problem screenshotProblem(const PackageFile &shot)
     if (!screenshotPixels(*size))
         return "is " + pixels(*size) + "; a screenshot is 16:9, from 1280x720 to 1920x1080 px";
     return std::nullopt;
-}
-
 }
 
 std::optional<PackageProblem> mediaProblem(const Manifest &manifest, const std::vector<PackageFile> &files)

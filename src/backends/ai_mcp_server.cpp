@@ -233,13 +233,14 @@ std::expected<api::Caller, api::Error> McpServer::callerFor(const api::Json &mcp
     if (!connection || !connection->isString())
         return api::fail(api::errors::kNotGranted, "The call names no MCP connection.");
     const api::Operation *op = api::Api::registry().find(operation);
-    if (op && op->access == api::Access::Write)
-        return api::fail(api::errors::kRefused, "Edits through MCP arrive with the review.");
+    if (op && op->access == api::Access::Write && operation != "document.apply")
+        return api::fail(api::errors::kRefused, "Through MCP, only document.apply writes; its edits land in the review.");
     const api::Json *client = mcp.find("client");
     api::Caller caller;
-    caller.id = "mcp";
+    caller.id = "mcp:" + connection->asString();
     caller.label = client && client->isString() && !client->asString().empty() ? client->asString() : "MCP agent";
     caller.allDocuments = true;
+    caller.reviewed = true;
     return caller;
 }
 
