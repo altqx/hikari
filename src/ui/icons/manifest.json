@@ -4625,8 +4625,7 @@
    "surfaces": [
     "settings-dialog",
     "plugin-manager"
-   ],
-   "pending": "PL5 #417"
+   ]
   },
   {
    "role": "marketplace",
