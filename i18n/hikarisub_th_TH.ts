@@ -5066,6 +5066,12 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation>มีที่คั่นหน้า</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>โน้ต QC %n รายการ</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>ยังไม่ได้นำไปใช้</translation>
@@ -6577,6 +6583,14 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
+    </message>
+    <message>
         <source>Convert Aegisub folds to line groups</source>
         <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
     </message>
@@ -6593,8 +6607,52 @@ Failed to copy %2 fonts.</source>
         <translation>ปิดไทม์โค้ด</translation>
     </message>
     <message>
-        <source>Video details…</source>
-        <translation>รายละเอียดวิดีโอ…</translation>
+        <source>QC notes panel</source>
+        <translation>แผงโน้ต QC</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>โน้ต QC ถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>โน้ต QC ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>เพิ่มโน้ต QC</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global</source>
@@ -7641,6 +7699,14 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>โน้ตจากการตรวจ QC ที่เก็บไว้ในไฟล์ พร้อมบรรทัดที่โน้ตนั้นชี้</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>โน้ต &amp;QC…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>เปลี่ยนอัตราเฟรมของเวลาคำบรรยาย</translation>
     </message>
@@ -7719,6 +7785,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>ใช้ข้อมูลการติดตาม Power-Pin กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
         <source>Video details…</source>
@@ -11310,6 +11388,295 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>โน้ต QC</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>ไม่มีโน้ตเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>นำเข้าไฟล์โน้ต…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>ส่งออกโน้ต…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>ลบโน้ตทั้งหมด…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 ไม่มีโน้ต โน้ตคือบรรทัดที่ขึ้นต้นด้วยเวลา เช่น 3:24 หรือ 0:03:24</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>คลิปบอร์ดไม่มีโน้ต โน้ตคือบรรทัดที่ขึ้นต้นด้วยเวลา เช่น 3:24 หรือ 0:03:24</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>นำเข้าโน้ต %n รายการแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n รายการมีอยู่ในไฟล์แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>โน้ต %n รายการไม่มีบรรทัดภายใน 15 วินาทีจากเวลาของโน้ต</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>คลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>นำเข้าโน้ต QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 มีโน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>ใน %n หมวด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>ไฟล์นี้มีโน้ตอยู่แล้ว %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>การเพิ่มจะข้ามโน้ตที่มีอยู่แล้ว %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>เพิ่มโน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>แทนที่โน้ตในไฟล์นี้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>อ่าน %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>ลบโน้ตทั้งหมด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>เลิกทำเพื่อนำกลับมาได้</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>ลบทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>นำเข้าไฟล์โน้ต</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>โน้ต QC (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ทุกไฟล์ (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>ส่งออกโน้ต QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>ส่งออกโน้ต %n รายการแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>เขียนโน้ตไม่ได้</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>ในไฟล์นี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>โน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>เพิ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>รวมโน้ตที่เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>เฉพาะหมวดที่เลือก (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>เฉพาะหมวดที่เลือก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>ส่งออกโน้ต %n รายการ…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>ไม่มีบรรทัด</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>ยังไม่เสร็จ</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>ไม่มีบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>วางไฟล์โน้ตที่นี่</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>เปิดไฟล์คำบรรยายเพื่อเก็บโน้ต QC ไว้ในไฟล์</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>วางโน้ต</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>โน้ตขึ้นต้นด้วยเวลา: 3:24 - …
+บรรทัด [หมวด] ใช้จัดกลุ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>ถัดไป</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>ซ่อนที่เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>เวลา</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>เวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>จุดเริ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>หมวด</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>โน้ต</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>สิ่งที่ต้องแก้</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter บันทึก · Esc ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reference</name>
     <message>
         <source>Compare with reference</source>
@@ -11733,6 +12100,229 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>“ส่งรายงานการขัดข้องเสมอ” เปิดอยู่ นี่คือสิ่งที่ส่งไป</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">บรรทัด</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">ใหม่</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">คงไว้</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -16072,6 +16662,123 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>บรรทัด %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>วางข้อมูล Power-Pin ที่ส่งออกจาก After Effects หรือ Blender ปุ่มนำไปใช้จะอ่านมุมทั้งสี่ของ CC Power Pin</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>นี่ไม่ใช่ข้อมูล Power-Pin: ไม่พบมุมของ CC Power Pin</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>เลือกบรรทัดที่จะติดตาม</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>ข้อมูลมี %n เฟรม แต่บรรทัดที่เลือกครอบคลุม %1 เฟรม (%2–%3) เลือกบรรทัดที่ครอบคลุมเฟรมที่ติดตาม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>ไม่มีบรรทัดที่เลือกแสดงที่เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>บรรทัดซ้อนทับกัน แต่บรรทัด %1 ไม่แสดงที่เฟรม %2 เลือกเฟรมที่ทุกบรรทัดแสดง หรือนำไปใช้ทีละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>ติดตามที่ขนาด %1 × %2 แต่วิดีโอมีขนาด %3 × %4 มุมจะถูกปรับขนาดให้เข้ากับวิดีโอ</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n เฟรมที่ %1 fps ติดตามที่ขนาด %2 × %3 ครอบคลุมเฟรม %4–%5 ของส่วนที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n เฟรม ครอบคลุมเฟรม %1–%2 ของส่วนที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>ติดตามบางบรรทัดไม่ได้: วัดขนาดข้อความไม่ได้ หรือระนาบพับบรรทัดนั้น</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>การติดตามเพอร์สเปกทีฟ</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>ข้อมูล Power-Pin</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>อ้างอิงเฟรม</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>จาก %1 · เฟรมวิดีโอ %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>จุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>กลาง</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>ไม่มี %1</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>คงไว้</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>ปรับบรรทัดที่แบนให้เข้ากับระนาบก่อน</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>ย้ายคลิปไปพร้อมกับระนาบ</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>ปรับขนาดเส้นขอบและเงา</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>ระนาบจะถูกบันทึกไว้กับแต่ละบรรทัด สำหรับเครื่องมือเพอร์สเปกทีฟและ Derive Perspective Track</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · เฟรม %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Translation</name>
     <message>
         <source>Translation</source>
@@ -18290,6 +18997,26 @@ do not work on comments</source>
         <translation>แผง</translation>
     </message>
     <message>
+        <source>Dock floating panels to lock the layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock it to move panels. Resizing still works.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tab with</source>
         <translation>รวมแท็บกับ</translation>
     </message>
@@ -18478,8 +19205,16 @@ do not work on comments</source>
         <translation>เค้าโครง: %1</translation>
     </message>
     <message>
+        <source>Layout: %1, locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Layout of this tab</source>
         <translation>เค้าโครงของแท็บนี้</translation>
+    </message>
+    <message>
+        <source>Layout of this tab, locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save layout as…</source>

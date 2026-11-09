@@ -120,7 +120,8 @@ QVariantList Application::windowTabs(int shellWindow) const
                             {QStringLiteral("current"), target == id},
                             {QStringLiteral("reference"), m_workspace.reference() == id},
                             {QStringLiteral("tip"), name + QLatin1Char('\n') + video},
-                            {QStringLiteral("video"), video}};
+                            {QStringLiteral("video"), video},
+                            {QStringLiteral("review"), m_review ? m_review->waitingIn(id) : 0}};
     }
     return rows;
 }

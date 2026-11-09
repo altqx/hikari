@@ -16,7 +16,7 @@ QString qs(std::string_view s)
 }
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
-    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this})
+    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review})
 {
 }
 
@@ -45,9 +45,9 @@ bool ApiHost::select(application::DocumentId document, const application::Select
     return true;
 }
 
-void ApiHost::committed(application::DocumentId)
+void ApiHost::committed(application::DocumentId document)
 {
-    m_wiring.refresh();
+    m_wiring.refresh(document);
     observe();
 }
 

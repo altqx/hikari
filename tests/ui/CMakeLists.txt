@@ -342,7 +342,7 @@ target_compile_definitions(hikari_ui_analytics_session_tests PRIVATE
 add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_media_fixtures hikari_lua_helper
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)

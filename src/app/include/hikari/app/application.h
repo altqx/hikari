@@ -14,6 +14,7 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
+#include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -42,6 +43,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/application/video_timing.h"
+#include "hikari/application/visual_perspective.h"
 #include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
@@ -73,6 +75,7 @@
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
+#include "hikari/app/review_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 #include "audio_controller.h"
@@ -439,6 +442,14 @@ public:
                               bool adjustRotations = true);
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
+    // lines, fitFlat}; empty without an exact video timebase or selected lines.
+    Q_INVOKABLE QVariantMap perspectiveTrackingValues() const;
+    // {state: "idle" | "ok" | "warning" | "error", text, canApply}.
+    Q_INVOKABLE QVariantMap checkPerspectiveTracking(const QString &data, int relativeFrame) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyPerspectiveTracking(const QString &data, int relativeFrame, int orgMode, bool fitFlat,
+                                                 bool moveClips, bool scaleBorders);
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -734,6 +745,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -766,6 +778,7 @@ public:
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
+    ReviewController *review() const { return m_review.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
     Q_PROPERTY(hikari::app::PluginMarketplace *pluginMarketplace READ pluginMarketplace CONSTANT)
@@ -944,6 +957,7 @@ private:
     void refreshVideo();
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
                           bool adjustRotations);
+    application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
@@ -1061,6 +1075,7 @@ private:
     std::unique_ptr<AiFeatures> m_ai;
     std::unique_ptr<AiMcp> m_aiMcp;
     std::unique_ptr<AiSettings> m_aiSettings;
+    std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
@@ -1079,6 +1094,7 @@ private:
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
     QString m_readingDictionary;
+    std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;

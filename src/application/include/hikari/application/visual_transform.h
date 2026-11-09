@@ -146,6 +146,9 @@ void changeOrg(const Context &context, TagFind &find, std::u16string &text, cons
 // vector. A vector clip keeps its scale and a rectangle its size.
 void changeClipScale(TagFind &find, std::u16string &text, PointF pivot, float scalex, float scaley);
 void changeClipRotationZ(TagFind &find, std::u16string &text, PointF pivot, float sinus, float cosinus);
+// Every point of the first \clip or \iclip through `map`, in script pixels, at two decimals; a rectangle
+// written as a vector.
+void mapClip(TagFind &find, std::u16string &text, const std::function<PointF(PointF)> &map);
 
 // For a several-Line target whose active Line has a \move with 3 or more values.
 std::u16string moveText(PointF pos, const double *tbl, int lineStartMs);

@@ -61,8 +61,8 @@ public:
     void closeHttp();
     quint16 httpPort() const;
 
-    /// What an MCP connection's call runs as: every Document, under the client's name. Writes are refused
-    /// until they land in the review (AI2 #430).
+    /// What an MCP connection's call runs as: every Document, under the client's name, with its edits in the
+    /// review (one turn per connection). document.apply is the only write it may call.
     std::expected<api::Caller, api::Error> callerFor(const api::Json &mcp, const std::string &operation) const;
 
     std::size_t connections() const { return m_local.size() + m_http.size(); }

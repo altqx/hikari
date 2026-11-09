@@ -866,11 +866,11 @@ private slots:
         Grid grid;
         grid.setSize(QSizeF(1000, 300));
         grid.setModel(&model);
-        QSignalSpy changed(&grid, &LineGrid::headerToolTipChanged);
+        QSignalSpy changed(&grid, &LineGrid::hoverToolTipChanged);
         const auto hover = [&](QPointF at) {
             QHoverEvent event(QEvent::HoverMove, at, at, at);
             grid.hoverMoveEvent(&event);
-            return grid.headerToolTip();
+            return grid.hoverToolTip();
         };
         const qreal headerY = grid.rowHeight() / 2;
         QHash<QString, QString> tips;
@@ -891,19 +891,51 @@ private slots:
             QVERIFY2(tips.value(QLatin1String(word)).isEmpty(), word);
         }
         QCOMPARE(hover(QPointF(grid.cellRect(0, vert).center().x(), headerY)), QStringLiteral("Vertical margin"));
-        QCOMPARE(grid.headerToolTipCell().x(), grid.cellRect(0, vert).x());
-        QCOMPARE(grid.headerToolTipCell().width(), grid.cellRect(0, vert).width());
-        QCOMPARE(grid.headerToolTipCell().bottom(), grid.rowHeight());
+        QCOMPARE(grid.hoverToolTipCell().x(), grid.cellRect(0, vert).x());
+        QCOMPARE(grid.hoverToolTipCell().width(), grid.cellRect(0, vert).width());
+        QCOMPARE(grid.hoverToolTipCell().bottom(), grid.rowHeight());
         QCOMPARE(hover(grid.cellRect(1, vert).center()), QString());
         hover(QPointF(grid.cellRect(0, vert).center().x(), headerY));
         QHoverEvent leave(QEvent::HoverLeave, QPointF(-1, -1), QPointF(-1, -1), QPointF());
         grid.hoverLeaveEvent(&leave);
-        QCOMPARE(grid.headerToolTip(), QString());
+        QCOMPARE(grid.hoverToolTip(), QString());
         QVERIFY(changed.size() >= 4);
         hover(QPointF(grid.cellRect(0, vert).center().x(), headerY));
-        QCOMPARE(grid.headerToolTip(), QStringLiteral("Vertical margin"));
+        QCOMPARE(grid.hoverToolTip(), QStringLiteral("Vertical margin"));
         model.setHiddenColumns(LineTableModel::hideBit(LineTableModel::MarginVerticalColumn));
-        QCOMPARE(grid.headerToolTip(), QString());
+        QCOMPARE(grid.hoverToolTip(), QString());
+    }
+
+    void showsQcNotesOnTheNumber()
+    {
+        struct Grid : LineGrid {
+            using LineGrid::hoverMoveEvent;
+        };
+        LineTableModel model;
+        model.setDocument(generate(3));
+        Grid grid;
+        grid.setSize(QSizeF(1000, 300));
+        grid.setModel(&model);
+        const qreal plain = grid.cellRect(0, 0).width();
+        const auto second = *model.lineAt(1);
+        const QStringList notes{QStringLiteral("0:00:01 TLC: a"), QStringLiteral("0:00:01 Timing: b")};
+        model.setQcMarks({{second.value, notes}}, second);
+        QCOMPARE(grid.cellRect(0, 0).width(), plain + 12);
+        QVERIFY(model.index(1, 0).data(LineTableModel::QcCurrentRole).toBool());
+        QVERIFY(!model.index(0, 0).data(LineTableModel::QcCurrentRole).toBool());
+        QVERIFY(grid.rowStateText(1).contains(QStringLiteral("QC note")));
+        QCOMPARE(grid.rowStateText(0), QString());
+        const auto hover = [&](QPointF at) {
+            QHoverEvent event(QEvent::HoverMove, at, at, at);
+            grid.hoverMoveEvent(&event);
+            return grid.hoverToolTip();
+        };
+        QCOMPARE(hover(grid.cellRect(1, 0).center()), notes.join(u'\n'));
+        QCOMPARE(grid.hoverToolTipCell(), grid.cellRect(1, 0));
+        QCOMPARE(hover(grid.cellRect(0, 0).center()), QString());
+        QCOMPARE(hover(grid.cellRect(1, grid.textColumn()).center()), QString());
+        model.setQcMarks({}, std::nullopt);
+        QCOMPARE(grid.cellRect(0, 0).width(), plain);
     }
 
     void paintsTheChangedLineMark()
