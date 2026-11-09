@@ -6549,10 +6549,10 @@ private slots:
         flick->setProperty("contentY", std::clamp(centre.y() - flick->height() / 2, 0.0, maxY));
     }
 
-    static QPointF settledPoint(QQuickItem *item, qreal across)
+    static QPointF settledPoint(QQuickItem *item)
     {
-        const auto place = [item, across] {
-            return std::pair{item->mapToScene(QPointF(item->width() * across, item->height() / 2)), item->window()->size()};
+        const auto place = [item] {
+            return std::pair{item->mapToScene(QPointF(item->width() / 2, item->height() / 2)), item->window()->size()};
         };
         auto last = place();
         for (int still = 0, waited = 0; still < 10 && waited < 250; ++waited) {
@@ -6576,12 +6576,12 @@ private slots:
         return QStringLiteral("%1 at %2,%3 in %4x%5").arg(name).arg(at.x()).arg(at.y()).arg(window->width()).arg(window->height());
     }
 
-    static void clickCentre(QQuickItem *item, qreal across = 0.5)
+    static void clickCentre(QQuickItem *item)
     {
-        QTest::mouseClick(item->window(), Qt::LeftButton, {}, settledPoint(item, across).toPoint());
+        QTest::mouseClick(item->window(), Qt::LeftButton, {}, settledPoint(item).toPoint());
     }
 
-    void typeAfterClickingTheArrow(QQuickItem *box, qreal across = 0.5)
+    void typeAfterClickingTheArrow(QQuickItem *box)
     {
         QVERIFY2(box && box->property("editable").toBool(), qPrintable(box ? box->objectName() : QStringLiteral("no box")));
         const QString name = box->objectName();
@@ -6595,7 +6595,7 @@ private slots:
         QVERIFY(QTest::qWaitForWindowActive(window));
 
         QTRY_VERIFY2(shownInScroller(arrow), qPrintable(name));
-        const QPointF at = settledPoint(arrow, across);
+        const QPointF at = settledPoint(arrow);
         QTest::mouseClick(window, Qt::LeftButton, {}, at.toPoint());
         QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name + u' ' + underPoint(window, at)));
         QVERIFY2(field->hasActiveFocus(), qPrintable(name));
@@ -6604,7 +6604,7 @@ private slots:
         QCOMPARE(box->property("editText").toString(), QStringLiteral("7"));
         QTRY_VERIFY2(!popup->property("visible").toBool(), qPrintable(name));
 
-        clickCentre(arrow, across);
+        clickCentre(arrow);
         QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name));
         QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY2(!popup->property("visible").toBool(), qPrintable(name));
@@ -6677,11 +6677,11 @@ private slots:
         item<QObject>("searchTool")->setProperty("scope", QStringLiteral("folder"));
         QVERIFY(QMetaObject::invokeMethod(item("findOptionsButton"), "click"));
         QTRY_VERIFY(item("findFolder")->isVisible());
+        QTRY_VERIFY(item("findOptions")->property("effectiveScrollBarWidth").toReal() > 0);
         typeAfterClickingTheArrow(item("findFolder"));
         if (QTest::currentTestFailed())
             return;
-        // MUST KILL: the find options' scroll bar covers the right half of the Files box's arrow.
-        typeAfterClickingTheArrow(item("findFilters"), 0.25);
+        typeAfterClickingTheArrow(item("findFilters"));
     }
 
     void fontsFromSubtitlesCatalogBoxTakesTypingAfterAClick()
