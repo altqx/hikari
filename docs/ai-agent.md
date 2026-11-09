@@ -52,6 +52,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 | Full access | Everything runs, except the always-ask list. |
 
 - Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close` and `panels.focus`, which change no content and no setting.
+- **Web search** isn't under the thread modes or the always-ask list: the `web` tools go out through the HTTP relay, not `_hikari/api.call`. The per-thread globe (AI23b) controls it instead. It is on only while Let AI search the web is on, and a search sends only its query, never a file.
 - **Allow in this thread** covers the operation, or for `commands.run` the one command, until the thread is deleted.
 - **The always-ask list** ([#410](https://github.com/altqx/hikari/issues/410)) asks in every mode, with Allow once and Deny only. `alwaysAsk` holds it:
 
