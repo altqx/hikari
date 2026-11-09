@@ -3,6 +3,7 @@
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
+#include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/app/style_manager_controller.h"
@@ -16685,6 +16686,8 @@ private slots:
               {"automation.fillLastAnswers", "Fill in my last answers"}}},
             {"settingsPageAi",
              {{"ai.off", "Turn off all AI features"},
+              {"ai.webSearch", "Let AI search the web"},
+              {"ai.searchService", nullptr},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
@@ -16867,6 +16870,54 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
+
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiWebSearch")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "setting_ai.webSearch")->property("checked").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "aiSearchHow")->property("text").toString(),
+                 QStringLiteral("Google Search, and reads pages"));
+        QVERIFY(dialogItem("settingsDialog", "aiGeminiSuggestionsNote")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiSearchKeyRow")->isVisible());
+        auto *service = dialogItem("settingsDialog", "setting_ai.searchService");
+        QCOMPARE(service->property("currentText").toString(), QStringLiteral("None"));
+        QVERIFY(QMetaObject::invokeMethod(service, "activated", Q_ARG(int, 3)));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiSearchKeyRow")->isVisible());
+        auto *addAnyway = dialogItem("settingsDialog", "aiSearchAddAnyway");
+        QVERIFY(!addAnyway->isVisible());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("exa-typed"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiSearchTest"), "click"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiSearchStatus")->property("text").toString(),
+                     QStringLiteral("Key rejected (401)"));
+        QVERIFY(!stored->keys.contains("search:exa"));
+        QVERIFY(addAnyway->isVisible());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("exa-edited"));
+        QVERIFY(!addAnyway->isVisible());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("exa-typed"));
+        QVERIFY(QMetaObject::invokeMethod(addAnyway, "click"));
+        QTRY_VERIFY(stored->keys.contains("search:exa"));
+        QCOMPARE(stored->keys.at("search:exa"), "exa-typed");
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiSearchKey")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiSearchRemoveKey")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(service, "activated", Q_ARG(int, 1)));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiSearchKeyRow")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiSearchKeyRow")->property("text").toString(),
+                 QStringLiteral("Brave Search key"));
+        QVERIFY(!dialogItem("settingsDialog", "aiSearchTest")->property("enabled").toBool());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("BSA-typed"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiSearchTest"), "click"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiSearchStatus")->property("text").toString(), QStringLiteral("Connected"));
+        QCOMPARE(stored->keys.at("search:brave"), "BSA-typed");
+        QVERIFY(dialogItem("settingsDialog", "aiSearchRemoveKey")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiSearchKey")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiSandboxNote")->property("text").toString().contains(
+            QStringLiteral("to the providers you add and to Brave Search.")));
+        QCOMPARE(application->ai()->requests()->searchService(), std::nullopt);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("ai.searchService"), QStringLiteral("brave"));
+        QTRY_COMPARE(application->ai()->requests()->searchService(), std::optional(ai::SearchService::Brave));
 
         std::vector<QUrl> opened;
         const auto routes = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {

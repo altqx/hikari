@@ -426,3 +426,88 @@ TEST_F(HttpRelayTest, AFailedConnectionIsANetworkError)
 }
 
 }
+
+namespace {
+
+struct SearchKeyStore final : app::KeyStore {
+    std::map<std::string, std::string> keys;
+    int reads = 0;
+    void read(const std::string &id, std::function<void(app::KeyResult)> done) override
+    {
+        ++reads;
+        if (const auto it = keys.find(id); it != keys.end())
+            done(it->second);
+        else
+            done(app::KeyError::NotFound);
+    }
+    void write(const std::string &id, const std::string &key, std::function<void(std::optional<app::KeyError>)> done) override
+    {
+        keys[id] = key;
+        done(std::nullopt);
+    }
+    void remove(const std::string &id, std::function<void(std::optional<app::KeyError>)> done) override
+    {
+        keys.erase(id);
+        done(std::nullopt);
+    }
+};
+
+RelayTargetResult lookUp(const RelayTargets &targets, const Json &target)
+{
+    std::optional<RelayTargetResult> found;
+    targets(target, [&](RelayTargetResult r) { found = std::move(r); });
+    EXPECT_TRUE(found.has_value());
+    return found ? std::move(*found) : std::unexpected(app::Error{});
+}
+
+Json searchTarget(const char *id) { return Json::object({{"kind", "search"}, {"id", id}}); }
+
+}
+
+TEST(SearchTargets, OnlyTheChosenServiceIsReachableWithItsKeychainKey)
+{
+    SearchKeyStore store;
+    store.keys["search:brave"] = kKey;
+    app::SearchKeys keys(store);
+    std::optional<app::SearchService> chosen;
+    std::optional<app::SearchService> tested;
+    int providerLookups = 0;
+    const RelayTargets targets = withSearchTargets(
+        [&](const Json &, std::function<void(RelayTargetResult)> done) {
+            ++providerLookups;
+            done(RelayTarget{QUrl(QStringLiteral("https://provider.example/v1")), "provider-key"});
+        },
+        keys, [&](app::SearchService service) -> std::optional<SearchAccess> {
+            if (service == tested)
+                return SearchAccess{"typed-key"};
+            return service == chosen ? std::optional(SearchAccess{}) : std::nullopt;
+        });
+
+    EXPECT_EQ(lookUp(targets, searchTarget("brave")).error().kind, app::ErrorKind::Rejected);
+    chosen = app::SearchService::Brave;
+    const RelayTargetResult brave = lookUp(targets, searchTarget("brave"));
+    ASSERT_TRUE(brave);
+    EXPECT_EQ(brave->base, QUrl(QStringLiteral("https://api.search.brave.com")));
+    EXPECT_EQ(brave->key, kKey);
+    EXPECT_EQ(lookUp(targets, searchTarget("tavily")).error().kind, app::ErrorKind::Rejected);
+    EXPECT_EQ(lookUp(targets, searchTarget("bing")).error().kind, app::ErrorKind::Rejected);
+    chosen = app::SearchService::Exa;
+    EXPECT_EQ(lookUp(targets, searchTarget("exa")).error().kind, app::ErrorKind::Key);
+    tested = app::SearchService::Tavily;
+    const RelayTargetResult typed = lookUp(targets, searchTarget("tavily"));
+    ASSERT_TRUE(typed);
+    EXPECT_EQ(typed->base, QUrl(QStringLiteral("https://api.tavily.com")));
+    EXPECT_EQ(typed->key, "typed-key");
+    EXPECT_EQ(store.reads, 2);
+    EXPECT_EQ(providerLookups, 0);
+
+    ASSERT_TRUE(lookUp(targets, Json::object({{"kind", "provider"}, {"id", "p"}})));
+    EXPECT_EQ(providerLookups, 1);
+}
+
+TEST(SearchTargets, EachServiceHasItsOwnHttpsHost)
+{
+    EXPECT_EQ(searchServiceBase(app::SearchService::Tavily), QUrl(QStringLiteral("https://api.tavily.com")));
+    EXPECT_EQ(searchServiceBase(app::SearchService::Exa), QUrl(QStringLiteral("https://api.exa.ai")));
+    EXPECT_EQ(searchServiceBase(app::SearchService::Firecrawl), QUrl(QStringLiteral("https://api.firecrawl.dev")));
+}
