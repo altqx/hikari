@@ -25,6 +25,13 @@ std::optional<Preset> presetFromId(std::string_view id);
 std::string_view roleId(Role role);
 std::optional<Role> roleFromId(std::string_view id);
 
+/// Searches the web for providers without a search of their own.
+enum class SearchService { Brave, Tavily, Exa, Firecrawl };
+std::string_view searchServiceId(SearchService service);
+std::optional<SearchService> searchServiceFromId(std::string_view id);
+/// The keychain entry of the service's key; no provider id contains ':'.
+std::string searchKeyEntry(SearchService service);
+
 struct Capabilities {
     bool tools = false;
     bool vision = false;
@@ -72,6 +79,8 @@ struct Provider {
 /// A provider entry for a preset, with its endpoint, wire and default capabilities.
 Provider presetProvider(Preset preset, std::string id, std::string name);
 Capabilities capabilitiesOf(const Provider &provider, std::string_view modelId);
+/// The sidecar's searchesNatively: the others search through the user's search service.
+bool searchesNatively(const Provider &provider);
 
 struct ModelRef {
     std::string providerId;
@@ -159,11 +168,25 @@ struct ToolCallArguments {
     int index = 0;
     std::string delta;
 };
+/// A source the answer cites; `index` numbers one completion's sources from 1.
+struct Citation {
+    int index = 0;
+    std::string url;
+    std::string title;
+    std::string quote;
+    bool operator==(const Citation &) const = default;
+};
 struct Finished {
     StopReason reason = StopReason::End;
     std::string text;
     std::vector<ToolCall> toolCalls;
     Usage usage;
+    std::vector<Citation> citations;
+    /// Google's search suggestions as HTML; its terms require showing them with a Gemini answer that searched.
+    std::string searchSuggestions;
+    /// The protocol's providerState part as JSON text, empty when there is none. It goes back among the assistant
+    /// message's parts when the conversation continues.
+    std::string providerState;
 };
 struct Failed {
     Error error;
@@ -234,6 +257,21 @@ private:
     KeyStore &m_keys;
     Config m_config;
     std::map<std::string, std::string, std::less<>> m_keyCache;
+};
+
+/// The search services' keys, kept in the keychain like the providers'.
+class SearchKeys {
+public:
+    explicit SearchKeys(KeyStore &keys) : m_keys(keys) {}
+
+    void store(SearchService service, std::string key, std::function<void(std::optional<SaveError>)> done);
+    void remove(SearchService service, std::function<void(std::optional<SaveError>)> done);
+    /// Read from the keychain once; nullopt when there is none or it can't be read.
+    void read(SearchService service, std::function<void(std::optional<std::string>)> done);
+
+private:
+    KeyStore &m_keys;
+    std::map<SearchService, std::string> m_cache;
 };
 
 }

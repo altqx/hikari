@@ -153,6 +153,8 @@ constexpr OptionsBinding kBindings[] = {
     {"video.hdrWarning", Check, Video},
     {"audio.playMono", Check, Audio},
     {"plugins.network", Check, Updates},
+    {"ai.webSearch", Check, Ai},
+    {"ai.searchService", Text, Ai},
     {"ai.mcp.server", Check, Ai},
     {"ai.mcp.http", Check, Ai},
 #ifdef _WIN32

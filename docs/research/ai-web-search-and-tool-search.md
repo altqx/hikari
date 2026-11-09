@@ -24,7 +24,7 @@ Sources:
 1. **Keep Hikari's `search_tools` as the one tool search on every wire.** Native tool search exists on Anthropic, OpenAI Responses (gpt-5.4 and later) and OpenRouter, but each has its own shape and limits. `search_tools` already works everywhere and can keep caching if found tools are added after the cached prefix (see [Tool search](#tool-search)). Use Anthropic's `tool_reference` return as an optimisation there only, since it is documented to keep the cache.
 2. **Web search: native where the wire has it, else the user's service.** Anthropic `web_search_20250305` (the ZDR-eligible version), OpenAI Responses `web_search`, Gemini `google_search`, OpenRouter `openrouter:web_search`. Chat Completions providers and custom endpoints use the service the user adds a key for, through a new `search` target kind in Qt's relay ([ADR 0029][ADR 0029] reserves this).
 3. **Web search and web fetch are found through `search_tools`, not sent up front,** as the owner asked under Q46. A native search tool is a server tool, though, so it can't be "found" mid-conversation without changing `tools`. On Anthropic, adding it invalidates the system and message caches. So the per-conversation globe toggle decides whether the native tool is in `tools` **from the first turn**. Mid-conversation, toggling costs one cache miss, and the panel says so.
-4. **Up-front budget: 3,000 tokens for Hikari's tools,** measured as below. Today's core block is about 2,900, of which `document_apply`'s schema is 1,069. Every web, MCP-server and agent tool is found on demand.
+4. **Up-front budget: 3,000 tokens for Hikari's tools,** measured as below. The owner raised it to 5,000 (Q123, 2026-11-09). Today's core block is about 2,900, of which `document_apply`'s schema is 1,069. Every web, MCP-server and agent tool is found on demand.
 5. **Citations: one shape in the sidecar.** Each wire's citation fields map to `{index, url, title, quote?}`, and the panel shows numbered links. Raw search results are kept only for the turn, which also meets Brave's terms.
 
 ## Web search
@@ -122,7 +122,7 @@ Of the core block, descriptions are 381 tokens and schemas 2,274. `document_appl
 - Tools it finds are appended **after** the cached prefix, in the turn they are found, so the prefix of system prompt and core tools stays byte-identical. That matches how Responses and Anthropic place loaded tools.
 - On Anthropic, `search_tools` returns `tool_reference` blocks instead of schemas in text, with the found tools marked `defer_loading`. This is the documented path that keeps the cache.
 - Native hosted tool search (OpenAI's and OpenRouter's) isn't used: its benefit over `search_tools` is small at Hikari's catalogue size, and it would make the loaded set depend on the wire.
-- **Budget: 3,000 tokens for the up-front block** (`o200k_base`), enforced by a sidecar test. Shrinking `document_apply`'s schema is the main lever if MCP tools later need room up front; it isn't needed for AI23.
+- **Budget: 3,000 tokens for the up-front block** (`o200k_base`), enforced by a sidecar test; 5,000 since owner Q123 (2026-11-09). Shrinking `document_apply`'s schema is the main lever if MCP tools later need room up front; it isn't needed for AI23.
 
 ## Effect on "What is sent"
 

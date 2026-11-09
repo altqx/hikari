@@ -39,6 +39,7 @@ class QcNotesController : public QObject {
     // The current note's index; -1 for none.
     Q_PROPERTY(int current READ current NOTIFY changed)
     Q_PROPERTY(bool hasDocument READ hasDocument NOTIFY changed)
+    Q_PROPERTY(bool canKeepNotes READ canKeepNotes NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(QString lastSection READ lastSection NOTIFY changed)
     Q_PROPERTY(bool clipboardHasNotes READ clipboardHasNotes NOTIFY clipboardChanged)
@@ -64,6 +65,7 @@ public:
     void setHideDone(bool hide);
     int current() const;
     bool hasDocument() const;
+    bool canKeepNotes() const;
     bool editable() const;
     QString lastSection() const;
     bool clipboardHasNotes() const;

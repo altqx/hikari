@@ -159,6 +159,12 @@ switch ($env:ACTION) {
         } else {
             Check (-not (Test-Path "$classes\HikariSub.ass")) 'no association without the component'
         }
+        if (-not $env:LEGACY) {
+            Check ((Value "$classes\hikarisub" '(default)') -eq 'URL:HikariSub') 'hikarisub link handler'
+            Check ($null -ne (Value "$classes\hikarisub" 'URL Protocol')) 'hikarisub URL Protocol'
+            Check ((Value "$classes\hikarisub\shell\open\command" '(default)') -eq "`"$exe`" `"%1`"") 'hikarisub open command'
+            Check ((Value "$classes\hikarisub\DefaultIcon" '(default)') -eq "`"$exe`",0") 'hikarisub DefaultIcon'
+        }
     }
     'check-removed' {
         Check (-not (Test-Path -LiteralPath $exe)) "$exe removed"
@@ -181,6 +187,7 @@ switch ($env:ACTION) {
             Check ((Value "$classes\$ext" '(default)') -ne "HikariSub$ext") "$ext default no longer HikariSub$ext"
         }
         Check (-not (Test-Path "$classes\Applications\HikariSub.exe")) 'Applications\HikariSub.exe removed'
+        Check (-not (Test-Path "$classes\hikarisub")) 'hikarisub link handler removed'
         foreach ($k in @($env:KEEP_USER -split '\|' | Where-Object { $_ })) {
             Check (Test-Path -LiteralPath (Join-Path $userFolder $k)) "user folder kept $k"
         }
