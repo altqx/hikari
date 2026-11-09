@@ -157,10 +157,10 @@ jobs:
           [ $allow = OFF ] || set -- "$@" --allow-missing-update-helper
           packaging/linux/make-packages.sh "$@"
           tests/packaging/linux/make-test-packages.sh --tools "$B/packaging-tools" --out out/dist-old --version "$VERSION"
-          # The docs export the site's hotkeys and settings pages are made from.
+          # The docs export the site's hotkeys, settings and API reference pages are made from.
           QT_QPA_PLATFORM=offscreen "$B/src/app/hikarisub" --export-docs out/docs
           (cd out/docs && cmake -E tar cf "$OLDPWD/out/dist/hikarisub-docs-$VERSION.zip" --format=zip -- \
-            meta.json commands.json settings.json guide-links.json)
+            meta.json commands.json settings.json guide-links.json api.json api.md)
           (cd out/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
           ls -la out/dist out/dist-old
 

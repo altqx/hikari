@@ -21,3 +21,6 @@ set_tests_properties(tools.draw-icons PROPERTIES LABELS "tools" TIMEOUT 60)
 add_test(NAME tools.app-icons
     COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/app_icons_tests.py")
 set_tests_properties(tools.app-icons PROPERTIES LABELS "tools;packaging" TIMEOUT 60)
+add_test(NAME tools.plugin-guide
+    COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/plugin_guide_tests.py")
+set_tests_properties(tools.plugin-guide PROPERTIES LABELS "tools" TIMEOUT 60)
