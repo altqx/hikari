@@ -335,6 +335,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_ADD_QC_NOTE", 5254},
         {"GLOBAL_MOVE_TAB_TO_NEW_WINDOW", 5221},
         {"GLOBAL_MOVE_TAB_TO_WINDOW", 5222},
+        {"GLOBAL_CLOSE_WINDOW", 5263},
         {"GLOBAL_KEEP_AI_CHANGE", 5245},
         {"GLOBAL_UNDO_AI_CHANGE", 5246},
         {"GLOBAL_NEXT_AI_CHANGE", 5247},
@@ -642,6 +643,7 @@ constexpr NameRow kNames[] = {
         {5254, "Add QC note"},
         {5221, "Move tab to new window"},
         {5222, "Move tab to window"},
+        {5263, "Close window"},
         {5245, "Keep AI change"},
         {5246, "Undo AI change"},
         {5247, "Next AI change"},
@@ -658,7 +660,7 @@ struct DefaultRow {
     const char *accel;
 };
 constexpr DefaultRow kMainDefaults[] = {
-        {5108, GlobalHotkey, "Exit", "Alt-F4"},
+        {5263, GlobalHotkey, "Close window", "Alt-F4"},
         {5301, GlobalHotkey, "Open new tab", "Ctrl-T"},
         {5302, GlobalHotkey, "Close current tab", "Ctrl-W"},
         {5030, GlobalHotkey, "Time shift window", "Ctrl-I"},

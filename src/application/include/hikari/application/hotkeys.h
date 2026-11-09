@@ -47,6 +47,7 @@ inline constexpr int kGridFirst = 4001;
 inline constexpr int kGridFilterIgnoreInActions = 4546;
 inline constexpr int kGlobalFirst = 5000;
 inline constexpr int kGlobalQuit = 5108;
+inline constexpr int kGlobalCloseWindow = 5263;
 inline constexpr int kLegacyHotkeyActions = 243;
 inline constexpr int kFirstScriptHotkey = 30100;
 // Rows from kFirstScriptHotkey up are macros', and plugin commands' when named "plugin.<id>.<command>".

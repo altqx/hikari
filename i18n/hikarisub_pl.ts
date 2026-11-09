@@ -6739,6 +6739,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przenieś zakładkę do okna</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7791,6 +7795,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Program settings</source>
         <translation>Ustawienia programu</translation>
+    </message>
+    <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>Zamknij o&amp;kno</translation>
     </message>
     <message>
         <source>Exit the program</source>

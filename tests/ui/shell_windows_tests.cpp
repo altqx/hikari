@@ -928,6 +928,44 @@ private slots:
         QTRY_VERIFY(!first()->isVisible());
     }
 
+    void altF4ClosesOnlyTheWindowItIsPressedIn()
+    {
+        edit(firstTab);
+        edit(secondTab);
+        second->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), second.get());
+        QTest::keyClick(second, Qt::Key_F4, Qt::AltModifier);
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QCOMPARE(reviewed(second).first().toMap().value(QStringLiteral("id")).toULongLong(), secondTab.value);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(!second);
+        QVERIFY(first()->isVisible());
+        QVERIFY(!application->quitApproved());
+        QVERIFY(modified(firstTab));
+        QFile file(application->lastSessionPath());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject saved = QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(saved.value(QStringLiteral("closed")).toBool(true), false);
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        const QJsonArray tabs = saved.value(QStringLiteral("tabs")).toArray();
+        QCOMPARE(tabs.size(), 1);
+        QCOMPARE(tabs.first().toObject().value(QStringLiteral("window")).toInt(0), 0);
+        QVERIFY(tabs.first().toObject().value(QStringLiteral("subtitles")).toString().endsWith(QStringLiteral("first.ass")));
+    }
+
+    void altF4InTheLastWindowQuits()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        first()->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), first());
+        QTest::keyClick(first(), Qt::Key_F4, Qt::AltModifier);
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+    }
+
     void quitFromAnyWindowReviewsEveryWindowOnce()
     {
         application->setSessionRestore(2);

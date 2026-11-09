@@ -21,7 +21,8 @@ File > Last session > Save session to file [GLOBAL_SAVE_EXTERNAL_SESSION]
 File > Last session > Ask whether to load the last session at program startup
 File > Last session > Load last session after program start
 File > Settings [GLOBAL_SETTINGS]
-File > Exit
+File > Close window [GLOBAL_CLOSE_WINDOW]
+File > Exit [GLOBAL_QUIT]
 Edit
 Edit > Undo [GLOBAL_UNDO]
 Edit > Redo [GLOBAL_REDO]

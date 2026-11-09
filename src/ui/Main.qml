@@ -1789,6 +1789,17 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_CLOSE_WINDOW"
+                    help: qsTr("Close this window; closing the last window exits the program")
+                    iconRole: "window-close"
+                    objectName: "closeWindowMenuItem"
+                    action: Action {
+                        text: qsTr("Close &window")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_WINDOW")) Qt.callLater(root.close)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_QUIT"
                     help: qsTr("Exit the program")
                     iconRole: "exit"
                     objectName: "exitMenuItem"
@@ -8371,6 +8382,7 @@ ApplicationWindow {
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
+        case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
