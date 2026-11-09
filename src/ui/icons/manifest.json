@@ -4599,7 +4599,7 @@
     "agent-panel",
     "settings-dialog"
    ],
-   "pending": "AI23 #742"
+   "pending": "AI23b #800"
   },
   {
    "role": "update",
@@ -4669,6 +4669,998 @@
     "plugin-manager"
    ],
    "pending": "PL7 #419"
+  },
+  {
+   "role": "remove-tags",
+   "file": "remove-tags.svg",
+   "label": "Remove tags",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "line-editor"
+   ],
+   "pending": "AU4 #839"
+  },
+  {
+   "role": "shape-unite",
+   "file": "shape-unite.svg",
+   "label": "Unite",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "shape-subtract",
+   "file": "shape-subtract.svg",
+   "label": "Subtract",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "shape-intersect",
+   "file": "shape-intersect.svg",
+   "label": "Intersect",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "shape-exclude",
+   "file": "shape-exclude.svg",
+   "label": "Exclude",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "shape-offset",
+   "file": "shape-offset.svg",
+   "label": "Offset",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "clip-to-shape",
+   "file": "clip-to-shape.svg",
+   "label": "Clip to shape",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "shape-to-clip",
+   "file": "shape-to-clip.svg",
+   "label": "Shape to clip",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "shape-merge",
+   "file": "shape-merge.svg",
+   "label": "Merge drawings",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU6 #845"
+  },
+  {
+   "role": "tool-gradient",
+   "file": "tool-gradient.svg",
+   "label": "Gradient",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-rect",
+   "file": "gradient-rect.svg",
+   "label": "Rectangle strips",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-skew",
+   "file": "gradient-skew.svg",
+   "label": "Skewed strips",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-rotated",
+   "file": "gradient-rotated.svg",
+   "label": "Rotated strips",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-vector",
+   "file": "gradient-vector.svg",
+   "label": "Wedge strips",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-clip-edge",
+   "file": "gradient-clip-edge.svg",
+   "label": "Strips along the clip",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-by-char",
+   "file": "gradient-by-char.svg",
+   "label": "By character",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-by-line",
+   "file": "gradient-by-line.svg",
+   "label": "By Line",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "gradient-merge",
+   "file": "gradient-merge.svg",
+   "label": "Merge strips",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU7 #843"
+  },
+  {
+   "role": "graph-shake",
+   "file": "graph-shake.svg",
+   "label": "Shake",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-wobble",
+   "file": "graph-wobble.svg",
+   "label": "Wobble",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-bounce",
+   "file": "graph-bounce.svg",
+   "label": "Bounce",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-typewriter",
+   "file": "graph-typewriter.svg",
+   "label": "Typewriter",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-fade-by-letter",
+   "file": "graph-fade-by-letter.svg",
+   "label": "Fade by letter",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-focus-lines",
+   "file": "graph-focus-lines.svg",
+   "label": "Focus lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-grain",
+   "file": "graph-grain.svg",
+   "label": "Grain",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-chromatic-aberration",
+   "file": "graph-chromatic-aberration.svg",
+   "label": "Chromatic aberration",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-randomove",
+   "file": "graph-randomove.svg",
+   "label": "Random move",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "graph-karaoke-to-alpha",
+   "file": "graph-karaoke-to-alpha.svg",
+   "label": "Karaoke to alpha",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "node-library"
+   ],
+   "pending": "AU9 #844"
+  },
+  {
+   "role": "select-overlapping",
+   "file": "select-overlapping.svg",
+   "label": "Overlapping lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "select-lines"
+   ],
+   "pending": "AU10 #841"
+  },
+  {
+   "role": "split-tag-blocks",
+   "file": "split-tag-blocks.svg",
+   "label": "Split at tag blocks",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ],
+   "pending": "AU10 #841"
+  },
+  {
+   "role": "split-every-n",
+   "file": "split-every-n.svg",
+   "label": "Split every N frames",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ],
+   "pending": "AU10 #841"
+  },
+  {
+   "role": "track-colour",
+   "file": "track-colour.svg",
+   "label": "Track colour",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU11 #846"
+  },
+  {
+   "role": "find-fade",
+   "file": "find-fade.svg",
+   "label": "Find fade",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU11 #846"
+  },
+  {
+   "role": "tool-text-on-path",
+   "file": "tool-text-on-path.svg",
+   "label": "Text on path",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU14 #847"
+  },
+  {
+   "role": "reinstall-scripts",
+   "file": "reinstall-scripts.svg",
+   "label": "Reinstall scripts",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation-reset"
+   ],
+   "pending": "AU16 #850"
+  },
+  {
+   "role": "layers",
+   "file": "layers.svg",
+   "label": "Blur and glow layers",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "menu:subtitles"
+   ],
+   "pending": "AU18 #852"
+  },
+  {
+   "role": "layers-repeat",
+   "file": "layers-repeat.svg",
+   "label": "Repeat blur and glow layers",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "menu:subtitles"
+   ],
+   "pending": "AU18 #852"
+  },
+  {
+   "role": "snap-start-to-previous-keyframe",
+   "file": "snap-start-to-previous-keyframe.svg",
+   "label": "Snap start to previous keyframe",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "snap-start-to-next-keyframe",
+   "file": "snap-start-to-next-keyframe.svg",
+   "label": "Snap start to next keyframe",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "snap-end-to-previous-keyframe",
+   "file": "snap-end-to-previous-keyframe.svg",
+   "label": "Snap end to previous keyframe",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "snap-end-to-next-keyframe",
+   "file": "snap-end-to-next-keyframe.svg",
+   "label": "Snap end to next keyframe",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "lead-in-remove",
+   "file": "lead-in-remove.svg",
+   "label": "Remove lead-in",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "lead-out-remove",
+   "file": "lead-out-remove.svg",
+   "label": "Remove lead-out",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "timing-assistant",
+   "file": "timing-assistant.svg",
+   "label": "Assistant",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "timing-postprocessor"
+   ],
+   "pending": "AU19 #853"
+  },
+  {
+   "role": "line-break-insert",
+   "file": "line-break-insert.svg",
+   "label": "Insert line break",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "line-break-left",
+   "file": "line-break-left.svg",
+   "label": "Move line break left",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "line-break-right",
+   "file": "line-break-right.svg",
+   "label": "Move line break right",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "line-break-remove",
+   "file": "line-break-remove.svg",
+   "label": "Remove line breaks",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "change-case",
+   "file": "change-case.svg",
+   "label": "Change case",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "case-upper",
+   "file": "case-upper.svg",
+   "label": "UPPER CASE",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "case-lower",
+   "file": "case-lower.svg",
+   "label": "lower case",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "case-title",
+   "file": "case-title.svg",
+   "label": "Title Case",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "case-sentence",
+   "file": "case-sentence.svg",
+   "label": "Sentence case",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "fullwidth",
+   "file": "fullwidth.svg",
+   "label": "Full-width",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "halfwidth",
+   "file": "halfwidth.svg",
+   "label": "Half-width",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "dialogue-swap",
+   "file": "dialogue-swap.svg",
+   "label": "Swap dialogue",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU20 #854"
+  },
+  {
+   "role": "change-alignment",
+   "file": "change-alignment.svg",
+   "label": "Change alignment, keep position",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "align-left",
+   "file": "align-left.svg",
+   "label": "Align left",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "align-center",
+   "file": "align-center.svg",
+   "label": "Align centre",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "align-right",
+   "file": "align-right.svg",
+   "label": "Align right",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "align-top",
+   "file": "align-top.svg",
+   "label": "Align top",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "align-middle",
+   "file": "align-middle.svg",
+   "label": "Align middle",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "align-bottom",
+   "file": "align-bottom.svg",
+   "label": "Align bottom",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "distribute-horizontal",
+   "file": "distribute-horizontal.svg",
+   "label": "Distribute horizontally",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "distribute-vertical",
+   "file": "distribute-vertical.svg",
+   "label": "Distribute vertically",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "pos-to-margins",
+   "file": "pos-to-margins.svg",
+   "label": "Position to margins",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "margins-to-pos",
+   "file": "margins-to-pos.svg",
+   "label": "Margins to position",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "phantom",
+   "file": "phantom.svg",
+   "label": "Phantom",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "grid-menu"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "cycle-values",
+   "file": "cycle-values.svg",
+   "label": "Cycle values",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "settings-dialog"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "shift-by-x",
+   "file": "shift-by-x.svg",
+   "label": "Shift X",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "shift-by-y",
+   "file": "shift-by-y.svg",
+   "label": "Shift Y",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ],
+   "pending": "AU21 #855"
+  },
+  {
+   "role": "interpolate-lines",
+   "file": "interpolate-lines.svg",
+   "label": "Interpolate across Lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ],
+   "pending": "AU22 #856"
+  },
+  {
+   "role": "import-lyrics",
+   "file": "import-lyrics.svg",
+   "label": "Import lyrics",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ],
+   "pending": "AU23 #857"
+  },
+  {
+   "role": "builtin-script",
+   "file": "builtin-script.svg",
+   "label": "Built in",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation-manager"
+   ],
+   "pending": "TH5 #833"
+  },
+  {
+   "role": "citations",
+   "file": "citations.svg",
+   "label": "Sources",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel"
+   ],
+   "pending": "AI23b #800"
+  },
+  {
+   "role": "web-page-read",
+   "file": "web-page-read.svg",
+   "label": "Read a page",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "agent-panel"
+   ],
+   "pending": "AI23b #800"
+  },
+  {
+   "role": "motion-apply",
+   "file": "motion-apply.svg",
+   "label": "Apply motion data",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU8 #842"
+  },
+  {
+   "role": "motion-revert",
+   "file": "motion-revert.svg",
+   "label": "Revert motion data",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU8 #842"
+  },
+  {
+   "role": "motion-copy",
+   "file": "motion-copy.svg",
+   "label": "Copy motion data",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU8 #842"
+  },
+  {
+   "role": "motion-extend",
+   "file": "motion-extend.svg",
+   "label": "Extend tracked lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU8 #842"
+  },
+  {
+   "role": "move-extend",
+   "file": "move-extend.svg",
+   "label": "Extrapolate \\move",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ],
+   "pending": "AU8 #842"
   }
  ],
  "notReplaced": {
