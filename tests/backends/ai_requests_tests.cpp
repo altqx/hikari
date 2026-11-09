@@ -357,3 +357,95 @@ TEST_F(AiRequestsTest, WithCachingOffRequestsAskTheSidecarForNoCache)
     EXPECT_EQ(sent.asArray()[1].find("params")->find("request")->find("caching"), nullptr);
     EXPECT_EQ(*sent.asArray()[3].find("params")->find("request")->find("caching"), Json(false));
 }
+
+TEST_F(AiRequestsTest, WebSearchReachesTheSidecarOnlyWhileTheSwitchIsOn)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    const auto ask = [&] {
+        Stream run;
+        Json request = chat();
+        request["webSearch"] = true;
+        requests.complete(app::Role::Chat, std::move(request), run.sink());
+        EXPECT_TRUE(waitFor([&] { return run.done(); }));
+    };
+    requests.setWebSearch(false, app::SearchService::Brave);
+    ask();
+    EXPECT_EQ(requests.searchService(), std::nullopt);
+    requests.setWebSearch(true, app::SearchService::Brave);
+    ask();
+    EXPECT_EQ(requests.searchService(), app::SearchService::Brave);
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 4u);
+    EXPECT_FALSE(sent.asArray()[0].find("params")->find("searchService"));
+    EXPECT_FALSE(sent.asArray()[1].find("params")->find("request")->find("webSearch"));
+    EXPECT_EQ(*sent.asArray()[2].find("params")->find("searchService"), Json("brave"));
+    EXPECT_EQ(*sent.asArray()[3].find("params")->find("request")->find("webSearch"), Json(true));
+}
+
+TEST_F(AiRequestsTest, CitationsAndSearchSuggestionsComeBackWithTheAnswer)
+{
+    configure({{app::Role::Chat, "cites"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    Stream run;
+    requests.complete(app::Role::Chat, chat(), run.sink());
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+    const auto &finished = std::get<app::Finished>(run.events.back());
+    EXPECT_EQ(finished.citations,
+              (std::vector<app::Citation>{{.index = 1, .url = "https://example.org/a", .title = "A", .quote = "Aimer"}}));
+    EXPECT_EQ(finished.searchSuggestions, "<div>chips</div>");
+    EXPECT_EQ(Json::parse(finished.providerState).value_or(Json()),
+              Json::object({{"type", "providerState"}, {"wire", "gemini"}, {"json", "[]"}}));
+}
+
+TEST_F(AiRequestsTest, TestingASearchServiceReachesItOnlyWhileTheTestRunsWithTheTypedKey)
+{
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Brave), std::nullopt);
+    std::optional<std::optional<app::Error>> answer;
+    requests.testSearch(app::SearchService::Brave, "BSA-typed", [&](std::optional<app::Error> e) { answer = e; });
+    const std::optional<SearchAccess> during = requests.searchAccess(app::SearchService::Brave);
+    ASSERT_TRUE(during);
+    EXPECT_EQ(during->typedKey, "BSA-typed");
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Exa), std::nullopt);
+    ASSERT_TRUE(waitFor([&] { return answer.has_value(); }));
+    EXPECT_EQ(*answer, std::nullopt);
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Brave), std::nullopt);
+    EXPECT_TRUE(keys.keys.empty());
+
+    answer.reset();
+    requests.testSearch(app::SearchService::Exa, std::nullopt, [&](std::optional<app::Error> e) { answer = e; });
+    const std::optional<SearchAccess> stored = requests.searchAccess(app::SearchService::Exa);
+    ASSERT_TRUE(stored);
+    EXPECT_EQ(stored->typedKey, std::nullopt);
+    ASSERT_TRUE(waitFor([&] { return answer.has_value(); }));
+    ASSERT_TRUE(answer->has_value());
+    EXPECT_EQ((*answer)->kind, app::ErrorKind::Unauthorized);
+    EXPECT_EQ((*answer)->httpStatus, 401);
+
+    requests.setWebSearch(true, app::SearchService::Exa);
+    ASSERT_TRUE(requests.searchAccess(app::SearchService::Exa));
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Exa)->typedKey, std::nullopt);
+    requests.setWebSearch(false, app::SearchService::Exa);
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Exa), std::nullopt);
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 4u);
+    EXPECT_EQ(*sent.asArray()[1].find("params"), Json::object({{"service", "brave"}}));
+    EXPECT_EQ(*sent.asArray()[3].find("params"), Json::object({{"service", "exa"}}));
+}
+
+TEST_F(AiRequestsTest, TestingASearchServiceWithoutTheAiComponentFails)
+{
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [] { return nullptr; });
+    std::optional<std::optional<app::Error>> answer;
+    requests.testSearch(app::SearchService::Brave, "BSA-typed", [&](std::optional<app::Error> e) { answer = e; });
+    ASSERT_TRUE(answer.has_value() && answer->has_value());
+    EXPECT_EQ((*answer)->kind, app::ErrorKind::Network);
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Brave), std::nullopt);
+}

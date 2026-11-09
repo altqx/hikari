@@ -40,6 +40,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "karaokeCheck", "/en/docs/karaoke/karaoke-check"},
     GuideLink{Window, "manageLayouts", "/en/docs/customize/layouts"},
     GuideLink{Window, "motionData", "/en/docs/typesetting/perspective"},
+    GuideLink{Window, "perspectiveTracking", "/en/docs/typesetting/perspective#perspective-tracking"},
     GuideLink{Window, "resample", "/en/docs/basics/files-and-formats"},
     GuideLink{Window, "restoreCheckpoint", "/en/docs/ai/review"},
     GuideLink{Window, "saveLayout", "/en/docs/customize/layouts"},

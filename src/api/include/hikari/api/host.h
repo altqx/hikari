@@ -6,6 +6,7 @@
 #include "hikari/application/automation_services.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/settings.h"
+#include "hikari/application/subtitle_render.h"
 #include "hikari/application/workspace.h"
 
 #include <optional>
@@ -73,6 +74,16 @@ public:
     virtual bool write(const std::string &path, std::string_view bytes) = 0;
 };
 
+// Draws subtitles as the video does, in a render context apart from the video's.
+class RenderHost {
+public:
+    virtual ~RenderHost() = default;
+    // `document`'s Lines at `frame`'s start, laid out and drawn at width x height with `id`'s fonts;
+    // nullopt without video or when the renderer fails.
+    virtual std::optional<application::OverlayFrame> render(application::DocumentId id, const core::Document &document,
+                                                            std::int64_t frame, int width, int height) = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -82,6 +93,7 @@ struct Host {
     application::MacroMediaPort *media = nullptr;
     FileHost *files = nullptr;
     application::AiReview *review = nullptr;
+    RenderHost *render = nullptr;
 };
 
 }

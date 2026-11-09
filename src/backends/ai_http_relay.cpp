@@ -164,6 +164,45 @@ RelayTargets providerTargets(app::Providers &providers)
     };
 }
 
+QUrl searchServiceBase(app::SearchService service)
+{
+    switch (service) {
+    case app::SearchService::Brave:
+        return QUrl(QStringLiteral("https://api.search.brave.com"));
+    case app::SearchService::Tavily:
+        return QUrl(QStringLiteral("https://api.tavily.com"));
+    case app::SearchService::Exa:
+        return QUrl(QStringLiteral("https://api.exa.ai"));
+    case app::SearchService::Firecrawl:
+        return QUrl(QStringLiteral("https://api.firecrawl.dev"));
+    }
+    return {};
+}
+
+RelayTargets withSearchTargets(RelayTargets next, app::SearchKeys &keys,
+                               std::function<std::optional<SearchAccess>(app::SearchService)> access)
+{
+    return [next = std::move(next), &keys, access = std::move(access)](const api::Json &target,
+                                                                        std::function<void(RelayTargetResult)> done) {
+        const api::Json *kind = target.find("kind");
+        if (!kind || *kind != api::Json("search"))
+            return next(target, std::move(done));
+        const api::Json *id = target.find("id");
+        const std::optional<app::SearchService> service =
+            id && id->isString() ? app::searchServiceFromId(id->asString()) : std::nullopt;
+        const std::optional<SearchAccess> allowed = service ? access(*service) : std::nullopt;
+        if (!allowed)
+            return done(std::unexpected(app::Error{app::ErrorKind::Rejected, 0, "search service not chosen"}));
+        if (allowed->typedKey)
+            return done(RelayTarget{searchServiceBase(*service), *allowed->typedKey});
+        keys.read(*service, [base = searchServiceBase(*service), done = std::move(done)](std::optional<std::string> key) {
+            if (!key)
+                return done(std::unexpected(app::Error{app::ErrorKind::Key, 0, ""}));
+            done(RelayTarget{base, std::move(*key)});
+        });
+    };
+}
+
 bool keySafeOverPlainHttp(const QHostAddress &address, const QList<QHostAddress> &local)
 {
     const QHostAddress a = unmapped(address);

@@ -5,7 +5,7 @@ import { inline, type JsonSchema } from "./schema";
 /** The core tools are always offered; the others come through search_tools. */
 export const kGroups = {
     core: "Documents, Lines, Styles, the selection, video and audio facts, granted files and commands.",
-    typeset: "Typesetting: video frames as images, signs, positions and clips.",
+    typeset: "Typesetting: video frames as images, ink bounds, colours and keyframes.",
     translate: "Translation passes, the glossary, characters and tag rules.",
     karaoke: "Karaoke timing: audio peaks, syllables and onsets.",
     automation: "Automation macros and AI-written Lua.",
@@ -21,6 +21,25 @@ interface Placement {
     name?: string;
     /** When the tool's answer isn't HA1's result as it is. */
     description?: string;
+    /** When the tool takes other parameters than HA1's. */
+    params?: (schema: JsonSchema) => JsonSchema;
+}
+
+/** video.frame's parameters, less maxPixels, which the image budget sets, and with `full`. */
+function frameParams(schema: JsonSchema): JsonSchema {
+    const { maxPixels: _, ...properties } = schema.properties as Record<string, JsonSchema>;
+    return {
+        ...schema,
+        properties: {
+            ...properties,
+            maxEdge: { ...properties.maxEdge, description: "Default 1024, and never more than the model takes." },
+            full: {
+                type: "boolean",
+                description: "The whole frame. Without it or crop, the frame is cropped around the ink of line, or of " +
+                    "every Line, with a margin, and whole when nothing is drawn.",
+            },
+        },
+    };
 }
 
 /** Where each HA1 operation is offered. An operation added to HA1 is offered once it is placed here. */
@@ -45,8 +64,14 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "commands.run": { group: "core", name: "run_command" },
     "video.frame": {
         group: "typeset",
-        description: "One video frame as a PNG image, optionally cropped, scaled to fit maxEdge.",
+        description: "One video frame as a PNG image, with every Line, one Line or none drawn on it, cropped around " +
+            "the ink unless full or crop is given. Image point (x, y) is video point " +
+            "(crop.x + x * crop.width / width, crop.y + y * crop.height / height).",
+        params: frameParams,
     },
+    "video.ink_bounds": { group: "typeset" },
+    "video.colours": { group: "typeset" },
+    "video.keyframes": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
@@ -68,7 +93,8 @@ export interface Tool {
     description: string;
     inputSchema: JsonSchema;
     annotations: { readOnlyHint: boolean };
-    _meta: { "hikari/group": Group };
+    /** A catalogue group, or a ToolSource's. */
+    _meta: { "hikari/group": string };
 }
 
 export interface Entry {
@@ -95,13 +121,19 @@ export interface Reference {
 
 export const kOwnReference = reference as unknown as Reference;
 
+export function tool(name: string, description: string, inputSchema: JsonSchema, access: "read" | "write",
+    group: string): Tool {
+    return { name, description, inputSchema, annotations: { readOnlyHint: access === "read" }, _meta: { "hikari/group": group } };
+}
+
 function entry(name: string, description: string, inputSchema: JsonSchema, access: "read" | "write", group: Group,
     operation?: OperationName): Entry {
-    return {
-        tool: { name, description, inputSchema, annotations: { readOnlyHint: access === "read" }, _meta: { "hikari/group": group } },
-        group,
-        operation,
-    };
+    return { tool: tool(name, description, inputSchema, access, group), group, operation };
+}
+
+export interface ExtraGroup {
+    group: string;
+    description: string;
 }
 
 /** The tools one app offers: an operation that app's reference lacks is never offered. */
@@ -143,19 +175,24 @@ export class Catalogue {
             [...this.operations.keys()].some((name) => kPlacements[name as OperationName]?.group === group));
     }
 
-    private searchTools(): Entry {
-        const searchable = this.searchable();
-        const groups = searchable.map((group) => `${group} (${kGroups[group]})`).join("; ");
-        return entry("search_tools",
-            `Finds more tools by words in their names and descriptions, or by group, and offers them from then on. Groups: ${groups}.`,
+    /** search_tools, listing the catalogue's searchable groups and then `extra`. */
+    searchToolsTool(extra: readonly ExtraGroup[] = []): Tool {
+        const all = [...this.searchable().map((group) => ({ group, description: kGroups[group] as string })), ...extra];
+        const groups = all.map(({ group, description }) => `${group} (${description})`).join("; ");
+        return tool("search_tools",
+            `Finds more tools by words or by group and offers them from then on. Groups: ${groups}.`,
             {
                 type: "object",
                 properties: {
                     query: { type: "string", minLength: 1, description: "Words to look for, such as \"video frame\"." },
-                    group: { enum: searchable, description: "Every tool of one group." },
+                    group: { enum: all.map((g) => g.group), description: "Every tool of one group." },
                 },
                 additionalProperties: false,
             }, "read", "core");
+    }
+
+    private searchTools(): Entry {
+        return { tool: this.searchToolsTool(), group: "core" };
     }
 
     private searchCommands(list: Operation): Entry {
@@ -184,7 +221,7 @@ export class Catalogue {
             const placement = kPlacements[op.name];
             if (placement && op.deprecatedIn === undefined)
                 entries.push(entry(this.toolNames.get(op.name)!, placement.description ?? this.forModel(op.summary),
-                    this.schema(op.params), op.access, placement.group, op.name));
+                    (placement.params ?? ((schema) => schema))(this.schema(op.params)), op.access, placement.group, op.name));
         }
         return entries;
     }

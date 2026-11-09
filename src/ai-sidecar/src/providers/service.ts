@@ -8,13 +8,13 @@ import { openAiClient } from "./openai";
 import { type Relay, relayFetch } from "./relay";
 import { kSchemas, type Schema, validate } from "./schema";
 import type { CompleteParams, ConversationEndParams, Finished, ModelsListParams, ModelsListResult, ProviderConfig,
-    ProvidersSetParams, Request, Update } from "./types";
+    ProvidersSetParams, Request, SearchService, Update } from "./types";
 
 export const kIdleTimeoutMs = 2 * 60 * 1000;
 
 export class InvalidParams extends Error {}
 
-function checked<T>(schema: Schema, params: unknown): T {
+export function checked<T>(schema: Schema, params: unknown): T {
     const broken = validate(schema, params);
     if (broken)
         throw new InvalidParams(broken);
@@ -72,7 +72,8 @@ interface ConversationCache {
 }
 
 function cacheContents(providerId: string, request: Request): string {
-    return JSON.stringify([providerId, request.model, prefixTexts(request), sortedTools(request), request.context ?? ""]);
+    return JSON.stringify([providerId, request.model, prefixTexts(request), sortedTools(request), request.context ?? "",
+        request.webSearch === true]);
 }
 
 /**
@@ -81,6 +82,7 @@ function cacheContents(providerId: string, request: Request): string {
  */
 export class ProviderService {
     private providers = new Map<string, ProviderConfig>();
+    private search: SearchService | undefined;
     private readonly relay: Relay;
     private readonly idleTimeoutMs: number;
     private readonly now: () => number;
@@ -93,12 +95,18 @@ export class ProviderService {
     }
 
     set(params: unknown): null {
-        const { providers } = checked<ProvidersSetParams>(kSchemas.providersSetParams, params);
+        const { providers, searchService } = checked<ProvidersSetParams>(kSchemas.providersSetParams, params);
         this.providers = new Map(providers.map((p) => [p.id, p]));
+        this.search = searchService;
         for (const [key, cache] of this.caches)
             if (!this.providers.has(cache.providerId))
                 this.caches.delete(key);
         return null;
+    }
+
+    /** The service that searches for providers without their own search, while web search is on. */
+    get searchService(): SearchService | undefined {
+        return this.search;
     }
 
     async endConversation(params: unknown, signal: AbortSignal): Promise<null> {

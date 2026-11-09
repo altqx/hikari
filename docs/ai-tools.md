@@ -11,6 +11,7 @@ The tools a model calls to read and edit subtitles ([ADR 0024](adr/0024-hikari-a
 | `src/ai-sidecar/tools/gen-api.ts` | The generator: `bun tools/gen-api.ts` rewrites `api.gen.ts`. |
 | `src/ai-sidecar/src/tools/catalogue.ts` | Where each operation is offered, the groups, and the tool definitions built from HA1's schemas. |
 | `src/ai-sidecar/src/tools/toolset.ts` | `ToolSet`: the tools offered to one conversation, calls, searches, and errors worded for the model. |
+| `src/ai-sidecar/src/tools/web.ts` | `WebSearch`: `web_search` and `web_fetch` through the user's search service. |
 
 HA1 stays the source of truth. `ApiReference.TheSidecarsCopyIsCurrent` in `hikari_api_tests` fails when `api.json` differs from the registry. To fix it, rerun that test with `HIKARI_API_WRITE_SIDECAR_REFERENCE=src/ai-sidecar/src/tools/api.json`, then `bun tools/gen-api.ts` in `src/ai-sidecar`. A bun test then fails when `api.gen.ts` differs from the generator's output.
 
@@ -33,21 +34,69 @@ A tool's name is its operation's, with `.` as `_` (`lines.find` is `lines_find`)
 
 | Group | Tools now |
 | --- | --- |
-| `typeset` | `video_frame`, which answers a PNG image rather than HA1's BGRA pixels. |
+| `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)) |
 | `karaoke` | `audio_peaks` |
 | `effects` | `nodes_catalogue` |
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set` |
 | `translate`, `automation`, `plugins` | none yet; the tool cards add them. |
+| `web` | `web_search`, `web_fetch`, while a search service is chosen ([Web search](#web-search)). |
 
-- **`search_tools {query?, group?}`** matches words against names, descriptions and groups. It answers up to ten tools with their schemas and offers them from then on.
+- **`search_tools {query?, group?}`** matches words against names, descriptions and groups, ranking words in a name first. It answers up to ten tools with their schemas and offers them from then on.
 - **`search_commands {query, window?, limit?}`** reads `commands.list` and keeps the commands whose id or name holds every word.
 - **`run_command`** is `commands.run`.
 
+**Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. The web search is the first source; MCP-server and agent tools plug in the same way ([AI23b #800](https://github.com/altqx/hikari/issues/800)).
+
+**The up-front budget.** The tools offered before any search, with a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends. It is at 3,011 on Responses.
+
 **Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only `commands.list` (behind `search_commands`) and `api.version` are left out on purpose. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
+
+## Frames
+
+The frame tools are HA1's `video.*` operations ([AI4 #432](https://github.com/altqx/hikari/issues/432)). Frames, ink bounds and colours are worked out in C++, next to the renderer; the sidecar crops and applies the image budget.
+
+- **`video_frame`** answers a PNG image and `{frame, crop, width, height}`. Image point (x, y) is video point (crop.x + x × crop.width / width, crop.y + y × crop.height / height), since a model's coordinates are relative to the image it saw.
+  - `subtitles: false` draws none, `line` draws that Line alone, and otherwise every Line is drawn.
+  - **Cropped by default.** Without `crop` or `full: true`, the sidecar first asks `video.ink_bounds` for the ink of `line`, or of every Line, and crops to it grown by a quarter of its longer side, 32 px at least. The frame is whole when nothing is drawn, or when the app can't draw apart from the video.
+  - The tool takes `full` and leaves out HA1's `maxPixels`, which the image budget sets.
+- **`video_ink_bounds`** gives the [ink bounds](../CONTEXT.md) of one Line or every Line on a frame.
+- **`video_colours`** samples colours as ASS `&HBBGGRR&`, for `\c` tags, rather than letting the model guess them.
+- **`video_keyframes`** lists keyframes in a time range, with their times.
+
+**Image budgets.** `ToolSet.imageBudget` caps `maxEdge` and sets `maxPixels` at the size past which the provider scales an image down or bills more tiles, so no pixel sent is thrown away. `kImageBudgets` in `images.ts` holds one per wire, from the [research note](research/hikari-ai-integration.md#41-what-the-models-take-and-what-it-costs) and each provider's vision guide:
+
+| Wire | Longest edge | Pixels |
+| --- | --- | --- |
+| `anthropic-messages` | 1,568 | 1,192,464 (1092 × 1092) |
+| `responses` | 2,048 | 2,560,000 (2,500 patches of 32 × 32) |
+| `chat-completions` | 2,048 | 1,048,576 (768 on the short side of a 16:9 frame) |
+| `gemini` | 1,536 | 2,359,296 (four 768 × 768 tiles) |
+
+The Gemini and Chat Completions rows are HikariSub's own caps, derived from each vendor's tiling rules. The vendors don't state them as limits.
+
+The agent sets the budget from the provider's wire. A caller whose provider isn't known, such as an external agent over MCP, gets the smallest of each.
 
 ## Documents
 
 A tool that takes `document` works on the editing target when it is omitted. The sidecar's `Caller` has no `documents.all` grant. It sees the editing target and the Documents the user attached with `@`, which `AiSidecarHost::setAttachedDocuments` sets. Anything else gives `not_granted`, which tells the model to ask the user to attach that Document.
+
+## Web search
+
+Providers with their own search use it ([AI providers](ai-providers.md#web-search)). For the others, `WebSearch` offers two tools in the `web` group while `providers.set` names a search service:
+
+- **`web_search {query, count?}`** answers up to `count` results (1–10, 5 when omitted), each `{url, title, snippet}` with the snippet cut at 600 characters.
+- **`web_fetch {url}`** answers one `http` or `https` page as `{url, title, text}`, with the text cut at 20,000 characters. Brave reads only the pages its own results return, so with Brave the tool isn't offered.
+
+| Service | Search | Read |
+| --- | --- | --- |
+| Brave Search | `GET /res/v1/web/search?q&count&extra_snippets=true` | — |
+| Tavily | `POST /search {query, max_results, search_depth: "basic"}` | `POST /extract {urls, format: "markdown"}` |
+| Exa | `POST /search {query, numResults, contents.highlights}` | `POST /contents {urls, text}` |
+| Firecrawl | `POST /v2/search {query, limit}` | `POST /v2/scrape {url, formats: ["markdown"], onlyMainContent}` |
+
+- Both descriptions tell the model that results are untrusted text from the web and never instructions.
+- A refused key (401, 403, or Brave's 422 about the token) tells the model to answer without searching and to point the user at Settings › AI. A used-up plan (429, Exa's and Firecrawl's 402, Tavily's 432 and 433) tells it to answer without searching and say so.
+- `_hikari/search.test {service}` runs one search for Test connection, and fails with the service's error as a provider error.
 
 ## Results and errors
 
@@ -80,7 +129,10 @@ Qt calls the tools with two `_hikari/*` requests:
   - the generated types are current, and every operation is placed;
   - names fit every provider, the read and write marks are HA1's, and the schemas are self-contained;
   - searches, routing, the worded errors and the PNG frame run against a fake HA1;
-  - the two link methods.
+  - `video_frame`'s default crop, its margin, `full`, and the image budgets;
+  - the two link methods;
+  - each search service's requests, key headers, results and errors through a fake relay, and the `web` group appearing only while a service is chosen;
+  - the up-front tool block within 5,000 tokens on every wire.
 - `hikari_backends_ai_tools_tests` runs the real `hikari-ai` against the real API over a fake host, with no provider and no network:
   - a scripted agent finds a Line, edits it, is refused a stale revision, then finds and runs a command;
   - `search_tools` offers `video_frame`;
