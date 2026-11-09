@@ -10823,6 +10823,18 @@ Failed to copy %2 fonts.</source>
         <translation>ติดตั้งปลั๊กอิน</translation>
     </message>
     <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>ติดตั้ง “%1” ไม่ได้ขณะที่ปิดการอัปเดตปลั๊กอินอยู่</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>ลิงก์นี้มาจากเว็บไซต์มาร์เก็ตเพลส HikariSub ค้นหาปลั๊กอินในรายการที่ลงนามของตัวเอง จึงต้องตรวจสอบมาร์เก็ตเพลสก่อน</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>เปิดการอัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>Update plugin</source>
         <translation>อัปเดตปลั๊กอิน</translation>
     </message>

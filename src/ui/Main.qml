@@ -1381,6 +1381,7 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    function openInstallLink(id) { pluginManagerDialog.followLink(id) }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }
