@@ -644,6 +644,7 @@ constexpr NameRow kNames[] = {
         {5221, "Move tab to new window"},
         {5222, "Move tab to window"},
         {5263, "Close window"},
+        {5108, "Exit"},
         {5245, "Keep AI change"},
         {5246, "Undo AI change"},
         {5247, "Next AI change"},
@@ -1301,7 +1302,6 @@ void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> 
     HotkeyMap mapped = live;
     const auto &names = hotkeyNames();
     int lastType = -1;
-    // MUST KILL: unnamed bindings follow their window's names, minus GLOBAL_QUIT
     for (auto cur = names.rbegin(); cur != names.rend(); ++cur) {
         const int htype = hotkeyType(cur->first);
         auto next = cur;
@@ -1311,8 +1311,6 @@ void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> 
                 if (lastType != it->first.type)
                     break;
                 ++done;
-                if (it->first.id == kGlobalQuit)
-                    continue;
                 const auto named = names.find(it->first.id);
                 const std::string name = named != names.end() ? named->second : it->second.name;
                 append(std::string(hotkeyWindowName(it->first.type)) + " " + name, name, it->second.accel, it->first);
