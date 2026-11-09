@@ -42,6 +42,7 @@ export const Method = {
     modelsList: "_hikari/models.list",
     conversationEnd: "_hikari/conversation.end",
     complete: "_hikari/complete",
+    searchTest: "_hikari/search.test",
     apiCall: "_hikari/api.call",
     apiSubscribe: "_hikari/api.subscribe",
     httpRequest: "_hikari/http.request",
@@ -197,7 +198,8 @@ export interface CancelRequestParams {
 
 /** Where a relayed request goes; Qt knows its base URL and key. */
 export interface RelayTarget {
-    kind: "provider";
+    /** A provider by its id, or the chosen search service by its SearchService id. */
+    kind: "provider" | "search";
     id: string;
 }
 

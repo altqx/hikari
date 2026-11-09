@@ -25,7 +25,7 @@ w() { winix --owner "$owner" --config "$config" "$@"; }
 guest='C:\Winix\work\inst-qt-windows\out\inst'
 user='C:\Users\winix\AppData\Local\Programs\HikariSub'
 machine='C:\Program Files\HikariSub'
-legacy_orphans='ffms2.dll|D3DX9_43.dll|HikariSub.pdb|HikariSub_AVX.pdb|Locale|Themes|Csri|LICENSE.txt'
+legacy_orphans='ffms2.dll|D3DX9_43.dll|HikariSub.pdb|HikariSub_AVX.pdb|Locale|Themes|Csri\xy-VSFilter_hikarisub.dll|LICENSE.txt'
 
 # A winix job without an exit code never ran its script ("Access to the path is denied."): run it once more.
 step() {

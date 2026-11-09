@@ -159,6 +159,17 @@ describe("Sidecar", () => {
             [ErrorCode.notInitialized, "ok", ErrorCode.invalidParams, "ok", ErrorCode.invalidParams, ErrorCode.invalidParams]);
     });
 
+    test("a session's tools include web search once a search service is set", async () => {
+        const { peer, feed } = link({ maxOutstanding: 16, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        const sidecar = new Sidecar(peer, build);
+        const sessionTools = (sidecar.sessions as unknown as { tools: (id: string) => { list(all: boolean): { name: string }[] } }).tools;
+        expect(sessionTools("t1").list(true).map((t) => t.name)).not.toContain("web_search");
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet, params: { providers: [], searchService: "brave" } });
+        await settle();
+        expect(sessionTools("t1").list(true).map((t) => t.name)).toContain("web_search");
+    });
+
     test("a session's tool calls name the session, so Qt checks them against its thread", async () => {
         const { peer, sent } = link();
         void new HikariApi(peer, undefined, "t1").call("documents.get");

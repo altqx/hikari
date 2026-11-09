@@ -132,6 +132,10 @@ _Avoid_: Trusted key as a synonym; a pinned key says who signed before, not that
 HikariSub's own signed index of plugins, run only by us, and the one source of listed plugins and their automatic updates ([ADR 0022](docs/adr/0022-hikarisub-plugins.md)).
 _Avoid_: Store, feed or curated index; there are no third-party feeds.
 
+**Install link**:
+`hikarisub://plugin/install?id=<id>`, the marketplace website's Install in HikariSub. It only chooses a listing: the index, the download checks and the install question are HikariSub's own.
+_Avoid_: Deep link or protocol handler as the product term; there are no other `hikarisub://` links.
+
 **Unverified**:
 A plugin sideloaded from a `.hikariplugin` file rather than installed from the Plugin marketplace, signed or not. It never updates by itself.
 
