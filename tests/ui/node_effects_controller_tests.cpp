@@ -49,6 +49,16 @@ std::vector<std::string> historyNames(const application::EditSession &s)
     return out;
 }
 
+class FortyTwo : public application::LuaNodePort {
+public:
+    std::expected<std::vector<std::vector<application::NodeValue>>, Failure> run(const Call &call) override
+    {
+        ++calls;
+        return std::vector<std::vector<application::NodeValue>>(call.rows.size(), {42.0});
+    }
+    int calls = 0;
+};
+
 QVariantMap nodeNamed(const NodeEffectsController &c, const QString &id)
 {
     for (const QVariant &n : c.nodes())
@@ -219,6 +229,36 @@ private slots:
         controller().commit();
         QVERIFY(controller().trusted());
         QVERIFY(editor.trusted());
+    }
+
+    void aTrustedLuaNodeRunsInTheHelper()
+    {
+        TemplateEditorController editor;
+        editor.setSessionSource([this] { return &*m_session; });
+        controller().shareTrustWith(&editor);
+        FortyTwo lua;
+        int started = 0;
+        controller().setLuaNodes([&]() -> application::LuaNodePort * {
+            ++started;
+            return &lua;
+        });
+        QVERIFY(controller().addPreset(presetIndex(QStringLiteral("10-palette.ass"))));
+        QTRY_VERIFY(!controller().previewLines().isEmpty());
+        QCOMPARE(started, 0);
+
+        const QString node = controller().addNode(QStringLiteral("lua.code"), 300, 200);
+        controller().setField(node, QStringLiteral("code"), QStringLiteral("out = 42"));
+        controller().setField(node, QStringLiteral("outputs"),
+                              QVariantList{QVariantMap{{QStringLiteral("name"), QStringLiteral("out")},
+                                                       {QStringLiteral("type"), QStringLiteral("Number")}}});
+        QVERIFY(controller().connectPorts(node, QStringLiteral("out"), QStringLiteral("place"), QStringLiteral("b")).isEmpty());
+        controller().commit();
+        QTest::qWait(50);
+        QCOMPARE(lua.calls, 0);
+
+        controller().trustDocument();
+        QTRY_VERIFY(lua.calls > 0);
+        QVERIFY(started > 0);
     }
 
     void groupingAndEnteringAGroup()

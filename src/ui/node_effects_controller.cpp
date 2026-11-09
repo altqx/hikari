@@ -292,6 +292,11 @@ void NodeEffectsController::setSessionSource(SessionSource source)
     m_sessionSource = std::move(source);
 }
 
+void NodeEffectsController::setLuaNodes(LuaNodesSource source)
+{
+    m_luaNodes = std::move(source);
+}
+
 void NodeEffectsController::shareTrustWith(TemplateEditorController *editor)
 {
     m_trustOwner = editor;
@@ -941,6 +946,8 @@ application::NodeEffectOptions NodeEffectsController::options() const
     application::NodeEffectOptions o;
     o.measure = m_measure;
     o.trustLua = trusted();
+    if (m_luaNodes && o.trustLua && hasLua())
+        o.lua = m_luaNodes();
     o.cache = const_cast<application::NodeEffectCache *>(&m_cache);
     return o;
 }

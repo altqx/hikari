@@ -1891,6 +1891,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
             showVideoSubtitles();
     });
     effects->shareTrustWith(v.templateEditor.get());
+    effects->setLuaNodes([this] { return &luaNodes(); });
 }
 
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
