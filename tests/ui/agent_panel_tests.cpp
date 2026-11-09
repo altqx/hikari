@@ -12,6 +12,7 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
 #include <QQuickWindow>
@@ -90,8 +91,10 @@ class AgentPanelTest : public QObject {
                     return found;
             return nullptr;
         };
-        if (QQuickItem *found = find(window()->contentItem()))
-            return found;
+        for (QWindow *top : QGuiApplication::topLevelWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(top); quick && quick->isVisible())
+                if (QQuickItem *found = find(quick->contentItem()))
+                    return found;
         for (QObject *popup : window()->findChildren<QObject *>()) {
             if (auto *popupItem = qobject_cast<QQuickItem *>(popup->property("popupItem").value<QObject *>()))
                 if (QQuickItem *found = find(popupItem))
@@ -261,6 +264,21 @@ private slots:
         shoot(QStringLiteral("agent-threads"), QStringLiteral("Tighten the long first line"));
     }
 
+    void aThreadIsRenamedInItsOwnWindow()
+    {
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
+        QTRY_VERIFY(item(QStringLiteral("agentRenameField")));
+        item(QStringLiteral("agentRenameField"))->setProperty("text", QStringLiteral("Honorifics pass"));
+        QVERIFY(click(QStringLiteral("agentRenameOk")));
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
+        QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+    }
+
     void fullAccessWarnsOnceAndTheAlwaysAskListStillAsks()
     {
         openPanel();
@@ -268,10 +286,10 @@ private slots:
         QVERIFY(click(QStringLiteral("agentModeButton")));
         QTRY_VERIFY(item(QStringLiteral("agentMode_full")));
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentMode_full")), "triggered"));
-        QTRY_VERIFY(item(QStringLiteral("agentDontWarn")));
+        QTRY_VERIFY(item(QStringLiteral("messageBoxDontAsk")));
         QCOMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("auto"));
-        item(QStringLiteral("agentDontWarn"))->setProperty("checked", true);
-        QVERIFY(click(QStringLiteral("agentTurnOnFullAccess")));
+        item(QStringLiteral("messageBoxDontAsk"))->setProperty("checked", true);
+        QVERIFY(click(QStringLiteral("messageBoxChoice_full")));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
         QVERIFY(agent().fullAccessWarned());
         QVERIFY(item(QStringLiteral("agentFullAccessBadge")));
@@ -300,7 +318,7 @@ private slots:
         QTRY_VERIFY(item(QStringLiteral("agentMode_full")));
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentMode_full")), "triggered"));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("mode")).toString(), QStringLiteral("full"));
-        QVERIFY(!item(QStringLiteral("agentDontWarn")));
+        QVERIFY(!item(QStringLiteral("messageBoxDontAsk")));
     }
 
     void aThreadAtItsCapStopsAndRaiseContinues()

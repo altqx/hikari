@@ -4223,8 +4223,7 @@
    "legacy": [],
    "surfaces": [
     "agent-panel"
-   ],
-   "pending": "AI7 #435"
+   ]
   },
   {
    "role": "review-keep",

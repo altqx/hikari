@@ -30,7 +30,22 @@ FocusScope {
     }
     function chooseMode(m) {
         if (m === "full" && panel.mode !== "full" && !panel.agent.fullAccessWarned) {
-            fullAccessDialog.open()
+            fullAccessQuestion.ask({
+                title: qsTr("Turn on Full access?"),
+                severity: "warning",
+                text: qsTr("The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone."),
+                detail: qsTr("These still ask, in every mode: deleting or overwriting files outside the subtitles' folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets."),
+                dontAsk: true,
+                dontAskText: qsTr("Don't warn me again"),
+                choices: [{ id: "full", text: qsTr("Turn on Full access"), role: "accept" },
+                          { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+            }, (id, dontWarn) => {
+                if (id !== "full")
+                    return
+                if (dontWarn)
+                    panel.agent.setFullAccessWarned()
+                panel.agent.setMode("full")
+            })
             return
         }
         panel.agent.setMode(m)
@@ -369,7 +384,7 @@ FocusScope {
                 elide: Text.ElideRight
                 text: !panel.hasThread ? ""
                       : panel.thread.contextWindow > 0
-                        ? qsTr("%1 of %2 tokens").arg(panel.tokens(panel.thread.contextTokens)).arg(panel.tokens(panel.thread.contextWindow))
+                        ? qsTr("%1 of %2 tokens").arg(panel.tokens(panel.thread.contextTokens), panel.tokens(panel.thread.contextWindow))
                         : qsTr("%1 tokens").arg(panel.tokens(panel.thread.contextTokens))
             }
             Label {
@@ -378,7 +393,7 @@ FocusScope {
                 color: over ? Theme.danger : Theme.muted
                 text: !panel.hasThread ? ""
                       : panel.thread.costUnknown && panel.thread.cost === 0 ? qsTr("cost not reported")
-                      : panel.thread.cap > 0 ? qsTr("%1 of %2").arg(panel.money(panel.thread.cost)).arg(panel.money(panel.thread.cap))
+                      : panel.thread.cap > 0 ? qsTr("%1 of %2").arg(panel.money(panel.thread.cost), panel.money(panel.thread.cap))
                       : panel.money(panel.thread.cost)
             }
         }
@@ -488,34 +503,44 @@ FocusScope {
         }
     }
 
-    Menu {
+    ShellMenu {
         id: threadMenu
-        MenuItem {
+        ShellMenuItem {
+            objectName: "agentRenameThread"
+            iconRole: "edit"
             text: qsTr("Rename thread…")
-            onTriggered: {
-                renameField.text = panel.thread.title
-                renameDialog.open()
-            }
+            onTriggered: renameLoader.active = true
         }
-        MenuItem {
+        ShellMenuItem {
+            iconRole: "export"
             text: qsTr("Export as Markdown…")
             onTriggered: panel.exportRequested(panel.thread.id)
         }
         MenuSeparator {}
-        MenuItem {
+        ShellMenuItem {
+            iconRole: "delete"
             text: qsTr("Delete thread")
-            onTriggered: deleteDialog.open()
+            onTriggered: deleteQuestion.ask({
+                title: qsTr("Delete this thread?"),
+                severity: "warning",
+                text: qsTr("The conversation goes. Changes it made stay in your subtitles and in the review."),
+                choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
+                          { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+            }, id => {
+                if (id === "delete")
+                    panel.agent.remove(panel.thread.id)
+            })
         }
     }
 
-    Menu {
+    ShellMenu {
         id: attachMenu
         Repeater {
             model: panel.agent.attachable
-            delegate: MenuItem {
+            delegate: ShellMenuItem {
                 required property var modelData
                 text: modelData.title
-                icon.name: "open-subtitles"
+                iconRole: "open-subtitles"
                 onTriggered: {
                     panel.agent.attach(modelData.id)
                     if (composer.text.endsWith("@"))
@@ -526,16 +551,18 @@ FocusScope {
         }
     }
 
-    Menu {
+    ShellMenu {
         id: slashMenu
-        MenuItem {
+        ShellMenuItem {
+            iconRole: "add"
             text: qsTr("/new  New thread")
             onTriggered: {
                 composer.text = ""
                 panel.agent.newThread()
             }
         }
-        MenuItem {
+        ShellMenuItem {
+            iconRole: "ai-assistant"
             text: qsTr("/mode  Change mode")
             onTriggered: {
                 composer.text = ""
@@ -544,11 +571,11 @@ FocusScope {
         }
     }
 
-    Menu {
+    ShellMenu {
         id: modelMenu
         Repeater {
             model: panel.agent.models
-            delegate: MenuItem {
+            delegate: ShellMenuItem {
                 required property var modelData
                 text: modelData.text + "   " + modelData.provider
                 checkable: true
@@ -561,13 +588,14 @@ FocusScope {
             }
         }
         MenuSeparator {}
-        MenuItem {
+        ShellMenuItem {
+            iconRole: "settings"
             text: qsTr("Settings › AI…")
             onTriggered: panel.settingsRequested()
         }
     }
 
-    Menu {
+    ShellMenu {
         id: modeMenu
         objectName: "agentModeMenu"
         width: 300
@@ -575,7 +603,7 @@ FocusScope {
             model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve every change. Reading never asks.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
-            delegate: MenuItem {
+            delegate: ShellMenuItem {
                 id: modeItem
                 required property var modelData
                 objectName: "agentMode_" + modelData.id
@@ -604,81 +632,60 @@ FocusScope {
             }
         }
         MenuSeparator {}
-        MenuItem {
+        ShellMenuItem {
+            iconRole: "settings"
             text: qsTr("Default for new threads…")
             onTriggered: panel.settingsRequested()
         }
     }
 
-    Dialog {
-        id: fullAccessDialog
-        objectName: "agentFullAccessDialog"
-        title: qsTr("Turn on Full access?")
-        modal: true
-        anchors.centerIn: parent
-        width: Math.min(panel.width - 24, 380)
-        ColumnLayout {
-            width: parent.width
-            spacing: 6
-            Label {
-                text: qsTr("The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.")
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
+    LazyMessageBox {
+        id: fullAccessQuestion
+        name: "agentFullAccessQuestion"
+    }
+
+    LazyMessageBox {
+        id: deleteQuestion
+        name: "agentDeleteQuestion"
+    }
+
+    Loader {
+        id: renameLoader
+        active: false
+        sourceComponent: DialogWindow {
+            id: renameDialog
+            objectName: "agentRenameWindow"
+            title: qsTr("Rename thread")
+            modal: true
+            initialFocus: renameField
+            defaultButton: renameOk
+            onAccepted: panel.agent.rename(panel.thread.id, renameField.text)
+            onVisibleChanged: if (!visible) Qt.callLater(() => renameLoader.active = false)
+            Component.onCompleted: {
+                renameField.text = panel.thread.title
+                open()
             }
-            Label { text: qsTr("These still ask, in every mode:"); font.bold: true }
-            Repeater {
-                model: [qsTr("deleting or overwriting files outside the subtitles' folders"),
-                        qsTr("running external programs and installing plugins"),
-                        qsTr("sending local files to the network"),
-                        qsTr("changing AI permissions, keys or budgets")]
-                delegate: Label {
-                    required property string modelData
-                    text: "•  " + modelData
-                    wrapMode: Text.Wrap
-                    Layout.fillWidth: true
+            TextField {
+                id: renameField
+                objectName: "agentRenameField"
+                Accessible.name: qsTr("Thread name")
+                Layout.preferredWidth: 280
+            }
+            buttons: [
+                PrimaryButton {
+                    id: renameOk
+                    objectName: "agentRenameOk"
+                    text: qsTr("Rename")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                    onClicked: renameDialog.accept()
+                },
+                Button {
+                    text: qsTr("Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                    onClicked: renameDialog.reject()
                 }
-            }
-            CheckBox { id: dontWarn; objectName: "agentDontWarn"; text: qsTr("Don't warn me again") }
+            ]
         }
-        footer: DialogButtonBox {
-            Button {
-                objectName: "agentTurnOnFullAccess"
-                text: qsTr("Turn on Full access")
-                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                palette.button: Theme.danger
-                palette.buttonText: Theme.onAccent
-            }
-            Button { text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
-        }
-        onAccepted: {
-            if (dontWarn.checked)
-                panel.agent.setFullAccessWarned()
-            panel.agent.setMode("full")
-        }
-    }
-
-    Dialog {
-        id: renameDialog
-        title: qsTr("Rename thread")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        TextField { id: renameField; width: 260; onAccepted: renameDialog.accept() }
-        onAccepted: panel.agent.rename(panel.thread.id, renameField.text)
-    }
-
-    Dialog {
-        id: deleteDialog
-        title: qsTr("Delete this thread?")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label {
-            width: 280
-            wrapMode: Text.Wrap
-            text: qsTr("The conversation goes. Changes it made stay in your subtitles and in the review.")
-        }
-        onAccepted: panel.agent.remove(panel.thread.id)
     }
 
     Component {
@@ -730,6 +737,8 @@ FocusScope {
         ColumnLayout {
             id: tool
             readonly property var item: parent ? parent.item : ({})
+            readonly property bool failed: item.status === "failed"
+            readonly property bool busy: item.status === "running"
             property bool open: false
             spacing: 2
             ItemDelegate {
@@ -740,7 +749,7 @@ FocusScope {
                     spacing: 6
                     Icon {
                         size: 14
-                        iconRole: tool.item.status === "failed" ? "notice-error" : tool.item.status === "running" ? "run-busy"
+                        iconRole: tool.failed ? "notice-error" : tool.busy ? "run-busy"
                                   : tool.item.read ? "search" : "run-applied"
                     }
                     Label {
@@ -810,13 +819,14 @@ FocusScope {
             id: ask
             readonly property var item: parent ? parent.item : ({})
             readonly property bool open: item.status === "open"
+            readonly property bool always: item.type === "always"
             property bool replying: false
             objectName: "agentAsk"
             edge: item.type === "always" ? Theme.danger : Theme.warning
             RowLayout {
                 Layout.fillWidth: true
                 CardTitle {
-                    iconRole: ask.item.type === "always" ? "notice-error" : "notice-warning"
+                    iconRole: ask.always ? "notice-error" : "notice-warning"
                     text: ask.item.type === "judge" ? qsTr("The judge asks you")
                           : ask.item.type === "always" ? qsTr("Allow %1?").arg(ask.item.tool ?? "")
                           : qsTr("Run %1?").arg(ask.item.tool ?? "")
