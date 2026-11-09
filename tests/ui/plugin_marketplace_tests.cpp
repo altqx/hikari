@@ -613,6 +613,81 @@ private slots:
         QVERIFY(row().value(QStringLiteral("enabled")).toBool());
         QVERIFY(!row().value(QStringLiteral("revoked")).toBool());
     }
+
+    void aLinkFetchesTheListThenTheListedPackage()
+    {
+        publish(3, {hello("1.1.0", "hello-1.1.0.hikariplugin")});
+        const QVariantMap review = reviewOf([&] { m_marketplace->follow(QStringLiteral("com.example.hello")); });
+        QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
+        QCOMPARE(review.value(QStringLiteral("id")).toString(), QStringLiteral("com.example.hello"));
+        QCOMPARE(review.value(QStringLiteral("change")).toString(), QStringLiteral("install"));
+        QCOMPARE(m_network->requests.size(), 3);
+        QCOMPARE(m_network->requests.at(2).url(), QUrl(kBase + QStringLiteral("p/com.example.hello/1.1.0.hikariplugin")));
+        QCOMPARE(row().size(), 0);
+    }
+
+    void aLinkAlwaysFetchesTheListAgain()
+    {
+        publish(3, {hello("1.0.0", "hello-1.0.0.hikariplugin")});
+        QVERIFY(refreshed());
+        publish(4, {hello("1.1.0", "hello-1.1.0.hikariplugin")});
+        const QVariantMap review = reviewOf([&] { m_marketplace->follow(QStringLiteral("com.example.hello")); });
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(review.value(QStringLiteral("version")).toString(), QStringLiteral("1.1.0"));
+        QCOMPARE(m_network->requests.size(), 5);
+    }
+
+    void aLinkToTheNewestInstalledVersionOnlyFetchesTheList()
+    {
+        installFromMarketplace();
+        const qsizetype before = m_network->requests.size();
+        QSignalSpy reviewed(m_marketplace.get(), &PluginMarketplace::reviewed);
+        m_marketplace->follow(QStringLiteral("com.example.hello"));
+        QVERIFY(QTest::qWaitFor([&] { return m_marketplace->status() == QLatin1String("ready") && m_network->requests.size() == before + 2; }));
+        QTest::qWait(50);
+        QVERIFY(reviewed.isEmpty());
+        QCOMPARE(m_network->requests.size(), before + 2);
+    }
+
+    void aLinkToAPluginTheListLacksSaysSo()
+    {
+        publish(3, {hello("1.1.0", "hello-1.1.0.hikariplugin")});
+        const QVariantMap review = reviewOf([&] { m_marketplace->follow(QStringLiteral("com.example.missing")); });
+        QVERIFY(!review.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(review.value(QStringLiteral("message")).toString(),
+                 QStringLiteral("“com.example.missing” isn’t in the marketplace for this HikariSub."));
+        QCOMPARE(m_network->requests.size(), 2);
+    }
+
+    void aLinkWhileTheMarketplaceIsUnreachableSaysSo()
+    {
+        const QVariantMap review = reviewOf([&] { m_marketplace->follow(QStringLiteral("com.example.hello")); });
+        QVERIFY(!review.value(QStringLiteral("ok")).toBool());
+        QVERIFY(review.value(QStringLiteral("message")).toString().startsWith(QStringLiteral("HikariSub couldn’t reach the marketplace: ")));
+        QCOMPARE(m_marketplace->status(), QStringLiteral("failed"));
+    }
+
+    void onlyTheLastLinkCounts()
+    {
+        publish(3, {hello("1.1.0", "hello-1.1.0.hikariplugin")});
+        QSignalSpy reviewed(m_marketplace.get(), &PluginMarketplace::reviewed);
+        m_marketplace->follow(QStringLiteral("com.example.missing"));
+        m_marketplace->follow(QStringLiteral("com.example.hello"));
+        QVERIFY(reviewed.wait(5000));
+        QTest::qWait(50);
+        QCOMPARE(reviewed.size(), 1);
+        QCOMPARE(reviewed.first().first().toMap().value(QStringLiteral("id")).toString(), QStringLiteral("com.example.hello"));
+    }
+
+    void aLinkWithoutAMarketplaceSaysSo()
+    {
+        PluginMarketplace none(*m_manager, nullptr, MarketplaceFeed{}, serialFile(), QStringLiteral("0.5.0"), m_network.get());
+        QSignalSpy reviewed(&none, &PluginMarketplace::reviewed);
+        none.follow(QStringLiteral("com.example.hello"));
+        QCOMPARE(reviewed.size(), 1);
+        QVERIFY(!reviewed.first().first().toMap().value(QStringLiteral("ok")).toBool());
+        QVERIFY(m_network->requests.isEmpty());
+    }
 };
 
 QTEST_MAIN(PluginMarketplaceTest)

@@ -760,8 +760,11 @@ ApplicationWindow {
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
     }
     function addQcNote(ms) {
-        if (!root.qcNotes.editable)
+        if (!root.qcNotes.editable) {
+            if (root.qcNotes.hasDocument && !root.qcNotes.canKeepNotes)
+                root.showPanel(qcNotesDock)
             return
+        }
         root.showPanel(qcNotesDock)
         qcNotesTool.startAdding(ms)
     }
@@ -1406,6 +1409,7 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    function openInstallLink(id) { pluginManagerDialog.followLink(id) }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }

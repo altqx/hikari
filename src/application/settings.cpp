@@ -351,6 +351,8 @@ const std::vector<SettingDefinition> &definitions()
         {"ai.off", "", Bool, Profile, Mapped, false, false},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
+        {"ai.webSearch", "", Bool, Profile, Mapped, false, true},
+        {"ai.searchService", "", String, Profile, Mapped, false, std::string()},
         {"plugins.network", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.properNouns", "", Bool, Profile, Mapped, false, true},
         {"grammar.group.initialisms", "", Bool, Profile, Mapped, false, true},

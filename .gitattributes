@@ -37,3 +37,8 @@
 # PL1: signed fixtures; a converted line ending breaks the signature.
 /tests/minisign/fixtures/** -text
 /tests/plugins/fixtures/** -text
+
+# tools.app-icons pins the icon masters, tools/icons/app_icons.py and its stamp by SHA-256.
+/packaging/icons/** text eol=lf
+/packaging/linux/icons/hicolor/scalable/** text eol=lf
+/tools/icons/app_icons.* text eol=lf

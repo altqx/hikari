@@ -14,8 +14,10 @@ class QLocalSocket;
 
 namespace hikari::app {
 
-// Drops the program's own switches; a file: URL becomes its local path, and a relative path
-// resolves against `workingDirectory`.
+// A hikarisub: link, which travels with the files and is never a path.
+bool isAppLink(const QString &argument);
+// Drops the program's own switches; a file: URL becomes its local path, a relative path
+// resolves against `workingDirectory`, and an app link stays as given.
 QStringList launchFiles(const QStringList &arguments, const QString &workingDirectory);
 
 // Adds `files` to those already kept at `path`; false when they could not be written.
