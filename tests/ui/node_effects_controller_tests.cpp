@@ -17,6 +17,7 @@
 
 using namespace hikari;
 using ui::NodeEffectsController;
+using ui::TemplateEditorController;
 
 namespace {
 
