@@ -4,6 +4,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariantMap>
 
 #include <memory>
 
@@ -19,6 +20,9 @@ class AiFeatures;
 /// Where it listens goes in the endpoint file for `hikarisub --mcp`.
 class AiMcp final : public QObject {
     Q_OBJECT
+    /// Settings › AI's Copy setup: {claudeCode, codex, json, port}. json is empty while nothing listens on
+    /// 127.0.0.1; port is the last HTTP port, 0 before the first.
+    Q_PROPERTY(QVariantMap setup READ setup NOTIFY changed FINAL)
 public:
     static constexpr const char *kSetting = "ai.mcp.server";
     static constexpr const char *kHttpSetting = "ai.mcp.http";
@@ -31,6 +35,13 @@ public:
     backends::ai::McpServer *server() const { return m_server.get(); }
     /// The token survives restarts so agents' settings stay valid; the socket is empty while off.
     const backends::ai::McpEndpoint &endpoint() const { return m_endpoint; }
+
+    /// What an agent starts for `--mcp`: the AppImage when HikariSub runs from one, else this executable.
+    static QString program();
+    QString claudeCodeSetup() const;
+    QString codexSetup() const;
+    QString httpSetup() const;
+    QVariantMap setup() const;
 
 signals:
     void changed();

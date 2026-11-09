@@ -353,6 +353,14 @@ target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
     HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
 add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
+if(HIKARI_AI_SIDECAR)
+    hikari_add_qttest(hikari_ui_ai_mcp_review_tests SOURCES ai_mcp_review_tests.cpp
+        LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+    target_compile_definitions(hikari_ui_ai_mcp_review_tests PRIVATE
+        HIKARI_AI_RUNTIME_FILE="${HIKARI_AI_RUNTIME_FILE}" HIKARI_AI_BUNDLE_FILE="${HIKARI_AI_BUNDLE_FILE}"
+        HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+    add_dependencies(hikari_ui_ai_mcp_review_tests hikari_ai_sidecar)
+endif()
 hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
     LIBRARIES hikari_composition Qt6::Test Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
