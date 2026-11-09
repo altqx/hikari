@@ -5,6 +5,7 @@ import { ProviderError } from "../../src/providers/errors";
 import type { CompleteParams, Finished, Message, ToolCall, Usage } from "../../src/providers/types";
 import { RpcError } from "../../src/rpc";
 import type { OperationName, Operations } from "../../src/tools/api.gen";
+import { kDefaultImageBudget, kImageBudgets } from "../../src/tools/images";
 import { ToolSet, type HikariCalls } from "../../src/tools/toolset";
 
 const kUsage: Usage = { inputTokens: 10, outputTokens: 2, cachedInputTokens: 0, cacheWriteTokens: 0, cacheWriteHourTokens: 0 };
@@ -215,5 +216,20 @@ describe("AgentSession", () => {
         expect(() => h.sessions.prompt({ sessionId: "nope", prompt: [{ type: "text", text: "a" }] })).toThrow(RpcError);
         h.sessions.close("t1");
         expect(h.sessions.has("t1")).toBe(false);
+    });
+
+    test("each turn's frames fit the image budget of the model's provider", async () => {
+        const tools = new ToolSet(new FakeHa1());
+        const model = new ScriptedModel([{ text: "ok" }], true);
+        const wires = { a: kImageBudgets["anthropic-messages"], g: kImageBudgets.gemini };
+        const sessions = new AgentSessions(() => tools, model.complete, () => {},
+            (id) => wires[id as keyof typeof wires] ?? kDefaultImageBudget);
+        sessions.open({ sessionId: "t1", model: { providerId: "a", model: "m" } });
+        await sessions.prompt({ sessionId: "t1", prompt: [{ type: "text", text: "1" }] });
+        expect(tools.imageBudget).toEqual(kImageBudgets["anthropic-messages"]);
+        await sessions.prompt({ sessionId: "t1", prompt: [{ type: "text", text: "2" }], model: { providerId: "g", model: "m" } });
+        expect(tools.imageBudget).toEqual(kImageBudgets.gemini);
+        await sessions.prompt({ sessionId: "t1", prompt: [{ type: "text", text: "3" }], model: { providerId: "gone", model: "m" } });
+        expect(tools.imageBudget).toEqual(kDefaultImageBudget);
     });
 });

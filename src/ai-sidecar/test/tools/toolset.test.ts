@@ -3,6 +3,7 @@ import { inflateSync } from "node:zlib";
 import { ErrorCode } from "../../src/protocol";
 import { RpcError } from "../../src/rpc";
 import type { OperationName, Operations } from "../../src/tools/api.gen";
+import { kDefaultImageBudget, kImageBudgets } from "../../src/tools/images";
 import { ToolSet, type HikariCalls } from "../../src/tools/toolset";
 
 type Answer = unknown | RpcError;
@@ -47,6 +48,11 @@ describe("ToolSet", () => {
         expect(app.map((t: { name: string }) => t.name).sort()).toEqual(["panels_close", "panels_focus", "panels_list",
             "panels_open", "settings_get", "settings_list", "settings_set"]);
         expect(app[0].inputSchema.type).toBe("object");
+    });
+
+    test("search_tools ranks words in a tool's name first", async () => {
+        const found = await new ToolSet(new FakeHa1()).call("search_tools", { query: "video frame" });
+        expect(JSON.parse(textOf(found)).tools[0].name).toBe("video_frame");
     });
 
     test("search_tools refuses what it can't search, in words the model can act on", async () => {
@@ -128,9 +134,10 @@ describe("ToolSet", () => {
 
     test("video_frame answers a PNG of HA1's BGRA pixels", async () => {
         const bgra = Uint8Array.of(10, 20, 30, 255, 40, 50, 60, 255, 70, 80, 90, 255, 1, 2, 3, 0);
-        const ha1 = new FakeHa1({ "video.frame": { frame: 7, width: 2, height: 2, format: "bgra", data: Buffer.from(bgra).toString("base64") } });
+        const crop = { x: 0, y: 0, width: 2, height: 2 };
+        const ha1 = new FakeHa1({ "video.frame": { frame: 7, width: 2, height: 2, crop, format: "bgra", data: Buffer.from(bgra).toString("base64") } });
         const result = await new ToolSet(ha1).call("video_frame", { maxEdge: 64 });
-        expect(result.content[0]).toEqual({ type: "text", text: '{"frame":7,"width":2,"height":2}' });
+        expect(result.content[0]).toEqual({ type: "text", text: '{"frame":7,"crop":{"x":0,"y":0,"width":2,"height":2},"width":2,"height":2}' });
         const image = result.content[1] as { type: string; data: string; mimeType: string };
         expect(image.type).toBe("image");
         expect(image.mimeType).toBe("image/png");
@@ -141,5 +148,66 @@ describe("ToolSet", () => {
         const idat = png.indexOf("IDAT");
         const pixels = inflateSync(png.subarray(idat + 4, idat + 4 + png.readUInt32BE(idat - 4)));
         expect([...pixels]).toEqual([0, 30, 20, 10, 60, 50, 40, 0, 90, 80, 70, 3, 2, 1]);
+    });
+});
+
+describe("video_frame", () => {
+    const pixel = Buffer.from(Uint8Array.of(1, 2, 3, 255)).toString("base64");
+    const shown = (crop: { x: number; y: number; width: number; height: number }) =>
+        ({ frame: 25, width: 1, height: 1, crop, format: "bgra", data: pixel });
+    const whole = { x: 0, y: 0, width: 1920, height: 1080 };
+
+    test("crops around the ink by default, within the model's image budget", async () => {
+        const ha1 = new FakeHa1({
+            "video.ink_bounds": { frame: 25, bounds: { x: 100, y: 20, width: 200, height: 40 } },
+            "video.frame": shown({ x: 50, y: 0, width: 300, height: 110 }),
+        });
+        const tools = new ToolSet(ha1);
+        tools.imageBudget = kImageBudgets["anthropic-messages"];
+        const answer = await tools.call("video_frame", { line: 3, subtitles: true });
+        expect(ha1.calls).toEqual([
+            { operation: "video.ink_bounds", params: { line: 3 } },
+            { operation: "video.frame", params: { line: 3, subtitles: true, frame: 25,
+                crop: { x: 50, y: 0, width: 300, height: 110 }, maxEdge: 1024, maxPixels: 1_192_464 } },
+        ]);
+        expect(JSON.parse(textOf(answer)).crop).toEqual({ x: 50, y: 0, width: 300, height: 110 });
+    });
+
+    test("a small sign keeps a 32 px margin, and a crop or full asks for no ink", async () => {
+        const ha1 = new FakeHa1({ "video.ink_bounds": { frame: 3, bounds: { x: 40, y: 40, width: 8, height: 8 } }, "video.frame": shown(whole) });
+        const tools = new ToolSet(ha1);
+        await tools.call("video_frame", { frame: 3 });
+        expect((ha1.calls[1]!.params as { crop: unknown }).crop).toEqual({ x: 8, y: 8, width: 72, height: 72 });
+        ha1.calls = [];
+        await tools.call("video_frame", { full: true, maxEdge: 4096 });
+        await tools.call("video_frame", { crop: { x: 1, y: 2, width: 3, height: 4 } });
+        expect(ha1.calls.map((c) => c.operation)).toEqual(["video.frame", "video.frame"]);
+        expect(ha1.calls[0]!.params).toEqual({ maxEdge: kDefaultImageBudget.maxEdge, maxPixels: kDefaultImageBudget.maxPixels });
+        expect(ha1.calls[1]!.params).toEqual({ crop: { x: 1, y: 2, width: 3, height: 4 }, maxEdge: 1024,
+            maxPixels: kDefaultImageBudget.maxPixels });
+    });
+
+    test("is whole when nothing is drawn or nothing can be drawn apart", async () => {
+        for (const ink of [{ frame: 7, bounds: null }, ha1Error("unavailable", "Subtitles cannot be drawn apart from the video here.")]) {
+            const ha1 = new FakeHa1({ "video.ink_bounds": ink, "video.frame": shown(whole) });
+            const answer = await new ToolSet(ha1).call("video_frame", {});
+            expect(answer.isError).toBeUndefined();
+            expect(ha1.calls[1]!.params).not.toHaveProperty("crop");
+        }
+    });
+
+    test("words a missing Line and a bad full for the model", async () => {
+        const ha1 = new FakeHa1({ "video.ink_bounds": ha1Error("not_found", "No Line has id 9.", { line: 9 }) });
+        const missing = await new ToolSet(ha1).call("video_frame", { line: 9 });
+        expect(missing.isError).toBe(true);
+        expect(textOf(missing)).toContain("No Line has id 9.");
+        expect(textOf(await new ToolSet(ha1).call("video_frame", { full: "yes" }))).toBe("video_frame: full must be true or false.");
+    });
+
+    test("the default image budget fits every provider's", () => {
+        for (const budget of Object.values(kImageBudgets)) {
+            expect(kDefaultImageBudget.maxEdge).toBeLessThanOrEqual(budget.maxEdge);
+            expect(kDefaultImageBudget.maxPixels).toBeLessThanOrEqual(budget.maxPixels);
+        }
     });
 });

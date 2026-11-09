@@ -25,6 +25,12 @@ target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_LIBASS_FORK_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/libass")
+hikari_add_gtest(hikari_backends_frame_tools_tests SOURCES frame_tools_tests.cpp
+    "${PROJECT_SOURCE_DIR}/tests/api/script_client.cpp"
+    LIBRARIES hikari_api hikari_backends hikari_regex Qt6::Gui LABELS backends api)
+target_include_directories(hikari_backends_frame_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
+target_compile_definitions(hikari_backends_frame_tools_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_gtest(hikari_backends_visual_geometry_tests SOURCES visual_geometry_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
@@ -43,10 +49,10 @@ hikari_add_gtest(hikari_backends_helper_tests SOURCES helper_host_tests.cpp
 target_compile_definitions(hikari_backends_helper_tests PRIVATE HIKARI_TEST_HELPER="$<TARGET_FILE:hikari_test_helper>")
 add_dependencies(hikari_backends_helper_tests hikari_test_helper)
 hikari_add_gtest(hikari_backends_plugin_process_tests SOURCES plugin_process_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core Qt6::Test LABELS backends plugins)
+    LIBRARIES hikari_backends Qt6::Core Qt6::Network Qt6::Test LABELS backends plugins)
 target_compile_definitions(hikari_backends_plugin_process_tests PRIVATE
-    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>")
-add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper)
+    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>" HIKARI_SANDBOX_PROBE="$<TARGET_FILE:hikari_sandbox_probe>")
+add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper hikari_sandbox_probe)
 
 # Generated at build time: discovered GoogleTest cases ignore a CTest setup fixture.
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")

@@ -6,6 +6,7 @@
 
 #include "hikari/backends/helper_host.h"
 #include "hikari/backends/plugin_protocol.h"
+#include "hikari/backends/sandbox.h"
 
 #include <QElapsedTimer>
 #include <QObject>
@@ -14,9 +15,14 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace hikari::backends {
+
+// HikariSub.Plugin.<hash of the id>: the helper's folder to read and execute, the plugin's package folder to read,
+// nothing else, and no network.
+sandbox::Profile pluginProfile(const QString &helperPath, const QString &packageFolder, const std::string &id);
 
 class PluginProcess : public QObject {
     Q_OBJECT
@@ -50,6 +56,9 @@ public:
     ~PluginProcess() override;
 
     void setServiceHandler(ServiceHandler handler) { m_services = std::move(handler); }
+    // Every later helper starts confined to `profile`; where that can't be enforced it still runs.
+    void setSandbox(std::optional<sandbox::Profile> profile) { m_sandbox = std::move(profile); }
+    bool sandboxed() const { return m_sandbox.has_value(); }
 
     // Also tries again after a failed load.
     void start();
@@ -102,6 +111,8 @@ private:
     LoadSource m_load;
     Limits m_limits;
     ServiceHandler m_services;
+    std::optional<sandbox::Profile> m_sandbox;
+    std::unique_ptr<sandbox::Launcher> m_launcher;
     std::unique_ptr<helper::HelperHost> m_host;
     State m_state = State::Idle;
     QString m_loadError;

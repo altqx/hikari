@@ -39,6 +39,7 @@ constexpr std::array kLinks{
     GuideLink{Window, "kanjiTimer", "/en/docs/karaoke/kanji-timer"},
     GuideLink{Window, "karaokeCheck", "/en/docs/karaoke/karaoke-check"},
     GuideLink{Window, "manageLayouts", "/en/docs/customize/layouts"},
+    GuideLink{Window, "perspectiveTracking", "/en/docs/typesetting/perspective#perspective-tracking"},
     GuideLink{Window, "resample", "/en/docs/basics/files-and-formats"},
     GuideLink{Window, "restoreCheckpoint", "/en/docs/ai/review"},
     GuideLink{Window, "saveLayout", "/en/docs/customize/layouts"},
