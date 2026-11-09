@@ -137,9 +137,15 @@ bool QcNotesController::hasDocument() const
     return target() != nullptr;
 }
 
+bool QcNotesController::canKeepNotes() const
+{
+    const auto *session = target();
+    return session && session->document().format() == core::SubtitleFormat::Ass;
+}
+
 bool QcNotesController::editable() const
 {
-    return target() && m_hooks.editable && m_hooks.editable();
+    return canKeepNotes() && m_hooks.editable && m_hooks.editable();
 }
 
 QString QcNotesController::lastSection() const

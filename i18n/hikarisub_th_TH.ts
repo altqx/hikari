@@ -11622,6 +11622,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยายเพื่อเก็บโน้ต QC ไว้ในไฟล์</translation>
     </message>
     <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
+    </message>
+    <message>
         <source>Paste notes</source>
         <translation>วางโน้ต</translation>
     </message>

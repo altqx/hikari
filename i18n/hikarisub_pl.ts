@@ -11778,6 +11778,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz plik napisów, aby przechowywać w nim notatki QC.</translation>
     </message>
     <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>Notatki QC można przechowywać tylko w plikach ASS i SSA. Zapisz ten plik jako ASS, aby dodać notatki.</translation>
+    </message>
+    <message>
         <source>Paste notes</source>
         <translation>Wklej notatki</translation>
     </message>

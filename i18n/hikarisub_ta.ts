@@ -11700,6 +11700,10 @@ Failed to copy %2 fonts.</source>
         <translation>QC குறிப்புகளை வைக்க ஒரு வசனக் கோப்பைத் திறக்கவும்.</translation>
     </message>
     <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>ASS மற்றும் SSA கோப்புகள் மட்டுமே QC குறிப்புகளை வைத்திருக்க முடியும். குறிப்புகளைச் சேர்க்க இந்தக் கோப்பை ASS ஆகச் சேமிக்கவும்.</translation>
+    </message>
+    <message>
         <source>Paste notes</source>
         <translation>குறிப்புகளை ஒட்டு</translation>
     </message>

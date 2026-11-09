@@ -11622,6 +11622,10 @@ Failed to copy %2 fonts.</source>
         <translation>QC 메모를 저장할 자막 파일을 여세요.</translation>
     </message>
     <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>ASS 및 SSA 파일만 QC 메모를 담을 수 있습니다. 메모를 추가하려면 이 파일을 ASS로 저장하세요.</translation>
+    </message>
+    <message>
         <source>Paste notes</source>
         <translation>메모 붙여 넣기</translation>
     </message>
