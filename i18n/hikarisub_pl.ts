@@ -9105,11 +9105,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>X</source>
+        <source>X position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Y</source>
+        <source>Y position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

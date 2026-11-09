@@ -252,7 +252,7 @@ Pane {
                 color: current ? Theme.select : modelData.selected ? Qt.alpha(Theme.select, 0.5)
                      : sourceMouse.containsMouse ? Theme.raised : "transparent"
                 Accessible.role: Accessible.ListItem
-                Accessible.name: qsTr("Line %1, %2").arg(modelData.number).arg(modelData.text)
+                Accessible.name: qsTr("Line %1, %2").arg(modelData.number, modelData.text)
                 Accessible.selected: modelData.selected
                 Rectangle {
                     visible: sourceRow.current

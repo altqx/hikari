@@ -55,7 +55,7 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(QVariantMap inspector READ inspector NOTIFY inspectorChanged)
     Q_PROPERTY(QVariantList catalogue READ catalogue CONSTANT)
     Q_PROPERTY(QVariantList recent READ recent NOTIFY recentChanged)
-    Q_PROPERTY(QVariantList presets READ presets CONSTANT)
+    Q_PROPERTY(QVariantList presets READ presets NOTIFY textsChanged)
     Q_PROPERTY(QStringList library READ library NOTIFY libraryChanged)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY changed)
     Q_PROPERTY(qulonglong source READ source WRITE setSource NOTIFY changed)
@@ -91,6 +91,7 @@ public:
     void setMeasure(application::TextMeasurePort *measure) { m_measure = measure; }
     void setDelays(int previewMs, int commitMs);
     void refresh();
+    void retranslate();
 
     // The Document as Apply would leave it for the current source Line, or nothing.
     std::optional<core::Document> videoDocument(const core::Document &doc) const;
@@ -188,6 +189,7 @@ signals:
     void libraryChanged();
     void documentEdited();
     void videoChanged();
+    void textsChanged();
 
 private:
     application::EditSession *session() const;

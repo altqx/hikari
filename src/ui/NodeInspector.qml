@@ -423,7 +423,7 @@ Pane {
                                     enabled: root.editable
                                     text: String(point.value[index] ?? 0)
                                     inputMethodHints: Qt.ImhFormattedNumbersOnly
-                                    Accessible.name: index === 0 ? qsTr("X") : qsTr("Y")
+                                    Accessible.name: index === 0 ? qsTr("X position") : qsTr("Y position")
                                     onTextEdited: {
                                         const next = point.value.slice()
                                         next[index] = Number(text) || 0
@@ -554,7 +554,7 @@ Pane {
                 //: A node's timing: "Last run 0.42 ms on line 12"; an Emit adds how many lines it wrote
                 text: root.node.emitted?.lines !== undefined
                       ? qsTr("Wrote %n lines in %1 on the last run", "", root.node.emitted.lines).arg(root.milliseconds(root.node.emitted.ms))
-                      : qsTr("Last run %1 on line %2").arg(root.milliseconds(root.controller.previewMs)).arg(root.node.valuesLine ?? 0)
+                      : qsTr("Last run %1 on line %2").arg(root.milliseconds(root.controller.previewMs), root.node.valuesLine ?? 0)
             }
         }
     }

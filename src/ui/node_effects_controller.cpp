@@ -292,6 +292,14 @@ void NodeEffectsController::setSessionSource(SessionSource source)
     m_sessionSource = std::move(source);
 }
 
+void NodeEffectsController::retranslate()
+{
+    emit textsChanged();
+    emit graphChanged();
+    emit inspectorChanged();
+    emit recentChanged();
+}
+
 void NodeEffectsController::setLuaNodes(LuaNodesSource source)
 {
     m_luaNodes = std::move(source);

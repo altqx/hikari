@@ -87,7 +87,7 @@ Pane {
     function announcement(n) {
         const wired = n.inputs.filter(p => p.wired).length
         //: A node on the canvas for a screen reader: "Choose, palette: 1 of 1 inputs wired"
-        return qsTr("%1, %2: %3 of %4 inputs wired").arg(n.title, n.id).arg(wired).arg(n.inputs.length)
+        return qsTr("%1, %2: %3 of %4 inputs wired").arg(n.title, n.id, wired, n.inputs.length)
     }
 
     function select(id, add) {
