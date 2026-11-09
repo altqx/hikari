@@ -20,14 +20,15 @@ With no provider, `AiRequests::complete` fails at once with `NoProvider`. It nev
 
 | Method | Params | Result |
 | --- | --- | --- |
-| `_hikari/providers.set` | `{providers: [{id, preset, wire, baseUrl}]}` | `null` |
-| `_hikari/complete` | `{stream, providerId, request}` | `{reason, text, toolCalls, usage}` |
+| `_hikari/providers.set` | `{providers: [{id, preset, wire, baseUrl}], searchService?}` | `null` |
+| `_hikari/complete` | `{stream, providerId, request}` | `{reason, text, toolCalls, usage, citations?, searchSuggestions?, providerState?}` |
 | `_hikari/models.list` | `{providerId}` | `{models: [{id, name, capabilities?, price?, contextTokens?}]}` |
 | `_hikari/conversation.end` | `{providerId, cacheKey}` | `null`; deletes the conversation's explicit cache |
+| `_hikari/search.test` | `{service}` | `null`, or the service's error; runs one search |
 
 - `AiRequests` sends `providers.set` with the current config before each request, then the request with the role's model. No key goes to the sidecar ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
 - The sidecar sends each provider request back to Qt as `_hikari/http.request` with target `{kind: "provider", id}`. `HttpRelay` reads the key from the keychain, puts it where the SDK wrote the `hikari-key` placeholder, and drops that header for a provider without a key.
-- While a completion runs, `session/update` notifications carry `{stream, update}` with `text`, `toolCall {index, id, name}`, `toolArguments {index, delta}` and `usage` updates. C++ turns them into `TextDelta`, `ToolCallStarted` and `ToolCallArguments`; the answer becomes `Finished`.
+- While a completion runs, `session/update` notifications carry `{stream, update}` with `text`, `toolCall {index, id, name}`, `toolArguments {index, delta}`, `usage` and `citation {citation}` updates. C++ turns them into `TextDelta`, `ToolCallStarted` and `ToolCallArguments`; the answer becomes `Finished`. Updates that carry a `sessionId` instead belong to an [agent thread](ai-agent.md).
 - A failure answers with code `-32010` and `data: {kind, httpStatus, detail}`, which becomes `Failed`. `$/cancel_request` closes the provider's connection and answers `-32800`, which becomes `Failed{Cancelled}`.
 - `src/ai-sidecar/src/providers/schema.ts` holds the JSON Schemas of every method's params and results.
 
@@ -71,6 +72,37 @@ Sources, read on 2026-11-02:
 - [Video understanding](https://ai.google.dev/gemini-api/docs/video-understanding) for video input;
 - [Pricing](https://ai.google.dev/gemini-api/docs/pricing) for thinking billed as output;
 - [Rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) and [API errors](https://ai.google.dev/gemini-api/docs/api-errors) for limits and status codes.
+
+## Web search
+
+The agent can search the web while the request has `webSearch: true` ([AI23 #742](https://github.com/altqx/hikari/issues/742)). `AiRequests::setWebSearch` turns it on with the user's search service, if any. With it off, `AiRequests` drops `webSearch` from every request and sends no `searchService`.
+
+| Preset and wire | How it searches | Sent with `webSearch` |
+| --- | --- | --- |
+| Anthropic, Messages | its own search and page reading | `web_search_20250305` and `web_fetch_20250910` server tools, five uses each |
+| OpenAI, Responses | its own search | the `web_search` tool |
+| Google Gemini, Gemini API | Google Search and URL context | `googleSearch` and `urlContext` in the tool with the functions. Beside functions, `toolConfig` asks for `includeServerSideToolInvocations` and `VALIDATED` calling (Gemini 3 and later) |
+| OpenRouter, Chat Completions | its own search and page reading | the `openrouter:web_search` and `openrouter:web_fetch` server tools |
+| Custom, or a preset on another wire | the user's search service, if one is chosen | nothing; the sidecar offers `web_search` and `web_fetch` through `search_tools` ([AI tools](ai-tools.md#web-search)) |
+
+- **Citations.** Each cited source becomes `{index, url, title, quote?}`, numbered from 1 in the order the answer cites them; a URL cited again keeps its first number. They stream as `citation` updates and come back in `Finished::citations`.
+  - Anthropic's `web_search_result_location` gives the quote as `cited_text`.
+  - OpenRouter's `url_citation` annotations give `content` as the quote.
+  - OpenAI's `response.output_text.annotation.added` gives no quote.
+  - Gemini's `groundingSupports` give each cited segment as the quote, then the other `groundingChunks` follow.
+- **Google's search suggestions.** Gemini's `searchEntryPoint.renderedContent` comes back as `Finished::searchSuggestions`. Google's terms require it to be shown with a grounded answer.
+- **Provider state.** A turn that ran a server tool keeps the raw assistant content in `Finished::providerState` (`{type: "providerState", wire, json}`). Sent back as a part of the assistant message, it replaces that message on the same wire, so Anthropic's `server_tool_use` and result blocks, and Gemini's `toolCall` and `toolResponse` parts, go back unchanged. Another wire ignores it.
+- **Limits.** Anthropic's `pause_turn` ends the turn as `End`. A conversation's cache prefix includes whether web search was on.
+- **The search service.** `searchService` in `providers.set` names Brave, Tavily, Exa or Firecrawl. The sidecar reaches it through `_hikari/http.request` with target `{kind: "search", id}`. `withSearchTargets` allows only the chosen service while web search is on, or a service while `AiRequests::testSearch` runs, and refuses any other with `Rejected`. The key is the keychain entry `ai-provider/search:<service>` (`SearchKeys`), or the typed key during its test, and it goes where the sidecar wrote `hikari-key`, as for a provider.
+
+| Service | Base URL | Key header |
+| --- | --- | --- |
+| Brave Search | `https://api.search.brave.com` | `X-Subscription-Token` |
+| Tavily | `https://api.tavily.com` | `Authorization: Bearer` |
+| Exa | `https://api.exa.ai` | `x-api-key` |
+| Firecrawl | `https://api.firecrawl.dev` | `Authorization: Bearer` |
+
+Sources, read on 2026-11-06: Anthropic's [web search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool) and [web fetch](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-fetch-tool) tools, OpenAI's [web search](https://developers.openai.com/api/docs/guides/tools-web-search), OpenRouter's [server tools](https://openrouter.ai/docs/features/web-search), Google's [grounding with Google Search](https://ai.google.dev/gemini-api/docs/google-search) and the `@google/genai` 2.31.0 types, and the [Brave](https://api-dashboard.search.brave.com/app/documentation/web-search/get-started), [Tavily](https://docs.tavily.com/documentation/api-reference/endpoint/search), [Exa](https://docs.exa.ai/reference/search) and [Firecrawl](https://docs.firecrawl.dev/api-reference/endpoint/search) API references.
 
 ## Keys
 
@@ -132,10 +164,10 @@ Sources, read on 2026-11-02 (Google's caching and Interactions pages again on 20
 
 ## Tests
 
-- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/providers`): a local mock server for each wire, Gemini included, covering streaming split at awkward bytes, tool calls, vision and history encoding, cache markers and keys on the wire, a stable prefix that is byte-identical across turns, cache reads and writes in usage, the Gemini explicit cache lifecycle, HTTP and in-stream errors, safety blocks, early ends, timeouts, cancellation, catalogues, the key rules and the JSON-RPC methods against their schemas.
-- `hikari_application_ai_providers_tests`: role fallback, capabilities, cost, keychain failures, removal, the catalogue and a Gemini model in every role.
-- `hikari_backends_ai_requests_tests`: requests through a fake sidecar: no provider starts nothing, the model reaches the sidecar and no key does, the relay reaches a provider with its keychain key, errors keep their kind.
-- `hikari_backends_ai_http_relay_tests`: the relay against a scripted local server: the key is added and masked, an SSE event passes before the next arrives, keyless providers, the key rules, pinned names, URLs outside the base, redirects, dropped headers, unknown targets and cancellation.
+- `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/providers`): a local mock server for each wire, Gemini included, covering streaming split at awkward bytes, tool calls, vision and history encoding, cache markers and keys on the wire, a stable prefix that is byte-identical across turns, cache reads and writes in usage, the Gemini explicit cache lifecycle, native search tools per wire with citations, suggestions and provider state, HTTP and in-stream errors, safety blocks, early ends, timeouts, cancellation, catalogues, the key rules and the JSON-RPC methods against their schemas.
+- `hikari_application_ai_providers_tests`: role fallback, capabilities, cost, keychain failures, removal, the catalogue, a Gemini model in every role, and search service ids and keys.
+- `hikari_backends_ai_requests_tests`: requests through a fake sidecar: no provider starts nothing, the model reaches the sidecar and no key does, the relay reaches a provider with its keychain key, errors keep their kind, `webSearch` reaches the sidecar only while it is on, citations, suggestions and provider state come back, and a search test reaches its service only while it runs, with the typed key when there is one.
+- `hikari_backends_ai_http_relay_tests`: the relay against a scripted local server: the key is added and masked, an SSE event passes before the next arrives, keyless providers, the key rules, pinned names, URLs outside the base, redirects, dropped headers, unknown targets and cancellation; only the chosen search service, or one under test, is reachable, with its own or the typed key and its HTTPS host.
 - `hikari_backends_ai_relay_sidecar_tests`: the real sidecar, sandboxed, lists models through the relay with a key only Qt holds.
 - `hikari_backends_ai_config_store_tests`: the provider file keeps everything but the key.
 

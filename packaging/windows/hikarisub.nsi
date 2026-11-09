@@ -58,6 +58,7 @@ SetCompressorDictSize 64
 !define HS_APPPATHS_KEY  "Software\Microsoft\Windows\CurrentVersion\App Paths\HikariSub.exe"
 !define HS_REGAPPS_KEY   "Software\RegisteredApplications"
 !define HS_CLASSES       "Software\Classes"
+!define HS_LINK_KEY      "Software\Classes\hikarisub"
 !define HS_MUTEX         "Global\io.github.altqx.HikariSub.Running"
 ; Held by an /UPDATE run until it exits; an app started meanwhile sets HS_START_EVENT and quits.
 !define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
@@ -1032,6 +1033,11 @@ Section /o "Desktop shortcut" SecDesktop
 SectionEnd
 
 Section "-Finish" SecFinish
+  WriteRegStr SHCTX "${HS_LINK_KEY}" "" "URL:HikariSub"
+  WriteRegStr SHCTX "${HS_LINK_KEY}" "URL Protocol" ""
+  WriteRegStr SHCTX "${HS_LINK_KEY}\DefaultIcon" "" '"$INSTDIR\${HS_EXE}",0'
+  WriteRegStr SHCTX "${HS_LINK_KEY}\shell\open\command" "" '"$INSTDIR\${HS_EXE}" "%1"'
+
   StrCpy $1 ""
   ${If} ${SectionIsSelected} ${SecAssoc}
     !insertmacro HS_ASSOC_WRITE ass "ASS subtitles" ${HS_ICON_ID_ass}
@@ -1421,6 +1427,10 @@ Section "Uninstall"
   Delete "$DESKTOP\${HS_NAME}.lnk"
 
   Call un.HsRemoveAssociations
+  ReadRegStr $0 SHCTX "${HS_LINK_KEY}\shell\open\command" ""
+  ${If} $0 == '"$INSTDIR\${HS_EXE}" "%1"'
+    DeleteRegKey SHCTX "${HS_LINK_KEY}"
+  ${EndIf}
 
   ReadRegStr $0 SHCTX "${HS_APPPATHS_KEY}" ""
   ${If} $0 == "$INSTDIR\${HS_EXE}"

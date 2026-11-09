@@ -12,6 +12,23 @@ namespace {
 
 const std::filesystem::path kScripts = HIKARI_API_SCRIPTS_DIR;
 
+std::string fromBase64(std::string_view text)
+{
+    constexpr std::string_view kDigits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    unsigned bits = 0;
+    int count = 0;
+    for (const char c : text) {
+        const auto digit = kDigits.find(c);
+        if (digit == std::string_view::npos)
+            break;
+        bits = (bits << 6) | unsigned(digit);
+        if ((count += 6) >= 8)
+            out += char((bits >> (count -= 8)) & 0xFF);
+    }
+    return out;
+}
+
 class MediaAndFiles : public ::testing::Test {
 protected:
     FakeHost host;
@@ -72,6 +89,9 @@ TEST_F(MediaAndFiles, NoVideoNoAudio)
     EXPECT_EQ(error("video.frame_at_time", R"({"time": 0})"), "unavailable");
     EXPECT_EQ(error("video.time_of_frame", R"({"frame": 0})"), "unavailable");
     EXPECT_EQ(error("video.frame"), "unavailable");
+    EXPECT_EQ(error("video.ink_bounds"), "unavailable");
+    EXPECT_EQ(error("video.colours", R"({"points": [{"x": 0, "y": 0}]})"), "unavailable");
+    EXPECT_EQ(error("video.keyframes"), "unavailable");
     EXPECT_EQ(*client.call(aiCaller(), "audio.info", Json()), *Json::parse(R"({"open": false})"));
     EXPECT_EQ(error("audio.peaks", R"({"start": 0, "end": 10})"), "unavailable");
 }
@@ -92,6 +112,77 @@ TEST_F(MediaAndFiles, AFrameHasSubtitlesUnlessAskedNotTo)
     EXPECT_TRUE(host.media.lastWithSubtitles);
     ASSERT_TRUE(client.call(aiCaller(), "video.frame", *Json::parse(R"({"subtitles": false})")));
     EXPECT_FALSE(host.media.lastWithSubtitles);
+}
+
+class Frames : public ::testing::Test {
+protected:
+    FakeHost host;
+    FakeRender &render = host.fakeRender;
+    Api api{host.host()};
+    ScriptClient client{api};
+
+    Result call(std::string_view operation, const char *params) { return client.call(aiCaller(), operation, *Json::parse(params)); }
+
+    static std::string pixels(const Json &frame)
+    {
+        return fromBase64(frame.find("data")->asString());
+    }
+};
+
+TEST_F(Frames, InkBoundsOfOneLineAreOnItsFirstFrameWhenTheFrameShownMissesIt)
+{
+    const Result bounds = call("video.ink_bounds", R"({"line": 1})");
+    ASSERT_TRUE(bounds);
+    EXPECT_EQ(*bounds, *Json::parse(R"({"frame": 25, "bounds": {"x": 4, "y": 2, "width": 3, "height": 2}})"));
+    EXPECT_EQ(render.drawnLines, std::vector<std::uint64_t>{1});
+}
+
+TEST_F(Frames, InkBoundsOfEveryLineCoverWhatTheFrameShows)
+{
+    EXPECT_EQ(*call("video.ink_bounds", "{}"), *Json::parse(R"({"frame": 7, "bounds": null})"));
+    EXPECT_EQ(render.drawnLines, (std::vector<std::uint64_t>{1, 2, 3}));
+    EXPECT_EQ(*call("video.ink_bounds", R"({"frame": 30})"),
+              *Json::parse(R"({"frame": 30, "bounds": {"x": 4, "y": 2, "width": 3, "height": 2}})"));
+    EXPECT_EQ(*call("video.ink_bounds", R"({"frame": 30, "line": 3})"), *Json::parse(R"({"frame": 30, "bounds": null})"));
+}
+
+TEST_F(Frames, AFrameWithOneLineIsTheFrameWithThatLinesOverlay)
+{
+    const Result frame = call("video.frame", R"({"line": 1, "crop": {"x": 2, "y": 1, "width": 8, "height": 4}})");
+    ASSERT_TRUE(frame);
+    EXPECT_FALSE(host.media.lastWithSubtitles);
+    EXPECT_EQ(render.drawnLines, std::vector<std::uint64_t>{1});
+    EXPECT_EQ(*frame->find("frame"), Json(25));
+    EXPECT_EQ(*frame->find("crop"), *Json::parse(R"({"x": 2, "y": 1, "width": 8, "height": 4})"));
+    const std::string data = pixels(*frame);
+    ASSERT_EQ(data.size(), 8u * 4 * 4);
+    for (int y = 0; y < 4; ++y)
+        for (int x = 0; x < 8; ++x) {
+            const int vx = x + 2, vy = y + 1;
+            const bool ink = vx >= 4 && vx < 7 && vy >= 2 && vy < 4;
+            const auto *p = reinterpret_cast<const unsigned char *>(data.data()) + (y * 8 + x) * 4;
+            EXPECT_EQ(p[0], ink ? 255 : vx) << vx << "," << vy;
+            EXPECT_EQ(p[2], ink ? 255 : 25) << vx << "," << vy;
+        }
+}
+
+TEST_F(Frames, OneLineNeedsTheLineSubtitlesAndARenderer)
+{
+    EXPECT_EQ(call("video.frame", R"({"line": 99})").error().code, errors::kNotFound);
+    EXPECT_EQ(call("video.ink_bounds", R"({"line": 99})").error().code, errors::kNotFound);
+    const Result off = call("video.frame", R"({"line": 1, "subtitles": false})");
+    ASSERT_FALSE(off);
+    EXPECT_EQ(*off.error().data.find("pointer"), Json("/line"));
+    EXPECT_EQ(call("video.frame", R"({"document": 99, "line": 1})").error().code, errors::kNotFound);
+    render.failing = true;
+    EXPECT_EQ(call("video.frame", R"({"line": 1})").error().code, errors::kUnavailable);
+    EXPECT_EQ(call("video.ink_bounds", "{}").error().code, errors::kUnavailable);
+    host.render = nullptr;
+    Api bare{host.host()};
+    ScriptClient none{bare};
+    EXPECT_EQ(none.call(aiCaller(), "video.frame", *Json::parse(R"({"line": 1})")).error().code, errors::kUnavailable);
+    EXPECT_EQ(none.call(aiCaller(), "video.ink_bounds", Json()).error().code, errors::kUnavailable);
+    EXPECT_TRUE(none.call(aiCaller(), "video.frame", Json()));
 }
 
 TEST_F(MediaAndFiles, WithoutPortsEverythingIsUnavailable)

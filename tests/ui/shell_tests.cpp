@@ -3,6 +3,7 @@
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/plugin_ui.h"
+#include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/app/style_manager_controller.h"
@@ -9136,6 +9137,7 @@ private slots:
         QVERIFY(application->property("includesVsfilter").toBool());
 #endif
         QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
+        QCOMPARE(dialogItem("creditsDialog", "creditsThaiSupport")->property("name").toString(), QStringLiteral("Jibrill"));
         QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
         QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
         QVERIFY(list);
@@ -11212,6 +11214,35 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.15,Song kanji,,0,0,0,,君の愛\n");
         return path;
     }
+    void qcNotesPanelSaysWhenTheFileCantKeepNotes()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(application->openFile(writeSrt(folder, "qc-notes.srt", "1\n00:00:01,000 --> 00:00:02,000\none\n\n")));
+        auto *session = openedSrt();
+        QVERIFY(session);
+        auto &qc = application->qcNotes();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "addQcNote", Q_ARG(QVariant, 1000)));
+        QTRY_VERIFY(item<QObject>("qcNotesDock")->property("isOpen").toBool());
+        QVERIFY2(!item("qcNotesAddEditor")->isVisible(), "the editor opened on a file that can't keep notes");
+        QVERIFY(!qc.editable());
+        QVERIFY(!item("qcNotesAdd")->isEnabled());
+        QTRY_VERIFY(item("qcNotesEmptyReason") && item("qcNotesEmptyReason")->isVisible());
+        QCOMPARE(item("qcNotesEmptyReason")->property("text").toString(),
+                 QStringLiteral("Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes."));
+        QVERIFY(!item("qcNotesEmptyImport")->isVisible());
+        QVERIFY(!qc.add(1000, QStringLiteral("General"), QStringLiteral("too late")));
+
+        QCOMPARE(application->saveChosenFor(0, QUrl::fromLocalFile(folder.filePath(QStringLiteral("qc-notes"))), QStringLiteral("ass")),
+                 QString());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QTRY_VERIFY(qc.editable());
+        QTRY_VERIFY(!item("qcNotesEmptyReason")->isVisible());
+        QVERIFY(item("qcNotesEmptyImport")->isVisible());
+        QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("too late")));
+        QCOMPARE(application::documentQcNotes(session->document()).size(), std::size_t(1));
+    }
+
     void qcNotesPanelKeepsNotesInTheFile()
     {
         QTemporaryDir &folder = testFolder();
@@ -16635,6 +16666,7 @@ private slots:
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
               {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"},
+              {"audio.karaokeThaiClusters", "Split Thai into character clusters"},
               {"audio.karaokeKfThreshold", nullptr},
               {"audio.ramCache", "Load audio into RAM"},
               {"audio.cacheFilesLimit", nullptr}}},
@@ -16656,6 +16688,10 @@ private slots:
               {"automation.fillLastAnswers", "Fill in my last answers"}}},
             {"settingsPageAi",
              {{"ai.off", "Turn off all AI features"},
+              {"ai.webSearch", "Let AI search the web"},
+              {"ai.searchService", nullptr},
+              {"ai.mcp.server", "Let agents outside HikariSub edit through MCP"},
+              {"ai.mcp.http", nullptr},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
              {{"updater.autoCheck", "Check for updates automatically"},
@@ -16839,6 +16875,54 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
 
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiWebSearch")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "setting_ai.webSearch")->property("checked").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "aiSearchHow")->property("text").toString(),
+                 QStringLiteral("Google Search, and reads pages"));
+        QVERIFY(dialogItem("settingsDialog", "aiGeminiSuggestionsNote")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiSearchKeyRow")->isVisible());
+        auto *service = dialogItem("settingsDialog", "setting_ai.searchService");
+        QCOMPARE(service->property("currentText").toString(), QStringLiteral("None"));
+        QVERIFY(QMetaObject::invokeMethod(service, "activated", Q_ARG(int, 3)));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiSearchKeyRow")->isVisible());
+        auto *addAnyway = dialogItem("settingsDialog", "aiSearchAddAnyway");
+        QVERIFY(!addAnyway->isVisible());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("exa-typed"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiSearchTest"), "click"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiSearchStatus")->property("text").toString(),
+                     QStringLiteral("Key rejected (401)"));
+        QVERIFY(!stored->keys.contains("search:exa"));
+        QVERIFY(addAnyway->isVisible());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("exa-edited"));
+        QVERIFY(!addAnyway->isVisible());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("exa-typed"));
+        QVERIFY(QMetaObject::invokeMethod(addAnyway, "click"));
+        QTRY_VERIFY(stored->keys.contains("search:exa"));
+        QCOMPARE(stored->keys.at("search:exa"), "exa-typed");
+        QTRY_VERIFY(!dialogItem("settingsDialog", "aiSearchKey")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiSearchRemoveKey")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(service, "activated", Q_ARG(int, 1)));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiSearchKeyRow")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "aiSearchKeyRow")->property("text").toString(),
+                 QStringLiteral("Brave Search key"));
+        QVERIFY(!dialogItem("settingsDialog", "aiSearchTest")->property("enabled").toBool());
+        dialogItem("settingsDialog", "aiSearchKey")->setProperty("text", QStringLiteral("BSA-typed"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiSearchTest"), "click"));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiSearchStatus")->property("text").toString(), QStringLiteral("Connected"));
+        QCOMPARE(stored->keys.at("search:brave"), "BSA-typed");
+        QVERIFY(dialogItem("settingsDialog", "aiSearchRemoveKey")->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "aiSearchKey")->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiSandboxNote")->property("text").toString().contains(
+            QStringLiteral("to the providers you add and to Brave Search.")));
+        QCOMPARE(application->ai()->requests()->searchService(), std::nullopt);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("ai.searchService"), QStringLiteral("brave"));
+        QTRY_COMPARE(application->ai()->requests()->searchService(), std::optional(ai::SearchService::Brave));
+
         std::vector<QUrl> opened;
         const auto routes = backends::desktop::replaceRoutes({.openUrl = [&](const QUrl &url) {
             opened.push_back(url);
@@ -16910,6 +16994,55 @@ private slots:
                      QStringLiteral("No key"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("ai");
+        auto *mcp = qobject_cast<app::AiMcp *>(application->aiSettings()->mcp());
+        QVERIFY(mcp && !mcp->server());
+        auto *http = dialogItem("settingsDialog", "setting_ai.mcp.http");
+        auto *copySetup = dialogItem("settingsDialog", "aiMcpCopySetup");
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcp")->isVisible());
+        QVERIFY(!http->isVisible() && !copySetup->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
+        QTRY_VERIFY(http->isVisible() && copySetup->isVisible());
+        QCOMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1"));
+        QVERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("needs “Also listen on")));
+        QVERIFY(!mcp->server());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(mcp->server());
+
+        const auto copyEntry = [&](const char *name) { return page->findChild<QObject *>(QLatin1String(name)); };
+        QVERIFY(copyEntry("aiMcpCopyClaudeCode") && copyEntry("aiMcpCopyCodex") && copyEntry("aiMcpCopyJson"));
+        QVERIFY(!copyEntry("aiMcpCopyJson")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyClaudeCode"), "triggered"));
+        QCOMPARE(QGuiApplication::clipboard()->text(),
+                 QStringLiteral("claude mcp add hikari -- \"%1\" --mcp").arg(app::AiMcp::program()));
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(),
+                     QStringLiteral("Copied. Run it in a terminal."));
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyCodex"), "triggered"));
+        QVERIFY(QGuiApplication::clipboard()->text().startsWith(QStringLiteral("[mcp_servers.hikari]\ncommand = ")));
+        QCOMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(),
+                 QStringLiteral("Copied. Paste it into the agent’s settings."));
+
+        QVERIFY(QMetaObject::invokeMethod(http, "click"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("press OK or Apply")));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(mcp->server()->httpPort() != 0);
+        const quint16 port = mcp->server()->httpPort();
+        QTRY_COMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1:%1").arg(port));
+        QTRY_VERIFY(copyEntry("aiMcpCopyJson")->property("enabled").toBool());
+        QVERIFY(!dialogItem("settingsDialog", "aiMcpJsonNote")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyJson"), "triggered"));
+        const QString json = QGuiApplication::clipboard()->text();
+        QVERIFY2(json.contains(QStringLiteral("http://127.0.0.1:%1/mcp").arg(port)), qPrintable(json));
+        QVERIFY(json.contains(QStringLiteral("Bearer ") + QString::fromLatin1(mcp->endpoint().token)));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
+        QTRY_VERIFY(!http->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!mcp->server());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()
@@ -17425,6 +17558,7 @@ private slots:
         QTRY_VERIFY((bar = dialogItem("pluginManagerDialog", "pluginMoveBar")) && bar->isVisible());
         QVERIFY(dialogItem("pluginManagerDialog", "pluginManagerView")->isVisible());
         QVERIFY(!dialogItem("pluginManagerDialog", "pluginDetailsName")->property("truncated").toBool());
+        QCOMPARE(dialogItem("pluginManagerDialog", "pluginNotSandboxed")->isVisible(), !application->pluginRuntime()->sandboxed());
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("pluginManagerDialog", "pluginMove"), "click"));
         QQuickWindow *box = nullptr;
@@ -20246,7 +20380,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 297);
+        QCOMPARE(hotkeyRows().size(), 299);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

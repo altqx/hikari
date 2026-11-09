@@ -1,5 +1,7 @@
 #include "lua_native.h"
 
+#include "hikari/core/graphemes.h"
+
 #include <boost/locale.hpp>
 #include <boost/regex/icu.hpp>
 
@@ -10,6 +12,7 @@ int luaopen_lpeg(lua_State *L);
 int luaopen_luabins(lua_State *L);
 }
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -103,10 +106,69 @@ char *foldCase(const char *str, char **err)
     }
 }
 
+int utf8Width(unsigned char lead)
+{
+    return lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+}
+
+char32_t decodeUtf8(const unsigned char *bytes, int available)
+{
+    constexpr char32_t replacement = 0xFFFD;
+    const int width = utf8Width(bytes[0]);
+    if (width == 1)
+        return bytes[0];
+    if (width > available || bytes[0] < 0xC2 || bytes[0] > 0xF4)
+        return replacement;
+    char32_t value = bytes[0] & (0x7F >> width);
+    for (int i = 1; i < width; ++i) {
+        if ((bytes[i] & 0xC0) != 0x80)
+            return replacement;
+        value = value << 6 | (bytes[i] & 0x3F);
+    }
+    constexpr char32_t shortest[] = {0, 0, 0x80, 0x800, 0x10000};
+    if (value < shortest[width] || value > 0x10FFFF || (value >= 0xD800 && value <= 0xDFFF))
+        return replacement;
+    return value;
+}
+
+// Byte end of the grapheme at byte `at`; it never cuts a char unicode.chars yields.
+int graphemeEndUtf8(const char *str, int length, int at)
+{
+    if (at < 0)
+        at = 0;
+    if (at >= length)
+        return length;
+    const auto *bytes = reinterpret_cast<const unsigned char *>(str);
+    std::u16string units;
+    std::vector<int> unitStarts;
+    int next = at;
+    for (std::size_t window = 64;; window *= 2) {
+        while (next < length && units.size() < window) {
+            const int width = std::min(utf8Width(bytes[next]), length - next);
+            const char32_t value = decodeUtf8(bytes + next, length - next);
+            if (value >= 0x10000) {
+                units.push_back(static_cast<char16_t>(0xD800 + ((value - 0x10000) >> 10)));
+                unitStarts.push_back(next);
+                units.push_back(static_cast<char16_t>(0xDC00 + ((value - 0x10000) & 0x3FF)));
+            } else {
+                units.push_back(static_cast<char16_t>(value));
+            }
+            unitStarts.push_back(next);
+            next += width;
+        }
+        const std::size_t end = hikari::core::graphemeEnd(units, 0);
+        if (end < units.size())
+            return unitStarts[end];
+        if (next >= length)
+            return length;
+    }
+}
+
 int openUnicode(lua_State *L)
 {
     beginLibTable(L, {});
-    lua_createtable(L, 0, 3);
+    lua_createtable(L, 0, 4);
+    addFunction(L, "grapheme_end", "int (*)(const char *, int, int)", fnptr(graphemeEndUtf8));
     addFunction(L, "to_upper_case", "char * (*)(const char *, char **)", fnptr(toUpper));
     addFunction(L, "to_lower_case", "char * (*)(const char *, char **)", fnptr(toLower));
     addFunction(L, "to_fold_case", "char * (*)(const char *, char **)", fnptr(foldCase));

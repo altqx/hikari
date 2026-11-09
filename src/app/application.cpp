@@ -756,7 +756,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
-        }});
+        },
+        [this]() -> const application::VideoSession * { return m_video ? &m_video->session() : nullptr; },
+        [this](const core::Document &document) { return rendererScript(document); },
+        [this](application::DocumentId document) { return subtitleFonts(document); },
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
     m_ai = std::make_unique<AiFeatures>(
         *m_settings, options.aiPorts ? std::move(*options.aiPorts)
                                      : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
@@ -765,7 +769,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                     : options.appVersion));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
-    m_aiSettings = std::make_unique<AiSettings>(*m_ai);
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
         m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -792,6 +796,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    pluginWiring.sandbox = true;
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
@@ -2203,7 +2208,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     protectReference();
-    showTabArrangement();
+    showTabArrangement(m_workspace.activeWindow());
     if (m_workspace.editingTarget())
         spellChecker();
     reportGroupBreak();

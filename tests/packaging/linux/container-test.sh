@@ -50,12 +50,12 @@ case $family in
 esac
 
 case $family in
-    deb) tools=(xvfb xauth libgl1-mesa-dri binutils desktop-file-utils appstream procps) ;;
+    deb) tools=(xvfb xauth libgl1-mesa-dri binutils desktop-file-utils appstream procps xdg-utils) ;;
     dnf) tools=(xorg-x11-server-Xvfb xorg-x11-xauth mesa-dri-drivers binutils desktop-file-utils appstream procps-ng
-                util-linux shadow-utils findutils) ;;
+                util-linux shadow-utils findutils xdg-utils) ;;
     zypper) tools=(xvfb-run xorg-x11-server-Xvfb xauth Mesa-dri binutils desktop-file-utils AppStream procps
-                   util-linux shadow findutils gzip tar) ;;
-    arch) tools=(xorg-server-xvfb xorg-xauth mesa binutils desktop-file-utils appstream procps-ng) ;;
+                   util-linux shadow findutils gzip tar xdg-utils) ;;
+    arch) tools=(xorg-server-xvfb xorg-xauth mesa binutils desktop-file-utils appstream procps-ng xdg-utils) ;;
 esac
 case $family in
     deb) baseline=(libgl1 libegl1 libopengl0 libglx0 libx11-6 libx11-xcb1 libxcb1 libxcb-randr0 libxcb-shm0
@@ -102,6 +102,16 @@ kind_name()
 }
 as_tester() { runuser -u tester -- env HOME=$home XDG_RUNTIME_DIR=/tmp/xdg-tester "$@"; }
 mkdir -p /tmp/xdg-tester && chown tester /tmp/xdg-tester && chmod 0700 /tmp/xdg-tester
+# <what> [VAR=value…]: the desktop entry that takes hikarisub:// links, as the tester sees it.
+link_handler()
+{
+    local what=$1 got
+    shift
+    got=$(as_tester env "$@" xdg-mime query default x-scheme-handler/hikarisub 2>/dev/null || true)
+    [ "$got" = io.github.altqx.HikariSub.desktop ] ||
+        fail "$what: xdg-mime query default x-scheme-handler/hikarisub gave '$got'"
+    pass "$what: hikarisub:// links open io.github.altqx.HikariSub.desktop"
+}
 
 check_version() # <kind> <command...>
 {
@@ -211,6 +221,9 @@ if want appimage; then
     install_pkgs "${baseline[@]}"
     export APPIMAGE_EXTRACT_AND_RUN=1
     check_version appimage "$work/${appimage##*/}"
+    grep -q '^Exec=hikarisub %u$' "$work/squashfs-root/io.github.altqx.HikariSub.desktop" || fail "appimage: Exec="
+    grep -q '^MimeType=.*x-scheme-handler/hikarisub;' "$work/squashfs-root/io.github.altqx.HikariSub.desktop" ||
+        fail "appimage: no x-scheme-handler/hikarisub"
     gui_start appimage env APPIMAGE_EXTRACT_AND_RUN=1 "$work/${appimage##*/}"
     host_list_not_bundled appimage 'appimage_extracted|squashfs-root|/tmp/\.mount_'
     unset APPIMAGE_EXTRACT_AND_RUN
@@ -229,6 +242,10 @@ if want tar; then
         "$(dpkg-deb -f "$deb" Depends)" > /dev/null
     check_version portable-linux /tmp/tar/hikarisub-linux-x86_64/hikarisub
     gui_start tar /tmp/tar/hikarisub-linux-x86_64/hikarisub
+    rm -rf /tmp/xdg-tar && mkdir -p /tmp/xdg-tar/data /tmp/xdg-tar/config && chown -R tester /tmp/xdg-tar
+    as_tester env XDG_DATA_HOME=/tmp/xdg-tar/data /tmp/tar/hikarisub-linux-x86_64/install-desktop-integration.sh > /dev/null ||
+        fail "tar: install-desktop-integration.sh"
+    link_handler tar XDG_DATA_HOME=/tmp/xdg-tar/data XDG_CONFIG_HOME=/tmp/xdg-tar/config
     host_list_not_bundled tar '/tmp/tar/'
 fi
 
@@ -286,6 +303,9 @@ native_checks()
         *) homepage=$(rpm -q --qf '%{URL}' hikarisub) ;;
     esac
     [ "$homepage" = https://hikarisub.org ] || fail "package homepage $homepage"
+    grep -q '^Exec=hikarisub %u$' /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "native: Exec="
+    update-desktop-database -q /usr/share/applications
+    link_handler native
     pass "native install: version $(installed_version), kind $kind, desktop files valid"
     unresolved=$(find /opt/hikarisub -type f \( -name '*.so*' -o -perm -u+x \) -print0 | xargs -0 -r ldd 2>/dev/null |
                  grep 'not found' | sort -u || true)

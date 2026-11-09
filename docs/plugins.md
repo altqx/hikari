@@ -67,6 +67,15 @@ The HikariSub marketplace (PL6 [#418](https://github.com/altqx/hikari/issues/418
 - **Install.** HikariSub downloads the listed version's `url`, which must be on the marketplace's origin and no larger than `size`. Then it checks `size` and `sha256`, runs the package checks, and checks that the manifest has the listed id, version, tier and API. The manifest's `publicKey` must be the listing's `publicKey` and, for an installed plugin, the pinned key. The marketplace packages carry no `.minisig`: the signed index vouches for the listing's author key. A downgrade is refused, except Install <last good> after a revocation. The install question always opens first, except for an [automatic update](#updates-roll-back-and-revocation).
 - **Source.** `plugins.json` records `"source": "marketplace"` for a marketplace install; a missing `source` means a file. Installing from a file over a marketplace copy makes it a file install again.
 
+### Installing from the website
+
+The marketplace website's Install in HikariSub opens `hikarisub://plugin/install?id=<id>` (MK1 [#667](https://github.com/altqx/hikari/issues/667)). [Distribution](distribution.md#packages) says how each package registers the scheme.
+
+- **The only link.** HikariSub takes exactly that form, with an id that fits the manifest's pattern and 100 characters at most. It ignores anything else (another action, an extra parameter, a fragment, a percent-encoded character) and only notes it in the `hikari.links` log. The link names nothing but the id.
+- **Where it goes.** A start with a link hands it to the HikariSub already running, like a file, and the last active window takes it. A start that opens the first window takes it once that window is up. Of several links that come together, only the last counts.
+- **What it does.** HikariSub opens the plugin manager at the Marketplace view and fetches the index again, so a plugin listed a minute ago is found. Then it chooses the listing and starts the same download as Install, which ends in the install question. When the newest version this HikariSub can run is already installed, it only chooses the listing. A plugin the index doesn't list, or one this HikariSub can't run, gets "<id> isn’t in the marketplace for this HikariSub.", and an index that doesn't arrive gets the usual message.
+- **Plugin updates off.** While "Check for plugin updates" is off, a link only asks: "<id> can’t be installed while plugin updates are off.", with Close and Turn on plugin updates. Turning them on carries on as above; nothing is fetched before that.
+
 ### Updates, roll back and revocation
 
 - **Automatic updates.** After each index HikariSub accepts, it installs the newest version a marketplace plugin can run when "Install updates automatically" (`plugins.autoUpdate`, on by default, under "Check for plugin updates") and the plugin's own switch are both on. The download gets the same checks as Install. File installs never update by themselves.
@@ -109,8 +118,9 @@ Each enabled plugin runs in its own `hikari-plugin-helper` process, started when
 - **Unrestricted.** The full LuaJIT libraries, with `package.path` pointed at the package's `lua/` folder and `package.cpath` at its `lib/`. Installing one shows the full-trust warning.
 - **Memory.** A counting allocator caps the state at 256 MB. A command or event that hits the cap fails with "the plugin ran out of memory: it may hold 256 MB", and the plugin keeps running.
 - **Time.** The load, each command and each event runs one at a time. One that runs longer than 10 seconds is force stopped: HikariSub ends the helper and says so in a toast. Time HikariSub spends answering the plugin (an API call, a setting) doesn't count. The plugin's next command starts a new helper.
-
-These limits come from process isolation and the restricted state; they are not an operating-system sandbox. That's PL7 ([#419](https://github.com/altqx/hikari/issues/419)), which reuses the AI sidecar's `hikari_sandbox` module ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)).
+- **The sandbox.** A restricted plugin's helper starts in an operating-system sandbox, `hikari_sandbox` ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)): Landlock and seccomp on Linux, an AppContainer on Windows. Its profile is `HikariSub.Plugin.<the first 32 hex digits of the id's SHA-256>`: the helper's folder to read and execute, the plugin's package folder to read, nothing else, and no network. The helper needs no more, because HikariSub itself opens the files a plugin was granted (`hikari.files`) and makes its requests (`hikari.net.fetch`).
+- **Full trust plugins run outside the sandbox,** with the same access as HikariSub.
+- **Where the sandbox can't apply,** for example on a kernel without Landlock or seccomp, restricted plugins still run under the limits above. HikariSub logs what is missing under `hikari.plugins.sandbox`, and the plugin's details say "HikariSub keeps it to these permissions, but it isn’t sandboxed on this system."
 
 ### The helper protocol
 
@@ -289,7 +299,7 @@ A request is a URL, or `{url, method, headers, body, encoding}`. `method` is `GE
 
 HikariSub refuses the request, with the error `refused` and its `reason`, or `not_granted`:
 
-- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because nothing sandboxes it yet (PL7 [#419](https://github.com/altqx/hikari/issues/419)).
+- **`network_off`.** Settings › Updates and privacy › Let plugins connect to the internet is off. It turns off `hikari.net.fetch` for every plugin at once. A Full trust plugin can still open its own connections, because it runs outside the sandbox.
 - **`not_https`.** The URL isn't `https://`. **`port`.** It names a port other than 443.
 - **`not_granted`**, with `host`. The host isn't one of the manifest's `permissions.network.hosts`, matched exactly. The plugin manager shows those hosts, and so does the install.
 - **`too_large`**, **`not_text`** (an answer that isn't UTF-8, without `encoding = "base64"`), **`failed`** and **`timeout`** (30 seconds).

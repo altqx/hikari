@@ -735,8 +735,11 @@ ApplicationWindow {
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
     }
     function addQcNote(ms) {
-        if (!root.qcNotes.editable)
+        if (!root.qcNotes.editable) {
+            if (root.qcNotes.hasDocument && !root.qcNotes.canKeepNotes)
+                root.showPanel(qcNotesDock)
             return
+        }
         root.showPanel(qcNotesDock)
         qcNotesTool.startAdding(ms)
     }
@@ -1381,6 +1384,7 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    function openInstallLink(id) { pluginManagerDialog.followLink(id) }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }
@@ -1474,6 +1478,8 @@ ApplicationWindow {
         function onDocumentWriteFailed(id) { matroskaSubtitles.writeFailed(id) }
         // MUST KILL: the app ignores Grid scroll reports until scrollRestored(), hiding the model reset's transient 0
         function onTabShown(scroll) {
+            if (root.app.lastUsedWindow !== root.shellWindow)
+                return
             Qt.callLater(() => {
                 grid.contentY = scroll * grid.rowHeight
                 root.app.scrollRestored()
@@ -3553,6 +3559,28 @@ ApplicationWindow {
                 margins: 4
             }
         }
+    }
+
+    DropArea {
+        id: tabDropArea
+        objectName: "tabDropArea"
+        parent: root.contentItem.parent
+        anchors.fill: parent
+        z: 3
+        visible: root.app.tabDragging
+        keys: ["application/x-hikari-tab"]
+        onDropped: drop => {
+            const document = Number(drop.getDataAsString("application/x-hikari-tab"))
+            const at = documentTabBar.mapFromItem(tabDropArea, drop.x, drop.y)
+            const index = documentTabBar.dropIndexAt(at.x, at.y, document)
+            if (index >= 0)
+                root.app.moveTab(document, root.shellWindow, index)
+            drop.acceptProposedAction()
+        }
+    }
+    function tabDropIndex(x, y) {
+        const at = documentTabBar.mapFromGlobal(x, y)
+        return documentTabBar.dropIndexAt(at.x, at.y, 0)
     }
 
     // Before the docking area so KDDW's hit test (last child wins) finds the panels; non-file drags are refused for its Wayland drop indicators.
@@ -8362,6 +8390,11 @@ ApplicationWindow {
         case "GLOBAL_ADD_QC_NOTE": if (editing) root.addQcNote(-1); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
+        case "GLOBAL_MOVE_TAB_TO_NEW_WINDOW":
+            if (root.app.editingDocument() > 0)
+                root.app.moveTabToNewWindow(root.app.editingDocument(), Qt.point(0, 0), false)
+            return true
+        case "GLOBAL_MOVE_TAB_TO_WINDOW": documentTabBar.openMoveToWindowMenu(); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true

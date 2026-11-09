@@ -25,14 +25,15 @@ struct SignInProgress;
 namespace hikari::app {
 
 class AiFeatures;
+class AiMcp;
 
 /// Settings › AI: the providers, their keys and catalogues, and the role models. Providers and keys are saved at
 /// once; role models wait for OK or Apply (applyRoles).
 class AiSettings final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool on READ on NOTIFY switched)
-    /// {id, name, preset, wire, baseUrl, needsKey, signedIn, models, state, error, httpStatus, detail}; state is "",
-    /// "testing", "ok" or "failed".
+    /// {id, name, preset, wire, baseUrl, needsKey, signedIn, searchesNatively, models, state, error, httpStatus,
+    /// detail}; state is "", "testing", "ok" or "failed".
     Q_PROPERTY(QVariantList providers READ providers NOTIFY providersChanged)
     /// {value: "<provider id>\t<model id>", text, provider, vision}
     Q_PROPERTY(QVariantList modelChoices READ modelChoices NOTIFY providersChanged)
@@ -46,11 +47,16 @@ class AiSettings final : public QObject {
     /// Codex under External agents: {found, path, version, canImport, signedIn, email, state, userCode, expiresAt,
     /// browserAvailable, error, host}. state is "", "starting", "code" or "browser"; error is a sign-in failure's kind.
     Q_PROPERTY(QVariantMap codex READ codex NOTIFY codexChanged)
+    /// The search service's key row: {service, hasKey, state, error, httpStatus, canAddAnyway}; state is "",
+    /// "checking", "saving", "testing", "ok" or "failed". canAddAnyway is set when a typed key's test failed.
+    Q_PROPERTY(QVariantMap search READ search NOTIFY searchChanged)
     /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
     Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
+    /// The MCP server's AiMcp, for its Copy setup; null without one.
+    Q_PROPERTY(QObject *mcp READ mcp CONSTANT FINAL)
 
 public:
-    explicit AiSettings(AiFeatures &features, QObject *parent = nullptr);
+    explicit AiSettings(AiFeatures &features, AiMcp *mcp = nullptr, QObject *parent = nullptr);
     ~AiSettings() override;
 
     bool on() const;
@@ -60,7 +66,9 @@ public:
     QVariantMap draft() const { return m_draft; }
     QVariantMap download() const;
     QVariantMap codex() const;
+    QVariantMap search() const { return m_search; }
     bool sandboxed() const;
+    QObject *mcp() const;
 
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
@@ -89,6 +97,16 @@ public:
     Q_INVOKABLE void signInDraft(const QVariantMap &form);
     /// Deletes a signed-in provider's key; it stays, keyless, until the user signs in again or pastes a key.
     Q_INVOKABLE void signOutProvider(const QString &providerId);
+    /// Reads whether the service's key is in the keychain; an empty id clears the row.
+    Q_INVOKABLE void checkSearchKey(const QString &service);
+    /// Tests the typed key with one search and stores it only when the test passes.
+    Q_INVOKABLE void saveSearchKey(const QString &service, const QString &key);
+    /// Stores a typed key whose test failed, keeping the failure on show.
+    Q_INVOKABLE void addSearchKeyAnyway(const QString &service, const QString &key);
+    /// One search with the stored key, which counts against the service's plan.
+    Q_INVOKABLE void testSearchKey(const QString &service);
+    Q_INVOKABLE void removeSearchKey(const QString &service);
+    Q_INVOKABLE void openSearchKeys(const QString &service) const;
     Q_INVOKABLE void openWhatIsSent() const;
     Q_INVOKABLE void openGeminiKeys() const;
     Q_INVOKABLE void openOpenRouterKeys() const;
@@ -96,6 +114,7 @@ public:
     static QUrl whatIsSentUrl() { return QUrl(QStringLiteral("https://hikarisub.org/en/docs/help/what-is-sent#ai")); }
     static QUrl geminiKeysUrl() { return QUrl(QStringLiteral("https://aistudio.google.com/apikey")); }
     static QUrl openRouterKeysUrl() { return QUrl(QStringLiteral("https://openrouter.ai/settings/keys")); }
+    static QUrl searchKeysUrl(application::ai::SearchService service);
 
 signals:
     void switched();
@@ -103,6 +122,8 @@ signals:
     void draftChanged();
     void downloadChanged();
     void codexChanged();
+    void searchChanged();
+    void searchKeyStored(const QString &service);
     void draftSaved(const QString &providerId);
 
 private:
@@ -123,8 +144,14 @@ private:
     void reset();
     void signInProgress(const backends::ai::SignInProgress &progress);
     void setCodexFailure(const backends::ai::SignInFailure &failure);
+    void setSearch(const QString &service, bool hasKey, const QString &state, const QString &error = {},
+                   int httpStatus = 0, bool canAddAnyway = false);
+    bool hasSearchKey(const QString &service) const;
+    void storeSearchKey(const QString &service, std::string key, std::function<void()> stored);
+    void runSearchTest(const QString &service, std::optional<std::string> typedKey);
 
     AiFeatures &m_features;
+    AiMcp *m_mcp = nullptr;
     std::map<std::string, Status, std::less<>> m_status;
     QVariantMap m_draft;
     struct Probed {
@@ -155,6 +182,7 @@ private:
         QString host;
     };
     Codex m_codex;
+    QVariantMap m_search;
     QUrl m_signInPage;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };

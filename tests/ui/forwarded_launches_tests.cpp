@@ -1,13 +1,17 @@
 #include "hikari/app/application.h"
 #include "hikari/app/session_json.h"
 #include "hikari/app/forwarded_launches.h"
+#include "hikari/app/single_instance.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
+#include "fake_network.h"
+#include "settings_store.h"
 
 #include <QDir>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
+#include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -39,6 +43,17 @@ QString media(const char *name)
     return QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name);
 }
 
+QByteArray pluginFixture(const QString &name)
+{
+    QFile f(QStringLiteral(HIKARI_PLUGIN_FIXTURES "/") + name);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+QString installLink(const char *id)
+{
+    return QStringLiteral("hikarisub://plugin/install?id=") + QLatin1String(id);
+}
+
 }
 
 class ForwardedLaunchesTests : public QObject {
@@ -51,15 +66,24 @@ class ForwardedLaunchesTests : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
-    void start(int restore = 0)
+    std::unique_ptr<hikari::test::FakeNetwork> market;
+
+    app::Application::Options options() const
     {
         app::Application::Options o;
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {};
+        return o;
+    }
+    void start(int restore = 0) { startWith(options(), restore); }
+    void startWith(const app::Application::Options &o, int restore = 0, const QStringList &beforeWindow = {})
+    {
         application = new app::Application(o);
         application->setSessionRestore(restore);
         forwarded = new app::ForwardedLaunches(*application);
+        if (!beforeWindow.isEmpty())
+            take(beforeWindow);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
@@ -98,6 +122,54 @@ class ForwardedLaunchesTests : public QObject {
         QVERIFY(s->isDirty());
     }
     void take(const QStringList &files) { forwarded->take({files, {}}); }
+    void startMarketplace(const QStringList &beforeWindow = {}, const QString &sideload = {})
+    {
+        const QString base = QStringLiteral("https://marketplace.test/");
+        market = std::make_unique<hikari::test::FakeNetwork>();
+        market->files = {
+            {base + QStringLiteral("index.json"), pluginFixture(QStringLiteral("marketplace/index.json"))},
+            {base + QStringLiteral("index.json.minisig"), pluginFixture(QStringLiteral("marketplace/index.json.minisig"))},
+            {base + QStringLiteral("p/com.example.hello/1.1.0.hikariplugin"), pluginFixture(QStringLiteral("hello-1.1.0.hikariplugin"))},
+            {base + QStringLiteral("p/com.example.native/1.0.0.hikariplugin"),
+             pluginFixture(QStringLiteral("native-1.0.0-unrestricted.hikariplugin"))},
+        };
+        QDir(home.filePath(QStringLiteral("market"))).removeRecursively();
+        app::Application::Options o = options();
+        o.plugins = {home.filePath(QStringLiteral("market/plugins")), home.filePath(QStringLiteral("market/plugin-data")),
+                     home.filePath(QStringLiteral("market/cache")), home.filePath(QStringLiteral("market/plugins.json"))};
+        o.marketplace = {QUrl(base), {*hikari::minisign::parsePublicKey("RWT+3LqYdlQyECmsuuFBvMrwsi4alNNNC8c2HlJtC/4SyJeUvJMilm3X")}};
+        o.marketplaceNetwork = market.get();
+        startWith(o, 0, beforeWindow);
+        if (!sideload.isEmpty()) {
+            QVERIFY(application->pluginManager()
+                        ->review(QUrl::fromLocalFile(QStringLiteral(HIKARI_PLUGIN_FIXTURES "/") + sideload))
+                        .value(QStringLiteral("ok"))
+                        .toBool());
+            QCOMPARE(application->pluginManager()->install(false), QString());
+        }
+    }
+    QQuickWindow *pluginMessage() const
+    {
+        QObject *host = named("pluginManagerMessages");
+        auto *box = host ? qvariant_cast<QQuickWindow *>(host->property("box")) : nullptr;
+        return box && box->isVisible() ? box : nullptr;
+    }
+    void answerPluginMessage(const QString &title, const QString &text, const QString &choice)
+    {
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = pluginMessage()));
+        QCOMPARE(box->title(), title);
+        QCOMPARE(box->property("text").toString(), text);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, choice)));
+        QTRY_VERIFY(!pluginMessage());
+    }
+    QObject *pluginManager() const { return named("pluginManagerDialog"); }
+    void showsListing(const QString &id)
+    {
+        QTRY_VERIFY(pluginManager()->property("visible").toBool());
+        QCOMPARE(pluginManager()->property("view").toString(), QStringLiteral("market"));
+        QTRY_COMPARE(pluginManager()->property("chosenListingId").toString(), id);
+    }
     void staysWaiting(const QStringList &before)
     {
         QTest::qWait(1000);
@@ -115,9 +187,111 @@ private slots:
         forwarded = nullptr;
         delete application;
         application = nullptr;
+        market.reset();
         for (const char *name : {"settings.toml", "hotkeys.toml", "state.json"})
             QFile::remove(home.filePath(QLatin1String(name)));
         QFile::remove(home.filePath(QStringLiteral("last-session.json")));
+    }
+
+    void aForwardedLinkOpensTheInstallQuestion()
+    {
+        startMarketplace();
+        take({installLink("com.example.native")});
+        answerPluginMessage(QStringLiteral("Install plugin"), QStringLiteral("Install “Native Tools” 1.0.0?"), QStringLiteral("cancel"));
+        showsListing(QStringLiteral("com.example.native"));
+        QVERIFY(application->pluginManager()->plugins().isEmpty());
+        QVERIFY(std::ranges::any_of(market->requests, [](const QNetworkRequest &r) {
+            return r.url().path() == QStringLiteral("/p/com.example.native/1.0.0.hikariplugin");
+        }));
+    }
+
+    void aLinkOnAColdStartWaitsForTheWindow()
+    {
+        startMarketplace({installLink("com.example.native")});
+        answerPluginMessage(QStringLiteral("Install plugin"), QStringLiteral("Install “Native Tools” 1.0.0?"), QStringLiteral("cancel"));
+        showsListing(QStringLiteral("com.example.native"));
+    }
+
+    void aLinkToTheNewestInstalledVersionOnlySelectsIt()
+    {
+        startMarketplace({}, QStringLiteral("hello-1.1.0.hikariplugin"));
+        take({installLink("com.example.hello")});
+        showsListing(QStringLiteral("com.example.hello"));
+        QTRY_COMPARE(market->requests.size(), 2);
+        QTest::qWait(500);
+        QVERIFY(!pluginMessage());
+        QCOMPARE(market->requests.size(), 2);
+    }
+
+    void aLinkToAnUnlistedPluginSaysSo()
+    {
+        startMarketplace();
+        take({installLink("com.example.missing")});
+        answerPluginMessage(QStringLiteral("Plugin not installed"),
+                            QStringLiteral("“com.example.missing” isn’t in the marketplace for this HikariSub."), QStringLiteral("ok"));
+    }
+
+    void aLinkWhilePluginUpdatesAreOffAsksToTurnThemOn()
+    {
+        startMarketplace();
+        application->settingsStore()->set("plugins.checkUpdates", false);
+        take({installLink("com.example.native")});
+        answerPluginMessage(QStringLiteral("Install plugin"),
+                            QStringLiteral("“com.example.native” can’t be installed while plugin updates are off."), QStringLiteral("close"));
+        QTest::qWait(500);
+        QVERIFY(!pluginManager()->property("visible").toBool());
+        QVERIFY(market->requests.isEmpty());
+        QVERIFY(!application->settingsStore()->boolean("plugins.checkUpdates"));
+
+        take({installLink("com.example.native")});
+        answerPluginMessage(QStringLiteral("Install plugin"),
+                            QStringLiteral("“com.example.native” can’t be installed while plugin updates are off."), QStringLiteral("turnOn"));
+        QVERIFY(application->settingsStore()->boolean("plugins.checkUpdates"));
+        answerPluginMessage(QStringLiteral("Install plugin"), QStringLiteral("Install “Native Tools” 1.0.0?"), QStringLiteral("cancel"));
+        showsListing(QStringLiteral("com.example.native"));
+    }
+
+    void refusedLinksAreOnlyLogged()
+    {
+        startMarketplace();
+        const QStringList refused{QStringLiteral("hikarisub://plugin/uninstall?id=com.example.hello"),
+                                  QStringLiteral("hikarisub://plugin/install?id=com.example.hello&url=https://evil.test/x"),
+                                  QStringLiteral("hikarisub://plugin/install?id=com%2Eexample.hello"),
+                                  installLink("com.example.hello") + QString(5000, QLatin1Char('a'))};
+        for (qsizetype i = 0; i < refused.size(); ++i)
+            QTest::ignoreMessage(QtWarningMsg, QRegularExpression(QStringLiteral("^Ignored a link HikariSub doesn't take: ")));
+        take(refused);
+        QTest::qWait(1000);
+        QVERIFY(!pluginMessage());
+        QVERIFY(!pluginManager()->property("visible").toBool());
+        QVERIFY(market->requests.isEmpty());
+        QVERIFY(!forwarded->pending());
+        QVERIFY(titles().isEmpty());
+    }
+
+    void onlyTheLastOfSeveralLinksCounts()
+    {
+        startMarketplace();
+        take({installLink("com.example.missing")});
+        take({installLink("com.example.native"), installLink("com.example.glossary"), installLink("com.example.native")});
+        answerPluginMessage(QStringLiteral("Install plugin"), QStringLiteral("Install “Native Tools” 1.0.0?"), QStringLiteral("cancel"));
+        QTest::qWait(500);
+        QVERIFY(!pluginMessage());
+    }
+
+    void aFileUrlOpensTheFile()
+    {
+        const QString path = writeAss(dir.filePath(QStringLiteral("a b/字幕.ass")), "url");
+        const QString url = QString::fromLatin1(QUrl::fromLocalFile(path).toEncoded());
+        QVERIFY(url.contains(QStringLiteral("a%20b/%E5%AD%97%E5%B9%95.ass")));
+        const QStringList files = app::launchFiles({url}, dir.path());
+        QCOMPARE(files, QStringList{QDir::cleanPath(path)});
+        start();
+        take(files);
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("字幕.ass")});
+        cleanup();
+        startWith(options(), 0, files);
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("字幕.ass")});
     }
 
     void theUntouchedEmptyTabTakesTheFile()

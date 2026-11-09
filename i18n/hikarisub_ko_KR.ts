@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>원근 추적…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7395,6 +7403,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>디자인 및 개발</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>자동화 스크립트의 태국어 지원</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -8973,6 +8985,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>촉음을 별도 음절로 분리 (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>태국어를 문자 묶음으로 분리</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>자동 분할이 태국어 문자 묶음마다 음절을 하나씩 만들어 กิน이 กิ|น이 됩니다. 끄면 태국어 단어 하나가 음절 하나로 남습니다.</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -10620,6 +10640,62 @@ Failed to copy %2 fonts.</source>
         <translation>다시 시도</translation>
     </message>
     <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>HikariSub 밖의 에이전트가 MCP로 편집하도록 허용</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex 및 기타 에이전트가 열린 문서를 읽습니다. 에이전트의 편집은 유지하거나 실행 취소할 때까지 검토에서 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>http://127.0.0.1에서도 수신</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>http://127.0.0.1:%1에서도 수신</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>HTTP로 연결하는 에이전트용입니다. 이 컴퓨터에서만, 토큰이 있어야 연결할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>설정 복사</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>복사했습니다. 터미널에서 실행하세요.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>복사했습니다. 에이전트 설정에 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Claude Code 명령</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>주소와 토큰이 담긴 JSON</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>JSON 설정은 HTTP로 연결하는 에이전트용이므로 “http://127.0.0.1에서도 수신”이 켜져 있어야 합니다.</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>프롬프트 캐싱 사용</translation>
     </message>
@@ -10642,6 +10718,126 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
         <translation type="vanished">요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Web search</source>
+        <translation>웹 검색</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>AI가 웹을 검색하도록 허용</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>에이전트가 이름, 용어, 가사, 참고 자료를 찾아보고 어디서 찾았는지 알려 줍니다. 에이전트가 작성한 각 검색어와 연 페이지는 공급자나 검색 서비스로 전송됩니다.</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google 검색, 페이지 읽기 가능</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>자체 검색, 페이지 읽기 가능</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>검색 서비스 필요</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>검색을 사용한 Gemini 답변에는 Google 약관에 따라 Google 검색 추천이 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>검색 서비스</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search(검색만)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search는 검색만 합니다. 자체 검색이 없는 공급자는 이 서비스로 페이지를 읽을 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>자체 검색이 없는 공급자용입니다. Anthropic, Google Gemini, OpenAI, OpenRouter는 검색 서비스 없이 검색합니다.</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>%1 키</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>키 바꾸기…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>그래도 추가</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>키 제거</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>%1 키 받기</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>연결됨</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>검색 한도 소진(%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>키를 테스트하려면 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>%1에 연결할 수 없음</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>검색 서비스 오류(%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>테스트 안 함</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>키체인에 저장됩니다. HikariSub는 에이전트가 작성한 검색어만 보내며 파일은 절대 보내지 않습니다. 연결 테스트는 검색을 한 번 실행하며, %1 요금제 사용량에 포함됩니다.</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1에서 키를 거부했습니다. %1 대시보드에서 새 키를 붙여 넣으세요.</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>%1 요금제에 남은 검색이 없습니다. 초기화될 때까지 자체 검색이 없는 공급자는 검색 없이 답하고 그 사실을 알립니다.</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>키는 키체인에 있습니다. 공급자는 토큰 외에 자체 검색 비용을 따로 청구합니다. %1 검색은 %1 요금제로 청구됩니다.</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>%1 키를 제거할까요?</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>키체인에서 삭제됩니다. 자체 검색이 없는 공급자는 키를 추가할 때까지 검색하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>요청은 추가한 공급자와 %1에만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>요청은 추가한 공급자와 %1에만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
     </message>
 </context>
 <context>
@@ -10821,6 +11017,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install plugin</source>
         <translation>플러그인 설치</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>플러그인 업데이트가 꺼져 있어 “%1”을(를) 설치할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>이 링크는 마켓플레이스 웹사이트에서 왔습니다. HikariSub는 자체 서명된 목록에서 플러그인을 찾으므로 먼저 마켓플레이스를 확인해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>플러그인 업데이트 켜기</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -11141,6 +11349,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Permissions</source>
         <translation>권한</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub는 이 플러그인을 이 권한 안으로 제한하지만, 이 시스템에서는 샌드박스에서 실행되지 않습니다.</translation>
     </message>
     <message>
         <source>Remembered folders</source>
@@ -11620,6 +11832,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open a subtitle file to keep QC notes in it.</source>
         <translation>QC 메모를 저장할 자막 파일을 여세요.</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>ASS 및 SSA 파일만 QC 메모를 담을 수 있습니다. 메모를 추가하려면 이 파일을 ASS로 저장하세요.</translation>
     </message>
     <message>
         <source>Paste notes</source>
@@ -14960,6 +15176,10 @@ Styles deleted:
         <translation>전환</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -15044,6 +15264,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>영상만</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
     </message>
 </context>
 <context>

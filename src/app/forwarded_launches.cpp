@@ -2,8 +2,10 @@
 
 #include "hikari/app/application.h"
 #include "hikari/app/composition.h"
+#include "hikari/plugins/marketplace.h"
 
 #include <QGuiApplication>
+#include <QLoggingCategory>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QWindow>
@@ -22,8 +24,17 @@ namespace hikari::app {
 
 namespace {
 
+Q_LOGGING_CATEGORY(lcLinks, "hikari.links")
+
 constexpr int kGatherMs = 400;
 constexpr int kBusyRetryMs = 100;
+constexpr qsizetype kLoggedLinkLength = 200;
+
+QString installLinkId(const QString &link)
+{
+    const auto id = plugins::installLinkId(link.toStdString());
+    return id ? QString::fromStdString(*id) : QString();
+}
 
 bool modalPopupOpen(QWindow *window)
 {
@@ -70,13 +81,26 @@ void ForwardedLaunches::setWindow(QWindow *window)
         m_activate = false;
         activate(target(), std::exchange(m_token, QString()));
     }
-    if (!m_files.isEmpty())
+    if (pending())
         m_timer.start(kGatherMs);
+}
+
+void ForwardedLaunches::keep(const QStringList &arguments)
+{
+    for (const QString &argument : arguments) {
+        if (!isAppLink(argument))
+            m_files << argument;
+        else if (!installLinkId(argument).isEmpty())
+            m_link = argument;
+        else
+            qCWarning(lcLinks, "Ignored a link HikariSub doesn't take: %s",
+                      argument.left(kLoggedLinkLength).toUtf8().toPercentEncoding(":/?=&.-_~").constData());
+    }
 }
 
 void ForwardedLaunches::take(const SingleInstance::Request &request)
 {
-    m_files += request.files;
+    keep(request.files);
     QString token = request.activationToken;
     if (m_application.quitting() && !token.isEmpty()) {
         m_quitToken = std::exchange(token, QString());
@@ -88,7 +112,7 @@ void ForwardedLaunches::take(const SingleInstance::Request &request)
         m_activate = true;
         m_token = token;
     }
-    if (!m_files.isEmpty() && m_window)
+    if (pending() && m_window)
         m_timer.start(kGatherMs);
     if (request.files.isEmpty() && m_application.quitting())
         m_afterQuitReview = m_application.quitReviews();
@@ -107,7 +131,10 @@ QString ForwardedLaunches::activationTokenAfterQuit() const
 QStringList ForwardedLaunches::takeUnopened()
 {
     m_timer.stop();
-    return std::exchange(m_files, QStringList());
+    QStringList unopened = std::exchange(m_files, QStringList());
+    if (!m_link.isEmpty())
+        unopened << std::exchange(m_link, QString());
+    return unopened;
 }
 
 bool ForwardedLaunches::busy() const
@@ -117,12 +144,18 @@ bool ForwardedLaunches::busy() const
 
 void ForwardedLaunches::open()
 {
-    if (!m_window || m_files.isEmpty())
+    if (!m_window || !pending())
         return;
     if (busy()) {
         m_timer.start(kBusyRetryMs);
         return;
     }
+    if (m_files.isEmpty()) {
+        QMetaObject::invokeMethod(target(), "openInstallLink", Q_ARG(QVariant, installLinkId(std::exchange(m_link, QString()))));
+        return;
+    }
+    if (!m_link.isEmpty())
+        m_timer.start(kBusyRetryMs);
     const QVariantMap result = m_application.openForwarded(std::exchange(m_files, QStringList()));
     const QString kind = result.value(QStringLiteral("kind")).toString();
     if (kind == QLatin1String("video"))

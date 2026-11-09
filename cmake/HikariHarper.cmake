@@ -5,20 +5,20 @@
 #   cmake -DDOWNLOADS=<dir> -P cmake/HikariHarper.cmake
 include_guard(GLOBAL)
 
-set(HIKARI_HARPER_VERSION "3.0.0")
+set(HIKARI_HARPER_VERSION "3.1.0")
 set(HIKARI_HARPER_RELEASE_URL "https://github.com/Automattic/harper/releases/download/v${HIKARI_HARPER_VERSION}")
 set(HIKARI_HARPER_LICENSE_URL "https://raw.githubusercontent.com/Automattic/harper/v${HIKARI_HARPER_VERSION}/LICENSE")
 set(HIKARI_HARPER_LICENSE_SHA256 "fbc8f1bffe04ab962340fabb1324d57d8b875070f67759d606516144ee53ac19")
 if(WIN32)
     set(HIKARI_HARPER_ARCHIVE "harper-ls-x86_64-pc-windows-msvc.zip")
-    set(HIKARI_HARPER_ARCHIVE_SHA256 "5300b63178909ea9fb126c6357d44a8a09a9e1418152c4225b0b1ca0ec403281")
+    set(HIKARI_HARPER_ARCHIVE_SHA256 "0827f6940a1cc150335ea475307dfa0b7c1237a5e5dd24b1a506fab5839addf8")
     set(HIKARI_HARPER_MEMBER "harper-ls.exe")
-    set(HIKARI_HARPER_SHA256 "b515bfae4582a66af6f9fe2dd6201cb1be97f97d8b240eaf93a3a47005c9a80d")
+    set(HIKARI_HARPER_SHA256 "d79fb99da23dd83d0f73b0a5d3fbf60da1a697a2bf7eeca74aa1a9dc64c41103")
 else()
     set(HIKARI_HARPER_ARCHIVE "harper-ls-x86_64-unknown-linux-musl.tar.gz")
-    set(HIKARI_HARPER_ARCHIVE_SHA256 "ce62e5a37d006e1d9b56c36140cb7abf0cfb8c72793c82b3e5d24646cde85bac")
+    set(HIKARI_HARPER_ARCHIVE_SHA256 "5e431c4c1a9bae694dfeb7e72d094f9efb8d8e43da27124052acf5d9848f98be")
     set(HIKARI_HARPER_MEMBER "harper-ls")
-    set(HIKARI_HARPER_SHA256 "f8e8d7514518c5d66437a455fbd9a8b2114412bd21b7c23cbd57341514c28626")
+    set(HIKARI_HARPER_SHA256 "11296ec13e6e5b74b1b7babe60a01fa44a69dff4515f221aabd63ed24052447b")
 endif()
 
 # hikari_harper_download(<url> <file> <sha256>): downloads <file> unless a copy with the pinned hash is there.

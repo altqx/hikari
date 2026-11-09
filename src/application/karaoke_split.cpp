@@ -25,7 +25,7 @@ std::string_view trimmed(std::string_view line)
     return line;
 }
 
-enum class Kind { Space, Punct, Kana, Han, Hangul, Latin, Other };
+enum class Kind { Space, Punct, Kana, Han, Hangul, Thai, Latin, Other };
 
 struct Unit {
     std::size_t at = 0, len = 0;
@@ -58,6 +58,11 @@ bool isHangul(char32_t c)
     return inRange(c, 0xAC00, 0xD7A3) || inRange(c, 0x1100, 0x11FF) || inRange(c, 0x3130, 0x318F) ||
            inRange(c, 0xA960, 0xA97C) || inRange(c, 0xD7B0, 0xD7FB) ||
            inRange(c, 0xFFA0, 0xFFDC); // halfwidth jamo
+}
+
+bool isThai(char32_t c)
+{
+    return inRange(c, 0x0E01, 0x0E3A) || inRange(c, 0x0E40, 0x0E4E);
 }
 
 bool isLatin(char32_t c)
@@ -151,6 +156,8 @@ void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
             unit.kind = Kind::Other;
         else if (classes.punct && classes.punct(c))
             unit.kind = Kind::Punct;
+        else if (isThai(c))
+            unit.kind = Kind::Thai;
         else if (isLatin(c))
             unit.kind = Kind::Latin;
         else
@@ -337,7 +344,7 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
         std::size_t runEnd = runStart + 1;
         while (runEnd < to && all[runEnd].kind == all[runStart].kind)
             ++runEnd;
-        if (all[runStart].kind == Kind::Other) {
+        if (all[runStart].kind == Kind::Other || (all[runStart].kind == Kind::Thai && !rules.thaiClusters)) {
             runStart = runEnd;
             continue;
         }
@@ -348,6 +355,7 @@ void splitWord(const std::vector<Unit> &all, std::size_t from, std::size_t to, c
         switch (all[runStart].kind) {
         case Kind::Han:
         case Kind::Hangul:
+        case Kind::Thai:
             for (std::size_t k = runStart + 1; k < runEnd; k++)
                 starts.push_back(k);
             break;

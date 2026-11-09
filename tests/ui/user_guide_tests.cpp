@@ -253,6 +253,9 @@ private slots:
         QVERIFY(!none->isVisible());
         QVERIFY(!run(QStringLiteral("UserGuide.hasPage('window', 'about')")).toBool());
         QVERIFY(run(QStringLiteral("UserGuide.hasPage('window', 'settings')")).toBool());
+        QVERIFY(run(QStringLiteral("UserGuide.hasPage('window', 'perspectiveTracking')")).toBool());
+        QCOMPARE(guide(GuideSurface::Window, QStringLiteral("perspectiveTracking")),
+                 QUrl(QStringLiteral("https://hikarisub.org/en/docs/typesetting/perspective#perspective-tracking")));
         before = recorded::opened().size();
         QTest::keyClick(about, Qt::Key_F1);
         QTRY_COMPARE(openedAfter(before), kHome);
