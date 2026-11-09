@@ -9314,6 +9314,26 @@ private slots:
             shoot("extendTrackingDialog", "extendTrackedLinesMenuItem",
                   QStringLiteral("/au8-extend-") + ui::theme::codeName(code) + QStringLiteral(".png"));
         }
+        auto *video = named("videoMenu");
+        auto *tracking = named("trackingMenu");
+        for (const auto code : {ui::theme::Code::Light, ui::theme::Code::Dark}) {
+            useTheme(code);
+            QVERIFY(QMetaObject::invokeMethod(video, "open"));
+            QTRY_VERIFY(video->property("opened").toBool());
+            const auto entries = menuItems(video);
+            const auto entry = std::find_if(entries.begin(), entries.end(), [&](QQuickItem *e) {
+                return e->property("subMenu").value<QObject *>() == tracking;
+            });
+            QVERIFY(entry != entries.end());
+            video->setProperty("currentIndex", int(entry - entries.begin()));
+            QTest::keyClick(window, Qt::Key_Right);
+            QTRY_VERIFY(tracking->property("opened").toBool());
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/au8-tracking-menu-") + ui::theme::codeName(code) +
+                                              QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(video, "dismiss"));
+            QTRY_VERIFY(!video->property("visible").toBool());
+        }
         QVERIFY(application->video().unloadVideo());
         application->editor().discard();
     }
