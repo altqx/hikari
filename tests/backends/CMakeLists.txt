@@ -43,10 +43,10 @@ hikari_add_gtest(hikari_backends_helper_tests SOURCES helper_host_tests.cpp
 target_compile_definitions(hikari_backends_helper_tests PRIVATE HIKARI_TEST_HELPER="$<TARGET_FILE:hikari_test_helper>")
 add_dependencies(hikari_backends_helper_tests hikari_test_helper)
 hikari_add_gtest(hikari_backends_plugin_process_tests SOURCES plugin_process_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core Qt6::Test LABELS backends plugins)
+    LIBRARIES hikari_backends Qt6::Core Qt6::Network Qt6::Test LABELS backends plugins)
 target_compile_definitions(hikari_backends_plugin_process_tests PRIVATE
-    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>")
-add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper)
+    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>" HIKARI_SANDBOX_PROBE="$<TARGET_FILE:hikari_sandbox_probe>")
+add_dependencies(hikari_backends_plugin_process_tests hikari_plugin_helper hikari_sandbox_probe)
 
 # Generated at build time: discovered GoogleTest cases ignore a CTest setup fixture.
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")

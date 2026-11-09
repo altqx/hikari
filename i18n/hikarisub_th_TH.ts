@@ -11143,6 +11143,10 @@ Failed to copy %2 fonts.</source>
         <translation>สิทธิ์</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub จำกัดปลั๊กอินนี้ไว้ที่สิทธิ์เหล่านี้ แต่ระบบนี้ไม่ได้รันปลั๊กอินในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>โฟลเดอร์ที่จำไว้</translation>
     </message>

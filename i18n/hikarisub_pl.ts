@@ -11271,6 +11271,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Uprawnienia</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub ogranicza ją do tych uprawnień, ale w tym systemie nie działa w piaskownicy.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>Zapamiętane foldery</translation>
     </message>

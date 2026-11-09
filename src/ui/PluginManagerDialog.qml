@@ -950,6 +950,14 @@ DialogWindow {
                 Layout.fillWidth: true
             }
         }
+        Label {
+            objectName: "pluginNotSandboxed"
+            visible: !details.row.unrestricted && dialog.runtime !== null && !dialog.runtime.sandboxed
+            text: qsTr("HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.")
+            color: Theme.warning
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
         Heading {
             visible: details.row.folders.length > 0
             text: qsTr("Remembered folders")
