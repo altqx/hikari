@@ -112,6 +112,10 @@ The bundled BezierToText ("Bezier Curve Imposition", now 1.1) places one Line pe
 
 Auto split gives each Thai grapheme cluster its own syllable, sharing the Line's time equally: `กินน้ำ` becomes `กิ|น|น้ำ`, and ำ stays in its cluster. Before, a Thai word stayed one syllable and only spaces split it, as Aegisub's split at spaces does. Settings › Audio › Karaoke › "Split Thai into character clusters" is on by default; off keeps each Thai word whole. Text without Thai splits as before. Clusters aren't Thai syllables (`กิน` is one syllable); real Thai syllable breaks are a later card. This replaces bundling th2syl.lua. [TH3 #831](https://github.com/altqx/hikari/issues/831), owner decision Q144.
 
+## TH4-grapheme-char-split
+
+Grid › "Split lines into characters" and the node-effect `char` units split text by grapheme cluster (UAX #29). A base character keeps its marks: `กินน้ำ` gives `กิ`, `น` and `น้ำ`, `é` written as e plus a combining accent stays whole, and an emoji or an emoji ZWJ sequence is one piece. A mark after an override block joins its base's piece together with the block. Before, the Grid split each UTF-16 unit, which cut marks off and broke surrogate pairs in two, and node effects split by code point. Text without combining marks or surrogate pairs splits as before. [TH4 #832](https://github.com/altqx/hikari/issues/832), owner decision Q146.
+
 ## TH1-template-char-graphemes
 
 The karaoke templater's `template char` splits a syllable by grapheme cluster (UAX #29, `unicode.graphemes`). A base character keeps its marks: `กิน` gives `กิ` and `น`, `น้ำ` stays one char, ำ is not decomposed, and a combining accent, an emoji ZWJ sequence or a flag is one char. Karaoke Templater 2.1.7 splits by code point, which puts each Thai mark on a Line of its own. A `code once` Line with `graphemes = false` splits as 2.1.7 does. Text without combining marks, joiners or surrogate pairs gives 2.1.7's output byte for byte, as the corpus shows. [TH1 #829](https://github.com/altqx/hikari/issues/829), owner decisions Q138–Q141.
