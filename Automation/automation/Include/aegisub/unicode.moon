@@ -43,7 +43,34 @@ conv_func = (f) -> check'string' (str) ->
     error errmsg, 2
   ffi_util.string result
 
+joins_previous = (code) ->
+  (code >= 0x0300 and code <= 0x036F) or (code >= 0x1AB0 and code <= 0x1AFF) or
+  (code >= 0x1DC0 and code <= 0x1DFF) or (code >= 0x20D0 and code <= 0x20FF) or
+  (code >= 0xFE20 and code <= 0xFE2F) or (code >= 0xFE00 and code <= 0xFE0F) or
+  code == 0x0E31 or (code >= 0x0E33 and code <= 0x0E3A) or (code >= 0x0E47 and code <= 0x0E4E) or
+  (code >= 0x1F3FB and code <= 0x1F3FF) or code == 0x200D
+
 local unicode
+
+native_grapheme_end = impl.grapheme_end
+grapheme_end = if native_grapheme_end
+  (s, i) -> native_grapheme_end s, #s, i - 1
+else
+  code_at = (s, i) ->
+    last = i + unicode.charwidth(s, i) - 1
+    return if last > #s
+    unicode.codepoint s\sub i, last
+
+  (s, i) ->
+    previous = code_at s, i
+    j = i + unicode.charwidth(s, i) - 1
+    while j < #s
+      code = code_at s, j + 1
+      break unless code and (joins_previous(code) or previous == 0x200D)
+      previous = code
+      j += unicode.charwidth s, j + 1
+    math.min j, #s
+
 unicode =
   -- Return the number of bytes occupied by the character starting at the i'th byte in s
   charwidth: check'string ?number' (s, i) ->
@@ -66,6 +93,18 @@ unicode =
       curchar += 1
       i += unicode.charwidth s, i
       s\sub(j, i - 1), curchar
+
+  -- Returns an iterator over the extended grapheme clusters (UAX #29) in s
+  graphemes: check'string' (s) ->
+    n, i = 0, 1
+    ->
+      return if i > s\len()
+
+      j = grapheme_end s, i
+      n += 1
+      cluster = s\sub i, j
+      i = j + 1
+      cluster, n
 
   -- Returns the number of characters in s
   -- Runs in O(s:len()) time!

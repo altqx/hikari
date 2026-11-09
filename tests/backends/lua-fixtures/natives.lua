@@ -36,6 +36,38 @@ aegisub.register_macro("Unicode", "", function()
     show(unicode.len("日本語"), unicode.codepoint("日"))
 end)
 
+local function clusters(unicode, s)
+    local t = {}
+    for cluster in unicode.graphemes(s) do t[#t + 1] = cluster end
+    return table.concat(t, "|")
+end
+
+local function cluster_lengths(unicode, s)
+    local t = {}
+    for cluster in unicode.graphemes(s) do t[#t + 1] = #cluster end
+    return table.concat(t, " ")
+end
+
+aegisub.register_macro("Graphemes", "", function()
+    local unicode = require 'aegisub.unicode'
+    show(clusters(unicode, "กินน้ำ"), clusters(unicode, "e\204\129a"), clusters(unicode, ""))
+    show(clusters(unicode, "👨‍👩‍👧!"), clusters(unicode, "🇹🇭🇯🇵🇹"))
+    show(cluster_lengths(unicode, "a\r\nb"), cluster_lengths(unicode, "a\255"), cluster_lengths(unicode, "ก\224\184"))
+    local _, n = unicode.graphemes("ab")()
+    show(n)
+end)
+
+aegisub.register_macro("GraphemesFallback", "", function()
+    local impl = require 'aegisub.__unicode_impl'
+    local native, loaded = impl.grapheme_end, package.loaded['aegisub.unicode']
+    impl.grapheme_end, package.loaded['aegisub.unicode'] = nil, nil
+    local ok, fallback = pcall(require, 'aegisub.unicode')
+    impl.grapheme_end, package.loaded['aegisub.unicode'] = native, loaded
+    assert(ok, fallback)
+    show(fallback ~= loaded, clusters(fallback, "กินน้ำ"), clusters(fallback, "e\204\129a"))
+    show(clusters(fallback, "👨‍👩‍👧!"), cluster_lengths(fallback, "ก\224\184"))
+end)
+
 aegisub.register_macro("Lpeg", "", function()
     local lpeg = require 'lpeg'
     show(lpeg.match(lpeg.P"a"^1, "aaab"), lpeg.version())
