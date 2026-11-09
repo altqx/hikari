@@ -16667,6 +16667,7 @@ private slots:
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
               {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"},
+              {"audio.karaokeThaiClusters", "Split Thai into character clusters"},
               {"audio.karaokeKfThreshold", nullptr},
               {"audio.ramCache", "Load audio into RAM"},
               {"audio.cacheFilesLimit", nullptr}}},

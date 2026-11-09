@@ -8987,6 +8987,14 @@ Failed to copy %2 fonts.</source>
         <translation>แยกพยัญชนะซ้อนเป็นพยางค์ของตัวเอง (so|ma|t|ta)</translation>
     </message>
     <message>
+        <source>Split Thai into character clusters</source>
+        <translation>แยกภาษาไทยเป็นกลุ่มอักขระ</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>แบ่งอัตโนมัติจะให้กลุ่มอักขระภาษาไทยแต่ละกลุ่มเป็นพยางค์ของตัวเอง กิน จึงกลายเป็น กิ|น ปิดตัวเลือกนี้เพื่อให้คำภาษาไทยแต่ละคำเป็นพยางค์เดียว</translation>
+    </message>
+    <message>
         <source>Long syllables for %1</source>
         <translation>พยางค์ยาวสำหรับ %1</translation>
     </message>
