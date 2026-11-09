@@ -11212,6 +11212,35 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.15,Song kanji,,0,0,0,,君の愛\n");
         return path;
     }
+    void qcNotesPanelSaysWhenTheFileCantKeepNotes()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(application->openFile(writeSrt(folder, "qc-notes.srt", "1\n00:00:01,000 --> 00:00:02,000\none\n\n")));
+        auto *session = openedSrt();
+        QVERIFY(session);
+        auto &qc = application->qcNotes();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "addQcNote", Q_ARG(QVariant, 1000)));
+        QTRY_VERIFY(item<QObject>("qcNotesDock")->property("isOpen").toBool());
+        QVERIFY2(!item("qcNotesAddEditor")->isVisible(), "the editor opened on a file that can't keep notes");
+        QVERIFY(!qc.editable());
+        QVERIFY(!item("qcNotesAdd")->isEnabled());
+        QTRY_VERIFY(item("qcNotesEmptyReason") && item("qcNotesEmptyReason")->isVisible());
+        QCOMPARE(item("qcNotesEmptyReason")->property("text").toString(),
+                 QStringLiteral("Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes."));
+        QVERIFY(!item("qcNotesEmptyImport")->isVisible());
+        QVERIFY(!qc.add(1000, QStringLiteral("General"), QStringLiteral("too late")));
+
+        QCOMPARE(application->saveChosenFor(0, QUrl::fromLocalFile(folder.filePath(QStringLiteral("qc-notes"))), QStringLiteral("ass")),
+                 QString());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QTRY_VERIFY(qc.editable());
+        QTRY_VERIFY(!item("qcNotesEmptyReason")->isVisible());
+        QVERIFY(item("qcNotesEmptyImport")->isVisible());
+        QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("too late")));
+        QCOMPARE(application::documentQcNotes(session->document()).size(), std::size_t(1));
+    }
+
     void qcNotesPanelKeepsNotesInTheFile()
     {
         QTemporaryDir &folder = testFolder();
