@@ -7196,7 +7196,7 @@ ApplicationWindow {
         }
     }
 
-    FolderDialog {
+    FolderChooser {
         id: projectFolderDialog
         objectName: "projectFolderDialog"
         title: qsTranslate("HikariSub.Project", "Open folder")
