@@ -10652,6 +10652,30 @@ Failed to copy %2 fonts.</source>
         <translation>Claude Code, Codex และเอเจนต์อื่นอ่านเอกสารที่เปิดอยู่ การแก้ไขของเอเจนต์จะรออยู่ในการตรวจทานจนกว่าคุณจะเก็บไว้หรือเลิกทำ</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>คอมโพเนนต์ทำงานเฉพาะเมื่อเอเจนต์ใช้ HikariSub และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>ต้องใช้คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP ยังปิดอยู่ %1</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย</translation>
     </message>
@@ -10666,6 +10690,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Copy setup</source>
         <translation>คัดลอกการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>รีเซ็ตโทเค็น</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>บันทึกโทเค็นใหม่แล้ว</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10686,6 +10718,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>JSON with the address and token</source>
         <translation>JSON พร้อมที่อยู่และโทเค็น</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>มีโทเค็นของคุณอยู่ โปรดเก็บไว้เป็นความลับ</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>รีเซ็ตโทเค็น จะสร้างโทเค็นใหม่ เอเจนต์ที่ตั้งค่าด้วยโทเค็นเดิมจะหยุดทำงานจนกว่าคุณจะคัดลอกการตั้งค่าอีกครั้ง</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>

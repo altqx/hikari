@@ -28,6 +28,9 @@
 #include "toml_file.h"
 #include "audio_display_item.h"
 #include "fake_auth_server.h"
+#include "hikari/backends/ai_sidecar_updater.h"
+#include "local_release.h"
+#include "minisign_signer.h"
 #include "fake_font_service.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
@@ -152,6 +155,50 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     f.write(events);
     return path;
 }
+
+struct MemoryAi {
+    std::map<std::string, std::string> keys;
+    application::ai::Config config;
+};
+
+class MemoryAiKeys final : public application::ai::KeyStore {
+public:
+    explicit MemoryAiKeys(std::shared_ptr<MemoryAi> stored) : m(std::move(stored)) {}
+    void read(const std::string &id, std::function<void(application::ai::KeyResult)> done) override
+    {
+        const auto it = m->keys.find(id);
+        done(it == m->keys.end() ? application::ai::KeyResult(application::ai::KeyError::NotFound)
+                                 : application::ai::KeyResult(it->second));
+    }
+    void write(const std::string &id, const std::string &key,
+               std::function<void(std::optional<application::ai::KeyError>)> done) override
+    {
+        m->keys[id] = key;
+        done(std::nullopt);
+    }
+    void remove(const std::string &id, std::function<void(std::optional<application::ai::KeyError>)> done) override
+    {
+        m->keys.erase(id);
+        done(std::nullopt);
+    }
+
+private:
+    std::shared_ptr<MemoryAi> m;
+};
+
+class MemoryAiConfigs final : public application::ai::ConfigStore {
+public:
+    explicit MemoryAiConfigs(std::shared_ptr<MemoryAi> stored) : m(std::move(stored)) {}
+    application::ai::Config load() override { return m->config; }
+    bool save(const application::ai::Config &config) override
+    {
+        m->config = config;
+        return true;
+    }
+
+private:
+    std::shared_ptr<MemoryAi> m;
+};
 
 struct OpenChooser {
     QObject *impl = nullptr;
@@ -16761,56 +16808,16 @@ private slots:
     void settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff()
     {
         namespace ai = application::ai;
-        struct Stored {
-            std::map<std::string, std::string> keys;
-            ai::Config config;
-        };
-        class Keys final : public ai::KeyStore {
-        public:
-            explicit Keys(std::shared_ptr<Stored> s) : m(std::move(s)) {}
-            void read(const std::string &id, std::function<void(ai::KeyResult)> done) override
-            {
-                const auto it = m->keys.find(id);
-                done(it == m->keys.end() ? ai::KeyResult(ai::KeyError::NotFound) : ai::KeyResult(it->second));
-            }
-            void write(const std::string &id, const std::string &key,
-                       std::function<void(std::optional<ai::KeyError>)> done) override
-            {
-                m->keys[id] = key;
-                done(std::nullopt);
-            }
-            void remove(const std::string &id, std::function<void(std::optional<ai::KeyError>)> done) override
-            {
-                m->keys.erase(id);
-                done(std::nullopt);
-            }
-
-        private:
-            std::shared_ptr<Stored> m;
-        };
-        class Configs final : public ai::ConfigStore {
-        public:
-            explicit Configs(std::shared_ptr<Stored> s) : m(std::move(s)) {}
-            ai::Config load() override { return m->config; }
-            bool save(const ai::Config &config) override
-            {
-                m->config = config;
-                return true;
-            }
-
-        private:
-            std::shared_ptr<Stored> m;
-        };
-        auto stored = std::make_shared<Stored>();
+        auto stored = std::make_shared<MemoryAi>();
         test::FakeAuthServer auth;
         auth.script("ok");
         test::FakeSignInClock signInTime{.realMs = 20};
         app::AiFeatures::Ports ports;
-        ports.keyStore = [stored] { return std::make_unique<Keys>(stored); };
+        ports.keyStore = [stored] { return std::make_unique<MemoryAiKeys>(stored); };
         ports.signIn = [&auth, &signInTime, port = test::freePort()](ai::KeyStore &keys) {
             return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(port), signInTime.clock());
         };
-        ports.configStore = [stored] { return std::make_unique<Configs>(stored); };
+        ports.configStore = [stored] { return std::make_unique<MemoryAiConfigs>(stored); };
         ports.sidecarHost = [this](const backends::ai::SidecarInstall &) {
             backends::ai::AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
@@ -17035,16 +17042,104 @@ private slots:
         QTRY_COMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1:%1").arg(port));
         QTRY_VERIFY(copyEntry("aiMcpCopyJson")->property("enabled").toBool());
         QVERIFY(!dialogItem("settingsDialog", "aiMcpJsonNote")->isVisible());
+        QCOMPARE(copyEntry("aiMcpCopyJson")->property("reason").toString(), QStringLiteral("Holds your token; keep it private."));
         QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyJson"), "triggered"));
         const QString json = QGuiApplication::clipboard()->text();
         QVERIFY2(json.contains(QStringLiteral("http://127.0.0.1:%1/mcp").arg(port)), qPrintable(json));
         QVERIFY(json.contains(QStringLiteral("Bearer ") + QString::fromLatin1(mcp->endpoint().token)));
+
+        const QByteArray oldToken = mcp->endpoint().token;
+        QVERIFY(dialogItem("settingsDialog", "aiMcpResetNote")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpResetToken"), "click"));
+        QVERIFY(mcp->endpoint().token != oldToken);
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiMcpCopied")->property("text").toString(), QStringLiteral("New token saved."));
+        QVERIFY(QMetaObject::invokeMethod(copyEntry("aiMcpCopyJson"), "triggered"));
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QString::fromLatin1(mcp->endpoint().token)));
+        QVERIFY(!QGuiApplication::clipboard()->text().contains(QString::fromLatin1(oldToken)));
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_ai.mcp.server"), "click"));
         QTRY_VERIFY(!http->isVisible());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!mcp->server());
+    }
+
+    void settingsAiMcpOffersTheAiComponentWithoutAProvider()
+    {
+        test::LocalRelease release;
+        test::FakeChannel channel{release};
+        test::MinisignSigner signer;
+        const auto start = [&](const QString &home) {
+            auto stored = std::make_shared<MemoryAi>();
+            app::AiFeatures::Ports ports;
+            ports.keyStore = [stored] { return std::make_unique<MemoryAiKeys>(stored); };
+            ports.configStore = [stored] { return std::make_unique<MemoryAiConfigs>(stored); };
+            ports.sidecarHost = [this](const backends::ai::SidecarInstall &) {
+                backends::ai::AiSidecarHost::Options o;
+                o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
+                o.arguments = {QStringLiteral("--mode"), QStringLiteral("ok")};
+                o.workingDirectory = dir.filePath(QStringLiteral("ai-mcp/ai/work"));
+                return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), nullptr, api::Caller{"ai", "AI"});
+            };
+            ports.sidecarUpdater = [&release, &signer, home] {
+                return std::make_unique<backends::ai::AiSidecarUpdater>(
+                    home + QStringLiteral("/ai/sidecar"), backends::ai::SidecarCompat{1, api::kApiVersion},
+                    backends::ai::SidecarSource::local(release.base(), {signer.publicKey()}));
+            };
+            app::Application::Options options;
+            options.settingsFile = home + QStringLiteral("/hikari.ini");
+            options.playbackAudio = false;
+            options.aiPorts = std::move(ports);
+            restartWith(options);
+            auto *dialog = openSettings();
+            QTRY_VERIFY(dialog && dialog->property("visible").toBool());
+            showSettingsPage("ai");
+            QTRY_VERIFY(dialogItem("settingsDialog", "aiMcp")->isVisible());
+            QVERIFY(dialogItem("settingsDialog", "aiNoProviders")->isVisible());
+        };
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        const auto server = [&] { return dialogItem("settingsDialog", "setting_ai.mcp.server"); };
+        const auto offer = [&] { return dialogItem("settingsDialog", "aiMcpDownload"); };
+        const auto stayedOff = [&] { return dialogItem("settingsDialog", "aiMcpStayedOff"); };
+
+        start(dir.filePath(QStringLiteral("ai-mcp-failed")));
+        QVERIFY(QMetaObject::invokeMethod(server(), "click"));
+        QTRY_VERIFY(offer()->isVisible());
+        QVERIFY(!server()->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpDownloadStart"), "click"));
+        QTRY_VERIFY(stayedOff()->isVisible());
+        QCOMPARE(stayedOff()->property("text").toString(), QStringLiteral("MCP stays off. Can’t download the AI component."));
+        QVERIFY(!offer()->isVisible());
+        QVERIFY(!server()->property("checked").toBool());
+        QCOMPARE(settingsValues(settingsWindow()).value(QStringLiteral("ai.mcp.server")).toBool(), false);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+
+        channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), QByteArray("#!/bin/sh\necho sidecar\n").repeated(4000));
+        channel.addRelease({QStringLiteral("1.1.0")});
+        channel.publish(signer);
+        start(dir.filePath(QStringLiteral("ai-mcp")));
+        QVERIFY(QMetaObject::invokeMethod(server(), "click"));
+        QTRY_VERIFY(offer()->isVisible());
+        QTRY_VERIFY(offer()->property("title").toString().contains(QStringLiteral(" MB.")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpDownloadCancel"), "click"));
+        QTRY_VERIFY(stayedOff()->isVisible());
+        QCOMPARE(stayedOff()->property("text").toString(), QStringLiteral("MCP stays off. It needs the AI component."));
+        QVERIFY(!server()->property("checked").toBool());
+        for (const QByteArray &path : release.requested)
+            QVERIFY2(!path.endsWith(".gz"), path.constData());
+
+        QVERIFY(QMetaObject::invokeMethod(server(), "click"));
+        QTRY_VERIFY(offer()->isVisible());
+        QVERIFY(!stayedOff()->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiMcpDownloadStart"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(server()->property("checked").toBool(), 30'000);
+        QVERIFY(!offer()->isVisible());
+        QVERIFY(dialogItem("settingsDialog", "aiMcpCopySetup")->isVisible());
+        auto *mcp = qobject_cast<app::AiMcp *>(application->aiSettings()->mcp());
+        QVERIFY(mcp && !mcp->server());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(mcp->server());
+        QVERIFY(application->ai()->sidecarForMcp());
     }
 
     void settingsAppearanceScrollsSidewaysWhenNarrow()

@@ -328,6 +328,31 @@ TEST_F(AiFeaturesTest, CopySetupStartsThisProgramAndGivesJsonOnlyWhileHttpListen
     qunsetenv("APPIMAGE");
 }
 
+TEST_F(AiFeaturesTest, ResetTokenSavesANewOneThatTheServerAndTheJsonSetupUse)
+{
+    settings.set(app::AiMcp::kSetting, true);
+    settings.set(app::AiMcp::kHttpSetting, true);
+    app::AiFeatures features(settings, ports(false));
+    const QString file = backends::ai::mcpEndpointFile(dir.path());
+    app::AiMcp mcp(settings, features, file);
+    const QByteArray old = mcp.endpoint().token;
+    int changed = 0;
+    QObject::connect(&mcp, &app::AiMcp::changed, [&] { ++changed; });
+
+    mcp.resetToken();
+    EXPECT_EQ(changed, 1);
+    const QByteArray token = mcp.endpoint().token;
+    EXPECT_EQ(token.size(), 64);
+    EXPECT_NE(token, old);
+    EXPECT_EQ(backends::ai::readMcpEndpoint(file)->token, token);
+    EXPECT_TRUE(mcp.httpSetup().contains(QString::fromLatin1(token)));
+    EXPECT_FALSE(mcp.httpSetup().contains(QString::fromLatin1(old)));
+#ifndef _WIN32
+    EXPECT_EQ(QFile::permissions(file) & ~(QFile::ReadUser | QFile::WriteUser | QFile::ReadOwner | QFile::WriteOwner),
+              QFile::Permissions());
+#endif
+}
+
 TEST_F(AiFeaturesTest, ASidecarThatFailsItsHandshakeRollsBackToThePreviousOne)
 {
     publish(QStringLiteral("1.1.0"));

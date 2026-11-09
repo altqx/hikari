@@ -119,6 +119,15 @@ QVariantMap AiMcp::setup() const
             {QStringLiteral("port"), int(m_endpoint.port)}};
 }
 
+void AiMcp::resetToken()
+{
+    m_endpoint.token = backends::ai::newMcpToken();
+    if (m_server)
+        m_server->setToken(m_endpoint.token);
+    save();
+    emit changed();
+}
+
 void AiMcp::save()
 {
     if (!m_endpointFile.isEmpty() && !backends::ai::writeMcpEndpoint(m_endpointFile, m_endpoint))

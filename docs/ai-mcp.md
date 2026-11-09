@@ -18,6 +18,7 @@ Qt never parses MCP. It passes each message to `_hikari/mcp.message`, and writes
 - **Nothing listens** until the user turns `ai.mcp.server` on.
 - **Nothing listens with AI off.** With "Turn off all AI features" on, no server exists, whatever `ai.mcp.server` says.
 - **The sidecar starts** with the first message, not when the server starts listening. The MCP server needs no provider.
+- **Without the AI component**, the server answers every message with "HikariSub's AI sidecar isn't installed". Settings › AI offers the download when the user turns the server on ([AI3c #869](https://github.com/altqx/hikari/issues/869)).
 - **Streamable HTTP** listens only while `ai.mcp.http` is on as well.
 
 ## Settings › AI
@@ -25,6 +26,8 @@ Qt never parses MCP. It passes each message to `_hikari/mcp.message`, and writes
 The MCP section sits between External agents and Privacy, as the [Settings › AI mockup](https://github.com/altqx/hikari/issues/649#issuecomment-6612977714) draws it. Both check boxes take effect on OK or Apply, like every other setting.
 
 - **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`) turns the server on.
+  - When the AI component isn't installed, checking it offers the component's one-time download first, with its size, as the provider form does. The box stays clear until the download finishes. **Download** installs the component with no provider (`AiSettings::installComponent`), then checks the box.
+  - If the user presses **Cancel**, or the download fails, the setting stays off and a line under the box says why: "MCP stays off. It needs the AI component." or the download's error.
 - **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`) shows under it while it is on. It names the last port once the server has listened over HTTP.
 - **Copy setup** copies one of three texts (`AiMcp::setup`):
 
@@ -32,11 +35,13 @@ The MCP section sits between External agents and Privacy, as the [Settings › A
 | --- | --- |
 | Claude Code command | `claude mcp add hikari -- "<program>" --mcp` |
 | Codex config.toml | `[mcp_servers.hikari]` with `command = "<program>"` and `args = ["--mcp"]` |
-| JSON with the address and token | `{"mcpServers": {"hikari": {"type": "http", "url": "http://127.0.0.1:<port>/mcp", "headers": {"Authorization": "Bearer <token>"}}}}` |
+| JSON with the address and token | `{"mcpServers": {"hikari": {"type": "http", "url": "http://127.0.0.1:<port>/mcp", "headers": {"Authorization": "Bearer <token>"}}}}`. Under the entry: "Holds your token; keep it private." |
 
 `<program>` is `$APPIMAGE` when HikariSub runs from an AppImage, and the executable otherwise (`AiMcp::program`). The JSON entry is disabled until HikariSub listens on 127.0.0.1, and a line under the button says why: the HTTP box is off, or it waits for OK or Apply.
 
-`<user folder>/ai/mcp.json` holds `{socket, token, port}`, and only the user can read it.
+**Reset token**, next to Copy setup, acts at once (`AiMcp::resetToken`). It makes a new token, saves it, and drops every connected agent. A request with the old token gets 401, and a bridge that sends it is closed. Agents started with `hikarisub --mcp` read the new token when they start again. Agents set up with the JSON stop working until the user copies the setup again, and the line under the button says so.
+
+`<user folder>/ai/mcp.json` holds `{socket, token, port}`, and only the user can read it. `writeMcpEndpoint` creates it as 0600, or on Windows with a protected ACL that allows only the user. Every later write, a reset included, rewrites it in place, so it keeps the permissions it was created with.
 - `socket` is set while the server listens, and cleared when it stops or HikariSub quits. After a crash the bridge finds nothing at it and says the server is off.
 - The token and the last HTTP port survive restarts, so agents' settings stay valid.
 
@@ -109,7 +114,11 @@ A local socket connection is `local-<n>`; all HTTP requests share `http`. The sa
   - an agent on the bridge reads every Document and is refused a write;
   - a client without the token is dropped;
   - HTTP accepts the token from this Origin only, and refuses another Host;
-  - the endpoint file round-trips, and only the user can read it.
-- `hikari_ui_ai_features_tests`: no listener unless `ai.mcp.server` is on, never with AI off, the token and port survive a restart, and Copy setup's three texts.
+  - the endpoint file round-trips, and only the user can read it, before and after a rewrite: 0600, or on Windows the same protected ACL for the user alone;
+  - a new token drops the connected agents, the old token gets 401 and is closed on the socket, and the new one connects.
+- `hikari_ui_ai_features_tests`: no listener unless `ai.mcp.server` is on, never with AI off, the token and port survive a restart, Copy setup's three texts, and Reset token saving a new token that the JSON setup uses.
+- `hikari_ui_ai_settings_tests`, against a fake download: with no provider, the component downloads for MCP and the server reaches it; Cancel downloads nothing; a failed download says why.
 - `hikari_ui_ai_mcp_review_tests`: in the app, a client on the bridge edits through the real sidecar as Claude Code. The edit waits in the Review panel under that name, Keep clears it with no step, and Undo puts the Line back as one step.
-- `hikari_ui_shell_tests` (`settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff`): the MCP check boxes, Apply starting and stopping the server, and each Copy setup entry's text on the clipboard.
+- `hikari_ui_shell_tests`:
+  - `settingsAiPageAddsGeminiAndFoldsAwayWhenAiIsOff`: the MCP check boxes, Apply starting and stopping the server, each Copy setup entry's text on the clipboard, the JSON entry's line, and Reset token;
+  - `settingsAiMcpOffersTheAiComponentWithoutAProvider`, against a fake download: a failed download and Cancel leave the setting off and say why, and Download then OK starts the server.
