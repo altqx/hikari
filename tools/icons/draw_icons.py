@@ -1414,7 +1414,6 @@ for card, roles in {
     "PJ8 #776": ["untrusted"],
     "AI21 #725": ["compact"],
     "AI24 #744": ["update"],
-    "PL5 #417": ["network"],
     "PL7 #419": ["plugin-sandbox"],
     "AU4 #839": ["remove-tags"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
