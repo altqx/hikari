@@ -41,6 +41,18 @@ def hello(version, key=None, **extra):
     return package({"hikari-plugin.json": manifest(version, key, **extra), "main.lua": f"return '{version}'\n"})
 
 
+def board(edit_manifest=None, files=None):
+    folder = HERE / "qml-board"
+    contents = {p.relative_to(folder).as_posix(): p.read_text() for p in sorted(folder.rglob("*")) if p.is_file()}
+    if edit_manifest:
+        m = json.loads(contents["hikari-plugin.json"])
+        edit_manifest(m)
+        contents["hikari-plugin.json"] = json.dumps(m, indent=2) + "\n"
+    if files:
+        files(contents)
+    return package(contents)
+
+
 def png(width, height):
     return b"\x89PNG\r\n\x1a\n" + struct.pack(">I4sII5B", 13, b"IHDR", width, height, 8, 6, 0, 0, 0)
 
@@ -110,6 +122,10 @@ def main():
     native = hello("1.0.0", "a", id="com.example.native", name="Native Tools", tier="unrestricted",
                    description="Runs a native tracker")
     write("native-1.0.0-unrestricted.hikariplugin", native)
+    write("board-1.0.0-qml.hikariplugin", board())
+    write("board-restricted-qml.hikariplugin", board(lambda m: m.pop("tier")))
+    write("board-ui-import.hikariplugin",
+          board(files=lambda f: f.update({"qml/parts/Badge.qml": f["qml/parts/Badge.qml"].replace("import QtQuick\n", "import QtQuick\nimport Hikari.Ui\n", 1)})))
     marketplace(v1, hello("1.1.0", "a"), native)
 
 

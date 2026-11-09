@@ -60,9 +60,25 @@ std::vector<Panel> panels(const Json *list)
             out.push_back({text(item, "id"), text(item, "title"),
                            area == "left"     ? PanelArea::Left
                            : area == "bottom" ? PanelArea::Bottom
-                                              : PanelArea::Right});
+                                              : PanelArea::Right,
+                           text(item, "qml")});
         }
     return out;
+}
+
+// Where a manifest that isn't Full trust names a QML panel, before the schema's own refusal.
+std::optional<std::string> restrictedQml(const Json &json)
+{
+    if (!json.isObject() || text(json, "tier") == "unrestricted")
+        return std::nullopt;
+    const Json *contributes = json.find("contributes");
+    const Json *panels = contributes && contributes->isObject() ? contributes->find("panels") : nullptr;
+    if (!panels || !panels->isArray())
+        return std::nullopt;
+    for (std::size_t i = 0; i < panels->asArray().size(); ++i)
+        if (const Json &panel = panels->asArray()[i]; panel.isObject() && panel.find("qml"))
+            return "/contributes/panels/" + std::to_string(i) + "/qml";
+    return std::nullopt;
 }
 
 template <typename Items>
@@ -145,6 +161,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (!parsed)
         return std::unexpected(ManifestProblem{Kind::NotJson, "", parsed.error().message, 0});
     const Json &json = *parsed;
+    if (auto at = restrictedQml(json))
+        return std::unexpected(ManifestProblem{Kind::QmlNeedsFullTrust, *at, "", 0});
     if (auto failure = api::validate(schema().root, json, schema().defs))
         return std::unexpected(ManifestProblem{Kind::Schema, failure->path, failure->message, 0});
 
@@ -195,6 +213,11 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
+}
+
+bool Manifest::hasQmlPanels() const
+{
+    return std::ranges::any_of(panels, [](const Panel &p) { return !p.qml.empty(); });
 }
 
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next)

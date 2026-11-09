@@ -18,11 +18,11 @@ struct PackageFile {
 };
 
 struct PackageProblem {
-    enum class Kind { TooLarge, BadPath, NoManifest, Manifest, MissingMain, Media };
+    enum class Kind { TooLarge, BadPath, NoManifest, Manifest, MissingMain, Media, MissingPanel, QmlImport };
     Kind kind = Kind::BadPath;
     std::string path;
     ManifestProblem manifest;
-    std::string detail; // Media: English, technical
+    std::string detail; // Media: English, technical; QmlImport: the import as written
 };
 
 struct Package {
@@ -32,7 +32,8 @@ struct Package {
 
 // Refuses more than kMaxPackageFiles files or kMaxPackageBytes unpacked, and any path that is
 // absolute, climbs out, repeats another case-insensitively, or that Windows cannot hold, and an
-// icon, screenshot or README.md that breaks the marketplace's media rules (docs/plugins.md).
+// icon, screenshot or README.md that breaks the marketplace's media rules (docs/plugins.md), a QML panel's missing
+// file, and an import a QML panel may not make in any .qml or .js file of a package with QML panels.
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion);
 
 // The media rules for one file, by its extension; nullopt when it passes. The detail is English and technical.

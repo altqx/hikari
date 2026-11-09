@@ -81,6 +81,9 @@ public:
     Q_INVOKABLE void download(const QString &id);
     // Drops the update that waits for consent; automatic updates pass over its version.
     Q_INVOKABLE void keepCurrent(const QString &id);
+    // An install link: fetches the index again, then download()s unless the newest version this
+    // HikariSub runs is installed; a refusal comes through reviewed(). Only the last of several counts.
+    Q_INVOKABLE void follow(const QString &id);
     // download() for the version the marketplace offers instead of a revoked one.
     Q_INVOKABLE void installLastGood(const QString &id);
     // Opens the listing's source repository; only https links open.
@@ -106,6 +109,7 @@ private:
     QNetworkReply *get(const QUrl &url, qint64 limit);
     void indexFinished();
     void fail(const QString &problem);
+    void followLink();
     void rebuild();
     void schedule();
     bool sameOrigin(const QUrl &url) const;
@@ -131,6 +135,7 @@ private:
     QPointer<QNetworkReply> m_updateReply;
     std::function<bool(const QString &)> m_busy;
     QStringList m_queue;
+    QString m_link;
     QSet<QString> m_triedThisIndex;
     std::map<QString, plugins::InstallReview> m_waiting;
     std::optional<plugins::MarketIndex> m_index;

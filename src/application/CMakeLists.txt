@@ -47,7 +47,7 @@ target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE macro_validation.cpp)
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
 target_sources(hikari_application PRIVATE reference_navigation.cpp)
-target_sources(hikari_application PRIVATE associated_files.cpp legacy_autosaves.cpp)
+target_sources(hikari_application PRIVATE associated_files.cpp legacy_autosaves.cpp project.cpp)
 target_sources(hikari_application PRIVATE font_collector.cpp)
 target_sources(hikari_application PRIVATE matroska.cpp)
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
@@ -72,7 +72,8 @@ set_source_files_properties(visual_drawing.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_sources.cpp)
 set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
-target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp video_details.cpp video_properties.cpp subtitle_render.cpp)
+target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp video_details.cpp video_properties.cpp subtitle_render.cpp
+    document_overlay.cpp)
 set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE video_fullscreen.cpp)

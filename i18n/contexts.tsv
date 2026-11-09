@@ -9,7 +9,7 @@ HikariSub.Documents	Opening, saving, closing and reloading Documents; Untitled D
 HikariSub.Editor	The line editor panel: text fields and their menu, the line inspector, counters, alignment, tag buttons
 HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
-HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the recent files and their menu
+HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the Project, the recent projects and files and their menus
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
 HikariSub.Karaoke	The karaoke check: its window, problems and their details
 HikariSub.Export	Export as: its window, the formats and options, and the report of what each format drops
@@ -17,6 +17,7 @@ HikariSub.MainWindow	The main window: title, its title bar (menus, window button
 HikariSub.Matroska	Subtitles from Matroska files
 HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language
 HikariSub.Reports	Crash and freeze reports, their notices, and Report an issue (CR1)
+HikariSub.Project	Projects: Open folder, Close project, the offer to open a file's Project
 HikariSub.Reference	The protected reference panel and its tray
 HikariSub.Review	AI review: the Review panel, the Line editor strip, Keep, Undo, checkpoints and their commands (AI2)
 HikariSub.ScriptProperties	The script properties dialog

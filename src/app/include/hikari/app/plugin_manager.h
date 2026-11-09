@@ -13,7 +13,7 @@
 namespace hikari::app {
 
 // The plugin manager's permission lines, as the install question lists them.
-QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions);
+QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false);
 
 class PluginManager : public QObject {
     Q_OBJECT

@@ -1,6 +1,7 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -338,6 +339,55 @@ TEST_F(AiSettingsTest, TheFirstProviderDownloadsTheComponentOnceItsSizeIsShown)
     EXPECT_EQ(release.requested.size(), 6u);
 }
 
+TEST_F(AiSettingsTest, TurningMcpOnWithoutAProviderDownloadsTheComponentAndTheServerReachesIt)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiMcp mcp(settings, features, {});
+    app::AiSettings page(features, &mcp);
+    ASSERT_TRUE(stored.providers.empty());
+    EXPECT_TRUE(page.componentNeeded());
+    ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
+    EXPECT_EQ(hostsBuilt, 0);
+
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_TRUE(ready.front().front().toBool());
+    EXPECT_FALSE(page.componentNeeded());
+    settings.set(app::AiMcp::kSetting, true);
+    ASSERT_TRUE(mcp.server());
+    EXPECT_TRUE(features.sidecarForMcp());
+    EXPECT_EQ(hostsBuilt, 1);
+}
+
+TEST_F(AiSettingsTest, DecliningTheComponentForMcpDownloadsNothing)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(page.componentNeeded());
+    ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
+    page.cancelComponent();
+    EXPECT_TRUE(page.componentNeeded());
+    for (const QByteArray &path : release.requested)
+        EXPECT_FALSE(path.endsWith(".gz")) << path.constData();
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AFailedComponentDownloadForMcpSaysWhy)
+{
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(page.componentNeeded());
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_FALSE(ready.front().front().toBool());
+    EXPECT_EQ(page.download().value(QStringLiteral("error")).toString(), QStringLiteral("downloadManifest"));
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
 TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
 {
     app::AiFeatures features(settings, ports(true));
@@ -616,4 +666,132 @@ TEST_F(AiSettingsTest, SigningOutOfOpenRouterDeletesTheKeyAndAPastedKeyIsNoLonge
                           QStringLiteral("openrouter")));
     ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
     EXPECT_FALSE(stored.providers.at(0).signedIn);
+}
+
+TEST_F(AiSettingsTest, ASearchKeyIsStoredOnlyAfterOneSearchPassesAndCanBeRemoved)
+{
+    stored.providers.push_back(ai::presetProvider(ai::Preset::OpenAI, "openai", "OpenAI"));
+    chain.keys["openai"] = "sk";
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    const auto state = [&] { return page.search().value(QStringLiteral("state")).toString(); };
+    page.checkSearchKey(QStringLiteral("brave"));
+    ASSERT_TRUE(waitFor([&] { return state().isEmpty(); }));
+    EXPECT_FALSE(page.search().value(QStringLiteral("hasKey")).toBool());
+
+    QSignalSpy storedSpy(&page, &app::AiSettings::searchKeyStored);
+    page.saveSearchKey(QStringLiteral("brave"), QStringLiteral("  BSA-typed "));
+    EXPECT_EQ(state(), QStringLiteral("testing"));
+    EXPECT_FALSE(chain.keys.contains("search:brave"));
+    ASSERT_TRUE(waitFor([&] { return state() == QLatin1String("ok"); }));
+    EXPECT_EQ(chain.keys.at("search:brave"), "BSA-typed");
+    EXPECT_TRUE(page.search().value(QStringLiteral("hasKey")).toBool());
+    EXPECT_FALSE(page.search().value(QStringLiteral("canAddAnyway")).toBool());
+    EXPECT_EQ(storedSpy.count(), 1);
+
+    page.removeSearchKey(QStringLiteral("brave"));
+    ASSERT_TRUE(waitFor([&] { return !page.search().value(QStringLiteral("hasKey")).toBool(); }));
+    EXPECT_FALSE(chain.keys.contains("search:brave"));
+    EXPECT_TRUE(state().isEmpty());
+
+    page.saveSearchKey(QStringLiteral("brave"), QStringLiteral(" "));
+    EXPECT_EQ(page.search().value(QStringLiteral("error")).toString(), QStringLiteral("key"));
+    EXPECT_FALSE(chain.keys.contains("search:brave"));
+
+    ASSERT_NE(features.sidecar(), nullptr);
+    std::optional<backends::ai::SidecarResult> received;
+    features.sidecar()->request("received", {}, [&](backends::ai::SidecarResult r) { received = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return received.has_value(); }));
+    ASSERT_TRUE(*received);
+    int tests = 0;
+    for (const api::Json &message : (**received).asArray())
+        if (*message.find("method") == api::Json("_hikari/search.test")) {
+            ++tests;
+            EXPECT_EQ(*message.find("params"), api::Json::object({{"service", "brave"}}));
+        }
+    EXPECT_EQ(tests, 1);
+}
+
+TEST_F(AiSettingsTest, AKeyWhoseTestFailsSaysWhyStaysOutOfTheKeychainAndCanBeAddedAnyway)
+{
+    stored.providers.push_back(ai::presetProvider(ai::Preset::OpenAI, "openai", "OpenAI"));
+    chain.keys["openai"] = "sk";
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    const auto settled = [&] {
+        const QString s = page.search().value(QStringLiteral("state")).toString();
+        return s == QLatin1String("ok") || s == QLatin1String("failed");
+    };
+    page.saveSearchKey(QStringLiteral("exa"), QStringLiteral("exa-typed"));
+    ASSERT_TRUE(waitFor(settled));
+    EXPECT_EQ(page.search().value(QStringLiteral("error")).toString(), QStringLiteral("unauthorized"));
+    EXPECT_EQ(page.search().value(QStringLiteral("httpStatus")).toInt(), 401);
+    EXPECT_FALSE(page.search().value(QStringLiteral("hasKey")).toBool());
+    EXPECT_TRUE(page.search().value(QStringLiteral("canAddAnyway")).toBool());
+    EXPECT_FALSE(chain.keys.contains("search:exa"));
+
+    page.addSearchKeyAnyway(QStringLiteral("exa"), QStringLiteral(" exa-typed "));
+    ASSERT_TRUE(waitFor([&] { return page.search().value(QStringLiteral("hasKey")).toBool(); }));
+    EXPECT_EQ(chain.keys.at("search:exa"), "exa-typed");
+    EXPECT_EQ(page.search().value(QStringLiteral("state")).toString(), QStringLiteral("failed"));
+    EXPECT_EQ(page.search().value(QStringLiteral("error")).toString(), QStringLiteral("unauthorized"));
+    EXPECT_FALSE(page.search().value(QStringLiteral("canAddAnyway")).toBool());
+
+    page.saveSearchKey(QStringLiteral("tavily"), QStringLiteral("tvly-typed"));
+    ASSERT_TRUE(waitFor(settled));
+    EXPECT_EQ(page.search().value(QStringLiteral("error")).toString(), QStringLiteral("rateLimited"));
+    EXPECT_EQ(page.search().value(QStringLiteral("httpStatus")).toInt(), 432);
+    EXPECT_FALSE(chain.keys.contains("search:tavily"));
+}
+
+TEST_F(AiSettingsTest, TestingASearchKeyWithoutAProviderStartsNothingButItCanBeAddedAnyway)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    page.saveSearchKey(QStringLiteral("brave"), QStringLiteral("BSA-typed"));
+    ASSERT_TRUE(waitFor([&] { return page.search().value(QStringLiteral("state")) == QLatin1String("failed"); }));
+    EXPECT_EQ(page.search().value(QStringLiteral("error")).toString(), QStringLiteral("noProvider"));
+    EXPECT_FALSE(page.search().value(QStringLiteral("hasKey")).toBool());
+    EXPECT_TRUE(page.search().value(QStringLiteral("canAddAnyway")).toBool());
+    EXPECT_FALSE(chain.keys.contains("search:brave"));
+    page.addSearchKeyAnyway(QStringLiteral("brave"), QStringLiteral("BSA-typed"));
+    ASSERT_TRUE(waitFor([&] { return page.search().value(QStringLiteral("hasKey")).toBool(); }));
+    EXPECT_EQ(chain.keys.at("search:brave"), "BSA-typed");
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, TheSidecarGetsTheSearchServiceOnlyWhileWebSearchIsOnAndItsKeyIsStored)
+{
+    EXPECT_TRUE(settings.boolean(app::AiFeatures::kWebSearchSetting));
+    settings.set(app::AiFeatures::kSearchServiceSetting, QStringLiteral("brave"));
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    EXPECT_EQ(features.requests()->searchService(), std::nullopt);
+
+    chain.keys["search:brave"] = "BSA";
+    features.applyWebSearch();
+    EXPECT_EQ(features.requests()->searchService(), ai::SearchService::Brave);
+    settings.set(app::AiFeatures::kWebSearchSetting, false);
+    EXPECT_EQ(features.requests()->searchService(), std::nullopt);
+    settings.set(app::AiFeatures::kWebSearchSetting, true);
+    EXPECT_EQ(features.requests()->searchService(), ai::SearchService::Brave);
+    settings.set(app::AiFeatures::kSearchServiceSetting, QStringLiteral("exa"));
+    EXPECT_EQ(features.requests()->searchService(), std::nullopt);
+
+    page.addSearchKeyAnyway(QStringLiteral("exa"), QStringLiteral("exa-typed"));
+    EXPECT_EQ(features.requests()->searchService(), ai::SearchService::Exa);
+    page.removeSearchKey(QStringLiteral("exa"));
+    EXPECT_EQ(features.requests()->searchService(), std::nullopt);
+}
+
+TEST_F(AiSettingsTest, EachProviderRowSaysWhetherItSearchesOnItsOwn)
+{
+    stored.providers.push_back(ai::presetProvider(ai::Preset::Anthropic, "anthropic", "Anthropic"));
+    ai::Provider ollama = ai::presetProvider(ai::Preset::Custom, "ollama", "Ollama");
+    ollama.baseUrl = "http://localhost:11434/v1";
+    stored.providers.push_back(ollama);
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    EXPECT_TRUE(row(page, 0).value(QStringLiteral("searchesNatively")).toBool());
+    EXPECT_FALSE(row(page, 1).value(QStringLiteral("searchesNatively")).toBool());
 }
