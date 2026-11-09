@@ -1136,14 +1136,13 @@ NOT_REPLACED = {
 PENDING = {}
 for card, roles in {
     "AI7 #435": ["ai-send"],
-    "AI2 #430": ["review-keep", "checkpoint", "review-panel"],
+    "AI2 #430": ["review-panel"],
     "PJ2 #770": ["open-project", "recent-projects", "close-project", "project"],
     "PJ3 #771": ["trust"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
     "MW2 #630": ["tab-to-new-window", "tab-to-window"],
-    "FA20 #577": ["qc-notes", "qc-done-reset"],
     "AI21 #725": ["compact"],
     "AI23 #742": ["web-search"],
     "AI24 #744": ["update"],

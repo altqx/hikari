@@ -427,7 +427,7 @@ export type DocumentApplyParams = {
     document?: DocumentId;
     /** The revision the edits were prepared against. */
     revision: Revision;
-    /** Names the undo step, after the caller's name. */
+    /** A few words naming the change, as the user reads it in the review and in History after the caller's name. */
     name: string;
     /** Applied in order; any refusal leaves the Document as it was. */
     edits: Edit[];

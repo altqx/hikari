@@ -47,6 +47,9 @@ public:
                       std::function<void(const QString &, bool warning)> log = {}, QObject *parent = nullptr);
     ~HotkeysController() override;
 
+    // Hidden commands keep their stored keys but are neither bound nor listed.
+    void setHidden(std::function<bool(int id)> hidden);
+
     QVariantMap keys() const;
     QVariantList globalShortcuts() const;
     QStringList globalSequences() const;
@@ -145,6 +148,7 @@ private:
     ui::SettingsStore &m_settings;
     application::HotkeyMap m_live;
     application::HotkeyMap m_installed;
+    std::function<bool(int id)> m_hidden;
     application::HotkeyMap m_copy;
     std::unique_ptr<application::HotkeyList> m_list;
     int m_installedTagButtons = 0;

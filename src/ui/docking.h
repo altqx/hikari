@@ -23,6 +23,8 @@ bool attachDocking(QQmlEngine &engine);
 
 // Not on Wayland, where the compositor places windows.
 int keepFloatingPanelsOnScreen();
+// Hides the visible floating panels of `main` and returns them.
+QList<QWindow *> hideFloatingPanelsOf(const QWindow *main);
 
 // `frame` as it is when the strip at its top reaches one of `screens`; otherwise moved whole onto
 // `fallback`, shrunk to fit it.

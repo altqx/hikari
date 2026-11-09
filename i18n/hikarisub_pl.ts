@@ -2433,6 +2433,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zamknij zakładkę</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>Usuń napisy z edytora</translation>
     </message>
@@ -5156,6 +5160,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>bookmarked</source>
         <translation>z zakładką</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n notatka QC</numerusform>
+            <numerusform>%n notatki QC</numerusform>
+            <numerusform>%n notatek QC</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>niezatwierdzona</translation>
@@ -6679,6 +6691,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
+    </message>
+    <message>
         <source>Convert Aegisub folds to line groups</source>
         <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
     </message>
@@ -6695,8 +6711,52 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zamknij kody czasowe</translation>
     </message>
     <message>
-        <source>Video details…</source>
-        <translation>Szczegóły wideo…</translation>
+        <source>QC notes panel</source>
+        <translation>Panel notatek QC</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>Następna notatka QC</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>Poprzednia notatka QC</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>Dodaj notatkę QC</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Node effects</source>
@@ -7753,6 +7813,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacza linijki według wyrażeń</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>Notatki z kontroli jakości, zapisane w pliku, z linijkami, które oznaczają</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>Notatki &amp;QC…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>Zmienia liczbę klatek na sekundę czasów napisów</translation>
     </message>
@@ -7831,6 +7899,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Following lines, end at video</source>
         <translation>Następne linijki, koniec na wideo</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>Stosuje dane śledzenia Power-Pin do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
         <source>Video details…</source>
@@ -12509,6 +12589,319 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>Notatki QC</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>Nie ma więcej notatek</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>Importuj plik notatek…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>Importuj notatki ze schowka</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>Eksportuj notatki…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>Oznacz wszystkie jako niegotowe</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>Usuń wszystkie notatki…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>Dodaj notatkę QC…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 nie zawiera notatek. Notatka to linijka zaczynająca się od czasu, np. 3:24 lub 0:03:24.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>Schowek nie zawiera notatek. Notatka to linijka zaczynająca się od czasu, np. 3:24 lub 0:03:24.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>Zaimportowano %n notatkę.</numerusform>
+            <numerusform>Zaimportowano %n notatki.</numerusform>
+            <numerusform>Zaimportowano %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n była już w pliku.</numerusform>
+            <numerusform>%n były już w pliku.</numerusform>
+            <numerusform>%n było już w pliku.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n notatka nie ma linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+            <numerusform>%n notatki nie mają linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+            <numerusform>%n notatek nie ma linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>Schowek</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>Importuj notatki QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 zawiera %n notatkę</numerusform>
+            <numerusform>%1 zawiera %n notatki</numerusform>
+            <numerusform>%1 zawiera %n notatek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>w %n sekcji.</numerusform>
+            <numerusform>w %n sekcjach.</numerusform>
+            <numerusform>w %n sekcjach.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>Ten plik ma już %n notatkę.</numerusform>
+            <numerusform>Ten plik ma już %n notatki.</numerusform>
+            <numerusform>Ten plik ma już %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>Dodawanie pominie %n notatkę, która już tu jest.</numerusform>
+            <numerusform>Dodawanie pominie %n notatki, które już tu są.</numerusform>
+            <numerusform>Dodawanie pominie %n notatek, które już tu są.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>Dodaj %n notatkę</numerusform>
+            <numerusform>Dodaj %n notatki</numerusform>
+            <numerusform>Dodaj %n notatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>Zastąp notatki w tym pliku</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>Nie można odczytać %1: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>Usuń wszystkie notatki</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
+            <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
+            <numerusform>Usunąć wszystkie %n notatek QC z tego pliku?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>Cofnięcie je przywróci.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>Usuń wszystkie</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>Importuj plik notatek</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>Notatki QC (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>Eksportuj notatki QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>Wyeksportowano %n notatkę.</numerusform>
+            <numerusform>Wyeksportowano %n notatki.</numerusform>
+            <numerusform>Wyeksportowano %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>Nie można zapisać notatek.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>W tym pliku</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n notatka</numerusform>
+            <numerusform>%n notatki</numerusform>
+            <numerusform>%n notatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>Dodaj notatkę</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>Uwzględnij gotowe notatki</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>Tylko wybrana sekcja (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>Tylko wybrana sekcja</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>Eksportuj %n notatkę…</numerusform>
+            <numerusform>Eksportuj %n notatki…</numerusform>
+            <numerusform>Eksportuj %n notatek…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Wszystkie</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 z %2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>linijka %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>brak linijki</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>gotowe</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>niegotowe</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>Brak linijki</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>Upuść tutaj plik notatek</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>Otwórz plik napisów, aby przechowywać w nim notatki QC.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>Wklej notatki</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>Notatki zaczynają się od czasu: 3:24 - …
+Linijki [Sekcja] je grupują.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>Poprzednia</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Następna</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>Ukryj gotowe</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>Czas wideo</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>Początek linijki</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Sekcja</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>Notatka</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>Co trzeba poprawić</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter zapisuje · Esc anuluje</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reference</name>
     <message>
         <source>Compare with reference</source>
@@ -12936,6 +13329,241 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>„Zawsze wysyłaj raporty o awariach” jest włączone. Oto, co zostało wysłane.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">Przegląd</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">Linijka</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">Linijka %1</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">Nowy</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">Przywróć</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">Cofnij</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">Zachowaj</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%1 z %2</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17358,6 +17986,129 @@ Usunięte style:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>Czasy nie zostały wyśrodkowane w klatkach: nie otwarto wideo</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>Linijka %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>Linijki %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>Wklej dane Power-Pin wyeksportowane z After Effects lub Blendera. Zastosuj odczytuje cztery narożniki CC Power Pin.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>To nie są dane Power-Pin: nie znaleziono narożników CC Power Pin.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>Zaznacz linijki do śledzenia.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>Dane mają %n klatkę, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+            <numerusform>Dane mają %n klatki, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+            <numerusform>Dane mają %n klatek, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>Żadna zaznaczona linijka nie jest widoczna w klatce %1.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>Linijki nakładają się, ale linijka %1 nie jest widoczna w klatce %2. Wybierz klatkę, w której widać każdą linijkę, albo zastosuj je po jednej.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>Śledzono w rozdzielczości %1 × %2, ale wideo ma %3 × %4. Narożniki zostaną przeskalowane do wideo.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n klatka przy %1 fps, śledzona w %2 × %3. Obejmuje klatki zaznaczenia %4–%5.</numerusform>
+            <numerusform>%n klatki przy %1 fps, śledzone w %2 × %3. Obejmują klatki zaznaczenia %4–%5.</numerusform>
+            <numerusform>%n klatek przy %1 fps, śledzonych w %2 × %3. Obejmują klatki zaznaczenia %4–%5.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n klatka. Obejmuje klatki zaznaczenia %1–%2.</numerusform>
+            <numerusform>%n klatki. Obejmują klatki zaznaczenia %1–%2.</numerusform>
+            <numerusform>%n klatek. Obejmują klatki zaznaczenia %1–%2.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>Nie można śledzić jednej z linijek: nie da się zmierzyć jej tekstu albo płaszczyzna ją składa.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>Śledzenie perspektywy</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Dane Power-Pin</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>Względem klatki</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>z %1 · klatka wideo %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>Środek obrotu</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>Środek</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>Bez %1</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>Zachowaj</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>Najpierw dopasuj płaskie linijki do płaszczyzny</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>Przesuwaj wycinki razem z płaszczyzną</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>Skaluj obwódkę i cień</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>Płaszczyzna jest zapisywana w każdej linijce, dla narzędzia Perspektywa i skryptu Derive Perspective Track.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · klatki %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>

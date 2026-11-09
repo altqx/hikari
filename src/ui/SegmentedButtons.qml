@@ -103,8 +103,8 @@ Rectangle {
                             wrapMode: group.wrapsLabels ? Text.Wrap : Text.NoWrap
                             maximumLineCount: group.wrapsLabels ? 2 : undefined
                             elide: Text.ElideRight
-                            Layout.fillWidth: true
-                            Layout.maximumWidth: implicitWidth
+                            Layout.preferredWidth: Math.ceil(Math.max(implicitWidth, boldText.implicitWidth))
+                            Layout.minimumWidth: 0
                         }
                     }
                 }

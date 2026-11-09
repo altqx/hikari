@@ -560,6 +560,22 @@ bool attachDocking(QQmlEngine &engine)
     return true;
 }
 
+QList<QWindow *> hideFloatingPanelsOf(const QWindow *main)
+{
+    QList<QWindow *> hidden;
+    if (!main || !KDDockWidgets::Core::Platform::instance())
+        return hidden;
+    for (auto *floating : KDDockWidgets::DockRegistry::self()->floatingWindows()) {
+        QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(floating->view());
+        QWindow *window = item ? item->window() : nullptr;
+        if (!window || !window->isVisible() || window->transientParent() != main)
+            continue;
+        window->hide();
+        hidden << window;
+    }
+    return hidden;
+}
+
 int keepFloatingPanelsOnScreen()
 {
     if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")) || !KDDockWidgets::Core::Platform::instance())

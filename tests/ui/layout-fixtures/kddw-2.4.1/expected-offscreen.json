@@ -13,6 +13,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -89,6 +91,8 @@
                 "Log",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -195,6 +199,8 @@
                 "Styles",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -273,6 +279,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -341,6 +349,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -407,6 +417,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -472,6 +484,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -550,6 +564,8 @@
                 "Log",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -656,6 +672,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -723,6 +741,8 @@
             "Template",
             "Spellchecker",
             "Postprocessor",
+            "QcNotes",
+            "Review",
             "NodeGraph",
             "NodeInspector",
             "NodeSources"
@@ -799,6 +819,8 @@
                 "Template",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"
@@ -862,6 +884,8 @@
                 "Log",
                 "Spellchecker",
                 "Postprocessor",
+                "QcNotes",
+                "Review",
                 "NodeGraph",
                 "NodeInspector",
                 "NodeSources"

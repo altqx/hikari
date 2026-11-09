@@ -2410,6 +2410,10 @@ Output device: %2</source>
         <translation>தாவலை மூடு</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>சாளரத்தை மூடு</translation>
+    </message>
+    <message>
         <source>Remove subtitles from the editor</source>
         <translation>திருத்தியிலிருந்து வசன வரிகளை அகற்று</translation>
     </message>
@@ -5111,6 +5115,13 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation>புத்தகக்குறியிடப்பட்டது</translation>
     </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n QC குறிப்பு</numerusform>
+            <numerusform>%n QC குறிப்புகள்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>uncommitted</source>
         <translation>கமிட் செய்யப்படவில்லை</translation>
@@ -6630,6 +6641,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Video details…</source>
+        <translation>வீடியோ விவரங்கள்…</translation>
+    </message>
+    <message>
         <source>Convert Aegisub folds to line groups</source>
         <translation>Aegisub மடிப்புகளை வரிக் குழுக்களாக மாற்று</translation>
     </message>
@@ -6646,8 +6661,52 @@ Failed to copy %2 fonts.</source>
         <translation>நேரக்குறியீடுகளை மூடு</translation>
     </message>
     <message>
-        <source>Video details…</source>
-        <translation>வீடியோ விவரங்கள்…</translation>
+        <source>QC notes panel</source>
+        <translation>QC குறிப்புகள் பலகம்</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>அடுத்த QC குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>முந்தைய QC குறிப்பு</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>QC குறிப்பைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Node effects</source>
@@ -7701,6 +7760,14 @@ Failed to copy %2 fonts.</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>QC சரிபார்ப்புக் குறிப்புகள், கோப்பில் வைக்கப்பட்டு, அவை குறிக்கும் வரிகளுடன்</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>QC குறிப்புகள்(&amp;Q)…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>வசன நேரங்களின் சட்டக வீதத்தை மாற்றுகிறது</translation>
     </message>
@@ -7779,6 +7846,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Following lines, end at video</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: கண்காணிப்புத் தரவு சட்டகம் வாரியானது.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
         <source>Video details…</source>
@@ -12435,6 +12514,307 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>QC குறிப்புகள்</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>மேலும் குறிப்புகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>குறிப்புக் கோப்பை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>இடைநிலைப்பலகையிலிருந்து குறிப்புகளை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>குறிப்புகளை ஏற்றுமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>அனைத்தையும் முடியாதவை எனக் குறி</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>QC குறிப்பைச் சேர்…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 இல் குறிப்புகள் இல்லை. குறிப்பு என்பது 3:24 அல்லது 0:03:24 போன்ற நேரத்துடன் தொடங்கும் வரி.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>இடைநிலைப்பலகையில் குறிப்புகள் இல்லை. குறிப்பு என்பது 3:24 அல்லது 0:03:24 போன்ற நேரத்துடன் தொடங்கும் வரி.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>%n குறிப்பு இறக்குமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n குறிப்புகள் இறக்குமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n ஏற்கெனவே கோப்பில் இருந்தது.</numerusform>
+            <numerusform>%n ஏற்கெனவே கோப்பில் இருந்தன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n குறிப்புக்கு அதன் நேரத்திலிருந்து 15 விநாடிகளுக்குள் வரி இல்லை.</numerusform>
+            <numerusform>%n குறிப்புகளுக்கு அவற்றின் நேரத்திலிருந்து 15 விநாடிகளுக்குள் வரி இல்லை.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>இடைநிலைப்பலகை</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>QC குறிப்புகளை இறக்குமதி செய்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 இல் %n குறிப்பு உள்ளது</numerusform>
+            <numerusform>%1 இல் %n குறிப்புகள் உள்ளன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>%n பிரிவில்.</numerusform>
+            <numerusform>%n பிரிவுகளில்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>இந்தக் கோப்பில் ஏற்கெனவே %n குறிப்பு உள்ளது.</numerusform>
+            <numerusform>இந்தக் கோப்பில் ஏற்கெனவே %n குறிப்புகள் உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>சேர்க்கும்போது ஏற்கெனவே உள்ள %n குறிப்பு தவிர்க்கப்படும்.</numerusform>
+            <numerusform>சேர்க்கும்போது ஏற்கெனவே உள்ள %n குறிப்புகள் தவிர்க்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>%n குறிப்பைச் சேர்</numerusform>
+            <numerusform>%n குறிப்புகளைச் சேர்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>இந்தக் கோப்பின் குறிப்புகளை மாற்றிவை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>எல்லாக் குறிப்புகளையும் நீக்கு</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>இந்தக் கோப்பிலிருந்து %n QC குறிப்பை நீக்கவா?</numerusform>
+            <numerusform>இந்தக் கோப்பிலிருந்து எல்லா %n QC குறிப்புகளையும் நீக்கவா?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>செயல்தவிர்த்தால் அவை திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>அனைத்தையும் நீக்கு</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>குறிப்புக் கோப்பை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>QC குறிப்புகள் (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>அனைத்துக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>QC குறிப்புகளை ஏற்றுமதி செய்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>%n குறிப்பு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
+            <numerusform>%n குறிப்புகள் ஏற்றுமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>குறிப்புகளை எழுத முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>இந்தக் கோப்பில்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n குறிப்பு</numerusform>
+            <numerusform>%n குறிப்புகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>குறிப்பைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>முடிந்த குறிப்புகளையும் சேர்</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>தேர்ந்தெடுத்த பிரிவு மட்டும் (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>தேர்ந்தெடுத்த பிரிவு மட்டும்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>%n குறிப்பை ஏற்றுமதி செய்…</numerusform>
+            <numerusform>%n குறிப்புகளை ஏற்றுமதி செய்…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>அனைத்தும்</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%2 இல் %1</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>வரி %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>குறிப்புக் கோப்பை இங்கே விடவும்</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>QC குறிப்புகளை வைக்க ஒரு வசனக் கோப்பைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>குறிப்புகளை ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>குறிப்புகள் நேரத்துடன் தொடங்கும்: 3:24 - …
+[பிரிவு] வரிகள் அவற்றைக் குழுவாக்கும்.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>முந்தையது</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>அடுத்தது</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>முடிந்தவற்றை மறை</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>நேரம்</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>வீடியோ நேரம்</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>வரியின் தொடக்கம்</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>பிரிவு</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>குறிப்பு</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>சரிசெய்ய வேண்டியது</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter சேமிக்கும் · Esc ரத்துசெய்யும்</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>சேமி</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reference</name>
     <message>
         <source>Compare with reference</source>
@@ -12860,6 +13240,235 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>“செயலிழப்பு அறிக்கைகளை எப்போதும் அனுப்பு” இயக்கத்தில் உள்ளது. அனுப்பப்பட்டது இதுதான்.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">மதிப்பாய்வு</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">வரி</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">வரி %1</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">புதிய</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">செயல்தவிர்</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">தக்கவை</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%2 இல் %1</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -17239,6 +17848,126 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>நேரங்கள் சட்டகங்களுக்குள் மையப்படுத்தப்படவில்லை: வீடியோ எதுவும் திறக்கப்படவில்லை</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>வரி %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>வரிகள் %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>After Effects அல்லது Blender இலிருந்து ஏற்றுமதி செய்த Power-Pin தரவை ஒட்டவும். பயன்படுத்து CC Power Pin இன் நான்கு மூலைகளைப் படிக்கும்.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>இது Power-Pin தரவு அல்ல: CC Power Pin மூலைகள் எதுவும் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>கண்காணிக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>தரவில் %n சட்டகம் உள்ளது, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும்.</numerusform>
+            <numerusform>தரவில் %n சட்டகங்கள் உள்ளன, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>சட்டகம் %1 இல் தேர்ந்தெடுத்த வரி எதுவும் காட்டப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>வரிகள் ஒன்றின் மேல் ஒன்று வருகின்றன, ஆனால் வரி %1 சட்டகம் %2 இல் காட்டப்படவில்லை. எல்லா வரிகளும் காட்டப்படும் சட்டகத்தைத் தேர்ந்தெடுக்கவும், அல்லது ஒவ்வொன்றாகப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>%1 × %2 இல் கண்காணிக்கப்பட்டது, ஆனால் வீடியோ %3 × %4. மூலைகள் வீடியோவுக்கு ஏற்ப அளவிடப்படும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%1 fps இல் %n சட்டகம், %2 × %3 இல் கண்காணிக்கப்பட்டது. தேர்வின் சட்டகங்கள் %4–%5 ஐ உள்ளடக்குகிறது.</numerusform>
+            <numerusform>%1 fps இல் %n சட்டகங்கள், %2 × %3 இல் கண்காணிக்கப்பட்டன. தேர்வின் சட்டகங்கள் %4–%5 ஐ உள்ளடக்குகின்றன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n சட்டகம். தேர்வின் சட்டகங்கள் %1–%2 ஐ உள்ளடக்குகிறது.</numerusform>
+            <numerusform>%n சட்டகங்கள். தேர்வின் சட்டகங்கள் %1–%2 ஐ உள்ளடக்குகின்றன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>ஒரு வரியைக் கண்காணிக்க முடியாது: அதன் உரையை அளக்க முடியவில்லை அல்லது தளம் அதை மடிக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>பார்வைக்கோணக் கண்காணிப்பு</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Power-Pin தரவு</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>சார்ந்த சட்டகம்</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>%1 இல் · வீடியோ சட்டகம் %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>மூலப்புள்ளி</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>மையம்</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>%1 இல்லை</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>தக்கவை</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>முதலில் தட்டையான வரிகளைத் தளத்துக்குப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>கிளிப்புகளைத் தளத்துடன் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>வெளிக்கோடு மற்றும் நிழலை அளவிடு</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>பார்வைக்கோணக் கருவிக்கும் Derive Perspective Track-க்கும் தளம் ஒவ்வொரு வரியுடனும் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · சட்டகங்கள் %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>

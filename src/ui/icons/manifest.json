@@ -4236,8 +4236,7 @@
     "agent-panel",
     "grid",
     "line-editor"
-   ],
-   "pending": "AI2 #430"
+   ]
   },
   {
    "role": "checkpoint",
@@ -4248,8 +4247,7 @@
    "legacy": [],
    "surfaces": [
     "agent-panel"
-   ],
-   "pending": "AI2 #430"
+   ]
   },
   {
    "role": "copy-path",
@@ -4540,8 +4538,7 @@
     "menu:view",
     "menu:subtitles",
     "qc-notes"
-   ],
-   "pending": "FA20 #577"
+   ]
   },
   {
    "role": "qc-done-reset",
@@ -4552,8 +4549,7 @@
    "legacy": [],
    "surfaces": [
     "qc-notes"
-   ],
-   "pending": "FA20 #577"
+   ]
   },
   {
    "role": "node-library",

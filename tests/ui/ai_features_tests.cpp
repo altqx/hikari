@@ -392,18 +392,22 @@ TEST(AiAutoUpdatePolicy, ReadsTheEnvironmentAndThePolicyFile)
     EXPECT_FALSE(app::aiAutoUpdateOffByPolicy({}, file));
 }
 
-TEST(AiCommands, NoCommandOrMenuEntryIsAnAiOneWhileAiHasNoCommands)
+TEST(AiCommands, TheSwitchTakesEveryCommandWithAnAiToken)
 {
     const QRegularExpression aiToken(QStringLiteral("(^|_)AI(_|$)"));
     for (const auto &action : application::hotkeyActions())
-        EXPECT_FALSE(aiToken.match(QString::fromLatin1(action.symbol.data(), action.symbol.size())).hasMatch())
+        EXPECT_EQ(aiToken.match(QString::fromLatin1(action.symbol.data(), action.symbol.size())).hasMatch(),
+                  application::aiCommand(action.id))
             << action.symbol;
     QFile ledger(QStringLiteral(HIKARI_MENU_LEDGER));
     ASSERT_TRUE(ledger.open(QIODevice::ReadOnly | QIODevice::Text));
-    const QRegularExpression aiEntry(QStringLiteral("^AI\\b|\\[[A-Z_]*\\bAI_[A-Z_]*\\]|\\[[A-Z_]*_AI\\]"));
+    const QRegularExpression command(QStringLiteral(R"(\[([A-Z0-9_]+)\]$)"));
     while (!ledger.atEnd()) {
         const QString line = QString::fromUtf8(ledger.readLine()).trimmed();
-        EXPECT_FALSE(aiEntry.match(line).hasMatch()) << line.toStdString();
+        const auto found = command.match(line);
+        if (found.hasMatch() && aiToken.match(found.captured(1)).hasMatch())
+            EXPECT_TRUE(application::aiCommand(application::hotkeyIdOf(found.captured(1).toStdString())))
+                << line.toStdString();
     }
 }
 
