@@ -17,6 +17,14 @@
 
 #include <array>
 
+#ifdef _WIN32
+#include <string>
+#include <vector>
+
+#include <windows.h>
+#include <sddl.h>
+#endif
+
 namespace hikari::backends::ai {
 
 namespace {
@@ -120,9 +128,47 @@ std::optional<McpEndpoint> readMcpEndpoint(const QString &file)
     return endpoint;
 }
 
+#ifdef _WIN32
+namespace {
+
+bool createForUserAlone(const QString &file)
+{
+    HANDLE token = nullptr;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        return false;
+    DWORD size = 0;
+    GetTokenInformation(token, TokenUser, nullptr, 0, &size);
+    std::vector<char> user(size);
+    const bool read = GetTokenInformation(token, TokenUser, user.data(), size, &size) != FALSE;
+    CloseHandle(token);
+    LPWSTR sid = nullptr;
+    if (!read || !ConvertSidToStringSidW(reinterpret_cast<TOKEN_USER *>(user.data())->User.Sid, &sid))
+        return false;
+    const std::wstring sddl = L"D:P(A;;FA;;;" + std::wstring(sid) + L")";
+    LocalFree(sid);
+    PSECURITY_DESCRIPTOR descriptor = nullptr;
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1, &descriptor, nullptr))
+        return false;
+    SECURITY_ATTRIBUTES attributes{DWORD(sizeof(attributes)), descriptor, FALSE};
+    const HANDLE created = CreateFileW(reinterpret_cast<LPCWSTR>(QDir::toNativeSeparators(file).utf16()), GENERIC_WRITE,
+                                       0, &attributes, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+    LocalFree(descriptor);
+    if (created == INVALID_HANDLE_VALUE)
+        return GetLastError() == ERROR_FILE_EXISTS;
+    CloseHandle(created);
+    return true;
+}
+
+}
+#endif
+
 bool writeMcpEndpoint(const QString &file, const McpEndpoint &endpoint)
 {
     QDir().mkpath(QFileInfo(file).absolutePath());
+#ifdef _WIN32
+    if (!QFileInfo::exists(file) && !createForUserAlone(file))
+        return false;
+#endif
     QJsonObject o{{QStringLiteral("token"), QString::fromLatin1(endpoint.token)}};
     if (!endpoint.socket.isEmpty())
         o.insert(QStringLiteral("socket"), endpoint.socket);
@@ -225,6 +271,19 @@ void McpServer::closeHttp()
 quint16 McpServer::httpPort() const
 {
     return m_httpServer ? m_httpServer->serverPort() : 0;
+}
+
+void McpServer::setToken(QByteArray token)
+{
+    m_token = std::move(token);
+    for (const auto &[id, client] : m_local)
+        if (client->socket)
+            client->socket->disconnectFromServer();
+    for (const auto &[id, client] : m_http)
+        if (client->socket)
+            client->socket->disconnectFromHost();
+    if (m_host && m_httpServer)
+        m_host->notify(kMcpClosed, api::Json::object({{"connection", kHttpConnection}}));
 }
 
 std::expected<api::Caller, api::Error> McpServer::callerFor(const api::Json &mcp, const std::string &operation) const
