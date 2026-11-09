@@ -238,7 +238,8 @@ private slots:
         QVERIFY(menu);
         QCOMPARE(menu_rows::shown(menu),
                  (QStringList{"tabMenuSave", "tabMenuSaveAll", "|", "tabMenuFolders", "tabMenuCopyPaths",
-                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuClose", "tabMenuCloseOthers",
+                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuMoveToNewWindow",
+                              "moveTabToWindowMenu", "|", "tabMenuClose", "tabMenuCloseOthers",
                               "tabMenuCloseRight", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab0")->property("text").toString(), QStringLiteral("a.ass"));
         QCOMPARE(named("tabMenuTab2")->property("text").toString(), QStringLiteral("c.ass"));
@@ -266,7 +267,8 @@ private slots:
         openTabMenu(1);
         QCOMPARE(menu_rows::shown(menu),
                  (QStringList{"tabMenuSave", "tabMenuSaveAll", "|", "tabMenuFolder_subtitles", "tabMenuCopyPath_subtitles",
-                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuClose", "tabMenuCloseOthers",
+                              "subtitleComparisonMenu", "tabMenuSwitchTo", "|", "tabMenuMoveToNewWindow",
+                              "moveTabToWindowMenu", "|", "tabMenuClose", "tabMenuCloseOthers",
                               "tabMenuCloseRight", "tabMenuCloseAll"}));
         QVERIFY(named("tabMenuSave")->property("enabled").toBool());
         QCOMPARE(named("tabMenuFolder_subtitles")->property("text").toString(), QStringLiteral("Show in folder"));
@@ -279,7 +281,8 @@ private slots:
         QVERIFY(!named("tabMenuCloseRight")->property("enabled").toBool());
         closeTabMenu();
         openTabMenu(-1);
-        QCOMPARE(menu_rows::shown(menu), (QStringList{"tabMenuNewTab", "tabMenuSaveAll", "tabMenuSwitchTo", "|", "tabMenuCloseAll"}));
+        QCOMPARE(menu_rows::shown(menu), (QStringList{"tabMenuNewTab", "tabMenuSaveAll", "tabMenuSwitchTo", "|", "tabMenuMoveToNewWindow",
+                                                      "moveTabToWindowMenu", "|", "tabMenuCloseAll"}));
         QCOMPARE(named("tabMenuTab1")->property("text").toString(), QStringLiteral("b.ass"));
     }
 

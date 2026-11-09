@@ -6731,6 +6731,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15182,6 +15190,10 @@ Usunięte style:
         <translation>Przełącz na</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -15268,6 +15280,10 @@ Usunięte style:
     <message>
         <source>Video only</source>
         <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
     </message>
 </context>
 <context>

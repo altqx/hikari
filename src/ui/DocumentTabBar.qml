@@ -42,11 +42,65 @@ Item {
     DocumentTabMenu {
         id: tabMenu
         app: bar.app
+        shellWindow: bar.shellWindow
         onSaveRequested: id => bar.saveRequested(id)
         onSaveAllRequested: bar.saveAllRequested()
         onCloseRequested: index => bar.closeRequested(index)
         onCloseOthersRequested: (index, toTheRight) => bar.closeTabsRequested(index, toTheRight)
         onCloseAllRequested: bar.closeAllRequested()
+    }
+    MoveTabMenu {
+        id: moveToWindowPopup
+        objectName: "moveTabToWindowPopup"
+        app: bar.app
+        shellWindow: bar.shellWindow
+    }
+    function openMoveToWindowMenu() {
+        const index = bar.app.windowCurrentTab(bar.shellWindow)
+        const tab = tabRepeater.itemAt(index)
+        moveToWindowPopup.prepare(bar.app.tabDocument(index))
+        if (tab && moveToWindowPopup.enabled)
+            moveToWindowPopup.popup(tab, 0, tab.height)
+    }
+    function dropIndexAt(x, y, document) {
+        if (x < 0 || y < 0 || x > width || y > height)
+            return -1
+        const inRow = row.mapFromItem(bar, x, 0).x
+        let left = 0
+        let index = tabRepeater.count
+        let from = -1
+        for (let i = 0; i < tabRepeater.count; ++i) {
+            const width = tabRepeater.itemAt(i)?.implicitWidth ?? 0
+            if (index === tabRepeater.count && inRow < left + width / 2)
+                index = i
+            if (tabModel.get(i).tabId === String(document))
+                from = i
+            left += width + row.spacing
+        }
+        return from >= 0 && index > from ? index - 1 : index
+    }
+
+    Item {
+        id: draggedTab
+        property real document: 0
+        Drag.dragType: Drag.Automatic
+        Drag.supportedActions: Qt.MoveAction
+        Drag.mimeData: ({ "application/x-hikari-tab": String(draggedTab.document) })
+        Drag.onDragFinished: dropAction => {
+            const document = draggedTab.document
+            bar.app.tabDragging = false
+            if (dropAction === Qt.IgnoreAction)
+                Qt.callLater(() => bar.app.moveTabToNewWindow(document, Qt.point(0, 0), false))
+        }
+    }
+    function prepareTabDrag(index, grabbedAt) {
+        const tab = tabRepeater.itemAt(index)
+        draggedTab.document = bar.app.tabDocument(index)
+        draggedTab.Drag.imageSource = ""
+        if (!tab)
+            return
+        draggedTab.Drag.hotSpot = Qt.point(tab.mapFromItem(bar, grabbedAt.x, 0).x, tab.height / 2)
+        tab.grabToImage(result => draggedTab.Drag.imageSource = result.url)
     }
 
     // A ListModel moves rows instead of remaking delegates, so a drag keeps its pointer grab.
@@ -118,25 +172,44 @@ Item {
         objectName: "tabDragHandler"
         enabled: bar.shown
         target: null
-        yAxis.enabled: false
         acceptedButtons: Qt.LeftButton
         property int dragged: -1
+        property bool out: false
+        property point releasedAt
+        readonly property bool wayland: Qt.platform.pluginName.startsWith("wayland")
         function tabUnder(x) {
             return bar.tabAt(row.mapFromItem(bar, x, 0).x)
         }
         onActiveChanged: {
             if (active) {
                 dragged = tabUnder(centroid.pressPosition.x)
-                if (dragged >= 0)
+                if (dragged >= 0) {
                     bar.app.selectTab(dragged)
-            } else {
-                dragged = -1
-                bar.app.endTabDrag()
+                    if (wayland)
+                        bar.prepareTabDrag(dragged, centroid.pressPosition)
+                }
+                return
             }
+            const document = out && !wayland && dragged >= 0 ? bar.app.tabDocument(dragged) : 0
+            dragged = -1
+            out = false
+            bar.app.endTabDrag()
+            if (document > 0)
+                bar.app.dropTab(document, releasedAt)
         }
         onCentroidChanged: {
             if (!active || dragged < 0)
                 return
+            releasedAt = bar.mapToGlobal(centroid.position.x, centroid.position.y)
+            const margin = Application.styleHints.startDragDistance
+            out = centroid.position.y < -margin || centroid.position.y > bar.height + margin
+            if (out) {
+                if (wayland && !draggedTab.Drag.active) {
+                    bar.app.tabDragging = true
+                    draggedTab.Drag.active = true
+                }
+                return
+            }
             const over = tabUnder(centroid.position.x)
             if (over >= 0 && over !== dragged && bar.app.dragTab(dragged, over))
                 dragged = over

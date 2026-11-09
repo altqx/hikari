@@ -2203,7 +2203,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     protectReference();
-    showTabArrangement();
+    showTabArrangement(m_workspace.activeWindow());
     if (m_workspace.editingTarget())
         spellChecker();
     reportGroupBreak();
