@@ -131,6 +131,7 @@
 #include <thread>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+Q_IMPORT_QML_PLUGIN(Hikari_PluginPlugin)
 
 using namespace hikari;
 
@@ -17842,6 +17843,86 @@ private slots:
         body = item(at("pluginPanelBody_").constData());
         QCOMPARE(findItem(body, QStringLiteral("pluginPanelPlaceholderText"))->property("text").toString(),
                  QStringLiteral("Notes helper isn’t installed."));
+    }
+    void aQmlPanelDocksBesideADeclarativeOne()
+    {
+        QTemporaryDir home;
+        const QString source = QStringLiteral(HIKARI_PLUGIN_FIXTURES "/qml-board");
+        QDirIterator files(source, QDir::Files, QDirIterator::Subdirectories);
+        while (files.hasNext()) {
+            const QString from = files.next();
+            const QString to = home.filePath(QStringLiteral("plugins/com.example.board/") + QDir(source).relativeFilePath(from));
+            QVERIFY(QDir().mkpath(QFileInfo(to).absolutePath()));
+            QVERIFY(QFile::copy(from, to));
+        }
+        QFile registry(home.filePath(QStringLiteral("plugins.json")));
+        QVERIFY(registry.open(QIODevice::WriteOnly));
+        registry.write(R"({"format": 1, "plugins": {"com.example.board": {"version": "1.0.0", "enabled": true}}})");
+        registry.close();
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        options.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        restartWith(options);
+        window->resize(1600, 900);
+        QVERIFY(application->openFile(writeFile(dir, "qml-panel.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hi\n"
+                                                                      "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,There\n")));
+
+        const QString board = QStringLiteral("plugin:com.example.board/board");
+        const QString notes = QStringLiteral("plugin:com.example.board/notes");
+        const auto at = [](const char *prefix, const QString &dock) { return (QLatin1String(prefix) + dock).toUtf8(); };
+        for (const QString &dock : {board, notes}) {
+            QObject *show = nullptr;
+            QTRY_VERIFY((show = named(at("panelShow", dock).constData())));
+            QVERIFY(QMetaObject::invokeMethod(show, "triggered"));
+        }
+        QPointer<QObject> boardDock;
+        QTRY_VERIFY((boardDock = item<QObject>(at("pluginDock_", board).constData())) && boardDock->property("isOpen").toBool());
+        QCOMPARE(boardDock->property("title").toString(), QStringLiteral("Board"));
+        QQuickItem *body = item(at("pluginPanelBody_", board).constData());
+        QPointer<QQuickItem> root;
+        QTRY_VERIFY((root = findItem(body, QStringLiteral("board"))));
+        QCOMPARE(root->parentItem(), findItem(body, QStringLiteral("pluginQmlHost")));
+        QVERIFY(root->isVisible());
+        QVERIFY(!findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(root, "countLines"));
+        QTRY_COMPARE(root->property("lines").toString(), QStringLiteral("2"));
+        QQuickItem *said = nullptr;
+        QQuickItem *notesBody = item(at("pluginPanelBody_", notes).constData());
+        QTRY_VERIFY((said = findItem(notesBody, QStringLiteral("pluginPanelTree"))) && said->isVisible());
+        QCOMPARE(QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists(), true);
+
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
+        QTRY_VERIFY(boardDock && boardDock->property("isFloating").toBool());
+        QTRY_VERIFY(findItem(body, QStringLiteral("board")));
+        QVERIFY(QMetaObject::invokeMethod(named(at("panelFloat", board).constData()), "triggered"));
+        QTRY_VERIFY(boardDock && !boardDock->property("isFloating").toBool());
+        QCOMPARE(findItem(body, QStringLiteral("board")), root.data());
+
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (!out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            auto *main = engine->rootObjects().first();
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTRY_COMPARE(main->property("palette").value<QObject *>()->property("window").value<QColor>(),
+                             ui::theme::current().roles.panel);
+                QVERIFY(root);
+                QTRY_COMPARE(root->property("accent").value<QColor>(), ui::theme::current().roles.accent);
+                QTest::qWait(400);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/qml-panel-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+            }
+        }
+
+        QCOMPARE(application->pluginManager()->setEnabled(QStringLiteral("com.example.board"), false), QString());
+        QTRY_VERIFY(!findItem(body, QStringLiteral("board")));
+        QTRY_VERIFY(findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
+        QTRY_VERIFY(!QFileInfo(home.filePath(QStringLiteral("plugin-panels.json"))).exists());
+        restartWith(app::Application::Options());
     }
     void pluginPanelScreenshots()
     {
