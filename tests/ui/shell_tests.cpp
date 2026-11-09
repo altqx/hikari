@@ -6549,17 +6549,36 @@ private slots:
         flick->setProperty("contentY", std::clamp(centre.y() - flick->height() / 2, 0.0, maxY));
     }
 
+    static QPointF settledPoint(QQuickItem *item, qreal across)
+    {
+        const auto place = [item, across] {
+            return std::pair{item->mapToScene(QPointF(item->width() * across, item->height() / 2)), item->window()->size()};
+        };
+        auto last = place();
+        for (int still = 0, waited = 0; still < 10 && waited < 250; ++waited) {
+            QTest::qWait(20);
+            const auto now = place();
+            still = now == last ? still + 1 : 0;
+            last = now;
+        }
+        return last.first;
+    }
+
+    static QString underPoint(QQuickWindow *window, QPointF at)
+    {
+        QString name = QStringLiteral("nothing");
+        for (QQuickItem *in = window->contentItem(); in;) {
+            const QPointF local = in->mapFromScene(at);
+            in = in->childAt(local.x(), local.y());
+            if (in)
+                name = QString::fromLatin1(in->metaObject()->className()) + u'(' + in->objectName() + u')';
+        }
+        return QStringLiteral("%1 at %2,%3 in %4x%5").arg(name).arg(at.x()).arg(at.y()).arg(window->width()).arg(window->height());
+    }
+
     static void clickCentre(QQuickItem *item, qreal across = 0.5)
     {
-        const auto centre = [item, across] { return item->mapToScene(QPointF(item->width() * across, item->height() / 2)); };
-        QPointF at = centre();
-        for (int settled = 0; settled < 2;) {
-            QTest::qWait(20);
-            const QPointF now = centre();
-            settled = now == at ? settled + 1 : 0;
-            at = now;
-        }
-        QTest::mouseClick(item->window(), Qt::LeftButton, {}, at.toPoint());
+        QTest::mouseClick(item->window(), Qt::LeftButton, {}, settledPoint(item, across).toPoint());
     }
 
     void typeAfterClickingTheArrow(QQuickItem *box, qreal across = 0.5)
@@ -6576,8 +6595,9 @@ private slots:
         QVERIFY(QTest::qWaitForWindowActive(window));
 
         QTRY_VERIFY2(shownInScroller(arrow), qPrintable(name));
-        clickCentre(arrow, across);
-        QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name));
+        const QPointF at = settledPoint(arrow, across);
+        QTest::mouseClick(window, Qt::LeftButton, {}, at.toPoint());
+        QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name + u' ' + underPoint(window, at)));
         QVERIFY2(field->hasActiveFocus(), qPrintable(name));
         QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
         typeText(window, QStringLiteral("7"));
