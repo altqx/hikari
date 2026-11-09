@@ -1,0 +1,192 @@
+{
+  "apply": {
+    "events": [
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Early part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\bord1.84\\fscx92.03\\fscy92.03\\pos(586.44,378.98)\\shad0.92}Early part"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Early part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\bord1.87\\fscx93.63\\fscy93.63\\pos(594.99,375.05)\\shad0.94}Early part"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Early part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\bord1.9\\fscx95.22\\fscy95.22\\pos(604.62,371.19)\\shad0.95}Early part"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Early part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\bord1.94\\fscx96.81\\fscy96.81\\pos(615.34,367.39)\\shad0.97}Early part"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Early part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\bord1.97\\fscx98.41\\fscy98.41\\pos(627.13,363.66)\\shad0.98}Early part"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Early part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\bord2\\fscx100\\fscy100\\pos(640,360)\\shad1}Early part"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\bord2\\fscx100\\fscy100\\pos(640,360)\\shad1}Late part"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\bord2.03\\fscx101.59\\fscy101.59\\pos(653.95,356.4)\\shad1.02}Late part"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\bord2.06\\fscx103.19\\fscy103.19\\pos(668.98,352.87)\\shad1.03}Late part"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\bord2.1\\fscx104.78\\fscy104.78\\pos(685.1,349.41)\\shad1.05}Late part"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\bord2.13\\fscx106.37\\fscy106.37\\pos(702.29,346.01)\\shad1.06}Late part"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\bord2.16\\fscx107.97\\fscy107.97\\pos(720.56,342.68)\\shad1.08}Late part"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\bord2.19\\fscx109.56\\fscy109.56\\pos(739.91,339.42)\\shad1.1}Late part"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}Late part",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 1,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\bord2.22\\fscx111.15\\fscy111.15\\pos(760.34,336.22)\\shad1.11}Late part"
+      }
+    ],
+    "outcome": "ok",
+    "unchanged": 12,
+    "undo_steps": 1
+  },
+  "departure": "D13"
+}

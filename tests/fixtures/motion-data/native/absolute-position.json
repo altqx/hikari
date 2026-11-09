@@ -12,7 +12,7 @@
         "layer": 0,
         "start": 4150,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.87\\clip(430.13,294.5,692,406.73)\\fscx93.52\\fscy93.52\\pos(600,333.33)\\shad0.94}Rect clip"
+        "text": "{\\bord1.87\\clip(430.13,294.5,692,406.73)\\fscx93.52\\fscy93.52\\pos(600,333.33)\\shad0.94}Rect clip"
       },
       {
         "end": 4230,
@@ -25,7 +25,7 @@
         "layer": 0,
         "start": 4190,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.9\\clip(444.34,284.62,710.74,398.79)\\fscx95.14\\fscy95.14\\pos(608.79,328.61)\\shad0.95}Rect clip"
+        "text": "{\\bord1.9\\clip(444.34,284.62,710.74,398.79)\\fscx95.14\\fscy95.14\\pos(608.79,328.61)\\shad0.95}Rect clip"
       },
       {
         "end": 4270,
@@ -38,7 +38,7 @@
         "layer": 0,
         "start": 4230,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.94\\clip(460.96,274.71,731.89,390.83)\\fscx96.76\\fscy96.76\\pos(618.65,323.96)\\shad0.97}Rect clip"
+        "text": "{\\bord1.94\\clip(460.96,274.71,731.89,390.83)\\fscx96.76\\fscy96.76\\pos(618.65,323.96)\\shad0.97}Rect clip"
       },
       {
         "end": 4310,
@@ -51,7 +51,7 @@
         "layer": 0,
         "start": 4270,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.97\\clip(480.03,264.79,755.5,382.85)\\fscx98.38\\fscy98.38\\pos(629.6,319.37)\\shad0.98}Rect clip"
+        "text": "{\\bord1.97\\clip(480.03,264.79,755.5,382.85)\\fscx98.38\\fscy98.38\\pos(629.6,319.37)\\shad0.98}Rect clip"
       },
       {
         "end": 4350,
@@ -64,7 +64,7 @@
         "layer": 0,
         "start": 4310,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2\\clip(501.63,254.85,781.63,374.85)\\fscx100\\fscy100\\pos(641.63,314.85)\\shad1}Rect clip"
+        "text": "{\\bord2\\clip(501.63,254.85,781.63,374.85)\\fscx100\\fscy100\\pos(641.63,314.85)\\shad1}Rect clip"
       },
       {
         "end": 4400,
@@ -77,7 +77,7 @@
         "layer": 0,
         "start": 4350,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.03\\clip(525.79,244.9,810.32,366.85)\\fscx101.62\\fscy101.62\\pos(654.73,310.4)\\shad1.02}Rect clip"
+        "text": "{\\bord2.03\\clip(525.79,244.9,810.32,366.85)\\fscx101.62\\fscy101.62\\pos(654.73,310.4)\\shad1.02}Rect clip"
       },
       {
         "end": 4440,
@@ -90,7 +90,7 @@
         "layer": 0,
         "start": 4400,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.06\\clip(552.56,234.94,841.63,358.83)\\fscx103.24\\fscy103.24\\pos(668.92,306.01)\\shad1.03}Rect clip"
+        "text": "{\\bord2.06\\clip(552.56,234.94,841.63,358.83)\\fscx103.24\\fscy103.24\\pos(668.92,306.01)\\shad1.03}Rect clip"
       },
       {
         "end": 4480,
@@ -103,7 +103,7 @@
         "layer": 0,
         "start": 4440,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.1\\clip(582.01,224.98,875.61,350.81)\\fscx104.86\\fscy104.86\\pos(684.19,301.69)\\shad1.05}Rect clip"
+        "text": "{\\bord2.1\\clip(582.01,224.98,875.61,350.81)\\fscx104.86\\fscy104.86\\pos(684.19,301.69)\\shad1.05}Rect clip"
       },
       {
         "end": 4520,
@@ -116,7 +116,7 @@
         "layer": 0,
         "start": 4480,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.13\\clip(614.19,215.01,912.32,342.78)\\fscx106.48\\fscy106.48\\pos(700.53,297.44)\\shad1.06}Rect clip"
+        "text": "{\\bord2.13\\clip(614.19,215.01,912.32,342.78)\\fscx106.48\\fscy106.48\\pos(700.53,297.44)\\shad1.06}Rect clip"
       },
       {
         "end": 4560,
@@ -129,7 +129,7 @@
         "layer": 0,
         "start": 4520,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.16\\clip(649.14,205.05,951.8,334.76)\\fscx108.09\\fscy108.09\\pos(717.96,293.25)\\shad1.08}Rect clip"
+        "text": "{\\bord2.16\\clip(649.14,205.05,951.8,334.76)\\fscx108.09\\fscy108.09\\pos(717.96,293.25)\\shad1.08}Rect clip"
       },
       {
         "end": 4600,
@@ -142,7 +142,7 @@
         "layer": 0,
         "start": 4560,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.19\\clip(686.92,195.09,994.12,326.74)\\fscx109.71\\fscy109.71\\pos(736.47,289.13)\\shad1.1}Rect clip"
+        "text": "{\\bord2.19\\clip(686.92,195.09,994.12,326.74)\\fscx109.71\\fscy109.71\\pos(736.47,289.13)\\shad1.1}Rect clip"
       },
       {
         "end": 4650,
@@ -155,7 +155,7 @@
         "layer": 0,
         "start": 4600,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.23\\clip(727.58,185.13,1039.31,318.73)\\fscx111.33\\fscy111.33\\pos(756.05,285.08)\\shad1.11}Rect clip"
+        "text": "{\\bord2.23\\clip(727.58,185.13,1039.31,318.73)\\fscx111.33\\fscy111.33\\pos(756.05,285.08)\\shad1.11}Rect clip"
       },
       {
         "end": 4690,
@@ -168,11 +168,12 @@
         "layer": 0,
         "start": 4650,
         "style": "Sign",
-        "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.26\\clip(771.18,175.19,1087.44,310.73)\\fscx112.95\\fscy112.95\\pos(776.72,281.09)\\shad1.13}Rect clip"
+        "text": "{\\bord2.26\\clip(771.18,175.19,1087.44,310.73)\\fscx112.95\\fscy112.95\\pos(776.72,281.09)\\shad1.13}Rect clip"
       }
     ],
     "outcome": "ok",
     "unchanged": 13,
     "undo_steps": 1
-  }
+  },
+  "departure": "D13"
 }

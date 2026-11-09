@@ -459,7 +459,7 @@ bool has(const std::vector<std::string> &tags, std::size_t from, std::initialize
 }
 
 std::vector<std::string> missingTags(const std::vector<std::string> &tags, std::size_t from, const Props &p,
-                                     const Setup &setup)
+                                     const Setup &setup, bool fades)
 {
     const auto &o = setup.options;
     const bool scale = o.main.scale;
@@ -473,7 +473,7 @@ std::vector<std::string> missingTags(const std::vector<std::string> &tags, std::
     add(scale && o.border, Kind::Bord, p.outline, true);
     add(scale && o.shadow, Kind::Shad, p.shadow, true);
     add(o.main.rotation, Kind::Frz, p.angle, false);
-    if (!o.bakeTransforms || has(tags, from, {Kind::Alpha}))
+    if (!o.bakeTransforms || !fades || has(tags, from, {Kind::Alpha}))
         return out;
     if (std::ranges::all_of(p.alpha, [](double a) { return a == 0; })) {
         out.push_back("\\alpha&H00&");
@@ -1014,6 +1014,8 @@ PreparedLine prepareLine(std::string_view text, std::int64_t duration, const Pro
               "," + std::to_string(duration) + ")";
     });
     dedupe(pieces);
+    bool fades = false;
+    forEachTag(pieces, [&](Position, const std::string &tag) { fades = fades || kindOf(tag) == Kind::Fade; });
 
     std::optional<int> align;
     bool positioned = false;
@@ -1039,7 +1041,7 @@ PreparedLine prepareLine(std::string_view text, std::int64_t duration, const Pro
     }
     if (!pieces.empty() && pieces.front().block) {
         auto &tags = pieces.front().tags;
-        const auto missing = missingTags(tags, 0, props, setup);
+        const auto missing = missingTags(tags, 0, props, setup, fades);
         tags.insert(tags.begin(), missing.begin(), missing.end());
     }
     for (auto &piece : pieces) {
@@ -1051,7 +1053,7 @@ PreparedLine prepareLine(std::string_view text, std::int64_t duration, const Pro
         if (reset != tags.end()) {
             const auto at = static_cast<std::size_t>(reset - tags.begin());
             const auto style = setup.styles.find(std::string(view(*reset).value));
-            const auto missing = missingTags(tags, at + 1, style == setup.styles.end() ? props : style->second, setup);
+            const auto missing = missingTags(tags, at + 1, style == setup.styles.end() ? props : style->second, setup, fades);
             tags.insert(tags.begin() + static_cast<std::ptrdiff_t>(at + 1), missing.begin(), missing.end());
         }
         if (!setup.touchesClips())

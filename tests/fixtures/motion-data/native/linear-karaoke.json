@@ -12,12 +12,12 @@
         "layer": 0,
         "start": 4170,
         "style": "Sign",
-        "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord1.87\\fscx93.52\\fscy93.52\\k10\\move(598.48,375.56,774.88,332.09,0,501)\\shad0.94\\t(0,501,\\bord2.26)\\t(0,501,\\fscx112.95)\\t(0,501,\\fscy112.95)\\t(0,501,\\shad1.13)}Ka{\\k20}ra{\\kf15}oke"
+        "text": "{\\bord1.87\\fscx93.52\\fscy93.52\\k10\\move(598.48,375.56,774.88,332.09,0,501)\\shad0.94\\t(0,501,\\bord2.26)\\t(0,501,\\fscx112.95)\\t(0,501,\\fscy112.95)\\t(0,501,\\shad1.13)}Ka{\\k20}ra{\\kf15}oke"
       }
     ],
     "outcome": "ok",
     "unchanged": 13,
     "undo_steps": 1
   },
-  "departure": "D8"
+  "departure": "D8, D13"
 }
