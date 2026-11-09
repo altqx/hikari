@@ -5,7 +5,6 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
-#include <QGuiApplication>
 #include <QQmlEngine>
 #include <QQuickWindow>
 
@@ -14,16 +13,6 @@
 #include <vector>
 
 namespace hikari::app {
-
-QQuickWindow *Application::shellQuickWindow(int shellWindow) const
-{
-    if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end())
-        return found->second.window;
-    for (QWindow *window : QGuiApplication::topLevelWindows())
-        if (!window->transientParent() && shellWindowOf(window) == shellWindow)
-            return qobject_cast<QQuickWindow *>(window);
-    return nullptr;
-}
 
 std::optional<int> Application::openWindowBeside(int shellWindow)
 {

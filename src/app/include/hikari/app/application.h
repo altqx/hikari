@@ -1305,7 +1305,6 @@ private:
     QString m_pendingOpenPath;
     application::RecentFiles m_recent;
     std::unique_ptr<ProjectWindows> m_projects;
-    QQuickWindow *shellQuickWindow(int shellWindow) const;
     application::Session sessionOf(std::optional<int> shellWindow);
     void keepProjectTabs(int shellWindow);
     void closeProject(int shellWindow);
