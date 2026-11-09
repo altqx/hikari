@@ -226,6 +226,10 @@ target_compile_definitions(hikari_application_associated_files_tests PRIVATE
     HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")
 hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_search_suggestions_tests SOURCES search_suggestions_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_search_suggestions_tests PRIVATE
+    HIKARI_SEARCH_SUGGESTIONS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/gemini_search_suggestions.html")
 hikari_add_gtest(hikari_application_aegisub_frame_times_tests SOURCES aegisub_frame_times_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_node_effects_tests SOURCES node_effects_tests.cpp
