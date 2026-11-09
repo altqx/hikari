@@ -111,6 +111,22 @@ Values are rounded to 2 decimals and written with `%g`, so trailing zeros are dr
   - c. `prepareConfig` loops `pairs{main, clip}`. If both dialogs ask for rect clips, the clip data is whichever comes last (`clip-separately`, 3 variants).
   - Native follows the evident intent in each case (named above). These goldens are checked only against native output, never against a-mo.
 
+## Derive, Export Power Pin and extrapolation: read, not run
+
+These four scripts aren't bundled (Q186), so they set no byte-identical target. The formats below come from reading their source:
+
+- 0x.DeriveTrack: The0x539/Aegisub-Scripts `src/0x.DeriveTrack.moon` at 3cd439b9d. It has no licence, so it's reimplemented from behaviour.
+- arch.DerivePerspTrack 1.1.3: from the third-party corpus, MIT.
+- petzku.ExtrapolateMove 0.1.5: petzku/Aegisub-Scripts at 184c8287, ISC.
+- phos.ExtrapolateTracking 1.0.2: GPL-3. Its algorithm is reimplemented from behaviour; no code is copied.
+
+| Script | Input | Output and rounding | Native |
+|---|---|---|---|
+| 0x.DeriveTrack (**Derive**) | At least 2 Lines with the same text once tags are removed, end to start, same layer and comment state. Per Line it reads the last `\pos` in any block, and `\fscx` `\fscy` `\frz` from the *last* block only, falling back to the style (`\fr` isn't read). No `\pos`: it logs "missing pos tag" and fails. | Written to the log window. `Units per Second` is hard-coded 23.976; Source Width/Height are PlayRes, so a-mo's scale factor is 1. Rows `\t%d\t%f\t%f\t0` (six decimals), frames from 0, one row per frame of each Line. Scale has Z 0, Rotation is `\t%d\t%f` of −`\frz`. There's no `End of Keyframe Data`. | **Copy motion data from lines**. It reads the effective first-block values (`\pos`, else the `\move` point at the frame, `\fscx` `\fscy` `\frz`/`\fr`, else the style), puts the text on the clipboard, writes the video's fps, ends with `End of Keyframe Data`, and refuses a Line without a position. Round trip: Apply motion data on the first Line, relative to frame 1, gives back the same Lines. |
+| arch.DerivePerspTrack (**Export Power Pin**) | From Outer Quad: each Line's `_aegi_perspective_ambient_plane` (`x;y\|x;y\|x;y\|x;y`). From Tags: the quad of its tags (VT3's `transformPoints`); `\move` is refused. Overlapping Lines are refused. | Log window. `Units Per Second` 23.976, Source size = PlayRes. Corners 0002, 0003, 0004, 0005 take quad points 1, 2, 4, 3 (TL, TR, BL, BR). Rows `\t<f>\t<x>\t<y>` from frame 0. Outer-quad values are copied as the extradata text; tag values use Lua `tostring` (14 significant digits). A frame no Line covers holds the last quad. Ends with `End of Keyframe Data`. | **Copy Power-Pin track from lines**: the same layout and numbers, the saved plane first, the tags' quad otherwise. Round trip: FA13's `parsePowerPin` reads back the same quads. Differences: real fps instead of 23.976, and one command instead of two (ledger). |
+| petzku.ExtrapolateMove | A 6-argument `\move` (the first one); 4-argument moves are left alone | `\move(%.2f,%.2f,%.2f,%.2f)`: the move's velocity carried back to time 0 and on to the Line's duration, so the 4-argument move covers the whole Line. Equal t1 and t2 divide by zero. | **Extrapolate \move to the line**: the same formula and format; equal times are refused. |
+| phos.ExtrapolateTracking | Frame-by-frame Lines (same layer and text, touching times, no animation); their effective `\pos`, `\fscx`, `\fscy` and `\frz` | For each value it fits degree 1–3 by k-fold cross-validation (k = 80 % of the points), stopping at RMSE < 0.01. While RMSE ≥ 0.003 and there are at least 8 points, it halves the window towards the extended end. RMSE > 0.2 is "LOW CONFIDENCE", > 5 "VERY LOW". It then extends the first or last Line by N frames and runs a-mo's Apply on it (Interpolate transforms, origin optional, every other option on). Numbers go through Lua `tostring`. | **Extend tracked lines…**, plus the dialog's **Extrapolate past the data** for data shorter than the Lines. Same fit and thresholds; the confidence shows in the status line. |
+
 ## Proposed departures
 
 | Id | Departure |
@@ -125,3 +141,5 @@ Values are rounded to 2 decimals and written with `%g`, so trailing zeros are dr
 | D8 | Linear works with karaoke |
 | D9 | The new Lines are selected |
 | D10 | Fixed tag order (N1) and fixed callback order (N2) |
+| D11 | Export Power Pin is one command: the saved plane, else the tags (arch has two) |
+| D12 | Derive and Export write the video's fps, not a fixed 23.976 |

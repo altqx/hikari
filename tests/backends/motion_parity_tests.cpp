@@ -236,7 +236,13 @@ protected:
             EXPECT_TRUE(app::applyMacroResult(session, *snapshot, *host.lastResult(), macroName.toStdString()));
             out.record.insert("undo_steps", int(session.historySize() - steps));
             const auto after = app::snapshotForMacro(session);
-            out.record.insert("events", events(*after));
+            QJsonArray changed;
+            const QJsonArray input = events(*snapshot);
+            int kept = 0;
+            for (const auto &e : events(*after))
+                input.contains(e) ? void(++kept) : changed.append(e);
+            out.record.insert("unchanged", kept);
+            out.record.insert("events", changed);
             QJsonArray selected;
             for (std::size_t i = 0; i < after->dialogues.size(); ++i)
                 if (session.selection().selected.contains(hikari::core::LineId{after->dialogues[i].id}))

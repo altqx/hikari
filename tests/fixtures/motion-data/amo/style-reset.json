@@ -2,62 +2,6 @@
     "apply": {
         "events": [
             {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(640,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Alt",
-                "text": "{\\fs30}Default position"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\frz-5\\org(500,200)\\pos(600,300)}Origin"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\move(600,300,700,350,0,300)}Moving"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\clip(500,300,780,420)\\pos(640,360)}Rect clip"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\iclip(2,m 1000 600 l 1560 600 1560 840 1000 840)\\pos(640,360)}Scaled vector clip"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\fad(100,150)\\pos(640,360)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\k10\\pos(640,360)}Ka{\\k20}ra{\\kf15}oke"
-            },
-            {
                 "end": 4190,
                 "extra": {
                     "a-mo": {
@@ -225,46 +169,12 @@
                 "start": 4650,
                 "style": "Sign",
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.26\\frz3.76\\fscx124.25\\fscy112.95\\pos(778.23,332.1)\\shad1.13}Start {\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.39\\frz8.76\\fscx101.66\\fscy124.25\\rAlt\\shad0.56}reset {\\1a&H00&\\3a&H00&\\4a&H80&\\bord2.26\\frz3.76\\fscx112.95\\fscy112.95\\r\\shad1.13}back"
-            },
-            {
-                "end": 4380,
-                "layer": 1,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\pos(640,360)}Early part"
-            },
-            {
-                "end": 4680,
-                "layer": 1,
-                "start": 4340,
-                "style": "Sign",
-                "text": "{\\pos(640,360)}Late part"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Flat",
-                "text": "{\\pos(640,360)}No outline"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\clip(m 500 300 l 780 300 780 420 500 420)\\pos(640,360)}Vector clip"
-            },
-            {
-                "end": 4680,
-                "layer": 0,
-                "start": 4170,
-                "style": "Sign",
-                "text": "{\\an1\\frz359.99\\fscx100.5\\fscy99.5\\pos(640,360)}Edge values"
             }
         ],
         "outcome": "ok",
         "selected": [
         ],
+        "unchanged": 13,
         "undo_steps": 1
     }
 }
