@@ -29,7 +29,10 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `video.info` | read | 1 | Whether a video is open, its size and aspect ratio, the frame shown and the keyframes. |
 | `video.frame_at_time` | read | 1 | The video frame shown at a time. |
 | `video.time_of_frame` | read | 1 | The time a video frame starts, in milliseconds. |
-| `video.frame` | read | 1 | One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge. |
+| `video.frame` | read | 1 | One video frame as BGRA pixels in base64, with every Line, one Line or none drawn on it, optionally cropped, scaled to fit maxEdge and maxPixels. |
+| `video.ink_bounds` | read | 1 | Where one Line's ink, or every Line's, lies on a video frame, in video pixels. |
+| `video.colours` | read | 1 | The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it. |
+| `video.keyframes` | read | 1 | The keyframes from one time to another, each with its start time. |
 | `audio.info` | read | 1 | Whether audio is open and loaded, its duration and sample rate. |
 | `audio.peaks` | read | 1 | The lowest and highest 16-bit sample in each of `buckets` equal slices of a time range. |
 | `files.list` | read | 1 | The files the user granted this caller, with read or write access. |
@@ -537,20 +540,23 @@ The time a video frame starts, in milliseconds.
 
 Read. Since version 1.
 
-One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge.
+One video frame as BGRA pixels in base64, with every Line, one Line or none drawn on it, optionally cropped, scaled to fit maxEdge and maxPixels.
 
 **Parameters**
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `frame` | integer |  | Default: the frame shown. At least 0. |
+| `frame` | integer |  | Default: the frame shown, or with line the Line's first frame when it is not on the frame shown. At least 0. |
 | `subtitles` | boolean |  | Render the subtitles on it. Default true. |
+| `document` | [DocumentId](#documentid) |  | line's Document. Defaults to the active Document. |
+| `line` | [LineId](#lineid) |  | Draw this Line alone. |
 | `crop` | object |  |  |
 | `crop.x` | integer | yes | At least 0. |
 | `crop.y` | integer | yes | At least 0. |
 | `crop.width` | integer | yes | At least 1. |
 | `crop.height` | integer | yes | At least 1. |
 | `maxEdge` | integer |  | Default 1024. From 16 to 4096. |
+| `maxPixels` | integer |  | The most pixels the image may have. No limit when omitted. From 256 to 16777216. |
 
 **Result**
 
@@ -559,8 +565,83 @@ One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxE
 | `frame` | integer | yes | At least 0. |
 | `width` | integer | yes | At least 1. |
 | `height` | integer | yes | At least 1. |
+| `crop` | object | yes |  |
+| `crop.x` | integer | yes | At least 0. |
+| `crop.y` | integer | yes | At least 0. |
+| `crop.width` | integer | yes | At least 1. |
+| `crop.height` | integer | yes | At least 1. |
 | `format` | `"bgra"` | yes |  |
 | `data` | string | yes | width * 4 bytes per row, top row first, base64. |
+
+### `video.ink_bounds`
+
+Read. Since version 1.
+
+Where one Line's ink, or every Line's, lies on a video frame, in video pixels.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `frame` | integer |  | Default: the frame shown, or with line the Line's first frame when it is not on the frame shown. At least 0. |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `line` | [LineId](#lineid) |  | This Line alone. Every Line when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `frame` | integer | yes | At least 0. |
+| `bounds` | object or null | yes | Null when nothing is drawn. |
+
+### `video.colours`
+
+Read. Since version 1.
+
+The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `frame` | integer |  | Default: the frame shown. At least 0. |
+| `points` | array of objects | yes | 1 to 256 items. |
+| `points[].x` | integer | yes | At least 0. |
+| `points[].y` | integer | yes | At least 0. |
+| `radius` | integer |  | Default 0, the pixel alone. From 0 to 32. |
+| `subtitles` | boolean |  | Sample with the subtitles drawn. Default false. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `frame` | integer | yes | At least 0. |
+| `colours` | array of objects | yes |  |
+| `colours[].x` | integer | yes |  |
+| `colours[].y` | integer | yes |  |
+| `colours[].colour` | string | yes | `pattern`: `"^&H[0-9A-F]{6}&$"`. |
+
+### `video.keyframes`
+
+Read. Since version 1.
+
+The keyframes from one time to another, each with its start time.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `from` | integer |  | Milliseconds. Default 0. At least 0. |
+| `to` | integer |  | Milliseconds. Default: the end. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `keyframes` | array of objects | yes | At most 500 items. |
+| `keyframes[].frame` | integer | yes | At least 0. |
+| `keyframes[].time` | integer | yes |  |
+| `total` | integer | yes | Every keyframe in the range; the first 500 are listed. At least 0. |
 
 ### `audio.info`
 
