@@ -2,6 +2,7 @@ import { ErrorCode } from "../protocol";
 import { RpcError } from "../rpc";
 import type { CommandsListResult, OperationName, Operations, VideoFrameResult } from "./api.gen";
 import { kCatalogue, type Catalogue, type Entry, type Tool } from "./catalogue";
+import { kDefaultImageBudget, type ImageBudget } from "./images";
 import { pngFromBgra } from "./png";
 
 export type Content = { type: "text"; text: string } | { type: "image"; data: string; mimeType: string };
@@ -71,6 +72,9 @@ function words(query: string): string[] {
     return query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }
 
+/** A word in a tool's name counts for more than any number of words in its description. */
+const kNameWeight = 100;
+
 /** How many of `wanted` occur in `haystack`. */
 function score(wanted: string[], haystack: string): number {
     const lower = haystack.toLowerCase().replaceAll("_", " ");
@@ -79,12 +83,22 @@ function score(wanted: string[], haystack: string): number {
 
 function frame(result: VideoFrameResult): CallToolResult {
     const png = pngFromBgra(result.width, result.height, Buffer.from(result.data, "base64"));
+    const { frame, crop, width, height } = result;
     return {
         content: [
-            { type: "text", text: JSON.stringify({ frame: result.frame, width: result.width, height: result.height }) },
+            { type: "text", text: JSON.stringify({ frame, crop, width, height }) },
             { type: "image", data: Buffer.from(png).toString("base64"), mimeType: "image/png" },
         ],
     };
+}
+
+type Rect = VideoFrameResult["crop"];
+
+/** `ink` grown on every side by a quarter of its longer side, and by 32 px at least. */
+function around(ink: Rect): Rect {
+    const margin = Math.max(32, Math.ceil(Math.max(ink.width, ink.height) / 4));
+    const x = Math.max(0, ink.x - margin), y = Math.max(0, ink.y - margin);
+    return { x, y, width: ink.x + ink.width + margin - x, height: ink.y + ink.height + margin - y };
 }
 
 /**
@@ -95,6 +109,8 @@ export class ToolSet {
     private readonly entries: readonly Entry[];
     private readonly offered: Set<string>;
     private readonly byName: Map<string, Entry>;
+    /** The model's: the agent sets it from the provider's wire with kImageBudgets. */
+    imageBudget: ImageBudget = kDefaultImageBudget;
 
     constructor(private readonly api: HikariCalls, private readonly catalogue: Catalogue = kCatalogue,
         private readonly sources: readonly ToolSource[] = []) {
@@ -133,11 +149,34 @@ export class ToolSet {
                 return this.searchTools(params);
             if (name === "search_commands")
                 return await this.searchCommands(params);
-            const result = await this.api.call(entry!.operation!, params as never);
-            return entry!.operation === "video.frame" ? frame(result as VideoFrameResult) : text(result);
+            if (entry!.operation === "video.frame")
+                return await this.videoFrame(name, params);
+            return text(await this.api.call(entry!.operation!, params as never));
         } catch (error) {
             return failure(worded(name, error, this.catalogue));
         }
+    }
+
+    private async videoFrame(name: string, params: Record<string, unknown>): Promise<CallToolResult> {
+        const { full, ...asked } = params;
+        if (full !== undefined && typeof full !== "boolean")
+            return failure(`${name}: full must be true or false.`);
+        const call: Record<string, unknown> = { ...asked, maxPixels: this.imageBudget.maxPixels };
+        if (asked.maxEdge === undefined || typeof asked.maxEdge === "number")
+            call.maxEdge = Math.min((asked.maxEdge as number | undefined) ?? 1024, this.imageBudget.maxEdge);
+        if (!full && asked.crop === undefined) {
+            const where = Object.fromEntries(["frame", "document", "line"].filter((key) => key in asked).map((key) => [key, asked[key]]));
+            const ink = await this.api.call("video.ink_bounds", where as never).catch((error: unknown) => {
+                if (error instanceof RpcError && isObject(error.data) && error.data.code === "unavailable")
+                    return undefined;
+                throw error;
+            });
+            if (ink?.bounds) {
+                call.frame = ink.frame;
+                call.crop = around(ink.bounds);
+            }
+        }
+        return frame(await this.api.call("video.frame", call as never));
     }
 
     private searchTools(params: Record<string, unknown>): CallToolResult {
@@ -155,7 +194,8 @@ export class ToolSet {
         ];
         const found = candidates
             .filter(([, g]) => group === undefined || g === group)
-            .map(([tool, g]): [Tool, number] => [tool, score(wanted, `${tool.name} ${tool.description} ${g}`)])
+            .map(([tool, g]): [Tool, number] => [tool, score(wanted, tool.name) * kNameWeight +
+                score(wanted, `${tool.name} ${tool.description} ${g}`)])
             .filter(([, s]) => wanted.length === 0 || s > 0)
             .sort(([a, sa], [b, sb]) => sb - sa || a.name.localeCompare(b.name))
             .slice(0, 10)

@@ -6631,6 +6631,14 @@ Failed to copy %2 fonts.</source>
         <translation>원근 추적…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7395,6 +7403,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>디자인 및 개발</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>자동화 스크립트의 태국어 지원</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -15156,6 +15168,10 @@ Styles deleted:
         <translation>전환</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>탭을 새 창으로 이동</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -15240,6 +15256,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>영상만</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>탭을 창으로 이동</translation>
     </message>
 </context>
 <context>

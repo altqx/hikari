@@ -6731,6 +6731,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7499,6 +7507,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Design and development</source>
         <translation>Projekt i programowanie</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -15378,6 +15390,10 @@ Usunięte style:
         <translation>Przełącz na</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -15464,6 +15480,10 @@ Usunięte style:
     <message>
         <source>Video only</source>
         <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
     </message>
 </context>
 <context>

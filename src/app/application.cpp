@@ -756,7 +756,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
-        }});
+        },
+        [this]() -> const application::VideoSession * { return m_video ? &m_video->session() : nullptr; },
+        [this](const core::Document &document) { return rendererScript(document); },
+        [this](application::DocumentId document) { return subtitleFonts(document); },
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
     m_ai = std::make_unique<AiFeatures>(
         *m_settings, options.aiPorts ? std::move(*options.aiPorts)
                                      : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
@@ -2204,7 +2208,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     protectReference();
-    showTabArrangement();
+    showTabArrangement(m_workspace.activeWindow());
     if (m_workspace.editingTarget())
         spellChecker();
     reportGroupBreak();

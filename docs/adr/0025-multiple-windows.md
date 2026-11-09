@@ -19,7 +19,7 @@ Panels don't move between windows. Each window docks and floats its own panels, 
 
 - **Drag out:** dragging a tab off the tab bar and releasing it outside every HikariSub window opens a new window holding that tab. On Windows and X11 the window opens under the pointer, at the size of the window it came from. On Wayland the compositor places it.
 - **Drag between windows:** releasing the tab over another window's tab bar moves it there, at the place it was dropped. Releasing it back over its own tab bar reorders it, as today.
-- **Keyboard:** the tab's ⋯ menu and context menu, and two hotkey commands, give the same moves without a mouse: **Move tab to new window** and **Move tab to window ▸**, which lists the other windows by their current tab's title. Both are in the Document tab bar's keyboard path and are spoken by screen readers like every other menu item.
+- **Keyboard:** the tab's context menu (the Menu key or Shift+F10 on a focused tab) and two hotkey commands give the same moves without a mouse: **Move tab to new window** and **Move tab to window ▸**, which lists the other windows by their current tab's title. Both are in the Document tab bar's keyboard path and are spoken by screen readers like every other menu item.
 - A window whose last tab moves away closes. Moving a tab never saves, reloads or reviews its Document; its undo history, selection, scroll and media position move with it.
 
 ## What is app-wide and what is per window

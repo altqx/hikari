@@ -5,7 +5,7 @@ import { inline, type JsonSchema } from "./schema";
 /** The core tools are always offered; the others come through search_tools. */
 export const kGroups = {
     core: "Documents, Lines, Styles, the selection, video and audio facts, granted files and commands.",
-    typeset: "Typesetting: video frames as images, signs, positions and clips.",
+    typeset: "Typesetting: video frames as images, ink bounds, colours and keyframes.",
     translate: "Translation passes, the glossary, characters and tag rules.",
     karaoke: "Karaoke timing: audio peaks, syllables and onsets.",
     automation: "Automation macros and AI-written Lua.",
@@ -21,6 +21,25 @@ interface Placement {
     name?: string;
     /** When the tool's answer isn't HA1's result as it is. */
     description?: string;
+    /** When the tool takes other parameters than HA1's. */
+    params?: (schema: JsonSchema) => JsonSchema;
+}
+
+/** video.frame's parameters, less maxPixels, which the image budget sets, and with `full`. */
+function frameParams(schema: JsonSchema): JsonSchema {
+    const { maxPixels: _, ...properties } = schema.properties as Record<string, JsonSchema>;
+    return {
+        ...schema,
+        properties: {
+            ...properties,
+            maxEdge: { ...properties.maxEdge, description: "Default 1024, and never more than the model takes." },
+            full: {
+                type: "boolean",
+                description: "The whole frame. Without it or crop, the frame is cropped around the ink of line, or of " +
+                    "every Line, with a margin, and whole when nothing is drawn.",
+            },
+        },
+    };
 }
 
 /** Where each HA1 operation is offered. An operation added to HA1 is offered once it is placed here. */
@@ -45,8 +64,14 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "commands.run": { group: "core", name: "run_command" },
     "video.frame": {
         group: "typeset",
-        description: "One video frame as a PNG image, optionally cropped, scaled to fit maxEdge.",
+        description: "One video frame as a PNG image, with every Line, one Line or none drawn on it, cropped around " +
+            "the ink unless full or crop is given. Image point (x, y) is video point " +
+            "(crop.x + x * crop.width / width, crop.y + y * crop.height / height).",
+        params: frameParams,
     },
+    "video.ink_bounds": { group: "typeset" },
+    "video.colours": { group: "typeset" },
+    "video.keyframes": { group: "typeset" },
     "audio.peaks": { group: "karaoke" },
     "nodes.catalogue": { group: "effects" },
     "nodes.validate": { group: "effects" },
@@ -196,7 +221,7 @@ export class Catalogue {
             const placement = kPlacements[op.name];
             if (placement && op.deprecatedIn === undefined)
                 entries.push(entry(this.toolNames.get(op.name)!, placement.description ?? this.forModel(op.summary),
-                    this.schema(op.params), op.access, placement.group, op.name));
+                    (placement.params ?? ((schema) => schema))(this.schema(op.params)), op.access, placement.group, op.name));
         }
         return entries;
     }
