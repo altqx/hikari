@@ -33,17 +33,40 @@ A tool's name is its operation's, with `.` as `_` (`lines.find` is `lines_find`)
 
 | Group | Tools now |
 | --- | --- |
-| `typeset` | `video_frame`, which answers a PNG image rather than HA1's BGRA pixels. |
+| `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)) |
 | `karaoke` | `audio_peaks` |
 | `effects` | `nodes_catalogue` |
 | `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set` |
 | `translate`, `automation`, `plugins` | none yet; the tool cards add them. |
 
-- **`search_tools {query?, group?}`** matches words against names, descriptions and groups. It answers up to ten tools with their schemas and offers them from then on.
+- **`search_tools {query?, group?}`** matches words against names, descriptions and groups, ranking words in a name first. It answers up to ten tools with their schemas and offers them from then on.
 - **`search_commands {query, window?, limit?}`** reads `commands.list` and keeps the commands whose id or name holds every word.
 - **`run_command`** is `commands.run`.
 
 **Placing operations.** `kPlacements` in `catalogue.ts` places every HA1 operation; only `commands.list` (behind `search_commands`) and `api.version` are left out on purpose. A bun test fails when HA1 gains an operation that isn't placed, so each new operation is a decision. Deprecated operations aren't offered.
+
+## Frames
+
+The frame tools are HA1's `video.*` operations ([AI4 #432](https://github.com/altqx/hikari/issues/432)). Frames, ink bounds and colours are worked out in C++, next to the renderer; the sidecar crops and applies the image budget.
+
+- **`video_frame`** answers a PNG image and `{frame, crop, width, height}`. Image point (x, y) is video point (crop.x + x × crop.width / width, crop.y + y × crop.height / height), since a model's coordinates are relative to the image it saw.
+  - `subtitles: false` draws none, `line` draws that Line alone, and otherwise every Line is drawn.
+  - **Cropped by default.** Without `crop` or `full: true`, the sidecar first asks `video.ink_bounds` for the ink of `line`, or of every Line, and crops to it grown by a quarter of its longer side, 32 px at least. The frame is whole when nothing is drawn, or when the app can't draw apart from the video.
+  - The tool takes `full` and leaves out HA1's `maxPixels`, which the image budget sets.
+- **`video_ink_bounds`** gives the [ink bounds](../CONTEXT.md) of one Line or every Line on a frame.
+- **`video_colours`** samples colours as ASS `&HBBGGRR&`, for `\c` tags, rather than letting the model guess them.
+- **`video_keyframes`** lists keyframes in a time range, with their times.
+
+**Image budgets.** `ToolSet.imageBudget` caps `maxEdge` and sets `maxPixels` at the size past which the provider scales an image down or bills more tiles, so no pixel sent is thrown away. `kImageBudgets` in `images.ts` holds one per wire, from the [research note](research/hikari-ai-integration.md#41-what-the-models-take-and-what-it-costs) and each provider's vision guide:
+
+| Wire | Longest edge | Pixels |
+| --- | --- | --- |
+| `anthropic-messages` | 1,568 | 1,192,464 (1092 × 1092) |
+| `responses` | 2,048 | 2,560,000 (2,500 patches of 32 × 32) |
+| `chat-completions` | 2,048 | 1,048,576 (768 on the short side of a 16:9 frame) |
+| `gemini` | 1,536 | 2,359,296 (four 768 × 768 tiles) |
+
+The agent sets the budget from the provider's wire. A caller whose provider isn't known, such as an external agent over MCP, gets the smallest of each.
 
 ## Documents
 
@@ -80,6 +103,7 @@ Qt calls the tools with two `_hikari/*` requests:
   - the generated types are current, and every operation is placed;
   - names fit every provider, the read and write marks are HA1's, and the schemas are self-contained;
   - searches, routing, the worded errors and the PNG frame run against a fake HA1;
+  - `video_frame`'s default crop, its margin, `full`, and the image budgets;
   - the two link methods.
 - `hikari_backends_ai_tools_tests` runs the real `hikari-ai` against the real API over a fake host, with no provider and no network:
   - a scripted agent finds a Line, edits it, is refused a stale revision, then finds and runs a command;

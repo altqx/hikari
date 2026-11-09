@@ -82,6 +82,10 @@ _Avoid_: Video effect.
 A video frame identified by media indexing or an imported keyframe list, usable for navigation or snapping.
 _Avoid_: Scene cut or ASS animation point as an equivalent term.
 
+**Ink bounds**:
+The smallest rectangle, in video pixels, that holds every pixel the subtitle renderer draws for one Line, or for every Line, on a frame.
+_Avoid_: A Line's box, which is where its layout places it whether or not anything is drawn.
+
 **Time shift**:
 An offset or alignment of chosen Line start or end times.
 _Avoid_: Timing postprocessor as a synonym.

@@ -25,6 +25,12 @@ target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_LIBASS_FORK_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/libass")
+hikari_add_gtest(hikari_backends_frame_tools_tests SOURCES frame_tools_tests.cpp
+    "${PROJECT_SOURCE_DIR}/tests/api/script_client.cpp"
+    LIBRARIES hikari_api hikari_backends hikari_regex Qt6::Gui LABELS backends api)
+target_include_directories(hikari_backends_frame_tools_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/api")
+target_compile_definitions(hikari_backends_frame_tools_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_gtest(hikari_backends_visual_geometry_tests SOURCES visual_geometry_tests.cpp
     LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
 target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
