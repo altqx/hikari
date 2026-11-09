@@ -10644,6 +10644,30 @@ Failed to copy %2 fonts.</source>
         <translation>Claude Code, Codex 및 기타 에이전트가 열린 문서를 읽습니다. 에이전트의 편집은 유지하거나 실행 취소할 때까지 검토에서 기다립니다.</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP를 사용하려면 AI 구성 요소가 필요합니다. 한 번만 다운로드합니다: %1MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP를 사용하려면 AI 구성 요소가 필요합니다. 한 번만 다운로드합니다.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>에이전트가 HikariSub를 사용할 때만 실행되며, AI가 꺼져 있을 때는 실행되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>다운로드</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>AI 구성 요소가 필요합니다</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP가 꺼진 상태로 유지됩니다. %1.</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>http://127.0.0.1에서도 수신</translation>
     </message>
@@ -10658,6 +10682,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Copy setup</source>
         <translation>설정 복사</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>토큰 재설정</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>새 토큰을 저장했습니다.</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10678,6 +10710,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>JSON with the address and token</source>
         <translation>주소와 토큰이 담긴 JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>토큰이 들어 있으니 다른 사람에게 공유하지 마세요.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>토큰 재설정은 새 토큰을 만듭니다. 이전 토큰으로 설정한 에이전트는 설정을 다시 복사할 때까지 작동하지 않습니다.</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
