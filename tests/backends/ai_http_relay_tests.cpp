@@ -389,6 +389,33 @@ TEST_F(HttpRelayTest, HopAndCookieHeadersAreDroppedAndBrokenOnesRefused)
     EXPECT_EQ(server.received.size(), 1u);
 }
 
+TEST_F(HttpRelayTest, TheNpmRegistryIsReadOnlyAndGetsNoKey)
+{
+    server.replies.push_back({200, "Content-Type: application/octet-stream\r\n", {"tarball"}});
+    HttpRelay r(withRegistryTargets(
+                    [](const Json &, std::function<void(RelayTargetResult)> done) {
+                        done(std::unexpected(app::Error{app::ErrorKind::NoProvider, 0, ""}));
+                    },
+                    QUrl(server.base())),
+                {[](const QString &, std::function<void(QList<QHostAddress>)> done) { done({}); }, [] {
+                     return QList<QHostAddress>{};
+                 }});
+    auto npm = [&](const std::string &method) {
+        Json p = params(server.base() + QStringLiteral("/sdk/-/sdk-1.0.0.tgz"), bearer(), {}, method);
+        p["target"] = Json::object({{"kind", "npm"}});
+        return p;
+    };
+    const Outcome got = run(r, npm("GET"));
+    ASSERT_TRUE(got.result) << got.kind();
+    EXPECT_EQ(got.body(), "tarball");
+    ASSERT_EQ(server.received.size(), 1u);
+    EXPECT_FALSE(server.received[0].headers.contains("authorization"));
+    for (const char *method : {"POST", "PUT", "DELETE"})
+        EXPECT_EQ(run(r, npm(method)).kind(), "rejected") << method;
+    EXPECT_EQ(run(r, params(server.base() + QStringLiteral("/chat"), bearer(), {}, "GET")).kind(), "noProvider");
+    EXPECT_EQ(server.received.size(), 1u);
+}
+
 TEST_F(HttpRelayTest, AnUnknownTargetFailsWithItsKind)
 {
     auto r = relay();

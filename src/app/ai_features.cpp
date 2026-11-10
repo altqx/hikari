@@ -91,12 +91,14 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
             return nullptr;
         backends::ai::AiSidecarHost::Options options;
         options.program = install.runtime;
-        options.arguments = {install.bundle};
+        const QString vendor = ai + QStringLiteral("/vendor");
+        QDir().mkpath(vendor);
+        options.arguments = {install.bundle, QStringLiteral("--vendor"), QDir::toNativeSeparators(vendor)};
         options.workingDirectory = ai + QStringLiteral("/work");
         options.sandbox = backends::sandbox::Profile{
             .name = QStringLiteral("HikariSub.AI.Sidecar"),
             .readExecute = {QFileInfo(install.runtime).absolutePath(), QFileInfo(install.bundle).absolutePath()},
-            .readWrite = {options.workingDirectory},
+            .readWrite = {options.workingDirectory, vendor},
         };
         options.buildId = HIKARI_AI_BUILD_ID;
         return std::make_unique<backends::ai::AiSidecarHost>(std::move(options), api,
@@ -180,7 +182,7 @@ void AiFeatures::apply()
         m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
         applyWebSearch();
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
-            m_live->requests->relayTargets(), *m_live->searchKeys,
+            backends::ai::withRegistryTargets(m_live->requests->relayTargets()), *m_live->searchKeys,
             [requests = m_live->requests.get()](application::ai::SearchService service) {
                 return requests->searchAccess(service);
             }));
