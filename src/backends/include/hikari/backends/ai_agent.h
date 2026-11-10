@@ -34,11 +34,20 @@ std::optional<AgentMode> agentModeFromId(std::string_view id);
 /// What Qt does with an agent's call before HA1 runs it.
 enum class Decision { Run, Judge, Ask, AlwaysAsk };
 
-/// Why the call asks in every mode, or empty. `pathOf` gives a granted file's path; `safeFolders` are the user
-/// folder, the open subtitles' folders and the Project.
-std::string alwaysAskReason(const std::string &operation, const api::Json &params,
-                            const std::function<std::optional<std::string>(std::string_view handle)> &pathOf,
-                            const std::vector<std::string> &safeFolders);
+/// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
+/// maps each to its operations, commands and settings.
+enum class Risk { None, Files, Programs, Plugins, Network, AiSettings };
+
+struct RiskCheck {
+    Risk risk = Risk::None;
+    std::string reason;
+};
+
+/// `pathOf` gives a granted file's path; `safeFolders` are the user folder, the open subtitles' folders and the
+/// Project.
+RiskCheck alwaysAsk(const std::string &operation, const api::Json &params,
+                    const std::function<std::optional<std::string>(std::string_view handle)> &pathOf,
+                    const std::vector<std::string> &safeFolders);
 
 /// Reads, and moving the selection or a panel, never ask: they change no content and no setting.
 bool asksPermission(const std::string &operation);
