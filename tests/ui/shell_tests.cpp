@@ -12373,7 +12373,7 @@ private slots:
         QObject *capture = find("hotkeyMapping");
         QVERIFY(QMetaObject::invokeMethod(capture, "capture", Q_ARG(QVariant, QStringLiteral("Exit")), Q_ARG(QVariant, 0),
                                           Q_ARG(QVariant, true), Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
-        capture->setProperty("refusal", QStringLiteral("You cannot use the program exit shortcut."));
+        capture->setProperty("refusal", QStringLiteral("Alt+F4 is kept for closing the window."));
         auto *refusal = capture->property("compactWindow").value<QQuickWindow *>();
         QVERIFY(QTest::qWaitForWindowExposed(refusal));
         QCOMPARE(refusal->title(), QStringLiteral("Keys for “Exit”"));
@@ -21381,7 +21381,7 @@ private slots:
         keyTo(keys(), Qt::Key_V, Qt::ControlModifier);
         QCOMPARE(refusal(), QStringLiteral("You cannot use shortcuts for copying, cutting, and pasting."));
         keyTo(keys(), Qt::Key_F4, Qt::AltModifier);
-        QCOMPARE(refusal(), QStringLiteral("You cannot use the program exit shortcut."));
+        QCOMPARE(refusal(), QStringLiteral("Alt+F4 is kept for closing the window."));
         keyTo(keys(), Qt::Key_S, Qt::ControlModifier);
         QTRY_VERIFY(question()->isVisible());
         QVERIFY(mapping->isVisible());
@@ -21428,6 +21428,14 @@ private slots:
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
         keyTo(list, Qt::Key_Y, Qt::ControlModifier);
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QString());
+        application->hotkeys().select(hotkeyPosition(QStringLiteral("Global Close window")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRemove"), "clicked"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Close window")).value(QStringLiteral("accel")).toString(), QString());
+        map(QStringLiteral("Global Close window"));
+        keyTo(keys(), Qt::Key_F4, Qt::AltModifier);
+        QTRY_VERIFY(!mapping->isVisible());
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Close window")).value(QStringLiteral("accel")).toString(),
+                 QStringLiteral("Alt-F4"));
         map(QStringLiteral("Global Find"));
         keyTo(keys(), Qt::Key_Escape);
         QTRY_VERIFY(!mapping->isVisible());

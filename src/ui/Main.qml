@@ -34,6 +34,10 @@ ApplicationWindow {
             if (shellWindow === root.shellWindow)
                 projectOfferBar.offer(folder, name)
         }
+        function onTabJoinedProject(shellWindow) {
+            if (shellWindow === root.shellWindow)
+                root.notices.post("info", root.app.projectMoveText(shellWindow), "")
+        }
     }
     readonly property string engineSuffix: shellWindow === 0 ? "" : "~" + shellWindow
     readonly property var dockAffinities: ["w" + shellWindow]
@@ -8535,7 +8539,7 @@ ApplicationWindow {
                 root.hotkeys.gestureMap(target.id, target.name, accel, type, "cancel")
             else
                 hotkeyMapping.ask(conflict, answer => root.hotkeys.gestureMap(target.id, target.name, accel, type, answer))
-        })
+        }, { command: target.id })
         return true
     }
     function gridGesture(item, symbol) {

@@ -7154,8 +7154,8 @@ Failed to copy %2 fonts.</source>
         <translation>คุณไม่สามารถใช้ปุ่มลัดสำหรับคัดลอก ตัด และวาง</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>คุณไม่สามารถใช้ปุ่มลัดสำหรับออกจากโปรแกรม</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Alt+F4 สงวนไว้สำหรับปิดหน้าต่าง</translation>
     </message>
     <message>
         <source>Align to video…</source>

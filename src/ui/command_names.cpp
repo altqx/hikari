@@ -335,7 +335,7 @@ constexpr const char *kHotkeyWindows[] = {
 constexpr const char *kHotkeyRefusals[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt)."),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "You cannot use shortcuts for copying, cutting, and pasting."),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "You cannot use the program exit shortcut."),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Alt+F4 is kept for closing the window."),
 };
 
 constexpr const char *kVisualTools[] = {

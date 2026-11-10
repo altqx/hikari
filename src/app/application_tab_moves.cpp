@@ -48,6 +48,8 @@ bool Application::moveTab(qulonglong document, int shellWindow, int index)
     refreshViews();
     m_scrollRestoring = true;
     emit tabShown(m_tabMedia[id.value].scroll);
+    if (const QString project = projectOf(shellWindow); !project.isEmpty() && project != projectOf(from))
+        emit tabJoinedProject(shellWindow);
     saveLastSession();
     if (m_workspace.tabs(from).empty())
         closeEmptiedWindow(from);

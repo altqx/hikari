@@ -7254,8 +7254,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie można używać skrótów kopiowania, wycinania i wklejania.</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>Nie można używać skrótu zamykania programu.</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Skrót Alt+F4 jest zarezerwowany do zamykania okna.</translation>
     </message>
     <message>
         <source>Align to video…</source>

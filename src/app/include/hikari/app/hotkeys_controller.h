@@ -110,7 +110,7 @@ public:
     void resetDefaults();
 
     // {result: "ignored" | "refused" | "accepted", accel, keys (portable text), message}.
-    Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window) const;
+    Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window, int command = 0) const;
 
     // The last input was a button or menu click with Shift alone (exact) or with Shift held.
     Q_INVOKABLE bool shiftClicked(bool exact = true) const;

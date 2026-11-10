@@ -7154,8 +7154,8 @@ Failed to copy %2 fonts.</source>
         <translation>복사, 잘라내기, 붙여 넣기에는 단축키를 사용할 수 없습니다.</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>프로그램 종료 단축키는 사용할 수 없습니다.</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Alt+F4는 창 닫기 전용입니다.</translation>
     </message>
     <message>
         <source>Align to video…</source>
