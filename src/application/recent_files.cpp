@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <filesystem>
+#include <system_error>
 
 namespace hikari::application {
 
@@ -106,6 +108,9 @@ std::string lowerExtension(std::string_view path)
 
 OpenKind openKindOf(std::string_view path, bool single)
 {
+    std::error_code error;
+    if (std::filesystem::is_directory(std::filesystem::path(std::u8string(path.begin(), path.end())), error))
+        return OpenKind::Folder;
     const std::string ext = lowerExtension(path);
     if (ext == "exe" || ext == "zip" || ext == "rar" || ext == "7z")
         return OpenKind::Refused;

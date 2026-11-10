@@ -6631,6 +6631,42 @@ Failed to copy %2 fonts.</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
+        <source>Apply motion data…</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>ย้อนกลับข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>คัดลอกข้อมูลการเคลื่อนไหวจากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>ขยายบรรทัดที่ติดตาม…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>ปิดหน้าต่าง</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7397,6 +7433,10 @@ Failed to copy %2 fonts.</source>
         <translation>การออกแบบและการพัฒนา</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>การแปล</translation>
     </message>
@@ -7467,6 +7507,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Check spelling</source>
         <translation>ตรวจการสะกด</translation>
+    </message>
+    <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>ต่อ %1 ที่กำหนดเวลาไว้ของแต่ละบรรทัดที่เลือกด้วยความเร็วเท่าเดิม ตั้งแต่ต้นจนจบบรรทัด</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>ประมาณค่า %1 นอกช่วงให้เต็มบรรทัด</translation>
     </message>
     <message>
         <source>Install, turn on and off, and uninstall plugins</source>
@@ -7675,6 +7723,14 @@ Failed to copy %2 fonts.</source>
         <translation>การตั้งค่าโปรแกรม</translation>
     </message>
     <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>ปิดหน้าต่างนี้ การปิดหน้าต่างสุดท้ายจะออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>ปิดหน้า&amp;ต่าง</translation>
+    </message>
+    <message>
         <source>Exit the program</source>
         <translation>ออกจากโปรแกรม</translation>
     </message>
@@ -7791,6 +7847,18 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>การติดตาม</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>ใช้ข้อมูลการเคลื่อนไหว After Effects จาก Mocha หรือ Blender กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้…</translation>
+    </message>
+    <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>ใช้ข้อมูลการติดตาม Power-Pin กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
     </message>
@@ -7809,6 +7877,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reload video</source>
         <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>เปลี่ยนบรรทัดที่ติดตามในส่วนที่เลือกกลับเป็นบรรทัดเดิมที่ใช้สร้าง</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>ย้อนกลับข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>คัดลอกตำแหน่ง มาตราส่วน และการหมุนของบรรทัดแบบทีละเฟรมที่เลือกเป็นข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>คัดลอกข้อมูลการเคลื่อนไหวจากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>คัดลอกระนาบเพอร์สเปกทีฟของบรรทัดที่เลือกเป็นข้อมูล Power-Pin โดยเป็นสี่เหลี่ยมหนึ่งรูปต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>ประมาณการเคลื่อนไหวของบรรทัดแบบทีละเฟรมที่เลือก แล้วต่อการเคลื่อนไหวนั้นไปอีกหลายเฟรม</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>ขยายบรรทัดที่ติดตาม…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -8973,6 +9073,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>แยกพยัญชนะซ้อนเป็นพยางค์ของตัวเอง (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>แยกภาษาไทยเป็นกลุ่มอักขระ</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>แบ่งอัตโนมัติจะให้กลุ่มอักขระภาษาไทยแต่ละกลุ่มเป็นพยางค์ของตัวเอง กิน จึงกลายเป็น กิ|น ปิดตัวเลือกนี้เพื่อให้คำภาษาไทยแต่ละคำเป็นพยางค์เดียว</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -10244,6 +10352,10 @@ Failed to copy %2 fonts.</source>
         <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่ได้</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>ตรวจสอบไม่ได้: ลายเซ็นไม่ถูกต้อง</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดมาเสียหาย</translation>
     </message>
@@ -10254,6 +10366,158 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Test failed</source>
         <translation>ทดสอบไม่ผ่าน</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อสักครู่</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %n นาทีที่แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %n ชั่วโมงที่แล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %1</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>กำลังตรวจสอบ…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>กำลังดาวน์โหลด %1 · %2 จาก %3 MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>ตรวจสอบไม่ได้: ไม่มีการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 พร้อมแล้ว · จะเริ่มเมื่อไม่ได้ใช้ AI เป็นเวลา 2 นาที</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>มี %1 ให้ใช้งาน · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>ใหม่ที่สุดที่ HikariSub นี้ใช้ได้</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>เป็นเวอร์ชันล่าสุด</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>ตรวจสอบล่าสุดเมื่อ %1 HikariSub จะลองอีกครั้งในหนึ่งชั่วโมง</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub จะลองอีกครั้งในหนึ่งชั่วโมง</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub ยังใช้ %1 และไม่ติดตั้งอะไรจากรายการนั้น</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>อัปเดต HikariSub เพื่อรับฟีเจอร์ AI ที่ใหม่กว่า</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>ตัวติดตั้งของ Claude</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>ตัวติดตั้งของ Codex</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>กำลังเรียกใช้ %1 เซสชันใหม่จะใช้เวอร์ชันใหม่</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>ยังเป็น %1 หลัง %2 ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 ทำงานไม่เสร็จ ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>มีเซสชัน %1 ทำงานอยู่ในแผงเอเจนต์ อัปเดตเลยจะรอจนกว่าเซสชันจะจบ</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>ติดตั้งด้วย %1</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>ติดตั้งด้วย %1 HikariSub จึงไม่อัปเดตให้ เรียกใช้คำสั่งนี้ในเทอร์มินัล:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>ติดตั้งด้วย %1 โปรดอัปเดตด้วยวิธีเดียวกับที่ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>ติดตั้งด้วยวิธีที่ไม่ทราบ โปรดอัปเดตด้วยวิธีเดียวกับที่ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>%1 มีข้อบกพร่องที่ทำให้เอเจนต์ของ HikariSub ใช้งานไม่ได้</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>%1 เก่ากว่าเวอร์ชันเก่าที่สุดที่ HikariSub รองรับ (%2)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · %2 ออกแล้ว · ติดตั้งด้วย %3</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · %2 ออกแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · ติดตั้งด้วย %2</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · ติดตั้งด้วยวิธีที่ไม่ทราบ</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>กำลังอัปเดต…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>อัปเดตไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>มีอัปเดต</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>เวอร์ชันที่ไม่รองรับ</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>เวอร์ชันที่ทราบว่ามีปัญหา</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>อัปเดตเลย</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -10520,10 +10784,6 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่พบใน PATH</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>พบใน PATH · %1</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>พบใน PATH</translation>
     </message>
@@ -10618,6 +10878,158 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Try again</source>
         <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>ให้เอเจนต์ภายนอก HikariSub แก้ไขผ่าน MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex และเอเจนต์อื่นอ่านเอกสารที่เปิดอยู่ การแก้ไขของเอเจนต์จะรออยู่ในการตรวจทานจนกว่าคุณจะเก็บไว้หรือเลิกทำ</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>คอมโพเนนต์ทำงานเฉพาะเมื่อเอเจนต์ใช้ HikariSub และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>ต้องใช้คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP ยังปิดอยู่ %1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1:%1 ด้วย</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP เข้าถึงได้จากคอมพิวเตอร์เครื่องนี้เท่านั้น และต้องมีโทเค็น</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>คัดลอกการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>รีเซ็ตโทเค็น</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>บันทึกโทเค็นใหม่แล้ว</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>คัดลอกแล้ว เรียกใช้ในเทอร์มินัล</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>คัดลอกแล้ว วางลงในการตั้งค่าของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>คำสั่ง Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON พร้อมที่อยู่และโทเค็น</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>มีโทเค็นของคุณอยู่ โปรดเก็บไว้เป็นความลับ</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>รีเซ็ตโทเค็น จะสร้างโทเค็นใหม่ เอเจนต์ที่ตั้งค่าด้วยโทเค็นเดิมจะหยุดทำงานจนกว่าคุณจะคัดลอกการตั้งค่าอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>มีอะไรใหม่</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>คอมโพเนนต์ AI %1 หยุดทำงาน HikariSub จึงกลับไปใช้ %2 และจะไม่ติดตั้ง %1 อีก</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>ส่งรายงานข้อขัดข้องแล้ว</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>ทำงานบน</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>ไลบรารีของผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>สถานะ</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>ตรวจสอบเลย</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>อัปเดตคอมโพเนนต์ AI โดยอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>ผู้ดูแลระบบปิดการอัปเดตอัตโนมัติในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>HikariSub ตรวจสอบทุกชั่วโมงขณะที่เปิด AI อยู่ เวอร์ชันใหม่จะดาวน์โหลดเบื้องหลังและเริ่มเมื่อไม่ได้ใช้ AI เป็นเวลา 2 นาที หากเริ่มไม่ได้ HikariSub จะกลับไปใช้เวอร์ชันก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub ยังตรวจสอบทุกชั่วโมง และจะดาวน์โหลดเมื่อคุณกด อัปเดตเลย เท่านั้น</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -10791,6 +11203,10 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอินนี้ต้องใช้ Hikari API %1 แต่ HikariSub นี้มี API %2 อัปเดต HikariSub เพื่อติดตั้งปลั๊กอินนี้</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>เฉพาะปลั๊กอินที่เชื่อถือเต็มที่เท่านั้นที่มีแผง QML ได้</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json ไม่ผ่านสคีมาปลั๊กอินที่ %1: %2</translation>
     </message>
@@ -10809,6 +11225,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>แพ็กเกจไม่เป็นไปตามกฎของสื่อ: %1 %2</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>แพ็กเกจไม่มีไฟล์แผง %1</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 นำเข้า %2 ซึ่งแผงของปลั๊กอินใช้ไม่ได้</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10841,6 +11265,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>เชื่อถือเต็มที่: อาจเรียกใช้โค้ดเนทีฟนอกขอบเขตที่ HikariSub จำกัดไว้</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>แสดงแผงของตัวเองภายใน HikariSub</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11275,6 +11703,10 @@ Failed to copy %2 fonts.</source>
         <translation>สิทธิ์</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub จำกัดปลั๊กอินนี้ไว้ที่สิทธิ์เหล่านี้ แต่ระบบนี้ไม่ได้รันปลั๊กอินในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>โฟลเดอร์ที่จำไว้</translation>
     </message>
@@ -11427,6 +11859,22 @@ Failed to copy %2 fonts.</source>
         <translation>แสดง</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของ %1 เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>โหลดแผงไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>แผงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>โหลดอีกครั้ง</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>ไม่ได้ติดตั้ง %1</translation>
     </message>
@@ -11522,6 +11970,21 @@ Failed to copy %2 fonts.</source>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของปลั๊กอินนี้เปิดอยู่ แผงจึงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>รากของแผงไม่ใช่ Item</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>โหลดแผง “%1” ไม่ได้: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
@@ -15096,6 +15559,10 @@ Styles deleted:
         <translation>สลับไปที่</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
@@ -15180,6 +15647,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>วิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
     </message>
 </context>
 <context>
@@ -16916,6 +17387,320 @@ Styles deleted:
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>มาตราส่วน</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>เลือกบรรทัดตั้งแต่สองบรรทัดขึ้นไป เฟรมละหนึ่งบรรทัด</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>บรรทัด %1 ไม่ใช่เฟรมถัดไปของป้าย: แต่ละบรรทัดต้องครอบคลุมหนึ่งเฟรมและต่อจากบรรทัดก่อนหน้า โดยมีข้อความและชั้นเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>บรรทัด %1 มีแอนิเมชัน (\t, \move, \fad หรือคาราโอเกะ) ให้ขยายบรรทัดที่อยู่นิ่งในแต่ละเฟรม</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>บรรทัด %1 ไม่มี \pos</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>วิดีโอมีน้อยกว่า %n เฟรมก่อนบรรทัด %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>ขยายบรรทัดไม่ได้</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>วางข้อมูลคีย์เฟรม After Effects ที่ส่งออกจาก Mocha หรือ Blender ปุ่มนำไปใช้จะอ่านตำแหน่ง มาตราส่วน และการหมุนจากข้อมูลนั้น</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>นี่ไม่ใช่ข้อมูลการเคลื่อนไหว: ไม่พบข้อมูลคีย์เฟรม After Effects ที่มีตำแหน่ง มาตราส่วน และการหมุน</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>ข้อมูลเริ่มที่เฟรม %1 และเลยเฟรมสุดท้ายของส่วนที่เลือก เลือกจุดเริ่มที่เร็วกว่านี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>ข้อมูล %n เฟรมสำหรับ %1 เฟรม: ประมาณค่านอกช่วงก่อนหน้า %2 เฟรม หลัง %3 เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1 เข้ากันได้ไม่ดีในช่วงต้น ตรวจสอบเฟรม %2–%3</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1 เข้ากันได้ไม่ดีในช่วงท้าย ตรวจสอบเฟรม %2–%3</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>ข้อมูลมี %n เฟรม แต่บรรทัดที่เลือกครอบคลุม %1 เฟรม (%2–%3) เลือกบรรทัดที่ครอบคลุมเฟรมที่ติดตาม หรือประมาณค่านอกช่วง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>วางข้อมูลที่คลิปจะเคลื่อนตาม</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>นี่ไม่ใช่ข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>ข้อมูลคลิปมี %n เฟรม แต่ข้อมูลการเคลื่อนไหวมี %1 เฟรม</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n เฟรม ย้ายคลิปตั้งแต่เฟรม %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>ข้อมูลไม่ครอบคลุมเฟรมของบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>ไม่มีบรรทัดที่เลือกที่มีข้อมูลการเคลื่อนไหวให้ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการเคลื่อนไหวเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>เลือกบรรทัดของป้ายเดียวกันตั้งแต่สองบรรทัดขึ้นไป ทีละเฟรม</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>บรรทัด %1 ไม่ได้ต่อจากบรรทัดก่อนหน้าที่มีข้อความและชั้นเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>บรรทัด %1 ไม่มี \pos หรือ \move</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>คัดลอกข้อมูลการเคลื่อนไหว %n เฟรมแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>เลือกบรรทัดที่จะคัดลอก</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>บรรทัด %1 ซ้อนทับกับบรรทัดอื่นที่เลือก คัดลอกทีละป้าย</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>บรรทัด %1 มี \move ซึ่งแทร็ก Power-Pin เก็บไว้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>วัดขนาดข้อความของบรรทัด %1 ไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>คัดลอกข้อมูล Power-Pin %n เฟรมแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>ประมาณค่า \move นอกช่วงใน %n บรรทัดแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>ไม่มีบรรทัดที่เลือกที่มี \move พร้อมเวลาเริ่มและเวลาสิ้นสุด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>ประมาณตำแหน่ง มาตราส่วน และการหมุนจาก %n บรรทัดที่เลือก (ดีกรี %1 ความคลาดเคลื่อน %2 px)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1 เข้ากันได้ไม่ดี (ความคลาดเคลื่อน %2) ตรวจสอบเฟรมใหม่</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>ไฟล์ใหญ่เกินกว่าจะเป็นข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>อ่านไฟล์ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>วาง</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>เปิดไฟล์…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>เปิดข้อมูลการติดตาม</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>ข้อมูลการติดตาม (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>ข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>ข้อมูลคลิป</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>เคลื่อนตาม</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>ค่าสัมบูรณ์</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>ตำแหน่ง x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>ตำแหน่ง y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>ตัวคูณความเบลอ เป็นเปอร์เซ็นต์</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>คลิปสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>คลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>สี่เหลี่ยมเป็นเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>เฉพาะคลิป</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>ติดตามคลิปด้วยข้อมูลอื่น</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>ตรึงการแปลงและการจาง</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>บรรทัดเดียวด้วย %1 และ %2</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>ประมาณค่าเลยช่วงข้อมูล</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>ข้อมูลเริ่มที่เฟรม</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>ขยายบรรทัดที่ติดตาม</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>เพิ่ม</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>จำนวนเฟรมที่จะเพิ่ม</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>เฟรม</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>ก่อนบรรทัดแรก</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>หลังบรรทัดสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>ตำแหน่งที่จะเพิ่ม</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>ย้ายจุดศูนย์กลาง (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>ขยาย</translation>
     </message>
 </context>
 <context>

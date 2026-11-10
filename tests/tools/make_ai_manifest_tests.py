@@ -100,6 +100,15 @@ class AiManifestTest(unittest.TestCase):
         self.write("channel.json", {"blocked": ["not a version"]})
         self.assertEqual(self.make("1.1.0", first).returncode, 1)
 
+    def test_the_channel_file_names_agent_cli_limits(self):
+        limits = {"claude": {"minimum": "2.0.0", "broken": ["2.0.9"]}, "codex": {"minimum": "0.40.0"}}
+        self.write("channel.json", {"agents": limits})
+        first, _ = self.made("1.0.0")
+        self.assertEqual(first["agents"], limits)
+        for bad in ({"gemini": {}}, {"claude": {"minimum": "soon"}}, {"codex": {"broken": "0.41.0"}}, []):
+            self.write("channel.json", {"agents": bad})
+            self.assertEqual(self.make("1.1.0", first).returncode, 1, bad)
+
 
 if __name__ == "__main__":
     unittest.main()

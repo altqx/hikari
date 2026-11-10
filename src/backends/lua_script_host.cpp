@@ -109,7 +109,8 @@ void LuaScriptHost::sendLoad()
     w.i32(static_cast<std::int32_t>(lua::Command::Load))
         .str(m_scriptPath.toStdString())
         .str(m_sharedInclude.toStdString())
-        .i32(m_traceLevel);
+        .i32(m_traceLevel)
+        .str(m_compileCache.toStdString());
     auto id = std::make_shared<std::uint64_t>(0);
     const auto sent = m_host->request(0, w.take(), [this, id](std::expected<Event, HostError> e) {
         if (e && e->kind == Kind::Service && *id == m_loadRequest) {

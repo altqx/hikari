@@ -1,0 +1,517 @@
+{
+  "apply": {
+    "events": [
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\blur0.57\\bord2.38\\frz8.59\\fscx114.08\\fscy76.05\\pos(608.93,372.19)\\shad1.43}Tracked {\\bord0.95\\fscx85.56\\xshad-1.9}sign"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\blur0.58\\bord2.42\\frz9.06\\fscx116.05\\fscy77.37\\pos(618.2,368.06)\\shad1.45}Tracked {\\bord0.97\\fscx87.04\\xshad-1.93}sign"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\blur0.59\\bord2.46\\frz9.53\\fscx118.03\\fscy78.68\\pos(628.55,364)\\shad1.48}Tracked {\\bord0.98\\fscx88.52\\xshad-1.97}sign"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(640,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\blur0.61\\bord2.54\\frz10.47\\fscx121.97\\fscy81.32\\pos(652.54,356.06)\\shad1.52}Tracked {\\bord1.02\\fscx91.48\\xshad-2.03}sign"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\blur0.62\\bord2.58\\frz10.94\\fscx123.95\\fscy82.63\\pos(666.16,352.18)\\shad1.55}Tracked {\\bord1.03\\fscx92.96\\xshad-2.07}sign"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\blur0.63\\bord2.62\\frz11.41\\fscx125.92\\fscy83.95\\pos(680.88,348.36)\\shad1.57}Tracked {\\bord1.05\\fscx94.44\\xshad-2.1}sign"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\blur0.64\\bord2.66\\frz11.88\\fscx127.9\\fscy85.27\\pos(696.69,344.61)\\shad1.6}Tracked {\\bord1.07\\fscx95.92\\xshad-2.13}sign"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\blur0.65\\bord2.71\\frz12.35\\fscx129.87\\fscy86.58\\pos(713.58,340.91)\\shad1.62}Tracked {\\bord1.08\\fscx97.4\\xshad-2.16}sign"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\blur0.66\\bord2.75\\frz12.82\\fscx131.85\\fscy87.9\\pos(731.57,337.27)\\shad1.65}Tracked {\\bord1.1\\fscx98.89\\xshad-2.2}sign"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\blur0.67\\bord2.79\\frz13.29\\fscx133.82\\fscy89.22\\pos(750.65,333.7)\\shad1.67}Tracked {\\bord1.12\\fscx100.37\\xshad-2.23}sign"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\blur0.68\\bord2.83\\frz13.76\\fscx135.8\\fscy90.53\\pos(770.81,330.18)\\shad1.7}Tracked {\\bord1.13\\fscx101.85\\xshad-2.26}sign"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\blur0.69\\bord2.87\\frz14.23\\fscx137.77\\fscy91.85\\pos(792.07,326.73)\\shad1.72}Tracked {\\bord1.15\\fscx103.33\\xshad-2.3}sign"
+      },
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\bord1.9\\frz-6.41\\fscx95.06\\fscy95.06\\org(500,200)\\pos(572.32,314.23)\\shad0.95}Origin"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\bord1.93\\frz-5.94\\fscx96.71\\fscy96.71\\org(500,200)\\pos(580.47,309.41)\\shad0.97}Origin"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\bord1.97\\frz-5.47\\fscx98.35\\fscy98.35\\org(500,200)\\pos(589.7,304.67)\\shad0.98}Origin"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\bord2\\frz-5\\fscx100\\fscy100\\org(500,200)\\pos(600,300)\\shad1}Origin"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\bord2.03\\frz-4.53\\fscx101.65\\fscy101.65\\org(500,200)\\pos(611.38,295.41)\\shad1.02}Origin"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\bord2.07\\frz-4.06\\fscx103.29\\fscy103.29\\org(500,200)\\pos(623.83,290.89)\\shad1.03}Origin"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\bord2.1\\frz-3.59\\fscx104.94\\fscy104.94\\org(500,200)\\pos(637.37,286.45)\\shad1.05}Origin"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\bord2.13\\frz-3.12\\fscx106.58\\fscy106.58\\org(500,200)\\pos(651.98,282.09)\\shad1.07}Origin"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\bord2.16\\frz-2.65\\fscx108.23\\fscy108.23\\org(500,200)\\pos(667.67,277.8)\\shad1.08}Origin"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\bord2.2\\frz-2.18\\fscx109.87\\fscy109.87\\org(500,200)\\pos(684.43,273.59)\\shad1.1}Origin"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\bord2.23\\frz-1.71\\fscx111.52\\fscy111.52\\org(500,200)\\pos(702.27,269.46)\\shad1.12}Origin"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\bord2.26\\frz-1.24\\fscx113.16\\fscy113.16\\org(500,200)\\pos(721.19,265.4)\\shad1.13}Origin"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(600,300)\\org(500,200)\\frz-5}Origin",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\bord2.3\\frz-0.77\\fscx114.81\\fscy114.81\\org(500,200)\\pos(741.19,261.42)\\shad1.15}Origin"
+      },
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\bord1.9\\clip(476.8,314.92,742.98,428.99)\\frz-1.41\\fscx95.06\\fscy95.06\\pos(608.93,372.19)\\shad0.95}Rect clip"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\bord1.93\\clip(483.45,309.88,754.24,425.93)\\frz-0.94\\fscx96.71\\fscy96.71\\pos(618.2,368.06)\\shad0.97}Rect clip"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\bord1.97\\clip(491.19,304.91,766.58,422.93)\\frz-0.47\\fscx98.35\\fscy98.35\\pos(628.55,364)\\shad0.98}Rect clip"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\bord2\\clip(500,300,780,420)\\frz0\\fscx100\\fscy100\\pos(640,360)\\shad1}Rect clip"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\bord2.03\\clip(509.89,295.16,794.5,417.14)\\frz0.47\\fscx101.65\\fscy101.65\\pos(652.54,356.06)\\shad1.02}Rect clip"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\bord2.07\\clip(520.87,290.39,810.08,414.34)\\frz0.94\\fscx103.29\\fscy103.29\\pos(666.16,352.18)\\shad1.03}Rect clip"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\bord2.1\\clip(532.92,285.68,826.74,411.61)\\frz1.41\\fscx104.94\\fscy104.94\\pos(680.88,348.36)\\shad1.05}Rect clip"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\bord2.13\\clip(546.06,281.04,844.49,408.94)\\frz1.88\\fscx106.58\\fscy106.58\\pos(696.69,344.61)\\shad1.07}Rect clip"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\bord2.16\\clip(560.27,276.47,863.31,406.35)\\frz2.35\\fscx108.23\\fscy108.23\\pos(713.58,340.91)\\shad1.08}Rect clip"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\bord2.2\\clip(575.56,271.97,883.21,403.82)\\frz2.82\\fscx109.87\\fscy109.87\\pos(731.57,337.27)\\shad1.1}Rect clip"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\bord2.23\\clip(591.94,267.53,904.19,401.35)\\frz3.29\\fscx111.52\\fscy111.52\\pos(750.65,333.7)\\shad1.12}Rect clip"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\bord2.26\\clip(609.39,263.16,926.25,398.95)\\frz3.76\\fscx113.16\\fscy113.16\\pos(770.81,330.18)\\shad1.13}Rect clip"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\clip(500,300,780,420)}Rect clip",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\bord2.3\\clip(627.93,258.85,949.39,396.62)\\frz4.23\\fscx114.81\\fscy114.81\\pos(792.07,326.73)\\shad1.15}Rect clip"
+      }
+    ],
+    "outcome": "ok",
+    "unchanged": 11,
+    "undo_steps": 1
+  },
+  "departure": "D13"
+}

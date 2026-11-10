@@ -99,3 +99,37 @@ When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix
 ## 738-resample-stretch-axis
 
 Resample subtitles with "Stretch" scales text by the smaller of the two resolution factors, and puts the rest on the axis that grew more: ScaleX and `\fscx` when the width grew more, ScaleY and `\fscy` when the height did. Drawings are scaled to match. Before, a taller change also went to ScaleX and `\fscx`, so stretched text came out wide when it should have been tall. A change that grows the width more resamples as before. [#738](https://github.com/altqx/hikari/issues/738), owner decision 2026-11-04.
+
+## AU8-motion-data
+
+Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).
+
+- **D1, relative frame.** The relative frame is 1 to the number of frames. Aegisub-Motion's 0, negative and absolute frames aren't offered.
+- **D2, data from a file.** **Open file…** loads a data file into the text box. A path typed in the box isn't read.
+- **D3, Shake rotoshape.** SRS data isn't read. Aegisub-Motion still reads it.
+- **D4, `\move`.** A `\move` is clamped to its times before it is tracked, as renderers show it. Aegisub-Motion extrapolates past them, so the sign overshoots. A 4-argument `\move` runs over the whole Line.
+- **D5, shifted transforms.** With Bake transforms off, every shifted `\t` and every tag is kept. Aegisub-Motion's dedupe keeps one `\t` a block, and sometimes drops `\fscx`.
+- **D6, empty clip.** Linear mode writes no `\clip()\t(…,\clip())`.
+- **D7, Linear with `\move`.** The Line's `\move` is read at the first and last frames' mid-times. Aegisub-Motion reads it at the absolute time, which puts the sign far off.
+- **D8, Linear with karaoke.** It works. Aegisub-Motion fails with "attempt to compare number with nil".
+- **D9, selection.** Apply selects the new Lines, and Revert selects the restored Lines. Aegisub-Motion returns no selection, so the deleted Lines stay selected after its Revert.
+- **D10, fixed order.** The added tags and the callbacks run in a fixed order. Aegisub-Motion runs them in Lua `pairs()` order: tag order varies between runs, and five cases differ in their values (rect clips can drop the rotation, Absolute moves a clip by another frame's offset).
+- **D11, one Power-Pin command.** Copy Power-Pin track from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
+- **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
+- **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
+
+## TH2-unicode-graphemes
+
+`aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.
+
+## TH2-bezier-clusters
+
+The bundled BezierToText ("Bezier Curve Imposition", now 1.1) places one Line per grapheme cluster instead of per code point, so a Thai vowel or tone mark, or any combining mark, stays in its base character's Line instead of being placed and rotated on its own. A mark that an override block separates from its base joins the base's Line too, with that block before it. Text without combining marks gives the same output as 1.0. The 2.3 rewrite in Jibrill's copy is not adopted. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decisions Q143 and Q145.
+
+## TH3-thai-auto-split
+
+Auto split gives each Thai grapheme cluster its own syllable, sharing the Line's time equally: `กินน้ำ` becomes `กิ|น|น้ำ`, and ำ stays in its cluster. Before, a Thai word stayed one syllable and only spaces split it, as Aegisub's split at spaces does. Settings › Audio › Karaoke › "Split Thai into character clusters" is on by default; off keeps each Thai word whole. Text without Thai splits as before. Clusters aren't Thai syllables (`กิน` is one syllable); real Thai syllable breaks are a later card. This replaces bundling th2syl.lua. [TH3 #831](https://github.com/altqx/hikari/issues/831), owner decision Q144.
+
+## TH4-grapheme-char-split
+
+Grid › "Split lines into characters" and the node-effect `char` units split text by grapheme cluster (UAX #29). A base character keeps its marks: `กินน้ำ` gives `กิ`, `น` and `น้ำ`, `é` written as e plus a combining accent stays whole, and an emoji or an emoji ZWJ sequence is one piece. A mark after an override block joins its base's piece together with the block. Before, the Grid split each UTF-16 unit, which cut marks off and broke surrogate pairs in two, and node effects split by code point. Text without combining marks or surrogate pairs splits as before. [TH4 #832](https://github.com/altqx/hikari/issues/832), owner decision Q146.

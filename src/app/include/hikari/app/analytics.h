@@ -15,6 +15,7 @@
 
 #include <array>
 #include <atomic>
+#include <functional>
 
 class QNetworkReply;
 
@@ -95,6 +96,15 @@ public:
     };
     // Only the first call sends.
     void appStarted(const StartFacts &facts);
+    // The ai_* version properties app_started and crash reports carry; empty with AI off.
+    void setAiVersions(std::function<QJsonObject()> versions) { m_aiVersions = std::move(versions); }
+    QJsonObject aiVersions() const { return m_aiVersions ? m_aiVersions() : QJsonObject(); }
+    static constexpr std::array<const char *, 5> kAiVersionProperties{
+        "ai_component_version", "ai_runtime_version", "ai_anthropic_version", "ai_openai_version", "ai_google_version"};
+    // `failure`: "initialize" or "crashed".
+    void aiComponentRolledBack(const QString &failedVersion, const QString &failure, const QJsonObject &versions);
+    // The members of `properties` that `event` allows.
+    static QJsonObject conforming(const QString &event, const QJsonObject &properties);
     // Blocks up to `timeoutMs` for the last send, then writes the queue.
     void quit(int timeoutMs = 2000);
 
@@ -133,6 +143,7 @@ private:
 
     ui::SettingsStore &m_settings;
     Config m_config;
+    std::function<QJsonObject()> m_aiVersions;
     bool m_enabled = false;
     QString m_sessionId;
     QJsonArray m_queue;

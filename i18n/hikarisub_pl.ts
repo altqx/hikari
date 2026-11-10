@@ -6731,6 +6731,42 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
+        <source>Apply motion data…</source>
+        <translation>Zastosuj dane ruchu…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>Wycofaj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>Kopiuj dane ruchu z linijek</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>Przedłuż śledzone linijki…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>Ekstrapoluj \move na całą linijkę</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7501,6 +7537,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Projekt i programowanie</translation>
     </message>
     <message>
+        <source>Thai support for automation scripts</source>
+        <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>Tłumaczenie</translation>
     </message>
@@ -7571,6 +7611,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Check spelling</source>
         <translation>Sprawdź pisownię</translation>
+    </message>
+    <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>Przedłuża %1 z podanymi czasami w każdej zaznaczonej linijce, z tą samą prędkością, od jej początku do końca</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>Ekstrapoluj %1 na całą linijkę</translation>
     </message>
     <message>
         <source>Install, turn on and off, and uninstall plugins</source>
@@ -7781,6 +7829,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustawienia programu</translation>
     </message>
     <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>Zamknij o&amp;kno</translation>
+    </message>
+    <message>
         <source>Exit the program</source>
         <translation>Zakończ działanie programu</translation>
     </message>
@@ -7897,6 +7953,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Następne linijki, koniec na wideo</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>Śledzenie</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>Stosuje dane ruchu After Effects z programu Mocha lub z Blendera do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>Zastosuj dane ruchu…</translation>
+    </message>
+    <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>Stosuje dane śledzenia Power-Pin do zaznaczonych linijek, jedna linijka na klatkę</translation>
     </message>
@@ -7915,6 +7983,38 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Reload video</source>
         <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>Zamienia śledzone linijki zaznaczenia z powrotem na linijki, z których powstały</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>Wycofaj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>Kopiuje pozycję, skalę i obrót zaznaczonych linijek klatka po klatce jako dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>Kopiuj dane ruchu z linijek</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>Kopiuje płaszczyzny perspektywy zaznaczonych linijek jako dane Power-Pin, jeden czworokąt na klatkę</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>Dopasowuje ruch zaznaczonych linijek klatka po klatce i przedłuża go o kolejne klatki</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>Przedłuż śledzone linijki…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -9089,6 +9189,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>Wydzielaj podwojoną spółgłoskę w osobną sylabę (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>Dziel tajski na klastry znaków</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>Automatyczny podział daje każdemu tajskiemu klastrowi znaków osobną sylabę, więc กิน staje się กิ|น. Wyłącz, aby każde tajskie słowo było jedną sylabą.</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -10368,6 +10476,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie można pobrać komponentu AI</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>Nie udało się sprawdzić: zły podpis</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>Pobrany komponent AI jest uszkodzony</translation>
     </message>
@@ -10378,6 +10490,162 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Test failed</source>
         <translation>Test nie powiódł się</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>Aktualny · sprawdzono przed chwilą</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>Aktualny · sprawdzono %n minutę temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n minuty temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n minut temu</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>Aktualny · sprawdzono %n godzinę temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n godziny temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n godzin temu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>Aktualny · sprawdzono %1</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>Pobieranie %1 · %2 z %3 MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>Nie udało się sprawdzić: brak połączenia</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 jest gotowy · uruchomi się, gdy AI będzie bezczynne przez 2 minuty</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>Dostępna jest wersja %1 · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>Najnowszy, jaki uruchamia ten HikariSub</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>Aktualny</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>Ostatnio sprawdzono %1. HikariSub spróbuje ponownie za godzinę.</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub spróbuje ponownie za godzinę.</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub zostaje przy %1 i nie instaluje niczego z tej listy.</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>Zaktualizuj HikariSub, aby dostać nowsze funkcje AI.</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>instalatora Claude</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>instalatora Codex</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>Trwa %1. Nowe sesje użyją nowej wersji.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>Nadal %1 po %2. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 się nie powiodło. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>W panelu agenta trwa sesja %1. Aktualizacja poczeka, aż się skończy.</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>Zainstalowano przy użyciu: %1.</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>Zainstalowano przy użyciu: %1, więc HikariSub go nie zaktualizuje. Uruchom to w terminalu:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>Zainstalowano przy użyciu: %1; zaktualizuj go tak, jak go zainstalowano.</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>Zainstalowano w nieznany sposób; zaktualizuj go tak, jak go zainstalowano.</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>Wersja %1 ma błąd, który psuje agenta HikariSub.</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>Wersja %1 jest starsza od najstarszej obsługiwanej przez HikariSub (%2).</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · dostępna jest %2 · zainstalowano przy użyciu: %3</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · dostępna jest %2.</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · zainstalowano przy użyciu: %2</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · zainstalowano w nieznany sposób</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>Aktualizowanie…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>Aktualizacja się nie udała</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>Dostępna aktualizacja</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>Nieobsługiwana wersja</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>Wersja ze znanym błędem</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>Zaktualizuj teraz</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -10648,10 +10916,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie znaleziono w PATH.</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>Znaleziono w PATH · %1.</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>Znaleziono w PATH.</translation>
     </message>
@@ -10746,6 +11010,158 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Try again</source>
         <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>Pozwól agentom spoza HikariSub edytować przez MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex i inni agenci czytają otwarte dokumenty. Ich zmiany czekają w przeglądzie, aż je zachowasz lub cofniesz.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>Działa tylko wtedy, gdy agent korzysta z HikariSub, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>Potrzebuje komponentu AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP pozostaje wyłączone. %1.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1:%1</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>Dla agentów łączących się przez HTTP. Dostęp ma tylko ten komputer i tylko z tokenem.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>Kopiuj konfigurację</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>Zresetuj token</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>Zapisano nowy token.</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>Skopiowano. Uruchom to w terminalu.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>Skopiowano. Wklej to do ustawień agenta.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Polecenie Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON z adresem i tokenem</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>Zawiera twój token; nie udostępniaj go.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>Zresetuj token tworzy nowy token. Agenci skonfigurowani ze starym przestaną działać, dopóki nie skopiujesz konfiguracji ponownie.</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>Konfiguracja JSON jest dla agentów łączących się przez HTTP, więc wymaga opcji „Nasłuchuj także na http://127.0.0.1”.</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>Komponenty AI</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>Co nowego</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>Komponent AI %1 przestał działać, więc HikariSub wrócił do %2 i nie zainstaluje %1 ponownie.</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>Wysłano raport o awarii.</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>Komponent AI</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>Działa na</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>Biblioteki dostawców</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Stan</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>Sprawdź teraz</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>Aktualizuj komponenty AI automatycznie</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>Administrator wyłączył automatyczne aktualizacje na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>Gdy AI jest włączone, HikariSub sprawdza co godzinę. Nowa wersja pobiera się w tle i uruchamia, gdy AI jest bezczynne przez 2 minuty. Jeśli się nie uruchomi, HikariSub wraca do poprzedniej.</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub nadal sprawdza co godzinę, a pobiera dopiero po naciśnięciu Zaktualizuj teraz.</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -10919,6 +11335,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>Tylko wtyczki z pełnym zaufaniem mogą zawierać panele QML.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
     </message>
@@ -10937,6 +11357,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The package breaks the media rules: %1 %2.</source>
         <translation>Pakiet narusza zasady dotyczące multimediów: %1 %2.</translation>
+    </message>
+    <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>W pakiecie brakuje pliku panelu, %1.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 importuje %2, czego panele wtyczek nie mogą używać.</translation>
     </message>
     <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
@@ -10969,6 +11397,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Full trust: it may run native code outside HikariSub’s limits.</source>
         <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
+    </message>
+    <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>Wyświetla własne panele w HikariSub</translation>
     </message>
     <message>
         <source>Read and edit every open subtitle file: %1</source>
@@ -11403,6 +11835,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Uprawnienia</translation>
     </message>
     <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub ogranicza ją do tych uprawnień, ale w tym systemie nie działa w piaskownicy.</translation>
+    </message>
+    <message>
         <source>Remembered folders</source>
         <translation>Zapamiętane foldery</translation>
     </message>
@@ -11559,6 +11995,22 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub zamknął się, gdy panel wtyczki %1 był otwarty.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>Nie udało się wczytać panelu.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>Jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>Wczytaj ponownie</translation>
+    </message>
+    <message>
         <source>%1 isn’t installed.</source>
         <translation>%1 nie jest zainstalowana.</translation>
     </message>
@@ -11654,6 +12106,21 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
     </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub zamknął się, gdy jej panel był otwarty, więc jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>Jego element główny nie jest typu Item.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
@@ -15318,6 +15785,10 @@ Usunięte style:
         <translation>Przełącz na</translation>
     </message>
     <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
@@ -15404,6 +15875,10 @@ Usunięte style:
     <message>
         <source>Video only</source>
         <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
     </message>
 </context>
 <context>
@@ -17180,6 +17655,338 @@ Usunięte style:
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>Pozycja</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Skala</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Obrót</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>Zaznacz co najmniej dwie linijki, po jednej na klatkę.</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>Linijka %1 nie jest następną klatką napisu: każda linijka musi obejmować jedną klatkę i następować bezpośrednio po poprzedniej, z tym samym tekstem i warstwą.</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>Linijka %1 jest animowana (\t, \move, \fad lub karaoke). Przedłużaj linijki, które w każdej klatce stoją w miejscu.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>Linijka %1 nie ma \pos.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatkę.</numerusform>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatki.</numerusform>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>Nie można przedłużyć linijek.</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>Wklej dane klatek kluczowych After Effects wyeksportowane z programu Mocha lub z Blendera. Zastosuj odczytuje z nich pozycję, skalę i obrót.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>To nie są dane ruchu: nie znaleziono danych klatek kluczowych After Effects z pozycją, skalą i obrotem.</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>Dane zaczynają się od klatki %1 i wykraczają poza ostatnią klatkę zaznaczenia. Wybierz wcześniejszy początek.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%n klatka danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+            <numerusform>%n klatki danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+            <numerusform>%n klatek danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1: słabe dopasowanie na początku; sprawdź klatki %2–%3.</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1: słabe dopasowanie na końcu; sprawdź klatki %2–%3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>Dane mają %n klatkę, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+            <numerusform>Dane mają %n klatki, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+            <numerusform>Dane mają %n klatek, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>Wklej dane, za którymi mają podążać wycinki.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>To nie są dane ruchu.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>Dane wycinków mają %n klatkę, a dane ruchu: %1.</numerusform>
+            <numerusform>Dane wycinków mają %n klatki, a dane ruchu: %1.</numerusform>
+            <numerusform>Dane wycinków mają %n klatek, a dane ruchu: %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n klatka. Przesuwa wycinki od klatki %1.</numerusform>
+            <numerusform>%n klatki. Przesuwa wycinki od klatki %1.</numerusform>
+            <numerusform>%n klatek. Przesuwa wycinki od klatki %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>Dane nie obejmują klatek zaznaczonych linijek.</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>Żadna zaznaczona linijka nie ma danych ruchu do wycofania.</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane ruchu są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>Zaznacz co najmniej dwie linijki jednego napisu, klatka po klatce.</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>Linijka %1 nie następuje bezpośrednio po poprzedniej linijce z tym samym tekstem i warstwą.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>Linijka %1 nie ma \pos ani \move.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>Skopiowano %n klatkę danych ruchu</numerusform>
+            <numerusform>Skopiowano %n klatki danych ruchu</numerusform>
+            <numerusform>Skopiowano %n klatek danych ruchu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>Zaznacz linijki do skopiowania.</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>Linijka %1 nakłada się na inną zaznaczoną linijkę. Kopiuj po jednym napisie.</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>Linijka %1 ma \move, którego ścieżka Power-Pin nie może przechować.</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>Nie można zmierzyć tekstu linijki %1.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Skopiowano %n klatkę danych Power-Pin</numerusform>
+            <numerusform>Skopiowano %n klatki danych Power-Pin</numerusform>
+            <numerusform>Skopiowano %n klatek danych Power-Pin</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>Ekstrapolowano \move w %n linijce</numerusform>
+            <numerusform>Ekstrapolowano \move w %n linijkach</numerusform>
+            <numerusform>Ekstrapolowano \move w %n linijkach</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>Żadna zaznaczona linijka nie ma \move z czasem początkowym i końcowym.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonej linijki (stopień %1, błąd %2 px).</numerusform>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonych linijek (stopień %1, błąd %2 px).</numerusform>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonych linijek (stopień %1, błąd %2 px).</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1: słabe dopasowanie (błąd %2); sprawdź nowe klatki.</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>Plik jest za duży, by mógł zawierać dane ruchu.</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>Nie można odczytać pliku: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Wklej</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>Otwórz plik…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>Otwórz dane śledzenia</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>Dane śledzenia (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>Zastosuj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>Dane ruchu</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>Dane wycinków</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>Podążanie</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>Bezwzględna</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>Pozycja x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>Pozycja y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>Współczynnik rozmycia, w procentach</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>Wycinki</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>Wycinki prostokątne</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>Wycinki wektorowe</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>Prostokątne na wektorowe</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>Tylko wycinki</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>Śledź wycinki innymi danymi</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>Utrwal przekształcenia i zanikania</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>Jedna linijka z %1 i %2</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>Ekstrapoluj poza dane</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>Dane zaczynają się od klatki</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>Przedłuż śledzone linijki</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Dodaj</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>Klatki do dodania</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>klatek</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>przed pierwszą linijką</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>po ostatniej linijce</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>Gdzie je dodać</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>Przesuń środek obrotu (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>Przedłuż</translation>
     </message>
 </context>
 <context>

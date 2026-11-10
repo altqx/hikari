@@ -41,6 +41,7 @@ struct SessionWindow {
     bool maximized = false;
     // An index into Session::tabs.
     std::optional<std::size_t> currentTab;
+    std::string project; // the window's Project folder; "" for none
     // The keys this build doesn't know, as a compact JSON object, written back as they were.
     std::string unknown;
     bool operator==(const SessionWindow &) const = default;

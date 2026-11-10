@@ -333,6 +333,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_NEXT_QC_NOTE", 5242},
         {"GLOBAL_PREVIOUS_QC_NOTE", 5243},
         {"GLOBAL_ADD_QC_NOTE", 5254},
+        {"GLOBAL_MOVE_TAB_TO_NEW_WINDOW", 5221},
+        {"GLOBAL_MOVE_TAB_TO_WINDOW", 5222},
+        {"GLOBAL_CLOSE_WINDOW", 5263},
         {"GLOBAL_KEEP_AI_CHANGE", 5245},
         {"GLOBAL_UNDO_AI_CHANGE", 5246},
         {"GLOBAL_NEXT_AI_CHANGE", 5247},
@@ -340,6 +343,16 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_KEEP_ALL_AI_CHANGES", 5249},
         {"GLOBAL_UNDO_ALL_AI_CHANGES", 5250},
         {"GLOBAL_SHOW_AI_REVIEW", 5251},
+        {"GLOBAL_SHOW_AI_AGENT", 5252},
+        {"GLOBAL_NEW_AI_THREAD", 5253},
+        {"GLOBAL_OPEN_FOLDER", 5255},
+        {"GLOBAL_CLOSE_PROJECT", 5256},
+        {"GLOBAL_APPLY_MOTION_DATA", 5257},
+        {"GLOBAL_REVERT_MOTION_DATA", 5258},
+        {"GLOBAL_COPY_MOTION_DATA", 5259},
+        {"GLOBAL_COPY_POWER_PIN_TRACK", 5260},
+        {"GLOBAL_EXTEND_TRACKED_LINES", 5261},
+        {"GLOBAL_EXTRAPOLATE_MOVE", 5262},
 };
 
 struct NameRow {
@@ -638,6 +651,10 @@ constexpr NameRow kNames[] = {
         {5242, "Next QC note"},
         {5243, "Previous QC note"},
         {5254, "Add QC note"},
+        {5221, "Move tab to new window"},
+        {5222, "Move tab to window"},
+        {5263, "Close window"},
+        {5108, "Exit"},
         {5245, "Keep AI change"},
         {5246, "Undo AI change"},
         {5247, "Next AI change"},
@@ -645,6 +662,16 @@ constexpr NameRow kNames[] = {
         {5249, "Keep all AI changes"},
         {5250, "Undo all AI changes"},
         {5251, "Review panel"},
+        {5252, "Agent panel"},
+        {5253, "New agent thread"},
+        {5255, "Open folder…"},
+        {5256, "Close project"},
+        {5257, "Apply motion data…"},
+        {5258, "Revert motion data"},
+        {5259, "Copy motion data from lines"},
+        {5260, "Copy Power-Pin track from lines"},
+        {5261, "Extend tracked lines…"},
+        {5262, "Extrapolate \\move to the line"},
 };
 
 struct DefaultRow {
@@ -654,7 +681,7 @@ struct DefaultRow {
     const char *accel;
 };
 constexpr DefaultRow kMainDefaults[] = {
-        {5108, GlobalHotkey, "Exit", "Alt-F4"},
+        {5263, GlobalHotkey, "Close window", "Alt-F4"},
         {5301, GlobalHotkey, "Open new tab", "Ctrl-T"},
         {5302, GlobalHotkey, "Close current tab", "Ctrl-W"},
         {5030, GlobalHotkey, "Time shift window", "Ctrl-I"},
@@ -1295,7 +1322,6 @@ void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> 
     HotkeyMap mapped = live;
     const auto &names = hotkeyNames();
     int lastType = -1;
-    // MUST KILL: unnamed bindings follow their window's names, minus GLOBAL_QUIT
     for (auto cur = names.rbegin(); cur != names.rend(); ++cur) {
         const int htype = hotkeyType(cur->first);
         auto next = cur;
@@ -1305,8 +1331,6 @@ void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> 
                 if (lastType != it->first.type)
                     break;
                 ++done;
-                if (it->first.id == kGlobalQuit)
-                    continue;
                 const auto named = names.find(it->first.id);
                 const std::string name = named != names.end() ? named->second : it->second.name;
                 append(std::string(hotkeyWindowName(it->first.type)) + " " + name, name, it->second.accel, it->first);

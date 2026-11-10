@@ -19,7 +19,7 @@ Panels don't move between windows. Each window docks and floats its own panels, 
 
 - **Drag out:** dragging a tab off the tab bar and releasing it outside every HikariSub window opens a new window holding that tab. On Windows and X11 the window opens under the pointer, at the size of the window it came from. On Wayland the compositor places it.
 - **Drag between windows:** releasing the tab over another window's tab bar moves it there, at the place it was dropped. Releasing it back over its own tab bar reorders it, as today.
-- **Keyboard:** the tab's ⋯ menu and context menu, and two hotkey commands, give the same moves without a mouse: **Move tab to new window** and **Move tab to window ▸**, which lists the other windows by their current tab's title. Both are in the Document tab bar's keyboard path and are spoken by screen readers like every other menu item.
+- **Keyboard:** the tab's context menu (the Menu key or Shift+F10 on a focused tab) and two hotkey commands give the same moves without a mouse: **Move tab to new window** and **Move tab to window ▸**, which lists the other windows by their current tab's title. Both are in the Document tab bar's keyboard path and are spoken by screen readers like every other menu item.
 - A window whose last tab moves away closes. Moving a tab never saves, reloads or reviews its Document; its undo history, selection, scroll and media position move with it.
 
 ## What is app-wide and what is per window
@@ -49,9 +49,10 @@ A tab's arrangement stays a value about one window and its floating panels, whic
 
 ## Close and quit
 
-- **Closing a window** reviews the unsaved changes of that window's tabs only, then closes them with the window. The other windows stay open.
+- **Closing a window** (its title bar ×, the window manager, or Close window 5263) reviews the unsaved changes of that window's tabs only, then closes them with the window. The other windows stay open.
 - **Closing the last window quits.**
-- **Quit** (File › Quit, the platform's quit) reviews the unsaved changes of every window in one review, then closes all the windows together and saves the Session with every window in it, so all of them come back.
+- **Alt+F4** is Close window's default key ([#866](https://github.com/altqx/hikari/issues/866)), so it closes only its window on every platform. On Windows, Qt passes Alt+F4 on to the system, which closes the window. On Linux the window manager or the app gets the key, and both close only that window.
+- **Quit** (File › Exit, the platform's quit) reviews the unsaved changes of every window in one review, then closes all the windows together and saves the Session with every window in it, so all of them come back.
 
 ## Platforms
 

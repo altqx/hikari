@@ -26,6 +26,8 @@ hikari_add_gtest(hikari_application_dialog_memory_tests SOURCES dialog_memory_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_services_tests SOURCES automation_services_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_compile_cache_tests SOURCES compile_cache_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_playback_pipeline_tests SOURCES playback_pipeline_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_video_session_tests SOURCES video_session_tests.cpp
@@ -58,6 +60,8 @@ hikari_add_gtest(hikari_application_frame_bake_tests SOURCES frame_bake_tests.cp
 hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -236,3 +240,8 @@ hikari_add_gtest(hikari_application_timecodes_file_tests SOURCES timecodes_file_
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_timecodes_file_tests PRIVATE
     HIKARI_TIMECODES_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timecodes")
+hikari_add_gtest(hikari_application_motion_data_tests SOURCES motion_data_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_motion_data_tests PRIVATE
+    HIKARI_MOTION_CORPUS="${PROJECT_SOURCE_DIR}/tests/fixtures/motion-data")
+target_include_directories(hikari_application_motion_data_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

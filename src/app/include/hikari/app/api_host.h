@@ -2,14 +2,21 @@
 
 #include "hikari/api/api.h"
 #include "hikari/application/document_files.h"
+#include "hikari/application/document_overlay.h"
+#include "hikari/application/video_session.h"
 
 #include <QJSValue>
 #include <QObject>
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <vector>
+
+namespace hikari::backends {
+class SubtitleRendererSelection;
+}
 
 namespace hikari::app {
 
@@ -20,7 +27,8 @@ class ApiHost final : public QObject,
                       public api::DocumentHost,
                       public api::CommandHost,
                       public api::PanelHost,
-                      public api::FileHost {
+                      public api::FileHost,
+                      public api::RenderHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
     // {enabled, reason} without run, or whether it ran.
@@ -40,8 +48,13 @@ public:
         std::function<bool(application::Selection)> selectTarget;
         std::function<void(application::DocumentId committed)> refresh;
         std::function<std::vector<std::string>(std::string_view command)> keys;
+        std::function<const application::VideoSession *()> video;
+        std::function<std::vector<std::byte>(const core::Document &)> encode;
+        std::function<std::vector<application::FontLease>(application::DocumentId)> fonts;
+        std::function<std::string()> renderer;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
+    ~ApiHost() override;
 
     api::Api &api() { return m_api; }
     application::AiReview &review() { return m_review; }
@@ -70,6 +83,9 @@ public:
     std::optional<std::string> read(const std::string &path, std::size_t atMost) const override;
     bool write(const std::string &path, std::string_view bytes) override;
 
+    std::optional<application::OverlayFrame> render(application::DocumentId id, const core::Document &document,
+                                                    std::int64_t frame, int width, int height) override;
+
 private:
     struct Seen {
         std::uint64_t revision = 0;
@@ -86,6 +102,8 @@ private:
     std::vector<application::DocumentId> m_seenDocuments;
     std::optional<application::DocumentId> m_seenTarget;
     bool m_observing = false;
+    std::unique_ptr<backends::SubtitleRendererSelection> m_renderer;
+    std::unique_ptr<application::DocumentOverlay> m_overlay;
 };
 
 }

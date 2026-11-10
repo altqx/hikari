@@ -137,6 +137,10 @@
                 "description": "Where the panel docks the first time it is shown.",
                 "enum": ["left", "right", "bottom"],
                 "default": "right"
+              },
+              "qml": {
+                "description": "Full trust only: the panel is this QML file in the package instead of a widget tree.",
+                "$ref": "#/$defs/QmlPath"
               }
             }
           }
@@ -145,6 +149,14 @@
       }
     }
   },
+  "anyOf": [
+    {
+      "description": "Only Full trust plugins can ship QML panels.",
+      "properties": {"tier": {"const": "unrestricted"}},
+      "required": ["tier"]
+    },
+    {"properties": {"contributes": {"properties": {"panels": {"items": {"properties": {"qml": {"maxLength": 0}}}}}}}}
+  ],
   "$defs": {
     "LocalId": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64},
     "Title": {"type": "string", "minLength": 1, "maxLength": 100},
@@ -160,6 +172,7 @@
       "maxLength": 200,
       "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.lua$"
     },
+    "QmlPath": {"type": "string", "maxLength": 200, "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.qml$"},
     "IconPath": {"type": "string", "maxLength": 200, "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(png|svg)$"},
     "ScreenshotPath": {"type": "string", "maxLength": 200, "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(png|jpg)$"},
     "Setting": {

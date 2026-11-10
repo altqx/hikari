@@ -1,6 +1,7 @@
 #include "hikari/app/ai_settings.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -18,6 +19,7 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
@@ -121,7 +123,18 @@ protected:
         p.signIn = [this](ai::KeyStore &keys) {
             return std::make_unique<backends::ai::AiSignIn>(keys, auth.endpoints(browserPort), time.clock());
         };
-        p.findCodex = [this](std::function<void(std::optional<backends::ai::CodexCli>)> done) { done(codexCli); };
+        p.findAgent = [this](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
+            const auto it = agentClis.find(agent);
+            done(it == agentClis.end() ? std::nullopt : std::optional(it->second));
+        };
+        p.agentInstall = [this](const backends::ai::AgentCli &cli) {
+            const auto it = installs.find(cli.agent);
+            return it == installs.end() ? backends::ai::AgentInstall{} : it->second;
+        };
+        p.agentLatest = [this](const backends::ai::AgentInstall &install, std::function<void(QString)> done) {
+            ++latestAsked;
+            done(latest.value(install.package));
+        };
         p.codexAuthPath = dir.filePath(QStringLiteral("codex/auth.json"));
         return p;
     }
@@ -144,6 +157,32 @@ protected:
     static QString draftError(const app::AiSettings &s) { return s.draft().value(QStringLiteral("error")).toString(); }
     static QVariantMap row(const app::AiSettings &s, int i) { return s.providers().value(i).toMap(); }
     static QVariant codex(const app::AiSettings &s, const char *key) { return s.codex().value(QLatin1String(key)); }
+    static QVariant agent(const app::AiSettings &s, const char *name, const char *key)
+    {
+        return s.agents().value(QLatin1String(name)).toMap().value(QLatin1String(key));
+    }
+    static QVariant component(const app::AiSettings &s, const char *key) { return s.components().value(QLatin1String(key)); }
+
+    QString fakeCli(const QString &name, const QByteArray &version, const QByteArray &action)
+    {
+        const QString path = dir.filePath(QStringLiteral("bin/") + name + QStringLiteral(HIKARI_EXE_SUFFIX));
+        QDir().mkpath(dir.filePath(QStringLiteral("bin")));
+        QFile::remove(path);
+        if (!QFile::copy(QStringLiteral(HIKARI_FAKE_AGENT_CLI), path))
+            ADD_FAILURE() << "can't copy the fake CLI";
+        QFile state(dir.filePath(QStringLiteral("cli-state.txt")));
+        if (!state.open(QIODevice::WriteOnly) || state.write(version + '\n' + action + '\n') <= 0)
+            ADD_FAILURE() << "can't write the fake CLI's state";
+        qputenv("HIKARI_FAKE_CLI_STATE", state.fileName().toLocal8Bit());
+        return path;
+    }
+    void installComponent(app::AiFeatures &features)
+    {
+        bool installed = false;
+        QObject::connect(features.updater(), &backends::ai::AiSidecarUpdater::installed, [&] { installed = true; });
+        features.updater()->install();
+        ASSERT_TRUE(waitFor([&] { return installed; }));
+    }
 
     void SetUp() override
     {
@@ -170,7 +209,10 @@ protected:
     test::FakeChannel channel{release};
     test::MinisignSigner signer;
     int hostsBuilt = 0;
-    std::optional<backends::ai::CodexCli> codexCli;
+    std::map<QString, backends::ai::AgentCli> agentClis;
+    std::map<QString, backends::ai::AgentInstall> installs;
+    QHash<QString, QString> latest;
+    int latestAsked = 0;
     std::vector<QUrl> opened;
     backends::desktop::Routes previousRoutes;
     test::FakeAuthServer auth;
@@ -338,6 +380,55 @@ TEST_F(AiSettingsTest, TheFirstProviderDownloadsTheComponentOnceItsSizeIsShown)
     EXPECT_EQ(release.requested.size(), 6u);
 }
 
+TEST_F(AiSettingsTest, TurningMcpOnWithoutAProviderDownloadsTheComponentAndTheServerReachesIt)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiMcp mcp(settings, features, {});
+    app::AiSettings page(features, &mcp);
+    ASSERT_TRUE(stored.providers.empty());
+    EXPECT_TRUE(page.componentNeeded());
+    ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
+    EXPECT_EQ(hostsBuilt, 0);
+
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_TRUE(ready.front().front().toBool());
+    EXPECT_FALSE(page.componentNeeded());
+    settings.set(app::AiMcp::kSetting, true);
+    ASSERT_TRUE(mcp.server());
+    EXPECT_TRUE(features.sidecarForMcp());
+    EXPECT_EQ(hostsBuilt, 1);
+}
+
+TEST_F(AiSettingsTest, DecliningTheComponentForMcpDownloadsNothing)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(page.componentNeeded());
+    ASSERT_TRUE(waitFor([&] { return page.download().value(QStringLiteral("size")).toLongLong() > 0; }));
+    page.cancelComponent();
+    EXPECT_TRUE(page.componentNeeded());
+    for (const QByteArray &path : release.requested)
+        EXPECT_FALSE(path.endsWith(".gz")) << path.constData();
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AFailedComponentDownloadForMcpSaysWhy)
+{
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(page.componentNeeded());
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_FALSE(ready.front().front().toBool());
+    EXPECT_EQ(page.download().value(QStringLiteral("error")).toString(), QStringLiteral("downloadManifest"));
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
 TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
 {
     app::AiFeatures features(settings, ports(true));
@@ -358,7 +449,7 @@ TEST_F(AiSettingsTest, AManifestSignedByAnotherKeyFailsTheTestAndInstallsNothing
     page.openDraft();
     page.testDraft(form(QStringLiteral("anthropic"), QStringLiteral("Anthropic"), QStringLiteral("sk-ant")));
     ASSERT_TRUE(waitFor([&] { return draftState(page) == QLatin1String("failed"); }));
-    EXPECT_EQ(draftError(page), QStringLiteral("downloadManifest"));
+    EXPECT_EQ(draftError(page), QStringLiteral("downloadSignature"));
     EXPECT_TRUE(page.download().value(QStringLiteral("needed")).toBool());
     EXPECT_EQ(hostsBuilt, 0);
     for (const QByteArray &path : release.requested)
@@ -424,16 +515,150 @@ TEST_F(AiSettingsTest, CodexIsFoundOnPathWithItsVersion)
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
     page.checkCodex();
+    page.checkAgents();
     EXPECT_FALSE(codex(page, "found").toBool());
     EXPECT_FALSE(codex(page, "signedIn").toBool());
     EXPECT_FALSE(codex(page, "canImport").toBool());
+    EXPECT_FALSE(agent(page, "codex", "found").toBool());
 
-    codexCli = backends::ai::CodexCli{QStringLiteral("/usr/local/bin/codex"), QStringLiteral("0.58.0")};
-    page.checkCodex();
+    agentClis[QStringLiteral("codex")] = {.agent = QStringLiteral("codex"), .path = QStringLiteral("/usr/local/bin/codex"),
+                                          .version = QStringLiteral("0.58.0")};
+    page.checkAgents();
     EXPECT_TRUE(codex(page, "found").toBool());
     EXPECT_EQ(codex(page, "path").toString(), QStringLiteral("/usr/local/bin/codex"));
     EXPECT_EQ(codex(page, "version").toString(), QStringLiteral("0.58.0"));
+    EXPECT_TRUE(agent(page, "codex", "found").toBool());
+    EXPECT_EQ(agent(page, "codex", "method").toString(), QStringLiteral("unknown"));
+    EXPECT_FALSE(agent(page, "codex", "canUpdate").toBool());
     EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AgentBadgesCompareEachCliWithItsSourcesLatestVersion)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    agentClis[QStringLiteral("claude")] = {.agent = QStringLiteral("claude"), .path = QStringLiteral("/opt/claude"),
+                                           .version = QStringLiteral("2.1.4")};
+    agentClis[QStringLiteral("codex")] = {.agent = QStringLiteral("codex"), .path = QStringLiteral("/opt/codex"),
+                                          .version = QStringLiteral("0.58.0")};
+    installs[QStringLiteral("claude")] = {.method = backends::ai::AgentInstallMethod::WinGet,
+                                          .manualCommand = QStringLiteral("winget upgrade Anthropic.ClaudeCode"),
+                                          .package = QStringLiteral("@anthropic-ai/claude-code")};
+    installs[QStringLiteral("codex")] = {.method = backends::ai::AgentInstallMethod::Npm,
+                                         .program = QStringLiteral("/opt/npm"),
+                                         .manualCommand = QStringLiteral("npm install -g @openai/codex@latest"),
+                                         .package = QStringLiteral("@openai/codex")};
+    latest[QStringLiteral("@anthropic-ai/claude-code")] = QStringLiteral("2.2.0");
+    latest[QStringLiteral("@openai/codex")] = QStringLiteral("0.58.0");
+    page.checkAgents();
+    EXPECT_EQ(latestAsked, 2);
+    EXPECT_EQ(agent(page, "claude", "badge").toString(), QStringLiteral("update"));
+    EXPECT_EQ(agent(page, "claude", "latest").toString(), QStringLiteral("2.2.0"));
+    EXPECT_EQ(agent(page, "claude", "method").toString(), QStringLiteral("winget"));
+    EXPECT_FALSE(agent(page, "claude", "canUpdate").toBool());
+    EXPECT_EQ(agent(page, "claude", "command").toString(), QStringLiteral("winget upgrade Anthropic.ClaudeCode"));
+    EXPECT_EQ(agent(page, "codex", "badge").toString(), QStringLiteral("current"));
+    EXPECT_TRUE(agent(page, "codex", "canUpdate").toBool());
+    EXPECT_FALSE(agent(page, "codex", "session").toBool());
+}
+
+TEST_F(AiSettingsTest, UpdateNowRunsTheOfficialCommandAndReadsTheVersionAgain)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    const QString cli = fakeCli(QStringLiteral("claude"), "2.1.4", "bump 2.2.0");
+    agentClis[QStringLiteral("claude")] = {.agent = QStringLiteral("claude"), .path = cli, .version = QStringLiteral("2.1.4")};
+    installs[QStringLiteral("claude")] = {.method = backends::ai::AgentInstallMethod::Native, .program = cli,
+                                          .arguments = {QStringLiteral("update")},
+                                          .manualCommand = QStringLiteral("claude update"),
+                                          .latest = backends::ai::AgentLatestSource::ClaudeChannel};
+    latest[QString()] = QStringLiteral("2.2.0");
+    page.checkAgents();
+    ASSERT_EQ(agent(page, "claude", "badge").toString(), QStringLiteral("update"));
+    page.updateAgent(QStringLiteral("claude"));
+    EXPECT_EQ(agent(page, "claude", "state").toString(), QStringLiteral("updating"));
+    ASSERT_TRUE(waitFor([&] { return !agent(page, "claude", "outcome").toString().isEmpty(); }));
+    EXPECT_EQ(agent(page, "claude", "outcome").toString(), QStringLiteral("updated"));
+    EXPECT_EQ(agent(page, "claude", "version").toString(), QStringLiteral("2.2.0"));
+    EXPECT_EQ(agent(page, "claude", "badge").toString(), QStringLiteral("current"));
+    EXPECT_TRUE(agent(page, "claude", "state").toString().isEmpty());
+}
+
+TEST_F(AiSettingsTest, AnUpdateThatLeavesTheVersionAloneDidntTake)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    const QString cli = fakeCli(QStringLiteral("codex"), "0.58.0", "same");
+    agentClis[QStringLiteral("codex")] = {.agent = QStringLiteral("codex"), .path = cli, .version = QStringLiteral("0.58.0")};
+    installs[QStringLiteral("codex")] = {.method = backends::ai::AgentInstallMethod::Native, .program = cli,
+                                         .arguments = {QStringLiteral("update")},
+                                         .manualCommand = QStringLiteral("codex update"),
+                                         .package = QStringLiteral("@openai/codex")};
+    latest[QStringLiteral("@openai/codex")] = QStringLiteral("0.60.0");
+    page.checkAgents();
+    page.updateAgent(QStringLiteral("codex"));
+    ASSERT_TRUE(waitFor([&] { return !agent(page, "codex", "outcome").toString().isEmpty(); }));
+    EXPECT_EQ(agent(page, "codex", "outcome").toString(), QStringLiteral("unchanged"));
+    EXPECT_EQ(agent(page, "codex", "version").toString(), QStringLiteral("0.58.0"));
+    EXPECT_EQ(agent(page, "codex", "lastLine").toString(), QStringLiteral("Up to date"));
+}
+
+TEST_F(AiSettingsTest, TheComponentsSectionOffersANewerVersionAndDownloadsItOnUpdateNow)
+{
+    serveSidecar();
+    settings.set(app::AiFeatures::kAutoUpdateSetting, false);
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    installComponent(features);
+    EXPECT_TRUE(component(page, "present").toBool());
+    EXPECT_EQ(component(page, "version").toString(), QStringLiteral("1.1.0"));
+    EXPECT_EQ(component(page, "openai").toString(), QStringLiteral("7.45.0"));
+
+    channel.addRelease({QStringLiteral("1.2.0")});
+    channel.publish(signer);
+    page.checkComponents();
+    EXPECT_EQ(component(page, "state").toString(), QStringLiteral("checking"));
+    ASSERT_TRUE(waitFor([&] { return component(page, "state").toString().isEmpty(); }));
+    EXPECT_EQ(component(page, "available").toString(), QStringLiteral("1.2.0"));
+    EXPECT_GT(component(page, "availableBytes").toLongLong(), 0);
+    EXPECT_TRUE(component(page, "staged").toString().isEmpty());
+    EXPECT_GT(component(page, "checkedAt").toLongLong(), 0);
+
+    page.updateComponents();
+    ASSERT_TRUE(waitFor([&] { return !component(page, "staged").toString().isEmpty(); }));
+    EXPECT_EQ(component(page, "staged").toString(), QStringLiteral("1.2.0"));
+    EXPECT_TRUE(component(page, "error").toString().isEmpty());
+}
+
+TEST_F(AiSettingsTest, AnUpdateListWithABadSignatureIsRefused)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    installComponent(features);
+    test::MinisignSigner stranger;
+    channel.addRelease({QStringLiteral("1.2.0")});
+    channel.publish(stranger);
+    page.checkComponents();
+    ASSERT_TRUE(waitFor([&] { return !component(page, "error").toString().isEmpty(); }));
+    EXPECT_EQ(component(page, "error").toString(), QStringLiteral("downloadSignature"));
+    EXPECT_TRUE(component(page, "available").toString().isEmpty());
+}
+
+TEST_F(AiSettingsTest, TheRollbackNoticeStaysUntilDismissed)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    installComponent(features);
+    EXPECT_TRUE(component(page, "rollback").toMap().isEmpty());
+    features.updater()->setRollback(backends::ai::SidecarRollback{.version = QStringLiteral("1.2.0"),
+                                                                  .to = QStringLiteral("1.1.0"),
+                                                                  .reason = QStringLiteral("crashed")});
+    EXPECT_EQ(component(page, "rollback").toMap().value(QStringLiteral("version")).toString(), QStringLiteral("1.2.0"));
+    EXPECT_FALSE(component(page, "rollback").toMap().value(QStringLiteral("reportSent")).toBool());
+    page.dismissComponentNotice();
+    EXPECT_TRUE(component(page, "rollback").toMap().isEmpty());
 }
 
 TEST_F(AiSettingsTest, ACodexSignInShowsTheCodeOpensItsPageOnlyWhenAskedAndCancels)
