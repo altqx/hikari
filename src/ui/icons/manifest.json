@@ -4781,8 +4781,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-rect",
@@ -4793,8 +4792,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-skew",
@@ -4805,8 +4803,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-rotated",
@@ -4817,8 +4814,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-vector",
@@ -4829,8 +4825,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-clip-edge",
@@ -4841,8 +4836,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-by-char",
@@ -4853,20 +4847,18 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-by-line",
    "file": "gradient-by-line.svg",
-   "label": "By Line",
+   "label": "By line",
    "accent": true,
    "mirror": true,
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "gradient-merge",
@@ -4877,8 +4869,7 @@
    "legacy": [],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "AU7 #843"
+   ]
   },
   {
    "role": "graph-shake",

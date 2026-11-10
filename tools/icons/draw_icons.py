@@ -1214,7 +1214,7 @@ icon("gradient-clip-edge", "Strips along the clip", [], [VISUAL],
      stroke(CLIP_QUAD) + "".join(CLIP_HANDLES) + accent(stroke("M5.5 5.25l5.25 1 .5 4-5.25.75z")))
 icon("gradient-by-char", "By character", [], [VISUAL],
      letters("A", 1.5, 2) + letters("A", 6.5, 2) + letters("A", 11.5, 2) + grad_handle(3, 12, 13, 12))
-icon("gradient-by-line", "By Line", [], [VISUAL],
+icon("gradient-by-line", "By line", [], [VISUAL],
      stroke("M6.5 3.5h8M6.5 8h8M6.5 12.5h8") + accent(stroke("M2.5 3.5v8"), dot(2.5, 3.5, 1.25),
                                                      frect(1.25, 11.25, 2.5, 2.5, .5)), mirror=True)
 icon("gradient-merge", "Merge strips", [], [VISUAL],
@@ -1415,8 +1415,6 @@ for card, roles in {
     "AU4 #839": ["remove-tags"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
                  "shape-to-clip", "shape-merge"],
-    "AU7 #843": ["tool-gradient", "gradient-rect", "gradient-skew", "gradient-rotated", "gradient-vector",
-                 "gradient-clip-edge", "gradient-by-char", "gradient-by-line", "gradient-merge"],
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],

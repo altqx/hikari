@@ -6902,6 +6902,10 @@ Failed to copy %2 fonts.</source>
         <translation>원근</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>그라데이션</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>벡터 클립: 점 이동</translation>
     </message>
@@ -20469,6 +20473,18 @@ or codecs or a splitter may be missing</source>
         <translation>끝 값</translation>
     </message>
     <message>
+        <source>Stops</source>
+        <translation>정지점</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>혼합</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>단계</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>페이드 인</translation>
     </message>
@@ -21247,6 +21263,202 @@ increasing or decreasing the value.</source>
     <message>
         <source>Text alignment works the same as in styles</source>
         <translation>텍스트 정렬은 스타일과 같은 방식으로 작동합니다</translation>
+    </message>
+    <message>
+        <source>Rectangle strips</source>
+        <translation>사각형 띠</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>회전된 띠</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>기울어진 띠</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>클립을 따라 띠</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>쐐기 띠</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>글자별</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>줄별</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>마스크 도형</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>그라데이션 값을 가져올 곳</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>그라데이션이 바꾸는 태그</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>그라데이션에서 태그 제거</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>색이 섞이는 방식</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>각 글자가 텍스트에서 놓인 위치</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>같은 띠 병합</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>그라데이션 적용 (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>쐐기</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>상자</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>고리</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>별</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>비네트</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>값</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>고른 줄</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>너비별</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>개수별</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>그라데이션에 있음</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>색과 알파</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>테두리, 그림자, 흐림</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>텍스트</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>간격</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>두께</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>뾰족한 끝</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>중심</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>구멍</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>가속</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>띠</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>겹침</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>기울기</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>그라데이션에 쓸 태그를 고르세요</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>정지점으로 쓸 줄을 두 개 이상 고르세요</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>고른 줄의 텍스트와 태그 블록이 같아야 합니다</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>고른 줄 사이에 다른 태그가 없습니다</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>그라데이션이 시작하는 곳에서 끝나는 곳까지 끄세요</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>줄에 덮을 텍스트나 클립이 없습니다</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>클립을 따라 띠를 만들려면 줄에 클립이 있어야 합니다</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>그라데이션은 반전 클립에서 동작하지 않습니다</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>줄에 글자가 없습니다</translation>
     </message>
     <message>
         <source>Edit</source>

@@ -24,7 +24,7 @@ class TextMeasurePort;
 
 namespace hikari::application::visual {
 
-// HikariSub legacy's family numbers, then Perspective.
+// HikariSub legacy's family numbers, then Perspective and Gradient.
 enum class Family : int {
     Crosshair = 0,
     Position,
@@ -38,9 +38,10 @@ enum class Family : int {
     PositionShifter,
     Hydra,
     Perspective,
+    Gradient,
 };
 inline constexpr int kLegacyFamilyCount = 11;
-inline constexpr int kFamilyCount = 12;
+inline constexpr int kFamilyCount = 13;
 
 struct FamilyInfo {
     Family family;
@@ -51,7 +52,7 @@ struct FamilyInfo {
 };
 const std::array<FamilyInfo, kFamilyCount> &families();
 const FamilyInfo &familyInfo(Family family);
-// Perspective comes after RotationXY.
+// Perspective comes after RotationXY; Gradient is last.
 const std::array<Family, kFamilyCount> &railOrder();
 // The family a VIDEO_TOOL_* command chooses.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
@@ -84,6 +85,7 @@ struct Key {
 // The arrow keys (Qt::Key values; the application layer does not link Qt).
 namespace keys {
 inline constexpr int Left = 0x01000012, Up = 0x01000013, Right = 0x01000014, Down = 0x01000015;
+inline constexpr int Return = 0x01000004, Enter = 0x01000005;
 }
 
 // -1, 0 or 1 on each axis for `key`'s arrow; nullopt for another key, with Ctrl,
@@ -214,10 +216,14 @@ public:
     void stage(core::LineId line, std::u8string text, bool translation = false);
     // Stages a target's whole [Aegisub Extradata] list.
     void stageExtradata(core::LineId line, std::vector<core::Extradata> extra);
-    bool hasChanges() const { return !m_staged.empty() || !m_stagedExtra.empty(); }
+    // Comments a target and puts a copy of it after it for each text, in order; the commit selects the copies.
+    void stageReplacement(core::LineId line, std::vector<std::u8string> texts);
+    bool hasChanges() const { return !m_staged.empty() || !m_stagedExtra.empty() || !m_replacements.empty(); }
     // A staged text or extradata list that differs from the target's as the gesture began.
     bool changesAnyLine() const;
     std::optional<std::u8string> staged(core::LineId line, bool translation = false) const;
+    // Everything staged as one string, equal for equal staging.
+    std::u8string stagedKey() const;
     // The staged texts put into a copy of the Document.
     void applyTo(core::Document &document) const;
     // Only the Lines shown at the video's time (5 ms either side, or any not yet
@@ -238,6 +244,7 @@ private:
     std::map<core::LineId, core::LineRecord> m_before;
     std::map<std::pair<core::LineId, bool>, std::u8string> m_staged;
     std::map<core::LineId, std::vector<core::Extradata>> m_stagedExtra;
+    std::map<core::LineId, std::vector<std::u8string>> m_replacements;
 };
 
 // Lines picked explicitly and kept by identity; with nothing picked a tool
@@ -477,6 +484,12 @@ public:
     // Lines the video renders after the Document's while the tool is on (the vector
     // clip's mask).
     virtual std::vector<core::LineRecord> previewLines(const VisualHost &host) const
+    {
+        (void)host;
+        return {};
+    }
+    // Lines the video leaves out while the tool is on (the Lines previewLines replaces).
+    virtual std::vector<core::LineId> hiddenLines(const VisualHost &host) const
     {
         (void)host;
         return {};

@@ -44,6 +44,7 @@
 #include "hikari/application/visual_drawing.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/motion_data.h"
+#include "hikari/application/visual_gradient.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -21307,7 +21308,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 312);
+        QCOMPARE(hotkeyRows().size(), 313);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
@@ -23481,7 +23482,8 @@ private slots:
                  {"D", "VIDEO_TOOL_DRAWING"},
                  {"A", "VIDEO_TOOL_POSITION_SHIFTER"},
                  {"H", "VIDEO_TOOL_HYDRA"},
-                 {"Q", "VIDEO_TOOL_PERSPECTIVE"}})
+                 {"Q", "VIDEO_TOOL_PERSPECTIVE"},
+                 {"W", "VIDEO_TOOL_GRADIENT"}})
             departures.append(QStringLiteral("Video %1: %2, legacy nothing").arg(QLatin1String(accel), QLatin1String(symbol)));
         QStringList differences;
         hotkeys.setRehearsing(true);
@@ -28456,6 +28458,183 @@ private slots:
         }
     }
 
+    void visualGradientThroughThePanel()
+    {
+        widenForTheInspectorBar();
+        using namespace application::visual;
+        QVERIFY(application->openFile(visualDocument(
+            "gradient.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)\\clip(60,80,260,160)}Sign\n")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool12"), "click"));
+        QCOMPARE(tools.activeFamily(), int(Family::Gradient));
+        settleVisualBar();
+        QQuickItem *more = visualItem("visualToolMore");
+        auto *popover = visualItem("visualToolBar")->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
+        QVERIFY(more && popover);
+        if (more->isVisible()) {
+            QVERIFY(QMetaObject::invokeMethod(more, "click"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+        }
+        const auto option = [&](const QString &name) { return visualItem(qPrintable(QStringLiteral("visualOption_") + name)); };
+        for (const QString &name : {QStringLiteral("mode0"), QStringLiteral("mode6"), QStringLiteral("merge"),
+                                    QStringLiteral("apply"), QStringLiteral("removeTag"), QStringLiteral("tag"),
+                                    QStringLiteral("blend"), QStringLiteral("stops")})
+            QTRY_VERIFY2(option(name), qPrintable(name));
+        const QStringList modeIcons{QStringLiteral("gradient-rect"),      QStringLiteral("gradient-rotated"),
+                                    QStringLiteral("gradient-skew"),      QStringLiteral("gradient-clip-edge"),
+                                    QStringLiteral("gradient-vector"),    QStringLiteral("gradient-by-char"),
+                                    QStringLiteral("gradient-by-line")};
+        for (int i = 0; i < modeIcons.size(); ++i)
+            QCOMPARE(option(QStringLiteral("mode%1").arg(i))->property("iconRole").toString(), modeIcons[i]);
+        QVERIFY(option(QStringLiteral("mode0"))->property("checked").toBool());
+        QCOMPARE(option(QStringLiteral("merge"))->property("iconRole").toString(), QStringLiteral("gradient-merge"));
+        QCOMPARE(option(QStringLiteral("apply"))->property("iconRole").toString(), QStringLiteral("commit"));
+        QCOMPARE(option(QStringLiteral("removeTag"))->property("iconRole").toString(), QStringLiteral("remove"));
+        QVERIFY(!option(QStringLiteral("apply"))->isEnabled());
+        for (const char *value : {"from0", "to0", "strip", "overlap", "accel"})
+            QVERIFY2(visualItem(qPrintable(QStringLiteral("visualValue_") + QLatin1String(value))), value);
+        if (popover->property("opened").toBool()) {
+            QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+        }
+
+        auto *tool = dynamic_cast<GradientTool *>(tools.tool());
+        QVERIFY(tool);
+        const auto applyEnabled = [&] {
+            for (const auto &o : tool->options(tools))
+                if (o.name == "apply")
+                    return o.enabled;
+            return false;
+        };
+        const auto &view = tools.videoView();
+        const auto at = [&](float x, float y) {
+            const PointF d = view.scriptToView({x, y});
+            return videoPoint(QPointF(view.toLogical(d.x), view.toLogical(d.y)));
+        };
+        const auto drag = [&] {
+            QTest::mouseMove(window, at(60, 120));
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(60, 120));
+            QTest::mouseMove(window, at(160, 120));
+            QTest::mouseMove(window, at(260, 120));
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(260, 120));
+        };
+        const QString before = text(session->document().lines()[2]);
+        const std::size_t steps = session->historySize();
+        const std::size_t lines = session->document().lines().size();
+        drag();
+        QTRY_VERIFY(tool->hasPending());
+        QVERIFY(!tool->problem());
+        const std::size_t strips = tool->previewLines(tools).size();
+        QVERIFY(strips > 1);
+        QTRY_VERIFY(applyEnabled());
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->document().lines().size(), lines);
+
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!tool->hasPending());
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(text(session->document().lines()[2]), before);
+
+        drag();
+        QTRY_VERIFY(tool->hasPending());
+        QVERIFY(tools.setValue(QStringLiteral("strip"), QStringLiteral("50")));
+        QTRY_COMPARE(tool->previewLines(tools).size(), std::size_t(4));
+        QCOMPARE(session->historySize(), steps);
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Gradient"));
+        QCOMPARE(session->document().lines().size(), lines + 4);
+        QVERIFY(session->document().lines()[2]->comment);
+        QCOMPARE(text(session->document().lines()[2]), before);
+        for (std::size_t i = 3; i < 7; ++i) {
+            const QString strip = text(session->document().lines()[i]);
+            QVERIFY2(strip.contains(QLatin1String("\\clip(")) && strip.contains(QLatin1String("\\1c&H")), qPrintable(strip));
+            QVERIFY(session->selection().selected.contains(session->document().lines()[i]->id));
+        }
+        QVERIFY(!tool->hasPending());
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), lines);
+        QVERIFY(!session->document().lines()[2]->comment);
+    }
+
+    void visualGradientScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1280, 1000);
+        auto &tools = application->visualTools();
+        QVERIFY(application->openFile(visualDocument(
+            "au7-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(40,70)\\bord0\\p1}"
+                             "m 0 0 l 240 0 240 100 0 100\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        QTRY_VERIFY(session->selection().active == session->document().lines()[2]->id);
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto shoot = [&](const QString &name) {
+            QTest::qWait(300);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QLatin1Char('/') + name));
+        };
+        const auto &view = tools.videoView();
+        const auto at = [&](float x, float y) {
+            const application::visual::PointF d = view.scriptToView({x, y});
+            return videoPoint(QPointF(view.toLogical(d.x), view.toLogical(d.y)));
+        };
+        const auto drag = [&](QPointF from, QPointF to) {
+            QTest::mouseMove(window, at(float(from.x()), float(from.y())));
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(float(from.x()), float(from.y())));
+            QTest::mouseMove(window, at(float((from.x() + to.x()) / 2), float((from.y() + to.y()) / 2)));
+            QTest::mouseMove(window, at(float(to.x()), float(to.y())));
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(float(to.x()), float(to.y())));
+        };
+        auto *root = engine->rootObjects().first();
+        for (const char *code : {"light", "dark", "highContrastBlack", "highContrastWhite"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            tools.selectFamily(int(application::visual::Family::Gradient));
+            QTRY_COMPARE(tools.activeFamily(), int(application::visual::Family::Gradient));
+            settleVisualBar();
+            QVERIFY(tools.setOption(QStringLiteral("mode0"), 1));
+            QVERIFY(tools.setValue(QStringLiteral("strip"), QStringLiteral("20")));
+            drag({40, 120}, {280, 120});
+            QTest::mouseMove(window, QPoint(1, 1));
+            shoot(QStringLiteral("au7-gradient-rect") + suffix);
+            QVERIFY(tools.setOption(QStringLiteral("mode4"), 1));
+            drag({40, 170}, {280, 170});
+            QTest::mouseMove(window, QPoint(1, 1));
+            shoot(QStringLiteral("au7-gradient-wedge") + suffix);
+            QVERIFY(tools.escape());
+            QVERIFY(tools.setOption(QStringLiteral("mode0"), 1));
+            tools.selectFamily(0);
+        }
+    }
+
     void visualAllTagsThroughThePanel()
     {
         widenForTheInspectorBar();
@@ -28866,7 +29045,7 @@ private slots:
             QTest::keyClick(window, key);
             QTRY_COMPARE(tools.activeFamily(), 0);
         }
-        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q"}));
+        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q", "W"}));
         QCOMPARE(QQmlProperty(visualItem("visualTool0"), QStringLiteral("ToolTip.text"), qmlContext(visualItem("visualTool0")))
                          .read()
                          .toString(),

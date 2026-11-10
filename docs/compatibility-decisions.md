@@ -100,6 +100,20 @@ When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix
 
 Resample subtitles with "Stretch" scales text by the smaller of the two resolution factors, and puts the rest on the axis that grew more: ScaleX and `\fscx` when the width grew more, ScaleY and `\fscy` when the height did. Drawings are scaled to match. Before, a taller change also went to ScaleX and `\fscx`, so stretched text came out wide when it should have been tall. A change that grows the width more resamples as before. [#738](https://github.com/altqx/hikari/issues/738), owner decision 2026-11-04.
 
+## AU7-gradient
+
+The Gradient visual tool does natively what the gradient scripts do (records in [AU7 #843](https://github.com/altqx/hikari/issues/843)). The bundled Gradient Factory and Skew gradient still ship unchanged, defects included; those defects are listed in [#885](https://github.com/altqx/hikari/issues/885). The departures below were accepted at the owner's gate on 2026-11-10 (Q227–Q229).
+
+- **G1, rounding.** Colours and alphas round half up. The scripts truncate, except Gradient Factory's By character.
+- **G2, both ends.** t runs from 0 to 1 inclusive: index/(n−1) for strips, and the last character or Line gets To. ua.Colorize and l0.LerpByChar stop one unit short.
+- **G3, rotated strips.** Overlap is measured across the strip, the strips cover the rotated box, a vertical drag works, and a drag of no length is refused. phos.RotateGradient overlaps 0.75 px vertically, deletes every Line when P3 is on the base and divides by zero on a vertical base.
+- **G4, originals.** The original Lines are commented and kept above their strips, never deleted. RotateGradient and zf.gradientCut delete them.
+- **G5, merge.** Merge equal strips joins only neighbouring strips with the same tags and removes only the strips it merged. petzku's CombineGradientLines deletes Lines it didn't merge.
+- **G6, along the clip.** Rings come from a true inset with round joins at reflex corners, so concave and self-touching clips work, and rect clips work. lyger's ClipGrad has no miter limit and crashes on a rect clip.
+- **G7, hue.** Colours blend in RGB or HSL (the shortest way round the hue). l0.LerpByChar's HSV treats red as 360 against grey's 0.
+- **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
+- **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
+
 ## AU8-motion-data
 
 Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).

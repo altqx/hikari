@@ -6902,6 +6902,10 @@ Failed to copy %2 fonts.</source>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>ไล่ระดับ</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>คลิปเวกเตอร์: ย้ายจุด</translation>
     </message>
@@ -20469,6 +20473,18 @@ or codecs or a splitter may be missing</source>
         <translation>ถึง</translation>
     </message>
     <message>
+        <source>Stops</source>
+        <translation>จุดหยุด</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>การผสม</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>ขั้น</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>เข้า</translation>
     </message>
@@ -21247,6 +21263,202 @@ increasing or decreasing the value.</source>
     <message>
         <source>Text alignment works the same as in styles</source>
         <translation>การจัดแนวข้อความทำงานเหมือนในสไตล์</translation>
+    </message>
+    <message>
+        <source>Rectangle strips</source>
+        <translation>แถบสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>แถบหมุน</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>แถบเอียง</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>แถบตามคลิป</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>แถบลิ่ม</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>ตามตัวอักษร</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>ตามบรรทัด</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>รูปร่างมาสก์</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>ค่าของการไล่ระดับมาจากที่ใด</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>แท็กที่การไล่ระดับเปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>นำแท็กออกจากการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>วิธีผสมสี</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>ตำแหน่งของตัวอักษรแต่ละตัวในข้อความ</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>รวมแถบที่เหมือนกัน</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>ใช้การไล่ระดับ (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>ลิ่ม</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>กล่อง</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>วงแหวน</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>ดาว</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>ขอบมืด</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>ค่า</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>ตามความกว้าง</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>ตามจำนวน</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>อยู่ในการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>สีและอัลฟา</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>ขอบ เงา และความเบลอ</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>ระยะห่าง</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>ความหนา</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>แฉก</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>กึ่งกลาง</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>รู</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>เร่ง</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>แถบ</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>ซ้อนทับ</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>ความเอียง</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>เลือกแท็กสำหรับการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>เลือกบรรทัดอย่างน้อยสองบรรทัดเป็นจุดหยุด</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>บรรทัดที่เลือกต้องมีข้อความและบล็อกแท็กเหมือนกัน</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>ไม่มีแท็กที่ต่างกันระหว่างบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>ลากจากจุดเริ่มต้นถึงจุดสิ้นสุดของการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>บรรทัดไม่มีข้อความหรือคลิปให้ครอบคลุม</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>แถบตามคลิปต้องมีคลิปในบรรทัด</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>การไล่ระดับใช้กับคลิปกลับด้านไม่ได้</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>บรรทัดไม่มีตัวอักษร</translation>
     </message>
     <message>
         <source>Edit</source>

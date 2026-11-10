@@ -247,3 +247,7 @@ hikari_add_gtest(hikari_application_motion_data_tests SOURCES motion_data_tests.
 target_compile_definitions(hikari_application_motion_data_tests PRIVATE
     HIKARI_MOTION_CORPUS="${PROJECT_SOURCE_DIR}/tests/fixtures/motion-data")
 target_include_directories(hikari_application_motion_data_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_gtest(hikari_application_gradient_tests SOURCES gradient_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradient_tests.cpp
+    LIBRARIES hikari_application LABELS application)

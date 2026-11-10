@@ -33,7 +33,10 @@ Control {
         "By": qsTr("By"),
         "Per line": qsTr("Per line"),
         "From": qsTr("From"),
-        "To": qsTr("To")
+        "To": qsTr("To"),
+        "Stops": qsTr("Stops"),
+        "Blend": qsTr("Blend"),
+        "Steps": qsTr("Steps")
     })
     readonly property var valueLabels: ({
         "Value": qsTr("Value"),
