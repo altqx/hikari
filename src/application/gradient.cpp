@@ -7,9 +7,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
 #include <map>
 #include <set>
+#include <utility>
 
 namespace hikari::application::gradient {
 namespace {
