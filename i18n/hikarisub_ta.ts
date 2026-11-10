@@ -6713,6 +6713,10 @@ Failed to copy %2 fonts.</source>
         <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>சாளரத்தை மூடு</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7770,6 +7774,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Program settings</source>
         <translation>நிரல் அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>இந்தச் சாளரத்தை மூடும்; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>சாளரத்தை மூடு (&amp;w)</translation>
     </message>
     <message>
         <source>Exit the program</source>

@@ -928,6 +928,78 @@ private slots:
         QTRY_VERIFY(!first()->isVisible());
     }
 
+    void altF4ClosesOnlyTheWindowItIsPressedIn()
+    {
+        edit(firstTab);
+        edit(secondTab);
+        second->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), second.get());
+        QTest::keyClick(second, Qt::Key_F4, Qt::AltModifier);
+        QTRY_COMPARE(reviewed(second).size(), 1);
+        QCOMPARE(reviewed(second).first().toMap().value(QStringLiteral("id")).toULongLong(), secondTab.value);
+        QCOMPARE(application->closeKind(), QStringLiteral("window"));
+        QVERIFY(reviewed(first()).isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(!second);
+        QVERIFY(first()->isVisible());
+        QVERIFY(!application->quitApproved());
+        QVERIFY(modified(firstTab));
+        QFile file(application->lastSessionPath());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject saved = QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(saved.value(QStringLiteral("closed")).toBool(true), false);
+        QVERIFY(saved.value(QStringLiteral("windows")).toArray().size() <= 1);
+        const QJsonArray tabs = saved.value(QStringLiteral("tabs")).toArray();
+        QCOMPARE(tabs.size(), 1);
+        QCOMPARE(tabs.first().toObject().value(QStringLiteral("window")).toInt(0), 0);
+        QVERIFY(tabs.first().toObject().value(QStringLiteral("subtitles")).toString().endsWith(QStringLiteral("first.ass")));
+    }
+
+    void altF4InTheLastWindowQuits()
+    {
+        second->close();
+        QTRY_VERIFY(!second);
+        first()->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), first());
+        QTest::keyClick(first(), Qt::Key_F4, Qt::AltModifier);
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+    }
+
+    void exitTakesAKeyInTheHotkeysSettingsAndItQuitsEveryWindow()
+    {
+        auto &hotkeys = application->hotkeys();
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_QUIT"), 0), QString());
+        hotkeys.beginOptions();
+        hotkeys.search(QStringLiteral("Global Exit"));
+        int position = -1;
+        const QVariantList shown = hotkeys.rows();
+        for (int i = 0; i < shown.size(); ++i)
+            if (shown[i].toMap().value(QStringLiteral("text")).toString() == QLatin1String("Global Exit"))
+                position = i;
+        QVERIFY(position >= 0);
+        QCOMPARE(shown[position].toMap().value(QStringLiteral("accel")).toString(), QString());
+        hotkeys.select(position);
+        hotkeys.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
+        hotkeys.commitOptions();
+        QCOMPARE(hotkeys.accelOf(QStringLiteral("GLOBAL_QUIT"), 0), QStringLiteral("Ctrl-Alt-Q"));
+        QObject *exitItem = second->findChild<QObject *>(QStringLiteral("exitMenuItem"));
+        QVERIFY(exitItem);
+        QTRY_COMPARE(exitItem->property("keysText").toString(), QStringLiteral("Ctrl+Alt+Q"));
+
+        edit(firstTab);
+        edit(secondTab);
+        second->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), second.get());
+        QTest::keyClick(second, Qt::Key_Q, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_COMPARE(reviewed(second).size(), 2);
+        QCOMPARE(application->closeKind(), QStringLiteral("quit"));
+        QVERIFY(QMetaObject::invokeMethod(unsaved(second), "discardAll"));
+        QTRY_VERIFY(application->quitApproved());
+        QTRY_VERIFY(!first()->isVisible());
+        QTRY_VERIFY(!second || !second->isVisible());
+    }
+
     void quitFromAnyWindowReviewsEveryWindowOnce()
     {
         application->setSessionRestore(2);

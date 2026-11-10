@@ -47,6 +47,7 @@ inline constexpr int kGridFirst = 4001;
 inline constexpr int kGridFilterIgnoreInActions = 4546;
 inline constexpr int kGlobalFirst = 5000;
 inline constexpr int kGlobalQuit = 5108;
+inline constexpr int kGlobalCloseWindow = 5263;
 inline constexpr int kLegacyHotkeyActions = 243;
 inline constexpr int kFirstScriptHotkey = 30100;
 // Rows from kFirstScriptHotkey up are macros', and plugin commands' when named "plugin.<id>.<command>".
@@ -71,7 +72,7 @@ std::string_view hotkeySymbol(int id);
 bool aiCommand(int id);
 // The English names the Options list shows, by id.
 const std::map<int, std::string> &hotkeyNames();
-// "" when the id has no name (scripts, GLOBAL_QUIT...).
+// "" when the id has no name (scripts...).
 std::string hotkeyName(int id);
 // A retired action keeps its symbol, so stored lines naming it are
 // recognised, but has no name and its bindings are dropped as lists are read.
