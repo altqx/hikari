@@ -16,6 +16,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 
 using namespace hikari;
@@ -119,6 +120,38 @@ class ApiHostTest : public QObject {
         }
     }
     bool heardEvent(const std::string &name) const { return std::ranges::find(heard, name) != heard.end(); }
+    QList<QQuickItem *> visibleNamed(const QString &name) const
+    {
+        QList<QQuickItem *> out;
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            if (!at->isVisible())
+                return;
+            if (at->objectName() == name)
+                out << at;
+            for (QQuickItem *child : at->childItems())
+                walk(child);
+        };
+        walk(window()->contentItem());
+        return out;
+    }
+    QQuickItem *changeRowUndo() const
+    {
+        const auto inItemRow = [](QQuickItem *at) {
+            for (; at; at = at->parentItem())
+                if (at->objectName() == QLatin1String("reviewItem"))
+                    return true;
+            return false;
+        };
+        for (QQuickItem *button : visibleNamed(QStringLiteral("reviewUndo")))
+            if (!inItemRow(button))
+                return button;
+        return nullptr;
+    }
+    bool clickVisible(const QString &name) const
+    {
+        const auto found = visibleNamed(name);
+        return found.size() == 1 && QMetaObject::invokeMethod(found.front(), "click");
+    }
 
 private slots:
     void init()
@@ -242,6 +275,56 @@ private slots:
         QCOMPARE(textAt(0), std::u8string(u8"mine"));
         QVERIFY(application->review()->undoLine(true));
         QCOMPARE(textAt(0), std::u8string(u8"first"));
+    }
+
+    void undoOnAChangeRowWithALineEditedSinceAsksFirst()
+    {
+        const auto lines = session().document().lines();
+        const auto first = lines[0]->id, second = lines[1]->id;
+        QVERIFY(call("document.apply", QStringLiteral(R"({"revision": %1, "name": "Tightened both", "edits": [
+            {"op": "set_line", "line": %2, "fields": {"text": "one"}},
+            {"op": "set_line", "line": %3, "fields": {"text": "two"}}]})")
+                                           .arg(session().revision())
+                                           .arg(first.value)
+                                           .arg(second.value)
+                                           .toUtf8()
+                                           .constData(),
+                     reviewedAi()));
+        QVERIFY(select(first));
+        application->editor().textEdited(QStringLiteral("mine"), 4);
+        QVERIFY(application->editor().commitFromField(false));
+        QCOMPARE(textAt(0), std::u8string(u8"mine"));
+        QCOMPARE(reviewRoleAt(0), int(ui::LineTableModel::ReviewState::EditedSince));
+        QCOMPARE(application->review()->waiting(), 2);
+
+        QVERIFY(shell(QStringLiteral("root.showPanel(reviewDock), reviewDock.isOpen")).toBool());
+        QTRY_VERIFY(changeRowUndo());
+        const auto steps = session().historySize();
+        QVERIFY(QMetaObject::invokeMethod(changeRowUndo(), "click"));
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewConfirmChange")).size(), 1);
+        QCOMPARE(visibleNamed(QStringLiteral("reviewConfirmChange")).front()->property("text").toString(),
+                 QStringLiteral("You changed 1 line(s) after this change. Undo puts the whole change back as it was "
+                                "before the AI, which drops your edits."));
+        QCOMPARE(session().historySize(), steps);
+        QVERIFY(visibleNamed(QStringLiteral("reviewConfirm")).isEmpty());
+        shoot(QStringLiteral("review-change-row-confirm"));
+
+        QVERIFY(clickVisible(QStringLiteral("reviewConfirmChangeCancel")));
+        QTRY_VERIFY(visibleNamed(QStringLiteral("reviewConfirmChange")).isEmpty());
+        QCOMPARE(textAt(0), std::u8string(u8"mine"));
+        QCOMPARE(textAt(1), std::u8string(u8"two"));
+        QCOMPARE(session().historySize(), steps);
+        QCOMPARE(application->review()->waiting(), 2);
+
+        QVERIFY(QMetaObject::invokeMethod(changeRowUndo(), "click"));
+        QTRY_COMPARE(visibleNamed(QStringLiteral("reviewConfirmChange")).size(), 1);
+        QVERIFY(clickVisible(QStringLiteral("reviewConfirmChangeUndo")));
+        QTRY_COMPARE(textAt(0), std::u8string(u8"first"));
+        QCOMPARE(textAt(1), std::u8string(u8"second"));
+        QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(session().history().back().name, std::string("Undo AI: Tightened both"));
+        QCOMPARE(application->review()->waiting(), 0);
+        QVERIFY(visibleNamed(QStringLiteral("reviewConfirmChange")).isEmpty());
     }
 
     void restoringACheckpointUndoesTheTurnKeptChangesToo()
