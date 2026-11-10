@@ -124,6 +124,10 @@ _Avoid_: Automation API or Lua API, which name Aegisub automation's interface.
 A graph of typed nodes, stored in its Document as a `graph <name>` Comment Line, that turns karaoke Lines into generated Lines marked `fx <name>`.
 _Avoid_: Template or effector, which name the stock karaoke templater's Lines and Kara Effector.
 
+**Node effects mode**:
+The window mode that edits a Document's node effects on a canvas, with its own panel layout and a preview on the video.
+_Avoid_: Node editor as the mode's name; it is one panel (Graph) of the mode.
+
 **Plugin**:
 A `.hikariplugin` package that extends HikariSub through the Hikari API, installed per user and run in its own helper.
 _Avoid_: Automation script or macro, which name Aegisub automation; extension or add-on.

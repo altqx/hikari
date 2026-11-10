@@ -1849,6 +1849,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     showTimecodes();
     connect(this, &Application::timecodesChanged, v.statusBar.get(), showTimecodes);
     makeTemplateEditor(v, shellWindow);
+    makeNodeEffects(v, shellWindow);
     makeKanjiTimer(v, shellWindow);
     createFindReplace(v, shellWindow);
 }
@@ -1897,6 +1898,22 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
     connect(m_automation.get(), &AutomationShell::progressChanged, editor, [editor] { editor->refresh(); });
 }
 
+void Application::makeNodeEffects(WindowViews &v, int shellWindow)
+{
+    const auto active = [this, &v] { return &v == &activeViews(); };
+    v.nodeEffects = std::make_unique<ui::NodeEffectsController>();
+    auto *effects = v.nodeEffects.get();
+    effects->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
+    effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
+    connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
+    connect(effects, &ui::NodeEffectsController::videoChanged, this, [this, active, effects] {
+        if (active() && (m_videoShowsTemplate || effects->videoPreview()))
+            showVideoSubtitles();
+    });
+    effects->shareTrustWith(v.templateEditor.get());
+    effects->setLuaNodes([this] { return &luaNodes(); });
+}
+
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
 {
     KanjiTimerController::Hooks hooks;
@@ -1932,8 +1949,10 @@ bool Application::applyKanji(application::DocumentId document, application::Edit
 
 void Application::commitTemplates()
 {
-    for (auto *views : allViews())
+    for (auto *views : allViews()) {
         views->templateEditor->commit();
+        views->nodeEffects->commit();
+    }
 }
 
 Application::WindowViews::WindowViews() = default;
@@ -2256,6 +2275,8 @@ void Application::refreshViews()
     followEditingLine();
     templateEditor().setEditable(target && m_workspace.checkContentCommand(*target).has_value());
     templateEditor().refresh();
+    nodeEffects().setEditable(target && m_workspace.checkContentCommand(*target).has_value());
+    nodeEffects().refresh();
     if (auto &active = activeViews(); target != active.editorDocument) {
         active.editorDocument = target;
         editor().setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
@@ -2315,6 +2336,8 @@ void Application::refreshWindowViews(int shellWindow)
         v.find->reset();
     v.templateEditor->setEditable(tab && m_workspace.checkContentCommand(*tab).has_value());
     v.templateEditor->refresh();
+    v.nodeEffects->setEditable(tab && m_workspace.checkContentCommand(*tab).has_value());
+    v.nodeEffects->refresh();
     v.kanjiTimer->documentEdited();
     v.visualTools->refresh();
     v.statusBar->setTimecodesFile(tabTimecodes(tab));
@@ -2334,7 +2357,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && m_video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (templateEditor().videoPreview()) {
+    if (nodeEffects().videoPreview()) {
+        templated = nodeEffects().videoDocument(draft ? *draft : session->document());
+    } else if (templateEditor().videoPreview()) {
         const auto &video = m_video->session();
         const auto frame = video.reportedFrame();
         const auto at = frame ? video.frameStart(*frame) : std::nullopt;
@@ -6303,6 +6328,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("automation"), QVariant::fromValue(static_cast<QObject *>(m_automation.get()))},
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
             {QStringLiteral("templateEditor"), QVariant::fromValue(views(shellWindow).templateEditor.get())},
+            {QStringLiteral("nodeEffects"), QVariant::fromValue(views(shellWindow).nodeEffects.get())},
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
             {QStringLiteral("automationResolution"), QVariant::fromValue(m_automation->resolutionPrompt())},

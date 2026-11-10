@@ -15,7 +15,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -91,7 +94,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {
@@ -197,7 +203,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -275,7 +284,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -343,7 +355,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -409,7 +424,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -474,7 +492,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -552,7 +573,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {
@@ -658,7 +682,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -725,7 +752,10 @@
             "Postprocessor",
             "QcNotes",
             "Review",
-            "Agent"
+            "Agent",
+            "NodeGraph",
+            "NodeInspector",
+            "NodeSources"
         ],
         "floatingWindows": [
             {
@@ -801,7 +831,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -864,7 +897,10 @@
                 "Postprocessor",
                 "QcNotes",
                 "Review",
-                "Agent"
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {

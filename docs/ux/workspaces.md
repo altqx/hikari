@@ -63,6 +63,8 @@ Accepted in the live tool-placement review: **B / movable and floating panels**.
 
 The [reviewed HTML follow-up](https://github.com/altqx/hikari/blob/9781b3cb51fb87d9640366a9619b9c5589ff1e26/docs/prototypes/workspace-tools.html) illustrates Left/Right/Bottom and Float positions. Its floating cards stay inside the browser page; this acceptance chooses the UX capability, not that simulation as a native implementation. The [accepted native docking contract](../docking.md) selects KDDockWidgets behind Hikari’s adapter, including persistence/recovery and cross-window ownership. Native accessibility, monitor and Qt integration qualification remain required.
 
+**Node effects** (NE2, [#424](https://github.com/altqx/hikari/issues/424)) is a window mode with its own arrangement, kept apart from every tab's: entering it keeps the tab's arrangement and shows Video, Source lines, Graph and Node, and leaving it restores the tab's. Switching tabs, applying a layout or restoring the previous layout leaves the mode first. See [node effects](../node-effects.md#the-node-effects-mode).
+
 ## Persistent tools and Home
 
 Accepted in the live review: Styles, Search, Timing and History **follow the editing document by default**, with an **optional Pin current document** control. A pinned tool retains its named document across editing-tab changes. When that document is a protected comparison reference, content-changing Apply remains unavailable. A tool must expose its document and scope; a preview must not silently retarget when the document or selection changes.

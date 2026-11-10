@@ -1,7 +1,7 @@
 qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_grid.cpp line_grid.h line_grid_accessible.cpp line_grid_accessible.h
     shell_controller.cpp shell_controller.h line_editor_controller.cpp line_editor_controller.h
     automation_dialog_controller.cpp automation_dialog_controller.h script_dialog_memory.cpp script_dialog_memory.h video_presenter.cpp video_presenter.h
-    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h
+    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h node_effects_controller.cpp node_effects_controller.h node_catalogue_text.cpp node_catalogue_text.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
@@ -27,6 +27,8 @@ qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml RecentList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagButton.qml TagButtonEditor.qml)
+qt_target_qml_sources(hikari_ui QML_FILES NodeGraphCanvas.qml NodePort.qml NodeAddPopup.qml NodeInspector.qml
+    NodeSourceLines.qml NodeModeBar.qml NodePresetMenu.qml NodeLibraryMenu.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
 target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
@@ -101,6 +103,7 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoFullscreen.qml FullscreenBarMenu.
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoRenderCost.qml
     VideoTemplateBadge.qml
+    VideoNodeBadge.qml
     VideoVolumeSlider.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml MenuRadioItem.qml MenuHeading.qml)

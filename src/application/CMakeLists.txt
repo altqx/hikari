@@ -14,10 +14,10 @@ target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/applic
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
 target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
-target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp node_layout.cpp
+target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp node_layout.cpp node_graph_editing.cpp node_graph_presets.cpp
     node_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
     include/hikari/application/node_graph.h include/hikari/application/node_graph_library.h
-    include/hikari/application/node_effects.h)
+    include/hikari/application/node_effects.h include/hikari/application/node_graph_editing.h)
 # Generated Lines must be byte-identical on every platform.
 set_source_files_properties(node_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

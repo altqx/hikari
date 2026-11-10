@@ -37,7 +37,8 @@ namespace {
 const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock",  "editorDock", "gridDock",
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
-                               "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock"};
+                               "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
+                               "nodeInspectorDock", "nodeSourcesDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")
 {
@@ -433,7 +434,7 @@ private slots:
         QVERIFY(menus);
         QCOMPARE(menus->property("count").toInt(), first()->findChild<QObject *>(QStringLiteral("appMenus"))->property("count").toInt());
         QVERIFY(item(second, "documentTabBar")->property("shown").toBool());
-        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar", "templateEditor", "kanjiTimer"})
+        for (const char *own : {"shell", "editor", "visualTools", "videoView", "statusBar", "templateEditor", "nodeEffects", "kanjiTimer"})
             QVERIFY2(controller(second, own) != controller(first(), own), own);
         QCOMPARE(second->property("hotkeys").value<QObject *>(), first()->property("hotkeys").value<QObject *>());
         QVERIFY(second->property("workspaceLayout").value<QObject *>() != first()->property("workspaceLayout").value<QObject *>());

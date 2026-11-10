@@ -183,9 +183,14 @@ View > Panels > Template editor >
 View > Panels > QC notes >
 View > Panels > Review >
 View > Panels > Agent >
+View > Panels > Graph >
+View > Panels > Node >
+View > Panels > Source lines >
 View > Panels > -
 View > Move panel…
 View > Restore the previous layout
+View > -
+View > Node effects [GLOBAL_NODE_EFFECTS]
 View > -
 View > Log
 View > Hide tags [GLOBAL_HIDE_TAGS]
