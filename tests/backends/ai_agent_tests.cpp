@@ -305,10 +305,11 @@ protected:
         host.reset();
     }
 
-    std::unique_ptr<AgentThreads> makeThreads()
+    std::unique_ptr<AgentThreads> makeThreads(bool withoutProvider = false)
     {
         AgentThreads::Wiring w;
-        w.requests = [this] { return requests.get(); };
+        w.requests = [this, withoutProvider] { return withoutProvider ? nullptr : requests.get(); };
+        w.agentHost = [this] { return sidecar(); };
         w.config = [this] { return &providers->config(); };
         w.api = &api;
         w.defaults = [this] { return defaults; };
@@ -436,13 +437,7 @@ TEST_F(AgentThreadsTest, ATurnStreamsTheAnswerKeepsTheHistoryAndTitlesTheThread)
 
 TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvider)
 {
-    AgentThreads::Wiring w;
-    w.config = [this] { return &providers->config(); };
-    w.api = &api;
-    w.agentHost = [this] { return sidecar(); };
-    w.now = [this] { return ++clock; };
-    w.today = [] { return QDate(2026, 11, 9); };
-    threads = std::make_unique<AgentThreads>(std::move(w), store.get());
+    threads = makeThreads(true);
 
     const std::string id = threads->create();
     threads->setModel(id, {"agent:claude", ""});

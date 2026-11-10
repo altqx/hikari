@@ -662,8 +662,8 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     if (parts.isArray())
         for (Json &part : parts.asArray())
             prompt.push(std::move(part));
-    AiRequests *requests = m_wiring.requests();
-    const bool caching = requests->caching();
+    AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
+    const bool caching = requests && requests->caching();
     if (!m_live.contains(id)) {
         Json open = Json::object({{"sessionId", id},
                                   {"model", modelJson(*model)},
