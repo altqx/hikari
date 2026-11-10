@@ -525,3 +525,10 @@ find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 hikari_add_gtest(hikari_backends_ai_sidecar_updater_tests SOURCES ai_sidecar_updater_tests.cpp
     LIBRARIES hikari_ai Qt6::Core Qt6::CorePrivate Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
 target_include_directories(hikari_backends_ai_sidecar_updater_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+add_executable(hikari_fake_agent_cli fake_agent_cli.cpp)
+hikari_add_gtest(hikari_backends_ai_agent_cli_tests SOURCES ai_agent_cli_tests.cpp
+    LIBRARIES hikari_ai Qt6::Core Qt6::CorePrivate Qt6::Network ZLIB::ZLIB Hikari::sodium LABELS backends)
+target_include_directories(hikari_backends_ai_agent_cli_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_backends_ai_agent_cli_tests PRIVATE
+    HIKARI_FAKE_AGENT_CLI="$<TARGET_FILE:hikari_fake_agent_cli>")
+add_dependencies(hikari_backends_ai_agent_cli_tests hikari_fake_agent_cli)

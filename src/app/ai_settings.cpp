@@ -2,13 +2,17 @@
 
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
+#include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include <QDateTime>
+#include <QDir>
 #include <QFileInfo>
+#include <QJsonObject>
+#include <QTimer>
 #include <QUrl>
 
 #include <algorithm>
@@ -56,6 +60,8 @@ QString downloadErrorId(backends::ai::SidecarDownloadError error)
     case E::Manifest:
     case E::NoAsset:
         return QStringLiteral("downloadManifest");
+    case E::Signature:
+        return QStringLiteral("downloadSignature");
     case E::Network:
         return QStringLiteral("downloadNetwork");
     case E::Mismatch:
@@ -67,6 +73,82 @@ QString downloadErrorId(backends::ai::SidecarDownloadError error)
     return QStringLiteral("downloadNetwork");
 }
 
+QString methodId(backends::ai::AgentInstallMethod method)
+{
+    using M = backends::ai::AgentInstallMethod;
+    switch (method) {
+    case M::Native:
+        return QStringLiteral("native");
+    case M::Npm:
+        return QStringLiteral("npm");
+    case M::Pnpm:
+        return QStringLiteral("pnpm");
+    case M::Bun:
+        return QStringLiteral("bun");
+    case M::Yarn:
+        return QStringLiteral("yarn");
+    case M::Volta:
+        return QStringLiteral("volta");
+    case M::Homebrew:
+        return QStringLiteral("homebrew");
+    case M::WinGet:
+        return QStringLiteral("winget");
+    case M::Chocolatey:
+        return QStringLiteral("chocolatey");
+    case M::Mise:
+        return QStringLiteral("mise");
+    case M::Unknown:
+        break;
+    }
+    return QStringLiteral("unknown");
+}
+
+QString badgeId(backends::ai::AgentBadge badge)
+{
+    using B = backends::ai::AgentBadge;
+    switch (badge) {
+    case B::Current:
+        return QStringLiteral("current");
+    case B::UpdateAvailable:
+        return QStringLiteral("update");
+    case B::Unsupported:
+        return QStringLiteral("unsupported");
+    case B::KnownBroken:
+        return QStringLiteral("broken");
+    case B::Unknown:
+        break;
+    }
+    return {};
+}
+
+QString outcomeId(backends::ai::AgentUpdate::Outcome outcome)
+{
+    using O = backends::ai::AgentUpdate::Outcome;
+    switch (outcome) {
+    case O::Updated:
+        return QStringLiteral("updated");
+    case O::Unchanged:
+        return QStringLiteral("unchanged");
+    case O::TimedOut:
+        return QStringLiteral("timedOut");
+    case O::Cancelled:
+        return QStringLiteral("cancelled");
+    case O::Failed:
+        break;
+    }
+    return QStringLiteral("failed");
+}
+
+QString shownPath(const QString &path)
+{
+#ifndef Q_OS_WIN
+    const QString home = QDir::homePath() + QLatin1Char('/');
+    if (path.startsWith(home))
+        return QStringLiteral("~/") + path.mid(home.size());
+#endif
+    return QDir::toNativeSeparators(path);
+}
+
 bool sameEndpoint(const ai::Provider &a, const ai::Provider &b)
 {
     return a.id == b.id && a.preset == b.preset && a.wire == b.wire && a.baseUrl == b.baseUrl;
@@ -74,14 +156,30 @@ bool sameEndpoint(const ai::Provider &a, const ai::Provider &b)
 
 }
 
+struct AiSettings::Agent {
+    std::optional<backends::ai::AgentCli> cli;
+    backends::ai::AgentInstall install;
+    QString latest;
+    bool session = false;
+    std::unique_ptr<backends::ai::AgentUpdate> update;
+    QString outcome;
+    QString lastLine;
+};
+
 AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, QObject *parent)
     : QObject(parent), m_features(features), m_mcp(mcp)
 {
+    for (const char *name : backends::ai::kAgentClis)
+        m_agents.emplace(QLatin1String(name), std::make_unique<Agent>());
     connect(&m_features, &AiFeatures::switched, this, [this] {
         reset();
+        watchUpdater();
         emit switched();
         emit providersChanged();
+        emit componentsChanged();
     });
+    connect(&m_features, &AiFeatures::componentsChanged, this, &AiSettings::componentsChanged);
+    watchUpdater();
 }
 
 AiSettings::~AiSettings()
@@ -531,15 +629,6 @@ void AiSettings::checkCodex()
     const AiFeatures::Ports &ports = m_features.ports();
     m_codex.canImport = !ports.codexAuthPath.isEmpty() && QFileInfo::exists(ports.codexAuthPath);
     emit codexChanged();
-    if (ports.findCodex)
-        ports.findCodex([this, alive = std::weak_ptr(m_alive)](std::optional<backends::ai::CodexCli> cli) {
-            if (!alive.lock())
-                return;
-            m_codex.found = cli.has_value();
-            m_codex.path = cli ? cli->path : QString();
-            m_codex.version = cli ? cli->version : QString();
-            emit codexChanged();
-        });
     signIn->codexSession([this, alive = std::weak_ptr(m_alive)](std::optional<backends::ai::CodexSession> session) {
         if (!alive.lock())
             return;
@@ -909,6 +998,240 @@ void AiSettings::openSearchKeys(const QString &service) const
 void AiSettings::openWhatIsSent() const
 {
     backends::desktop::openUrl(whatIsSentUrl());
+}
+
+void AiSettings::watchUpdater()
+{
+    backends::ai::AiSidecarUpdater *updater = m_features.updater();
+    if (m_watched == updater)
+        return;
+    if (m_watched)
+        disconnect(m_watched, nullptr, this, nullptr);
+    m_watched = updater;
+    m_componentState.clear();
+    m_componentError.clear();
+    if (!updater)
+        return;
+    using backends::ai::AiSidecarUpdater;
+    connect(updater, &AiSidecarUpdater::progress, this, [this](qint64 received, qint64 total) {
+        if (m_download)
+            return;
+        m_componentState = QStringLiteral("downloading");
+        m_componentReceived = received;
+        m_componentTotal = total;
+        emit componentsChanged();
+    });
+    connect(updater, &AiSidecarUpdater::checked, this, [this] {
+        m_componentError.clear();
+        QTimer::singleShot(0, this, [this] {
+            if (m_componentState == QLatin1String("checking") && (!m_watched || !m_watched->busy()))
+                m_componentState.clear();
+            emit componentsChanged();
+        });
+        emit componentsChanged();
+    });
+    connect(updater, &AiSidecarUpdater::downloaded, this, [this] {
+        m_componentState.clear();
+        emit componentsChanged();
+    });
+    connect(updater, &AiSidecarUpdater::failed, this, [this](backends::ai::SidecarDownloadError error, const QString &) {
+        if (m_componentState == QLatin1String("cancelled"))
+            m_componentError.clear();
+        else
+            m_componentError = downloadErrorId(error);
+        m_componentState.clear();
+        emit componentsChanged();
+    });
+}
+
+QVariantMap AiSettings::components() const
+{
+    const backends::ai::AiSidecarUpdater *updater = m_features.updater();
+    if (!updater)
+        return {{QStringLiteral("present"), false}};
+    const QJsonObject versions = m_features.versionProperties();
+    const auto staged = updater->staged();
+    QVariantMap rollback;
+    if (const auto r = updater->rollback())
+        rollback = {{QStringLiteral("version"), r->version},
+                    {QStringLiteral("to"), r->to},
+                    {QStringLiteral("reportSent"), r->reportSent}};
+    const QString state = m_componentState == QLatin1String("cancelled") ? QString() : m_componentState;
+    return {{QStringLiteral("present"), true},
+            {QStringLiteral("version"), versions.value(QLatin1String("ai_component_version")).toString()},
+            {QStringLiteral("runtime"), versions.value(QLatin1String("ai_runtime_version")).toString()},
+            {QStringLiteral("anthropic"), versions.value(QLatin1String("ai_anthropic_version")).toString()},
+            {QStringLiteral("openai"), versions.value(QLatin1String("ai_openai_version")).toString()},
+            {QStringLiteral("google"), versions.value(QLatin1String("ai_google_version")).toString()},
+            {QStringLiteral("available"), updater->available()},
+            {QStringLiteral("availableBytes"), updater->availableBytes()},
+            {QStringLiteral("staged"), staged ? staged->version : QString()},
+            {QStringLiteral("newerNeedsApp"), updater->newerNeedsApp()},
+            {QStringLiteral("checkedAt"), updater->lastCheck().isValid() ? updater->lastCheck().toMSecsSinceEpoch() : 0},
+            {QStringLiteral("state"), state},
+            {QStringLiteral("received"), m_componentReceived},
+            {QStringLiteral("total"), m_componentTotal},
+            {QStringLiteral("error"), m_componentError},
+            {QStringLiteral("policyOff"), m_features.autoUpdateOffByPolicy()},
+            {QStringLiteral("rollback"), rollback}};
+}
+
+void AiSettings::checkComponents()
+{
+    watchUpdater();
+    if (!m_watched || m_watched->busy())
+        return;
+    m_componentState = QStringLiteral("checking");
+    m_componentError.clear();
+    m_componentReceived = m_componentTotal = 0;
+    m_features.checkNow();
+    emit componentsChanged();
+}
+
+void AiSettings::updateComponents()
+{
+    watchUpdater();
+    if (!m_watched || m_watched->busy())
+        return;
+    m_componentState = QStringLiteral("checking");
+    m_componentError.clear();
+    m_componentReceived = 0;
+    m_componentTotal = m_watched->availableBytes();
+    m_features.updateNow();
+    emit componentsChanged();
+}
+
+void AiSettings::cancelComponents()
+{
+    if (!m_watched || !m_watched->busy())
+        return;
+    m_componentState = QStringLiteral("cancelled");
+    m_watched->abort();
+    emit componentsChanged();
+}
+
+void AiSettings::dismissComponentNotice()
+{
+    if (backends::ai::AiSidecarUpdater *updater = m_features.updater()) {
+        updater->setRollback(std::nullopt);
+        emit componentsChanged();
+    }
+}
+
+void AiSettings::openWhatsNew() const
+{
+    backends::desktop::openUrl(whatsNewUrl());
+}
+
+QVariantMap AiSettings::agents() const
+{
+    QVariantMap out;
+    for (const auto &[name, agent] : m_agents)
+        out.insert(name, agentRow(name));
+    return out;
+}
+
+QVariantMap AiSettings::agentRow(const QString &name) const
+{
+    const Agent &a = *m_agents.at(name);
+    if (!a.cli)
+        return {{QStringLiteral("found"), false}};
+    backends::ai::AgentCompat compat;
+    if (const backends::ai::AiSidecarUpdater *updater = m_features.updater())
+        if (const auto it = updater->agentCompat().find(name); it != updater->agentCompat().end())
+            compat = it->second;
+    const bool updating = a.update && a.update->running();
+    return {{QStringLiteral("found"), true},
+            {QStringLiteral("path"), shownPath(a.cli->path)},
+            {QStringLiteral("version"), a.cli->version},
+            {QStringLiteral("latest"), a.latest},
+            {QStringLiteral("badge"), badgeId(backends::ai::agentBadge(a.cli->version, a.latest, compat))},
+            {QStringLiteral("method"), methodId(a.install.method)},
+            {QStringLiteral("minimum"), compat.minimum},
+            {QStringLiteral("canUpdate"), !a.install.program.isEmpty()},
+            {QStringLiteral("command"), a.install.manualCommand},
+            {QStringLiteral("session"), a.session},
+            {QStringLiteral("state"), updating ? QStringLiteral("updating") : QString()},
+            {QStringLiteral("outcome"), a.outcome},
+            {QStringLiteral("lastLine"), a.lastLine}};
+}
+
+void AiSettings::checkAgents()
+{
+    const AiFeatures::Ports &ports = m_features.ports();
+    refreshAgentSessions();
+    if (!ports.findAgent)
+        return;
+    for (const auto &[name, agent] : m_agents) {
+        if (agent->update && agent->update->running())
+            continue;
+        ports.findAgent(name, [this, alive = std::weak_ptr(m_alive), name](std::optional<backends::ai::AgentCli> cli) {
+            if (!alive.lock())
+                return;
+            Agent &a = *m_agents.at(name);
+            a.cli = std::move(cli);
+            a.install = a.cli && m_features.ports().agentInstall ? m_features.ports().agentInstall(*a.cli)
+                                                                  : backends::ai::AgentInstall{};
+            if (name == QLatin1String("codex")) {
+                m_codex.found = a.cli.has_value();
+                m_codex.path = a.cli ? a.cli->path : QString();
+                m_codex.version = a.cli ? a.cli->version : QString();
+                emit codexChanged();
+            }
+            emit agentsChanged();
+            if (!a.cli || !m_features.ports().agentLatest)
+                return;
+            m_features.ports().agentLatest(a.install, [this, alive, name](QString latest) {
+                if (!alive.lock())
+                    return;
+                m_agents.at(name)->latest = std::move(latest);
+                emit agentsChanged();
+            });
+        });
+    }
+}
+
+void AiSettings::updateAgent(const QString &agent)
+{
+    const auto it = m_agents.find(agent);
+    if (it == m_agents.end())
+        return;
+    Agent &a = *it->second;
+    refreshAgentSessions();
+    if (!a.cli || a.install.program.isEmpty() || a.session || (a.update && a.update->running()))
+        return;
+    a.update = std::make_unique<backends::ai::AgentUpdate>();
+    a.outcome.clear();
+    a.lastLine.clear();
+    connect(a.update.get(), &backends::ai::AgentUpdate::finished, this,
+            [this, agent](backends::ai::AgentUpdate::Outcome outcome, const QString &version, const QString &lastLine) {
+                Agent &done = *m_agents.at(agent);
+                done.outcome = outcomeId(outcome);
+                done.lastLine = lastLine;
+                if (outcome == backends::ai::AgentUpdate::Outcome::Updated && done.cli)
+                    done.cli->version = version;
+                emit agentsChanged();
+            });
+    a.update->start(a.install, a.cli->path, a.cli->version);
+    emit agentsChanged();
+}
+
+void AiSettings::cancelAgentUpdate(const QString &agent)
+{
+    if (const auto it = m_agents.find(agent); it != m_agents.end() && it->second->update)
+        it->second->update->cancel();
+}
+
+void AiSettings::refreshAgentSessions()
+{
+    bool changed = false;
+    for (const auto &[name, agent] : m_agents) {
+        const bool session = m_features.agentSessions(name.toStdString()) > 0;
+        changed = changed || session != agent->session;
+        agent->session = session;
+    }
+    if (changed)
+        emit agentsChanged();
 }
 
 void AiSettings::openGeminiKeys() const

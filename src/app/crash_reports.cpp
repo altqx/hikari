@@ -172,6 +172,7 @@ report::Report CrashReports::fresh() const
     report::Report r;
     r.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     r.system = m_system;
+    r.system.ai = Analytics::conforming(QStringLiteral("crash_report"), m_analytics.aiVersions());
     r.settings = report::settingsSummary(m_settings);
     return r;
 }
@@ -250,6 +251,7 @@ void CrashReports::savePending()
 void CrashReports::started(const QString &package, int screens, qreal scale, const QString &layout)
 {
     m_system = report::System::current(m_config.version, package, screens, scale, layout);
+    m_system.ai = Analytics::conforming(QStringLiteral("crash_report"), m_analytics.aiVersions());
     if (m_started)
         return;
     m_started = true;
@@ -278,6 +280,18 @@ void CrashReports::freezeRecovered(const crash::Record &record)
     emit changed();
     if (!m_settings.boolean(kAlwaysSend) || !canSend() || !sendAuto(QStringLiteral("freeze")))
         emit freezeNoticed(record.seconds);
+}
+
+bool CrashReports::aiComponentFailed(const QString &failedVersion, const QString &failure)
+{
+    if (!m_settings.boolean(kAlwaysSend) || !canSend())
+        return false;
+    QJsonObject properties = fresh().reportProperties({});
+    properties.remove(QStringLiteral("log"));
+    properties.insert(QStringLiteral("kind"), QStringLiteral("ai_component"));
+    properties.insert(QStringLiteral("ai_failed_version"), failedVersion);
+    properties.insert(QStringLiteral("ai_failure"), failure);
+    return m_analytics.sendReport({{QStringLiteral("crash_report"), properties}});
 }
 
 bool CrashReports::sendAuto(const QString &source)
