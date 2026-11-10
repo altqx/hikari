@@ -6663,6 +6663,10 @@ Failed to copy %2 fonts.</source>
         <translation>탭을 창으로 이동</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>창 닫기</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7717,6 +7721,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Program settings</source>
         <translation>프로그램 설정</translation>
+    </message>
+    <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>이 창을 닫습니다. 마지막 창을 닫으면 프로그램이 종료됩니다</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>창 닫기[&amp;W]</translation>
     </message>
     <message>
         <source>Exit the program</source>

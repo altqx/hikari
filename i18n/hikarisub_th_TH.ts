@@ -6663,6 +6663,10 @@ Failed to copy %2 fonts.</source>
         <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
     </message>
     <message>
+        <source>Close window</source>
+        <translation>ปิดหน้าต่าง</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7717,6 +7721,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Program settings</source>
         <translation>การตั้งค่าโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>ปิดหน้าต่างนี้ การปิดหน้าต่างสุดท้ายจะออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>ปิดหน้า&amp;ต่าง</translation>
     </message>
     <message>
         <source>Exit the program</source>
