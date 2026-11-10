@@ -29035,7 +29035,7 @@ private slots:
             QTest::keyClick(window, key);
             QTRY_COMPARE(tools.activeFamily(), 0);
         }
-        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q"}));
+        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q", "W"}));
         QCOMPARE(QQmlProperty(visualItem("visualTool0"), QStringLiteral("ToolTip.text"), qmlContext(visualItem("visualTool0")))
                          .read()
                          .toString(),

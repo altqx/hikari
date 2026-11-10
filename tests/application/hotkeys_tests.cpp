@@ -640,13 +640,13 @@ TEST(Hotkeys, ConflictsPerWindow)
         HotkeyList list(copy);
         list.build(live);
         const int stop = list.find("Video Stop");
-        auto c = list.mapConflict(stop, "W", VideoHotkey, live);
+        auto c = list.mapConflict(stop, "E", VideoHotkey, live);
         ASSERT_TRUE(c);
         EXPECT_TRUE(c->doubled);
-        EXPECT_EQ(c->message, "This hotkey already exists for \"Play 500 ms after\".\nWhat to do?");
-        list.map(stop, "W", VideoHotkey, HotkeyAnswer::Delete, live);
-        EXPECT_EQ(list.row(stop).accel, "W");
-        EXPECT_EQ(rowNamed(list, "Audio Play 500 ms after").accel, "W");
+        EXPECT_EQ(c->message, "This hotkey already exists for \"Play first 500 ms\".\nWhat to do?");
+        list.map(stop, "E", VideoHotkey, HotkeyAnswer::Delete, live);
+        EXPECT_EQ(list.row(stop).accel, "E");
+        EXPECT_EQ(rowNamed(list, "Audio Play first 500 ms").accel, "E");
         const int insert = list.find("Subtitles Insert before");
         c = list.mapConflict(insert, "L", GridHotkey, live);
         ASSERT_TRUE(c);
@@ -794,16 +794,16 @@ TEST(Hotkeys, GestureMapsAtOnce)
     ASSERT_TRUE(c);
     EXPECT_TRUE(c->doubled);
     EXPECT_EQ(c->message, "This hotkey already exists for \"Save\".\nWhat to do?");
-    c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "W", VideoHotkey);
+    c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "E", VideoHotkey);
     ASSERT_TRUE(c);
     EXPECT_FALSE(c->doubled);
-    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play 500 ms "
-                          "after\".\nWhat would you like to do?");
-    auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "W", VideoHotkey, HotkeyAnswer::SetAnyway);
+    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play first 500 "
+                          "ms\".\nWhat would you like to do?");
+    auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "E", VideoHotkey, HotkeyAnswer::SetAnyway);
     EXPECT_TRUE(r.changed);
     EXPECT_TRUE(r.saveAudio);
-    EXPECT_EQ(live.at(HotkeyId{ids().at("VIDEO_STOP"), VideoHotkey}).accel, "W");
-    EXPECT_EQ(live.at(HotkeyId{ids().at("AUDIO_PLAY_500MS_AFTER"), AudioHotkey}).accel, "W");
+    EXPECT_EQ(live.at(HotkeyId{ids().at("VIDEO_STOP"), VideoHotkey}).accel, "E");
+    EXPECT_EQ(live.at(HotkeyId{ids().at("AUDIO_PLAY_500MS_FIRST"), AudioHotkey}).accel, "E");
     r = mapHotkeyNow(live, kNextDoubtful, "Next unconfirmed line", "Ctrl-R", EditorHotkey, HotkeyAnswer::Switch);
     EXPECT_FALSE(r.saveAudio);
     EXPECT_EQ(live.at(HotkeyId{kNextDoubtful, EditorHotkey}).accel, "Ctrl-R");
