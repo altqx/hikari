@@ -151,12 +151,4 @@ private:
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };
 
-struct CodexCli {
-    QString path;
-    QString version;
-};
-
-/// `codex` on PATH and its `--version`; nullopt when it isn't there.
-void findCodexCli(std::function<void(std::optional<CodexCli>)> done);
-
 }

@@ -536,6 +536,20 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>Up to date · checked %n minute ago</numerusform>
+            <numerusform>Up to date · checked %n minutes ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>Up to date · checked %n hour ago</numerusform>
+            <numerusform>Up to date · checked %n hours ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Connected · %n model(s)</source>
         <translation>
             <numerusform>Connected · %n model</numerusform>

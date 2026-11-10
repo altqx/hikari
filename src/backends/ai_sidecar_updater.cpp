@@ -14,6 +14,7 @@
 
 #include <zlib.h>
 
+#include <algorithm>
 #include <array>
 
 namespace hikari::backends::ai {
@@ -191,6 +192,12 @@ std::optional<SidecarInstall> AiSidecarUpdater::installation(const QString &vers
     return install;
 }
 
+void AiSidecarUpdater::setRollback(std::optional<SidecarRollback> rollback)
+{
+    m_rollback = std::move(rollback);
+    save();
+}
+
 bool AiSidecarUpdater::usable(const QString &version) const
 {
     return !version.isEmpty() && !m_blocked.contains(version) && !m_skipped.contains(version) &&
@@ -226,6 +233,16 @@ void AiSidecarUpdater::load()
     m_blocked = toList(state.value(QStringLiteral("blocked")));
     m_seen = state.value(QStringLiteral("seen")).toString();
     m_available = state.value(QStringLiteral("available")).toString();
+    m_availableBytes = state.value(QStringLiteral("availableBytes")).toInteger();
+    m_newerNeedsApp = state.value(QStringLiteral("newerNeedsApp")).toBool();
+    const QJsonObject agents = state.value(QStringLiteral("agents")).toObject();
+    for (auto it = agents.begin(); it != agents.end(); ++it) {
+        const QJsonObject entry = it.value().toObject();
+        m_agents[it.key()] = {entry.value(QStringLiteral("minimum")).toString(), toList(entry.value(QStringLiteral("broken")))};
+    }
+    if (const QJsonObject r = state.value(QStringLiteral("rollback")).toObject(); !r.isEmpty())
+        m_rollback = SidecarRollback{r.value(QStringLiteral("version")).toString(), r.value(QStringLiteral("to")).toString(),
+                                     r.value(QStringLiteral("reason")).toString(), r.value(QStringLiteral("reportSent")).toBool()};
     m_etag = state.value(QStringLiteral("etag")).toString().toLatin1();
     m_checked = QDateTime::fromString(state.value(QStringLiteral("checked")).toString(), Qt::ISODate);
 }
@@ -233,7 +250,11 @@ void AiSidecarUpdater::load()
 void AiSidecarUpdater::save() const
 {
     QDir().mkpath(m_root);
-    const QJsonObject state{{QStringLiteral("current"), m_current},
+    QJsonObject agents;
+    for (const auto &[name, compat] : m_agents)
+        agents.insert(name, QJsonObject{{QStringLiteral("minimum"), compat.minimum},
+                                        {QStringLiteral("broken"), toArray(compat.broken)}});
+    QJsonObject state{{QStringLiteral("current"), m_current},
                             {QStringLiteral("previous"), m_previous},
                             {QStringLiteral("staged"), m_staged},
                             {QStringLiteral("skipped"), toArray(m_skipped)},
@@ -241,7 +262,15 @@ void AiSidecarUpdater::save() const
                             {QStringLiteral("seen"), m_seen},
                             {QStringLiteral("available"), m_available},
                             {QStringLiteral("etag"), QString::fromLatin1(m_etag)},
-                            {QStringLiteral("checked"), m_checked.toString(Qt::ISODate)}};
+                            {QStringLiteral("checked"), m_checked.toString(Qt::ISODate)},
+                            {QStringLiteral("availableBytes"), m_availableBytes},
+                            {QStringLiteral("newerNeedsApp"), m_newerNeedsApp},
+                            {QStringLiteral("agents"), agents}};
+    if (m_rollback)
+        state.insert(QStringLiteral("rollback"), QJsonObject{{QStringLiteral("version"), m_rollback->version},
+                                                             {QStringLiteral("to"), m_rollback->to},
+                                                             {QStringLiteral("reason"), m_rollback->reason},
+                                                             {QStringLiteral("reportSent"), m_rollback->reportSent}});
     writeFile(m_root + QStringLiteral("/state.json"), QJsonDocument(state).toJson());
 }
 
@@ -358,15 +387,15 @@ void AiSidecarUpdater::useManifest(Goal goal, const QByteArray &manifest, const 
 {
     const auto channel = parseChannel(manifest);
     if (!channel)
-        return fail(SidecarDownloadError::Manifest, QStringLiteral("the AI channel's manifest is malformed"));
+        return fail(SidecarDownloadError::Signature, QStringLiteral("the AI channel's manifest is malformed"));
     const auto problem = application::releaseSignatureProblem(
         manifest.toStdString(),
         signature.isEmpty() ? std::nullopt : std::optional(signature.toStdString()),
         channelTag(channel->version).toStdString(), kChannelManifest, m_source.keys);
     if (problem)
-        return fail(SidecarDownloadError::Manifest, QString::fromLatin1(application::signatureProblemText(*problem)));
+        return fail(SidecarDownloadError::Signature, QString::fromLatin1(application::signatureProblemText(*problem)));
     if (!m_seen.isEmpty() && compareVersions(channel->version, m_seen) < 0)
-        return fail(SidecarDownloadError::Manifest,
+        return fail(SidecarDownloadError::Signature,
                     QStringLiteral("the AI channel's manifest is older than one already seen"));
     m_seen = channel->version;
     m_blocked = channel->blocked;
@@ -378,6 +407,17 @@ void AiSidecarUpdater::useManifest(Goal goal, const QByteArray &manifest, const 
     const QString running = current() ? current()->version : QString();
     m_available = chosen && (running.isEmpty() || compareVersions(chosen->version, running) > 0) ? chosen->version
                                                                                                   : QString();
+    m_availableBytes = 0;
+    if (!m_available.isEmpty()) {
+        if (!QFileInfo(runtimeDirectory(chosen->runtime) + QLatin1Char('/') + runtimeExecutableName()).isFile())
+            m_availableBytes += channel->runtimeAsset(chosen->runtime, sidecarPlatform())->size;
+        m_availableBytes += chosen->bundle.size;
+    }
+    const QString best = chosen ? chosen->version : running;
+    m_newerNeedsApp = std::ranges::any_of(channel->releases, [&](const SidecarRelease &release) {
+        return !runs(release, m_compat) && (best.isEmpty() || compareVersions(release.version, best) > 0);
+    });
+    m_agents = channel->agents;
     save();
     if (goal == Goal::Check || goal == Goal::Stage)
         emit checked();

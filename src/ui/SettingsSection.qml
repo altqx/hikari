@@ -8,6 +8,7 @@ ColumnLayout {
     property string title
     property bool ruled: true
     default property alias content: rows.data
+    property alias trailing: trailingSlot.data
 
     spacing: 10
     Layout.fillWidth: true
@@ -22,11 +23,21 @@ ColumnLayout {
         Layout.topMargin: 6
         Layout.bottomMargin: 6
     }
-    Label {
-        text: section.title
-        font.bold: true
-        color: Theme.text
+    RowLayout {
+        spacing: 8
         Layout.fillWidth: true
+        Label {
+            text: section.title
+            font.bold: true
+            color: Theme.text
+            Layout.fillWidth: true
+        }
+        Item {
+            id: trailingSlot
+            visible: children.length > 0
+            implicitWidth: childrenRect.width
+            implicitHeight: childrenRect.height
+        }
     }
     ColumnLayout {
         id: rows

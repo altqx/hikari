@@ -81,6 +81,7 @@ protected:
     {
         auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script, include);
         host->setServiceHandler(std::move(services));
+        host->setCompileCache(compileCache);
         QObject::connect(host.get(), &LuaScriptHost::logged, [this](const QString &t) { run.log << t; });
         QObject::connect(host.get(), &LuaScriptHost::progressChanged, [this](double p) { run.progress << p; });
         QObject::connect(host.get(), &LuaScriptHost::dialogWithdrawn, [this] { ++run.withdrawn; });
@@ -112,6 +113,7 @@ protected:
     }
 
     RunRecord run;
+    QString compileCache;
 };
 
 TEST_F(LuaHelper, LoadsTheUnchangedBundledEdgeblurScript)
@@ -1534,6 +1536,86 @@ TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
         << run.message.toStdString();
 }
 
+QByteArray readAll(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+void writeAll(const QString &path, const QByteArray &bytes)
+{
+    QFile f(path);
+    ASSERT_TRUE(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    f.write(bytes);
+}
+
+QStringList cacheEntries(const QString &dir)
+{
+    return QDir(dir).entryList(QDir::Files);
+}
+
+TEST_F(LuaHelper, MoonScriptLoadsFromTheCompileCacheAndKeepsItsErrorLines)
+{
+    QTemporaryDir cache;
+    ASSERT_TRUE(cache.isValid());
+    compileCache = cache.path();
+    {
+        auto host = load(fixture("moon-macro.moon"));
+        ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    }
+    const QStringList entries = cacheEntries(cache.path());
+    ASSERT_EQ(entries.size(), 1) << entries.join(' ').toStdString();
+    const QString entry = cache.filePath(entries[0]);
+    QByteArray bytes = readAll(entry);
+    const qsizetype code = bytes.lastIndexOf("moon ran ");
+    ASSERT_GT(code, bytes.indexOf("moon ran ")) << "the source, then the compiled Lua";
+    bytes.replace(code, 9, "from hit ");
+    writeAll(entry, bytes);
+
+    auto host = load(fixture("moon-macro.moon"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runToEnd(*host, "Moon"));
+    EXPECT_EQ(run.log, QStringList{"from hit 2,4,6"}) << "the cached Lua ran, not a new compile";
+    ASSERT_TRUE(runToEnd(*host, "Moon error"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("File \"%1\", line 7").arg(fixture("moon-macro.moon"))))
+        << run.message.toStdString();
+}
+
+TEST_F(LuaHelper, AChangedSourceOrCompilerMissesTheCompileCache)
+{
+    QTemporaryDir cache, work, compiler;
+    ASSERT_TRUE(cache.isValid() && work.isValid() && compiler.isValid());
+    compileCache = cache.path();
+    const QString script = work.filePath(QStringLiteral("moon-macro.moon"));
+    const QByteArray source = readAll(fixture("moon-macro.moon"));
+    writeAll(script, source);
+    const auto ranAfterTampering = [&](const QString &include) {
+        for (const QString &name : cacheEntries(cache.path())) {
+            QByteArray bytes = readAll(cache.filePath(name));
+            const qsizetype code = bytes.lastIndexOf("moon ran ");
+            if (code > bytes.indexOf("moon ran "))
+                writeAll(cache.filePath(name), bytes.replace(code, 9, "from hit "));
+        }
+        auto host = load(script, {}, include);
+        EXPECT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+        EXPECT_TRUE(runToEnd(*host, "Moon"));
+        return run.log;
+    };
+    const QString include = QStringLiteral(HIKARI_LUA_INCLUDE);
+    EXPECT_EQ(ranAfterTampering(include), QStringList{"moon ran 2,4,6"}) << "nothing cached yet";
+    EXPECT_EQ(ranAfterTampering(include), QStringList{"from hit 2,4,6"});
+
+    writeAll(script, source + "\n-- changed\n");
+    EXPECT_EQ(ranAfterTampering(include), QStringList{"moon ran 2,4,6"}) << "a changed source";
+    EXPECT_EQ(cacheEntries(cache.path()).size(), 1) << "the file's entry was replaced";
+
+    writeAll(compiler.filePath(QStringLiteral("moonscript.lua")),
+             readAll(include + QStringLiteral("/moonscript.lua")) + "\n-- another compiler\n");
+    EXPECT_EQ(ranAfterTampering(compiler.path()), QStringList{"moon ran 2,4,6"}) << "a new compiler";
+    EXPECT_EQ(cacheEntries(cache.path()).size(), 2);
+}
+
 // DependencyControl's first require runs an update check against live third-party feeds.
 void disableDependencyControlUpdater(const QString &automationDir)
 {
@@ -1616,20 +1698,30 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
 #ifdef _WIN32
     paths.windows = true;
 #endif
-    int decodedWhileLoading = 0;
-    auto host = load(fixture("depctrl-load.lua"),
-                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
-                         if (r.service != hikari::application::HostService::DecodePath)
-                             return reply(hikari::application::HostServiceReply::unavailable());
-                         ++decodedWhileLoading;
-                         hikari::application::HostServiceReply out;
-                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
-                         reply(out);
-                     });
-    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
-    EXPECT_GT(decodedWhileLoading, 0);
-    ASSERT_TRUE(runToEnd(*host, "Show"));
-    EXPECT_EQ(run.log, QStringList{"true,table,"});
+    QTemporaryDir cache;
+    ASSERT_TRUE(cache.isValid());
+    compileCache = cache.path();
+    std::vector<double> loadMs;
+    for (const char *pass : {"compiling", "from the compile cache"}) {
+        int decodedWhileLoading = 0;
+        auto host = load(fixture("depctrl-load.lua"),
+                         [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                             if (r.service != hikari::application::HostService::DecodePath)
+                                 return reply(hikari::application::HostServiceReply::unavailable());
+                             ++decodedWhileLoading;
+                             hikari::application::HostServiceReply out;
+                             out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                             reply(out);
+                         });
+        ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << pass << ": " << host->lastError().toStdString();
+        EXPECT_GT(decodedWhileLoading, 0) << pass;
+        ASSERT_TRUE(runToEnd(*host, "Show")) << pass;
+        EXPECT_EQ(run.log, QStringList{"true,table,"}) << pass;
+        loadMs.push_back(host->loadMs());
+        std::fprintf(stderr, "DependencyControl load %s: %.0f ms\n", pass, host->loadMs());
+    }
+    EXPECT_FALSE(cacheEntries(cache.path()).isEmpty());
+    EXPECT_LT(loadMs[1], loadMs[0] / 2);
 }
 
 TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)

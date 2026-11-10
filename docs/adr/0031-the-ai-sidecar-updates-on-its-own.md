@@ -79,5 +79,5 @@ It amends [ADR 0019](0019-installers-and-seamless-updates.md) and [ADR 0027](002
 
 ## The user's `claude` and `codex`
 
-- **Badges** compare the installed `--version` with the latest from the install method's source. The compatibility table (minimum supported, known broken) rides in the signed AI manifest. No badge shows until AI15 lands; the CLI probe already finds `claude` and `codex` on `PATH`.
+- **Badges** compare the installed `--version` with the latest from the install method's source. The compatibility table (minimum supported, known broken) rides in the signed AI manifest. The owner chose on 2026-11-09 (Q122) to show them with AI24b, for the `claude` and `codex` on `PATH`, without waiting for AI15.
 - **Update now** runs the official command only when the binary's real path proves the install method. It runs on the user's click, outside SB1's sandbox, with a fixed command from Qt, and never one from the sidecar. Anything else gets a command to copy, and nothing that needs admin ever runs.

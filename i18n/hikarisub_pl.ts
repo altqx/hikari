@@ -11541,6 +11541,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można pobrać komponentu AI</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>Nie udało się sprawdzić: zły podpis</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>Pobrany komponent AI jest uszkodzony</translation>
     </message>
@@ -11551,6 +11555,162 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Test failed</source>
         <translation>Test nie powiódł się</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>Aktualny · sprawdzono przed chwilą</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>Aktualny · sprawdzono %n minutę temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n minuty temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n minut temu</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>Aktualny · sprawdzono %n godzinę temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n godziny temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n godzin temu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>Aktualny · sprawdzono %1</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>Pobieranie %1 · %2 z %3 MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>Nie udało się sprawdzić: brak połączenia</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 jest gotowy · uruchomi się, gdy AI będzie bezczynne przez 2 minuty</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>Dostępna jest wersja %1 · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>Najnowszy, jaki uruchamia ten HikariSub</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>Aktualny</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>Ostatnio sprawdzono %1. HikariSub spróbuje ponownie za godzinę.</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub spróbuje ponownie za godzinę.</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub zostaje przy %1 i nie instaluje niczego z tej listy.</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>Zaktualizuj HikariSub, aby dostać nowsze funkcje AI.</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>instalatora Claude</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>instalatora Codex</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>Trwa %1. Nowe sesje użyją nowej wersji.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>Nadal %1 po %2. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 się nie powiodło. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>W panelu agenta trwa sesja %1. Aktualizacja poczeka, aż się skończy.</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>Zainstalowano przy użyciu: %1.</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>Zainstalowano przy użyciu: %1, więc HikariSub go nie zaktualizuje. Uruchom to w terminalu:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>Zainstalowano przy użyciu: %1; zaktualizuj go tak, jak go zainstalowano.</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>Zainstalowano w nieznany sposób; zaktualizuj go tak, jak go zainstalowano.</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>Wersja %1 ma błąd, który psuje agenta HikariSub.</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>Wersja %1 jest starsza od najstarszej obsługiwanej przez HikariSub (%2).</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · dostępna jest %2 · zainstalowano przy użyciu: %3</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · dostępna jest %2.</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · zainstalowano przy użyciu: %2</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · zainstalowano w nieznany sposób</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>Aktualizowanie…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>Aktualizacja się nie udała</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>Dostępna aktualizacja</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>Nieobsługiwana wersja</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>Wersja ze znanym błędem</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>Zaktualizuj teraz</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -11821,10 +11981,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie znaleziono w PATH.</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>Znaleziono w PATH · %1.</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>Znaleziono w PATH.</translation>
     </message>
@@ -12015,6 +12171,62 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
         <translation>Konfiguracja JSON jest dla agentów łączących się przez HTTP, więc wymaga opcji „Nasłuchuj także na http://127.0.0.1”.</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>Komponenty AI</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>Co nowego</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>Komponent AI %1 przestał działać, więc HikariSub wrócił do %2 i nie zainstaluje %1 ponownie.</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>Wysłano raport o awarii.</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>Komponent AI</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>Działa na</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>Biblioteki dostawców</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Stan</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>Sprawdź teraz</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>Aktualizuj komponenty AI automatycznie</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>Administrator wyłączył automatyczne aktualizacje na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>Gdy AI jest włączone, HikariSub sprawdza co godzinę. Nowa wersja pobiera się w tle i uruchamia, gdy AI jest bezczynne przez 2 minuty. Jeśli się nie uruchomi, HikariSub wraca do poprzedniej.</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub nadal sprawdza co godzinę, a pobiera dopiero po naciśnięciu Zaktualizuj teraz.</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -12971,6 +13183,9 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
     </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

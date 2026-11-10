@@ -143,6 +143,7 @@ constexpr OptionsBinding kBindings[] = {
     {"editor.softLineBreak", Check, LineEditor},
     {"grid.splitFramesBakeAnimations", Check, Grid},
     {"ai.off", Check, Ai},
+    {"ai.autoUpdate", Check, Ai},
     {"ai.promptCaching", Check, Ai},
     {"video.handleSize", Number, Video, 50, 400},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
