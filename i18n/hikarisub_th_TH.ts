@@ -14638,6 +14638,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Scale border and shadow</source>
         <translation>ปรับขนาดของขอบและเงา</translation>
     </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>การบันทึก “%1” จะเปลี่ยนคุณสมบัติของสคริปต์ต่อไปนี้</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>ข้าม</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Search</name>

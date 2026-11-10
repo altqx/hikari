@@ -953,7 +953,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Changed from the script’s %1.</source>
-        <translation>Zmieniono względem wartości skryptu: %1.</translation>
+        <translation>Zmieniono względem wartości skryptu. %1.</translation>
     </message>
     <message>
         <source>Delete preset</source>
@@ -14833,6 +14833,18 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Scale border and shadow</source>
         <translation>Skalowana obwódka i cień</translation>
+    </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>Zapisanie “%1” zmieni te właściwości skryptu:</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Pomiń</translation>
     </message>
 </context>
 <context>

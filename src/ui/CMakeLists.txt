@@ -45,7 +45,7 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FileChooser.qml FolderChooser.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
-qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml ScriptInfoOnSaveDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml MoveTabMenu.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ReferenceTray.qml)
 qt_target_qml_sources(hikari_ui QML_FILES GridToolTip.qml GridScrollBars.qml)

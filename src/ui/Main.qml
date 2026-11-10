@@ -7159,11 +7159,38 @@ ApplicationWindow {
             openSaveDialog(document)
         else if (route === "readonly")
             root.warnReadOnly(document, root.tabTitle(document))
-        else if (document === 0)
-            return root.editor.save()
         else
-            return root.app.saveDocument(document)
+            confirmScriptInfo([document], () => document === 0 ? root.editor.save() : root.app.saveDocument(document), () => {})
         return true
+    }
+    function confirmScriptInfo(ids, then, cancelled) {
+        if (ids.length === 0) {
+            then()
+            return
+        }
+        const document = ids[0]
+        const rest = () => root.confirmScriptInfo(ids.slice(1), then, cancelled)
+        const rows = root.app.scriptInfoQuestion(document)
+        if (rows.length === 0) {
+            rest()
+            return
+        }
+        scriptInfoOnSaveLoader.active = true
+        scriptInfoOnSaveLoader.item.ask(root.tabTitle(document), rows, null, (choice, keys) => {
+            if (choice === "cancel") {
+                cancelled()
+                return
+            }
+            root.app.approveScriptInfo(document, keys)
+            rest()
+        })
+    }
+    Loader {
+        id: scriptInfoOnSaveLoader
+        active: false
+        sourceComponent: ScriptInfoOnSaveDialog {
+            settings: root.app.settings
+        }
     }
     property var saveQueue: []
     function saveAllTabs(overDisk) {
@@ -7183,6 +7210,11 @@ ApplicationWindow {
         saveQueue = saveQueue.slice(1)
         if (next.route === "readonly")
             warnReadOnly(next.id, root.tabTitle(next.id))
+        else if (next.route === "scriptInfo")
+            confirmScriptInfo([next.id], () => {
+                root.app.saveDocument(next.id)
+                root.saveNext()
+            }, () => root.saveNext())
         else
             openSaveDialog(next.id)
     }
@@ -7247,10 +7279,11 @@ ApplicationWindow {
             const target = document
             const file = selectedFile
             const format = formats[selectedNameFilter.index] ?? ""
-            root.confirmAssConversion(target, file, format, null, () => root.saveChosenAs(target, file, format), () => {
+            const cancelled = () => {
                 matroskaSubtitles.saveDone()
                 root.saveNext()
-            })
+            }
+            root.confirmAssConversion(target, file, format, null, () => root.confirmScriptInfo([target], () => root.saveChosenAs(target, file, format), cancelled), cancelled)
         }
         onRejected: {
             matroskaSubtitles.saveDone()
@@ -7363,6 +7396,7 @@ ApplicationWindow {
             else
                 diskSaveQuestion.confirm(marked, then, cancelled)
         }
+        confirmScriptInfo: (ids, then, cancelled) => root.confirmScriptInfo(ids, then, cancelled)
     }
 
     AutomationDialog {
