@@ -5271,6 +5271,10 @@ Failed to copy %2 fonts.</source>
         <translation>திற…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>கோப்புறையைத் திற…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>வீடியோவைத் திற…</translation>
     </message>
@@ -5308,6 +5312,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Dismiss</source>
         <translation>நிராகரி</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>கடைசி தாவல்களை மீண்டும் திற (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>சமீபத்திய திட்டப்பணிகள்</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>சமீபத்திய திட்டப்பணிகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>பொருந்தும் திட்டப்பணிகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>சமீபத்திய திட்டப்பணிகளை வடிகட்டு</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>காணாத கோப்புறைகளை அகற்று</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -6717,6 +6745,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>கோப்புறையைத் திற…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>திட்டப்பணியை மூடு</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7616,6 +7652,10 @@ Failed to copy %2 fonts.</source>
         <translation>தொடக்க நேரத்தால் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
+    </message>
+    <message>
         <source>Sort by end time</source>
         <translation>இறுதி நேரத்தால் வரிசைப்படுத்துங்கள்</translation>
     </message>
@@ -7656,6 +7696,14 @@ Failed to copy %2 fonts.</source>
         <translation>வசனக் கோப்பைத் திற</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>ஒரு கோப்புறையைத் திட்டப்பணியாகத் திற</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>கோப்புறையைத் திற… (&amp;f)</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்</translation>
     </message>
@@ -7666,6 +7714,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>திருத்தியிலிருந்து வசன வரிகளை அகற்று</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>இந்தச் சாளரத்தின் தாவல்களையும் அதன் திட்டப்பணியையும் மூடு</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>திட்டப்பணியை மூடு (&amp;j)</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -9829,11 +9885,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>நம்பகமான ச்கிரிப்ட் கோப்புறைகள்</translation>
+        <translation type="vanished">நம்பகமான ச்கிரிப்ட் கோப்புறைகள்</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் இந்தக் கோப்புறைகளில் ஒன்றில் இருந்தால் கேட்காமல் ஏற்றப்படும்.</translation>
+        <translation type="vanished">வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் இந்தக் கோப்புறைகளில் ஒன்றில் இருந்தால் கேட்காமல் ஏற்றப்படும்.</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9890,6 +9946,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI</source>
         <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>நம்பகமான கோப்புறைகள்</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub இந்தக் கோப்புறைகளையும் அவற்றுக்குள் உள்ள கோப்புறைகளையும் நம்புகிறது: வசனக் கோப்பு குறிப்பிடும் ச்கிரிப்ட்கள் கேட்காமல் ஏற்றப்படும், ஒரு திட்டப்பணியில் உள்ள கோப்பு அந்தத் திட்டப்பணியைத் திறக்கும்.</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -11751,6 +11815,45 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>திட்டப்பணி அமைப்புகள்</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை, எனவே அதன் அமைப்புகள் பொருந்தாது.</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை, எனவே அதன் அமைப்புகள் பொருந்தாது. அது %2 ஆக வைக்கப்பட்டுள்ளது.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>ஒரு திட்டப்பணி %1 ஐ அமைக்க முடியாது, எனவே திட்டப்பணிக் கோப்பின் மதிப்பு புறக்கணிக்கப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>கோப்புறையைத் திற</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1 ஒரு கோப்புறை அல்ல.</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>இந்தத் தாவல் இப்போது %1 திட்டப்பணியைப் பயன்படுத்துகிறது.</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>இந்தக் கோப்பு %1 திட்டப்பணியில் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>திட்டப்பணியைத் திற</translation>
     </message>
 </context>
 <context>

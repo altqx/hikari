@@ -5320,6 +5320,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>Otwórz folder…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>Otwórz wideo…</translation>
     </message>
@@ -5358,6 +5362,30 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Dismiss</source>
         <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>Otwórz ponownie ostatnie zakładki (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>Ostatnie projekty</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>Brak ostatnich projektów</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>Brak pasujących projektów</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>Filtruj ostatnie projekty</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>Usuń brakujące foldery</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -6767,6 +6795,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>Otwórz folder…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>Zamknij projekt</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -7669,6 +7705,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sortuj według czasu początkowego</translation>
     </message>
     <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
+    </message>
+    <message>
         <source>Sort by end time</source>
         <translation>Sortuj według czasu końcowego</translation>
     </message>
@@ -7709,6 +7749,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz plik napisów</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>Otwórz folder jako projekt</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>Otwórz &amp;folder…</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>Ostatnio otwarte napisy</translation>
     </message>
@@ -7719,6 +7767,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>Usuń napisy z edytora</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>Zamknij zakładki tego okna i jego projekt</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>Zamknij pro&amp;jekt</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -9888,11 +9944,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>Zaufane foldery skryptów</translation>
+        <translation type="vanished">Zaufane foldery skryptów</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>Skrypty wymienione w pliku napisów wczytują się bez pytania, gdy leżą w jednym z tych folderów.</translation>
+        <translation type="vanished">Skrypty wymienione w pliku napisów wczytują się bez pytania, gdy leżą w jednym z tych folderów.</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9949,6 +10005,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>AI</source>
         <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>Zaufane foldery</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub ufa tym folderom i folderom w nich: skrypty wymienione w pliku napisów wczytują się bez pytania, a plik w projekcie otwiera ten projekt.</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -11817,6 +11881,45 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>Ustawienia projektu</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>Nie można odczytać pliku %1, więc jego ustawienia nie obowiązują.</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>Nie można odczytać pliku %1, więc jego ustawienia nie obowiązują. Zachowano go jako %2.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>Projekt nie może ustawiać opcji %1, więc wartość z pliku projektu jest pomijana.</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>Otwórz folder</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1 nie jest folderem.</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>Ta zakładka używa teraz projektu %1.</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>Ten plik należy do projektu %1.</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>Otwórz projekt</translation>
     </message>
 </context>
 <context>

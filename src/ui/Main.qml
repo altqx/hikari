@@ -1636,7 +1636,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_CLOSE_PROJECT"
-                    help: qsTr("Close this window's tabs and its project")
+                    help: qsTr("Close this window’s tabs and its project")
                     iconRole: "close-project"
                     objectName: "closeProjectMenuItem"
                     action: Action {

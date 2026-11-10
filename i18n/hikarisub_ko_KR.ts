@@ -5222,6 +5222,10 @@ Failed to copy %2 fonts.</source>
         <translation>열기…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>폴더 열기…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>영상 열기…</translation>
     </message>
@@ -5258,6 +5262,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Dismiss</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>마지막 탭 다시 열기 (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>최근 프로젝트</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>최근 프로젝트 없음</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>일치하는 프로젝트 없음</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>최근 프로젝트 필터</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>찾을 수 없는 폴더 제거</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -6667,6 +6695,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>폴더 열기…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>프로젝트 닫기</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -7563,6 +7599,10 @@ Failed to copy %2 fonts.</source>
         <translation>정렬 / 시작 시간</translation>
     </message>
     <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
+    </message>
+    <message>
         <source>Sort by end time</source>
         <translation>정렬 / 종료 시간</translation>
     </message>
@@ -7603,6 +7643,14 @@ Failed to copy %2 fonts.</source>
         <translation>자막 파일 열기</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>폴더를 프로젝트로 열기</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>폴더 열기…[&amp;F]</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>열었던 자막</translation>
     </message>
@@ -7613,6 +7661,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>모든 자막을 삭제하고 &quot;새 자막&quot;으로 만들기</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>이 창의 탭과 프로젝트 닫기</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>프로젝트 닫기[&amp;J]</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -9770,11 +9826,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>신뢰하는 스크립트 폴더</translation>
+        <translation type="vanished">신뢰하는 스크립트 폴더</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>자막 파일에 지정된 스크립트가 이 폴더 중 하나에 있으면 묻지 않고 불러옵니다.</translation>
+        <translation type="vanished">자막 파일에 지정된 스크립트가 이 폴더 중 하나에 있으면 묻지 않고 불러옵니다.</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9831,6 +9887,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI</source>
         <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>신뢰하는 폴더</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub은 이 폴더와 그 안의 폴더를 신뢰합니다. 자막 파일에 지정된 스크립트는 묻지 않고 불러오고, 프로젝트 안의 파일을 열면 그 프로젝트가 열립니다.</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -11685,6 +11749,45 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>프로젝트 설정</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>%1(을)를 읽을 수 없어 그 설정을 적용하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>%1(을)를 읽을 수 없어 그 설정을 적용하지 않습니다. %2(으)로 보관했습니다.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>프로젝트는 %1(을)를 설정할 수 없어 프로젝트 파일의 값을 무시합니다.</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>폴더 열기</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1(은)는 폴더가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>이 탭은 이제 %1 프로젝트를 사용합니다.</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>이 파일은 %1 프로젝트에 있습니다.</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>프로젝트 열기</translation>
     </message>
 </context>
 <context>
