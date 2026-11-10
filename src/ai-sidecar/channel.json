@@ -1,4 +1,5 @@
 {
   "keep": 10,
-  "blocked": []
+  "blocked": [],
+  "agents": {}
 }

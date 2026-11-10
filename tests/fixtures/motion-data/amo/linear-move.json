@@ -1,0 +1,24 @@
+{
+    "apply": {
+        "events": [
+            {
+                "end": 4680,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\move(600,300,700,350,0,300)}Moving",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4170,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\bord1.87\\clip()\\fscx93.52\\fscy93.52\\move(1861.06,969.44,2299.72,1049.33,0,501)\\shad0.94\\t(0,501,\\bord2.26)\\t(0,501,\\clip())\\t(0,501,\\fscx112.95)\\t(0,501,\\fscy112.95)\\t(0,501,\\shad1.13)}Moving"
+            }
+        ],
+        "outcome": "ok",
+        "selected": [
+        ],
+        "unchanged": 13,
+        "undo_steps": 1
+    }
+}

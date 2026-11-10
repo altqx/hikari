@@ -1,7 +1,7 @@
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
     application_tabs.cpp
     session_json.cpp include/hikari/app/session_json.h
-    project_windows.cpp include/hikari/app/project_windows.h
+    project_windows.cpp include/hikari/app/project_windows.h window_settings.cpp include/hikari/app/window_settings.h
     application_projects.cpp
     application_comparison.cpp
     application_video.cpp
@@ -121,7 +121,7 @@ target_sources(hikari_composition PRIVATE single_instance.cpp include/hikari/app
     forwarded_launches.cpp include/hikari/app/forwarded_launches.h)
 target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
 target_sources(hikari_composition PRIVATE application_video_timing.cpp)
-target_sources(hikari_composition PRIVATE application_tracking.cpp)
+target_sources(hikari_composition PRIVATE application_tracking.cpp application_motion.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
 target_sources(hikari_composition PRIVATE application_grammar.cpp)

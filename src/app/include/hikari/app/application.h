@@ -61,6 +61,7 @@
 #endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "node_effects_controller.h"
 #include "template_editor_controller.h"
 #include "log_controller.h"
 #include "colour_picker_controller.h"
@@ -78,6 +79,7 @@
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/review_controller.h"
+#include "hikari/app/window_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 #include "audio_controller.h"
@@ -101,6 +103,7 @@
 #include <functional>
 #include <deque>
 #include <expected>
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <set>
@@ -172,6 +175,8 @@ public:
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
+        // Where compiled MoonScript is kept between loads. Empty: compiled at every load.
+        QString compileCacheDir;
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
@@ -476,6 +481,29 @@ public:
     // Empty when done, else why not.
     Q_INVOKABLE QString applyPerspectiveTracking(const QString &data, int relativeFrame, int orgMode, bool fitFlat,
                                                  bool moveClips, bool scaleBorders);
+    // {data (the clipboard's motion data), frames, firstFrame, relativeFrame, lines}; empty without frame
+    // times or selected lines.
+    Q_INVOKABLE QVariantMap motionDataValues() const;
+    // {state, text, canApply, clipState, clipText, dataFrames}. dataStart > 0 extrapolates data shorter than the
+    // selection, starting at that frame of it.
+    Q_INVOKABLE QVariantMap checkMotionData(const QString &data, const QString &clipData, int relativeFrame,
+                                            int dataStart) const;
+    // The dialog's values by name; empty when done, else why not.
+    Q_INVOKABLE QString applyMotionData(const QString &data, const QString &clipData, const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString revertMotionData();
+    // {ok, text}: the toast's text, or why nothing was copied.
+    Q_INVOKABLE QVariantMap copyMotionData();
+    Q_INVOKABLE QVariantMap copyPowerPinTrack();
+    Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {lines, firstFrame, frames}; empty without frame times or selected lines.
+    Q_INVOKABLE QVariantMap extendTrackingValues() const;
+    // {state, text, canApply}.
+    Q_INVOKABLE QVariantMap checkExtendTracking(int frames, bool after) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
+    // {text} or {error}.
+    Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -741,6 +769,7 @@ public:
     ui::ShellController &shell() const { return *activeViews().shell; }
     ui::LineEditorController &editor() const { return *activeViews().editor; }
     ui::TemplateEditorController &templateEditor() const { return *activeViews().templateEditor; }
+    ui::NodeEffectsController &nodeEffects() const { return *activeViews().nodeEffects; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
@@ -1083,6 +1112,7 @@ private:
         std::unique_ptr<ui::VideoViewController> videoView;
         std::unique_ptr<ui::StatusBarController> statusBar;
         std::unique_ptr<ui::TemplateEditorController> templateEditor;
+        std::unique_ptr<ui::NodeEffectsController> nodeEffects;
         std::unique_ptr<KanjiTimerController> kanjiTimer;
         std::unique_ptr<FindHost> findHost;
         std::unique_ptr<application::FindReplace> find;
@@ -1090,6 +1120,7 @@ private:
         std::unique_ptr<application::SpellCheckWalk> spellWalk;
         std::optional<application::DocumentId> spellWalkDocument;
         std::unique_ptr<GrammarWalk> grammarWalk;
+        std::unique_ptr<WindowSettings> settings;
         std::optional<application::DocumentId> editorDocument;
         std::uint64_t shownRevision = 0;
     };
@@ -1101,6 +1132,7 @@ private:
     std::vector<WindowViews *> allViews();
     void makeViews(WindowViews &views, int shellWindow);
     void makeTemplateEditor(WindowViews &views, int shellWindow);
+    void makeNodeEffects(WindowViews &views, int shellWindow);
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
     bool kanjiPending(application::DocumentId document);
@@ -1330,6 +1362,10 @@ private:
     bool windowEmpty(int shellWindow) const;
     std::optional<int> openWindowBeside(int shellWindow);
     void offerProjectFor(application::DocumentId document, const QString &path);
+    bool projectTrusted(const QString &root) const;
+    void applyWindowProject(int shellWindow);
+    application::Settings &windowSettings(int shellWindow);
+    const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;
     QString m_userFolder;
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
@@ -1340,7 +1376,11 @@ private:
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
-    application::SpellChecker *spellChecker();
+    application::SpellChecker *spellChecker() { return spellChecker(m_workspace.activeWindow()); }
+    application::SpellChecker *spellChecker(int shellWindow);
+    application::SpellChecker *startedSpellChecker(int shellWindow);
+    application::SpellChecker *anySpellChecker() const;
+    void userWordsChanged(const application::SpellChecker *by);
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
@@ -1348,9 +1388,17 @@ private:
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
     void showSpellCheckWord(int shellWindow);
-    std::unique_ptr<application::SpellChecker> m_spellChecker;
-    // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
-    bool m_spellingStarted = false;
+    struct SpellSlot {
+        std::unique_ptr<application::SpellChecker> checker;
+        // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
+        bool started = false;
+    };
+    // By dictionary language; windows on one language share a checker.
+    std::map<QString, SpellSlot> m_spellCheckers;
+    std::vector<std::filesystem::path> m_spellingFolders;
+    SpellSlot *spellSlot(const QString &language);
+    // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
+    bool editorSpellingOn() const;
     application::SpellingText m_spellingText;
     application::SpellingBackendLoader m_spellingLoader;
     std::unique_ptr<application::SpellChecker> m_sampleChecker;

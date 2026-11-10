@@ -4199,8 +4199,7 @@
    "surfaces": [
     "menu:view",
     "node-editor"
-   ],
-   "pending": "NE2 #424"
+   ]
   },
   {
    "role": "ai-assistant",
@@ -4554,8 +4553,7 @@
    "legacy": [],
    "surfaces": [
     "node-editor"
-   ],
-   "pending": "NE2 #424"
+   ]
   },
   {
    "role": "compact",
@@ -5606,8 +5604,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "motion-revert",
@@ -5618,8 +5615,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "motion-copy",
@@ -5630,8 +5626,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "motion-extend",
@@ -5642,8 +5637,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "move-extend",
@@ -5654,8 +5648,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   }
  ],
  "notReplaced": {

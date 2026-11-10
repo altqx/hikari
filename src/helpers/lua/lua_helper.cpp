@@ -1,10 +1,12 @@
 // One process per loaded script, its LuaJIT state living for the process; Lua calls to the host block.
 
 #include "hikari/backends/helper_endpoint.h"
+#include "hikari/application/compile_cache.h"
 #include "hikari/application/karaoke_syllables.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/regex/regex.h"
+#include "lua_host_cache.h"
 #include "lua_native.h"
 #include "lua_nodes.h"
 
@@ -15,11 +17,13 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <new>
+#include <optional>
 #include <filesystem>
 #include <limits>
 #include <map>
@@ -50,6 +54,10 @@ struct Script {
     std::filesystem::path path;
     std::vector<std::string> includePath; // the script's directory, then the shared ones
     std::string shippedInclude;
+    std::filesystem::path compileCache;
+    std::filesystem::path compiler; // the MoonScript compiler's file
+    std::optional<hikari::application::CompileCache> moonCache;
+    bool moonCacheOpened = false;
     int traceLevel = 3;
     ScriptInfo info;
     std::vector<int> features; // registry refs of {run, validate, isactive}
@@ -63,6 +71,7 @@ Responder *g_services = nullptr;  // host services: the running request, or the 
 constexpr int kNoProgress = std::numeric_limits<int>::min();
 int g_lastProgress = kNoProgress;
 char g_cancelTag; // its address identifies aegisub.cancel()
+std::optional<hikari::application::HostServiceReply> askOrThrow(hikari::application::HostServiceRequest request);
 
 std::string toUtf8(const std::filesystem::path &p)
 {
@@ -89,6 +98,81 @@ bool readFile(const std::filesystem::path &path, std::string &out)
     return !in.bad();
 }
 
+const hikari::application::CompileCache *moonCache()
+{
+    if (!g_script.moonCacheOpened) {
+        g_script.moonCacheOpened = true;
+        std::string compiler;
+        if (!g_script.compileCache.empty() && readFile(g_script.compiler, compiler))
+            g_script.moonCache.emplace(g_script.compileCache, hikari::application::CompileCache::compilerId(compiler));
+    }
+    return g_script.moonCache ? &*g_script.moonCache : nullptr;
+}
+
+// A line table's {Lua line = source position} pairs; false if it holds anything else.
+bool lineTableOf(lua_State *L, int index, std::vector<std::pair<double, double>> &out)
+{
+    if (index < 0)
+        index += lua_gettop(L) + 1;
+    lua_pushnil(L);
+    while (lua_next(L, index)) {
+        if (lua_type(L, -2) != LUA_TNUMBER || lua_type(L, -1) != LUA_TNUMBER) {
+            lua_pop(L, 2);
+            return false;
+        }
+        out.emplace_back(lua_tonumber(L, -2), lua_tonumber(L, -1));
+        lua_pop(L, 1);
+    }
+    return true;
+}
+
+// MoonScript's line_tables[name] = the table at the top, popped.
+void setLineTable(lua_State *L, const std::string &name)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript line tables");
+    lua_insert(L, -2);
+    lua_setfield(L, -2, name.c_str());
+    lua_pop(L, 1);
+}
+
+// As moonscript.loadstring(source, name), the compiled Lua and its line table kept in the compile cache.
+bool loadMoon(lua_State *L, std::string_view source, const std::string &name)
+{
+    const auto *cache = moonCache();
+    if (cache) {
+        if (const auto compiled = cache->find(name, source)) {
+            lua_createtable(L, 0, static_cast<int>(compiled->lines.size()));
+            for (const auto &[line, position] : compiled->lines) {
+                lua_pushnumber(L, line);
+                lua_pushnumber(L, position);
+                lua_rawset(L, -3);
+            }
+            setLineTable(L, name);
+            return luaL_loadbuffer(L, compiled->code.data(), compiled->code.size(), name.c_str()) == 0;
+        }
+    }
+    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript");
+    lua_pushlstring(L, source.data(), source.size());
+    if (lua_pcall(L, 1, 2, 0))
+        return false; // leaves the error message
+    if (lua_isnil(L, -2)) {
+        lua_remove(L, -2);
+        return false;
+    }
+    hikari::application::CompiledSource compiled;
+    const bool cacheable = cache && lineTableOf(L, -1, compiled.lines);
+    std::size_t len = 0;
+    const char *code = lua_tolstring(L, -2, &len);
+    compiled.code.assign(code, len);
+    setLineTable(L, name);
+    lua_pop(L, 1);
+    if (luaL_loadbuffer(L, compiled.code.data(), compiled.code.size(), name.c_str()))
+        return false;
+    if (cacheable)
+        cache->store(name, source, compiled);
+    return true;
+}
+
 // The whole file, a UTF-8 BOM skipped, the path as the chunk name.
 bool loadFile(lua_State *L, const std::filesystem::path &path)
 {
@@ -97,31 +181,16 @@ bool loadFile(lua_State *L, const std::filesystem::path &path)
         lua_pushfstring(L, "cannot read %s", toUtf8(path).c_str());
         return false;
     }
-    const char *data = text.data();
-    std::size_t size = text.size();
-    if (size >= 3 && static_cast<unsigned char>(data[0]) == 0xEF && static_cast<unsigned char>(data[1]) == 0xBB &&
-        static_cast<unsigned char>(data[2]) == 0xBF) {
-        data += 3;
-        size -= 3;
-    }
+    std::string_view source = text;
+    if (source.starts_with("\xEF\xBB\xBF"))
+        source.remove_prefix(3);
     const std::string name = toUtf8(path);
     if (!name.ends_with("moon"))
-        return luaL_loadbuffer(L, data, size, name.c_str()) == 0;
+        return luaL_loadbuffer(L, source.data(), source.size(), name.c_str()) == 0;
     // The raw text is kept to map error lines back to the .moon source.
-    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript");
-    lua_pushlstring(L, data, size);
-    lua_pushvalue(L, -1);
+    lua_pushlstring(L, source.data(), source.size());
     lua_setfield(L, LUA_REGISTRYINDEX, ("raw moonscript: " + name).c_str());
-    lua_pushstring(L, name.c_str());
-    if (lua_pcall(L, 2, 2, 0))
-        return false; // leaves the error message
-    // loadstring returns nil, error on error, or the function.
-    if (lua_isnil(L, -2)) {
-        lua_remove(L, -2);
-        return false;
-    }
-    lua_pop(L, 1);
-    return true;
+    return loadMoon(L, source, name);
 }
 
 std::string stringOrEmpty(lua_State *L, int index)
@@ -756,12 +825,9 @@ void installAegisub(lua_State *L)
     lua_setglobal(L, "aegisub");
 }
 
-// package.loaders[2]: each package.path entry with "/?" replaced by the module path, a .moon file preferred over
-// its .lua.
-int moduleLoader(lua_State *L)
+// Each package.path entry with "/?" replaced by the module path, a .moon file preferred over its .lua.
+std::optional<std::string> moduleFile(lua_State *L, const std::string &name)
 {
-    const int pretop = lua_gettop(L);
-    const std::string name = checkString(L, -1);
     std::string module = name;
     std::replace(module.begin(), module.end(), '.', LUA_DIRSEP[0]);
     lua_getglobal(L, "package");
@@ -794,18 +860,26 @@ int moduleLoader(lua_State *L)
             if (std::filesystem::exists(fromUtf8(moon)))
                 filename = moon;
         }
-        if (!std::filesystem::exists(fromUtf8(filename)))
-            continue;
-        noteLoaded(fromUtf8(filename));
-        if (!loadFile(L, fromUtf8(filename)))
-            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename.c_str(), luaL_checkstring(L, -1));
-        break;
+        if (std::filesystem::exists(fromUtf8(filename)))
+            return filename;
+    }
+    return std::nullopt;
+}
+
+int moduleLoader(lua_State *L)
+{
+    const int pretop = lua_gettop(L);
+    const auto filename = moduleFile(L, checkString(L, -1));
+    if (filename) {
+        noteLoaded(fromUtf8(*filename));
+        if (!loadFile(L, fromUtf8(*filename)))
+            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename->c_str(), luaL_checkstring(L, -1));
     }
     return lua_gettop(L) - pretop;
 }
 
-// package.path from the include directories, the module loader above, and moonscript.loadstring kept in the
-// registry. False leaves the error message on the stack.
+// package.path from the include directories, the module loader above, and MoonScript's to_lua and line_tables
+// kept in the registry. False leaves the error message on the stack.
 bool install(lua_State *L)
 {
     lua_getglobal(L, "package");
@@ -818,10 +892,13 @@ bool install(lua_State *L)
     lua_pushcfunction(L, moduleLoader);
     lua_rawseti(L, -2, 2);
     lua_pop(L, 2);
-    luaL_loadstring(L, "return require('moonscript').loadstring");
-    if (lua_pcall(L, 0, 1, 0))
+    luaL_loadstring(L, "return require('moonscript').to_lua, require('moonscript.line_tables')");
+    if (lua_pcall(L, 0, 2, 0))
         return false;
+    lua_setfield(L, LUA_REGISTRYINDEX, "moonscript line tables");
     lua_setfield(L, LUA_REGISTRYINDEX, "moonscript");
+    if (const auto compiler = moduleFile(L, "moonscript"))
+        g_script.compiler = fromUtf8(*compiler);
     return true;
 }
 
@@ -830,6 +907,7 @@ void load(Reader &in, Responder &r)
     const std::string path = in.str();
     const std::string sharedInclude = in.str();
     const std::int32_t traceLevel = in.i32();
+    const std::string compileCache = in.str();
     if (!in.ok() || path.empty())
         return r.terminal(Outcome::InvalidInput, bytesOf("malformed Load"));
     if (g_script.L)
@@ -837,6 +915,7 @@ void load(Reader &in, Responder &r)
 
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
+    g_script.compileCache = fromUtf8(compileCache);
     // Each include directory ends with a separator. The shared ones come one per line, the shipped Include last.
     g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP};
     for (std::size_t from = 0;;) {
@@ -874,6 +953,7 @@ void load(Reader &in, Responder &r)
     lua_setfield(L, LUA_REGISTRYINDEX, "filename");
     installAegisub(L);
     g_services = &r;
+    hikari::lua_host::beginRun(askOrThrow);
     struct EndServices {
         ~EndServices() { g_services = nullptr; }
     } endServices;
@@ -1625,6 +1705,36 @@ std::optional<HostServiceReply> askHost(HostServiceRequest request, Outcome *fai
     return reply;
 }
 
+int raiseHostFailure(lua_State *L, const char *name, Outcome failure)
+{
+    if (failure == Outcome::Cancelled)
+        cancelScript(L);
+    return luaL_error(L, "the host could not answer aegisub.%s", name);
+}
+
+std::optional<HostServiceReply> askOrThrow(HostServiceRequest request)
+{
+    if (!g_services)
+        return std::nullopt;
+    Outcome failure = Outcome::Ok;
+    auto reply = askHost(std::move(request), &failure);
+    if (!reply)
+        throw hikari::lua_host::HostFailure{failure};
+    if (reply->status == HostServiceReply::Status::Unavailable)
+        return std::nullopt;
+    return reply;
+}
+
+template <class F> std::optional<Outcome> failedHostCall(F &&call)
+{
+    try {
+        call();
+    } catch (const hikari::lua_host::HostFailure &e) {
+        return e.outcome;
+    }
+    return std::nullopt;
+}
+
 // From Lua: a cancelled run raises the cancellation, a failed call a script
 // error. std::nullopt means Unavailable (push nil).
 std::optional<HostServiceReply> callHost(lua_State *L, const char *name, HostService service,
@@ -1641,11 +1751,8 @@ std::optional<HostServiceReply> callHost(lua_State *L, const char *name, HostSer
     request.style = std::move(style);
     Outcome failure = Outcome::Ok;
     auto reply = askHost(std::move(request), &failure);
-    if (!reply) {
-        if (failure == Outcome::Cancelled)
-            cancelScript(L);
-        luaL_error(L, "the host could not answer aegisub.%s", name);
-    }
+    if (!reply)
+        raiseHostFailure(L, name, failure);
     if (reply->status == HostServiceReply::Status::Unavailable)
         return std::nullopt;
     return reply;
@@ -1688,24 +1795,31 @@ int subsScriptResolutionAsked(lua_State *L)
     return 2;
 }
 
+using hikari::application::AegisubFrameTimes;
+
+template <class Convert> int convertFrameTime(lua_State *L, const char *name, Convert convert)
+{
+    checkCancelled(L);
+    const int value = static_cast<int>(lua_tonumber(L, -1));
+    const std::optional<AegisubFrameTimes> *times = nullptr;
+    if (const auto failure = failedHostCall([&] { times = &hikari::lua_host::runFrameTimes().times(); }))
+        return raiseHostFailure(L, name, *failure);
+    if (!*times)
+        return pushNil(L);
+    lua_pushnumber(L, static_cast<double>(convert(**times, value)));
+    return 1;
+}
+
 int frameFromMs(lua_State *L)
 {
-    const int ms = static_cast<int>(lua_tonumber(L, -1));
-    const auto reply = callHost(L, "frame_from_ms", HostService::FrameFromMs, {ms});
-    if (!reply)
-        return pushNil(L);
-    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
-    return 1;
+    return convertFrameTime(L, "frame_from_ms",
+                            [](const AegisubFrameTimes &t, std::int64_t ms) { return t.frameFromMs(ms); });
 }
 
 int msFromFrame(lua_State *L)
 {
-    const int frame = static_cast<int>(lua_tonumber(L, -1));
-    const auto reply = callHost(L, "ms_from_frame", HostService::MsFromFrame, {frame});
-    if (!reply)
-        return pushNil(L);
-    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
-    return 1;
+    return convertFrameTime(L, "ms_from_frame",
+                            [](const AegisubFrameTimes &t, std::int64_t frame) { return t.msFromFrame(frame); });
 }
 
 int videoSize(lua_State *L)
@@ -1740,9 +1854,13 @@ int keyframes(lua_State *L)
 
 // get_frame's VideoFrame: BGRA rows, never flipped here.
 struct VideoFrame {
+    std::int64_t number = 0;
+    bool withSubtitles = false;
     std::size_t width = 0, height = 0;
+    int pixelReads = 0;
     std::vector<std::byte> data;
 };
+constexpr int kPixelReadsBeforeCopy = 64;
 
 VideoFrame *checkFrame(lua_State *L)
 {
@@ -1761,35 +1879,60 @@ int frameHeight(lua_State *L)
     return 1;
 }
 
-// The pixel at (x, y), the last two arguments; nil outside the frame.
-const unsigned char *framePixel(lua_State *L, VideoFrame *frame)
+bool copyFrame(lua_State *L, VideoFrame &frame)
+{
+    if (!frame.data.empty() || frame.width * frame.height == 0)
+        return true;
+    auto reply = callHost(L, "get_frame", HostService::Frame, {frame.number, frame.withSubtitles ? 1 : 0});
+    if (!reply || reply->pixels.size() != frame.width * frame.height * 4)
+        return false;
+    frame.data = std::move(reply->pixels);
+    return true;
+}
+
+using Bgr = std::array<unsigned char, 3>;
+
+// The pixel at (x, y), the last two arguments; nullopt outside the frame.
+std::optional<Bgr> framePixel(lua_State *L, VideoFrame &frame)
 {
     const auto x = static_cast<std::size_t>(lua_tointeger(L, -2));
     const auto y = static_cast<std::size_t>(lua_tointeger(L, -1));
     lua_pop(L, 2);
-    if (x >= frame->width || y >= frame->height)
-        return nullptr;
-    return reinterpret_cast<const unsigned char *>(frame->data.data()) + y * frame->width * 4 + x * 4;
+    if (x >= frame.width || y >= frame.height)
+        return std::nullopt;
+    if (frame.data.empty() && ++frame.pixelReads > kPixelReadsBeforeCopy)
+        copyFrame(L, frame);
+    if (!frame.data.empty()) {
+        const auto *p = reinterpret_cast<const unsigned char *>(frame.data.data()) + y * frame.width * 4 + x * 4;
+        return Bgr{p[0], p[1], p[2]};
+    }
+    const auto reply = callHost(L, "get_frame", HostService::FramePixel,
+                                {frame.number, frame.withSubtitles ? 1 : 0, static_cast<std::int64_t>(x),
+                                 static_cast<std::int64_t>(y)});
+    if (!reply || reply->integers.size() != 3)
+        return std::nullopt;
+    return Bgr{static_cast<unsigned char>(reply->integers[0]), static_cast<unsigned char>(reply->integers[1]),
+               static_cast<unsigned char>(reply->integers[2])};
 }
 
 int frameGetPixel(lua_State *L)
 {
-    const unsigned char *p = framePixel(L, checkFrame(L));
+    const auto p = framePixel(L, *checkFrame(L));
     if (!p)
         return pushNil(L);
-    lua_pushinteger(L, p[2]);
-    lua_pushinteger(L, p[1]);
-    lua_pushinteger(L, p[0]);
+    lua_pushinteger(L, (*p)[2]);
+    lua_pushinteger(L, (*p)[1]);
+    lua_pushinteger(L, (*p)[0]);
     return 3;
 }
 
 int frameGetPixelFormatted(lua_State *L)
 {
-    const unsigned char *p = framePixel(L, checkFrame(L));
+    const auto p = framePixel(L, *checkFrame(L));
     if (!p)
         return pushNil(L);
     char text[16];
-    std::snprintf(text, sizeof text, "&H%02X%02X%02X&", p[0], p[1], p[2]);
+    std::snprintf(text, sizeof text, "&H%02X%02X%02X&", (*p)[0], (*p)[1], (*p)[2]);
     lua_pushstring(L, text);
     return 1;
 }
@@ -1797,6 +1940,8 @@ int frameGetPixelFormatted(lua_State *L)
 int frameData(lua_State *L)
 {
     auto *frame = checkFrame(L);
+    if (!copyFrame(L, *frame))
+        return pushNil(L);
     lua_pushlightuserdata(L, frame->data.data());
     lua_pushinteger(L, static_cast<lua_Integer>(frame->width * 4));
     lua_pushboolean(L, false);
@@ -1826,13 +1971,12 @@ int getFrame(lua_State *L)
         luaL_register(L, nullptr, methods);
     }
     lua_pop(L, 1);
-    auto reply = callHost(L, "get_frame", HostService::Frame, {number, withSubtitles ? 1 : 0});
-    const auto width = reply ? static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 0))) : 0;
-    const auto height = reply ? static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 1))) : 0;
-    if (!reply || reply->pixels.size() != width * height * 4)
+    const auto reply = callHost(L, "get_frame", HostService::FrameSize, {number, withSubtitles ? 1 : 0});
+    if (!reply)
         return pushNil(L);
-    auto *frame = new (lua_newuserdata(L, sizeof(VideoFrame))) VideoFrame{width, height, std::move(reply->pixels)};
-    (void)frame;
+    const auto width = static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 0)));
+    const auto height = static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 1)));
+    new (lua_newuserdata(L, sizeof(VideoFrame))) VideoFrame{number, withSubtitles, width, height, 0, {}};
     luaL_getmetatable(L, "VideoFrame");
     lua_setmetatable(L, -2);
     return 1;
@@ -1943,18 +2087,64 @@ int textExtents(lua_State *L)
     if (!entry || !std::holds_alternative<MacroStyleLine>(*entry))
         return 0;
     const std::string text = lua_tostring(L, 2);
-    if (text.empty()) {
-        for (int i = 0; i < 4; ++i)
-            lua_pushnumber(L, 0);
-        return 4;
-    }
-    const auto reply =
-        callHost(L, "text_extents", HostService::TextExtents, {}, {text}, std::get<MacroStyleLine>(*entry).fields);
-    if (!reply || reply->numbers.size() != 4)
+    checkCancelled(L);
+    std::optional<hikari::application::TextExtents> extents;
+    const auto &style = std::get<MacroStyleLine>(*entry).fields;
+    if (const auto failure =
+            failedHostCall([&] { extents = hikari::lua_host::runExtents().measure(style, text).extents; }))
+        return raiseHostFailure(L, "text_extents", *failure);
+    if (!extents)
         return 0;
-    for (const double v : reply->numbers)
+    for (const double v : {extents->width, extents->height, extents->descent, extents->externalLeading})
         lua_pushnumber(L, v);
     return 4;
+}
+
+// aegisub.__karaskel_impl.measure_many(style, texts[, count]): text_extents of each text, flat, four numbers a
+// text; nil where text_extents would return nothing.
+int measureMany(lua_State *L)
+{
+    if (!lua_istable(L, 1)) {
+        lua_pushstring(L, "First argument of text_extents must be a table");
+        return lua_error(L);
+    }
+    luaL_checktype(L, 2, LUA_TTABLE);
+    const int count = std::max(0, lua_isnoneornil(L, 3) ? static_cast<int>(lua_objlen(L, 2)) : luaL_checkint(L, 3));
+    std::vector<std::string> texts;
+    texts.reserve(static_cast<std::size_t>(count));
+    for (int i = 1; i <= count; ++i) {
+        lua_rawgeti(L, 2, i);
+        if (!lua_isstring(L, -1)) {
+            lua_pushfstring(L, "Second argument of text_extents must be a string but is of type %s",
+                            lua_typename(L, lua_type(L, -1)));
+            return lua_error(L);
+        }
+        texts.emplace_back(lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+    lua_pushvalue(L, 1);
+    const auto entry = luaToLine(L);
+    lua_pop(L, 1);
+    lua_createtable(L, count * 4, 0);
+    if (!entry || !std::holds_alternative<MacroStyleLine>(*entry))
+        return 1;
+    checkCancelled(L);
+    std::vector<hikari::application::karaoke_layout::ExtentsCache::Result> extents;
+    const auto &style = std::get<MacroStyleLine>(*entry).fields;
+    if (const auto failure =
+            failedHostCall([&] { extents = hikari::lua_host::runExtents().measureMany(style, texts); }))
+        return raiseHostFailure(L, "text_extents", *failure);
+    for (std::size_t i = 0; i < extents.size(); ++i) {
+        if (!extents[i].extents)
+            continue;
+        const auto &e = *extents[i].extents;
+        int at = static_cast<int>(i * 4);
+        for (const double v : {e.width, e.height, e.descent, e.externalLeading}) {
+            lua_pushnumber(L, v);
+            lua_rawseti(L, -2, ++at);
+        }
+    }
+    return 1;
 }
 
 // Clipboard through LuaJIT FFI function pointers (aegisub.__init_clipboard,
@@ -2148,6 +2338,16 @@ void installHostServices(lua_State *L)
         lua_setfield(L, -2, name);
     }
     lua_setfield(L, -2, "gui");
+    lua_getfield(L, -1, "__karaskel_impl");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, "__karaskel_impl");
+    }
+    lua_pushcfunction(L, measureMany);
+    lua_setfield(L, -2, "measure_many");
+    lua_pop(L, 1);
 }
 
 // The first return is the answer; a runtime error answers false. Edits made while validating reach the macro,
@@ -2203,6 +2403,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     g_subs = &staged;
     g_responder = &r;
     g_services = &r;
+    hikari::lua_host::beginRun(askOrThrow);
     g_lastProgress = kNoProgress;
     installSink(L);
     lua_getglobal(L, "aegisub");

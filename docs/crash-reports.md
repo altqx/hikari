@@ -49,6 +49,10 @@ Send report posts to PostHog's `/batch/`, through our own proxy at `https://i.hi
 - With usage data on, AN1 already sent the record alone as `$exception` at the start; Send report adds only `crash_report` (the note, the Log lines, the settings summary), linked to it by `report_id`. Turning usage data off drops what it had queued, so Send report then sends the record again.
 - With usage data off (or `DO_NOT_TRACK`), Send report sends both, under a one-off random id: pressing it is consent for that one report. No install id is made or kept.
 
+With AI on, every report also carries the AI component's version and those of its Bun and provider libraries (the `ai_*` properties in [analytics.md](analytics.md)), and the report's System lines list them.
+
+**A rolled-back AI component** ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)) sends a `crash_report` of kind `ai_component` at once, only with **Always send crash reports** on: the system, the settings summary, the `ai_*` versions now running, `ai_failed_version` and `ai_failure` (`initialize` or `crashed`). It has no Log lines and no note, and no window opens; Settings › AI › AI components says it was sent.
+
 Only release builds carry the PostHog key; without it the window has no Send report, and Open GitHub issue still works.
 
 ## Symbols and symbolize.py

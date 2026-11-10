@@ -29,6 +29,7 @@ so a user moving from HikariSub legacy sees the same words.
 | Document tab | แท็บเอกสาร | |
 | Tab | แท็บ | |
 | Session | เซสชัน | |
+| Project (a folder opened with Open folder…) | โปรเจกต์ | "Close project" ปิดโปรเจกต์ |
 | Workspace | พื้นที่ทำงาน | |
 | Panel | แผง | |
 | Grid | ตาราง | legacy: ตารางคำบรรยาย (subtitle grid) |

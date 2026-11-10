@@ -27,8 +27,9 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | KE1-regenerate-selected | "Apply karaoke template to selected lines" replaces only the selected karaoke Lines' generated Lines, as one undo step. |
 | KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the Log. |
 | KE1-render-cost-overlay | "Show / hide render cost" in the Video menu and the video's context menu (GLOBAL_VIDEO_RENDER_COST) draws over the video what the shown frame's subtitles cost to draw. |
+| TH1-template-char-graphemes | `template char` gives each grapheme cluster its own Line, so `กิน` gives `กิ` and `น` and `น้ำ` stays whole; a combining accent, an emoji ZWJ sequence and a flag are one char. 2.1.7 splits by code point. `graphemes = false` in a `code once` Line splits as 2.1.7 does. Thai support by Jibrill. |
 
-The generated Lines are byte for byte 3.2.2's in every case, apart from the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
+The generated Lines are byte for byte 3.2.2's in every case, apart from `char` templates over clusters (TH1, locked by `departures/thai.ass`) and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
 
 ### Regenerating the selected Lines
 

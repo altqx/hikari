@@ -20,6 +20,22 @@ struct PowerPin {
 };
 // nullopt unless every corner is there with as many frames as the others.
 std::optional<PowerPin> parsePowerPin(std::u8string_view text);
+// Corners 0002 to 0005, rows from frame 0, numbers as short as they read back.
+std::u8string writePowerPin(const PowerPin &pin);
+
+enum class PowerPinProblem { NoLines, Overlap, Move, Unmeasured };
+struct PowerPinFailure {
+    PowerPinProblem problem;
+    int row = 0;
+};
+// The selected shown Lines as Power-Pin data at the script's resolution, a frame a row from the first
+// they show: each Line's saved plane (kPlaneKey) as written, else its tags' quad. A frame no Line shows
+// keeps the quad before it.
+std::expected<std::u8string, PowerPinFailure> derivePowerPinTrack(const EditSession &session,
+                                                                  const LegacyTimebase &timebase, double fps,
+                                                                  int videoHeight,
+                                                                  const visual::perspective::TextMeasure &measure,
+                                                                  const LineVisible &visible = {});
 
 struct TrackingOptions {
     int relativeFrame = 1; // 1 .. the data's frames

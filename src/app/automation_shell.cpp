@@ -295,6 +295,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
 #endif
         return c;
     });
+    m_manager.setCompileCache(m_paths.compileCache);
     m_manager.setServiceHandler([this](const application::HostServiceRequest &r, backends::LuaScriptHost::ServiceReply reply) {
         m_router.handle(r, std::move(reply));
     });
@@ -302,6 +303,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_manager.setDialogHandler([this](const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply) {
         presentDialog(request, std::move(reply));
     });
+    connect(&m_manager, &backends::AutomationManager::runFinished, this, [this] { m_router.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
@@ -396,6 +398,7 @@ bool AutomationShell::runTask(const QString &title, const QString &script, TaskD
     if (busy())
         return false;
     auto host = std::make_unique<Host>(m_paths.helper, script, sharedIncludes(m_paths));
+    host->setCompileCache(m_paths.compileCache);
     Host *h = host.get();
     h->setServiceHandler([this](const application::HostServiceRequest &r, Host::ServiceReply reply) {
         m_router.handle(r, std::move(reply));
@@ -697,7 +700,7 @@ std::string AutomationShell::trustKey(application::DocumentId document, const st
 
 QStringList AutomationShell::trustedFolders() const
 {
-    return m_settings ? m_settings->list("automation.trustedFolders") : QStringList();
+    return m_settings ? m_settings->list("trust.folders") : QStringList();
 }
 
 namespace {
@@ -801,7 +804,7 @@ void AutomationShell::answerTrust(int id, const QString &answer)
             if (!folders.contains(folder, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive))
                 folders << folder;
         }
-        m_settings->set("automation.trustedFolders", folders);
+        m_settings->set("trust.folders", folders);
         m_settings->sync();
     }
     if (session(question.document)) {

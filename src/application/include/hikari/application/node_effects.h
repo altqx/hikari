@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <expected>
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -74,6 +75,12 @@ private:
     std::unique_ptr<Store> m_store;
 };
 
+// What each node's outputs gave for the first unit they were read for, on the first karaoke Line
+// run, keyed by node id ("group/inner" inside a group) and then port.
+struct NodeValueTrace {
+    std::map<std::string, std::map<std::string, NodeValue>> values;
+};
+
 struct NodeEffectOptions {
     TextMeasurePort *measure = nullptr;
     // The video's size: karaskel corrects widths when its aspect differs from the script's.
@@ -85,6 +92,8 @@ struct NodeEffectOptions {
     std::optional<std::set<core::LineId>> sources;
     NodeEffectCache *cache = nullptr;
     unsigned threads = 0; // 0: one per hardware thread
+    // Filled by a run that evaluates; cached Lines are not evaluated, so pass no cache with it.
+    NodeValueTrace *trace = nullptr;
 };
 
 struct NodeEffectProblem {

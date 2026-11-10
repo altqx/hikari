@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../schemas/hikari-plugin.schema.json",
+  "id": "com.example.first-plugin",
+  "name": "First plugin",
+  "version": "0.3.0",
+  "api": 1,
+  "main": "main.lua",
+  "authors": ["Your name"],
+  "license": "MIT",
+  "contributes": {
+    "commands": [
+      {"id": "count", "title": "Count lines"},
+      {"id": "unbreak", "title": "Join line breaks in the selected lines"}
+    ],
+    "panels": [{"id": "summary", "title": "Summary", "area": "right"}]
+  }
+}
