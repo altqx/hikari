@@ -6588,6 +6588,15 @@ private slots:
         return !flick || QRectF(0, 0, flick->width(), flick->height()).contains(item->mapToItem(flick, QPointF(item->width() / 2, item->height() / 2)));
     }
 
+    static bool fitsScrollerWidth(QQuickItem *item)
+    {
+        auto *flick = scrollerOf(item);
+        if (!flick)
+            return true;
+        const QRectF placed = item->mapRectToItem(flick, QRectF(0, 0, item->width(), item->height()));
+        return placed.left() >= 0 && placed.right() <= flick->width() + 0.5;
+    }
+
     static void scrollIntoView(QQuickItem *item)
     {
         auto *flick = scrollerOf(item);
@@ -6614,15 +6623,22 @@ private slots:
         return last.first;
     }
 
-    static QString underPoint(QQuickWindow *window, QPointF at)
+    static QQuickItem *topmostAt(QQuickWindow *window, QPointF at)
     {
-        QString name = QStringLiteral("nothing");
+        QQuickItem *top = nullptr;
         for (QQuickItem *in = window->contentItem(); in;) {
             const QPointF local = in->mapFromScene(at);
             in = in->childAt(local.x(), local.y());
             if (in)
-                name = QString::fromLatin1(in->metaObject()->className()) + u'(' + in->objectName() + u')';
+                top = in;
         }
+        return top;
+    }
+
+    static QString underPoint(QQuickWindow *window, QPointF at)
+    {
+        QQuickItem *top = topmostAt(window, at);
+        const QString name = top ? QString::fromLatin1(top->metaObject()->className()) + u'(' + top->objectName() + u')' : QStringLiteral("nothing");
         return QStringLiteral("%1 at %2,%3 in %4x%5").arg(name).arg(at.x()).arg(at.y()).arg(window->width()).arg(window->height());
     }
 
@@ -6645,7 +6661,11 @@ private slots:
         QVERIFY(QTest::qWaitForWindowActive(window));
 
         QTRY_VERIFY2(shownInScroller(arrow), qPrintable(name));
+        QTRY_VERIFY2(fitsScrollerWidth(box), qPrintable(name + u' ' + QString::number(box->width()) + u" wide in "
+                                                        + QString::number(scrollerOf(box) ? scrollerOf(box)->width() : 0.0)));
         const QPointF at = settledPoint(arrow);
+        QQuickItem *top = topmostAt(window, at);
+        QVERIFY2(top == box || box->isAncestorOf(top), qPrintable(name + u' ' + underPoint(window, at)));
         QTest::mouseClick(window, Qt::LeftButton, {}, at.toPoint());
         QTRY_VERIFY2(popup->property("opened").toBool(), qPrintable(name + u' ' + underPoint(window, at)));
         QVERIFY2(field->hasActiveFocus(), qPrintable(name));
