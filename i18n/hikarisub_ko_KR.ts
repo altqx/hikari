@@ -10352,6 +10352,10 @@ Failed to copy %2 fonts.</source>
         <translation>AI 구성 요소를 다운로드할 수 없습니다</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>확인할 수 없음: 잘못된 서명</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>다운로드한 AI 구성 요소가 손상되었습니다</translation>
     </message>
@@ -10362,6 +10366,158 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Test failed</source>
         <translation>테스트 실패</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>최신 상태 · 방금 확인함</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>최신 상태 · %n분 전에 확인함</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>최신 상태 · %n시간 전에 확인함</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>최신 상태 · %1에 확인함</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>확인 중…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>%1 다운로드 중 · %3MB 중 %2MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>확인할 수 없음: 연결 없음</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 준비됨 · AI를 2분 동안 사용하지 않으면 시작합니다</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>%1 사용 가능 · %2MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>이 HikariSub에서 실행되는 최신 버전</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>최신 상태</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>마지막 확인: %1. HikariSub가 1시간 후에 다시 시도합니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub가 1시간 후에 다시 시도합니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub는 %1을(를) 유지하고 그 목록에서 아무것도 설치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>새 AI 기능을 사용하려면 HikariSub를 업데이트하세요.</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>Claude 설치 프로그램</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>Codex 설치 프로그램</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>%1 실행 중. 새 세션부터 새 버전을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>%2 후에도 여전히 %1입니다. 이유를 보려면 터미널에서 실행하세요.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1이(가) 끝나지 않았습니다. 이유를 보려면 터미널에서 실행하세요.</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>에이전트 패널에서 %1 세션이 실행 중입니다. 지금 업데이트는 세션이 끝날 때까지 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>%1(으)로 설치됨.</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>%1(으)로 설치되어 HikariSub가 업데이트하지 않습니다. 터미널에서 다음을 실행하세요:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>%1(으)로 설치됨. 설치한 방법으로 업데이트하세요.</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>알 수 없는 방법으로 설치됨. 설치한 방법으로 업데이트하세요.</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>%1에는 HikariSub 에이전트를 망가뜨리는 결함이 있습니다.</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>%1은(는) HikariSub가 지원하는 가장 오래된 버전(%2)보다 오래되었습니다.</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · %2 출시됨 · %3(으)로 설치됨</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · %2 출시됨.</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · %2(으)로 설치됨</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · 알 수 없는 방법으로 설치됨</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>업데이트 중…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>업데이트가 적용되지 않음</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>업데이트 있음</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>지원되지 않는 버전</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>알려진 결함 버전</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>지금 업데이트</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -10628,10 +10784,6 @@ Failed to copy %2 fonts.</source>
         <translation>PATH에서 찾을 수 없습니다.</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>PATH에서 찾음 · %1.</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>PATH에서 찾음.</translation>
     </message>
@@ -10822,6 +10974,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
         <translation>JSON 설정은 HTTP로 연결하는 에이전트용이므로 “http://127.0.0.1에서도 수신”이 켜져 있어야 합니다.</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>AI 구성 요소</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>새로운 기능</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>AI 구성 요소 %1이(가) 작동을 멈춰 HikariSub가 %2(으)로 되돌렸으며 %1은(는) 다시 설치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>충돌 보고서를 보냈습니다.</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>AI 구성 요소</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>실행 환경</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>공급자 라이브러리</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>상태</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>지금 확인</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>AI 구성 요소 자동 업데이트</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>관리자가 이 컴퓨터에서 자동 업데이트를 껐습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>AI가 켜져 있으면 HikariSub가 1시간마다 확인합니다. 새 버전은 백그라운드에서 다운로드되며 AI를 2분 동안 사용하지 않으면 시작합니다. 시작하지 못하면 HikariSub가 이전 버전으로 되돌립니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub는 계속 1시간마다 확인하며, 지금 업데이트를 누를 때만 다운로드합니다.</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -11774,6 +11982,9 @@ Failed to copy %2 fonts.</source>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>패널 “%1”을(를) 불러오지 못했습니다: %2</translation>
     </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

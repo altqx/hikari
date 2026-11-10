@@ -21,7 +21,9 @@
 #include <QJsonObject>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <optional>
@@ -379,6 +381,19 @@ TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
     ASSERT_TRUE(host->validate(macro(*host, "Apply karaoke template"), *snapshot));
     ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+}
+
+TEST_F(KaraokeTemplater, KaraEffectorLoadsOnlyWhenATemplateUsesIt)
+{
+    auto host = load(bundledScript());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto loaded = [&](const char *name) {
+        return std::ranges::any_of(host->info().loadedFiles, [&](const std::string &file) {
+            return std::filesystem::path(file).filename() == name;
+        });
+    };
+    EXPECT_TRUE(loaded("utils.lua"));
+    EXPECT_FALSE(loaded("effector-auto4.lua")) << "ke4.ass's golden covers a template that loads it";
 }
 
 

@@ -10352,6 +10352,10 @@ Failed to copy %2 fonts.</source>
         <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่ได้</translation>
     </message>
     <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>ตรวจสอบไม่ได้: ลายเซ็นไม่ถูกต้อง</translation>
+    </message>
+    <message>
         <source>Downloaded AI component is damaged</source>
         <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดมาเสียหาย</translation>
     </message>
@@ -10362,6 +10366,158 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Test failed</source>
         <translation>ทดสอบไม่ผ่าน</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อสักครู่</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %n นาทีที่แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %n ชั่วโมงที่แล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %1</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>กำลังตรวจสอบ…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>กำลังดาวน์โหลด %1 · %2 จาก %3 MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>ตรวจสอบไม่ได้: ไม่มีการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 พร้อมแล้ว · จะเริ่มเมื่อไม่ได้ใช้ AI เป็นเวลา 2 นาที</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>มี %1 ให้ใช้งาน · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>ใหม่ที่สุดที่ HikariSub นี้ใช้ได้</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>เป็นเวอร์ชันล่าสุด</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>ตรวจสอบล่าสุดเมื่อ %1 HikariSub จะลองอีกครั้งในหนึ่งชั่วโมง</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub จะลองอีกครั้งในหนึ่งชั่วโมง</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub ยังใช้ %1 และไม่ติดตั้งอะไรจากรายการนั้น</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>อัปเดต HikariSub เพื่อรับฟีเจอร์ AI ที่ใหม่กว่า</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>ตัวติดตั้งของ Claude</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>ตัวติดตั้งของ Codex</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>กำลังเรียกใช้ %1 เซสชันใหม่จะใช้เวอร์ชันใหม่</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>ยังเป็น %1 หลัง %2 ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 ทำงานไม่เสร็จ ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>มีเซสชัน %1 ทำงานอยู่ในแผงเอเจนต์ อัปเดตเลยจะรอจนกว่าเซสชันจะจบ</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>ติดตั้งด้วย %1</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>ติดตั้งด้วย %1 HikariSub จึงไม่อัปเดตให้ เรียกใช้คำสั่งนี้ในเทอร์มินัล:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>ติดตั้งด้วย %1 โปรดอัปเดตด้วยวิธีเดียวกับที่ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>ติดตั้งด้วยวิธีที่ไม่ทราบ โปรดอัปเดตด้วยวิธีเดียวกับที่ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>%1 มีข้อบกพร่องที่ทำให้เอเจนต์ของ HikariSub ใช้งานไม่ได้</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>%1 เก่ากว่าเวอร์ชันเก่าที่สุดที่ HikariSub รองรับ (%2)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · %2 ออกแล้ว · ติดตั้งด้วย %3</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · %2 ออกแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · ติดตั้งด้วย %2</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · ติดตั้งด้วยวิธีที่ไม่ทราบ</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>กำลังอัปเดต…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>อัปเดตไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>มีอัปเดต</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>เวอร์ชันที่ไม่รองรับ</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>เวอร์ชันที่ทราบว่ามีปัญหา</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>อัปเดตเลย</translation>
     </message>
     <message>
         <source>Edit “%1”</source>
@@ -10628,10 +10784,6 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่พบใน PATH</translation>
     </message>
     <message>
-        <source>Found on PATH · %1.</source>
-        <translation>พบใน PATH · %1</translation>
-    </message>
-    <message>
         <source>Found on PATH.</source>
         <translation>พบใน PATH</translation>
     </message>
@@ -10822,6 +10974,62 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
         <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>มีอะไรใหม่</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>คอมโพเนนต์ AI %1 หยุดทำงาน HikariSub จึงกลับไปใช้ %2 และจะไม่ติดตั้ง %1 อีก</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>ส่งรายงานข้อขัดข้องแล้ว</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>ทำงานบน</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>ไลบรารีของผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>สถานะ</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>ตรวจสอบเลย</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>อัปเดตคอมโพเนนต์ AI โดยอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>ผู้ดูแลระบบปิดการอัปเดตอัตโนมัติในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>HikariSub ตรวจสอบทุกชั่วโมงขณะที่เปิด AI อยู่ เวอร์ชันใหม่จะดาวน์โหลดเบื้องหลังและเริ่มเมื่อไม่ได้ใช้ AI เป็นเวลา 2 นาที หากเริ่มไม่ได้ HikariSub จะกลับไปใช้เวอร์ชันก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub ยังตรวจสอบทุกชั่วโมง และจะดาวน์โหลดเมื่อคุณกด อัปเดตเลย เท่านั้น</translation>
     </message>
     <message>
         <source>Use prompt caching</source>
@@ -11774,6 +11982,9 @@ Failed to copy %2 fonts.</source>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>โหลดแผง “%1” ไม่ได้: %2</translation>
     </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
