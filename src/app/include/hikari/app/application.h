@@ -61,6 +61,7 @@
 #endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "node_effects_controller.h"
 #include "template_editor_controller.h"
 #include "log_controller.h"
 #include "colour_picker_controller.h"
@@ -174,6 +175,8 @@ public:
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
+        // Where compiled MoonScript is kept between loads. Empty: compiled at every load.
+        QString compileCacheDir;
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
@@ -478,6 +481,29 @@ public:
     // Empty when done, else why not.
     Q_INVOKABLE QString applyPerspectiveTracking(const QString &data, int relativeFrame, int orgMode, bool fitFlat,
                                                  bool moveClips, bool scaleBorders);
+    // {data (the clipboard's motion data), frames, firstFrame, relativeFrame, lines}; empty without frame
+    // times or selected lines.
+    Q_INVOKABLE QVariantMap motionDataValues() const;
+    // {state, text, canApply, clipState, clipText, dataFrames}. dataStart > 0 extrapolates data shorter than the
+    // selection, starting at that frame of it.
+    Q_INVOKABLE QVariantMap checkMotionData(const QString &data, const QString &clipData, int relativeFrame,
+                                            int dataStart) const;
+    // The dialog's values by name; empty when done, else why not.
+    Q_INVOKABLE QString applyMotionData(const QString &data, const QString &clipData, const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString revertMotionData();
+    // {ok, text}: the toast's text, or why nothing was copied.
+    Q_INVOKABLE QVariantMap copyMotionData();
+    Q_INVOKABLE QVariantMap copyPowerPinTrack();
+    Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {lines, firstFrame, frames}; empty without frame times or selected lines.
+    Q_INVOKABLE QVariantMap extendTrackingValues() const;
+    // {state, text, canApply}.
+    Q_INVOKABLE QVariantMap checkExtendTracking(int frames, bool after) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
+    // {text} or {error}.
+    Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -743,6 +769,7 @@ public:
     ui::ShellController &shell() const { return *activeViews().shell; }
     ui::LineEditorController &editor() const { return *activeViews().editor; }
     ui::TemplateEditorController &templateEditor() const { return *activeViews().templateEditor; }
+    ui::NodeEffectsController &nodeEffects() const { return *activeViews().nodeEffects; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
@@ -1085,6 +1112,7 @@ private:
         std::unique_ptr<ui::VideoViewController> videoView;
         std::unique_ptr<ui::StatusBarController> statusBar;
         std::unique_ptr<ui::TemplateEditorController> templateEditor;
+        std::unique_ptr<ui::NodeEffectsController> nodeEffects;
         std::unique_ptr<KanjiTimerController> kanjiTimer;
         std::unique_ptr<FindHost> findHost;
         std::unique_ptr<application::FindReplace> find;
@@ -1104,6 +1132,7 @@ private:
     std::vector<WindowViews *> allViews();
     void makeViews(WindowViews &views, int shellWindow);
     void makeTemplateEditor(WindowViews &views, int shellWindow);
+    void makeNodeEffects(WindowViews &views, int shellWindow);
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
     bool kanjiPending(application::DocumentId document);

@@ -129,7 +129,9 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
                                  QStringLiteral("Log"), QStringLiteral("Styles"), QStringLiteral("Template"),
                                  QStringLiteral("Spellchecker"),
-                                 QStringLiteral("Postprocessor"), QStringLiteral("QcNotes"), QStringLiteral("Review"), QStringLiteral("Agent")};
+                                 QStringLiteral("Postprocessor"), QStringLiteral("QcNotes"), QStringLiteral("Review"),
+                                 QStringLiteral("Agent"), QStringLiteral("NodeGraph"), QStringLiteral("NodeInspector"),
+                                 QStringLiteral("NodeSources")};
     return ids;
 }
 
@@ -1128,7 +1130,7 @@ bool WorkspaceLayoutController::restoreSavedFile()
 
 bool WorkspaceLayoutController::save()
 {
-    return write({m_preset, serialiseWindow(), m_layout, m_locked});
+    return write({m_preset, tabPayload(), m_layout, m_locked});
 }
 
 bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
@@ -1154,16 +1156,14 @@ bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
 
 bool WorkspaceLayoutController::saveForQuit()
 {
-    const bool saved = save();
-    if (m_loaded)
-        m_quitArrangement = shownArrangement();
-    m_quitting = true;
-    return saved;
+    return saveForQuit({m_preset, tabPayload(), m_layout, m_locked});
 }
 
 bool WorkspaceLayoutController::saveForQuit(const WorkspaceArrangement &active)
 {
     const bool saved = write(active);
+    if (m_beforeNodeEffects && !nodeEffectsFile().isEmpty())
+        writeAtomically(nodeEffectsFile(), envelope(serialiseWindow()));
     if (m_loaded)
         m_quitArrangement = shownArrangement();
     m_quitting = true;
@@ -1174,6 +1174,11 @@ bool WorkspaceLayoutController::resetLayout()
 {
     if (m_default.isEmpty())
         return false;
+    if (m_beforeNodeEffects) {
+        buildNodeEffects();
+        emit arrangementSwapped();
+        return true;
+    }
     const bool done = restorePayload(m_default);
     emit arrangementSwapped();
     if (!m_layout.isEmpty()) {
@@ -1222,6 +1227,7 @@ bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
+    dropNodeEffects();
     const bool done = buildPreset(name, true);
     dismissPanelNotice();
     takeLock(false);
@@ -1229,6 +1235,61 @@ bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
     emit arrangementSwapped();
     save();
     return done;
+}
+
+QString WorkspaceLayoutController::nodeEffectsFile() const
+{
+    if (m_file.isEmpty())
+        return {};
+    const QFileInfo file(m_file);
+    return file.dir().filePath(file.completeBaseName() + QStringLiteral("-node-effects.json"));
+}
+
+QByteArray WorkspaceLayoutController::tabPayload() const
+{
+    return m_beforeNodeEffects ? *m_beforeNodeEffects : serialiseWindow();
+}
+
+void WorkspaceLayoutController::buildNodeEffects()
+{
+    restorePayload(m_default, true);
+    emit buildArrangement(QStringLiteral("NodeEffects"));
+}
+
+bool WorkspaceLayoutController::enterNodeEffects()
+{
+    if (m_beforeNodeEffects || !m_loaded || m_default.isEmpty())
+        return false;
+    m_beforeNodeEffects = serialiseWindow();
+    const QString file = nodeEffectsFile();
+    const auto bytes = file.isEmpty() ? std::nullopt : readFile(file);
+    const auto payload = bytes ? payloadOf(*bytes, nullptr) : std::nullopt;
+    if (!payload || !restorePayload(*payload, true))
+        buildNodeEffects();
+    emit changed();
+    emit arrangementSwapped();
+    return true;
+}
+
+void WorkspaceLayoutController::dropNodeEffects()
+{
+    if (!m_beforeNodeEffects)
+        return;
+    if (const QString file = nodeEffectsFile(); !file.isEmpty())
+        writeAtomically(file, envelope(serialiseWindow()));
+    m_beforeNodeEffects.reset();
+    emit changed();
+}
+
+bool WorkspaceLayoutController::leaveNodeEffects()
+{
+    if (!m_beforeNodeEffects)
+        return false;
+    const QByteArray before = *m_beforeNodeEffects;
+    dropNodeEffects();
+    restorePayload(before, true);
+    emit arrangementSwapped();
+    return true;
 }
 
 bool WorkspaceLayoutController::hasBackup() const
@@ -1244,6 +1305,7 @@ bool WorkspaceLayoutController::restoreBackup()
     const auto payload = bytes ? payloadOf(*bytes, nullptr, &preset, &layout, &locked) : std::nullopt;
     if (!payload)
         return false;
+    dropNodeEffects();
     if (!restorePayload(*payload))
         return false;
     takeLock(locked);
@@ -1322,11 +1384,12 @@ WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
 {
     if (m_quitArrangement)
         return *m_quitArrangement;
-    return {m_preset, serialiseWindow(), m_layout, m_locked};
+    return {m_preset, tabPayload(), m_layout, m_locked};
 }
 
 bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arrangement)
 {
+    dropNodeEffects();
     bool shown = true;
     if (arrangement.payload.isEmpty()) {
         shown = buildPreset(arrangement.preset, true);
@@ -1769,6 +1832,8 @@ bool WorkspaceLayoutController::applySavedArrangement(const QString &name)
 
 bool WorkspaceLayoutController::resetCurrentLayout()
 {
+    if (m_beforeNodeEffects)
+        return resetLayout();
     if (const QString saved = layout(); !saved.isEmpty() && m_saved[static_cast<std::size_t>(savedLayoutIndex(saved))].arrangement)
         return applySavedArrangement(saved);
     return applyPresetArrangement(m_preset);

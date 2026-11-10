@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.29)
 # Provisioning runs before project(): it sets the toolchain.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/provision/Provision.cmake")
 if(HIKARI_PROVISION_ONLY OR HIKARI_QT_VERIFY_ONLY)
@@ -7,6 +7,9 @@ if(HIKARI_PROVISION_ONLY OR HIKARI_QT_VERIFY_ONLY)
 endif()
 
 project(HikariSub VERSION 0.1.0 LANGUAGES C CXX)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CMAKE_LINKER_TYPE LLD CACHE STRING "Linker for our own targets (LLD or BFD); the vcpkg ports keep theirs")
+endif()
 # The version the program reports and compares, and the release tag without its "v" (ADR 0019).
 set(HIKARI_VERSION_SUFFIX "" CACHE STRING "SemVer prerelease of the version, for example beta.2; empty for a release")
 if(HIKARI_VERSION_SUFFIX STREQUAL "")

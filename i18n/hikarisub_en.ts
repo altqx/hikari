@@ -438,6 +438,74 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.NodeEffects</name>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation>
+            <numerusform>%n node</numerusform>
+            <numerusform>%n nodes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation>
+            <numerusform>%n wire</numerusform>
+            <numerusform>%n wires</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation>
+            <numerusform>%n more output</numerusform>
+            <numerusform>%n more outputs</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation>
+            <numerusform>%n node selected.</numerusform>
+            <numerusform>%n nodes selected.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation>
+            <numerusform>Wrote %n line in %1 on the last run</numerusform>
+            <numerusform>Wrote %n lines in %1 on the last run</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation>
+            <numerusform>%n karaoke line</numerusform>
+            <numerusform>%n karaoke lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problems</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation>
+            <numerusform>Applied: %n line from %1 in %2</numerusform>
+            <numerusform>Applied: %n lines from %1 in %2</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
         <source>%n rules</source>
@@ -465,6 +533,20 @@
         <translation>
             <numerusform>%n skipped: its keys are taken.</numerusform>
             <numerusform>%n skipped: their keys are taken.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>Up to date · checked %n minute ago</numerusform>
+            <numerusform>Up to date · checked %n minutes ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>Up to date · checked %n hour ago</numerusform>
+            <numerusform>Up to date · checked %n hours ago</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -997,6 +1079,69 @@
         <translation>
             <numerusform>%n frame. Covers the selection’s frames %1–%2.</numerusform>
             <numerusform>%n frames. Covers the selection’s frames %1–%2.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>The video has fewer than %n frame before line %1.</numerusform>
+            <numerusform>The video has fewer than %n frames before line %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%n frame of data for %1 frames: %2 extrapolated before, %3 after.</numerusform>
+            <numerusform>%n frames of data for %1 frames: %2 extrapolated before, %3 after.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>The data has %n frame, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</numerusform>
+            <numerusform>The data has %n frames, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>The clip data has %n frame; the motion data has %1.</numerusform>
+            <numerusform>The clip data has %n frames; the motion data has %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n frame. Moves the clips from frame %1.</numerusform>
+            <numerusform>%n frames. Moves the clips from frame %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>Copied %n frame of motion data</numerusform>
+            <numerusform>Copied %n frames of motion data</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Copied %n frame of Power-Pin data</numerusform>
+            <numerusform>Copied %n frames of Power-Pin data</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>Extrapolated \move on %n line</numerusform>
+            <numerusform>Extrapolated \move on %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>Fits position, scale and rotation over the %n selected line (degree %1, error %2 px).</numerusform>
+            <numerusform>Fits position, scale and rotation over the %n selected lines (degree %1, error %2 px).</numerusform>
         </translation>
     </message>
 </context>

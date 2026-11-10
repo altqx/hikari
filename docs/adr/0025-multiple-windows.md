@@ -49,9 +49,10 @@ A tab's arrangement stays a value about one window and its floating panels, whic
 
 ## Close and quit
 
-- **Closing a window** reviews the unsaved changes of that window's tabs only, then closes them with the window. The other windows stay open.
+- **Closing a window** (its title bar ×, the window manager, or Close window 5263) reviews the unsaved changes of that window's tabs only, then closes them with the window. The other windows stay open.
 - **Closing the last window quits.**
-- **Quit** (File › Quit, the platform's quit) reviews the unsaved changes of every window in one review, then closes all the windows together and saves the Session with every window in it, so all of them come back.
+- **Alt+F4** is Close window's default key ([#866](https://github.com/altqx/hikari/issues/866)), so it closes only its window on every platform. On Windows, Qt passes Alt+F4 on to the system, which closes the window. On Linux the window manager or the app gets the key, and both close only that window.
+- **Quit** (File › Exit, the platform's quit) reviews the unsaved changes of every window in one review, then closes all the windows together and saves the Session with every window in it, so all of them come back.
 
 ## Platforms
 

@@ -362,7 +362,7 @@ private slots:
         QVERIFY(missing(macros, twin).isEmpty());
     }
 
-    void aMacroOnTheExitKeysSaysExitTakesThem()
+    void aMacroOnAltF4SaysCloseWindowTakesIt()
     {
         app::Application::Options o = options();
         o.settingsFile = dir.filePath(QStringLiteral("exit/settings.toml"));
@@ -371,7 +371,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(!a.automationHotkeys().unboundMacros().empty(), 30'000);
         a.automationHotkeys().replaceCommitted({{kEdgeblur, "Alt+F4"}});
         a.automationHotkeys().install();
-        QCOMPARE(a.hotkeys().globalHolder(QStringLiteral("Alt+F4")), QStringLiteral("Exit"));
+        QCOMPARE(a.hotkeys().globalHolder(QStringLiteral("Alt+F4")), QStringLiteral("Close window"));
         auto &h = a.hotkeys();
         h.beginOptions();
         h.filter(7);
@@ -379,7 +379,7 @@ private slots:
         for (const QVariant &v : h.rows())
             if (v.toMap().value(QStringLiteral("macro")).toString() == QStringLiteral("Add edgeblur"))
                 note = v.toMap().value(QStringLiteral("note")).toString();
-        QCOMPARE(note, QStringLiteral("Exit takes it"));
+        QCOMPARE(note, QStringLiteral("Close window takes it"));
     }
 
     void retiredWindowAudioBindingIsDropped()

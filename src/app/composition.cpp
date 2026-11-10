@@ -260,6 +260,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.systemUiLanguages = QLocale::system().uiLanguages();
     options.updateEnvironment = updateEnvironment;
     options.userAutomationDir = userFolder.root();
+    options.compileCacheDir = userFolder.cache() + QStringLiteral("/MoonScript");
     QDir().mkpath(userFolder.cache());
     options.analytics.key = Analytics::compiledKey();
     options.analytics.queueFile = userFolder.cache() + QStringLiteral("/analytics-queue.json");

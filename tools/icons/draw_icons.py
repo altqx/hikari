@@ -1404,7 +1404,6 @@ NOT_REPLACED = {
 
 PENDING = {}
 for card, roles in {
-    "NE2 #424": ["node-editor", "node-library"],
     "AI2 #430": ["review-panel"],
     "PJ3 #771": ["trust"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
@@ -1418,7 +1417,6 @@ for card, roles in {
                  "shape-to-clip", "shape-merge"],
     "AU7 #843": ["tool-gradient", "gradient-rect", "gradient-skew", "gradient-rotated", "gradient-vector",
                  "gradient-clip-edge", "gradient-by-char", "gradient-by-line", "gradient-merge"],
-    "AU8 #842": ["motion-apply", "motion-revert", "motion-copy", "motion-extend", "move-extend"],
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],

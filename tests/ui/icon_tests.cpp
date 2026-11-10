@@ -246,7 +246,7 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 97);
+        QCOMPARE(pending, 90);
     }
 
     static bool isStandInGlyph(const QString &literal)

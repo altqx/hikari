@@ -49,7 +49,7 @@ bool rememberedByTheApp(std::string_view id)
         "find.recentFinds",       "find.recentReplacements", "findInSubs.recentFilters", "findInSubs.recentPaths",
         "selectLines.recentSelections", "colourPicker.recentColours", "automation.dialogAnswers",
         "automation.lastScript",  "styles.lastCatalog",      "privacy.usageDataId",      "updater.skippedVersion",
-        "qcNotes.lastSection"};
+        "qcNotes.lastSection",    "tracking.motionOptions",  "tracking.extendOptions"};
     return id.starts_with("recent.") || ids.contains(id);
 }
 

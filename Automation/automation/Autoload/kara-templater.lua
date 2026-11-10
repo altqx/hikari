@@ -998,7 +998,8 @@ function apply_one_syllable_template(syl, line, template, tenv, varctx, subs, sk
 		tenv.syl = charsyl
 		
 		local left, width = syl.left, 0
-		for c in unicode.chars(syl.text_stripped) do
+		local clusters = tenv.graphemes == false and unicode.chars or unicode.graphemes
+		for c in clusters(syl.text_stripped) do
 			charsyl.text = c
 			charsyl.text_stripped = c
 			charsyl.text_spacestripped = c

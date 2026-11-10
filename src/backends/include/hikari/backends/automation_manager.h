@@ -38,6 +38,8 @@ public:
     void setGracePeriod(int ms);
     // A change reloads every loaded script that is not running a macro.
     void setTraceLevel(int level);
+    // Takes effect at each script's next load.
+    void setCompileCache(const QString &dir);
     void setDialogHandler(LuaScriptHost::DialogHandler handler);
     void setServiceHandler(LuaScriptHost::ServiceHandler handler);
     void setObserver(std::function<void()> changed) override { m_observer = std::move(changed); }
@@ -69,7 +71,7 @@ private:
     void rebuildRegistry();
     void notify();
 
-    QString m_helperPath, m_sharedInclude;
+    QString m_helperPath, m_sharedInclude, m_compileCache;
     std::vector<std::string> m_order;
     std::map<std::string, Entry> m_entries;
     application::AutomationRegistry m_registry;

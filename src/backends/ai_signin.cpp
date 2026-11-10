@@ -10,9 +10,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPointer>
-#include <QProcess>
 #include <QRandomGenerator>
-#include <QStandardPaths>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTimer>
@@ -25,7 +23,6 @@ using api::Json;
 
 namespace {
 
-constexpr int kVersionTimeoutMs = 5'000;
 constexpr int kMinPollMs = 3'000;
 constexpr int kTransientLimit = 6;
 constexpr qsizetype kMaxCallbackBytes = 16 * 1024;
@@ -683,33 +680,6 @@ void AiSignIn::signOutCodex(std::function<void(std::optional<app::KeyError>)> do
         if (alive.lock())
             done(error == app::KeyError::NotFound ? std::nullopt : error);
     });
-}
-
-void findCodexCli(std::function<void(std::optional<CodexCli>)> done)
-{
-    const QString path = QStandardPaths::findExecutable(QStringLiteral("codex"));
-    if (path.isEmpty()) {
-        done(std::nullopt);
-        return;
-    }
-    auto *process = new QProcess;
-    auto answer = std::make_shared<std::function<void(QString)>>([process, path, done = std::move(done)](QString version) mutable {
-        auto once = std::move(done);
-        done = nullptr;
-        process->deleteLater();
-        if (once)
-            once(CodexCli{path, version});
-    });
-    QObject::connect(process, &QProcess::finished, process, [process, answer] {
-        const QStringList words = QString::fromUtf8(process->readAllStandardOutput()).simplified().split(QLatin1Char(' '));
-        (*answer)(process->exitCode() == 0 ? words.last() : QString());
-    });
-    QObject::connect(process, &QProcess::errorOccurred, process, [answer](QProcess::ProcessError error) {
-        if (error == QProcess::FailedToStart)
-            (*answer)({});
-    });
-    QTimer::singleShot(kVersionTimeoutMs, process, [process] { process->kill(); });
-    process->start(path, {QStringLiteral("--version")});
 }
 
 }

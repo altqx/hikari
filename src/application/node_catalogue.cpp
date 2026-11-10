@@ -246,7 +246,7 @@ std::vector<NodeSpec> makeCatalogue()
                   port("layer", Number), port("tags", Tags), port("text", Text), port("drawing", Drawing)},
                  {},
                  {field("when", FieldKind::Bool, Json(true), "Write the Line."),
-                  field("layer", FieldKind::Integer, Json(0), "Its Layer."),
+                  field("layer", FieldKind::Integer, Json(0), "Its layer."),
                   field("order", FieldKind::Integer, Json(0), "Its place among the emits for one unit; ties keep graph order."),
                   choice("unit_text", {"stripped", "raw", "none"},
                          "The unit's text while no text or drawing is wired: without tags, with them, or none.")}});
@@ -260,11 +260,11 @@ std::vector<NodeSpec> makeCatalogue()
     group.dynamicPorts = true;
     c.push_back(std::move(group));
     NodeSpec groupInput{"groups.input", "groups", "Inside a group: its inputs, as outputs.", {}, {},
-                        {field("ports", FieldKind::Ports, Json::array(), "The ports, as [{\"name\", \"type\"}].")}};
+                        {field("ports", FieldKind::Ports, Json::array(), "The ports, each a name and a port type.")}};
     groupInput.dynamicPorts = true;
     c.push_back(std::move(groupInput));
     NodeSpec groupOutput{"groups.output", "groups", "Inside a group: its outputs, as inputs.", {}, {},
-                         {field("ports", FieldKind::Ports, Json::array(), "The ports, as [{\"name\", \"type\"}].")}};
+                         {field("ports", FieldKind::Ports, Json::array(), "The ports, each a name and a port type.")}};
     groupOutput.dynamicPorts = true;
     c.push_back(std::move(groupOutput));
 
@@ -275,7 +275,7 @@ std::vector<NodeSpec> makeCatalogue()
                  {},
                  {},
                  {field("code", FieldKind::Text, Json(""), "The code."),
-                  field("inputs", FieldKind::Ports, Json::array(), "Its inputs, as [{\"name\", \"type\"}]."),
+                  field("inputs", FieldKind::Ports, Json::array(), "Its inputs, each a name and a port type."),
                   field("outputs", FieldKind::Ports, Json::array(), "Its outputs.")}};
     lua.dynamicPorts = true;
     c.push_back(std::move(lua));

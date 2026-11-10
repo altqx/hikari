@@ -1,0 +1,180 @@
+{
+    "apply": {
+        "events": [
+            {
+                "end": 4190,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4150,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord2.81\\frz3.12\\fs30\\fscx84.17\\fscy102.88\\pos(27.37,57.34)\\shad0.47}Default position"
+            },
+            {
+                "end": 4230,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4190,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord2.85\\frz3.59\\fs30\\fscx85.63\\fscy104.66\\pos(23.96,52.63)\\shad0.48}Default position"
+            },
+            {
+                "end": 4270,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4230,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord2.9\\frz4.06\\fs30\\fscx87.09\\fscy106.44\\pos(21.6,48.17)\\shad0.48}Default position"
+            },
+            {
+                "end": 4310,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4270,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord2.95\\frz4.53\\fs30\\fscx88.54\\fscy108.22\\pos(20.28,43.96)\\shad0.49}Default position"
+            },
+            {
+                "end": 4350,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4310,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3\\frz5\\fs30\\fscx90\\fscy110\\pos(20,40)\\shad0.5}Default position"
+            },
+            {
+                "end": 4400,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4350,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.05\\frz5.47\\fs30\\fscx91.46\\fscy111.78\\pos(20.77,36.29)\\shad0.51}Default position"
+            },
+            {
+                "end": 4440,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4400,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.1\\frz5.94\\fs30\\fscx92.91\\fscy113.56\\pos(22.6,32.83)\\shad0.52}Default position"
+            },
+            {
+                "end": 4480,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4440,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.15\\frz6.41\\fs30\\fscx94.37\\fscy115.34\\pos(25.47,29.62)\\shad0.52}Default position"
+            },
+            {
+                "end": 4520,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4480,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.19\\frz6.88\\fs30\\fscx95.83\\fscy117.12\\pos(29.41,26.66)\\shad0.53}Default position"
+            },
+            {
+                "end": 4560,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4520,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.24\\frz7.35\\fs30\\fscx97.29\\fscy118.9\\pos(34.4,23.95)\\shad0.54}Default position"
+            },
+            {
+                "end": 4600,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4560,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.29\\frz7.82\\fs30\\fscx98.74\\fscy120.68\\pos(40.45,21.5)\\shad0.55}Default position"
+            },
+            {
+                "end": 4650,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4600,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.34\\frz8.29\\fs30\\fscx100.2\\fscy122.47\\pos(47.56,19.3)\\shad0.56}Default position"
+            },
+            {
+                "end": 4690,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\fs30}Default position",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4650,
+                "style": "Alt",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H40&\\bord3.39\\frz8.76\\fs30\\fscx101.66\\fscy124.25\\pos(55.74,17.36)\\shad0.56}Default position"
+            }
+        ],
+        "outcome": "ok",
+        "selected": [
+        ],
+        "unchanged": 13,
+        "undo_steps": 1
+    }
+}

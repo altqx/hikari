@@ -1,0 +1,34 @@
+[Script Info]
+; TH1: template char walks grapheme clusters (Thai, combining Latin, emoji ZWJ and flags); not compared against 3.2.2
+Title: TH1 corpus thai
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Thai-furigana,Tahoma,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  Thai,Tahoma,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Thai,,0,0,0,template syl char,{\an5\pos($center,$middle)\clip($left,0,$right,720)\t($start,$end,\fscx120)}
+Comment: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,karaoke,{\k40}กิน{\k60}น้ำ{\k0} {\k50}ขึ้น{\k45}ไป
+Comment: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,karaoke,{\k50}café{\k0} {\k40}👨‍👩‍👧{\k30}🇹🇭
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(519,40)\clip(497,0,541,720)\t(0,400,\fscx120)}กิ
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(552,40)\clip(541,0,563,720)\t(0,400,\fscx120)}น
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(596,40)\clip(563,0,629,720)\t(400,1000,\fscx120)}น้ำ
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(662,40)\clip(651,0,673,720)\t(1000,1000,\fscx120)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(684,40)\clip(651,0,717,720)\t(1000,1500,\fscx120)}ขึ้
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(728,40)\clip(717,0,739,720)\t(1000,1500,\fscx120)}น
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(750,40)\clip(739,0,761,720)\t(1500,1950,\fscx120)}ไ
+Dialogue: 0,0:00:01.00,0:00:04.00,Thai,,0,0,0,fx,{\an5\pos(772,40)\clip(761,0,783,720)\t(1500,1950,\fscx120)}ป
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(463,40)\clip(452,0,474,720)\t(0,500,\fscx120)}c
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(485,40)\clip(474,0,496,720)\t(0,500,\fscx120)}a
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(507,40)\clip(496,0,518,720)\t(0,500,\fscx120)}f
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(540,40)\clip(518,0,562,720)\t(0,500,\fscx120)}é
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(595,40)\clip(584,0,606,720)\t(500,500,\fscx120)} 
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(666,40)\clip(584,0,748,720)\t(500,900,\fscx120)}👨‍👩‍👧
+Dialogue: 0,0:00:05.00,0:00:07.00,Thai,,0,0,0,fx,{\an5\pos(788,40)\clip(748,0,828,720)\t(900,1200,\fscx120)}🇹🇭

@@ -1,6 +1,6 @@
 # Plugins
 
-A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)), and the marketplace with its automatic updates, roll back and revocation (PL6, [#418](https://github.com/altqx/hikari/issues/418)).
+A plugin extends HikariSub itself through the [Hikari API](api.md). The decision is [ADR 0022](adr/0022-hikarisub-plugins.md). This page is the contract for the package, install and signatures (PL1, [#413](https://github.com/altqx/hikari/issues/413)) and for running a plugin (PL2, [#414](https://github.com/altqx/hikari/issues/414)). It also covers documents and selections (PL3), panels and the full plugin manager (PL4), files and network (PL5, [#417](https://github.com/altqx/hikari/issues/417)), and the marketplace with its automatic updates, roll back and revocation (PL6, [#418](https://github.com/altqx/hikari/issues/418)). To write a first plugin step by step, start with the [guide](plugin-guide.md) (PL9, [#421](https://github.com/altqx/hikari/issues/421)); every operation and event is in the [Hikari API reference](api-reference.md).
 
 ## The package
 
