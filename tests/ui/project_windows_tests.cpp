@@ -254,6 +254,35 @@ private slots:
         QCOMPARE(titles(0), QStringList{QStringLiteral("loose.ass")});
     }
 
+    void aTabMovedIntoAProjectWindowNamesTheProject()
+    {
+        start();
+        QVERIFY(application->openFile(writeAss(dir.filePath(QStringLiteral("loose.ass")), "loose")));
+        QVERIFY(application->openFile(writeAss(dir.filePath(QStringLiteral("kept.ass")), "kept")));
+        const QVariantMap opened = application->openFolder(folder("Show S01"), 0);
+        const int other = opened.value(QStringLiteral("window")).toInt();
+        QVERIFY(other != 0);
+        QTRY_VERIFY(shell(other) && shell(other)->isVisible());
+        const auto toasts = [](int shellWindow) {
+            QStringList out;
+            for (const QVariant &entry : named(shell(shellWindow), "toastStack")->property("entries").toList())
+                out << entry.toMap().value(QStringLiteral("title")).toString();
+            return out;
+        };
+        const QString text = QStringLiteral("This tab now uses the project Show S01.");
+        QSignalSpy joined(application, &app::Application::tabJoinedProject);
+        const qulonglong loose = application->windowTabs(0).first().toMap().value(QStringLiteral("id")).toULongLong();
+
+        QVERIFY(application->moveTab(loose, other, -1));
+        QCOMPARE(joined.size(), 1);
+        QCOMPARE(joined.first().first().toInt(), other);
+        QTRY_VERIFY(toasts(other).contains(text));
+
+        QVERIFY(application->moveTab(loose, 0, -1));
+        QVERIFY(application->moveTabToNewWindow(loose, QPointF(), false));
+        QCOMPARE(joined.size(), 1);
+    }
+
     void aFileOrAMissingFolderIsNoProject()
     {
         start();

@@ -13,6 +13,7 @@ Item {
     property bool offerWindows: true
     property int type: 0
     property int window: 0
+    property int command: 0
     property var done: null
     property var clear: null
     property string keys: ""
@@ -34,6 +35,7 @@ Item {
         type = win
         window = win
         offerWindows = windows
+        command = o.command || 0
         done = callback
         clear = o.clear || null
         keys = ""
@@ -119,7 +121,7 @@ Item {
         }
         answerDone = null
         conflict = null
-        const r = hotkeys.capture(event.key, event.modifiers, window)
+        const r = hotkeys.capture(event.key, event.modifiers, window, command)
         if (r.result === "refused") {
             refusal = r.message
             keys = ""

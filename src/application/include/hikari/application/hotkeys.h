@@ -146,7 +146,7 @@ struct HotkeyCapture {
     std::string accel;   // Accepted: the binding
     std::string message; // Refused: the message box shown; the window stays open
 };
-HotkeyCapture captureHotkey(const HotkeyPress &press, int type);
+HotkeyCapture captureHotkey(const HotkeyPress &press, int type, int command = 0);
 
 // The accelerators the Line editor's text fields keep whatever a binding says
 // (numpad digits only when TEXT_FIELD_ALLOW_NUMPAD_HOTKEYS is off).

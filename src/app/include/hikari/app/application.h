@@ -131,6 +131,7 @@ signals:
     void projectsChanged();
     void recentProjectsChanged();
     void projectOffered(int shellWindow, const QString &root, const QString &name);
+    void tabJoinedProject(int shellWindow);
     // description: the group the command would break (0: it would make a new
     // malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);

@@ -191,6 +191,21 @@ TEST(Hotkeys, AltF4ClosesTheWindowAndExitHasNoDefault)
     EXPECT_EQ(rowNamed(list, "Global Close window").accel, "Alt-F4");
 }
 
+TEST(Hotkeys, OnlyCloseWindowCanTakeAltF4)
+{
+    using R = HotkeyCapture::Result;
+    const HotkeyPress altF4{wxk::F4, true, false, false, false};
+    const HotkeyPress altShiftF4{wxk::F4, true, false, true, false};
+    EXPECT_EQ(captureHotkey(altF4, GlobalHotkey, kGlobalCloseWindow).accel, "Alt-F4");
+    EXPECT_EQ(captureHotkey(altShiftF4, GlobalHotkey, kGlobalCloseWindow).accel, "Alt-Shift-F4");
+    for (const int command : {0, kGlobalQuit}) {
+        const auto refused = captureHotkey(altF4, GlobalHotkey, command);
+        EXPECT_EQ(refused.result, R::Refused) << command;
+        EXPECT_EQ(refused.message, "Alt+F4 is kept for closing the window.") << command;
+    }
+    EXPECT_EQ(captureHotkey(altF4, VideoHotkey, 2001).result, R::Refused);
+}
+
 TEST(Hotkeys, TypesFollowGetType)
 {
     EXPECT_EQ(hotkeyType(1000), AudioHotkey);
@@ -308,7 +323,7 @@ TEST(Hotkeys, MappingWindowReadsKeysAsOnKeyPress)
     EXPECT_EQ(captureHotkey(press('Z', false, true, false), GridHotkey).result, R::Refused);
     EXPECT_EQ(captureHotkey(press('V', false, true, true), GridHotkey).accel, "Ctrl-Shift-V");
     c = captureHotkey(press(wxk::F4, true, false, false), VideoHotkey);
-    EXPECT_EQ(c.message, "You cannot use the program exit shortcut.");
+    EXPECT_EQ(c.message, "Alt+F4 is kept for closing the window.");
     EXPECT_EQ(captureHotkey(press(wxk::F4, true, true, false), VideoHotkey).accel, "Alt-Ctrl-F4");
     EXPECT_EQ(captureHotkey(press(wxk::Escape, false, false, false), VideoHotkey).result, R::Ignored);
     EXPECT_EQ(captureHotkey(press('#', false, true, false), VideoHotkey).result, R::Ignored);

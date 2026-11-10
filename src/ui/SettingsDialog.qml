@@ -220,7 +220,7 @@ DialogWindow {
                 hotkeys.optionsMap(accel, window, "cancel")
             else
                 settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
-        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete() })
+        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete(), command: target.id })
     }
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)

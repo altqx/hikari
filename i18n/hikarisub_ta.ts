@@ -6773,8 +6773,8 @@ Failed to copy %2 fonts.</source>
         <translation>நகலெடுத்தல், வெட்டுதல், ஒட்டுதல் ஆகியவற்றுக்குக் குறுக்குவிசைகளைப் பயன்படுத்த முடியாது.</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>நிரலை விட்டு வெளியேறும் குறுக்குவிசையைப் பயன்படுத்த முடியாது.</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Alt+F4 சாளரத்தை மூடுவதற்காக ஒதுக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
         <source>Align to video…</source>

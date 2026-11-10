@@ -1233,7 +1233,7 @@ std::string accelOfQtKeys(std::string_view keys)
     return out + key;
 }
 
-HotkeyCapture captureHotkey(const HotkeyPress &press, int type)
+HotkeyCapture captureHotkey(const HotkeyPress &press, int type, int command)
 {
     HotkeyCapture out;
     const int key = press.key;
@@ -1256,9 +1256,9 @@ HotkeyCapture captureHotkey(const HotkeyPress &press, int type)
         out.message = "You cannot use shortcuts for copying, cutting, and pasting.";
         return out;
     }
-    if (press.alt && !press.ctrl && key == wxk::F4) {
+    if (press.alt && !press.ctrl && key == wxk::F4 && command != kGlobalCloseWindow) {
         out.result = HotkeyCapture::Result::Refused;
-        out.message = "You cannot use the program exit shortcut.";
+        out.message = "Alt+F4 is kept for closing the window.";
         return out;
     }
     const auto &names = hotkeyKeyNames();
