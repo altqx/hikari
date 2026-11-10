@@ -544,9 +544,18 @@ void AgentThreads::setAttached(const std::string &id, std::vector<application::D
     m_attached[id] = std::move(documents);
 }
 
+std::optional<std::string> externalAgentOf(const app::ModelRef &model)
+{
+    if (!model.providerId.starts_with(kAgentProviderPrefix))
+        return std::nullopt;
+    return model.providerId.substr(kAgentProviderPrefix.size());
+}
+
 std::optional<app::ModelRef> AgentThreads::modelOf(const AgentThread &thread) const
 {
     const app::Config *config = m_wiring.config ? m_wiring.config() : nullptr;
+    if (thread.model && externalAgentOf(*thread.model))
+        return thread.model;
     if (thread.model && config && config->provider(thread.model->providerId))
         return thread.model;
     return config ? config->modelFor(app::Role::Chat) : std::nullopt;
@@ -582,10 +591,12 @@ void AgentThreads::send(const std::string &id, std::string text, Json extraParts
     start(*t, std::move(text), std::move(extraParts));
 }
 
-AiSidecarHost *AgentThreads::host()
+AiSidecarHost *AgentThreads::host(bool externalAgent)
 {
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     AiSidecarHost *h = requests ? requests->connected() : nullptr;
+    if (!h && externalAgent && m_wiring.agentHost)
+        h = m_wiring.agentHost();
     if (h == m_host)
         return h;
     if (m_host) {
@@ -624,7 +635,8 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     const std::string id = thread.id;
     const Defaults defaults = m_wiring.defaults ? m_wiring.defaults() : Defaults{};
     const auto model = modelOf(thread);
-    AiSidecarHost *h = model ? host() : nullptr;
+    const std::optional<std::string> agent = model ? externalAgentOf(*model) : std::nullopt;
+    AiSidecarHost *h = model ? host(agent.has_value()) : nullptr;
     const auto notice = [&](std::string_view kind) {
         push(thread, Json::object({{"kind", "notice"}, {"notice", std::string(kind)}}));
         touch(thread);
@@ -653,14 +665,15 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
     AiRequests *requests = m_wiring.requests();
     const bool caching = requests->caching();
     if (!m_live.contains(id)) {
-        h->request("session/new",
-                   Json::object({{"sessionId", id},
-                                 {"model", modelJson(*model)},
-                                 {"system", std::string(kSystemPrompt)},
-                                 {"history", thread.history},
-                                 {"cacheKey", id},
-                                 {"caching", caching}}),
-                   [](SidecarResult) {});
+        Json open = Json::object({{"sessionId", id},
+                                  {"model", modelJson(*model)},
+                                  {"system", std::string(kSystemPrompt)},
+                                  {"history", thread.history},
+                                  {"cacheKey", id},
+                                  {"caching", caching}});
+        if (agent)
+            open["agent"] = *agent;
+        h->request("session/new", std::move(open), [](SidecarResult) {});
         m_live.insert(id);
     }
     auto run = std::make_unique<Run>();

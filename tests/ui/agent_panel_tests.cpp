@@ -204,6 +204,8 @@ private slots:
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         ports.agents = [](backends::ai::AgentBroker &) {};
+        const bool claude = QTest::currentTestFunction() == QByteArrayLiteral("claudeCodeIsAModelOnlyWhenItIsFound");
+        ports.agentOnPath = [claude](const QString &agent) { return claude && agent == QStringLiteral("claude"); };
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -235,6 +237,24 @@ private slots:
         application.reset();
     }
 
+    void claudeCodeIsAModelOnlyWhenItIsFound()
+    {
+        openPanel();
+        const QVariantList models = agent().models();
+        QCOMPARE(models.size(), 2);
+        QCOMPARE(models.front().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Claude Code"));
+        const QString claude = models.front().toMap().value(QStringLiteral("value")).toString();
+        QCOMPARE(claude, QStringLiteral("agent:claude\t"));
+        agent().newThread();
+        agent().setModel(claude);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
+        QCOMPARE(agent().thread().value(QStringLiteral("model")).toString(), claude);
+    }
+    void claudeCodeIsNoModelWhenItIsMissing()
+    {
+        openPanel();
+        QCOMPARE(agent().models().size(), 1);
+    }
     void aTurnStreamsIntoTheTimelineAndItsChangeWaitsInTheReview()
     {
         application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));

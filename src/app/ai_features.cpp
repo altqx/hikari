@@ -127,6 +127,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
                                                      agents + QStringLiteral("/codex/work")))
                 broker.add("codex", std::move(*spec));
     };
+    ports.agentOnPath = [](const QString &agent) { return !QStandardPaths::findExecutable(agent).isEmpty(); };
     ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
     ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
         backends::ai::probeAgentCli(agent, std::move(done));
