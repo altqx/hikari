@@ -16,8 +16,11 @@ namespace hikari::application {
 // The graph format's number; it grows add-only, as the Hikari API does.
 inline constexpr int kNodeGraphFormat = 1;
 
+// Letters, digits, '_' and '-'.
+bool isNodeId(std::string_view id);
+
 struct GraphNode {
-    std::string id; // letters, digits, '_' and '-'
+    std::string id; // isNodeId
     std::string type;
     json::Json fields = json::Json::object();
     // Where the canvas draws it; the engine ignores it.

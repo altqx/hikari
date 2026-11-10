@@ -631,6 +631,21 @@ private slots:
         }
     }
 
+    void portColoursTellTypesApartExceptInHighContrast()
+    {
+        for (const auto code : {Code::Dark, Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
+            const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
+            const auto c = ui::theme::content(code, r);
+            for (const QColor &colour : c.ports)
+                QVERIFY2(contrastRatio(colour, r.field) >= 3.0,
+                         qPrintable(ui::theme::codeName(code) + QLatin1Char(' ') + colour.name()));
+            std::set<QRgb> distinct;
+            for (const QColor &colour : c.ports)
+                distinct.insert(colour.rgba());
+            QCOMPARE(int(distinct.size()), ui::theme::isHighContrast(code) ? 1 : int(c.ports.size()));
+        }
+    }
+
     void profilePreviewAndPalette()
     {
         ui::SettingsStore store;

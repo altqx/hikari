@@ -151,12 +151,14 @@ public:
         QJsonArray releases;
         for (auto it = m_releases.rbegin(); it != m_releases.rend(); ++it)
             releases.push_back(*it);
-        return QJsonDocument(QJsonObject{{QStringLiteral("schema"), 1},
-                                         {QStringLiteral("version"), newest},
-                                         {QStringLiteral("runtimes"), m_runtimes},
-                                         {QStringLiteral("releases"), releases},
-                                         {QStringLiteral("blocked"), QJsonArray::fromStringList(blocked)}})
-            .toJson();
+        QJsonObject root{{QStringLiteral("schema"), 1},
+                         {QStringLiteral("version"), newest},
+                         {QStringLiteral("runtimes"), m_runtimes},
+                         {QStringLiteral("releases"), releases},
+                         {QStringLiteral("blocked"), QJsonArray::fromStringList(blocked)}};
+        if (!agents.isEmpty())
+            root.insert(QStringLiteral("agents"), agents);
+        return QJsonDocument(root).toJson();
     }
 
     /// Publishes the manifest, signed for `ai-v<signedFor>` (the newest release when empty).
@@ -177,6 +179,9 @@ public:
     }
 
     QByteArray path(const QString &name) const { return "/download/ai-channel/" + name.toLatin1(); }
+
+    /// The manifest's `agents` member.
+    QJsonObject agents;
 
 private:
     void put(const QString &name, const QByteArray &data) { m_server.files[path(name)] = data; }

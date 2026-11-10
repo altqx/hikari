@@ -101,9 +101,13 @@ struct Content {
     std::array<QColor, 5> comparison;
     QColor comparisonSelection;
     std::array<QColor, 13> syntax;
+    // Node effects port types, in kPortColourTypes' order; high contrast gives them all the text colour.
+    std::array<QColor, 8> ports;
     // MUST KILL: audio is a full AudioDisplayOptions of which only the colour fields are set
     application::AudioDisplayOptions audio;
 };
+// Number, Time and Alpha connect to one another, so they share Number's colour.
+inline constexpr std::array kPortColourTypes{"Units", "Tags", "Number", "Text", "Colour", "Point", "Bool", "Drawing"};
 Content content(Code code, const Roles &roles);
 void applyAudioColours(application::AudioDisplayOptions &options, const application::AudioDisplayOptions &colours);
 
@@ -157,6 +161,7 @@ class Theme : public QObject {
     Q_PROPERTY(QColor spellcheck READ spellcheck NOTIFY changed FINAL)
     Q_PROPERTY(QColor grammar READ grammar NOTIFY changed FINAL)
     Q_PROPERTY(QVariantList syntax READ syntax NOTIFY changed FINAL)
+    Q_PROPERTY(QVariantMap ports READ ports NOTIFY changed FINAL)
 public:
     explicit Theme(QObject *parent = nullptr);
     static Theme *create(QQmlEngine *engine, QJSEngine *js);
@@ -185,6 +190,8 @@ public:
     QColor spellcheck() const { return theme::current().content.spellcheck; }
     QColor grammar() const { return theme::current().content.grammar; }
     QVariantList syntax() const;
+    // The colour of each port type by name, Time and Alpha with Number's.
+    QVariantMap ports() const;
 
     Q_INVOKABLE QVariantList themes() const;
     Q_INVOKABLE QVariantList accents(bool dark) const;

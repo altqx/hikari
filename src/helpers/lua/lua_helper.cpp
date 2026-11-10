@@ -1,6 +1,7 @@
 // One process per loaded script, its LuaJIT state living for the process; Lua calls to the host block.
 
 #include "hikari/backends/helper_endpoint.h"
+#include "hikari/application/compile_cache.h"
 #include "hikari/application/karaoke_syllables.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
@@ -22,6 +23,7 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 #include <new>
+#include <optional>
 #include <filesystem>
 #include <limits>
 #include <map>
@@ -52,6 +54,10 @@ struct Script {
     std::filesystem::path path;
     std::vector<std::string> includePath; // the script's directory, then the shared ones
     std::string shippedInclude;
+    std::filesystem::path compileCache;
+    std::filesystem::path compiler; // the MoonScript compiler's file
+    std::optional<hikari::application::CompileCache> moonCache;
+    bool moonCacheOpened = false;
     int traceLevel = 3;
     ScriptInfo info;
     std::vector<int> features; // registry refs of {run, validate, isactive}
@@ -92,6 +98,81 @@ bool readFile(const std::filesystem::path &path, std::string &out)
     return !in.bad();
 }
 
+const hikari::application::CompileCache *moonCache()
+{
+    if (!g_script.moonCacheOpened) {
+        g_script.moonCacheOpened = true;
+        std::string compiler;
+        if (!g_script.compileCache.empty() && readFile(g_script.compiler, compiler))
+            g_script.moonCache.emplace(g_script.compileCache, hikari::application::CompileCache::compilerId(compiler));
+    }
+    return g_script.moonCache ? &*g_script.moonCache : nullptr;
+}
+
+// A line table's {Lua line = source position} pairs; false if it holds anything else.
+bool lineTableOf(lua_State *L, int index, std::vector<std::pair<double, double>> &out)
+{
+    if (index < 0)
+        index += lua_gettop(L) + 1;
+    lua_pushnil(L);
+    while (lua_next(L, index)) {
+        if (lua_type(L, -2) != LUA_TNUMBER || lua_type(L, -1) != LUA_TNUMBER) {
+            lua_pop(L, 2);
+            return false;
+        }
+        out.emplace_back(lua_tonumber(L, -2), lua_tonumber(L, -1));
+        lua_pop(L, 1);
+    }
+    return true;
+}
+
+// MoonScript's line_tables[name] = the table at the top, popped.
+void setLineTable(lua_State *L, const std::string &name)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript line tables");
+    lua_insert(L, -2);
+    lua_setfield(L, -2, name.c_str());
+    lua_pop(L, 1);
+}
+
+// As moonscript.loadstring(source, name), the compiled Lua and its line table kept in the compile cache.
+bool loadMoon(lua_State *L, std::string_view source, const std::string &name)
+{
+    const auto *cache = moonCache();
+    if (cache) {
+        if (const auto compiled = cache->find(name, source)) {
+            lua_createtable(L, 0, static_cast<int>(compiled->lines.size()));
+            for (const auto &[line, position] : compiled->lines) {
+                lua_pushnumber(L, line);
+                lua_pushnumber(L, position);
+                lua_rawset(L, -3);
+            }
+            setLineTable(L, name);
+            return luaL_loadbuffer(L, compiled->code.data(), compiled->code.size(), name.c_str()) == 0;
+        }
+    }
+    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript");
+    lua_pushlstring(L, source.data(), source.size());
+    if (lua_pcall(L, 1, 2, 0))
+        return false; // leaves the error message
+    if (lua_isnil(L, -2)) {
+        lua_remove(L, -2);
+        return false;
+    }
+    hikari::application::CompiledSource compiled;
+    const bool cacheable = cache && lineTableOf(L, -1, compiled.lines);
+    std::size_t len = 0;
+    const char *code = lua_tolstring(L, -2, &len);
+    compiled.code.assign(code, len);
+    setLineTable(L, name);
+    lua_pop(L, 1);
+    if (luaL_loadbuffer(L, compiled.code.data(), compiled.code.size(), name.c_str()))
+        return false;
+    if (cacheable)
+        cache->store(name, source, compiled);
+    return true;
+}
+
 // The whole file, a UTF-8 BOM skipped, the path as the chunk name.
 bool loadFile(lua_State *L, const std::filesystem::path &path)
 {
@@ -100,31 +181,16 @@ bool loadFile(lua_State *L, const std::filesystem::path &path)
         lua_pushfstring(L, "cannot read %s", toUtf8(path).c_str());
         return false;
     }
-    const char *data = text.data();
-    std::size_t size = text.size();
-    if (size >= 3 && static_cast<unsigned char>(data[0]) == 0xEF && static_cast<unsigned char>(data[1]) == 0xBB &&
-        static_cast<unsigned char>(data[2]) == 0xBF) {
-        data += 3;
-        size -= 3;
-    }
+    std::string_view source = text;
+    if (source.starts_with("\xEF\xBB\xBF"))
+        source.remove_prefix(3);
     const std::string name = toUtf8(path);
     if (!name.ends_with("moon"))
-        return luaL_loadbuffer(L, data, size, name.c_str()) == 0;
+        return luaL_loadbuffer(L, source.data(), source.size(), name.c_str()) == 0;
     // The raw text is kept to map error lines back to the .moon source.
-    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript");
-    lua_pushlstring(L, data, size);
-    lua_pushvalue(L, -1);
+    lua_pushlstring(L, source.data(), source.size());
     lua_setfield(L, LUA_REGISTRYINDEX, ("raw moonscript: " + name).c_str());
-    lua_pushstring(L, name.c_str());
-    if (lua_pcall(L, 2, 2, 0))
-        return false; // leaves the error message
-    // loadstring returns nil, error on error, or the function.
-    if (lua_isnil(L, -2)) {
-        lua_remove(L, -2);
-        return false;
-    }
-    lua_pop(L, 1);
-    return true;
+    return loadMoon(L, source, name);
 }
 
 std::string stringOrEmpty(lua_State *L, int index)
@@ -759,12 +825,9 @@ void installAegisub(lua_State *L)
     lua_setglobal(L, "aegisub");
 }
 
-// package.loaders[2]: each package.path entry with "/?" replaced by the module path, a .moon file preferred over
-// its .lua.
-int moduleLoader(lua_State *L)
+// Each package.path entry with "/?" replaced by the module path, a .moon file preferred over its .lua.
+std::optional<std::string> moduleFile(lua_State *L, const std::string &name)
 {
-    const int pretop = lua_gettop(L);
-    const std::string name = checkString(L, -1);
     std::string module = name;
     std::replace(module.begin(), module.end(), '.', LUA_DIRSEP[0]);
     lua_getglobal(L, "package");
@@ -797,18 +860,26 @@ int moduleLoader(lua_State *L)
             if (std::filesystem::exists(fromUtf8(moon)))
                 filename = moon;
         }
-        if (!std::filesystem::exists(fromUtf8(filename)))
-            continue;
-        noteLoaded(fromUtf8(filename));
-        if (!loadFile(L, fromUtf8(filename)))
-            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename.c_str(), luaL_checkstring(L, -1));
-        break;
+        if (std::filesystem::exists(fromUtf8(filename)))
+            return filename;
+    }
+    return std::nullopt;
+}
+
+int moduleLoader(lua_State *L)
+{
+    const int pretop = lua_gettop(L);
+    const auto filename = moduleFile(L, checkString(L, -1));
+    if (filename) {
+        noteLoaded(fromUtf8(*filename));
+        if (!loadFile(L, fromUtf8(*filename)))
+            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename->c_str(), luaL_checkstring(L, -1));
     }
     return lua_gettop(L) - pretop;
 }
 
-// package.path from the include directories, the module loader above, and moonscript.loadstring kept in the
-// registry. False leaves the error message on the stack.
+// package.path from the include directories, the module loader above, and MoonScript's to_lua and line_tables
+// kept in the registry. False leaves the error message on the stack.
 bool install(lua_State *L)
 {
     lua_getglobal(L, "package");
@@ -821,10 +892,13 @@ bool install(lua_State *L)
     lua_pushcfunction(L, moduleLoader);
     lua_rawseti(L, -2, 2);
     lua_pop(L, 2);
-    luaL_loadstring(L, "return require('moonscript').loadstring");
-    if (lua_pcall(L, 0, 1, 0))
+    luaL_loadstring(L, "return require('moonscript').to_lua, require('moonscript.line_tables')");
+    if (lua_pcall(L, 0, 2, 0))
         return false;
+    lua_setfield(L, LUA_REGISTRYINDEX, "moonscript line tables");
     lua_setfield(L, LUA_REGISTRYINDEX, "moonscript");
+    if (const auto compiler = moduleFile(L, "moonscript"))
+        g_script.compiler = fromUtf8(*compiler);
     return true;
 }
 
@@ -833,6 +907,7 @@ void load(Reader &in, Responder &r)
     const std::string path = in.str();
     const std::string sharedInclude = in.str();
     const std::int32_t traceLevel = in.i32();
+    const std::string compileCache = in.str();
     if (!in.ok() || path.empty())
         return r.terminal(Outcome::InvalidInput, bytesOf("malformed Load"));
     if (g_script.L)
@@ -840,6 +915,7 @@ void load(Reader &in, Responder &r)
 
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
+    g_script.compileCache = fromUtf8(compileCache);
     // Each include directory ends with a separator. The shared ones come one per line, the shipped Include last.
     g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP};
     for (std::size_t from = 0;;) {

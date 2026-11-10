@@ -124,6 +124,10 @@ const Table &table()
                     QStringLiteral("3x+")})},
             {QStringLiteral("startup_time"), oneOf(kTimeBuckets)},
         };
+        std::map<QString, Rule> aiVersions;
+        for (const char *key : Analytics::kAiVersionProperties)
+            aiVersions.emplace(QLatin1String(key), pattern(kVersion));
+        started.insert(aiVersions.begin(), aiVersions.end());
         t.emplace(QStringLiteral("app_started"), started);
         std::map<QString, Rule> closed{{QStringLiteral("session_length"), oneOf(kSessionBuckets)}};
         for (const char *bucket : Analytics::kFrameBuckets)
@@ -167,14 +171,20 @@ const Table &table()
                                           {QStringLiteral("$debug_images"), {Rule::DebugImages, {}, {}}}});
         std::map<QString, Rule> report{
             {QStringLiteral("report_id"), pattern(kUuid)},
-            {QStringLiteral("kind"), oneOf({QStringLiteral("crash"), QStringLiteral("freeze")})},
+            {QStringLiteral("kind"), oneOf({QStringLiteral("crash"), QStringLiteral("freeze"), QStringLiteral("ai_component")})},
             {QStringLiteral("note"), {Rule::Text, {}, {}, 4000}},
             {QStringLiteral("log"), {Rule::Text, {}, {}, 64 * 1024}},
             {QStringLiteral("settings"), {Rule::Settings, {}, {}, 64}},
         };
         for (const char *key : {"version", "channel", "$os", "$os_version", "arch", "package", "qt_version"})
             report.emplace(QString::fromLatin1(key), started.at(QString::fromLatin1(key)));
+        std::map<QString, Rule> rollback{
+            {QStringLiteral("ai_failed_version"), pattern(kVersion)},
+            {QStringLiteral("ai_failure"), oneOf({QStringLiteral("initialize"), QStringLiteral("crashed")})}};
+        rollback.insert(aiVersions.begin(), aiVersions.end());
+        report.insert(rollback.begin(), rollback.end());
         t.emplace(QStringLiteral("crash_report"), std::move(report));
+        t.emplace(QStringLiteral("ai_component_rolled_back"), std::move(rollback));
         return t;
     }();
     return events;
@@ -445,6 +455,23 @@ bool Analytics::conforms(const QString &event, const QJsonObject &properties)
     return true;
 }
 
+QJsonObject Analytics::conforming(const QString &event, const QJsonObject &properties)
+{
+    QJsonObject kept;
+    for (auto p = properties.begin(); p != properties.end(); ++p)
+        if (conforms(event, {{p.key(), p.value()}}))
+            kept.insert(p.key(), p.value());
+    return kept;
+}
+
+void Analytics::aiComponentRolledBack(const QString &failedVersion, const QString &failure, const QJsonObject &versions)
+{
+    QJsonObject properties = conforming(QStringLiteral("ai_component_rolled_back"), versions);
+    properties.insert(QStringLiteral("ai_failed_version"), failedVersion);
+    properties.insert(QStringLiteral("ai_failure"), failure);
+    capture(QStringLiteral("ai_component_rolled_back"), properties);
+}
+
 bool Analytics::capture(const QString &event, const QJsonObject &properties)
 {
     if (!active())
@@ -683,8 +710,9 @@ void Analytics::appStarted(const StartFacts &facts)
     if (!matches(osVersion, QStringLiteral("^[A-Za-z0-9._-]{1,24}$")))
         osVersion = QStringLiteral("other");
     const QString layout = kLayouts.contains(facts.layout.toLower()) ? facts.layout.toLower() : QStringLiteral("custom");
-    capture(QStringLiteral("app_started"),
-            {{QStringLiteral("version"), version},
+    QJsonObject properties = m_aiVersions ? conforming(QStringLiteral("app_started"), m_aiVersions()) : QJsonObject();
+    for (const auto &[key, value] : std::initializer_list<std::pair<QString, QJsonValue>>{
+             {QStringLiteral("version"), version},
              {QStringLiteral("channel"), version.contains(QLatin1Char('-')) ? QStringLiteral("prerelease") : QStringLiteral("stable")},
              {QStringLiteral("$os"), os()},
              {QStringLiteral("$os_version"), osVersion},
@@ -697,7 +725,9 @@ void Analytics::appStarted(const StartFacts &facts)
              {QStringLiteral("layout"), layout},
              {QStringLiteral("screens"), screensBucket(facts.screens)},
              {QStringLiteral("scale"), scaleBucket(facts.scale)},
-             {QStringLiteral("startup_time"), timeBucket(facts.startupMs)}});
+             {QStringLiteral("startup_time"), timeBucket(facts.startupMs)}})
+        properties.insert(key, value);
+    capture(QStringLiteral("app_started"), properties);
 }
 
 bool Analytics::sendReport(const QList<std::pair<QString, QJsonObject>> &events)

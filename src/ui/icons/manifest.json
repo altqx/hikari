@@ -4199,8 +4199,7 @@
    "surfaces": [
     "menu:view",
     "node-editor"
-   ],
-   "pending": "NE2 #424"
+   ]
   },
   {
    "role": "ai-assistant",
@@ -4554,8 +4553,7 @@
    "legacy": [],
    "surfaces": [
     "node-editor"
-   ],
-   "pending": "NE2 #424"
+   ]
   },
   {
    "role": "compact",

@@ -121,6 +121,11 @@ The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of a
 
 Stock modules always load from the shipped Include: a module or `include` file whose top-level name is in the shipped Include comes from there before the script's folder and the user's Include. The DependencyControl-managed packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) keep the script folder → user Include → shipped order, so DependencyControl's updates win, and a module the shipped Include lacks resolves as before. This covers `moonscript` as Aegisub 3.5 does by loading its support files by exact path.
 
+### Loading faster (AU2, [#838](https://github.com/altqx/hikari/issues/838))
+
+- **MoonScript compile cache.** A `.moon` script or module compiles once. The compiled Lua and its line table are kept in the user folder's cache, `MoonScript/`, one entry for each file and compiler (`CompileCache`, `compile_cache.h`). An entry is used only while its file holds exactly the source it was compiled from, and the compiler (`moonscript.lua`) is the same text. So a changed script, or a new MoonScript, compiles again. Error lines map to the `.moon` source as before. The cache is best effort: one that can't be written leaves every load compiling, as before. A script that requires DependencyControl compiles ~46 modules (~0.3 s); from the cache it loads in a fraction of that.
+- **Kara Effector loads on first use.** `utils.lua` (which karaskel includes) binds `ke4`, the `R` family, `interpolate*`, and ke4's `temp` and `recall` to stand-ins (`effector-auto4-lazy.lua`). The first use of any of them requires `effector-auto4` and puts the real ones in their place. A global the script set itself in the meantime keeps the script's value, as when ke4 loaded first. A script holding a stand-in compares unequal to the real function, the only difference from loading it up front.
+
 ### Thai support (TH2, 2026-11-09)
 
 Thai support by Jibrill: the fixes from Jibrill's Aegisub scripts, carried over with Jibrill's permission ([TH0 #834](https://github.com/altqx/hikari/issues/834)).
