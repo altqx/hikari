@@ -7,7 +7,6 @@ A thread can run on an agent the user already has, instead of Hikari's own loop 
 Claude runs through the Claude Agent SDK, on the user's own `claude` and its login. Hikari never starts, reads, stores or relays that login.
 
 - **Picking it.** When Qt finds `claude` on `PATH`, the panel's model menu lists **Claude Code** first. A thread on it has the model `agent:claude`, which Qt sends as `session/new`'s `agent`. Such a thread needs no provider: it uses the same sidecar as the MCP server.
-
 - **One query per thread.** `session/new` with `"agent": "claude"` opens the session. Its first `session/prompt` starts one long-running query, and every later turn of the thread goes into the same query. When `claude` exits, the next turn starts a new query that resumes Claude's session.
 - **Only Hikari's tools.** The query runs with:
   - `tools: []`, so Claude's built-in tools are off;
