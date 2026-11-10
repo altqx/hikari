@@ -11985,6 +11985,10 @@ Failed to copy %2 fonts.</source>
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>แท็บนี้ใช้โปรเจกต์ %1 แล้ว</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

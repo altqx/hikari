@@ -12053,6 +12053,10 @@ Failed to copy %2 fonts.</source>
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>இந்தத் தாவல் இப்போது %1 திட்டத்தைப் பயன்படுத்துகிறது.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

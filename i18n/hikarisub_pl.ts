@@ -12121,6 +12121,10 @@ Nie udało się skopiować czcionek: %2.</translation>
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>Ta zakładka używa teraz projektu %1.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
