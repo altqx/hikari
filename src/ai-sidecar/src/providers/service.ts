@@ -5,6 +5,7 @@ import { Collector } from "./collector";
 import { ProviderError, providerErrorOf } from "./errors";
 import { geminiClient } from "./gemini";
 import { openAiClient } from "./openai";
+import { type ImageBudget, kDefaultImageBudget, kImageBudgets } from "../tools/images";
 import { type Relay, relayFetch } from "./relay";
 import { kSchemas, type Schema, validate } from "./schema";
 import type { CompleteParams, ConversationEndParams, Finished, ModelsListParams, ModelsListResult, ProviderConfig,
@@ -107,6 +108,11 @@ export class ProviderService {
     /** The service that searches for providers without their own search, while web search is on. */
     get searchService(): SearchService | undefined {
         return this.search;
+    }
+
+    imageBudget(providerId: string): ImageBudget {
+        const config = this.providers.get(providerId);
+        return config ? kImageBudgets[config.wire] : kDefaultImageBudget;
     }
 
     async endConversation(params: unknown, signal: AbortSignal): Promise<null> {

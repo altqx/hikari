@@ -16744,6 +16744,10 @@ private slots:
               {"ai.searchService", nullptr},
               {"ai.mcp.server", "Let agents outside HikariSub edit through MCP"},
               {"ai.mcp.http", nullptr},
+              {"ai.agent.mode", nullptr},
+              {"ai.agent.threadCapCents", nullptr},
+              {"ai.agent.dailyCapCents", nullptr},
+              {"ai.agent.costMeter", "Show the cost meter"},
               {"ai.autoUpdate", "Update AI components automatically"},
               {"ai.promptCaching", "Use prompt caching"}}},
             {"settingsPageUpdates",
@@ -20723,7 +20727,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 301);
+        QCOMPARE(hotkeyRows().size(), 303);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

@@ -55,6 +55,11 @@ double AegisubFrameTimes::fps() const
     return static_cast<double>(m_numerator) / static_cast<double>(kDenominator);
 }
 
+Timecodes AegisubFrameTimes::timecodes() const
+{
+    return Timecodes{TimecodesFormat::V2, m_starts, m_numerator, m_last};
+}
+
 std::int64_t AegisubFrameTimes::frameAt(std::int64_t ms) const
 {
     if (ms < 0)
