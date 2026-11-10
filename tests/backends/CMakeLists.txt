@@ -168,6 +168,7 @@ target_compile_definitions(hikari_backends_karaoke_preview_tests PRIVATE
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
+target_include_directories(hikari_backends_karaoke_preview_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_karaoke_preview_tests hikari_lua_helper hikari_automation_stage)
 
 hikari_add_gtest(hikari_backends_karaoke_presets_tests SOURCES karaoke_presets_tests.cpp
