@@ -1,0 +1,179 @@
+{
+  "apply": {
+    "events": [
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Sign",
+        "text": "{\\bord1.87\\fade(255,0,255,0,100,360,510)\\fscx93.52\\fscy93.52\\pos(598.48,375.56)\\shad0.94\\t(0,250,\\fscx140.29\\1c&H0000FF&)\\t(0,510,\\frz30)}Transforms"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Sign",
+        "text": "{\\bord1.9\\fade(255,0,255,-40,60,320,470)\\fscx95.14\\fscy95.14\\pos(607.24,371.57)\\shad0.95\\t(-40,210,\\fscx142.71\\1c&H0000FF&)\\t(-40,470,\\frz30)}Transforms"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Sign",
+        "text": "{\\bord1.94\\fade(255,0,255,-80,20,280,430)\\fscx96.76\\fscy96.76\\pos(617.08,367.64)\\shad0.97\\t(-80,170,\\fscx145.14\\1c&H0000FF&)\\t(-80,430,\\frz30)}Transforms"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Sign",
+        "text": "{\\bord1.97\\fade(255,0,255,-120,-20,240,390)\\fscx98.38\\fscy98.38\\pos(628,363.79)\\shad0.98\\t(-120,130,\\fscx147.57\\1c&H0000FF&)\\t(-120,390,\\frz30)}Transforms"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Sign",
+        "text": "{\\bord2\\fade(255,0,255,-160,-60,200,350)\\fscx100\\fscy100\\pos(640,360)\\shad1\\t(-160,350,\\frz30)\\t(-160,90,\\fscx150\\1c&H0000FF&)}Transforms"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Sign",
+        "text": "{\\bord2.03\\fade(255,0,255,-200,-100,160,310)\\fscx101.62\\fscy101.62\\pos(653.08,356.28)\\shad1.02\\t(-200,310,\\frz30)\\t(-200,50,\\fscx152.43\\1c&H0000FF&)}Transforms"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.06\\fade(255,0,255,-250,-150,110,260)\\fscx154.86\\fscy103.24\\pos(667.24,352.62)\\shad1.03\\t(-250,260,\\frz30)}Transforms"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.1\\fade(255,0,255,-290,-190,70,220)\\fscx157.29\\fscy104.86\\pos(682.48,349.03)\\shad1.05\\t(-290,220,\\frz30)}Transforms"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.13\\fade(255,0,255,-330,-230,30,180)\\fscx159.71\\fscy106.48\\pos(698.8,345.51)\\shad1.06\\t(-330,180,\\frz30)}Transforms"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.16\\fade(255,0,255,-370,-270,-10,140)\\fscx162.14\\fscy108.09\\pos(716.2,342.05)\\shad1.08\\t(-370,140,\\frz30)}Transforms"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.19\\fade(255,0,255,-410,-310,-50,100)\\fscx164.57\\fscy109.71\\pos(734.68,338.67)\\shad1.1\\t(-410,100,\\frz30)}Transforms"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.23\\fade(255,0,255,-450,-350,-90,60)\\fscx167\\fscy111.33\\pos(754.24,335.34)\\shad1.11\\t(-450,60,\\frz30)}Transforms"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)\\fad(100,150)\\t(0,250,\\fscx150\\1c&H0000FF&)\\t(\\frz30)}Transforms",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Sign",
+        "text": "{\\1c&H0000FF&\\bord2.26\\fade(255,0,255,-500,-400,-140,10)\\fscx169.43\\fscy112.95\\pos(774.88,332.09)\\shad1.13\\t(-500,10,\\frz30)}Transforms"
+      }
+    ],
+    "outcome": "ok",
+    "unchanged": 13,
+    "undo_steps": 1
+  },
+  "departure": "D5"
+}

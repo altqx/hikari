@@ -5606,8 +5606,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "motion-revert",
@@ -5618,8 +5617,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "motion-copy",
@@ -5630,8 +5628,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "motion-extend",
@@ -5642,8 +5639,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   },
   {
    "role": "move-extend",
@@ -5654,8 +5650,7 @@
    "legacy": [],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "AU8 #842"
+   ]
   }
  ],
  "notReplaced": {

@@ -1,0 +1,6 @@
+{
+    "apply": {
+        "outcome": "stopped",
+        "refusal": "The length of your main data (5 frames) doesn't match\nthe length of your lines (13 frames) and I quit."
+    }
+}

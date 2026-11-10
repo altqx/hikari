@@ -1418,7 +1418,6 @@ for card, roles in {
                  "shape-to-clip", "shape-merge"],
     "AU7 #843": ["tool-gradient", "gradient-rect", "gradient-skew", "gradient-rotated", "gradient-vector",
                  "gradient-clip-edge", "gradient-by-char", "gradient-by-line", "gradient-merge"],
-    "AU8 #842": ["motion-apply", "motion-revert", "motion-copy", "motion-extend", "move-extend"],
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],

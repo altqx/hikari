@@ -1,0 +1,6 @@
+{
+    "apply": {
+        "message": "File \"<stage>/Include/a-mo/Line.moon\", line 419  <anonymous function at lines 416-436>\nattempt to compare number with nil",
+        "outcome": "stopped"
+    }
+}
