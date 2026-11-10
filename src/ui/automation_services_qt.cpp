@@ -37,6 +37,10 @@ bool flag(const std::vector<std::string> &style, std::size_t i)
     return std::atoi(field(style, i).c_str()) != 0;
 }
 
+#ifdef _WIN32
+constexpr std::size_t kMaxGdiFonts = 64;
+#endif
+
 // ASS v4+ style field positions.
 enum : std::size_t { Fontname = 1, Fontsize = 2, Bold = 7, Italic = 8, Underline = 9, StrikeOut = 10, ScaleX = 11,
                      ScaleY = 12, Spacing = 13, Encoding = 22 };
@@ -63,6 +67,26 @@ bool QtClipboardPort::setText(const std::string &text)
     return true;
 }
 
+QtTextMeasurePort::~QtTextMeasurePort()
+{
+#ifdef _WIN32
+    dropFonts();
+    if (m_dc)
+        DeleteDC(static_cast<HDC>(m_dc));
+#endif
+}
+
+#ifdef _WIN32
+void QtTextMeasurePort::dropFonts()
+{
+    if (m_dc && m_dcFont)
+        SelectObject(static_cast<HDC>(m_dc), static_cast<HGDIOBJ>(m_dcFont));
+    for (const auto &[key, font] : m_fonts)
+        DeleteObject(static_cast<HFONT>(font.handle));
+    m_fonts.clear();
+}
+#endif
+
 std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::vector<std::string> &style,
                                                                    const std::string &text)
 {
@@ -74,10 +98,13 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
         return application::TextExtents{};
 #ifdef _WIN32
     const std::wstring wide = string.toStdWString();
-    HDC dc = CreateCompatibleDC(nullptr);
-    if (!dc)
-        return std::nullopt;
-    SetMapMode(dc, MM_TEXT);
+    if (!m_dc) {
+        m_dc = CreateCompatibleDC(nullptr);
+        if (!m_dc)
+            return std::nullopt;
+        SetMapMode(static_cast<HDC>(m_dc), MM_TEXT);
+    }
+    HDC dc = static_cast<HDC>(m_dc);
     LOGFONTW lf{};
     lf.lfHeight = static_cast<LONG>(fontsize);
     lf.lfWeight = flag(style, Bold) ? FW_BOLD : FW_NORMAL;
@@ -91,12 +118,26 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
     lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
     const std::wstring face = qs(field(style, Fontname)).toStdWString();
     wcsncpy_s(lf.lfFaceName, face.c_str(), _TRUNCATE);
-    HFONT font = CreateFontIndirectW(&lf);
-    if (!font) {
-        DeleteDC(dc);
-        return std::nullopt;
+    const auto key = std::tuple{std::wstring(lf.lfFaceName), static_cast<long>(lf.lfHeight),
+                                static_cast<long>(lf.lfWeight), static_cast<int>(lf.lfItalic),
+                                static_cast<int>(lf.lfUnderline), static_cast<int>(lf.lfStrikeOut),
+                                static_cast<int>(lf.lfCharSet)};
+    auto found = m_fonts.find(key);
+    if (found == m_fonts.end()) {
+        if (m_fonts.size() >= kMaxGdiFonts)
+            dropFonts();
+        HFONT font = CreateFontIndirectW(&lf);
+        if (!font)
+            return std::nullopt;
+        HGDIOBJ previous = SelectObject(dc, font);
+        if (!m_dcFont)
+            m_dcFont = previous;
+        TEXTMETRICW tm{};
+        GetTextMetricsW(dc, &tm);
+        found = m_fonts.emplace(key, GdiFont{font, tm.tmDescent, tm.tmExternalLeading}).first;
+    } else {
+        SelectObject(dc, static_cast<HFONT>(found->second.handle));
     }
-    SelectObject(dc, font);
     SIZE sz{};
     if (spacing != 0) {
         for (const wchar_t c : wide) {
@@ -109,12 +150,8 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
         fwidth = static_cast<float>(sz.cx);
         fheight = static_cast<float>(sz.cy);
     }
-    TEXTMETRICW tm{};
-    GetTextMetricsW(dc, &tm);
-    fdescent = static_cast<float>(tm.tmDescent);
-    fextlead = static_cast<float>(tm.tmExternalLeading);
-    DeleteDC(dc);
-    DeleteObject(font);
+    fdescent = static_cast<float>(found->second.descent);
+    fextlead = static_cast<float>(found->second.externalLeading);
 #else
     // The style's size is the line's height, as GDI's positive lfHeight makes it on Windows, not the em.
     const int pixelHeight = std::max(1, static_cast<int>((fontsize / 64.f) + 0.5f));

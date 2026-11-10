@@ -9,6 +9,7 @@
 #include "hikari/core/extradata.h"
 #include "karaoke_marks.h"
 #include "hikari/core/text_projection.h"
+#include "fake_text_measure.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -75,22 +76,6 @@ std::string textOf(const std::vector<std::byte> &bytes)
     return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
 }
 
-HostServiceReply textExtents(const HostServiceRequest &r)
-{
-    const auto number = [&](std::size_t i) { return i < r.style.size() ? std::stod(r.style[i]) : 0.0; };
-    const double size = number(2), scaleX = number(11) / 100, scaleY = number(12) / 100, spacing = number(13);
-    const QString text = QString::fromStdString(r.strings.at(0));
-    double ems = 0;
-    int chars = 0;
-    for (const char32_t c : text.toUcs4()) {
-        ems += c >= 0x2E80 ? 1.0 : 0.55;
-        ++chars;
-    }
-    HostServiceReply out;
-    out.numbers = {ems * size * scaleX + spacing * chars, size * scaleY, size * 0.21, 0};
-    return out;
-}
-
 struct Outcome {
     std::optional<LuaScriptHost::RunOutcome> outcome;
     QString message;
@@ -112,8 +97,9 @@ protected:
     {
         auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
                                                     QStringLiteral(HIKARI_LUA_INCLUDE));
-        host->setServiceHandler([](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
-            reply(r.service == HostService::TextExtents ? textExtents(r) : HostServiceReply::unavailable());
+        host->setServiceHandler([this](const HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+            ++asked[r.service];
+            reply(answer(r));
         });
         QObject::connect(host.get(), &LuaScriptHost::logged, [this](const QString &t) { run.log << t; });
         QObject::connect(host.get(), &LuaScriptHost::finished,
@@ -189,6 +175,8 @@ protected:
 
     Outcome run;
     QJsonObject report;
+    std::function<HostServiceReply(const HostServiceRequest &)> answer = hikari::test::fakeMeasureReply;
+    std::map<HostService, int> asked;
 };
 
 QStringList corpus()
@@ -282,6 +270,38 @@ TEST_F(KaraokeTemplater, BundledTemplaterMatchesAegisub322ByteForByte)
     }
 }
 
+
+TEST_F(KaraokeTemplater, CharTemplatesMeasureEachTextOnceARun)
+{
+    const auto bytes = bytesOf(R"([Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template char,{\pos($x,$y)}
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}o{\k20}ke
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,karaoke,{\k20}ka{\k20}ra{\k20}ka{\k20}ra
+)");
+    const std::string batched = templatedBytes(bytes, bundledScript());
+    ASSERT_FALSE(batched.empty());
+    EXPECT_EQ(asked[HostService::TextExtentsMany], 2) << "one batch a karaoke Line";
+    EXPECT_EQ(asked[HostService::TextExtents], 4) << "k, a, r and e; o is a syllable already measured";
+
+    answer = [](const HostServiceRequest &r) {
+        return r.service == HostService::TextExtentsMany ? HostServiceReply::unavailable()
+                                                         : hikari::test::fakeMeasureReply(r);
+    };
+    asked.clear();
+    EXPECT_EQ(templatedBytes(bytes, bundledScript()), batched);
+    EXPECT_EQ(asked[HostService::TextExtentsMany], 1) << "asked once, then text by text for the rest of the run";
+    EXPECT_EQ(asked[HostService::TextExtents], 10) << "each distinct non-empty text once, where 25 were asked before";
+}
 
 TEST_F(KaraokeTemplater, AReopenedFileKnowsWhichKaraokeLineEachLineCameFrom)
 {

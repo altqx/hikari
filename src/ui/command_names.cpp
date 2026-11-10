@@ -300,6 +300,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next QC note"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous QC note"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Add QC note"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to new window"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep AI change"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo AI change"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next AI change"),
@@ -307,6 +309,10 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep all AI changes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo all AI changes"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Review panel"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Agent panel"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "New agent thread"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open folder…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close project"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

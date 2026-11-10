@@ -13,10 +13,28 @@ ApplicationWindow {
     width: 1280
     height: 800
     visible: true
-    title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
+    title: {
+        if (!shell.hasEditingTarget)
+            return projectName.length > 0 ? qsTr("%1 - HikariSub").arg(projectName) : "HikariSub"
+        return projectName.length > 0 ? qsTr("%1 - %2 - HikariSub").arg(shell.editingTitle, projectName)
+                                      : qsTr("%1 - HikariSub").arg(shell.editingTitle)
+    }
     color: Theme.background
 
     property int shellWindow: 0
+    property int projectRevision: 0
+    readonly property string projectName: {
+        root.projectRevision
+        return root.app.projectName(root.shellWindow)
+    }
+    Connections {
+        target: root.app
+        function onProjectsChanged() { root.projectRevision++ }
+        function onProjectOffered(shellWindow, folder, name) {
+            if (shellWindow === root.shellWindow)
+                projectOfferBar.offer(folder, name)
+        }
+    }
     readonly property string engineSuffix: shellWindow === 0 ? "" : "~" + shellWindow
     readonly property var dockAffinities: ["w" + shellWindow]
     readonly property bool windowHome: {
@@ -57,6 +75,7 @@ ApplicationWindow {
     required property var fontCatalogs
     required property var matroska
     required property var review
+    required property var agent
     required property var hotkeys
     required property var settingsImport
     required property VisualToolsController visualTools
@@ -104,6 +123,13 @@ ApplicationWindow {
 
     function beginClose(then) {
         const rows = root.app.reviewClose(then)
+        if (rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(rows)
+    }
+    function closeProject() {
+        const rows = root.app.reviewCloseProject(root.shellWindow)
         if (rows.length === 0)
             root.app.finishClose()
         else
@@ -372,6 +398,13 @@ ApplicationWindow {
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
+    function addAgent() {
+        if (reviewDock.isOpen && !reviewDock.isFloating)
+            reviewDock.addDockWidgetAsTab(agentDock)
+        else
+            root.addRightOfGrid(agentDock, 446)
+    }
+
     function addRightOfGrid(dock, preferredWidth) {
         const grid = gridDock.isOpen && !gridDock.isFloating
         const left = Docking.placeInLayout(root.engineName("Grid")).x
@@ -397,10 +430,12 @@ ApplicationWindow {
 
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel]
+                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel,
+                                                 agentPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
                                          templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
+                                         .concat(root.agent.on ? [agentDock] : [])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -507,7 +542,7 @@ ApplicationWindow {
                 id: pluginPanel
                 objectName: "pluginPanel_" + pluginDock.uniqueName
                 dockName: pluginDock.uniqueName
-                minimumBodySize: Qt.size(160, 120)
+                minimumBodySize: pluginBody.minimumBodySize
                 anchors.fill: parent
                 title: pluginDock.title
                 PluginPanelBody {
@@ -523,6 +558,7 @@ ApplicationWindow {
                     onTurnOn: plugin => root.app.pluginManager.setEnabled(plugin, true)
                     onRestart: plugin => root.app.pluginRuntime.restart(plugin)
                     onDetails: root.showPanel(logDock)
+                    onCopy: text => root.app.copyText(text)
                     // KDDW deletes these children inside ~DockWidget; a binding on pluginBody would then call into the dying dock.
                     onPluginNameChanged: pluginDock.pluginName = pluginName
                     onTitleChanged: pluginDock.knownTitle = title
@@ -735,8 +771,11 @@ ApplicationWindow {
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
     }
     function addQcNote(ms) {
-        if (!root.qcNotes.editable)
+        if (!root.qcNotes.editable) {
+            if (root.qcNotes.hasDocument && !root.qcNotes.canKeepNotes)
+                root.showPanel(qcNotesDock)
             return
+        }
         root.showPanel(qcNotesDock)
         qcNotesTool.startAdding(ms)
     }
@@ -762,6 +801,8 @@ ApplicationWindow {
             root.addStyles()
         else if (dock === templateDock && !Docking.hasPlace(root.engineName("Template")))
             root.addTemplate()
+        else if (dock === agentDock && !Docking.hasPlace(root.engineName("Agent")))
+            root.addAgent()
         else if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
             root.addPluginDock(dock)
         else if (!Docking.hasPlace(dock.uniqueName))
@@ -1381,6 +1422,7 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    function openInstallLink(id) { pluginManagerDialog.followLink(id) }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }
@@ -1474,6 +1516,8 @@ ApplicationWindow {
         function onDocumentWriteFailed(id) { matroskaSubtitles.writeFailed(id) }
         // MUST KILL: the app ignores Grid scroll reports until scrollRestored(), hiding the model reset's transient 0
         function onTabShown(scroll) {
+            if (root.app.lastUsedWindow !== root.shellWindow)
+                return
             Qt.callLater(() => {
                 grid.contentY = scroll * grid.rowHeight
                 root.app.scrollRestored()
@@ -1541,6 +1585,17 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.show()
                     }
                 }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_FOLDER"
+                    help: qsTr("Open a folder as a project")
+                    iconRole: "open-project"
+                    objectName: "openFolderMenuItem"
+                    action: Action {
+                        id: openFolderAction
+                        text: qsTr("Open &folder…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FOLDER")) projectFolderDialog.show()
+                    }
+                }
                 ShellMenu {
                     help: qsTr("Recently opened subtitles")
                     id: recentMenu
@@ -1589,6 +1644,18 @@ ApplicationWindow {
                         text: qsTr("&Close")
                         enabled: root.shell.hasEditingTarget
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CLOSE_PROJECT"
+                    help: qsTr("Close this window's tabs and its project")
+                    iconRole: "close-project"
+                    objectName: "closeProjectMenuItem"
+                    action: Action {
+                        id: closeProjectAction
+                        text: qsTr("Close pro&ject")
+                        enabled: root.projectName.length > 0
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PROJECT")) root.closeProject()
                     }
                 }
                 ShellMenuItem {
@@ -3555,6 +3622,28 @@ ApplicationWindow {
         }
     }
 
+    DropArea {
+        id: tabDropArea
+        objectName: "tabDropArea"
+        parent: root.contentItem.parent
+        anchors.fill: parent
+        z: 3
+        visible: root.app.tabDragging
+        keys: ["application/x-hikari-tab"]
+        onDropped: drop => {
+            const document = Number(drop.getDataAsString("application/x-hikari-tab"))
+            const at = documentTabBar.mapFromItem(tabDropArea, drop.x, drop.y)
+            const index = documentTabBar.dropIndexAt(at.x, at.y, document)
+            if (index >= 0)
+                root.app.moveTab(document, root.shellWindow, index)
+            drop.acceptProposedAction()
+        }
+    }
+    function tabDropIndex(x, y) {
+        const at = documentTabBar.mapFromGlobal(x, y)
+        return documentTabBar.dropIndexAt(at.x, at.y, 0)
+    }
+
     // Before the docking area so KDDW's hit test (last child wins) finds the panels; non-file drags are refused for its Wayland drop indicators.
     DropArea {
         id: fileDropArea
@@ -3596,12 +3685,15 @@ ApplicationWindow {
         id: homePage
         objectName: "homePage"
         app: root.app
+        shellWindow: root.shellWindow
         anchors.fill: dockingArea
         z: 1.5
         visible: root.windowHome
         spaceAbove: documentTabBar.height
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
+        onOpenFolderRequested: openFolderAction.trigger()
+        onProjectChosen: path => root.app.openFolder(path, root.shellWindow)
         onOpenVideoRequested: openVideoAction.trigger()
         onRestoreRequested: sessionWindows.load()
         offer: sessionWindows.offer
@@ -6216,6 +6308,43 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: agentDock
+            objectName: "agentDock"
+            uniqueName: root.engineName("Agent")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.Agent", "Agent")
+            Panel {
+                id: agentPanel
+                objectName: "agentPanel"
+                dockName: root.engineName("Agent")
+                minimumBodySize: Qt.size(300, 240)
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Agent", "Agent")
+                Loader {
+                    id: agentLoader
+                    anchors.fill: parent
+                    active: root.agent.on
+                    focus: true
+                    sourceComponent: AgentPanel {
+                        agent: root.agent
+                        onReviewRequested: root.showPanel(reviewDock)
+                        onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
+                        onSettingsRequested: root.openSettings("ai")
+                        onLogRequested: root.showPanel(logDock)
+                        onExportRequested: id => agentExportDialog.openFor(id)
+                    }
+                }
+                Connections {
+                    target: root.agent
+                    function onSwitched() {
+                        if (!root.agent.on && agentDock.isOpen)
+                            agentDock.close()
+                    }
+                }
+            }
+        }
+
+        PanelDock {
             id: searchDock
             objectName: "searchDock"
             uniqueName: root.engineName("Search")
@@ -6498,6 +6627,27 @@ ApplicationWindow {
                 visible: startupBar.offer.kind === "crash" && startupBar.offer.autosaveCount > 0
                 text: qsTranslate("HikariSub.Session", "Autosaves…")
                 onClicked: autosaves.show()
+            }
+        }
+        InlineBar {
+            id: projectOfferBar
+            objectName: "projectOfferBar"
+            property string folder: ""
+            function offer(path, name) {
+                folder = path
+                text = qsTranslate("HikariSub.Project", "This file is in the project %1.").arg(name)
+            }
+            visible: folder.length > 0 && root.projectName.length === 0
+            Layout.fillWidth: true
+            onClosed: folder = ""
+            IconTextButton {
+                iconRole: "open-project"
+                objectName: "projectOfferOpen"
+                text: qsTranslate("HikariSub.Project", "Open project")
+                onClicked: {
+                    root.app.openFolder(projectOfferBar.folder, root.shellWindow, 2)
+                    projectOfferBar.folder = ""
+                }
             }
         }
         InlineBar {
@@ -7124,6 +7274,22 @@ ApplicationWindow {
         }
     }
 
+    FolderChooser {
+        id: projectFolderDialog
+        objectName: "projectFolderDialog"
+        title: qsTranslate("HikariSub.Project", "Open folder")
+        function show() {
+            const folder = root.pickerFolder("project")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+        onAccepted: {
+            root.rememberPickerFolder("project", selectedFolder)
+            root.app.openFolder(root.app.localPath(selectedFolder), root.shellWindow)
+        }
+    }
+
     Loader {
         id: setNewFpsLoader
         active: false
@@ -7428,6 +7594,24 @@ ApplicationWindow {
         function show() {
             currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
             open()
+        }
+    }
+    FileChooser {
+        id: agentExportDialog
+        objectName: "agentExportDialog"
+        property string thread
+        title: qsTranslate("HikariSub.Agent", "Export as Markdown")
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "md"
+        nameFilters: [qsTranslate("HikariSub.Agent", "Markdown (*.md)")]
+        function openFor(id) {
+            thread = id
+            open()
+        }
+        onAccepted: {
+            if (!root.agent.exportMarkdown(thread, selectedFile))
+                root.notices.post("warning", qsTranslate("HikariSub.Agent", "Export as Markdown"),
+                                  qsTranslate("HikariSub.Agent", "The thread couldn't be saved there."))
         }
     }
     FileChooser {
@@ -8145,6 +8329,23 @@ ApplicationWindow {
         onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_ALL_AI_CHANGES")) root.undoAllAiChanges()
     }
     Action {
+        id: showAiAgentAction
+        text: qsTranslate("HikariSub.Agent", "Agent panel")
+        enabled: root.agent.on
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_AI_AGENT")) root.showPanel(agentDock)
+    }
+    Action {
+        id: newAiThreadAction
+        text: qsTranslate("HikariSub.Agent", "New agent thread")
+        enabled: root.agent.on
+        onTriggered: {
+            if (root.hotkeyGesture("GLOBAL_NEW_AI_THREAD"))
+                return
+            root.agent.newThread()
+            root.showPanel(agentDock)
+        }
+    }
+    Action {
         id: showAiReviewAction
         text: qsTranslate("HikariSub.Review", "Show panel")
         enabled: root.review.on
@@ -8181,6 +8382,7 @@ ApplicationWindow {
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
         GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
+        GLOBAL_OPEN_FOLDER: openFolderAction, GLOBAL_CLOSE_PROJECT: closeProjectAction,
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
@@ -8198,6 +8400,7 @@ ApplicationWindow {
         GLOBAL_NEXT_AI_CHANGE: nextAiChangeAction, GLOBAL_PREVIOUS_AI_CHANGE: previousAiChangeAction,
         GLOBAL_KEEP_ALL_AI_CHANGES: keepAllAiChangesAction, GLOBAL_UNDO_ALL_AI_CHANGES: undoAllAiChangesAction,
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
+        GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }
@@ -8362,6 +8565,11 @@ ApplicationWindow {
         case "GLOBAL_ADD_QC_NOTE": if (editing) root.addQcNote(-1); return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
+        case "GLOBAL_MOVE_TAB_TO_NEW_WINDOW":
+            if (root.app.editingDocument() > 0)
+                root.app.moveTabToNewWindow(root.app.editingDocument(), Qt.point(0, 0), false)
+            return true
+        case "GLOBAL_MOVE_TAB_TO_WINDOW": documentTabBar.openMoveToWindowMenu(); return true
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true

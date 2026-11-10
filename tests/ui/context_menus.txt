@@ -226,6 +226,9 @@ Document tab > Subtitle comparison > Compare by styles
 Document tab > Subtitle comparison > Compare by selected styles >
 Document tab > Switch to >
 Document tab > -
+Document tab > Move tab to new window [GLOBAL_MOVE_TAB_TO_NEW_WINDOW]
+Document tab > Move tab to window >
+Document tab > -
 Document tab > Close
 Document tab > Close other tabs
 Document tab > Close tabs to the right
@@ -259,6 +262,13 @@ Home row > Copy path
 Home row > -
 Home row > Remove from list
 Home row > Remove missing files
+Home project row
+Home project row > Open
+Home project row > Show in folder
+Home project row > Copy path
+Home project row > -
+Home project row > Remove from list
+Home project row > Remove missing folders
 Reference tray
 Reference tray > Copy
 Reference tray > -

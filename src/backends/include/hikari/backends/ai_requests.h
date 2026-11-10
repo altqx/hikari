@@ -43,6 +43,23 @@ public:
     void probe(const application::ai::Provider &provider, const std::string &key, std::function<void(Probed)> done);
     /// Off sends every request with `caching: false`.
     void setCaching(bool on) { m_caching = on; }
+    bool caching() const { return m_caching; }
+    /// The sidecar, told the current providers first; null when AI is off or no sidecar is installed.
+    AiSidecarHost *connected() { return connect(); }
+    /// Off strips `webSearch` from every request and tells the sidecar no search service. The service searches for
+    /// providers without their own search.
+    void setWebSearch(bool on, std::optional<application::ai::SearchService> service);
+    /// The service the sidecar searches with: nullopt while web search is off.
+    std::optional<application::ai::SearchService> searchService() const
+    {
+        return m_webSearch ? m_searchService : std::nullopt;
+    }
+    /// One search with `service`, for Test connection: with `typedKey`, which stays in Qt, else its keychain key. The
+    /// relay reaches the service while the test runs, even when it isn't the chosen one yet.
+    void testSearch(application::ai::SearchService service, std::optional<std::string> typedKey,
+                    std::function<void(std::optional<application::ai::Error>)> done);
+    /// The chosen search service, or one being tested with the key to use.
+    std::optional<SearchAccess> searchAccess(application::ai::SearchService service) const;
     /// Deletes the explicit provider cache the sidecar keeps for the conversation (the request's `cacheKey`). Call
     /// when the thread ends.
     void endConversation(const std::string &providerId, const std::string &cacheKey);
@@ -56,6 +73,10 @@ private:
         std::string key;
         std::uint64_t generation = 0;
     };
+    struct SearchTest {
+        std::optional<std::string> typedKey;
+        std::uint64_t generation = 0;
+    };
     AiSidecarHost *connect(const application::ai::Config &config);
     AiSidecarHost *connect() { return connect(m_providers.config()); }
     void listModels(const std::string &providerId, std::function<void(std::optional<application::ai::Error>)> done);
@@ -67,12 +88,17 @@ private:
     std::map<application::ai::StreamId, std::shared_ptr<Pending>> m_pending;
     application::ai::StreamId m_nextId = 1;
     bool m_caching = true;
+    bool m_webSearch = false;
+    std::optional<application::ai::SearchService> m_searchService;
+    std::map<application::ai::SearchService, SearchTest> m_searchTests;
     std::map<std::string, Draft> m_drafts;
-    std::uint64_t m_lastDraft = 0;
+    std::uint64_t m_lastAttempt = 0;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
 };
 
 /// The sidecar's answer to a failed request as the panel shows it.
 application::ai::Error requestError(const SidecarFailure &failure);
+/// The protocol's Usage object.
+application::ai::Usage usageOf(const api::Json &usage);
 
 }

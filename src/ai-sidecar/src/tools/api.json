@@ -1737,7 +1737,7 @@
     {
       "name": "video.frame",
       "access": "read",
-      "summary": "One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge.",
+      "summary": "One video frame as BGRA pixels in base64, with every Line, one Line or none drawn on it, optionally cropped, scaled to fit maxEdge and maxPixels.",
       "since": 1,
       "params": {
         "type": "object",
@@ -1745,11 +1745,19 @@
           "frame": {
             "type": "integer",
             "minimum": 0,
-            "description": "Default: the frame shown."
+            "description": "Default: the frame shown, or with line the Line's first frame when it is not on the frame shown."
           },
           "subtitles": {
             "type": "boolean",
             "description": "Render the subtitles on it. Default true."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "line's Document. Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "Draw this Line alone."
           },
           "crop": {
             "type": "object",
@@ -1784,6 +1792,12 @@
             "minimum": 16,
             "maximum": 4096,
             "description": "Default 1024."
+          },
+          "maxPixels": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 16777216,
+            "description": "The most pixels the image may have. No limit when omitted."
           }
         },
         "additionalProperties": false
@@ -1803,6 +1817,34 @@
             "type": "integer",
             "minimum": 1
           },
+          "crop": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "y": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          },
           "format": {
             "const": "bgra"
           },
@@ -1815,8 +1857,233 @@
           "frame",
           "width",
           "height",
+          "crop",
           "format",
           "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.ink_bounds",
+      "access": "read",
+      "summary": "Where one Line's ink, or every Line's, lies on a video frame, in video pixels.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown, or with line the Line's first frame when it is not on the frame shown."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "This Line alone. Every Line when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bounds": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when nothing is drawn."
+          }
+        },
+        "required": [
+          "frame",
+          "bounds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.colours",
+      "access": "read",
+      "summary": "The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown."
+          },
+          "points": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "y": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "radius": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 32,
+            "description": "Default 0, the pixel alone."
+          },
+          "subtitles": {
+            "type": "boolean",
+            "description": "Sample with the subtitles drawn. Default false."
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "colours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "integer"
+                },
+                "y": {
+                  "type": "integer"
+                },
+                "colour": {
+                  "type": "string",
+                  "pattern": "^&H[0-9A-F]{6}&$"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "colour"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "frame",
+          "colours"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.keyframes",
+      "access": "read",
+      "summary": "The keyframes from one time to another, each with its start time.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Milliseconds. Default 0."
+          },
+          "to": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Milliseconds. Default: the end."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "keyframes": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "object",
+              "properties": {
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "time": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "frame",
+                "time"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every keyframe in the range; the first 500 are listed."
+          }
+        },
+        "required": [
+          "keyframes",
+          "total"
         ],
         "additionalProperties": false
       }

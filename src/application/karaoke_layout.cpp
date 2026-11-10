@@ -376,19 +376,6 @@ std::optional<std::vector<std::u8string>> Layout::addedStyle(std::u8string_view 
     return out;
 }
 
-ExtentsCache::Result ExtentsCache::measure(const std::vector<std::string> &style, const std::string &text)
-{
-    std::string key;
-    for (const std::string &f : style)
-        key += f + ',';
-    if (const auto at = m_cache.find(std::pair{key, text}); at != m_cache.end())
-        return {at->second, false};
-    ++m_measured;
-    const auto e = m_measure.measure(style, text);
-    m_cache.emplace(std::pair{std::move(key), text}, e);
-    return {e, true};
-}
-
 Layout::Extents Layout::measure(const StyleInfo &style, const std::string &text, std::vector<std::string> &problems)
 {
     const ExtentsCache::Result r = m_extents.measure(style.fields, text);

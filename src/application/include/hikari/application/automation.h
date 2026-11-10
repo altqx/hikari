@@ -148,10 +148,16 @@ struct MacroResult {
 //   VideoSize                 -> integers {width, height, arX, arY}
 //   Keyframes                 -> integers (frame numbers)
 //   Frame                     integers {frame, withSubtitles} -> integers {width, height}, pixels (BGRA rows)
+//   FrameSize                 integers {frame, withSubtitles} -> integers {width, height}
+//   FramePixel                integers {frame, withSubtitles, x, y} -> integers {blue, green, red}
+//                             (Unavailable: no such frame or pixel)
+//   FrameTimes                -> integers {numerator, last, frame starts...} (AegisubFrameTimes::timecodes)
 //   AudioSelection            -> integers {startMs, endMs}
 //   ProjectProperties         -> integers {video frame shown}, strings {audio, video, keyframes file},
 //                             numbers {video zoom}
 //   TextExtents               style, strings {text} -> numbers {width, height, descent, external leading}
+//   TextExtentsMany           style, strings {texts} -> integers {measured: 1 or 0 per text},
+//                             numbers {width, height, descent, external leading per text}
 //   ClipboardGet              -> strings {text}
 //   ClipboardSet              strings {text} -> integers {succeeded}
 //   OpenFiles                 strings {title, dir, file, wildcard}, integers {multiple, mustExist} -> strings (paths)
@@ -173,9 +179,9 @@ enum class HostService : std::int32_t {
     FrameFromMs = 1, MsFromFrame, VideoSize, Keyframes, Frame, AudioSelection, ProjectProperties, TextExtents,
     ClipboardGet, ClipboardSet, OpenFiles, SaveFile, StatusText, DecodePath, FileName,
     EditorCursor, SetEditorCursor, EditorSelection, SetEditorSelection, EditorModified,
-    FrequencyPeaks, Gettext, ScriptResolution,
+    FrequencyPeaks, Gettext, ScriptResolution, FrameTimes, TextExtentsMany, FrameSize, FramePixel,
 };
-inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::ScriptResolution);
+inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::FramePixel);
 
 struct HostServiceRequest {
     HostService service = HostService::FrameFromMs;

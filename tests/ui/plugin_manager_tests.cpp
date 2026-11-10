@@ -169,8 +169,23 @@ private slots:
         QCOMPARE(refusal(manager, "bad-icon.hikariplugin"),
                  QStringLiteral("The package breaks the media rules: icon.png is 128x128 px, not 256x256 px."));
         QVERIFY(refusal(manager, "missing.hikariplugin").contains(QStringLiteral("can’t read")));
+        QCOMPARE(refusal(manager, "board-restricted-qml.hikariplugin"), QStringLiteral("Only Full trust plugins can ship QML panels."));
+        QCOMPARE(refusal(manager, "board-ui-import.hikariplugin"),
+                 QStringLiteral("qml/parts/Badge.qml imports Hikari.Ui, which plugin panels can’t use."));
         QVERIFY(manager.plugins().isEmpty());
         QVERIFY(!QDir(folders().plugins).exists());
+    }
+
+    void aPluginWithQmlPanelsSaysItShowsItsOwnPanels()
+    {
+        PluginManager manager(folders());
+        const QVariantMap review = manager.review(fixture("board-1.0.0-qml.hikariplugin"));
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(review.value(QStringLiteral("permissions")).toStringList(),
+                 (QStringList{QStringLiteral("Full trust: it may run native code outside HikariSub’s limits."),
+                              QStringLiteral("Shows its own panels inside HikariSub")}));
+        QCOMPARE(manager.install(true), QString());
+        QCOMPARE(only(manager).value(QStringLiteral("permissions")).toStringList().size(), 2);
     }
 
     void detailsListWhatAPluginAsksForAddsAndKeeps()

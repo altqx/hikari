@@ -1,4 +1,5 @@
 #include "hikari/plugins/package.h"
+#include "hikari/plugins/qml_imports.h"
 
 #include "test_signer.h"
 
@@ -273,4 +274,68 @@ TEST(PluginPackage, AReadmeIsUtf8AndAt128KiB)
     EXPECT_EQ(problem(plugin({{"README.md", bytes("\xC0\xAF")}})).kind, Kind::Media);
 }
 
+}
+
+TEST(PluginPackage, AQmlPanelNeedsItsFileAndOnlyTheSupportedImports)
+{
+    constexpr std::string_view manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0",
+        "api": 1, "main": "lua/main.lua", "authors": ["Ana"], "tier": "unrestricted",
+        "contributes": {"panels": [{"id": "notes", "title": "Notes", "qml": "qml/Notes.qml"}]}})";
+    const auto files = [&](std::vector<PackageFile> extra) {
+        std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+        out.insert(out.end(), extra.begin(), extra.end());
+        return out;
+    };
+    const PackageProblem missing = problem(files({}));
+    EXPECT_EQ(missing.kind, Kind::MissingPanel);
+    EXPECT_EQ(missing.path, "qml/Notes.qml");
+
+    constexpr std::string_view panel = "import QtQuick\nimport QtQuick.Controls\nimport \"parts\"\nItem {}\n";
+    EXPECT_TRUE(openPackage(files({{"qml/Notes.qml", bytes(panel)}, {"qml/parts/Row.qml", bytes("import QtQuick\nItem {}")}}), 1));
+
+    const PackageProblem refused = problem(files({{"qml/Notes.qml", bytes(panel)},
+                                                   {"qml/parts/Row.qml", bytes("import QtQuick\nimport Hikari.Ui\nItem {}")}}));
+    EXPECT_EQ(refused.kind, Kind::QmlImport);
+    EXPECT_EQ(refused.path, "qml/parts/Row.qml");
+    EXPECT_EQ(refused.detail, "Hikari.Ui");
+
+    const PackageProblem script = problem(files({{"qml/Notes.qml", bytes(panel)}, {"qml/util.js", bytes(".import \"/etc/x.js\" as X\n")}}));
+    EXPECT_EQ(script.kind, Kind::QmlImport);
+    EXPECT_EQ(script.detail, "\"/etc/x.js\"");
+
+    EXPECT_TRUE(openPackage(plugin({{"qml/Stray.qml", bytes("import Hikari.Ui\nItem {}")}}), 1))
+        << "a package without QML panels isn't read for imports";
+}
+
+TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)
+{
+    const std::pair<const char *, const char *> allowed[] = {
+        {"qml/A.qml", "pragma ComponentBehavior: Bound\nimport QtQuick 2.15\nimport QtQuick.Controls as C\n"
+                      "import QtQuick.Layouts; import Hikari.Plugin\nimport \"../lib\" as Lib\nimport \"./util.js\" as U\n"
+                      "Item { property string s: \"import Hikari.Ui\" // import Hikari.Ui\n}\n"},
+        {"qml/B.qml", "/* import Hikari.Ui */\nimport QtQuick\nItem { function f() { return x.import } }\n"},
+        {"lib/u.js", ".pragma library\n.import QtQuick as Q\n.import \"other.js\" as O\nfunction f() { return 1 }\n"},
+        {"lib/m.mjs", "import { a, b } from \"./parts.mjs\"\nimport \"../top.mjs\"\nexport * from \"./more.mjs\"\n"
+                      "export function g() { return import(\"./late.mjs\") }\nconst s = 'import x from \"/abs\"'\n"},
+    };
+    for (const auto &[path, text] : allowed)
+        EXPECT_EQ(qmlImportProblem(path, text), std::nullopt) << path;
+
+    const std::tuple<const char *, const char *, const char *> refused[] = {
+        {"qml/A.qml", "import QtQuick\nimport Hikari.Ui\nItem {}", "Hikari.Ui"},
+        {"qml/A.qml", "import QtQuick.Window\nItem {}", "QtQuick.Window"},
+        {"qml/A.qml", "import QtQml.Models\nItem {}", "QtQml.Models"},
+        {"qml/A.qml", "import \"https://example.com/x\"\nItem {}", "\"https://example.com/x\""},
+        {"qml/A.qml", "import \"qrc:/qt/qml/Hikari/Ui\"\nItem {}", "\"qrc:/qt/qml/Hikari/Ui\""},
+        {"qml/A.qml", "import \"/usr/lib/qt6/qml\"\nItem {}", "\"/usr/lib/qt6/qml\""},
+        {"qml/A.qml", "import \"../../outside\"\nItem {}", "\"../../outside\""},
+        {"qml/A.qml", "import \"C:\\\\x\"\nItem {}", "\"C:\\x\""},
+        {"lib/u.js", ".import Hikari.Ui as H\n", "Hikari.Ui"},
+        {"lib/m.mjs", "import {\n  a\n} from \"file:///etc/x.mjs\"\n", "\"file:///etc/x.mjs\""},
+        {"lib/m.mjs", "export { a } from \"../../x.mjs\"\n", "\"../../x.mjs\""},
+        {"lib/m.mjs", "const m = import(\"/abs.mjs\")\n", "\"/abs.mjs\""},
+    };
+    for (const auto &[path, text, import] : refused)
+        EXPECT_EQ(qmlImportProblem(path, text), std::optional<std::string>(import)) << text;
+    EXPECT_TRUE(isQmlSource("a/B.qml") && isQmlSource("a.js") && isQmlSource("a.mjs") && !isQmlSource("a.lua"));
 }

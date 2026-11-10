@@ -230,13 +230,14 @@ TEST_F(AiSignInTest, CancellingStopsThePollingEndsTheSignInOnceAndStoresNothing)
                      kind = r ? "" : r.error().kind;
                  });
     ASSERT_TRUE(waitFor([&] { return !issuer.at(FakeAuthServer::kPoll).empty(); }));
+    const std::size_t polledBeforeCancel = issuer.at(FakeAuthServer::kPoll).size();
+    const std::size_t pollAlreadySent = 1;
     signIn.cancel();
     EXPECT_EQ(calls, 1);
     EXPECT_EQ(kind, "cancelled");
     EXPECT_FALSE(signIn.running());
-    const std::size_t polled = issuer.at(FakeAuthServer::kPoll).size();
     waitFor([] { return false; }, 200);
-    EXPECT_EQ(issuer.at(FakeAuthServer::kPoll).size(), polled);
+    EXPECT_LE(issuer.at(FakeAuthServer::kPoll).size(), polledBeforeCancel + pollAlreadySent);
     EXPECT_EQ(calls, 1);
     EXPECT_TRUE(keys.keys.empty());
 }

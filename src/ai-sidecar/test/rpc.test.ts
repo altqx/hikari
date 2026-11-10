@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method } from "../src/protocol";
 import { Peer, RpcError } from "../src/rpc";
-import { Sidecar } from "../src/sidecar";
+import { HikariApi, Sidecar } from "../src/sidecar";
 import { kOwnReference } from "../src/tools/catalogue";
+import { kDefaultImageBudget, kImageBudgets } from "../src/tools/images";
 
 const limits = { maxOutstanding: 4, maxOutstandingBytes: 1024, maxMessageBytes: 512 };
 
@@ -144,16 +145,47 @@ describe("Sidecar", () => {
         expect((sent[0]!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
     });
 
-    test("declared methods refuse before initialize and say they aren't implemented after it", async () => {
-        const { peer, sent, feed } = link();
+    test("sessions refuse before initialize, and after it without a session id and a model", async () => {
+        const { peer, sent, feed } = link({ maxOutstanding: 16, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
         new Sidecar(peer, build);
         feed({ jsonrpc: "2.0", id: 1, method: Method.sessionNew, params: {} });
         await settle();
         feed({ jsonrpc: "2.0", id: 2, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
-        feed({ jsonrpc: "2.0", id: 3, method: Method.sessionNew, params: {} });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.sessionNew, params: { sessionId: "t1" } });
+        feed({ jsonrpc: "2.0", id: 4, method: Method.sessionNew, params: { sessionId: "t1", model: { providerId: "p", model: "m" } } });
+        feed({ jsonrpc: "2.0", id: 5, method: Method.sessionPrompt, params: { sessionId: "t2", prompt: [{ type: "text", text: "a" }] } });
+        feed({ jsonrpc: "2.0", id: 6, method: Method.sessionPrompt, params: { sessionId: "t1", prompt: [] } });
         await settle();
         expect(sent.map((m) => (m.error as { code?: number } | undefined)?.code ?? "ok")).toEqual(
-            [ErrorCode.notInitialized, "ok", ErrorCode.methodNotFound]);
+            [ErrorCode.notInitialized, "ok", ErrorCode.invalidParams, "ok", ErrorCode.invalidParams, ErrorCode.invalidParams]);
+    });
+
+    test("a session's tools include web search once a search service is set", async () => {
+        const { peer, feed } = link({ maxOutstanding: 16, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        const sidecar = new Sidecar(peer, build);
+        const sessionTools = (sidecar.sessions as unknown as { tools: (id: string) => { list(all: boolean): { name: string }[] } }).tools;
+        expect(sessionTools("t1").list(true).map((t) => t.name)).not.toContain("web_search");
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet, params: { providers: [], searchService: "brave" } });
+        await settle();
+        expect(sessionTools("t1").list(true).map((t) => t.name)).toContain("web_search");
+    });
+
+    test("a session's image budget is its provider's wire's", async () => {
+        const { peer, feed } = link();
+        const sidecar = new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet,
+            params: { providers: [{ id: "g", preset: "gemini", wire: "gemini", baseUrl: "https://example.invalid" }] } });
+        await settle();
+        expect(sidecar.providers.imageBudget("g")).toEqual(kImageBudgets.gemini);
+        expect(sidecar.providers.imageBudget("gone")).toEqual(kDefaultImageBudget);
+    });
+
+    test("a session's tool calls name the session, so Qt checks them against its thread", async () => {
+        const { peer, sent } = link();
+        void new HikariApi(peer, undefined, "t1").call("documents.get");
+        expect(sent).toEqual([{ jsonrpc: "2.0", id: 1, method: Method.apiCall, params: { operation: "documents.get", session: "t1" } }]);
     });
 
     test("_hikari/api.call round-trips an HA1 read and a write", async () => {

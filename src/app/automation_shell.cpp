@@ -302,6 +302,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_manager.setDialogHandler([this](const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply) {
         presentDialog(request, std::move(reply));
     });
+    connect(&m_manager, &backends::AutomationManager::runFinished, this, [this] { m_router.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);

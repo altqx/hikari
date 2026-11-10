@@ -106,11 +106,28 @@ Scripts get Aegisub 3.5.1's Lua API with the additions of arch1t3cht's fork ([FA
 - `frame_from_ms` and `ms_from_frame` round as Aegisub does (`AegisubFrameTimes`, ported from libaegisub's `vfr.cpp`). Only the automation services use it.
 - `aegisub.lfs`, `aegisub.util.deep_copy`, `include()` and `require()` errors behave as in Aegisub 3.5. Argument checking stays as lenient as it was.
 
+### Host calls in a run (AU1, [#837](https://github.com/altqx/hikari/issues/837))
+
+The helper asks the app as little as it can while a run lasts, and the answers are the ones the app would give each time.
+
+- `frame_from_ms` and `ms_from_frame` fetch the video's frame times once a run (`FrameTimes`) and answer in the helper with the same `AegisubFrameTimes`.
+- `text_extents` asks once a run for each style and text, through `karaoke_layout::ExtentsCache` (`extents_cache.h`), which caches any `TextMeasurePort`, failures included. The bundled karaskel measures a Line, its syllables and its furigana with `aegisub.__karaskel_impl.measure_many(style, texts[, count])`, one `TextExtentsMany` request for the texts not yet measured. It returns four numbers a text in one flat table, nil where `text_extents` returns nothing, and raises `text_extents`' errors.
+- `get_frame` asks only for the frame's size. `getPixel` and `getPixelFormatted` ask for one pixel, until a frame object has read 64. Then, or on `frame:data()`, the frame is copied once. The app keeps a run's last two decoded frames and forgets them when the run ends.
+- On Windows the text measure keeps its device context and up to 64 GDI fonts.
+
 The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of arch1t3cht's macros scripts on a fixture with folds and a perspective plane in its extradata, a 23.976 fps fixture video and a clipboard. `expected.json` pins each run.
 - FocusLines draws at random angles, so its drawings are masked (`random_drawings`).
 - AegisubChain's run is Manage Chains. Its Configure fails with the bundled DependencyControl, because `ipairs` over a config list raises "numerically indexed config hive keys are not supported". It fails the same way in Aegisub 3.5.1, whose LuaJIT also honours `__ipairs`.
 
 Stock modules always load from the shipped Include: a module or `include` file whose top-level name is in the shipped Include comes from there before the script's folder and the user's Include. The DependencyControl-managed packages (`l0`, `a-mo`, `BM`, `DM`, `PT`, `requireffi`, `SubInspector`, `json`, `Yutils`, `lyger`) keep the script folder → user Include → shipped order, so DependencyControl's updates win, and a module the shipped Include lacks resolves as before. This covers `moonscript` as Aegisub 3.5 does by loading its support files by exact path.
+
+### Thai support (TH2, 2026-11-09)
+
+Thai support by Jibrill: the fixes from Jibrill's Aegisub scripts, carried over with Jibrill's permission ([TH0 #834](https://github.com/altqx/hikari/issues/834)).
+
+- `unicode.graphemes(s)` iterates grapheme clusters ([TH2-unicode-graphemes](compatibility-decisions.md#th2-unicode-graphemes)). The native `grapheme_end` in `aegisub.__unicode_impl` calls `core::graphemeEnd`, the same split the karaoke editor uses.
+- BezierToText places clusters, not code points ([TH2-bezier-clusters](compatibility-decisions.md#th2-bezier-clusters)).
+- "Letter spacing to positioned clusters…" (`fsp-to-pos.lua`, from Jibrill's "Fsp for thai char" 1.2) replaces `\fsp` with one `\pos` Line per cluster, so renderers can't space a mark away from its base. The spacing comes from the dialog or from the Line: its Style's spacing, then each `\fsp`. Lines wrap at the margins unless WrapStyle is 2. `\pos` and `\an` in the Line set the anchor. Each Line gets `\fsp0` when the Style has spacing. The original Line becomes a comment. Lines with `\move` or a drawing are left alone and logged. Unlike 1.2, it doesn't decompose ำ (Q140), keeps `\fn`, `\r` and `\b` resets, and treats `\n` as a space outside WrapStyle 2.
 
 ## Accepted cancellation and transaction policy (2026-09-29)
 

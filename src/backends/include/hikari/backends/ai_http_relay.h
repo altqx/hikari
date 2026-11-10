@@ -42,6 +42,16 @@ using RelayTargets =
 /// `providers` must outlive the lookup.
 RelayTargets providerTargets(application::ai::Providers &providers);
 
+QUrl searchServiceBase(application::ai::SearchService service);
+/// How the relay may reach a search service; a typed key, being tested, stands in for the keychain's.
+struct SearchAccess {
+    std::optional<std::string> typedKey;
+};
+/// Adds {"kind": "search", "id": …}: a reachable search service's base URL with its key. A service `access` answers
+/// nullopt for is refused. Other targets go to `next`. `keys` must outlive the lookup.
+RelayTargets withSearchTargets(RelayTargets next, application::ai::SearchKeys &keys,
+                               std::function<std::optional<SearchAccess>(application::ai::SearchService)> access);
+
 /// How the relay answers one request.
 struct RelayExchange {
     std::function<void(const std::string &method, api::Json params)> notify;
