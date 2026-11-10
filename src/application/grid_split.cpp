@@ -3,6 +3,7 @@
 #include "hikari/application/frame_bake.h"
 #include "hikari/application/resample.h"
 
+#include "hikari/core/graphemes.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
 
@@ -239,9 +240,39 @@ namespace legacy {
 using u16 = std::u16string;
 using u16v = std::u16string_view;
 
+struct VisibleText {
+    u16 text;
+    std::vector<std::size_t> at;
+};
+
+constexpr char16_t kClusterBreak = u'\u2028';
+
+VisibleText visibleText(u16v txt)
+{
+    VisibleText visible;
+    bool inBrackets = false;
+    for (std::size_t i = 0; i < txt.size(); ++i) {
+        const char16_t ch = txt[i];
+        if (!inBrackets && ch == u'\\' && i + 1 < txt.size() && (txt[i + 1] == u'N' || txt[i + 1] == u'n')) {
+            visible.text += kClusterBreak;
+            visible.at.push_back(i++);
+        } else if (ch == u'{') {
+            inBrackets = true;
+        } else if (ch == u'}') {
+            inBrackets = false;
+        } else if (!inBrackets) {
+            visible.text += ch;
+            visible.at.push_back(i);
+        }
+    }
+    return visible;
+}
+
 std::vector<u16> splitByChar(u16v txt, bool addSpaces)
 {
     std::vector<u16> out;
+    const VisibleText visible = visibleText(txt);
+    std::size_t shown = 0;
     const std::size_t len = txt.size();
     bool inBrackets = false;
     u16 charWithTags;
@@ -272,6 +303,11 @@ std::vector<u16> splitByChar(u16v txt, bool addSpaces)
                 ++i;
                 continue;
             }
+            while (visible.at[shown] != i)
+                ++shown;
+            const std::size_t last = visible.at[core::graphemeEnd(visible.text, shown) - 1];
+            charWithTags += txt.substr(i + 1, last - i);
+            i = last;
             out.push_back(charWithTags);
             charWithTags.clear();
         }
