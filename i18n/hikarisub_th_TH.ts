@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="th_TH">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>เอเจนต์</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>ส่งออกเป็น Markdown</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>บันทึกเธรดไว้ที่นั่นไม่ได้</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>แผงเอเจนต์</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>เธรดเอเจนต์ใหม่</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>ด้วยตนเอง</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>สิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>เปิดสิทธิ์เต็มไหม</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>เอเจนต์จะเปลี่ยนคำบรรยาย สไตล์ และการตั้งค่าโดยไม่ถาม การเปลี่ยนแปลงทุกครั้งยังคงอยู่ในการตรวจทานและเลิกทำได้</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>สิ่งเหล่านี้ยังคงถามในทุกโหมด: การลบหรือเขียนทับไฟล์นอกโฟลเดอร์ของคำบรรยาย การเรียกใช้โปรแกรมภายนอกและการติดตั้งปลั๊กอิน การส่งไฟล์ในเครื่องไปยังเครือข่าย และการเปลี่ยนสิทธิ์ คีย์ หรืองบประมาณของ AI</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>ไม่ต้องเตือนอีก</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>เปิดสิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>เธรด</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>เธรดใหม่</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>เมนูเธรด</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>เพิ่มผู้ให้บริการเพื่อใช้เอเจนต์</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub ไม่มีเซิร์ฟเวอร์ AI เอเจนต์ทำงานบนผู้ให้บริการที่คุณเพิ่ม: คีย์ API การลงชื่อเข้าใช้ ChatGPT หรือ OpenRouter หรือโมเดลในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>เปิดการตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>จะไม่มีการส่งหรือดาวน์โหลดสิ่งใดจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>ค้นหาเธรด</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>วันนี้</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>เมื่อวาน</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>ไม่ได้รายงานค่าใช้จ่าย</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>กำลังทำงาน</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>ถึงวงเงินแล้ว</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>อยู่ในคิว · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>ปรับทิศทางตอนนี้</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>นำออก</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>%1 จาก %2 โทเค็น</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>%1 โทเค็น</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · แท็บที่ใช้งานอยู่</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>ถาม หรือพิมพ์ @ เพื่อแนบ / สำหรับคำสั่ง</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>เพิ่มผู้ให้บริการก่อน</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>แนบ</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>หยุด</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>ส่ง</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>เปลี่ยนชื่อเธรด…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>ส่งออกเป็น Markdown…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>ลบเธรด</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>ลบเธรดนี้ไหม</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>บทสนทนาจะถูกลบ แต่การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในคำบรรยายและในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>เปลี่ยนโหมด</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>การตั้งค่า › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>คุณอนุมัติการเปลี่ยนแปลงทุกครั้ง การอ่านไม่ถามเลย</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>โมเดลผู้ตัดสินจะอนุมัติแต่ละการกระทำ หรือถามคุณ โมเดลเห็นการกระทำและข้อความของคุณ แต่ไม่เห็นไฟล์ของคุณ</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>ไม่มีการถามยกเว้นรายการที่ถามเสมอ การแก้ไขมีผลทันทีและยังเลิกทำได้</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>เปลี่ยนชื่อเธรด</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>ชื่อเธรด</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>ปรับทิศทางแล้ว</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>คืนค่าจุดตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>ผู้ตัดสินอนุมัติแล้ว</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>แผน</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>ผู้ตัดสินถามคุณ</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>อนุญาต %1 ไหม</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>เรียกใช้ %1 ไหม</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>ถามในทุกโหมด</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>เหตุผล: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>อนุญาต</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>อนุญาตครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>อนุญาตในเธรดนี้</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>ปฏิเสธ</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>ควรทำอะไรแทน</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>อนุญาตแล้ว</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>อนุญาตในเธรดนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>ปฏิเสธแล้ว</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>ไม่จำเป็นแล้ว</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>เธรดนี้ถึงวงเงิน %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>ถึงวงเงิน %1 ของวันนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>คอมโพเนนต์ AI หยุดทำงาน</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>รอบนี้ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>คุณหยุดรอบนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>คำตอบยาวถึงขีดจำกัดความยาวของโมเดล</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>โมเดลปฏิเสธที่จะตอบ</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>รอบนี้หยุดหลังจากส่งคำขอถึงโมเดลครบจำนวนสูงสุด</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>เลือกโมเดลแชตในการตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>คอมโพเนนต์ AI ยังไม่พร้อม</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>รอบนี้หยุดหลังการเปลี่ยนแปลงล่าสุด เพิ่มวงเงินของเธรดนี้เพื่อทำต่อ</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>ทุกเธรดจะหยุดจนถึงพรุ่งนี้ หรือจนกว่าคุณจะเพิ่มวงเงินในการตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>รอบนี้ถูกขัดจังหวะและจะไม่เริ่มใหม่เอง การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>เพิ่มเป็น %1 แล้วทำต่อ</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>ทำต่อ</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>ลองรอบนี้อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>แสดงล็อก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -6723,6 +7106,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Agent panel</source>
+        <translation>แผงเอเจนต์</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>เธรดเอเจนต์ใหม่</translation>
+    </message>
+    <message>
         <source>Open folder…</source>
         <translation>เปิดโฟลเดอร์…</translation>
     </message>
@@ -12087,6 +12478,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
     </message>
     <message>
+        <source>Agent</source>
+        <translation>เอเจนต์</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>โหมดสำหรับเธรดใหม่</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>ด้วยตนเอง</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>สิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>วงเงินค่าใช้จ่ายต่อเธรด</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>วงเงินค่าใช้จ่ายต่อวัน</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>ไม่จำกัด</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>เมื่อถึงวงเงิน รอบนี้จะหยุดหลังการเปลี่ยนแปลงปัจจุบัน เอเจนต์จะไม่เพิ่มวงเงินเอง มีเพียงคุณที่เพิ่มได้</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>แสดงมาตรวัดค่าใช้จ่าย</translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>คอมโพเนนต์ AI</translation>
     </message>
@@ -13910,7 +14341,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Restore checkpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>คืนค่าจุดตรวจสอบ</translation>
     </message>
     <message>
         <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
@@ -14027,6 +14458,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>คุณแก้ไข %n บรรทัดหลังการเปลี่ยนแปลงนี้ การเลิกทำจะคืนการเปลี่ยนแปลงทั้งหมดเป็นแบบก่อนใช้ AI และทิ้งการแก้ไขของคุณ</numerusform>
+        </translation>
     </message>
     <message>
         <source>All kept or undone</source>

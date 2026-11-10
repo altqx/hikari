@@ -104,7 +104,7 @@ The Agent panel is panel 14. With AI off it isn't built, and its commands, Show 
 - **Without a chat model** it says so and opens Settings › AI. Nothing starts until a provider is added.
 - **The timeline** shows the items above. Ask cards offer Allow once, Allow in this thread, Deny and Deny with a message; an always-ask card has a red edge, says it asks in every mode, and offers Allow once and Deny only. A `cap` notice offers Raise and continue; `lost` and `failed` offer Retry the turn.
 - **The composer** shows the active tab, the attached tabs (`@` attaches another open tab), the model and the mode. Enter sends, Shift+Enter starts a new line, Esc stops. `/new` starts a thread and `/mode` opens the mode menu. While a turn runs, a message waits in the queue strip with Steer now.
-- **Full access** warns once with what still asks, unless the user ticks Don't warn me again.
+- **Full access** warns once with what still asks, unless the user ticks Don’t warn me again.
 - **The meter** shows the context tokens and the thread's cost against its cap.
 
 Settings › AI › Agent holds the mode for new threads (`ai.agent.mode`, Auto), the thread cap (`ai.agent.threadCapCents`, $2.00), the daily cap (`ai.agent.dailyCapCents`, $10.00) and the cost meter (`ai.agent.costMeter`). 0 means no cap.

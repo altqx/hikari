@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ko_KR">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>에이전트</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>Markdown으로 내보내기</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>그 위치에 스레드를 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>에이전트 패널</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>새 에이전트 스레드</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>수동</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>전체 권한</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>전체 권한을 켜시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>에이전트가 묻지 않고 자막, 스타일, 설정을 바꿉니다. 모든 변경은 그래도 검토에 남으며 실행 취소할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>다음 작업은 어느 모드에서나 계속 묻습니다: 자막 폴더 밖의 파일 삭제 또는 덮어쓰기, 외부 프로그램 실행과 플러그인 설치, 로컬 파일을 네트워크로 보내기, AI 권한, 키, 예산 변경.</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>다시 경고하지 않기</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>전체 권한 켜기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>스레드</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>새 스레드</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>스레드 메뉴</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>에이전트를 쓰려면 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub에는 AI 서버가 없습니다. 에이전트는 추가한 공급자에서 실행됩니다: API 키, ChatGPT 또는 OpenRouter 로그인, 이 컴퓨터의 모델.</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>설정 › AI 열기</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>공급자를 추가하기 전에는 아무것도 보내거나 다운로드하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>스레드 검색</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>오늘</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>어제</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>비용 보고 안 됨</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>실행 중</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>한도 도달</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>대기 중 · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>지금 방향 바꾸기</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>편집</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>토큰 %1/%2</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>토큰 %1</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1/%2</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · 활성 탭</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>질문하거나 @로 첨부, /로 명령</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>먼저 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>메시지</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>첨부</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>멈춤</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>보내기</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>스레드 이름 바꾸기…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>Markdown으로 내보내기…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>스레드 삭제</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>이 스레드를 삭제하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>대화는 삭제됩니다. 대화에서 한 변경은 자막과 검토에 그대로 남습니다.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>모드 변경</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>설정 › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>모든 변경을 직접 승인합니다. 읽기는 묻지 않습니다.</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>판정자 모델이 각 작업을 승인하거나 사용자에게 묻습니다. 판정자는 작업과 메시지만 보며 파일은 보지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>항상 묻는 목록 외에는 묻지 않습니다. 편집은 바로 적용되며 실행 취소할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>새 스레드 기본값…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>스레드 이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>스레드 이름</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>방향 바꿈</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>체크포인트 복원</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>판정자 승인</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>검토</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>계획</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>판정자가 묻습니다</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>%1을(를) 허용하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>%1을(를) 실행하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>모든 모드에서 물음</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>이유: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>허용</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>한 번 허용</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>이 스레드에서 허용</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>거부</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>거부하고 에이전트에게 알리기…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>대신 무엇을 해야 합니까?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>허용됨</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>이 스레드에서 허용됨</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>거부됨</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>더 이상 필요 없음</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>이 스레드가 %1 한도에 도달했습니다</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>오늘의 %1 한도에 도달했습니다</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>AI 구성 요소가 멈췄습니다</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>턴이 실패했습니다</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>턴을 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>답변이 모델의 길이 제한에 도달했습니다.</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>모델이 답변을 거부했습니다.</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>턴이 최대 모델 요청 수에 도달해 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>설정 › AI에서 채팅 모델을 고르세요</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>AI 구성 요소가 준비되지 않았습니다</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>턴이 마지막 변경 뒤에 멈췄습니다. 계속하려면 이 스레드의 한도를 올리세요.</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>내일까지 또는 설정 › AI에서 한도를 올릴 때까지 모든 스레드가 멈춥니다.</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>턴이 중단되었으며 저절로 다시 실행되지 않습니다. 턴에서 한 변경은 검토에 남습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub가 아직 AI 구성 요소를 받는 중이거나 구성 요소를 시작하지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>%1(으)로 올리고 계속</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>계속하세요.</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>턴 다시 시도</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>로그 표시</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -6723,6 +7106,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Agent panel</source>
+        <translation>에이전트 패널</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>새 에이전트 스레드</translation>
+    </message>
+    <message>
         <source>Open folder…</source>
         <translation>폴더 열기…</translation>
     </message>
@@ -12087,6 +12478,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>JSON 설정은 HTTP로 연결하는 에이전트용이므로 “http://127.0.0.1에서도 수신”이 켜져 있어야 합니다.</translation>
     </message>
     <message>
+        <source>Agent</source>
+        <translation>에이전트</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>새 스레드 모드</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>수동</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>전체 권한</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>스레드당 비용 한도</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>하루 비용 한도</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>한도 없음</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>한도에 도달하면 턴은 현재 변경 뒤에 멈춥니다. 에이전트는 한도를 올리지 않으며, 사용자만 올릴 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>비용 미터 표시</translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>AI 구성 요소</translation>
     </message>
@@ -13910,7 +14341,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Restore checkpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>체크포인트 복원</translation>
     </message>
     <message>
         <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
@@ -14027,6 +14458,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>이 변경 뒤에 줄 %n개를 고쳤습니다. 실행 취소하면 변경 전체가 AI 이전 상태로 돌아가며 고친 내용은 사라집니다.</numerusform>
+        </translation>
     </message>
     <message>
         <source>All kept or undone</source>

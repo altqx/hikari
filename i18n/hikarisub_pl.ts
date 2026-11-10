@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="pl">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>Eksportuj jako Markdown</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>Nie można zapisać tam wątku.</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>Panel agenta</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>Nowy wątek agenta</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>Ręczny</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>Pełny dostęp</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatyczny</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>Włączyć Pełny dostęp?</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>Agent zmienia napisy, style i ustawienia bez pytania. Każda zmiana i tak trafia do przeglądu i można ją cofnąć.</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>W każdym trybie nadal pytają: usuwanie lub nadpisywanie plików poza folderami napisów, uruchamianie zewnętrznych programów i instalowanie wtyczek, wysyłanie plików lokalnych do sieci oraz zmiana uprawnień, kluczy lub budżetów AI.</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>Nie ostrzegaj ponownie</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>Włącz Pełny dostęp</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>Wątki</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>Nowy wątek</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>Menu wątku</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>Dodaj dostawcę, aby używać agenta</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub nie ma własnego serwera AI. Agent działa u dostawcy, którego dodasz: przez klucz API, logowanie ChatGPT lub OpenRouter albo model na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>Otwórz Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>Nic nie jest wysyłane ani pobierane, dopóki go nie dodasz.</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>Szukaj wątków</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>Dzisiaj</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>Wczoraj</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>koszt nieznany</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>działa</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>limit osiągnięty</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>W kolejce · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>Pokieruj teraz</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edytuj</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>%1 z %2 tokenów</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>Tokeny: %1</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 z %2</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · aktywna karta</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>Zapytaj albo wpisz @, aby dołączyć, / dla poleceń</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>Najpierw dodaj dostawcę</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>Wiadomość</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Dołącz</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Wyślij</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>Zmień nazwę wątku…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>Eksportuj jako Markdown…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>Usuń wątek</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>Usunąć ten wątek?</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>Rozmowa zostanie usunięta. Wprowadzone w niej zmiany zostają w napisach i w przeglądzie.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>Zmień tryb</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>Ustawienia › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>Zatwierdzasz każdą zmianę. Odczyt nigdy nie pyta.</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>Model sędziego zatwierdza każdą akcję albo pyta Ciebie. Widzi akcję i Twoje wiadomości, nigdy Twoich plików.</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>Pyta tylko lista „zawsze pytaj”. Zmiany działają od razu i można je cofnąć.</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>Domyślny dla nowych wątków…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>Zmień nazwę wątku</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>Nazwa wątku</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>pokierowano</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>Przywróć punkt kontrolny</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>zatwierdzone przez sędziego</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>Przegląd</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>Plan</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>Sędzia pyta Ciebie</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>Zezwolić na %1?</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>Uruchomić %1?</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>pyta w każdym trybie</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>Powód: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>Zezwól</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>Zezwól raz</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>Zezwól w tym wątku</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmów</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>Odmów i powiedz agentowi…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>Co ma zrobić zamiast tego?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>Zezwolono</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>Zezwolono w tym wątku</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>Odmówiono</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>Już niepotrzebne</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>Ten wątek osiągnął limit %1</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>Osiągnięto dzisiejszy limit %1</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>Komponent AI zatrzymał się</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>Tura nie powiodła się</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>Zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>Odpowiedź osiągnęła limit długości modelu.</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>Model odmówił odpowiedzi.</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>Tura zatrzymała się po maksymalnej liczbie zapytań do modelu.</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>Wybierz model czatu w Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>Komponent AI nie jest gotowy</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>Tura zatrzymała się po ostatniej zmianie. Aby kontynuować, podnieś limit tego wątku.</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>Każdy wątek stoi do jutra albo do podniesienia limitu w Ustawienia › AI.</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>Tura została przerwana i nie uruchomi się ponownie sama. Wprowadzone zmiany zostają w przeglądzie.</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>Podnieś do %1 i kontynuuj</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>Kontynuuj.</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>Ponów turę</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>Pokaż dziennik</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -6823,6 +7206,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Agent panel</source>
+        <translation>Panel agenta</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>Nowy wątek agenta</translation>
+    </message>
+    <message>
         <source>Open folder…</source>
         <translation>Otwórz folder…</translation>
     </message>
@@ -12237,6 +12628,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Konfiguracja JSON jest dla agentów łączących się przez HTTP, więc wymaga opcji „Nasłuchuj także na http://127.0.0.1”.</translation>
     </message>
     <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>Tryb nowych wątków</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>Ręczny</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatyczny</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>Pełny dostęp</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>Limit kosztu na wątek</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>Limit kosztu na dzień</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>Bez limitu</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>Po osiągnięciu limitu tura zatrzymuje się po bieżącej zmianie. Agent nigdy nie podnosi limitu; może to zrobić tylko użytkownik.</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>Pokazuj licznik kosztu</translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>Komponenty AI</translation>
     </message>
@@ -14094,7 +14525,7 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>Restore checkpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć punkt kontrolny</translation>
     </message>
     <message>
         <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
@@ -14219,6 +14650,14 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>Po tej zmianie edytowano %n linijkę. Cofnięcie przywróci całą zmianę do stanu sprzed AI i usunie Twoje poprawki.</numerusform>
+            <numerusform>Po tej zmianie edytowano %n linijki. Cofnięcie przywróci całą zmianę do stanu sprzed AI i usunie Twoje poprawki.</numerusform>
+            <numerusform>Po tej zmianie edytowano %n linijek. Cofnięcie przywróci całą zmianę do stanu sprzed AI i usunie Twoje poprawki.</numerusform>
+        </translation>
     </message>
     <message>
         <source>All kept or undone</source>

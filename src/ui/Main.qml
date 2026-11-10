@@ -7859,7 +7859,7 @@ ApplicationWindow {
         onAccepted: {
             if (!root.agent.exportMarkdown(thread, selectedFile))
                 root.notices.post("warning", qsTranslate("HikariSub.Agent", "Export as Markdown"),
-                                  qsTranslate("HikariSub.Agent", "The thread couldn't be saved there."))
+                                  qsTranslate("HikariSub.Agent", "The thread couldn’t be saved there."))
         }
     }
     FileChooser {
