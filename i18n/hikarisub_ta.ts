@@ -204,8 +204,8 @@
         <translation>அமைப்புகள் › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>ஒவ்வொரு மாற்றத்தையும் நீங்கள் ஒப்புதலளிக்கிறீர்கள். படித்தல் ஒருபோதும் கேட்காது.</translation>
+        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
+        <translation>வசன வரிகளின் திருத்தங்கள் மதிப்பாய்வுக்குச் செல்லும்; அங்கே அவற்றைத் தக்கவைக்கலாம் அல்லது செயல்தவிர்க்கலாம். பிற மாற்றங்கள் கேட்கும்.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>

@@ -204,8 +204,8 @@
         <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>คุณอนุมัติการเปลี่ยนแปลงทุกครั้ง การอ่านไม่ถามเลย</translation>
+        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
+        <translation>การแก้ไขคำบรรยายจะเข้าไปในการตรวจทาน ซึ่งคุณเลือกคงไว้หรือเลิกทำได้ การเปลี่ยนแปลงอื่นจะถาม</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>

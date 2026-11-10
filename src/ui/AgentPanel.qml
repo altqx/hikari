@@ -602,7 +602,7 @@ FocusScope {
         objectName: "agentModeMenu"
         width: 300
         Repeater {
-            model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve every change. Reading never asks.")},
+            model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("Subtitle edits go into the review, where you keep or undo them. Other changes ask.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
             delegate: ShellMenuItem {
