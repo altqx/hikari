@@ -48,7 +48,8 @@ bool linearMode(Mode m)
 
 Point toScript(const VideoView &v, float x, float y)
 {
-    return {((x / v.zoomScale().x) + v.zoomMove().x) * v.coeffW(), ((y / v.zoomScale().y) + v.zoomMove().y) * v.coeffH()};
+    return {(double(x) / v.zoomScale().x + v.zoomMove().x) * v.coeffW(),
+            (double(y) / v.zoomScale().y + v.zoomMove().y) * v.coeffH()};
 }
 
 PointF toView(const VideoView &v, Point p)
