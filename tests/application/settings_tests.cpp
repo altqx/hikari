@@ -351,3 +351,91 @@ TEST(SettingsRegistry, InterimKeysNameSettingsOfTheirType)
     ASSERT_NE(findSetting(kAutomationHotkeysSetting), nullptr);
     EXPECT_TRUE(findSetting(kAutomationHotkeysSetting)->legacyKey.empty());
 }
+
+TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
+{
+    for (const char *id : {"editor.dictionaryLanguage", "editor.spellchecker", "grammar.language",
+                           "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
+                           "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal"})
+        EXPECT_TRUE(findSetting(id)->projectable) << id;
+    for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
+                           "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",
+                           "scriptProperties.linkResolutions", "translation.showOriginal"})
+        EXPECT_FALSE(findSetting(id)->projectable) << id;
+    for (const auto &setting : settingDefinitions())
+        EXPECT_FALSE(setting.widens) << setting.id;
+}
+
+TEST(ProjectSettings, AProjectOverridesTheUserPerKey)
+{
+    MemorySettingsStorage user;
+    auto project = std::make_shared<MemorySettingsStorage>();
+    LayeredSettingsStorage layered(user);
+    Settings settings(layered);
+    settings.set("editor.dictionaryLanguage", std::string("pl"));
+    settings.set("grammar.language", std::int64_t{1});
+    project->write(*findSetting("editor.dictionaryLanguage"), std::string("en_GB"));
+    EXPECT_EQ(settings.text("editor.dictionaryLanguage"), "pl");
+
+    layered.setProject(project, false);
+    EXPECT_EQ(settings.text("editor.dictionaryLanguage"), "en_GB");
+    EXPECT_TRUE(layered.fromProject(*findSetting("editor.dictionaryLanguage")));
+    EXPECT_EQ(settings.integer("grammar.language"), 1);
+    EXPECT_FALSE(layered.fromProject(*findSetting("grammar.language")));
+
+    layered.setProject(nullptr, false);
+    EXPECT_EQ(settings.text("editor.dictionaryLanguage"), "pl");
+}
+
+TEST(ProjectSettings, AProjectNeverSetsWhatIsOffTheAllowlist)
+{
+    MemorySettingsStorage user;
+    auto project = std::make_shared<MemorySettingsStorage>();
+    LayeredSettingsStorage layered(user);
+    layered.setProject(project, true);
+    Settings settings(layered);
+    project->write(*findSetting("privacy.usageData"), false);
+    project->write(*findSetting("shortcuts.hotkeys"), std::vector<std::string>{"x"});
+    EXPECT_EQ(settings.value("privacy.usageData"), findSetting("privacy.usageData")->defaultValue);
+    EXPECT_FALSE(settings.isSet("shortcuts.hotkeys"));
+}
+
+TEST(ProjectSettings, AProjectReplacesListsWholesale)
+{
+    const SettingDefinition list{"test.list", "", SettingType::StringList, SettingScope::Profile,
+                                 SettingDisposition::Mapped, false, std::vector<std::string>(), true};
+    MemorySettingsStorage user;
+    auto project = std::make_shared<MemorySettingsStorage>();
+    LayeredSettingsStorage layered(user);
+    layered.setProject(project, false);
+    user.write(list, std::vector<std::string>{"mine", "shared"});
+    project->write(list, std::vector<std::string>{"theirs"});
+    EXPECT_EQ(layered.read(list), SettingValue(std::vector<std::string>{"theirs"}));
+}
+
+TEST(ProjectSettings, AWideningValueWaitsForTrust)
+{
+    const SettingDefinition widening{"test.widening", "", SettingType::Bool, SettingScope::Profile,
+                                     SettingDisposition::Mapped, false, false, true, true};
+    MemorySettingsStorage user;
+    auto project = std::make_shared<MemorySettingsStorage>();
+    project->write(widening, true);
+    LayeredSettingsStorage layered(user);
+    layered.setProject(project, false);
+    EXPECT_FALSE(layered.read(widening).has_value());
+    EXPECT_FALSE(projectMaySet(widening, false));
+    layered.setProject(project, true);
+    EXPECT_EQ(layered.read(widening), SettingValue(true));
+}
+
+TEST(ProjectSettings, WritesGoToTheUsersTier)
+{
+    MemorySettingsStorage user;
+    auto project = std::make_shared<MemorySettingsStorage>();
+    LayeredSettingsStorage layered(user);
+    layered.setProject(project, true);
+    Settings settings(layered);
+    settings.set("editor.dictionaryLanguage", std::string("de_DE"));
+    EXPECT_EQ(user.read(*findSetting("editor.dictionaryLanguage")), SettingValue(std::string("de_DE")));
+    EXPECT_FALSE(project->read(*findSetting("editor.dictionaryLanguage")).has_value());
+}

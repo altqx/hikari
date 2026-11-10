@@ -589,6 +589,106 @@ private slots:
                      qPrintable(entry.at(3).toString()));
     }
 
+    void theFirstPluginGuideRunsAtEveryStep()
+    {
+        const QString id = QStringLiteral("com.example.first-plugin");
+        const QString path = m_dir.filePath(QStringLiteral("guide.ass"));
+        write(path, "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,one\\Ntwo\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,three\n");
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        app::Application a(o);
+        QVERIFY(a.openFile(path));
+        QSignalSpy noticed(&a.log(), &ui::LogController::noticed);
+        const auto said = [&] {
+            QList<Notice> out;
+            for (const Notice &notice : notices(noticed))
+                if (notice.title == QLatin1String("First plugin"))
+                    out << notice;
+            return out;
+        };
+        const auto step = [&](int number) {
+            const QString from = QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/first-plugin/step-%1/").arg(number);
+            for (const char *file : {"hikari-plugin.json", "main.lua"}) {
+                QFile source(from + QLatin1String(file));
+                if (!source.open(QIODevice::ReadOnly))
+                    return false;
+                write(folders().plugins + QLatin1Char('/') + id + QLatin1Char('/') + QLatin1String(file), source.readAll());
+            }
+            m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("0.%1.0").arg(number)},
+                                         {QStringLiteral("enabled"), true}};
+            write(folders().registry,
+                  QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+            return true;
+        };
+        const QString count = QStringLiteral("plugin.com.example.first-plugin.count");
+        const QString dock = QStringLiteral("plugin:com.example.first-plugin/summary");
+        const auto heading = [](app::PluginPanelState *panel) {
+            return panel->tree().toMap().value(QStringLiteral("children")).toList().value(0).toMap().value(QStringLiteral("text"));
+        };
+
+        QVERIFY(step(1));
+        {
+            app::PluginRuntime runtime(wiring(a));
+            runtime.sync();
+            QVERIFY(runtime.run(count));
+            QTRY_COMPARE(said().size(), 1);
+            QCOMPARE(said().at(0).text, QStringLiteral("guide.ass has 2 lines."));
+            QVERIFY(runtime.ui()->panels().isEmpty());
+        }
+
+        QVERIFY(step(2));
+        {
+            app::PluginRuntime runtime(wiring(a));
+            runtime.sync();
+            app::PluginPanelState *panel = runtime.ui()->panel(dock);
+            QVERIFY(panel);
+            QCOMPARE(panel->title(), QStringLiteral("Summary"));
+            runtime.ui()->setShown(dock, true);
+            QTRY_COMPARE(heading(panel), QVariant(QStringLiteral("2 lines")));
+            QVERIFY(apiCall(a, "document.apply", QStringLiteral(R"({"revision": %1, "name": "More",
+                "edits": [{"op": "insert_line", "fields": {"text": "four"}}]})")
+                                                     .arg(session(a).revision())));
+            QTRY_COMPARE(heading(panel), QVariant(QStringLiteral("3 lines")));
+            QVERIFY(apiCall(a, "document.apply", QStringLiteral(R"({"revision": %1, "name": "Less",
+                "edits": [{"op": "delete_line", "line": %2}]})")
+                                                     .arg(session(a).revision())
+                                                     .arg(lineIds(a).back())));
+            QTRY_COMPARE(heading(panel), QVariant(QStringLiteral("2 lines")));
+        }
+
+        QVERIFY(step(3));
+        {
+            app::PluginRuntime runtime(wiring(a));
+            runtime.sync();
+            app::PluginPanelState *panel = runtime.ui()->panel(dock);
+            runtime.ui()->setShown(dock, true);
+            QTRY_COMPARE(panel->tree().toMap().value(QStringLiteral("children")).toList().size(), 2);
+            select(a, lineIds(a));
+            const std::size_t steps = session(a).historySize();
+            QVERIFY(runtime.run(QStringLiteral("plugin.com.example.first-plugin.unbreak")));
+            QTRY_COMPARE(session(a).historySize(), steps + 1);
+            QCOMPARE(session(a).history().back().name, std::string("First plugin: Join line breaks"));
+            QCOMPARE(session(a).document().lines().front()->text, std::u8string(u8"one two"));
+            QCOMPARE(session(a).document().lines().back()->text, std::u8string(u8"three"));
+            QVERIFY(runtime.run(QStringLiteral("plugin.com.example.first-plugin.unbreak")));
+            QTRY_COMPARE(said().size(), 2);
+            QCOMPARE(said().last().text, QStringLiteral("The selected lines have no line breaks."));
+            QCOMPARE(session(a).historySize(), steps + 1);
+
+            QVERIFY(session(a).undo());
+            select(a, lineIds(a));
+            runtime.ui()->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")},
+                                      {QStringLiteral("widget"), QStringLiteral("unbreak")}});
+            QTRY_COMPARE(session(a).document().lines().front()->text, std::u8string(u8"one two"));
+        }
+        for (const Notice &notice : said())
+            QVERIFY2(notice.severity != ui::LogController::Error, qPrintable(notice.text));
+    }
+
     void aDialogAnswersWithItsButtonAndValues()
     {
         install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(

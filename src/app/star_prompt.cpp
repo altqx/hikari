@@ -14,7 +14,6 @@ namespace hikari::app {
 
 namespace {
 
-constexpr char kEnabled[] = "privacy.starPrompt";
 constexpr char kDays[] = "starPrompt.days";
 constexpr char kLastDay[] = "starPrompt.lastDay";
 constexpr char kEditingSeconds[] = "starPrompt.editingSeconds";
@@ -47,8 +46,7 @@ QDateTime StarPrompt::now() const
 
 bool StarPrompt::finished() const
 {
-    return !m_settings.boolean(kEnabled) || m_settings.boolean(kStarred) ||
-           m_settings.integer(kShown) >= m_config.maxShows;
+    return m_settings.boolean(kStarred) || m_settings.integer(kShown) >= m_config.maxShows;
 }
 
 void StarPrompt::countDay()

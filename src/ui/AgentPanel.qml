@@ -34,9 +34,9 @@ FocusScope {
                 title: qsTr("Turn on Full access?"),
                 severity: "warning",
                 text: qsTr("The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone."),
-                detail: qsTr("These still ask, in every mode: deleting or overwriting files outside the subtitles' folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets."),
+                detail: qsTr("These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets."),
                 dontAsk: true,
-                dontAskText: qsTr("Don't warn me again"),
+                dontAskText: qsTr("Don’t warn me again"),
                 choices: [{ id: "full", text: qsTr("Turn on Full access"), role: "accept" },
                           { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
             }, (id, dontWarn) => {
@@ -555,7 +555,8 @@ FocusScope {
         id: slashMenu
         ShellMenuItem {
             iconRole: "add"
-            text: qsTr("/new  New thread")
+            text: qsTr("New thread")
+            detailText: "/new"
             onTriggered: {
                 composer.text = ""
                 panel.agent.newThread()
@@ -563,7 +564,8 @@ FocusScope {
         }
         ShellMenuItem {
             iconRole: "ai-assistant"
-            text: qsTr("/mode  Change mode")
+            text: qsTr("Change mode")
+            detailText: "/mode"
             onTriggered: {
                 composer.text = ""
                 modeMenu.popup(modeButton, 0, -modeMenu.implicitHeight)
@@ -827,7 +829,7 @@ FocusScope {
                 Layout.fillWidth: true
                 CardTitle {
                     iconRole: ask.always ? "notice-error" : "notice-warning"
-                    text: ask.item.type === "judge" ? qsTr("The judge asks you")
+                    text: ask.item.type === "judge" ? qsTr("Judge asks you")
                           : ask.item.type === "always" ? qsTr("Allow %1?").arg(ask.item.tool ?? "")
                           : qsTr("Run %1?").arg(ask.item.tool ?? "")
                 }
@@ -904,15 +906,15 @@ FocusScope {
             CardTitle {
                 iconRole: notice.quiet ? "notice-info" : notice.edge === Theme.warning ? "notice-warning" : "notice-error"
                 text: notice.kind === "cap" ? qsTr("This thread reached its %1 cap").arg(panel.money(panel.thread.cap ?? 0))
-                      : notice.kind === "dailyCap" ? qsTr("Today's %1 cap is reached").arg(panel.money(panel.agent.dailyCap))
-                      : notice.kind === "lost" ? qsTr("The AI component stopped")
-                      : notice.kind === "failed" ? qsTr("The turn failed")
+                      : notice.kind === "dailyCap" ? qsTr("Today’s %1 cap is reached").arg(panel.money(panel.agent.dailyCap))
+                      : notice.kind === "lost" ? qsTr("AI component stopped")
+                      : notice.kind === "failed" ? qsTr("Turn failed")
                       : notice.kind === "stopped" ? qsTr("You stopped the turn.")
-                      : notice.kind === "maxTokens" ? qsTr("The answer reached the model's length limit.")
+                      : notice.kind === "maxTokens" ? qsTr("The answer reached the model’s length limit.")
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
                       : notice.kind === "noModel" ? qsTr("Choose a chat model in Settings › AI")
-                      : qsTr("The AI component isn't ready")
+                      : qsTr("AI component isn’t ready")
             }
             Label {
                 visible: text.length > 0
@@ -921,9 +923,9 @@ FocusScope {
                 color: Theme.muted
                 text: notice.kind === "cap" ? qsTr("The turn stopped after its last change. Raise the cap for this thread to go on.")
                       : notice.kind === "dailyCap" ? qsTr("Every thread stops until tomorrow, or until you raise the cap in Settings › AI.")
-                      : notice.kind === "lost" ? qsTr("The turn was interrupted and won't rerun by itself. Changes it made stay in the review.")
+                      : notice.kind === "lost" ? qsTr("The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.")
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
-                      : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn't start.")
+                      : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
                       : ""
             }
             RowLayout {

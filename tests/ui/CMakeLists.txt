@@ -221,6 +221,11 @@ target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui" "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_template_editor_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_node_effects_controller_tests SOURCES node_effects_controller_tests.cpp
+    LIBRARIES hikari_ui OFFSCREEN_ONLY)
+target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 foreach(mode offscreen xvfb native)
     if(TEST hikari_ui_template_editor_tests.${mode})
         set_tests_properties(hikari_ui_template_editor_tests.${mode} PROPERTIES TIMEOUT 300)
@@ -373,8 +378,9 @@ hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
 target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
     "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_ai_settings_tests PRIVATE
-    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
-add_dependencies(hikari_ui_ai_settings_tests hikari_fake_ai_sidecar)
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
+    HIKARI_FAKE_AGENT_CLI="$<TARGET_FILE:hikari_fake_agent_cli>" HIKARI_EXE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
+add_dependencies(hikari_ui_ai_settings_tests hikari_fake_ai_sidecar hikari_fake_agent_cli)
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
@@ -407,6 +413,7 @@ hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARI
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
     HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
@@ -441,6 +448,7 @@ target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
+target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")

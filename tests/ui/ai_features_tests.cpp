@@ -360,7 +360,13 @@ TEST_F(AiFeaturesTest, ASidecarThatFailsItsHandshakeRollsBackToThePreviousOne)
     publish(QStringLiteral("1.2.0"), "--required-api 99");
     installNewest();
     policyOff = true;
-    app::AiFeatures features(settings, ports(false, true));
+    app::AiFeatures::Ports p = ports(false, true);
+    std::vector<std::pair<QString, QString>> reported;
+    p.reportRollback = [&](const QString &version, const QString &reason) {
+        reported.emplace_back(version, reason);
+        return true;
+    };
+    app::AiFeatures features(settings, std::move(p));
     ASSERT_EQ(features.updater()->current()->version, QStringLiteral("1.2.0"));
     std::optional<QString> rolledBack;
     QObject::connect(&features, &app::AiFeatures::rolledBack, [&](const QString &v) { rolledBack = v; });
@@ -370,6 +376,14 @@ TEST_F(AiFeaturesTest, ASidecarThatFailsItsHandshakeRollsBackToThePreviousOne)
     EXPECT_EQ(*rolledBack, QStringLiteral("1.2.0"));
     EXPECT_EQ(features.updater()->current()->version, QStringLiteral("1.1.0"));
     EXPECT_EQ(features.sidecar(), nullptr);
+    EXPECT_EQ(reported, (std::vector<std::pair<QString, QString>>{{QStringLiteral("1.2.0"), QStringLiteral("initialize")}}));
+    const auto notice = features.updater()->rollback();
+    ASSERT_TRUE(notice);
+    EXPECT_EQ(notice->version, QStringLiteral("1.2.0"));
+    EXPECT_EQ(notice->to, QStringLiteral("1.1.0"));
+    EXPECT_EQ(notice->reason, QStringLiteral("initialize"));
+    EXPECT_TRUE(notice->reportSent);
+    EXPECT_EQ(features.versionProperties().value(QStringLiteral("ai_component_version")).toString(), QStringLiteral("1.1.0"));
 
     bool answered = false;
     features.sidecarForMcp()->request("echo", api::Json(1), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });

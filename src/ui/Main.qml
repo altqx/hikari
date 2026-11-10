@@ -34,6 +34,10 @@ ApplicationWindow {
             if (shellWindow === root.shellWindow)
                 projectOfferBar.offer(folder, name)
         }
+        function onTabJoinedProject(shellWindow) {
+            if (shellWindow === root.shellWindow)
+                root.notices.post("info", root.app.projectMoveText(shellWindow), "")
+        }
     }
     readonly property string engineSuffix: shellWindow === 0 ? "" : "~" + shellWindow
     readonly property var dockAffinities: ["w" + shellWindow]
@@ -51,6 +55,7 @@ ApplicationWindow {
     required property var automation
     required property AutomationManagerController automationManager
     required property TemplateEditorController templateEditor
+    required property NodeEffectsController nodeEffects
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
     required property ScriptResolutionPromptController automationResolution
@@ -280,6 +285,31 @@ ApplicationWindow {
         templateDock.close()
     }
 
+    function nodeEffectsLayout() {
+        for (const dock of [gridDock, editorDock, audioDock, originalDock, referenceDock, postprocessorDock, stylesDock,
+                            templateDock, timingDock, searchDock, automationDock, spellDock, logDock])
+            if (dock.isOpen)
+                dock.close()
+        const width = dockingArea.width
+        dockingArea.addDockWidget(nodeGraphDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
+                                  Qt.size(Math.round(width * 0.44), 0))
+        dockingArea.addDockWidget(nodeInspectorDock, KDDW.KDDockWidgets.Location_OnRight, nodeGraphDock,
+                                  Qt.size(Math.round(width * 0.22), 0))
+        dockingArea.addDockWidget(nodeSourcesDock, KDDW.KDDockWidgets.Location_OnBottom, videoDock,
+                                  Qt.size(0, Math.round(dockingArea.height * 0.42)))
+    }
+    function setNodeEffects(on) {
+        if (on === root.workspaceLayout.nodeEffects)
+            return
+        root.nodeEffects.commit()
+        if (on)
+            root.workspaceLayout.enterNodeEffects()
+        else
+            root.workspaceLayout.leaveNodeEffects()
+        if (on)
+            root.focusPanel(nodeGraphPanel, Qt.OtherFocusReason)
+    }
+
     function typesettingLayout() {
         const area = root.workspaceLayout.panelSize(gridDock).width
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnLeft, gridDock,
@@ -331,6 +361,8 @@ ApplicationWindow {
                 root.typesettingLayout()
             else if (name === "Karaoke")
                 root.karaokeLayout()
+            else if (name === "NodeEffects")
+                root.nodeEffectsLayout()
         }
     }
     Connections {
@@ -431,11 +463,12 @@ ApplicationWindow {
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
                                                  logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel,
-                                                 agentPanel]
+                                                 agentPanel, nodeGraphPanel, nodeInspectorPanel, nodeSourcesPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
                                          templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
                                          .concat(root.agent.on ? [agentDock] : [])
+                                         .concat([nodeGraphDock, nodeInspectorDock, nodeSourcesDock])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -1555,6 +1588,17 @@ ApplicationWindow {
             onResetRequested: root.resetLayout()
             onManageRequested: manageLayoutsDialog.show()
         }
+        tools: IconToolButton {
+            objectName: "nodeEffectsToggle"
+            iconRole: "node-editor"
+            action: nodeEffectsAction
+            tip: nodeEffectsAction.text
+            focusPolicy: Qt.NoFocus
+            implicitHeight: 24
+            Layout.alignment: Qt.AlignVCenter
+            Accessible.checkable: true
+            Accessible.checked: checked
+        }
     }
     MainWindowEdges {
         frame: windowFrame
@@ -1648,7 +1692,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_CLOSE_PROJECT"
-                    help: qsTr("Close this window's tabs and its project")
+                    help: qsTr("Close this window’s tabs and its project")
                     iconRole: "close-project"
                     objectName: "closeProjectMenuItem"
                     action: Action {
@@ -1850,6 +1894,17 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    command: "GLOBAL_CLOSE_WINDOW"
+                    help: qsTr("Close this window; closing the last window exits the program")
+                    iconRole: "window-close"
+                    objectName: "closeWindowMenuItem"
+                    action: Action {
+                        text: qsTr("Close &window")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_WINDOW")) Qt.callLater(root.close)
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_QUIT"
                     help: qsTr("Exit the program")
                     iconRole: "exit"
                     objectName: "exitMenuItem"
@@ -2396,17 +2451,101 @@ ApplicationWindow {
                     }
                 }
             }
-            ShellMenuItem {
-                command: "GLOBAL_PERSPECTIVE_TRACKING"
-                help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
-                                          : qsTr("Open a video first: tracking data is per frame.")
-                iconRole: "tool-perspective"
-                objectName: "perspectiveTrackingMenuItem"
-                action: Action {
-                    id: perspectiveTrackingAction
-                    text: qsTr("Perspective tracking…")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
+            ShellMenu {
+                iconRole: "motion-apply"
+                objectName: "trackingMenu"
+                title: qsTr("Tracking")
+                enabled: root.shell.hasEditingTarget
+                ShellMenuItem {
+                    command: "GLOBAL_APPLY_MOTION_DATA"
+                    help: root.video.hasVideo ? qsTr("Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "motion-apply"
+                    objectName: "applyMotionDataMenuItem"
+                    action: Action {
+                        id: applyMotionDataAction
+                        text: qsTr("Apply motion data…")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_APPLY_MOTION_DATA")) root.openMotionData()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_PERSPECTIVE_TRACKING"
+                    help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "tool-perspective"
+                    objectName: "perspectiveTrackingMenuItem"
+                    action: Action {
+                        id: perspectiveTrackingAction
+                        text: qsTr("Perspective tracking…")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_REVERT_MOTION_DATA"
+                    help: qsTr("Puts the tracked lines of the selection back as the lines they were made from")
+                    iconRole: "motion-revert"
+                    objectName: "revertMotionDataMenuItem"
+                    action: Action {
+                        id: revertMotionDataAction
+                        text: qsTr("Revert motion data")
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_REVERT_MOTION_DATA")) root.revertMotionData()
+                    }
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_COPY_MOTION_DATA"
+                    help: root.video.hasVideo ? qsTr("Copies the selected frame-by-frame lines’ position, scale and rotation as motion data")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "motion-copy"
+                    objectName: "copyMotionDataMenuItem"
+                    action: Action {
+                        id: copyMotionDataAction
+                        text: qsTr("Copy motion data from lines")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_MOTION_DATA")) root.trackingToast(root.app.copyMotionData())
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_COPY_POWER_PIN_TRACK"
+                    help: root.video.hasVideo ? qsTr("Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "perspective-plane"
+                    objectName: "copyPowerPinTrackMenuItem"
+                    action: Action {
+                        id: copyPowerPinTrackAction
+                        text: qsTr("Copy Power-Pin track from lines")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_POWER_PIN_TRACK")) root.trackingToast(root.app.copyPowerPinTrack())
+                    }
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_EXTEND_TRACKED_LINES"
+                    help: root.video.hasVideo ? qsTr("Fits the selected frame-by-frame lines’ motion and carries it on for more frames")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "motion-extend"
+                    objectName: "extendTrackedLinesMenuItem"
+                    action: Action {
+                        id: extendTrackedLinesAction
+                        text: qsTr("Extend tracked lines…")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_TRACKED_LINES")) root.openExtendTracking()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_EXTRAPOLATE_MOVE"
+                    help: qsTr("Carries each selected line’s timed %1 on at the same speed from its start to its end").arg("\\move")
+                    iconRole: "move-extend"
+                    objectName: "extrapolateMoveMenuItem"
+                    action: Action {
+                        id: extrapolateMoveAction
+                        text: qsTr("Extrapolate %1 to the line").arg("\\move")
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTRAPOLATE_MOVE")) root.trackingToast(root.app.extrapolateMoves())
+                    }
                 }
             }
             ShellMenuItem {
@@ -2908,6 +3047,25 @@ ApplicationWindow {
                 text: qsTr("Restore the previous layout")
                 enabled: root.workspaceLayout.hasBackup && !root.layoutLocked
                 onTriggered: root.workspaceLayout.restoreBackup()
+            }
+            MenuSeparator {}
+            ShellMenuItem {
+                command: "GLOBAL_NODE_EFFECTS"
+                help: qsTranslate("HikariSub.NodeEffects", "Edits this file’s node effects on a canvas, with a preview on the video")
+                iconRole: "node-editor"
+                objectName: "nodeEffectsMenuItem"
+                action: Action {
+                    id: nodeEffectsAction
+                    text: qsTranslate("HikariSub.NodeEffects", "Node effects")
+                    checkable: true
+                    checked: root.workspaceLayout.nodeEffects
+                    enabled: root.workspaceLayout.nodeEffects || (root.shell.hasEditingTarget && !root.layoutLocked)
+                    onToggled: {
+                        if (!root.hotkeyGesture("GLOBAL_NODE_EFFECTS"))
+                            root.setNodeEffects(checked)
+                        checked = Qt.binding(() => root.workspaceLayout.nodeEffects)
+                    }
+                }
             }
             MenuSeparator {}
             ShellMenuItem {
@@ -3840,14 +3998,21 @@ ApplicationWindow {
                     id: templateBadge
                     x: presenter.x + 8
                     y: presenter.y + 8
-                    visible: root.templateEditor.videoPreview && root.video.hasVideo
+                    visible: root.templateEditor.videoPreview && !root.nodeEffects.videoPreview && root.video.hasVideo
                     controller: root.templateEditor
+                }
+                VideoNodeBadge {
+                    id: nodeBadge
+                    x: presenter.x + 8
+                    y: presenter.y + 8
+                    visible: root.nodeEffects.videoPreview && root.video.hasVideo
+                    controller: root.nodeEffects
                 }
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
                     cost: presenter.renderCost
-                    textTop: templateBadge.visible ? templateBadge.height + 12 : 8
+                    textTop: templateBadge.visible ? templateBadge.height + 12 : nodeBadge.visible ? nodeBadge.height + 12 : 8
                 }
                 VisualLastChange {
                     anchors { top: parent.top; right: parent.right; margins: 14 }
@@ -6489,6 +6654,78 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: nodeGraphDock
+            objectName: "nodeGraphDock"
+            uniqueName: root.engineName("NodeGraph")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.NodeEffects", "Graph")
+            Binding {
+                target: root.nodeEffects
+                property: "shown"
+                value: root.workspaceLayout.nodeEffects || (nodeGraphDock.isOpen && nodeGraphPanel.visible)
+            }
+            Panel {
+                id: nodeGraphPanel
+                objectName: "nodeGraphPanelHost"
+                dockName: root.engineName("NodeGraph")
+                minimumBodySize: nodeGraphTool.minimumSize
+                anchors.fill: parent
+                title: root.nodeEffects.hasGraph ? qsTranslate("HikariSub.NodeEffects", "Graph: %1").arg(root.nodeEffects.name)
+                                                 : qsTranslate("HikariSub.NodeEffects", "Graph")
+                accessibleName: qsTranslate("HikariSub.NodeEffects", "Graph")
+                NodeGraphCanvas {
+                    id: nodeGraphTool
+                    anchors.fill: parent
+                    controller: root.nodeEffects
+                }
+            }
+        }
+
+        PanelDock {
+            id: nodeInspectorDock
+            objectName: "nodeInspectorDock"
+            uniqueName: root.engineName("NodeInspector")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.NodeEffects", "Node")
+            Panel {
+                id: nodeInspectorPanel
+                objectName: "nodeInspectorPanel"
+                dockName: root.engineName("NodeInspector")
+                minimumBodySize: nodeInspectorTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.NodeEffects", "Node")
+                NodeInspector {
+                    id: nodeInspectorTool
+                    anchors.fill: parent
+                    controller: root.nodeEffects
+                    colourPicker: root.colourPicker
+                }
+            }
+        }
+
+        PanelDock {
+            id: nodeSourcesDock
+            objectName: "nodeSourcesDock"
+            uniqueName: root.engineName("NodeSources")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.NodeEffects", "Source lines")
+            Panel {
+                id: nodeSourcesPanel
+                objectName: "nodeSourcesPanel"
+                dockName: root.engineName("NodeSources")
+                minimumBodySize: nodeSourcesTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.NodeEffects", "Source lines")
+                NodeSourceLines {
+                    id: nodeSourcesTool
+                    anchors.fill: parent
+                    controller: root.nodeEffects
+                    video: root.video
+                }
+            }
+        }
+
+        PanelDock {
             id: logDock
             objectName: "logDock"
             uniqueName: root.engineName("Log")
@@ -6519,6 +6756,9 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("Original"), true, originalTools)
             Docking.setPanelHeader(root.engineName("Styles"), true, stylesTool.toolbar)
             Docking.setPanelHeader(root.engineName("Template"), false, templateTool.toolbar)
+            Docking.setPanelHeader(root.engineName("NodeGraph"), true, nodeGraphTool.toolbar)
+            Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
+            Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
             root.defaultLayout()
         }
     }
@@ -6750,6 +6990,18 @@ ApplicationWindow {
                         onClicked: sessionWindows.remove(entryBar.modelData)
                     }
                 }
+            }
+        }
+        NodeModeBar {
+            objectName: "nodeModeBar"
+            visible: root.workspaceLayout.nodeEffects
+            Layout.fillWidth: true
+            controller: root.nodeEffects
+            onLeave: root.setNodeEffects(false)
+            onProblemChosen: node => {
+                root.nodeEffects.selection = [node]
+                nodeGraphTool.centreOn(node)
+                root.focusPanel(nodeGraphPanel, Qt.OtherFocusReason)
             }
         }
     }
@@ -7611,7 +7863,7 @@ ApplicationWindow {
         onAccepted: {
             if (!root.agent.exportMarkdown(thread, selectedFile))
                 root.notices.post("warning", qsTranslate("HikariSub.Agent", "Export as Markdown"),
-                                  qsTranslate("HikariSub.Agent", "The thread couldn't be saved there."))
+                                  qsTranslate("HikariSub.Agent", "The thread couldn’t be saved there."))
         }
     }
     FileChooser {
@@ -7738,6 +7990,38 @@ ApplicationWindow {
             settings: root.app.settings
             video: root.video
         }
+    }
+    function openMotionData() {
+        motionDataLoader.active = true
+        motionDataLoader.item.openDialog()
+    }
+    Loader {
+        id: motionDataLoader
+        active: false
+        sourceComponent: MotionDataWindow {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    function openExtendTracking() {
+        extendTrackingLoader.active = true
+        extendTrackingLoader.item.openDialog()
+    }
+    Loader {
+        id: extendTrackingLoader
+        active: false
+        sourceComponent: ExtendTrackingWindow {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    function revertMotionData() {
+        const failure = root.app.revertMotionData()
+        if (failure.length > 0)
+            root.notify("warning", failure, "")
+    }
+    function trackingToast(result) {
+        root.notify(result.ok ? "info" : "warning", result.text, "")
     }
     function openPerspectiveTracking() {
         perspectiveTrackingLoader.active = true
@@ -8255,7 +8539,7 @@ ApplicationWindow {
                 root.hotkeys.gestureMap(target.id, target.name, accel, type, "cancel")
             else
                 hotkeyMapping.ask(conflict, answer => root.hotkeys.gestureMap(target.id, target.name, accel, type, answer))
-        })
+        }, { command: target.id })
         return true
     }
     function gridGesture(item, symbol) {
@@ -8377,6 +8661,12 @@ ApplicationWindow {
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
+        GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
+        GLOBAL_REVERT_MOTION_DATA: revertMotionDataAction,
+        GLOBAL_COPY_MOTION_DATA: copyMotionDataAction,
+        GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,
+        GLOBAL_EXTEND_TRACKED_LINES: extendTrackedLinesAction,
+        GLOBAL_EXTRAPOLATE_MOVE: extrapolateMoveAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
@@ -8395,6 +8685,7 @@ ApplicationWindow {
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
+        GLOBAL_NODE_EFFECTS: nodeEffectsAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
         GLOBAL_KEEP_AI_CHANGE: keepAiChangeAction, GLOBAL_UNDO_AI_CHANGE: undoAiChangeAction,
         GLOBAL_NEXT_AI_CHANGE: nextAiChangeAction, GLOBAL_PREVIOUS_AI_CHANGE: previousAiChangeAction,
@@ -8546,6 +8837,7 @@ ApplicationWindow {
         const editing = root.shell.hasEditingTarget
         switch (symbol) {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
+        case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":

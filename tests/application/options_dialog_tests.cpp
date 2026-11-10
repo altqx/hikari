@@ -254,18 +254,12 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(id), nullptr);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
     }
-    const auto &starPrompt = all[std::size(kLegacy) + 38];
-    EXPECT_EQ(starPrompt.setting, "privacy.starPrompt");
-    EXPECT_EQ(starPrompt.control, OptionsControl::Check);
-    EXPECT_EQ(starPrompt.page, OptionsPage::Updates);
-    ASSERT_NE(findSetting("privacy.starPrompt"), nullptr);
-    EXPECT_EQ(std::get<bool>(findSetting("privacy.starPrompt")->defaultValue), true);
     const std::pair<std::string_view, std::int64_t> zoom[] = {{"video.zoomModel", 0},
                                                               {"video.scrollAction", 4},
                                                               {"video.ctrlScrollAction", 0},
                                                               {"video.shiftScrollAction", 2}};
     for (std::size_t i = 0; i < std::size(zoom); ++i) {
-        const auto &binding = all[std::size(kLegacy) + 39 + i];
+        const auto &binding = all[std::size(kLegacy) + 38 + i];
         EXPECT_EQ(binding.setting, zoom[i].first);
         EXPECT_EQ(binding.control, OptionsControl::IndexChoice) << zoom[i].first;
         EXPECT_EQ(binding.page, OptionsPage::Video) << zoom[i].first;
@@ -273,20 +267,21 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(zoom[i].first), nullptr);
         EXPECT_EQ(std::get<std::int64_t>(findSetting(zoom[i].first)->defaultValue), zoom[i].second) << zoom[i].first;
     }
-    const auto &softBreak = all[std::size(kLegacy) + 43];
+    const auto &softBreak = all[std::size(kLegacy) + 42];
     EXPECT_EQ(softBreak.setting, "editor.softLineBreak");
     EXPECT_EQ(softBreak.control, OptionsControl::Check);
     EXPECT_EQ(softBreak.page, OptionsPage::LineEditor);
     ASSERT_NE(findSetting("editor.softLineBreak"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("editor.softLineBreak")->defaultValue), false);
-    const auto &bake = all[std::size(kLegacy) + 44];
+    const auto &bake = all[std::size(kLegacy) + 43];
     EXPECT_EQ(bake.setting, "grid.splitFramesBakeAnimations");
     EXPECT_EQ(bake.control, OptionsControl::Check);
     EXPECT_EQ(bake.page, OptionsPage::Grid);
     ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
-    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", false}, std::pair{"ai.promptCaching", true}}) {
-        const auto &binding = all[std::size(kLegacy) + 45 + i++];
+    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", false}, std::pair{"ai.autoUpdate", true},
+                                                            std::pair{"ai.promptCaching", true}}) {
+        const auto &binding = all[std::size(kLegacy) + 44 + i++];
         EXPECT_EQ(binding.setting, id);
         EXPECT_EQ(binding.control, OptionsControl::Check);
         EXPECT_EQ(binding.page, OptionsPage::Ai);

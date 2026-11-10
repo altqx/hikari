@@ -690,12 +690,17 @@ bool VisualToolsController::previewDocument(const core::Document &document, core
 {
     const auto *t = tool();
     std::vector<core::LineRecord> extra;
-    if (t && m_view.hasVideo())
+    std::vector<core::LineId> hidden;
+    if (t && m_view.hasVideo()) {
         extra = t->previewLines(*this);
+        hidden = t->hiddenLines(*this);
+    }
     const bool staged = m_gesture && m_gesture->hasChanges();
-    if (!staged && extra.empty())
+    if (!staged && extra.empty() && hidden.empty())
         return false;
     out = staged ? m_gesture->preview(document, videoTimeMs(), m_video.session().playing()) : document;
+    if (!hidden.empty())
+        out.removeLinesIf([&](const core::LineRecord &line) { return std::ranges::contains(hidden, line.id); });
     for (auto &line : extra)
         (void)out.appendLine(std::move(line));
     return true;
@@ -712,14 +717,15 @@ void VisualToolsController::updatePreview()
 {
     std::u8string key;
     if (m_gesture)
-        for (const auto &id : m_gesture->targets())
-            for (const bool translation : {false, true})
-                if (const auto staged = m_gesture->staged(id, translation))
-                    key += *staged + u8'\x1f';
+        key = m_gesture->stagedKey();
     key += u8'\x1e';
-    if (const auto *t = tool(); t && m_view.hasVideo())
+    if (const auto *t = tool(); t && m_view.hasVideo()) {
         for (const auto &line : t->previewLines(*this))
             key += line.text + u8'\x1f';
+        for (const auto &id : t->hiddenLines(*this))
+            for (const char c : 'h' + std::to_string(id.value))
+                key += static_cast<char8_t>(c);
+    }
     if (key == m_previewKey)
         return;
     m_previewKey = std::move(key);
@@ -1125,7 +1131,7 @@ QVariantList VisualToolsController::overlay() const
     for (const OverlayText &x : o.texts)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
                                {QStringLiteral("x"), L(x.rect.left)}, {QStringLiteral("y"), L(x.rect.top)},
-                               {QStringLiteral("text"), qs(x.text)}, {QStringLiteral("outline"), x.outline},
+                               {QStringLiteral("text"), visualToolText(x.text)}, {QStringLiteral("outline"), x.outline},
                                {QStringLiteral("pixelSize"), x.pixelSize > 0 ? L(x.pixelSize) : labelPixelSize()},
                                {QStringLiteral("color"), colour(x.argb)}});
     return out;

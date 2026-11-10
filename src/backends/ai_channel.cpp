@@ -151,6 +151,18 @@ std::optional<Channel> parseChannel(const QByteArray &manifest)
     for (const QJsonValue &value : root.value(QStringLiteral("blocked")).toArray())
         if (isVersion(value.toString()))
             channel.blocked.push_back(value.toString());
+    const QJsonObject agents = root.value(QStringLiteral("agents")).toObject();
+    for (const char *name : kAgentClis) {
+        const QJsonObject entry = agents.value(QLatin1String(name)).toObject();
+        AgentCompat compat;
+        if (const QString minimum = entry.value(QStringLiteral("minimum")).toString(); isVersion(minimum))
+            compat.minimum = minimum;
+        for (const QJsonValue &value : entry.value(QStringLiteral("broken")).toArray())
+            if (isVersion(value.toString()))
+                compat.broken.push_back(value.toString());
+        if (!compat.minimum.isEmpty() || !compat.broken.isEmpty())
+            channel.agents.emplace(QLatin1String(name), std::move(compat));
+    }
     return channel;
 }
 

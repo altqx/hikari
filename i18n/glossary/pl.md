@@ -37,6 +37,7 @@ first column below is the one to use.
 | Document | dokument | |
 | Document tab | zakładka (dokumentu) | Legacy "zakładka"; "Otwieraj… w nowej karcie" stays as carried. |
 | Session | sesja | |
+| Project (a folder opened with Open folder…) | projekt | "Close project" Zamknij projekt |
 | Workspace | obszar roboczy | Panel arrangement of a tab. |
 | Panel | panel | |
 | Grid | lista napisów / siatka | Legacy "pole napisów". As a panel name: "Lista napisów". |

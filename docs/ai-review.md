@@ -27,7 +27,7 @@ This card ships the review of applied changes (Auto and Full access). Manual mod
 | --- | --- |
 | Keep | Clears the marks; no history step. |
 | Undo | One step per action, named for what it undoes (`Undo AI change to Line 12`, `Undo AI: Tightened`, `Undo all AI changes`). A Line goes back to exactly its before copy, its change version too (`ChangeMark::Restored`). Deleted and moved Lines go back in place. |
-| Undo, edited since | Asks first. "Undo anyway" drops the user's edit; otherwise the Line stays. |
+| Undo, edited since | Asks first. "Undo anyway" drops the user's edit; otherwise the Line stays. On a whole change the question says how many of its Lines were edited since, and "Undo anyway" undoes the whole change as one step; Cancel leaves it all. Undo all asks too and also offers "Leave my edits", which undoes the rest. |
 | Restore checkpoint | Undoes every change from that turn on, kept ones too, in every tab, one step per tab. The user's edits since stay unless "Also undo my edits" is ticked. |
 
 ## In the window
@@ -68,5 +68,5 @@ The `Review` dock itself stays registered with the layout, so turning AI back on
 - `hikari_application_ai_review_tests`: per-Line waiting and exact Undo, Keep with no step, inserted, deleted and moved Lines, Styles and Script Info, edited since, History undo and redo, turns, other callers, checkpoints across tabs, closing a Document, the Line target.
 - `hikari_application_word_diff_tests`.
 - `hikari_api_tests`: a reviewed caller's write waits in the review; a plugin's doesn't.
-- `hikari_ui_api_host_tests`: the Grid marks, the strip and Keep; Undo and the edited-since question; Restore checkpoint; AI off takes the commands, menus and panel away and AI on brings them back.
+- `hikari_ui_api_host_tests`: the Grid marks, the strip and Keep; Undo and the edited-since question, on an item and on a whole change; Restore checkpoint; AI off takes the commands, menus and panel away and AI on brings them back.
 - `hikari_ui_ai_features_tests`: every command with an AI token is one the switch takes.

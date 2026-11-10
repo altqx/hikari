@@ -57,6 +57,7 @@ void Application::languageSwitched()
         views->shell->retranslate();
         views->statusBar->retranslate();
         views->visualTools->retranslate();
+        views->nodeEffects->retranslate();
     }
     if (m_hotkeys)
         m_hotkeys->retranslate();

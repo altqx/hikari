@@ -100,6 +100,38 @@ When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix
 
 Resample subtitles with "Stretch" scales text by the smaller of the two resolution factors, and puts the rest on the axis that grew more: ScaleX and `\fscx` when the width grew more, ScaleY and `\fscy` when the height did. Drawings are scaled to match. Before, a taller change also went to ScaleX and `\fscx`, so stretched text came out wide when it should have been tall. A change that grows the width more resamples as before. [#738](https://github.com/altqx/hikari/issues/738), owner decision 2026-11-04.
 
+## AU7-gradient
+
+The Gradient visual tool does natively what the gradient scripts do (records in [AU7 #843](https://github.com/altqx/hikari/issues/843)). The bundled Gradient Factory and Skew gradient still ship unchanged, defects included; those defects are listed in [#885](https://github.com/altqx/hikari/issues/885). The departures below were accepted at the owner's gate on 2026-11-10 (Q227–Q229).
+
+- **G1, rounding.** Colours and alphas round half up. The scripts truncate, except Gradient Factory's By character.
+- **G2, both ends.** t runs from 0 to 1 inclusive: index/(n−1) for strips, and the last character or Line gets To. ua.Colorize and l0.LerpByChar stop one unit short.
+- **G3, rotated strips.** Overlap is measured across the strip, the strips cover the rotated box, a vertical drag works, and a drag of no length is refused. phos.RotateGradient overlaps 0.75 px vertically, deletes every Line when P3 is on the base and divides by zero on a vertical base.
+- **G4, originals.** The original Lines are commented and kept above their strips, never deleted. RotateGradient and zf.gradientCut delete them.
+- **G5, merge.** Merge equal strips joins only neighbouring strips with the same tags and removes only the strips it merged. petzku's CombineGradientLines deletes Lines it didn't merge.
+- **G6, along the clip.** Rings come from a true inset with round joins at reflex corners, so concave and self-touching clips work, and rect clips work. lyger's ClipGrad has no miter limit and crashes on a rect clip.
+- **G7, hue.** Colours blend in RGB or HSL (the shortest way round the hue). l0.LerpByChar's HSV treats red as 360 against grey's 0.
+- **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
+- **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
+
+## AU8-motion-data
+
+Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).
+
+- **D1, relative frame.** The relative frame is 1 to the number of frames. Aegisub-Motion's 0, negative and absolute frames aren't offered.
+- **D2, data from a file.** **Open file…** loads a data file into the text box. A path typed in the box isn't read.
+- **D3, Shake rotoshape.** SRS data isn't read. Aegisub-Motion still reads it.
+- **D4, `\move`.** A `\move` is clamped to its times before it is tracked, as renderers show it. Aegisub-Motion extrapolates past them, so the sign overshoots. A 4-argument `\move` runs over the whole Line.
+- **D5, shifted transforms.** With Bake transforms off, every shifted `\t` and every tag is kept. Aegisub-Motion's dedupe keeps one `\t` a block, and sometimes drops `\fscx`.
+- **D6, empty clip.** Linear mode writes no `\clip()\t(…,\clip())`.
+- **D7, Linear with `\move`.** The Line's `\move` is read at the first and last frames' mid-times. Aegisub-Motion reads it at the absolute time, which puts the sign far off.
+- **D8, Linear with karaoke.** It works. Aegisub-Motion fails with "attempt to compare number with nil".
+- **D9, selection.** Apply selects the new Lines, and Revert selects the restored Lines. Aegisub-Motion returns no selection, so the deleted Lines stay selected after its Revert.
+- **D10, fixed order.** The added tags and the callbacks run in a fixed order. Aegisub-Motion runs them in Lua `pairs()` order: tag order varies between runs, and five cases differ in their values (rect clips can drop the rotation, Absolute moves a clip by another frame's offset).
+- **D11, one Power-Pin command.** Copy Power-Pin track from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
+- **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
+- **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
+
 ## TH2-unicode-graphemes
 
 `aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.
@@ -115,3 +147,7 @@ Auto split gives each Thai grapheme cluster its own syllable, sharing the Line's
 ## TH4-grapheme-char-split
 
 Grid › "Split lines into characters" and the node-effect `char` units split text by grapheme cluster (UAX #29). A base character keeps its marks: `กินน้ำ` gives `กิ`, `น` and `น้ำ`, `é` written as e plus a combining accent stays whole, and an emoji or an emoji ZWJ sequence is one piece. A mark after an override block joins its base's piece together with the block. Before, the Grid split each UTF-16 unit, which cut marks off and broke surrogate pairs in two, and node effects split by code point. Text without combining marks or surrogate pairs splits as before. [TH4 #832](https://github.com/altqx/hikari/issues/832), owner decision Q146.
+
+## TH1-template-char-graphemes
+
+The karaoke templater's `template char` splits a syllable by grapheme cluster (UAX #29, `unicode.graphemes`). A base character keeps its marks: `กิน` gives `กิ` and `น`, `น้ำ` stays one char, ำ is not decomposed, and a combining accent, an emoji ZWJ sequence or a flag is one char. Karaoke Templater 2.1.7 splits by code point, which puts each Thai mark on a Line of its own. A `code once` Line with `graphemes = false` splits as 2.1.7 does. Text without combining marks, joiners or surrogate pairs gives 2.1.7's output byte for byte, as the corpus shows. [TH1 #829](https://github.com/altqx/hikari/issues/829), owner decisions Q138–Q141.

@@ -8,6 +8,8 @@ F.SpinBox {
         const n = parseInt(text.replace(/[^0-9-]/g, ""), 10)
         return isNaN(n) ? control.value : n
     }
+    // Qt's SpinBox takes no focus from a click on a step arrow, so typing went to the field focused before (#801).
+    focusPolicy: editable ? Qt.ClickFocus : Qt.NoFocus
     // Fusion's TextInput without the text-editing ContextMenu Qt 6.12 gives it.
     contentItem: TextInput {
         z: 2

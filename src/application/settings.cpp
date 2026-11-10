@@ -17,9 +17,37 @@ std::string utf8(std::u8string_view s)
     return {reinterpret_cast<const char *>(s.data()), s.size()};
 }
 
+// Ids, or prefixes ending in ".", that a Project may set (ADR 0030).
+constexpr std::string_view kProjectable[] = {
+    "editor.dictionaryLanguage",     "editor.spellchecker",          "grammar.",
+    "scriptProperties.title",        "scriptProperties.titleOn",     "scriptProperties.script",
+    "scriptProperties.scriptOn",     "scriptProperties.translation", "scriptProperties.translationOn",
+    "scriptProperties.editing",      "scriptProperties.editingOn",   "scriptProperties.timing",
+    "scriptProperties.timingOn",     "scriptProperties.update",      "scriptProperties.updateOn",
+    "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal",
+};
+// Projectable ids whose Project value waits for trust.
+constexpr std::span<const std::string_view> kWidening;
+
+bool listed(std::span<const std::string_view> rules, std::string_view id)
+{
+    return std::ranges::any_of(rules, [id](std::string_view rule) {
+        return rule.ends_with('.') ? id.starts_with(rule) : id == rule;
+    });
+}
+
+std::vector<SettingDefinition> withProjectFlags(std::vector<SettingDefinition> table)
+{
+    for (auto &setting : table) {
+        setting.projectable = listed(kProjectable, setting.id);
+        setting.widens = listed(kWidening, setting.id);
+    }
+    return table;
+}
+
 const std::vector<SettingDefinition> &definitions()
 {
-    static const std::vector<SettingDefinition> table{
+    static const std::vector<SettingDefinition> table = withProjectFlags({
         {"audio.autoCommit", "AUDIO_AUTO_COMMIT", Bool, Profile, Mapped, true, true},
         {"audio.autoFocus", "AUDIO_AUTO_FOCUS", Bool, Profile, Mapped, true, true},
         {"audio.autoScroll", "AUDIO_AUTO_SCROLL", Bool, Profile, Mapped, true, true},
@@ -288,7 +316,6 @@ const std::vector<SettingDefinition> &definitions()
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordPresence", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordFileName", "", Bool, Profile, Mapped, false, false},
-        {"privacy.starPrompt", "", Bool, Profile, Mapped, false, true},
         // The star prompt's counters: lastDay is an ISO date, snoozedUntil seconds since the epoch.
         {"starPrompt.days", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"starPrompt.lastDay", "", String, Profile, Mapped, false, std::string()},
@@ -320,11 +347,11 @@ const std::vector<SettingDefinition> &definitions()
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},
         {"qcNotes.lastSection", "", String, Profile, Mapped, false, std::string("General")},
+        {"tracking.motionOptions", "", String, Profile, Mapped, false, std::string()},
+        {"tracking.extendOptions", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // Native absolute folders whose scripts a subtitle file may load without asking.
-        {"automation.trustedFolders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
@@ -348,6 +375,8 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.dialogPresets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // 0 off, 1 English (US), 2 (UK), 3 (Canada), 4 (Australia).
         {"grammar.language", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // Native absolute folders whose scripts and Projects HikariSub trusts, subfolders included.
+        {"trust.folders", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.mcp.server", "", Bool, Profile, Mapped, false, false},
         {"ai.mcp.http", "", Bool, Profile, Mapped, false, false},
         {"ai.off", "", Bool, Profile, Mapped, false, false},
@@ -388,7 +417,7 @@ const std::vector<SettingDefinition> &definitions()
         {"video.layoutResMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.untaggedMatrixWarning", "", Bool, Profile, Mapped, false, true},
         {"video.hdrWarning", "", Bool, Profile, Mapped, false, true},
-    };
+    });
     return table;
 }
 
@@ -429,6 +458,12 @@ std::optional<std::uint32_t> parseSettingColour(std::string_view text)
     if (text.size() == 7)
         return 0xFF000000u | rgba;
     return (rgba & 0xFFu) << 24 | rgba >> 8; // #RRGGBBAA
+}
+
+std::span<const RenamedSetting> renamedSettings()
+{
+    static constexpr RenamedSetting renamed[] = {{"automation.trustedFolders", "trust.folders"}};
+    return renamed;
 }
 
 std::span<const std::string_view> retiredSettings()
@@ -527,6 +562,40 @@ SettingValue convertSetting(const SettingValue &value, SettingType type)
             return v;
         },
         value);
+}
+
+bool projectMaySet(const SettingDefinition &setting, bool trusted)
+{
+    return setting.projectable && (trusted || !setting.widens);
+}
+
+void LayeredSettingsStorage::setProject(std::shared_ptr<const SettingsStorage> project, bool trusted)
+{
+    m_project = std::move(project);
+    m_trusted = trusted;
+}
+
+bool LayeredSettingsStorage::fromProject(const SettingDefinition &setting) const
+{
+    return m_project && projectMaySet(setting, m_trusted) && m_project->read(setting).has_value();
+}
+
+std::optional<SettingValue> LayeredSettingsStorage::read(const SettingDefinition &setting) const
+{
+    if (m_project && projectMaySet(setting, m_trusted))
+        if (auto value = m_project->read(setting))
+            return value;
+    return m_user.read(setting);
+}
+
+void LayeredSettingsStorage::write(const SettingDefinition &setting, const SettingValue &value)
+{
+    m_user.write(setting, value);
+}
+
+void LayeredSettingsStorage::remove(const SettingDefinition &setting)
+{
+    m_user.remove(setting);
 }
 
 std::optional<SettingValue> MemorySettingsStorage::read(const SettingDefinition &setting) const

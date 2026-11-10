@@ -22,7 +22,8 @@ class QNetworkReply;
 namespace hikari::backends::ai {
 
 enum class SidecarDownloadError {
-    Manifest,  // the channel manifest couldn't be fetched, its signature was refused, or it is older than one seen
+    Manifest,  // the channel manifest couldn't be fetched
+    Signature, // the manifest's signature was refused, it is malformed, or it is older than one seen
     NoAsset,   // the manifest offers no sidecar this app runs on this platform
     Network,   // an asset couldn't be fetched
     Mismatch,  // its size or SHA-256 differs from the manifest's
@@ -48,6 +49,14 @@ struct SidecarInstall {
     std::map<QString, QString> packages;
 };
 
+/// A sidecar that failed and was rolled back, until the user dismisses the notice.
+struct SidecarRollback {
+    QString version;
+    QString to;
+    QString reason; // "initialize" or "crashed"
+    bool reportSent = false;
+};
+
 /// Keeps the AI sidecar under <root>: runtimes in runtime/<id>/, bundles in bundle/<version>/, and state.json with the
 /// version in use, the previous one, a staged one and the versions skipped after failing. Checks the signed channel
 /// manifest, picks the newest release this app runs and downloads it. A file that fails a check is deleted, never run.
@@ -66,6 +75,14 @@ public:
     QString previous() const;
     /// The newest version the last check offered, when it is newer than the current one.
     QString available() const { return m_available; }
+    /// What downloading `available()` fetches: its bundle, and its runtime when that is new.
+    qint64 availableBytes() const { return m_availableBytes; }
+    /// The channel has a newer release that only a newer app runs.
+    bool newerNeedsApp() const { return m_newerNeedsApp; }
+    /// From the last verified manifest, by agent CLI name.
+    const std::map<QString, AgentCompat> &agentCompat() const { return m_agents; }
+    std::optional<SidecarRollback> rollback() const { return m_rollback; }
+    void setRollback(std::optional<SidecarRollback> rollback);
     QDateTime lastCheck() const { return m_checked; }
     bool busy() const { return m_reply != nullptr; }
 
@@ -134,6 +151,10 @@ private:
     QStringList m_blocked;
     QString m_seen;
     QString m_available;
+    qint64 m_availableBytes = 0;
+    bool m_newerNeedsApp = false;
+    std::map<QString, AgentCompat> m_agents;
+    std::optional<SidecarRollback> m_rollback;
     QByteArray m_etag;
     QDateTime m_checked;
 };
