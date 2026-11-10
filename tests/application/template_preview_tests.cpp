@@ -429,13 +429,14 @@ TEST_F(TemplatePreview, PreviewRunsOnlyReadFromTheHost)
     for (const auto service : {HostService::TextExtents, HostService::FrameFromMs, HostService::MsFromFrame,
                                HostService::VideoSize, HostService::Keyframes, HostService::ProjectProperties,
                                HostService::AudioSelection, HostService::DecodePath, HostService::FileName,
-                               HostService::Gettext})
+                               HostService::Gettext, HostService::FrameTimes, HostService::TextExtentsMany})
         EXPECT_TRUE(isPreviewService(service)) << static_cast<int>(service);
     for (const auto service : {HostService::ClipboardGet, HostService::ClipboardSet, HostService::OpenFiles,
                                HostService::SaveFile, HostService::StatusText, HostService::EditorCursor,
                                HostService::SetEditorCursor, HostService::EditorSelection,
                                HostService::SetEditorSelection, HostService::EditorModified, HostService::Frame,
-                               HostService::FrequencyPeaks, HostService::ScriptResolution})
+                               HostService::FrequencyPeaks, HostService::ScriptResolution, HostService::FrameSize,
+                               HostService::FramePixel})
         EXPECT_FALSE(isPreviewService(service)) << static_cast<int>(service);
 }
 

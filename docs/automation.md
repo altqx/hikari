@@ -106,6 +106,15 @@ Scripts get Aegisub 3.5.1's Lua API with the additions of arch1t3cht's fork ([FA
 - `frame_from_ms` and `ms_from_frame` round as Aegisub does (`AegisubFrameTimes`, ported from libaegisub's `vfr.cpp`). Only the automation services use it.
 - `aegisub.lfs`, `aegisub.util.deep_copy`, `include()` and `require()` errors behave as in Aegisub 3.5. Argument checking stays as lenient as it was.
 
+### Host calls in a run (AU1, [#837](https://github.com/altqx/hikari/issues/837))
+
+The helper asks the app as little as it can while a run lasts, and the answers are the ones the app would give each time.
+
+- `frame_from_ms` and `ms_from_frame` fetch the video's frame times once a run (`FrameTimes`) and answer in the helper with the same `AegisubFrameTimes`.
+- `text_extents` asks once a run for each style and text, through `karaoke_layout::ExtentsCache` (`extents_cache.h`), which caches any `TextMeasurePort`, failures included. The bundled karaskel measures a Line, its syllables and its furigana with `aegisub.__karaskel_impl.measure_many(style, texts[, count])`, one `TextExtentsMany` request for the texts not yet measured. It returns four numbers a text in one flat table, nil where `text_extents` returns nothing, and raises `text_extents`' errors.
+- `get_frame` asks only for the frame's size. `getPixel` and `getPixelFormatted` ask for one pixel, until a frame object has read 64. Then, or on `frame:data()`, the frame is copied once. The app keeps a run's last two decoded frames and forgets them when the run ends.
+- On Windows the text measure keeps its device context and up to 64 GDI fonts.
+
 The third-party corpus (`tests/fixtures/automation-thirdparty`) runs all 14 of arch1t3cht's macros scripts on a fixture with folds and a perspective plane in its extradata, a 23.976 fps fixture video and a clipboard. `expected.json` pins each run.
 - FocusLines draws at random angles, so its drawings are masked (`random_drawings`).
 - AegisubChain's run is Manage Chains. Its Configure fails with the bundled DependencyControl, because `ipairs` over a config list raises "numerically indexed config hive keys are not supported". It fails the same way in Aegisub 3.5.1, whose LuaJIT also honours `__ipairs`.

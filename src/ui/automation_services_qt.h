@@ -21,11 +21,25 @@ public:
 
 class QtTextMeasurePort : public application::TextMeasurePort {
 public:
+    QtTextMeasurePort() = default;
+    QtTextMeasurePort(const QtTextMeasurePort &) = delete;
+    QtTextMeasurePort &operator=(const QtTextMeasurePort &) = delete;
+    ~QtTextMeasurePort() override;
     std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
                                                     const std::string &text) override;
 
 private:
     std::map<std::tuple<std::string, std::string, bool, bool, int>, int> m_points;
+#ifdef _WIN32
+    struct GdiFont {
+        void *handle = nullptr;
+        long descent = 0, externalLeading = 0;
+    };
+    void dropFonts();
+    void *m_dc = nullptr;
+    void *m_dcFont = nullptr;
+    std::map<std::tuple<std::wstring, long, long, int, int, int, int>, GdiFont> m_fonts;
+#endif
 };
 
 // A wx wildcard ("Label|*.a;*.b|...") from a script, as Qt name filters.

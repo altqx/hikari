@@ -33,6 +33,24 @@ aegisub.register_macro("Fork API", "", function()
     show(type(data), pitch, flipped, bytes[4], bytes[5], bytes[6], bytes[7])
 end)
 
+aegisub.register_macro("Frame times", "", function()
+    local t = {}
+    for ms = -100, 700, 7 do t[#t + 1] = tostring(aegisub.frame_from_ms(ms)) end
+    for frame = -3, 20 do t[#t + 1] = tostring(aegisub.ms_from_frame(frame)) end
+    aegisub.log("%s", table.concat(t, ","))
+end)
+
+aegisub.register_macro("Pixel loop", "", function()
+    local f = aegisub.get_frame(3, true)
+    local reads = 0
+    for i = 1, 100 do
+        if f:getPixel(1, 0) == 48 then reads = reads + 1 end
+    end
+    local r, g, b = f:getPixel(1, 0)
+    local data, pitch = f:data()
+    show(reads, r, g, b, f:getPixelFormatted(1, 0), type(data), pitch)
+end)
+
 aegisub.register_macro("Unavailable", "", function()
     show(aegisub.frame_from_ms(1), aegisub.video_size(), aegisub.keyframes(), aegisub.get_frame(1),
          aegisub.project_properties(), aegisub.file_name(), aegisub.get_audio_selection(),
@@ -46,6 +64,19 @@ aegisub.register_macro("Text", "", function(subs)
     local ok, err = pcall(aegisub.text_extents, "style", "x")
     show(err)
     ok, err = pcall(aegisub.text_extents, subs[3], {})
+    show(err)
+end)
+
+aegisub.register_macro("Measure many", "", function(subs)
+    show((aegisub.text_extents(subs[3], "Hello")), (aegisub.text_extents(subs[3], "Hello")),
+         (aegisub.text_extents(subs[3], "World")))
+    local many = aegisub.__karaskel_impl.measure_many
+    local e = many(subs[3], {"a", "Hello", "b", "", "c", "a"})
+    show(#e, e[5], e[9], e[6], e[13], e[17], e[21])
+    show(#many(subs[4], {"x"}))
+    local ok, err = pcall(many, "style", {"x"})
+    show(err)
+    ok, err = pcall(many, subs[3], {"x", nil, "y"}, 3)
     show(err)
 end)
 
@@ -77,5 +108,5 @@ aegisub.register_macro("Gui", "", function()
 end)
 
 aegisub.register_macro("Wait", "", function()
-    show(aegisub.frame_from_ms(1))
+    show(aegisub.keyframes()[1])
 end)
