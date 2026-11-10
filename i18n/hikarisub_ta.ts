@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ta">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>முகவர்</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>Markdown ஆக ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>இழையை அங்கே சேமிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>முகவர் பலகம்</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>புதிய முகவர் இழை</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>கைமுறை</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>முழு அணுகல்</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>தானியங்கு</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>முழு அணுகலை இயக்கவா?</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>முகவர் கேட்காமலேயே வசனங்கள், பாணிகள், அமைப்புகளை மாற்றுகிறது. ஒவ்வொரு மாற்றமும் மதிப்பாய்வில் சேர்கிறது, அதைச் செயல்தவிர்க்கலாம்.</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>இவை எல்லாப் பயன்முறைகளிலும் இன்னும் கேட்கும்: வசனக் கோப்புறைகளுக்கு வெளியே உள்ள கோப்புகளை நீக்குதல் அல்லது மேலெழுதுதல், வெளி நிரல்களை இயக்குதல், செருகுநிரல்களை நிறுவுதல், உள்ளூர்க் கோப்புகளைப் பிணையத்துக்கு அனுப்புதல், AI அனுமதிகள், விசைகள் அல்லது வரவுசெலவுகளை மாற்றுதல்.</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>மீண்டும் எச்சரிக்க வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>முழு அணுகலை இயக்கு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>இழைகள்</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>புதிய இழை</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>இழை மெனு</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>முகவரைப் பயன்படுத்த ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub-க்கு AI சேவையகம் இல்லை. நீங்கள் சேர்க்கும் வழங்குநரில் முகவர் இயங்குகிறது: ஒரு API விசை, ChatGPT அல்லது OpenRouter உள்நுழைவு, அல்லது இந்தக் கணினியில் உள்ள ஒரு மாதிரி.</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>அமைப்புகள் › AI ஐத் திற</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>நீங்கள் ஒன்றைச் சேர்க்கும் வரை எதுவும் அனுப்பப்படாது, பதிவிறக்கப்படாது.</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>இழைகளைத் தேடு</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>இன்று</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>நேற்று</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>செலவு தெரிவிக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>இயங்குகிறது</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>வரம்பை எட்டியது</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>வரிசையில் · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>இப்போதே வழிநடத்து</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>திருத்து</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>அகற்று</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>%2 இல் %1 டோக்கன்கள்</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>%1 டோக்கன்கள்</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%2 இல் %1</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · செயலில் உள்ள தாவல்</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>கேளுங்கள், அல்லது இணைக்க @, கட்டளைகளுக்கு / தட்டச்சிடுங்கள்</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>முதலில் ஒரு வழங்குநரைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>செய்தி</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>அனுப்பு</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>இழையை மறுபெயரிடு…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>Markdown ஆக ஏற்றுமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>இழையை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>இந்த இழையை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>உரையாடல் நீக்கப்படும். அது செய்த மாற்றங்கள் உங்கள் வசனங்களிலும் மதிப்பாய்விலும் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>பயன்முறையை மாற்று</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>அமைப்புகள் › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>ஒவ்வொரு மாற்றத்தையும் நீங்கள் ஒப்புதலளிக்கிறீர்கள். படித்தல் ஒருபோதும் கேட்காது.</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>நடுவர் மாதிரி ஒவ்வொரு செயலையும் ஒப்புக்கொள்கிறது, அல்லது உங்களைக் கேட்கிறது. அது செயலையும் உங்கள் செய்திகளையும் பார்க்கும், உங்கள் கோப்புகளை ஒருபோதும் பார்க்காது.</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>எப்போதும் கேட்கும் பட்டியலைத் தவிர எதுவும் கேட்காது. திருத்தங்கள் உடனே பொருந்தும், செயல்தவிர்க்கவும் முடியும்.</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>புதிய இழைகளுக்கான இயல்புநிலை…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>இழையை மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>இழையின் பெயர்</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>மறுபெயரிடு</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>வழிநடத்தப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>சோதனைப்புள்ளியை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>நடுவர் ஒப்புக்கொண்டது</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>மதிப்பாய்வு</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>திட்டம்</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>நடுவர் உங்களைக் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>%1 ஐ அனுமதிக்கவா?</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>%1 ஐ இயக்கவா?</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>எல்லாப் பயன்முறைகளிலும் கேட்கும்</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>காரணம்: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>அனுமதி</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>ஒருமுறை அனுமதி</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>இந்த இழையில் அனுமதி</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>மறு</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>மறுத்து முகவரிடம் சொல்…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>அதற்குப் பதிலாக அது என்ன செய்ய வேண்டும்?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>இந்த இழையில் அனுமதிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>மறுக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>இனி தேவையில்லை</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>இந்த இழை அதன் %1 வரம்பை எட்டியது</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>இன்றைய %1 வரம்பு எட்டப்பட்டது</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>AI கூறு நின்றுவிட்டது</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>சுற்று தோல்வியடைந்தது</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>நீங்கள் சுற்றை நிறுத்தினீர்கள்.</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>பதில் மாதிரியின் நீள வரம்பை எட்டியது.</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>மாதிரி பதிலளிக்க மறுத்தது.</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>அதிகபட்ச மாதிரிக் கோரிக்கைகளுக்குப் பிறகு சுற்று நின்றது.</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>அமைப்புகள் › AI இல் ஒரு அரட்டை மாதிரியைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>AI கூறு தயாராக இல்லை</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>சுற்று அதன் கடைசி மாற்றத்துக்குப் பிறகு நின்றது. தொடர, இந்த இழையின் வரம்பை உயர்த்தவும்.</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>நாளை வரை, அல்லது அமைப்புகள் › AI இல் வரம்பை உயர்த்தும் வரை, எல்லா இழைகளும் நிற்கும்.</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>சுற்று இடைமறிக்கப்பட்டது, தானாக மீண்டும் இயங்காது. அது செய்த மாற்றங்கள் மதிப்பாய்வில் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>%1 ஆக உயர்த்தித் தொடர்</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>தொடரவும்.</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>சுற்றை மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>பதிவைக் காட்டு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -6717,6 +7100,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Agent panel</source>
+        <translation>முகவர் பலகம்</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>புதிய முகவர் இழை</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -10800,6 +11191,46 @@ Failed to copy %2 fonts.</source>
         <translation>JSON அமைப்பு HTTP வழியாக இணையும் முகவர்களுக்கானது, எனவே “http://127.0.0.1 இலும் கேள்” இயக்கப்பட வேண்டும்.</translation>
     </message>
     <message>
+        <source>Agent</source>
+        <translation>முகவர்</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>புதிய இழைகளுக்கான பயன்முறை</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>கைமுறை</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>தானியங்கு</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>முழு அணுகல்</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>இழை ஒன்றுக்கான செலவு வரம்பு</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>நாள் ஒன்றுக்கான செலவு வரம்பு</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>வரம்பு இல்லை</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>வரம்பை எட்டியதும் சுற்று அதன் தற்போதைய மாற்றத்துக்குப் பிறகு நிற்கும். முகவர் ஒருபோதும் வரம்பை உயர்த்தாது; நீங்கள் மட்டுமே உயர்த்த முடியும்.</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>செலவு அளவியைக் காட்டு</translation>
+    </message>
+    <message>
         <source>Use prompt caching</source>
         <translation>ப்ராம்ப்ட் தற்காலிகச் சேமிப்பைப் பயன்படுத்து</translation>
     </message>
@@ -12666,6 +13097,13 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>இந்த மாற்றத்துக்குப் பிறகு %n வரியை மாற்றினீர்கள். செயல்தவிர்த்தால் முழு மாற்றமும் AI-க்கு முந்தைய நிலைக்குத் திரும்பும், உங்கள் திருத்தங்கள் நீக்கப்படும்.</numerusform>
+            <numerusform>இந்த மாற்றத்துக்குப் பிறகு %n வரிகளை மாற்றினீர்கள். செயல்தவிர்த்தால் முழு மாற்றமும் AI-க்கு முந்தைய நிலைக்குத் திரும்பும், உங்கள் திருத்தங்கள் நீக்கப்படும்.</numerusform>
+        </translation>
     </message>
     <message>
         <source>All kept or undone</source>

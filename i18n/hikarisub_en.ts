@@ -641,6 +641,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>You changed %n line after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</numerusform>
+            <numerusform>You changed %n lines after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n change(s)</source>
         <translation>
             <numerusform>%n change</numerusform>
