@@ -147,6 +147,7 @@ void AutomationManager::load(const std::string &path)
     entry.generation = 1;
     entry.modified = modifiedTime(path);
     entry.host->setGracePeriod(m_graceMs);
+    entry.host->setCompileCache(m_compileCache);
     auto &stored = m_entries.emplace(path, std::move(entry)).first->second;
     m_order.push_back(path);
     attach(path, stored);
@@ -243,6 +244,13 @@ void AutomationManager::setGracePeriod(int ms)
     m_graceMs = ms;
     for (auto &[path, e] : m_entries)
         e.host->setGracePeriod(ms);
+}
+
+void AutomationManager::setCompileCache(const QString &dir)
+{
+    m_compileCache = dir;
+    for (auto &[path, entry] : m_entries)
+        entry.host->setCompileCache(dir);
 }
 
 void AutomationManager::setTraceLevel(int level)
