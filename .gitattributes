@@ -45,3 +45,6 @@
 /packaging/icons/** text eol=lf
 /packaging/linux/icons/hicolor/scalable/** text eol=lf
 /tools/icons/app_icons.* text eol=lf
+
+# PL9: ApiReferenceMarkdown compares the generated reference byte for byte.
+/docs/api-reference.md text eol=lf
