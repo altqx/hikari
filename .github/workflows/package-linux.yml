@@ -82,6 +82,9 @@ jobs:
         run: |
           set -eu
           sh packaging/linux/floor/almalinux9.sh
+          # MUST KILL: lld is installed here, not in almalinux9.sh, because that script keys the floor vcpkg cache.
+          dnf -y -q install lld > /dev/null
+          ld.lld --version
           mkdir -p out/evidence
           rpm -qa --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' | sort > out/evidence/floor-packages.tsv
 

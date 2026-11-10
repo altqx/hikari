@@ -172,6 +172,7 @@ View > Panels > Styles >
 View > Panels > Template editor >
 View > Panels > QC notes >
 View > Panels > Review >
+View > Panels > Agent >
 View > Panels > Graph >
 View > Panels > Node >
 View > Panels > Source lines >

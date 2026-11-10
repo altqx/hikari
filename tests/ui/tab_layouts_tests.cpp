@@ -470,8 +470,8 @@ private slots:
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
                                  "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock",
-                                 "templateDock", "postprocessorDock", "qcNotesDock", "reviewDock", "nodeGraphDock",
-                                 "nodeInspectorDock", "nodeSourcesDock"})
+                                 "templateDock", "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock",
+                                 "nodeGraphDock", "nodeInspectorDock", "nodeSourcesDock"})
             closedShown += isOpen(dock) ? 0 : 1;
         QVERIFY(closedShown < 17);
         window()->close();

@@ -263,6 +263,18 @@ std::vector<std::string> randomRun(std::int64_t seed, unsigned threads)
 
 }
 
+TEST(NodeEffects, CharUnitsAreWholeGraphemeClusters)
+{
+    std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
+    fixture.erase(fixture.find("Dialogue: "));
+    fixture += commentLine("graph letters", graphText(graphOf(kFallingLetters)));
+    fixture += "Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,{\\k40}กิน{\\k60}น้ำ{\\k30}e\u0301\U0001F600ab\n";
+    std::vector<std::string> chars;
+    for (const std::string &line : linesOf(runGraph(load(fixture), u8"letters")))
+        chars.push_back(line.substr(line.rfind('}') + 1));
+    EXPECT_EQ(chars, (std::vector<std::string>{"กิ", "น", "น้ำ", "e\u0301", "\U0001F600", "a", "b"}));
+}
+
 TEST(NodeEffects, RandomNumbersComeOnlyFromTheSeed)
 {
     const auto a = randomRun(7, 1);

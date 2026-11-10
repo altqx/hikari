@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           # dbus-daemon: show_in_folder_tests runs its own session bus and skips without it.
-          pkgs=(git cmake ninja-build gcc gcc-c++ make pkgconf-pkg-config autoconf autoconf-archive alsa-lib-devel
+          pkgs=(git cmake ninja-build gcc gcc-c++ lld make pkgconf-pkg-config autoconf autoconf-archive alsa-lib-devel
                 automake libtool nasm python3 curl tar zip unzip xz bzip2 patch diffutils findutils
                 which file perl
                 mesa-libGL-devel mesa-libEGL libxkbcommon libxkbcommon-devel libxkbcommon-x11 wayland-devel fontconfig dbus-libs dbus-daemon libsecret-devel
@@ -61,7 +61,7 @@ jobs:
           mkdir -p /tmp/evidence
           rpm -q --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "${pkgs[@]}" > /tmp/evidence/host-packages.tsv
           { uname -srm; grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release
-            cmake --version | head -1; ninja --version; g++ --version | head -1; nasm -v; } > /tmp/evidence/host.txt
+            cmake --version | head -1; ninja --version; g++ --version | head -1; ld.lld --version; nasm -v; } > /tmp/evidence/host.txt
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

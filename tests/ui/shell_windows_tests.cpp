@@ -37,7 +37,7 @@ namespace {
 const char *const kPanels[] = {"videoDock",     "audioDock",      "originalDock",  "editorDock", "gridDock",
                                "referenceDock", "timingDock",     "searchDock",    "automationDock",
                                "spellDock",     "stylesDock",     "templateDock",  "logDock",
-                               "postprocessorDock", "qcNotesDock", "reviewDock", "nodeGraphDock",
+                               "postprocessorDock", "qcNotesDock", "reviewDock", "agentDock", "nodeGraphDock",
                                "nodeInspectorDock", "nodeSourcesDock"};
 
 QString writeSubtitles(const QString &path, const char *text, int width, const char *more = "")

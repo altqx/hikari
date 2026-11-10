@@ -1,5 +1,6 @@
 # Translation contexts by surface; ctest hikari_i18n_contexts_are_semantic fails on a context missing here.
 context	surface
+HikariSub.Agent	AI agent: the Agent panel, its threads, questions, modes and caps, and its commands (AI7)
 HikariSub.Audio	The audio panel: waveform and spectrum, playback, audio files and tracks
 HikariSub.Automation	Automation: the manager, script notices and dialogs, macros and their shortcuts
 HikariSub.Colours	The colour pickers and the screen dropper

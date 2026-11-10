@@ -22,6 +22,7 @@ public:
     std::int64_t startOf(std::int64_t frame) const;
     std::int64_t heldFrames() const { return static_cast<std::int64_t>(m_starts.size()); }
     double fps() const;
+    Timecodes timecodes() const;
 
 private:
     AegisubFrameTimes(std::vector<std::int64_t> startsMs, std::int64_t numerator, std::int64_t last);

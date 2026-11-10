@@ -27,6 +27,7 @@ constexpr std::array kLinks{
     GuideLink{Panel, "Template", "/en/docs/karaoke/template-editor"},
     GuideLink{Panel, "QcNotes", "/en/docs/checking/qc-notes"},
     GuideLink{Panel, "Review", "/en/docs/ai/review"},
+    GuideLink{Panel, "Agent", "/en/docs/ai/agent"},
     GuideLink{Panel, "NodeGraph", "/en/docs/karaoke/node-effects"},
     GuideLink{Panel, "NodeInspector", "/en/docs/karaoke/node-effects"},
     GuideLink{Panel, "NodeSources", "/en/docs/karaoke/node-effects"},
