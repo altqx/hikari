@@ -477,6 +477,29 @@ public:
     // Empty when done, else why not.
     Q_INVOKABLE QString applyPerspectiveTracking(const QString &data, int relativeFrame, int orgMode, bool fitFlat,
                                                  bool moveClips, bool scaleBorders);
+    // {data (the clipboard's motion data), frames, firstFrame, relativeFrame, lines}; empty without frame
+    // times or selected lines.
+    Q_INVOKABLE QVariantMap motionDataValues() const;
+    // {state, text, canApply, clipState, clipText, dataFrames}. dataStart > 0 extrapolates data shorter than the
+    // selection, starting at that frame of it.
+    Q_INVOKABLE QVariantMap checkMotionData(const QString &data, const QString &clipData, int relativeFrame,
+                                            int dataStart) const;
+    // The dialog's values by name; empty when done, else why not.
+    Q_INVOKABLE QString applyMotionData(const QString &data, const QString &clipData, const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString revertMotionData();
+    // {ok, text}: the toast's text, or why nothing was copied.
+    Q_INVOKABLE QVariantMap copyMotionData();
+    Q_INVOKABLE QVariantMap copyPowerPinTrack();
+    Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {lines, firstFrame, frames}; empty without frame times or selected lines.
+    Q_INVOKABLE QVariantMap extendTrackingValues() const;
+    // {state, text, canApply}.
+    Q_INVOKABLE QVariantMap checkExtendTracking(int frames, bool after) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
+    // {text} or {error}.
+    Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.

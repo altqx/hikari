@@ -6681,12 +6681,40 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணக் கண்காணிப்பு…</translation>
     </message>
     <message>
+        <source>Apply motion data…</source>
+        <translation>அசைவுத் தரவைப் பயன்படுத்து…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>அசைவுத் தரவைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>வரிகளிலிருந்து அசைவுத் தரவை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>கண்காணித்த வரிகளை நீட்டு…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>\move ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
     </message>
     <message>
         <source>Move tab to window</source>
         <translation>தாவலை சாளரத்திற்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>சாளரத்தை மூடு</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -7537,6 +7565,14 @@ Failed to copy %2 fonts.</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>தேர்ந்தெடுத்த ஒவ்வொரு வரியின் நேரமிட்ட %1 ஐ அதே வேகத்தில் வரியின் தொடக்கம் முதல் முடிவு வரை தொடரும்</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>%1 ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
+    </message>
+    <message>
         <source>Install, turn on and off, and uninstall plugins</source>
         <translation>செருகுநிரல்களை நிறுவு, இயக்கு அல்லது முடக்கு, நிறுவலை நீக்கு</translation>
     </message>
@@ -7744,6 +7780,14 @@ Failed to copy %2 fonts.</source>
         <translation>நிரல் அமைப்புகள்</translation>
     </message>
     <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>இந்தச் சாளரத்தை மூடும்; கடைசிச் சாளரத்தை மூடினால் நிரல் வெளியேறும்</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>சாளரத்தை மூடு (&amp;w)</translation>
+    </message>
+    <message>
         <source>Exit the program</source>
         <translation>நிரலில் இருந்து வெளியேறவும்</translation>
     </message>
@@ -7860,6 +7904,18 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்து வரும் வரிகள், முடிவு வீடியோவில்</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>கண்காணிப்பு</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>Mocha அல்லது Blender இலிருந்து வரும் After Effects அசைவுத் தரவைத் தேர்ந்தெடுத்த வரிகளுக்குப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>அசைவுத் தரவைப் பயன்படுத்து…</translation>
+    </message>
+    <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>தேர்ந்தெடுத்த வரிகளுக்கு Power-Pin கண்காணிப்புத் தரவைப் பயன்படுத்தும், ஒரு சட்டகத்துக்கு ஒரு வரி</translation>
     </message>
@@ -7878,6 +7934,38 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reload video</source>
         <translation>வீடியோவை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>தேர்வில் உள்ள கண்காணித்த வரிகளை அவை உருவாக்கப்பட்ட அசல் வரிகளாகத் திரும்ப மாற்றும்</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>அசைவுத் தரவைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>சட்டகம் சட்டகமாக அமைந்த தேர்ந்தெடுத்த வரிகளின் நிலை, அளவீடு, சுழற்சியை அசைவுத் தரவாக நகலெடுக்கும்</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>வரிகளிலிருந்து அசைவுத் தரவை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் பார்வைக்கோணத் தளங்களை Power-Pin தரவாக நகலெடுக்கும், ஒரு சட்டகத்துக்கு ஒரு நாற்கரம்</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>வரிகளிலிருந்து Power-Pin தடத்தை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>சட்டகம் சட்டகமாக அமைந்த தேர்ந்தெடுத்த வரிகளின் அசைவைப் பொருத்தி, மேலும் பல சட்டகங்களுக்குத் தொடரும்</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>கண்காணித்த வரிகளை நீட்டு…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -18276,6 +18364,329 @@ Styles deleted:
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>ஒரு சட்டகத்துக்கு ஒன்றாக, இரண்டு அல்லது அதற்கு மேற்பட்ட வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>வரி %1 டைப்செட் உரையின் அடுத்த சட்டகம் அல்ல: ஒவ்வொரு வரியும் ஒரு சட்டகத்தை உள்ளடக்கி, அதே உரை மற்றும் அடுக்குடன் முந்தைய வரியைத் தொடர்ந்து வர வேண்டும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>வரி %1 அசைவூட்டப்பட்டுள்ளது (\t, \move, \fad அல்லது கரோக்கி). ஒவ்வொரு சட்டகத்திலும் அசையாமல் இருக்கும் வரிகளை நீட்டிக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>வரி %1 இல் \pos இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>வரி %1 க்கு முன் வீடியோவில் %n சட்டகத்துக்கும் குறைவாகவே உள்ளது.</numerusform>
+            <numerusform>வரி %1 க்கு முன் வீடியோவில் %n சட்டகங்களுக்கும் குறைவாகவே உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>வரிகளை நீட்டிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>Mocha அல்லது Blender இலிருந்து ஏற்றுமதி செய்த After Effects கீஃப்ரேம் தரவை ஒட்டவும். பயன்படுத்து அதன் நிலை, அளவீடு, சுழற்சியைப் படிக்கும்.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>இது அசைவுத் தரவு அல்ல: நிலை, அளவீடு, சுழற்சி கொண்ட After Effects கீஃப்ரேம் தரவு எதுவும் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>தரவு சட்டகம் %1 இல் தொடங்கி, தேர்வின் கடைசிச் சட்டகத்தைத் தாண்டிச் செல்கிறது. முந்தைய தொடக்கத்தைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%1 சட்டகங்களுக்கு %n சட்டகத் தரவு: முன்னால் %2, பின்னால் %3 புறச்செருகப்பட்டன.</numerusform>
+            <numerusform>%1 சட்டகங்களுக்கு %n சட்டகங்களின் தரவு: முன்னால் %2, பின்னால் %3 புறச்செருகப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1 தொடக்கத்தில் சரியாகப் பொருந்தவில்லை; சட்டகங்கள் %2–%3 ஐச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1 முடிவில் சரியாகப் பொருந்தவில்லை; சட்டகங்கள் %2–%3 ஐச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>தரவில் %n சட்டகம் உள்ளது, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும், அல்லது புறச்செருகவும்.</numerusform>
+            <numerusform>தரவில் %n சட்டகங்கள் உள்ளன, ஆனால் தேர்ந்தெடுத்த வரிகள் %1 சட்டகங்களை (%2–%3) உள்ளடக்குகின்றன. கண்காணித்த சட்டகங்களை உள்ளடக்கும் வரிகளைத் தேர்ந்தெடுக்கவும், அல்லது புறச்செருகவும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>கிளிப்புகள் பின்தொடர வேண்டிய தரவை ஒட்டவும்.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>இது அசைவுத் தரவு அல்ல.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>கிளிப் தரவில் %n சட்டகம் உள்ளது; அசைவுத் தரவில் %1 உள்ளன.</numerusform>
+            <numerusform>கிளிப் தரவில் %n சட்டகங்கள் உள்ளன; அசைவுத் தரவில் %1 உள்ளன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n சட்டகம். சட்டகம் %1 இலிருந்து கிளிப்புகளை நகர்த்தும்.</numerusform>
+            <numerusform>%n சட்டகங்கள். சட்டகம் %1 இலிருந்து கிளிப்புகளை நகர்த்தும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் சட்டகங்களைத் தரவு உள்ளடக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>திரும்பப்பெற வேண்டிய அசைவுத் தரவு உள்ள தேர்ந்தெடுத்த வரி எதுவும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: அசைவுத் தரவு சட்டகம் வாரியானது.</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>ஒரே டைப்செட் உரையின் இரண்டு அல்லது அதற்கு மேற்பட்ட வரிகளைச் சட்டகம் சட்டகமாகத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>வரி %1, அதே உரை மற்றும் அடுக்குடன் உள்ள முந்தைய வரியைத் தொடர்ந்து வரவில்லை.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>வரி %1 இல் \pos அல்லது \move இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>அசைவுத் தரவின் %n சட்டகம் நகலெடுக்கப்பட்டது</numerusform>
+            <numerusform>அசைவுத் தரவின் %n சட்டகங்கள் நகலெடுக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>முதலில் ஒரு வீடியோவைத் திறக்கவும்: கண்காணிப்புத் தரவு சட்டகம் வாரியானது.</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>நகலெடுக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>வரி %1 தேர்ந்தெடுத்த மற்றொரு வரியுடன் மேற்பொருந்துகிறது. ஒரு நேரத்தில் ஒரு டைப்செட் உரையை நகலெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>வரி %1 இல் \move உள்ளது, அதை Power-Pin தடத்தில் வைக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>வரி %1 இன் உரையை அளக்க முடியவில்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Power-Pin தரவின் %n சட்டகம் நகலெடுக்கப்பட்டது</numerusform>
+            <numerusform>Power-Pin தரவின் %n சட்டகங்கள் நகலெடுக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>%n வரியில் \move புறச்செருகப்பட்டது</numerusform>
+            <numerusform>%n வரிகளில் \move புறச்செருகப்பட்டது</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>தொடக்க மற்றும் முடிவு நேரங்கள் கொண்ட \move உள்ள தேர்ந்தெடுத்த வரி எதுவும் இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>தேர்ந்தெடுத்த %n வரியின் மீது நிலை, அளவீடு, சுழற்சியைப் பொருத்துகிறது (படி %1, பிழை %2 px).</numerusform>
+            <numerusform>தேர்ந்தெடுத்த %n வரிகளின் மீது நிலை, அளவீடு, சுழற்சியைப் பொருத்துகிறது (படி %1, பிழை %2 px).</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1 சரியாகப் பொருந்தவில்லை (பிழை %2); புதிய சட்டகங்களைச் சரிபார்க்கவும்.</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>இந்தக் கோப்பு அசைவுத் தரவாக இருக்க முடியாத அளவுக்கு மிகப் பெரியது.</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>கோப்பைப் படிக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>ஒட்டு</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>கோப்பைத் திற…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>கண்காணிப்புத் தரவைத் திற</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>கண்காணிப்புத் தரவு (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>அனைத்துக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>அசைவுத் தரவைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>அசைவுத் தரவு</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>கிளிப் தரவு</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>பின்தொடர்</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>முழுமையான</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>நிலை x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>நிலை y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>மங்கல்</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>மங்கல் காரணி, சதவீதத்தில்</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>கிளிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>செவ்வகக் கிளிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>திசையன் கிளிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>செவ்வகத்தைத் திசையனாக்கு</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>கிளிப்புகள் மட்டும்</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>வேறு தரவைக் கொண்டு கிளிப்புகளைக் கண்காணி</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>உருமாற்றங்களையும் மங்கல்களையும் நிலைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>%1 மற்றும் %2 உடன் ஒரே வரி</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>தரவுக்கு அப்பால் புறச்செருகு</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>தரவு தொடங்கும் சட்டகம்</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>கண்காணித்த வரிகளை நீட்டு</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>சேர்</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>சேர்க்க வேண்டிய சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>சட்டகங்கள்</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>முதல் வரிக்கு முன்</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>கடைசி வரிக்குப் பின்</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>அவற்றை எங்கே சேர்ப்பது</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>மூலப்புள்ளியை நகர்த்து (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>நீட்டு</translation>
     </message>
 </context>
 <context>

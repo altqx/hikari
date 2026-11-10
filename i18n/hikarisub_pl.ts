@@ -6731,12 +6731,40 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Śledzenie perspektywy…</translation>
     </message>
     <message>
+        <source>Apply motion data…</source>
+        <translation>Zastosuj dane ruchu…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>Wycofaj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>Kopiuj dane ruchu z linijek</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>Przedłuż śledzone linijki…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>Ekstrapoluj \move na całą linijkę</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>Przenieś zakładkę do nowego okna</translation>
     </message>
     <message>
         <source>Move tab to window</source>
         <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -7589,6 +7617,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sprawdź pisownię</translation>
     </message>
     <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>Przedłuża %1 z podanymi czasami w każdej zaznaczonej linijce, z tą samą prędkością, od jej początku do końca</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>Ekstrapoluj %1 na całą linijkę</translation>
+    </message>
+    <message>
         <source>Install, turn on and off, and uninstall plugins</source>
         <translation>Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
     </message>
@@ -7797,6 +7833,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustawienia programu</translation>
     </message>
     <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>Zamknij o&amp;kno</translation>
+    </message>
+    <message>
         <source>Exit the program</source>
         <translation>Zakończ działanie programu</translation>
     </message>
@@ -7913,6 +7957,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Następne linijki, koniec na wideo</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>Śledzenie</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>Stosuje dane ruchu After Effects z programu Mocha lub z Blendera do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>Zastosuj dane ruchu…</translation>
+    </message>
+    <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>Stosuje dane śledzenia Power-Pin do zaznaczonych linijek, jedna linijka na klatkę</translation>
     </message>
@@ -7931,6 +7987,38 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Reload video</source>
         <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>Zamienia śledzone linijki zaznaczenia z powrotem na linijki, z których powstały</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>Wycofaj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>Kopiuje pozycję, skalę i obrót zaznaczonych linijek klatka po klatce jako dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>Kopiuj dane ruchu z linijek</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>Kopiuje płaszczyzny perspektywy zaznaczonych linijek jako dane Power-Pin, jeden czworokąt na klatkę</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>Dopasowuje ruch zaznaczonych linijek klatka po klatce i przedłuża go o kolejne klatki</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>Przedłuż śledzone linijki…</translation>
     </message>
     <message>
         <source>Render cost</source>
@@ -18417,6 +18505,338 @@ Usunięte style:
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>Pozycja</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Skala</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Obrót</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>Zaznacz co najmniej dwie linijki, po jednej na klatkę.</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>Linijka %1 nie jest następną klatką napisu: każda linijka musi obejmować jedną klatkę i następować bezpośrednio po poprzedniej, z tym samym tekstem i warstwą.</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>Linijka %1 jest animowana (\t, \move, \fad lub karaoke). Przedłużaj linijki, które w każdej klatce stoją w miejscu.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>Linijka %1 nie ma \pos.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatkę.</numerusform>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatki.</numerusform>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>Nie można przedłużyć linijek.</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>Wklej dane klatek kluczowych After Effects wyeksportowane z programu Mocha lub z Blendera. Zastosuj odczytuje z nich pozycję, skalę i obrót.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>To nie są dane ruchu: nie znaleziono danych klatek kluczowych After Effects z pozycją, skalą i obrotem.</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>Dane zaczynają się od klatki %1 i wykraczają poza ostatnią klatkę zaznaczenia. Wybierz wcześniejszy początek.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%n klatka danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+            <numerusform>%n klatki danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+            <numerusform>%n klatek danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1: słabe dopasowanie na początku; sprawdź klatki %2–%3.</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1: słabe dopasowanie na końcu; sprawdź klatki %2–%3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>Dane mają %n klatkę, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+            <numerusform>Dane mają %n klatki, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+            <numerusform>Dane mają %n klatek, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>Wklej dane, za którymi mają podążać wycinki.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>To nie są dane ruchu.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>Dane wycinków mają %n klatkę, a dane ruchu: %1.</numerusform>
+            <numerusform>Dane wycinków mają %n klatki, a dane ruchu: %1.</numerusform>
+            <numerusform>Dane wycinków mają %n klatek, a dane ruchu: %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n klatka. Przesuwa wycinki od klatki %1.</numerusform>
+            <numerusform>%n klatki. Przesuwa wycinki od klatki %1.</numerusform>
+            <numerusform>%n klatek. Przesuwa wycinki od klatki %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>Dane nie obejmują klatek zaznaczonych linijek.</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>Żadna zaznaczona linijka nie ma danych ruchu do wycofania.</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane ruchu są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>Zaznacz co najmniej dwie linijki jednego napisu, klatka po klatce.</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>Linijka %1 nie następuje bezpośrednio po poprzedniej linijce z tym samym tekstem i warstwą.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>Linijka %1 nie ma \pos ani \move.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>Skopiowano %n klatkę danych ruchu</numerusform>
+            <numerusform>Skopiowano %n klatki danych ruchu</numerusform>
+            <numerusform>Skopiowano %n klatek danych ruchu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>Zaznacz linijki do skopiowania.</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>Linijka %1 nakłada się na inną zaznaczoną linijkę. Kopiuj po jednym napisie.</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>Linijka %1 ma \move, którego ścieżka Power-Pin nie może przechować.</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>Nie można zmierzyć tekstu linijki %1.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Skopiowano %n klatkę danych Power-Pin</numerusform>
+            <numerusform>Skopiowano %n klatki danych Power-Pin</numerusform>
+            <numerusform>Skopiowano %n klatek danych Power-Pin</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>Ekstrapolowano \move w %n linijce</numerusform>
+            <numerusform>Ekstrapolowano \move w %n linijkach</numerusform>
+            <numerusform>Ekstrapolowano \move w %n linijkach</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>Żadna zaznaczona linijka nie ma \move z czasem początkowym i końcowym.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonej linijki (stopień %1, błąd %2 px).</numerusform>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonych linijek (stopień %1, błąd %2 px).</numerusform>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonych linijek (stopień %1, błąd %2 px).</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1: słabe dopasowanie (błąd %2); sprawdź nowe klatki.</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>Plik jest za duży, by mógł zawierać dane ruchu.</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>Nie można odczytać pliku: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Wklej</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>Otwórz plik…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>Otwórz dane śledzenia</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>Dane śledzenia (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>Zastosuj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>Dane ruchu</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>Dane wycinków</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>Podążanie</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>Bezwzględna</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>Pozycja x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>Pozycja y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>Współczynnik rozmycia, w procentach</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>Wycinki</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>Wycinki prostokątne</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>Wycinki wektorowe</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>Prostokątne na wektorowe</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>Tylko wycinki</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>Śledź wycinki innymi danymi</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>Utrwal przekształcenia i zanikania</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>Jedna linijka z %1 i %2</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>Ekstrapoluj poza dane</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>Dane zaczynają się od klatki</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>Przedłuż śledzone linijki</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Dodaj</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>Klatki do dodania</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>klatek</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>przed pierwszą linijką</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>po ostatniej linijce</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>Gdzie je dodać</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>Przesuń środek obrotu (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>Przedłuż</translation>
     </message>
 </context>
 <context>

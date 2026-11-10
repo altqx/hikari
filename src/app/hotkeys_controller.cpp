@@ -194,8 +194,6 @@ std::string symbolOf(int id)
 
 QString commandName(int id)
 {
-    if (id == application::kGlobalQuit)
-        return QCoreApplication::translate("HikariSub.Hotkeys", "Exit");
     const std::string name = application::hotkeyName(id);
     return name.empty() ? qs(symbolOf(id)) : ui::hotkeyCommandName(name);
 }

@@ -326,7 +326,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 319);
+    EXPECT_EQ(bound, 326);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
@@ -701,6 +701,43 @@ TEST(SettingsImport, OldHotkeyNamesAreConvertedAndAbsentTargetsStayUnresolved)
     const PlanRow &absent = rowOf(plan, "record:Config/Hotkeys.txt:3");
     EXPECT_EQ(absent.disposition, Disposition::Unresolved);
     EXPECT_NE(absent.reason.find("GLOBAL_5_SECONDS_FORWARD"), std::string::npos);
+}
+
+TEST(SettingsImport, ExitOnAltF4MovesToCloseWindowAndExitOnAnyOtherKeyStays)
+{
+    const auto hasRow = [](const Plan &plan, std::string_view id) {
+        return std::ranges::any_of(plan.rows, [&](const PlanRow &r) { return r.id == id; });
+    };
+    for (const auto &[body, header] : {std::pair{"GLOBAL_QUIT G=Alt-F4\r\n", kBuildHeader},
+                                       std::pair{"Quit G=Alt-F4\r\n", std::string_view("[Kainote v0.8.0.1100]\r\n")}}) {
+        const Plan plan = buildPlan({hotkeys(body, header)}, linuxHost(), readBy(ReadBy::Windows));
+        const PlanRow &close = rowOf(plan, "shortcut:GLOBAL_CLOSE_WINDOW:G");
+        EXPECT_EQ(close.binding, (HotkeyId{kGlobalCloseWindow, GlobalHotkey})) << body;
+        EXPECT_EQ(close.destination, "GLOBAL_CLOSE_WINDOW (Global)");
+        EXPECT_EQ(close.value, SettingValue(std::string("Alt-F4")));
+        EXPECT_EQ(close.disposition, Disposition::Unchanged);
+        EXPECT_NE(close.reason.find("as Close window"), std::string::npos) << close.reason;
+        EXPECT_FALSE(hasRow(plan, "shortcut:GLOBAL_QUIT:G")) << body;
+    }
+
+    for (const char *accel : {"Ctrl-Q", "Ctrl-Alt-F4"}) {
+        const Plan plan = buildPlan({hotkeys("GLOBAL_QUIT G=" + std::string(accel) + "\r\n")}, linuxHost(),
+                                    readBy(ReadBy::Windows));
+        const PlanRow &exit = rowOf(plan, "shortcut:GLOBAL_QUIT:G");
+        EXPECT_EQ(exit.binding, (HotkeyId{kGlobalQuit, GlobalHotkey}));
+        EXPECT_EQ(exit.value, SettingValue(std::string(accel)));
+        EXPECT_EQ(exit.disposition, Disposition::Change);
+        EXPECT_TRUE(exit.proposedImport) << exit.reason;
+        EXPECT_EQ(exit.reason.find("Close window"), std::string::npos) << exit.reason;
+        const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
+        HotkeyMap map;
+        readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
+        const HotkeyId exitKey{kGlobalQuit, GlobalHotkey}, closeKey{kGlobalCloseWindow, GlobalHotkey};
+        ASSERT_TRUE(map.contains(exitKey));
+        EXPECT_EQ(map[exitKey].accel, accel);
+        ASSERT_TRUE(map.contains(closeKey));
+        EXPECT_EQ(map[closeKey].accel, "Alt-F4");
+    }
 }
 
 TEST(SettingsImport, LaterBindingsSupersedeAndConflictsAreShown)
