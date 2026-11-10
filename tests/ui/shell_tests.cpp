@@ -17385,7 +17385,7 @@ private slots:
         bound.insert("notices.hiddenQuestions");
         bound.insert("updater.skippedVersion");
         bound.insert("automation.dialogAnswers");
-        bound.insert("automation.trustedFolders");
+        bound.insert("trust.folders");
 #ifndef HIKARI_WITH_VSFILTERMOD
         bound.erase("video.subtitleProvider");
 #endif
@@ -22136,7 +22136,7 @@ private slots:
             return QString::fromStdString(script.path).endsWith(QStringLiteral("First.lua"));
         }));
         auto &settings = *application->settingsStore();
-        const auto untrusted = qScopeGuard([&] { settings.set("automation.trustedFolders", QStringList()); });
+        const auto untrusted = qScopeGuard([&] { settings.set("trust.folders", QStringList()); });
         QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
         QVERIFY(!listed("First"));
         QTRY_VERIFY(messageBox("messages") && messageBox("messages")->isVisible());
@@ -22147,7 +22147,7 @@ private slots:
         answerMessage("messages", QStringLiteral("Automation"),
                       QStringLiteral("This subtitle file wants to run 1 script(s) on your computer."), QStringLiteral("load"));
         QVERIFY(listed("First"));
-        QVERIFY(settings.list("automation.trustedFolders").isEmpty());
+        QVERIFY(settings.list("trust.folders").isEmpty());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_First"), 30000);
         QTRY_VERIFY(!offer->isVisible());
         QVERIFY(application->openFile(second));
@@ -22161,7 +22161,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
         answerMessage("messages", QStringLiteral("Automation"),
                       QStringLiteral("This subtitle file wants to run 1 script(s) on your computer."), QStringLiteral("always"));
-        QCOMPARE(settings.list("automation.trustedFolders"), QStringList{QDir::toNativeSeparators(scripts.path())});
+        QCOMPARE(settings.list("trust.folders"), QStringList{QDir::toNativeSeparators(scripts.path())});
         QVERIFY(listed("Second"));
         QVERIFY(!listed("missing/Gone"));
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Second"), 30000);
@@ -22261,7 +22261,7 @@ private slots:
         QVERIFY(std::ranges::none_of(automation.scripts(), [&](const auto &s) {
             return paths.contains(QString::fromStdString(s.path));
         }));
-        QVERIFY(application->settingsStore()->list("automation.trustedFolders").isEmpty());
+        QVERIFY(application->settingsStore()->list("trust.folders").isEmpty());
     }
 
     void settingsListsAndRemovesTrustedFolders()
@@ -22269,24 +22269,26 @@ private slots:
         auto &settings = *application->settingsStore();
         const QStringList folders{QDir::toNativeSeparators(dir.filePath(QStringLiteral("kfx"))),
                                   QDir::toNativeSeparators(dir.filePath(QStringLiteral("fonts")))};
-        settings.set("automation.trustedFolders", folders);
-        const auto untrusted = qScopeGuard([&] { settings.set("automation.trustedFolders", QStringList()); });
+        settings.set("trust.folders", folders);
+        const auto untrusted = qScopeGuard([&] { settings.set("trust.folders", QStringList()); });
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.trustedFolders")).toStringList(), folders);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("trust.folders")).toStringList(), folders);
+        QVERIFY(dialogItem("settingsDialog", "settingsPageGeneral")
+                    ->isAncestorOf(dialogItem("settingsDialog", "settingsTrustedFolders")));
         auto *remove = dialogItem("settingsDialog", "settingsUntrustFolder");
         QVERIFY(remove);
         QVERIFY(QMetaObject::invokeMethod(remove, "clicked"));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.trustedFolders")).toStringList(),
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("trust.folders")).toStringList(),
                  QStringList{folders.at(1)});
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
-        QCOMPARE(settings.list("automation.trustedFolders"), folders);
+        QCOMPARE(settings.list("trust.folders"), folders);
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsUntrustFolder"), "clicked"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QCOMPARE(settings.list("automation.trustedFolders"), QStringList{folders.at(1)});
+        QCOMPARE(settings.list("trust.folders"), QStringList{folders.at(1)});
     }
 
     void automationPanelRefusesAMacroNameTwoScriptsShare()

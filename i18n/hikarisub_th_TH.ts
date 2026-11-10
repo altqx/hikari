@@ -5222,6 +5222,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิด…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>เปิดโฟลเดอร์…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>เปิดวิดีโอ…</translation>
     </message>
@@ -5258,6 +5262,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Dismiss</source>
         <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>เปิดแท็บล่าสุดอีกครั้ง (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>โปรเจกต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>ไม่มีโปรเจกต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>ไม่มีโปรเจกต์ที่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>กรองโปรเจกต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>นำโฟลเดอร์ที่ไม่พบออก</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -6695,6 +6723,14 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>เปิดโฟลเดอร์…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>ปิดโปรเจกต์</translation>
+    </message>
+    <message>
         <source>Node effects</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7603,6 +7639,10 @@ Failed to copy %2 fonts.</source>
         <translation>เรียงตามเวลาเริ่มต้น</translation>
     </message>
     <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
+    </message>
+    <message>
         <source>Sort by end time</source>
         <translation>จัดเรียงตามเวลาสิ้นสุด</translation>
     </message>
@@ -7643,6 +7683,14 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>เปิดโฟลเดอร์เป็นโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>เปิด&amp;โฟลเดอร์…</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>คำบรรยายที่เพิ่งเปิด</translation>
     </message>
@@ -7653,6 +7701,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>นำคำบรรยายออกจากตัวแก้ไข</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>ปิดแท็บของหน้าต่างนี้และโปรเจกต์ของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>ปิดโปรเ&amp;จกต์</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -10905,11 +10961,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>โฟลเดอร์สคริปต์ที่เชื่อถือ</translation>
+        <translation type="vanished">โฟลเดอร์สคริปต์ที่เชื่อถือ</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถามเมื่ออยู่ในโฟลเดอร์ใดโฟลเดอร์หนึ่งเหล่านี้</translation>
+        <translation type="vanished">สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถามเมื่ออยู่ในโฟลเดอร์ใดโฟลเดอร์หนึ่งเหล่านี้</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -10966,6 +11022,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>AI</source>
         <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>โฟลเดอร์ที่เชื่อถือ</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub เชื่อถือโฟลเดอร์เหล่านี้และโฟลเดอร์ที่อยู่ข้างใน: สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถาม และไฟล์ที่อยู่ในโปรเจกต์จะเปิดโปรเจกต์นั้น</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -13032,6 +13096,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
 </context>
 <context>
     <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>การตั้งค่าโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>อ่าน %1 ไม่ได้ จึงไม่ใช้การตั้งค่าในไฟล์นั้น</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>อ่าน %1 ไม่ได้ จึงไม่ใช้การตั้งค่าในไฟล์นั้น และเก็บไฟล์ไว้เป็น %2</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>โปรเจกต์ตั้งค่า %1 ไม่ได้ จึงไม่ใช้ค่าในไฟล์โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>เปิดโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1 ไม่ใช่โฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>แท็บนี้ใช้โปรเจกต์ %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>ไฟล์นี้อยู่ในโปรเจกต์ %1</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>เปิดโปรเจกต์</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

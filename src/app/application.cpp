@@ -1105,20 +1105,19 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     m_spellingOn = m_settings->boolean("editor.spellchecker");
     if (!m_dictionaryDir.isEmpty() && options.spellingBackend) {
-        std::vector<std::filesystem::path> folders{std::filesystem::path(m_dictionaryDir.toStdU16String())};
+        m_spellingFolders.emplace_back(m_dictionaryDir.toStdU16String());
         if (!m_bundledDictionaryDir.isEmpty() && m_bundledDictionaryDir != m_dictionaryDir)
-            folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
-        m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
-        m_spellChecker->setLoadedHandler(
-            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
+            m_spellingFolders.emplace_back(m_bundledDictionaryDir.toStdU16String());
     }
     setUpGrammar(options);
     m_spellingLoader = options.spellingBackend;
+    spellSlot(m_settings->text("editor.dictionaryLanguage"));
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened"));
     m_projects = std::make_unique<ProjectWindows>(
         *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
@@ -1673,6 +1672,10 @@ QUrl Application::audioDialogFolder() const
 
 void Application::makeViews(WindowViews &v, int shellWindow)
 {
+    v.settings = std::make_unique<WindowSettings>(m_settings->storage());
+    if (m_projects)
+        if (const QString root = m_projects->root(shellWindow); !root.isEmpty())
+            v.settings->setProject(root, projectTrusted(root));
     const auto active = [this, &v] { return &v == &activeViews(); };
     v.shell = std::make_unique<ui::ShellController>(m_workspace);
     v.shell->setShellWindow(shellWindow);
@@ -1691,8 +1694,8 @@ void Application::makeViews(WindowViews &v, int shellWindow)
                                    [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
     v.editor->setShowTagsSetting(!m_settings->boolean("editor.hideTags"),
                                  [this](bool show) { m_settings->set("editor.hideTags", !show); });
-    v.editor->setMoveTags(m_settings->boolean("translation.autoMoveTagsFromOriginal"));
-    v.shell->setRunMarks(m_settings->boolean("translation.autoMoveTagsFromOriginal"));
+    v.editor->setMoveTags(v.settings->settings().boolean("translation.autoMoveTagsFromOriginal"));
+    v.shell->setRunMarks(v.settings->settings().boolean("translation.autoMoveTagsFromOriginal"));
     connect(v.editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [&v] {
         const auto *frames = v.editor->frameTimebase();
         v.shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
@@ -1736,12 +1739,12 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         followEditingLine();
         v.templateEditor->refresh();
     });
-    v.shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
-        application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
+    v.shell->setSpelling([this, shellWindow](std::u16string_view text, core::SubtitleFormat format, bool spell,
+                                             int replaceTagsLen) {
+        application::SpellChecker *checker = startedSpellChecker(shellWindow);
+        const bool on = spell && windowSettings(shellWindow).boolean("editor.spellchecker") && checker;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
-                                                  spell && m_settings->boolean("editor.spellchecker") && checker ? checker->wordCheck()
-                                                                                   : core::legacy::WordCheck{},
-                                                  replaceTagsLen);
+                                                  on ? checker->wordCheck() : core::legacy::WordCheck{}, replaceTagsLen);
     });
     v.shell->setChangeStates(
         [this, shellWindow](const core::LineRecord &line) {
@@ -2245,8 +2248,9 @@ void Application::refreshViews()
     noteLastUsedWindow();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
-    if (m_workspace.editingTarget())
-        spellChecker();
+    for (const int window : sessionWindows())
+        if (m_workspace.currentTab(window))
+            spellChecker(window);
     reportGroupBreak();
     scheduleAutosave();
     if (m_styleManager)
@@ -2294,6 +2298,10 @@ void Application::refreshViews()
     if (activeViews().statusBar)
         statusBar().refresh();
     const int left = std::exchange(m_viewsWindow, m_workspace.activeWindow());
+    if (m_projects && left != m_viewsWindow && m_projects->root(left) != m_projects->root(m_viewsWindow)) {
+        applyGrammarSettings();
+        emit spellingChanged();
+    }
     for (const auto &[shellWindow, shell] : m_shellWindows)
         refreshInactiveViews(shellWindow, left);
     refreshInactiveViews(0, left);
@@ -4667,16 +4675,33 @@ void Application::convertListFiles()
     }
 }
 
-application::SpellChecker *Application::spellChecker()
+Application::SpellSlot *Application::spellSlot(const QString &language)
 {
-    if (!m_spellChecker)
+    if (m_spellingFolders.empty() || !m_spellingLoader)
         return nullptr;
-    if (!m_spellingStarted) {
-        m_spellingStarted = true;
-        if (m_settings->boolean("editor.spellchecker")) {
-            const auto status = m_spellChecker->initialize(dictionaryLanguage().toStdU16String());
+    auto &slot = m_spellCheckers[language];
+    if (!slot.checker) {
+        slot.checker = std::make_unique<application::SpellChecker>(m_spellingFolders, m_spellingLoader);
+        slot.checker->setLoadedHandler(
+            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
+    }
+    return &slot;
+}
+
+application::SpellChecker *Application::spellChecker(int shellWindow)
+{
+    const auto &settings = windowSettings(shellWindow);
+    const QString language = QString::fromStdString(settings.text("editor.dictionaryLanguage"));
+    auto *slot = spellSlot(language);
+    if (!slot)
+        return nullptr;
+    if (!slot->started) {
+        slot->started = true;
+        if (settings.boolean("editor.spellchecker")) {
+            const auto status = slot->checker->initialize(language.toStdU16String());
             if (status != application::SpellChecker::Status::Ready) {
-                m_settings->set("editor.spellchecker", false);
+                if (!views(shellWindow).settings->overridden("editor.dictionaryLanguage"))
+                    m_settings->set("editor.spellchecker", false);
                 const bool noDictionary = status == application::SpellChecker::Status::NoDictionary;
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
@@ -4693,14 +4718,36 @@ application::SpellChecker *Application::spellChecker()
             }
         }
     }
-    return m_spellChecker.get();
+    return slot->checker.get();
+}
+
+application::SpellChecker *Application::startedSpellChecker(int shellWindow)
+{
+    const auto slot =
+        m_spellCheckers.find(QString::fromStdString(windowSettings(shellWindow).text("editor.dictionaryLanguage")));
+    return slot != m_spellCheckers.end() && slot->second.started ? slot->second.checker.get() : nullptr;
+}
+
+application::SpellChecker *Application::anySpellChecker() const
+{
+    return m_spellCheckers.empty() ? nullptr : m_spellCheckers.begin()->second.checker.get();
+}
+
+void Application::userWordsChanged(const application::SpellChecker *by)
+{
+    for (auto &[language, slot] : m_spellCheckers)
+        if (slot.checker.get() != by) {
+            slot.checker->clear();
+            slot.started = false;
+        }
 }
 
 void Application::restartSpellChecker()
 {
-    if (m_spellChecker)
-        m_spellChecker->clear();
-    m_spellingStarted = false;
+    for (auto &[language, slot] : m_spellCheckers) {
+        slot.checker->clear();
+        slot.started = false;
+    }
     emit spellCheckerRestarted();
 }
 
@@ -4712,12 +4759,18 @@ void Application::spellingRefresh()
 
 bool Application::spellingOn() const
 {
-    return m_settings->boolean("editor.spellchecker");
+    return windowSettings(m_workspace.activeWindow()).boolean("editor.spellchecker");
+}
+
+bool Application::editorSpellingOn() const
+{
+    const int window = m_workspace.activeWindow();
+    return views(window).settings->overridden("editor.spellchecker") ? spellingOn() : m_spellingOn;
 }
 
 QString Application::dictionaryLanguage() const
 {
-    return m_settings->text("editor.dictionaryLanguage");
+    return QString::fromStdString(windowSettings(m_workspace.activeWindow()).text("editor.dictionaryLanguage"));
 }
 
 bool Application::suggestionsOnDoubleClick() const
@@ -4794,7 +4847,7 @@ std::optional<std::u16string> Application::windowLineRaw(int shellWindow, int ro
 QVariantList Application::editorSpellingMarks(int role)
 {
     QVariantList out;
-    if (!m_spellingOn || role != spellingRole() || !core::syntax::spellChecked(editor().syntaxState()))
+    if (!editorSpellingOn() || role != spellingRole() || !core::syntax::spellChecked(editor().syntaxState()))
         return out;
     const auto raw = editorRaw(role);
     if (!raw || raw->empty())
@@ -4817,7 +4870,7 @@ QVariantList Application::editorSpellingMarks(int role)
 
 QVariantMap Application::editorMisspellAt(int role, int position)
 {
-    if (!m_spellingOn || role != spellingRole() || !core::syntax::spellChecked(editor().syntaxState()))
+    if (!editorSpellingOn() || role != spellingRole() || !core::syntax::spellChecked(editor().syntaxState()))
         return {};
     const auto raw = editorRaw(role);
     auto *checker = spellChecker();
@@ -4869,6 +4922,7 @@ bool Application::addEditorWord(const QString &word)
     auto *checker = spellChecker();
     if (!checker || !checker->addWord(word.toStdU16String()))
         return false;
+    userWordsChanged(checker);
     spellingRefresh();
     return true;
 }
@@ -4916,7 +4970,7 @@ QVariantMap Application::spellCheckState(int shellWindow, bool changed, const QS
         }
     }
     return {{QStringLiteral("found"), current != nullptr},
-            {QStringLiteral("available"), m_spellChecker && m_spellChecker->ready()},
+            {QStringLiteral("available"), startedSpellChecker(shellWindow) && startedSpellChecker(shellWindow)->ready()},
             {QStringLiteral("line"), row},
             {QStringLiteral("before"), before},
             {QStringLiteral("after"), after},
@@ -5114,8 +5168,8 @@ void Application::closeSpellChecker(int shellWindow)
 QStringList Application::addedDictionaryWords() const
 {
     QStringList out;
-    if (m_spellChecker)
-        for (const auto &word : m_spellChecker->addedWords())
+    if (const auto *checker = anySpellChecker())
+        for (const auto &word : checker->addedWords())
             out << qstr(word);
     return out;
 }
@@ -5128,6 +5182,7 @@ bool Application::removeDictionaryWords(const QStringList &words)
         list.push_back(w.toStdU16String());
     if (!checker || !checker->removeWords(list))
         return false;
+    userWordsChanged(checker);
     spellingRefresh();
     return true;
 }
@@ -6373,6 +6428,11 @@ void Application::settingChanged(const QString &id)
 {
     if (id.startsWith(QLatin1String("grammar.")) || id == QLatin1String("editor.spellchecker"))
         applyGrammarSettings();
+    if (id == QLatin1String("trust.folders") && m_projects)
+        for (const int window : sessionWindows())
+            if (const QString root = m_projects->root(window);
+                !root.isEmpty() && projectTrusted(root) != views(window).settings->trusted())
+                applyWindowProject(window);
     if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
         m_audioPlayer->reopenOutput();
     if (id == QLatin1String("audio.playMono") && m_audioPlayer)
@@ -6609,7 +6669,7 @@ QVariantMap Application::openSettingsDialog()
     addAppearance(values);
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
-    values.insert(QStringLiteral("automation.trustedFolders"), m_settings->list("automation.trustedFolders"));
+    values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
         rendererLabels << subtitleRendererLabel(name);
@@ -6703,12 +6763,12 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         m_settings->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
         m_automation->forgetRepeat();
     }
-    if (const auto trusted = values.constFind(QStringLiteral("automation.trustedFolders")); trusted != values.cend()) {
-        const QStringList kept = m_settings->list("automation.trustedFolders");
+    if (const auto trusted = values.constFind(QStringLiteral("trust.folders")); trusted != values.cend()) {
+        const QStringList kept = m_settings->list("trust.folders");
         QStringList list = trusted->toStringList();
         list.removeIf([&](const QString &folder) { return !kept.contains(folder); });
         if (list != kept)
-            m_settings->setValue(QStringLiteral("automation.trustedFolders"), list);
+            m_settings->setValue(QStringLiteral("trust.folders"), list);
     }
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
     const auto wrote = [&](std::string_view id) { return std::ranges::find(written, id) != written.end(); };
@@ -6941,7 +7001,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                 keep(b.sizeSetting);
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
-    refreshed.insert(QStringLiteral("automation.trustedFolders"), QStringList());
+    refreshed.insert(QStringLiteral("trust.folders"), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
 }
@@ -6970,7 +7030,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     if (*which == application::OptionsPage::General)
         out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     if (*which == application::OptionsPage::Automation)
-        out.insert(QStringLiteral("automation.trustedFolders"), QStringList());
+        out.insert(QStringLiteral("trust.folders"), QStringList());
     return out;
 }
 

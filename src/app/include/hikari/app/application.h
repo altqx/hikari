@@ -79,6 +79,7 @@
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/review_controller.h"
+#include "hikari/app/window_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 #include "audio_controller.h"
@@ -102,6 +103,7 @@
 #include <functional>
 #include <deque>
 #include <expected>
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <set>
@@ -1118,6 +1120,7 @@ private:
         std::unique_ptr<application::SpellCheckWalk> spellWalk;
         std::optional<application::DocumentId> spellWalkDocument;
         std::unique_ptr<GrammarWalk> grammarWalk;
+        std::unique_ptr<WindowSettings> settings;
         std::optional<application::DocumentId> editorDocument;
         std::uint64_t shownRevision = 0;
     };
@@ -1359,6 +1362,10 @@ private:
     bool windowEmpty(int shellWindow) const;
     std::optional<int> openWindowBeside(int shellWindow);
     void offerProjectFor(application::DocumentId document, const QString &path);
+    bool projectTrusted(const QString &root) const;
+    void applyWindowProject(int shellWindow);
+    application::Settings &windowSettings(int shellWindow);
+    const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;
     QString m_userFolder;
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
@@ -1369,7 +1376,11 @@ private:
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
-    application::SpellChecker *spellChecker();
+    application::SpellChecker *spellChecker() { return spellChecker(m_workspace.activeWindow()); }
+    application::SpellChecker *spellChecker(int shellWindow);
+    application::SpellChecker *startedSpellChecker(int shellWindow);
+    application::SpellChecker *anySpellChecker() const;
+    void userWordsChanged(const application::SpellChecker *by);
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
@@ -1377,9 +1388,17 @@ private:
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
     void showSpellCheckWord(int shellWindow);
-    std::unique_ptr<application::SpellChecker> m_spellChecker;
-    // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
-    bool m_spellingStarted = false;
+    struct SpellSlot {
+        std::unique_ptr<application::SpellChecker> checker;
+        // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
+        bool started = false;
+    };
+    // By dictionary language; windows on one language share a checker.
+    std::map<QString, SpellSlot> m_spellCheckers;
+    std::vector<std::filesystem::path> m_spellingFolders;
+    SpellSlot *spellSlot(const QString &language);
+    // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
+    bool editorSpellingOn() const;
     application::SpellingText m_spellingText;
     application::SpellingBackendLoader m_spellingLoader;
     std::unique_ptr<application::SpellChecker> m_sampleChecker;

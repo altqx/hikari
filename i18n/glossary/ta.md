@@ -44,6 +44,7 @@ which Automation scripts read, keeps legacy's text).
 | Document tab | ஆவணத் தாவல் | |
 | Tab | தாவல் | |
 | Session | அமர்வு | |
+| Project (a folder opened with Open folder…) | திட்டப்பணி | "Close project" திட்டப்பணியை மூடு |
 | Workspace | பணியிடம் | |
 | Panel | பலகம் | |
 | Style | பாணி | ச்டைல் |

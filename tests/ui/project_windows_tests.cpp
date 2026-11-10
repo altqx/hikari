@@ -5,7 +5,10 @@
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
+#include "line_table_model.h"
 #include "settings_store.h"
+#include "shell_controller.h"
+#include "spelling/fake_spelling.h"
 
 #include <QDir>
 #include <QFile>
@@ -63,12 +66,12 @@ class ProjectWindowsTests : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
-    void start()
+    void start(application::SpellingBackendLoader spelling = {})
     {
         app::Application::Options o;
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
-        o.spellingBackend = {};
+        o.spellingBackend = std::move(spelling);
         application = new app::Application(o);
         forwarded = new app::ForwardedLaunches(*application);
         engine = new QQmlApplicationEngine;
@@ -95,6 +98,18 @@ class ProjectWindowsTests : public QObject {
         const QString path = dir.filePath(QLatin1String(name));
         QDir().mkpath(project ? path + QStringLiteral("/.hikari") : path);
         return path;
+    }
+    static void writeAll(const QString &path, const QByteArray &bytes)
+    {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(bytes);
+    }
+    static QVariantList marks(int shellWindow)
+    {
+        auto *controller = shell(shellWindow)->property("shell").value<ui::ShellController *>();
+        return controller->lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList();
     }
     static QString canonical(const QString &path) { return app::ProjectWindows::canonicalFolder(path); }
     QStringList titles(int shellWindow) const
@@ -149,6 +164,7 @@ private slots:
                                  "gone.hksession"})
             QFile::remove(home.filePath(QLatin1String(name)));
         QDir(home.filePath(QStringLiteral("projects"))).removeRecursively();
+        QDir(home.filePath(QStringLiteral("Dictionary"))).removeRecursively();
         QDir(dir.path()).removeRecursively();
         QDir().mkpath(dir.path());
     }
@@ -292,7 +308,7 @@ private slots:
     {
         start();
         const QString show = folder("show", true);
-        application->settingsStore()->setValue(QStringLiteral("automation.trustedFolders"),
+        application->settingsStore()->setValue(QStringLiteral("trust.folders"),
                                                QStringList{QFileInfo(dir.path()).canonicalFilePath()});
         QSignalSpy offered(application, &app::Application::projectOffered);
         QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "one")));
@@ -375,6 +391,57 @@ private slots:
         QTRY_COMPARE(titles(2), QStringList{QStringLiteral("ncop.ass")});
         QCOMPARE(application->projectRoot(2), canonical(extras));
         QCOMPARE(titles(1), QStringList{QStringLiteral("loose.ass")});
+    }
+
+    void eachWindowSpellsWithItsProjectsDictionary()
+    {
+        for (const char *language : {"en_US", "en_GB"}) {
+            writeAll(home.filePath(QStringLiteral("Dictionary/%1.aff").arg(QLatin1String(language))), {});
+            writeAll(home.filePath(QStringLiteral("Dictionary/%1.dic").arg(QLatin1String(language))),
+                     language == std::string_view("en_US") ? "2\nHello\ncolor\n" : "2\nHello\ncolour\n");
+        }
+        start(fakes::FakeSpelling::loader());
+        const QString american = folder("american");
+        const QString british = folder("british", true);
+        writeAll(british + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n# The show is British.\n[editor]\ndictionaryLanguage = \"en_GB\"\n");
+
+        QCOMPARE(application->openFolder(american, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(writeAss(american + QStringLiteral("/us.ass"), "Hello colr")));
+        const int other = application->openFolder(british, 0).value(QStringLiteral("window")).toInt();
+        QVERIFY(other != 0);
+        QTRY_VERIFY(shell(other) && shell(other)->isVisible());
+        application->activateShellWindow(other);
+        QTRY_COMPARE(application->workspace().activeWindow(), other);
+        QVERIFY(application->openFile(writeAss(british + QStringLiteral("/gb.ass"), "Hello colr")));
+        QCOMPARE(titles(other), QStringList{QStringLiteral("gb.ass")});
+
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("en_GB"));
+        QCOMPARE(application->settingsStore()->text("editor.dictionaryLanguage"), QStringLiteral("en_US"));
+        QTRY_COMPARE(marks(other), (QVariantList{6, 9}));
+        QTRY_COMPARE(marks(0), (QVariantList{6, 9}));
+        const auto firstSuggestion = [&] {
+            return application->editorMisspellAt(0, 7).value(QStringLiteral("suggestions")).toStringList().value(0);
+        };
+        QTRY_COMPARE(firstSuggestion(), QStringLiteral("colour"));
+
+        application->activateShellWindow(0);
+        QTRY_COMPARE(application->dictionaryLanguage(), QStringLiteral("en_US"));
+        QTRY_COMPARE(firstSuggestion(), QStringLiteral("color"));
+        QCOMPARE(marks(other), (QVariantList{6, 9}));
+    }
+
+    void aProjectsMissingDictionaryLeavesMySpellingOn()
+    {
+        writeAll(home.filePath(QStringLiteral("Dictionary/en_US.aff")), {});
+        writeAll(home.filePath(QStringLiteral("Dictionary/en_US.dic")), "1\nHello\n");
+        start(fakes::FakeSpelling::loader());
+        const QString show = folder("show", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[editor]\ndictionaryLanguage = \"pl_PL\"\n");
+        application->openFolder(show, 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep01.ass"), "Hello wrold")));
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl_PL"));
+        QVERIFY(application->settingsStore()->boolean("editor.spellchecker"));
     }
 
     void recentProjectsDropMissingFolders()

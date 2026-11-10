@@ -700,7 +700,7 @@ std::string AutomationShell::trustKey(application::DocumentId document, const st
 
 QStringList AutomationShell::trustedFolders() const
 {
-    return m_settings ? m_settings->list("automation.trustedFolders") : QStringList();
+    return m_settings ? m_settings->list("trust.folders") : QStringList();
 }
 
 namespace {
@@ -804,7 +804,7 @@ void AutomationShell::answerTrust(int id, const QString &answer)
             if (!folders.contains(folder, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive))
                 folders << folder;
         }
-        m_settings->set("automation.trustedFolders", folders);
+        m_settings->set("trust.folders", folders);
         m_settings->sync();
     }
     if (session(question.document)) {
