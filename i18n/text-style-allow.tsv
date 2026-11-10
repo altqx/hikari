@@ -54,3 +54,7 @@ HikariSub.Review	Show the Review panel	title-case	Review is the panel’s name
 HikariSub.Workspace	The layout is locked	leading-the	pending #596 Docking
 HikariSub.Plugins	Only Full trust plugins can ship QML panels.	title-case	Full trust is the plugin tier’s name
 HikariSub.Plugins	Its root isn’t an Item.	title-case	Item is the QML type’s name
+HikariSub.Agent	Export as Markdown	title-case	Markdown is the file format’s name
+HikariSub.Agent	Export as Markdown…	title-case	Markdown is the file format’s name
+HikariSub.Agent	Turn on Full access?	title-case	Full access is the agent mode’s name
+HikariSub.Agent	Turn on Full access	title-case	Full access is the agent mode’s name
