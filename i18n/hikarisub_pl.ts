@@ -22345,4 +22345,11 @@ nie działają na komentarzach</translation>
         <translation>LTR</translation>
     </message>
 </context>
+<context>
+    <name>hikari::app::AgentController</name>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
+</context>
 </TS>
