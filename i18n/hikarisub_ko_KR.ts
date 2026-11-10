@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ko_KR">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>에이전트</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>Markdown으로 내보내기</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>그 위치에 스레드를 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>에이전트 패널</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>새 에이전트 스레드</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>수동</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>전체 권한</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>전체 권한을 켜시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>에이전트가 묻지 않고 자막, 스타일, 설정을 바꿉니다. 모든 변경은 그래도 검토에 남으며 실행 취소할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>다음 작업은 어느 모드에서나 계속 묻습니다: 자막 폴더 밖의 파일 삭제 또는 덮어쓰기, 외부 프로그램 실행과 플러그인 설치, 로컬 파일을 네트워크로 보내기, AI 권한, 키, 예산 변경.</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>다시 경고하지 않기</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>전체 권한 켜기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>스레드</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>새 스레드</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>스레드 메뉴</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>에이전트를 쓰려면 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub에는 AI 서버가 없습니다. 에이전트는 추가한 공급자에서 실행됩니다: API 키, ChatGPT 또는 OpenRouter 로그인, 이 컴퓨터의 모델.</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>설정 › AI 열기</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>공급자를 추가하기 전에는 아무것도 보내거나 다운로드하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>스레드 검색</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>오늘</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>어제</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>비용 보고 안 됨</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>실행 중</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>한도 도달</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>대기 중 · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>지금 방향 바꾸기</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>편집</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>토큰 %1/%2</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>토큰 %1</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1/%2</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · 활성 탭</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>질문하거나 @로 첨부, /로 명령</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>먼저 공급자를 추가하세요</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>메시지</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>첨부</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>멈춤</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>보내기</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>스레드 이름 바꾸기…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>Markdown으로 내보내기…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>스레드 삭제</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>이 스레드를 삭제하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>대화는 삭제됩니다. 대화에서 한 변경은 자막과 검토에 그대로 남습니다.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>모드 변경</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>설정 › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>모든 변경을 직접 승인합니다. 읽기는 묻지 않습니다.</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>판정자 모델이 각 작업을 승인하거나 사용자에게 묻습니다. 판정자는 작업과 메시지만 보며 파일은 보지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>항상 묻는 목록 외에는 묻지 않습니다. 편집은 바로 적용되며 실행 취소할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>새 스레드 기본값…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>스레드 이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>스레드 이름</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>방향 바꿈</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>체크포인트 복원</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>판정자 승인</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>검토</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>계획</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>판정자가 묻습니다</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>%1을(를) 허용하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>%1을(를) 실행하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>모든 모드에서 물음</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>이유: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>허용</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>한 번 허용</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>이 스레드에서 허용</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>거부</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>거부하고 에이전트에게 알리기…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>대신 무엇을 해야 합니까?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>허용됨</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>이 스레드에서 허용됨</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>거부됨</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>더 이상 필요 없음</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>이 스레드가 %1 한도에 도달했습니다</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>오늘의 %1 한도에 도달했습니다</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>AI 구성 요소가 멈췄습니다</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>턴이 실패했습니다</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>턴을 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>답변이 모델의 길이 제한에 도달했습니다.</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>모델이 답변을 거부했습니다.</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>턴이 최대 모델 요청 수에 도달해 멈췄습니다.</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>설정 › AI에서 채팅 모델을 고르세요</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>AI 구성 요소가 준비되지 않았습니다</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>턴이 마지막 변경 뒤에 멈췄습니다. 계속하려면 이 스레드의 한도를 올리세요.</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>내일까지 또는 설정 › AI에서 한도를 올릴 때까지 모든 스레드가 멈춥니다.</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>턴이 중단되었으며 저절로 다시 실행되지 않습니다. 턴에서 한 변경은 검토에 남습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub가 아직 AI 구성 요소를 받는 중이거나 구성 요소를 시작하지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>%1(으)로 올리고 계속</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>계속하세요.</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>턴 다시 시도</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>로그 표시</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -5222,6 +5605,10 @@ Failed to copy %2 fonts.</source>
         <translation>열기…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>폴더 열기…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>영상 열기…</translation>
     </message>
@@ -5258,6 +5645,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Dismiss</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>마지막 탭 다시 열기 (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>최근 프로젝트</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>최근 프로젝트 없음</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>일치하는 프로젝트 없음</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>최근 프로젝트 필터</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>찾을 수 없는 폴더 제거</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -6695,6 +7106,26 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Agent panel</source>
+        <translation>에이전트 패널</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>새 에이전트 스레드</translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation>폴더 열기…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>프로젝트 닫기</translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -7599,6 +8030,10 @@ Failed to copy %2 fonts.</source>
         <translation>정렬 / 시작 시간</translation>
     </message>
     <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
+    </message>
+    <message>
         <source>Sort by end time</source>
         <translation>정렬 / 종료 시간</translation>
     </message>
@@ -7639,6 +8074,14 @@ Failed to copy %2 fonts.</source>
         <translation>자막 파일 열기</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>폴더를 프로젝트로 열기</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>폴더 열기…[&amp;F]</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>열었던 자막</translation>
     </message>
@@ -7649,6 +8092,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>모든 자막을 삭제하고 &quot;새 자막&quot;으로 만들기</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>이 창의 탭과 프로젝트 닫기</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>프로젝트 닫기[&amp;J]</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -8825,6 +9276,1049 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.NodeEffects</name>
+    <message>
+        <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, %2: %3 of %4 inputs wired</source>
+        <extracomment>A node on the canvas for a screen reader: &quot;Choose, palette: 1 of 1 inputs wired&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 node</source>
+        <extracomment>The graph&apos;s size in the Graph header: &quot;12 nodes · 13 wires&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 wire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fit the graph in view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The canvas zoom: &quot;100 %&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has a problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 more output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fewer outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no node effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph can’t be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph turns karaoke lines into new lines. It is saved in the file as a Comment line, and the lines it writes are marked fx with its name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From a preset</source>
+        <translation type="unfinished">프리셋에서</translation>
+    </message>
+    <message>
+        <source>From the library…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">글자</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished">알파</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">태그</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished">그리기 명령</translation>
+    </message>
+    <message>
+        <source>Yes or no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes with a %1 input, for %2 › %3</source>
+        <extracomment>Over the Add node list after a wire is dropped in empty space: &quot;Nodes with a Tags input, for fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No node matches.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter adds %1 here, wired from %2 › %3</source>
+        <extracomment>Under the filtered Add node list: &quot;Enter adds Transform here, wired from fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A time a node effect took: %1 milliseconds
+----------
+The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;</extracomment>
+        <translation type="unfinished">%1ms</translation>
+    </message>
+    <message>
+        <source>Not wired</source>
+        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Select a node to see its fields.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ graph seed %1</source>
+        <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>New seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Y position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to %1</source>
+        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On line %1, from the last run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the file’s Lua is not trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No values: this node didn’t run on the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished">타이밍</translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last run %1 on line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished">1줄</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Preview on the video</source>
+        <translation type="unfinished">영상에서 미리 보기</translation>
+    </message>
+    <message>
+        <source>Loop the line</source>
+        <translation type="unfinished">줄 반복 재생</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">미리 보기</translation>
+    </message>
+    <message>
+        <source>Preview on line %1</source>
+        <translation type="unfinished">%1번 줄 미리 보기</translation>
+    </message>
+    <message>
+        <source>Kept from the last run that worked</source>
+        <translation type="unfinished">마지막으로 성공한 실행의 결과</translation>
+    </message>
+    <message>
+        <source>No karaoke line of this graph’s style to preview on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing runs until the file’s Lua is trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No preview: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The graph writes no lines for line %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 karaoke line</source>
+        <extracomment>Which karaoke lines the graph applies to: &quot;24 karaoke lines, Default&quot; or &quot;24 karaoke lines, all styles&quot;</extracomment>
+        <translation type="unfinished">노래방 줄 1개</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation type="unfinished">
+            <numerusform>노래방 줄 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>all styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1, %2</source>
+        <translation type="unfinished">%1번 줄, %2</translation>
+    </message>
+    <message>
+        <source>Pick or add a graph to see the karaoke lines it applies to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">스타일</translation>
+    </message>
+    <message>
+        <source>All styles</source>
+        <translation type="unfinished">모든 스타일</translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply stopped with a problem; nothing changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">적용</translation>
+    </message>
+    <message>
+        <source>Apply to every karaoke line</source>
+        <translation type="unfinished">모든 노래방 줄에 적용</translation>
+    </message>
+    <message>
+        <source>Apply options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file’s node effects run Lua code with your rights. Preview them if you trust the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph was saved by a newer HikariSub, so it opens read-only. Update HikariSub to edit it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">복제</translation>
+    </message>
+    <message>
+        <source>Save to the library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keeps a copy of this graph in your user folder, to add to other files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removes the graph line and the lines it wrote. Undo brings them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines</source>
+        <translation type="unfinished">선택한 줄에 적용</translation>
+    </message>
+    <message>
+        <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">이름 바꾸기</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
+        <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation type="unfinished">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+    </message>
+    <message>
+        <source>last run that worked</source>
+        <translation type="unfinished">마지막으로 성공한 실행</translation>
+    </message>
+    <message>
+        <source>not applied</source>
+        <translation type="unfinished">적용 안 됨</translation>
+    </message>
+    <message>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no graph to wire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A %1 can’t connect to a %2 input.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A node can’t take its own output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That port doesn’t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That wire would make a loop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another graph in this file has that name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Nodes</name>
+    <message>
+        <source>For each</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat</source>
+        <translation type="unfinished">반복</translation>
+    </message>
+    <message>
+        <source>Each unit `count` times; j runs from 1 to count.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">프레임</translation>
+    </message>
+    <message>
+        <source>Unit info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit of every karaoke line the graph applies to: the line itself, its syllables, their characters or the furigana. Blank units (no duration or only spaces) can be skipped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">글자</translation>
+    </message>
+    <message>
+        <source>A text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">색상</translation>
+    </message>
+    <message>
+        <source>A colour.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A point from its coordinates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose</source>
+        <translation type="unfinished">선택</translation>
+    </message>
+    <message>
+        <source>One of a list of values by its place (from 1); places past the end wrap around.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calculate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished">비교</translation>
+    </message>
+    <message>
+        <source>Whether a stands in that relation to b.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">진행 상황</translation>
+    </message>
+    <message>
+        <source>How far index is through count, from 0 at the first to 1 at the last, eased.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A seeded random number from min to max, in multiples of step from min when step is above 0. The same graph seed, node and scope give the same number on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line’s start and end as the templater’s retime(mode, start_offset, end_offset) sets them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The units of the current line joined: each one’s tags as an override block, then its text (unwired, the unit’s own).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per unit: the source line with these times, Layer, tags and text (or drawing), Effect “fx &lt;graph name&gt;”. Unwired times are the source line’s. Lines come in the templater’s order: Line units first, then by syllable, then by `order`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph inside a node. Its inputs are its Group input’s ports, its outputs its Group output’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code run in the automation helper once per line for all its units, only once the user trusts the document’s Lua. Its inputs are globals and it sets its outputs as globals; it gets no random numbers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first step’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last step’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values’ type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One number per output line, per unit (the same across repeats and frames) or per line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the graph’s seed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The templater’s retime mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it starts, from the line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text or drawing is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stagger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished">태그</translation>
+    </message>
+    <message>
+        <source>One override tag after `before`. pos and org take point, clip and iclip take point and point2 (or drawing), colours take colour, alpha tags take alpha, fn and r take text, raw writes text as it is, and the others take value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">이동</translation>
+    </message>
+    <message>
+        <source>\move after `before`, with its times when timed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\fad after `before`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t over `tags` after `before`; t1 and t2 when timed, accel when it is not 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished">그라데이션</translation>
+    </message>
+    <message>
+        <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">도형</translation>
+    </message>
+    <message>
+        <source>A vector drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished">병합</translation>
+    </message>
+    <message>
+        <source>Emit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its inputs, as outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its outputs, as inputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What one unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out units with no duration or only spaces.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many times.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The second operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The relation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The easing (quadratic).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place, from 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The smallest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The largest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0: any value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the start (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the end (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the first unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The time between places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tag, without its backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its point, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its second point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its alpha, 0 (opaque) to 255.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it starts, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write t1 and t2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade in, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade out, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The acceleration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How far along.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The drawing commands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The \p scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its place among the emits for one unit; ties keep graph order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inner nodes and wires.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The ports, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its inputs, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Math</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">태그</translation>
+    </message>
+    <message>
+        <source>Colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation type="unfinished">출력</translation>
+    </message>
+    <message>
+        <source>Groups</source>
+        <translation type="unfinished">그룹</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message>
         <source>Theme</source>
@@ -9858,11 +11352,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>신뢰하는 스크립트 폴더</translation>
+        <translation type="vanished">신뢰하는 스크립트 폴더</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>자막 파일에 지정된 스크립트가 이 폴더 중 하나에 있으면 묻지 않고 불러옵니다.</translation>
+        <translation type="vanished">자막 파일에 지정된 스크립트가 이 폴더 중 하나에 있으면 묻지 않고 불러옵니다.</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9919,6 +11413,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI</source>
         <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>신뢰하는 폴더</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub은 이 폴더와 그 안의 폴더를 신뢰합니다. 자막 파일에 지정된 스크립트는 묻지 않고 불러오고, 프로젝트 안의 파일을 열면 그 프로젝트가 열립니다.</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -10050,11 +11552,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>GitHub에서 HikariSub에 별표 주기 제안</translation>
+        <translation type="vanished">GitHub에서 HikariSub에 별표 주기 제안</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
+        <translation type="vanished">HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>
@@ -10974,6 +12476,46 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
         <translation>JSON 설정은 HTTP로 연결하는 에이전트용이므로 “http://127.0.0.1에서도 수신”이 켜져 있어야 합니다.</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>에이전트</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>새 스레드 모드</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>수동</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>전체 권한</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>스레드당 비용 한도</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>하루 비용 한도</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>한도 없음</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>한도에 도달하면 턴은 현재 변경 뒤에 멈춥니다. 에이전트는 한도를 올리지 않으며, 사용자만 올릴 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>비용 미터 표시</translation>
     </message>
     <message>
         <source>AI components</source>
@@ -11986,8 +13528,40 @@ Failed to copy %2 fonts.</source>
 <context>
     <name>HikariSub.Project</name>
     <message>
+        <source>Project settings</source>
+        <translation>프로젝트 설정</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>%1(을)를 읽을 수 없어 그 설정을 적용하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>%1(을)를 읽을 수 없어 그 설정을 적용하지 않습니다. %2(으)로 보관했습니다.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>프로젝트는 %1(을)를 설정할 수 없어 프로젝트 파일의 값을 무시합니다.</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>폴더 열기</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1(은)는 폴더가 아닙니다.</translation>
+    </message>
+    <message>
         <source>This tab now uses the project %1.</source>
-        <translation>이제 이 탭은 %1 프로젝트를 사용합니다.</translation>
+        <translation>이 탭은 이제 %1 프로젝트를 사용합니다.</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>이 파일은 %1 프로젝트에 있습니다.</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>프로젝트 열기</translation>
     </message>
 </context>
 <context>
@@ -12767,7 +14341,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Restore checkpoint</source>
-        <translation type="unfinished"></translation>
+        <translation>체크포인트 복원</translation>
     </message>
     <message>
         <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
@@ -12884,6 +14458,12 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>By %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>이 변경 뒤에 줄 %n개를 고쳤습니다. 실행 취소하면 변경 전체가 AI 이전 상태로 돌아가며 고친 내용은 사라집니다.</numerusform>
+        </translation>
     </message>
     <message>
         <source>All kept or undone</source>

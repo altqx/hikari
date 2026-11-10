@@ -39,3 +39,11 @@ Text extents come from a deterministic fake (0.55 em per character, 1 em for
 CJK), so the goldens do not depend on installed fonts. To rewrite the goldens
 from the 3.2.2 script after adding a Document, run the test with
 `HIKARI_UPDATE_KARAOKE_GOLDENS=1`.
+
+## Departures
+
+`departures/` holds Documents whose output is meant to differ from 3.2.2,
+each for a named entry in the compatibility ledger. They are compared with
+their own golden only. `thai` locks TH1-template-char-graphemes: `template
+char` over Thai clusters, a combining accent, an emoji ZWJ sequence and a
+flag.

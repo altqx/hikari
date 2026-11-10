@@ -102,7 +102,7 @@ void Application::setUpGrammar(const Options &options)
     m_grammarDir = options.grammarDir;
     if (m_grammarDir.isEmpty() && !m_settingsFile.isEmpty())
         m_grammarDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Harper");
-    if (!m_spellChecker && !m_grammarDir.isEmpty()) {
+    if (m_spellingFolders.empty() && !m_grammarDir.isEmpty()) {
         QFile words(QDir(m_grammarDir).filePath(QStringLiteral("dictionary.txt")));
         if (words.open(QIODevice::ReadOnly))
             for (const QString &line : QString::fromUtf8(words.readAll()).split(QLatin1Char('\n')))
@@ -118,7 +118,7 @@ void Application::setUpGrammar(const Options &options)
 
 bool Application::grammarOn() const
 {
-    return m_settings->integer("grammar.language") > 0;
+    return windowSettings(m_workspace.activeWindow()).integer("grammar.language") > 0;
 }
 
 QString Application::grammarVersion() const
@@ -149,12 +149,13 @@ backends::HarperClient *Application::grammarClient()
 QJsonObject Application::grammarSettings() const
 {
     static constexpr const char *kDialects[] = {"American", "British", "Canadian", "Australian"};
-    const auto language = std::clamp<std::int64_t>(m_settings->integer("grammar.language"), 1, 4);
+    const auto &settings = windowSettings(m_workspace.activeWindow());
+    const auto language = std::clamp<std::int64_t>(settings.integer("grammar.language"), 1, 4);
     const auto ids = core::grammar::groupIds();
     std::array<bool, kGroupTexts.size()> groups{};
     for (std::size_t i = 0; i < ids.size() && i < groups.size(); ++i)
-        groups[i] = m_settings->boolean(("grammar.group." + std::string(ids[i])).c_str());
-    const bool hunspellOn = m_spellChecker && m_settings->boolean("editor.spellchecker");
+        groups[i] = settings.boolean("grammar.group." + std::string(ids[i]));
+    const bool hunspellOn = !m_spellCheckers.empty() && settings.boolean("editor.spellchecker");
     QJsonObject linters;
     for (const auto &[rule, on] : core::grammar::linterSwitches(groups, hunspellOn))
         linters.insert(latin(rule), on);
@@ -338,7 +339,7 @@ void Application::syncGrammarWords()
 {
     if (!m_harper)
         return;
-    const QStringList words = m_spellChecker ? addedDictionaryWords() : m_grammarOwnWords;
+    const QStringList words = anySpellChecker() ? addedDictionaryWords() : m_grammarOwnWords;
     QString content;
     for (const QString &word : words)
         if (!word.trimmed().isEmpty())
@@ -508,9 +509,10 @@ bool Application::addGrammarWord(const QString &word)
     const QString trimmed = word.trimmed();
     if (trimmed.isEmpty())
         return false;
-    if (m_spellChecker) {
-        if (!m_spellChecker->addUserWord(trimmed.toStdU16String()))
+    if (auto *checker = anySpellChecker()) {
+        if (!checker->addUserWord(trimmed.toStdU16String()))
             return false;
+        userWordsChanged(checker);
     } else if (!m_grammarOwnWords.contains(trimmed)) {
         m_grammarOwnWords << trimmed;
     }

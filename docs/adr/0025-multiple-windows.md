@@ -70,4 +70,4 @@ The native gate proves the drag out, back and between windows, the keyboard comm
 
 The code starts after DK2 [#588](https://github.com/altqx/hikari/issues/588) and DK3 [#589](https://github.com/altqx/hikari/issues/589) merge, as they change the same docking code.
 
-Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): the Project is per-window state, one per window, and the Session records each window's Project. The Project tier of settings, catalogues, dictionary words, layouts and presets applies per window, on top of the app-wide user tier; a change to the user tier still applies to every window at once.
+Amended by [ADR 0030](0030-open-a-folder-as-a-project.md): the Project is per-window state, one per window, and the Session records each window's Project. The Project tier of settings, catalogues, dictionary words, layouts and presets applies per window, on top of the app-wide user tier; a change to the user tier still applies to every window at once. Each window spells with its own dictionary language, and windows on one language share a checker; grammar follows the active window.

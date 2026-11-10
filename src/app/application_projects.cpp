@@ -1,6 +1,8 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/project.h"
+#include "log_controller.h"
+#include "project_file.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -22,6 +24,64 @@ std::optional<int> Application::openWindowBeside(int shellWindow)
     return opened ? std::optional(opened->property("shellWindow").toInt()) : std::nullopt;
 }
 
+bool Application::projectTrusted(const QString &root) const
+{
+#ifdef _WIN32
+    constexpr bool windows = true;
+#else
+    constexpr bool windows = false;
+#endif
+    std::vector<std::string> trusted;
+    for (const QString &folder : m_settings->list("trust.folders"))
+        trusted.push_back(QDir::toNativeSeparators(folder).toStdString());
+    return application::folderTrusted(root.toStdString(), trusted, windows);
+}
+
+application::Settings &Application::windowSettings(int shellWindow)
+{
+    return views(shellWindow).settings->settings();
+}
+
+const application::Settings &Application::windowSettings(int shellWindow) const
+{
+    return views(shellWindow).settings->settings();
+}
+
+void Application::applyWindowProject(int shellWindow)
+{
+    if (shellWindow != 0 && !m_shellWindows.contains(shellWindow))
+        return;
+    auto &v = views(shellWindow);
+    const QString root = m_projects->root(shellWindow);
+    v.settings->setProject(root, !root.isEmpty() && projectTrusted(root));
+    if (const auto *project = v.settings->project()) {
+        const QString title = QCoreApplication::translate("HikariSub.Project", "Project settings");
+        for (const auto &problem : project->problems())
+            m_log->notice(ui::LogController::Warning, title,
+                          problem.keptAs.empty()
+                              ? QCoreApplication::translate("HikariSub.Project",
+                                                            "%1 could not be read, so its settings don’t apply.")
+                                    .arg(QString::fromStdString(application::displayPath(problem.file)))
+                              : QCoreApplication::translate("HikariSub.Project",
+                                                            "%1 could not be read, so its settings don’t apply. It is "
+                                                            "kept as %2.")
+                                    .arg(QString::fromStdString(application::displayPath(problem.file)),
+                                         QString::fromStdString(application::displayPath(problem.keptAs))),
+                          QString::fromStdString(problem.failure.message));
+        for (const auto &id : project->refused())
+            m_log->notice(ui::LogController::Warning, title,
+                          QCoreApplication::translate("HikariSub.Project",
+                                                      "A Project can’t set %1, so the project file’s value is ignored.")
+                              .arg(QString::fromStdString(id)));
+    }
+    const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
+    v.editor->setMoveTags(moveTags);
+    v.shell->setRunMarks(moveTags);
+    if (shellWindow == m_workspace.activeWindow())
+        applyGrammarSettings();
+    spellingRefresh();
+}
+
 bool Application::windowEmpty(int shellWindow) const
 {
     if (!m_projects->root(shellWindow).isEmpty())
@@ -41,15 +101,7 @@ void Application::offerProjectFor(application::DocumentId document, const QStrin
     const QString root = found ? ProjectWindows::canonicalFolder(QString::fromStdU16String(found->u16string())) : QString();
     if (root.isEmpty() || m_projects->windowOf(root))
         return;
-#ifdef _WIN32
-    constexpr bool windows = true;
-#else
-    constexpr bool windows = false;
-#endif
-    std::vector<std::string> trusted;
-    for (const QString &folder : m_settings->list("automation.trustedFolders"))
-        trusted.push_back(QDir::toNativeSeparators(folder).toStdString());
-    if (application::folderTrusted(root.toStdString(), trusted, windows))
+    if (projectTrusted(root))
         m_projects->set(window, root);
     else
         emit projectOffered(window, root, QString::fromStdString(application::projectName(*found)));

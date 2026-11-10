@@ -1114,6 +1114,7 @@ void TemplateEditorController::trustDocument()
     emit changed();
     updateSource();
     schedulePreview();
+    emit documentTrusted();
 }
 
 int TemplateEditorController::changedNumber() const

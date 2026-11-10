@@ -18,7 +18,7 @@ Left without an icon, as IC1 and IC2 decided: check items, entries named by thei
 | layout-reset, rerun-macro, refresh, check-updates, restart, restore-default, history, tool-rotate-z | as drawn | redrawn at the owner's request: every circular arrow is a circle open at the top with a solid arrowhead, as the reload badge is |
 | checkpoint (pending AI2 #430) | Agent panel: a turn's checkpoint | redrawn: a node on a line; the diamond means a keyframe everywhere else in the set |
 | hard-space, paste-special, tab-switch, layout-lock, align-to-video, subtitles-snapshot, subtitles-copy | as drawn | kept |
-| node-editor (pending NE2 #424) | View › Node effects, the mode's toolbar toggle | kept: the approved NE2 mockup uses it |
+| node-editor | View › Node effects, the title bar's node-effects button (NE2 #424) | kept: the approved NE2 mockup uses it |
 | ai-send (pending AI7 #435) | Agent panel: Send | kept |
 | review-keep (pending AI2 #430) | Keep AI change, Keep all AI changes | kept |
 
