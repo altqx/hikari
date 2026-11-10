@@ -18,7 +18,8 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}) {
     const mcp = new McpServer(() => ({
         call: (operation, params) => {
             calls.push({ operation, params });
-            return Promise.resolve(answers[operation] as never);
+            const answer = answers[operation];
+            return Promise.resolve((typeof answer === "function" ? answer() : answer) as never);
         },
     }), { name: "hikarisub", title: "HikariSub", version: "test" });
     const session = new ClaudeSession("t1", { sessionId: "t1", agent: "claude", model: { providerId: "", model: "" } }, {
@@ -74,5 +75,21 @@ describe("Claude through the Agent SDK", () => {
         h.session.close();
         expect(h.log().split("\n").filter((l) => l.startsWith("args"))).toHaveLength(1);
         expect(h.calls.map((c) => c.params)).toEqual([{ text: "one" }, { text: "two" }]);
+    }, 30_000);
+
+    test("Stop interrupts the turn, which ends cancelled without the rest of its calls", async () => {
+        let stop = () => {};
+        const h = harness({ "lines.find": () => {
+            stop();
+            return { revision: 1, total: 0, lines: [] };
+        } });
+        stop = () => h.session.cancel();
+        const result = await h.session.prompt({ sessionId: "t1", prompt: h.script({ calls: [
+            { name: "mcp__hikari__lines_find", arguments: { text: "a" } },
+            { name: "mcp__hikari__document_apply", arguments: { revision: 1, edits: [] } },
+        ] }) });
+        h.session.close();
+        expect(result.stopReason).toBe("cancelled");
+        expect(h.calls.map((c) => c.operation)).toEqual(["lines.find"]);
     }, 30_000);
 });
