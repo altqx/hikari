@@ -6591,6 +6591,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>Gradient</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>Wycinek wektorowy: przesuń punkty</translation>
     </message>
@@ -18960,6 +18964,18 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Do</translation>
     </message>
     <message>
+        <source>Stops</source>
+        <translation>Punkty</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>Mieszanie</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>Kroki</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Wejście</translation>
     </message>
@@ -19752,6 +19768,202 @@ zwiększając lub zmniejszając wartość.</translation>
     <message>
         <source>Text alignment works the same as in styles</source>
         <translation>Położenie tekstu działa tak samo jak w stylach</translation>
+    </message>
+    <message>
+        <source>Rectangle strips</source>
+        <translation>Pasy prostokątne</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>Pasy obrócone</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>Pasy pochylone</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>Pasy wzdłuż wycinka</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>Pasy klinowe</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>Według znaków</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>Według linii</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>Kształt maski</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>Skąd pochodzą wartości gradientu</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>Tagi zmieniane przez gradient</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>Usuń tag z gradientu</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>Sposób mieszania kolorów</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>Położenie każdego znaku w tekście</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>Scal jednakowe pasy</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>Zastosuj gradient (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>Klin</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>Prostokąt</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>Pierścień</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>Gwiazda</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>Winieta</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>Wartości</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>Wybrane linie</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>Według szerokości</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>Według liczby</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>W gradiencie</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>Kolor i alfa</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>Obramowanie, cień i rozmycie</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>Odstęp</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>Grubość</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>Promienie</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>Środek</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>Otwór</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>Przysp.</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>Pas</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>Nakładanie</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>Pochylenie</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>Wybierz tag dla gradientu</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>Wybierz co najmniej dwie linie jako punkty</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>Wybrane linie muszą mieć ten sam tekst i bloki tagów</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>Żaden tag nie różni się między wybranymi liniami</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>Przeciągnij od początku do końca gradientu</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>Linia nie ma tekstu ani wycinka do pokrycia</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>Pasy wzdłuż wycinka wymagają wycinka w linii</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>Gradienty nie działają z odwróconym wycinkiem</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>Linia nie ma znaków</translation>
     </message>
     <message>
         <source>Edit</source>

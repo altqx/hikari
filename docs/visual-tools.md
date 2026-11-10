@@ -62,6 +62,7 @@ VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [i
 | Position shifter | VIDEO_TOOL_POSITION_SHIFTER (2031) | A | free (the A nudge retired) | Audio Scroll left |
 | Hydra | VIDEO_TOOL_HYDRA (2032) | H | free | Audio Stop |
 | Perspective (VT3) | VIDEO_TOOL_PERSPECTIVE (2033) | Q | free | Audio Play 500 ms before |
+| Gradient (AU7) | VIDEO_TOOL_GRADIENT (2043) | W | free | Audio Play 500 ms after |
 
 The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPanel::SetAccels), not over the video, so they keep their keys.
 
@@ -239,6 +240,22 @@ VT3 ([#273](https://github.com/altqx/hikari/issues/273), mockup approved 2026-10
 **Drawing.** The inner quad in red at two pixels, the outer quad dashed, the grid faint, the corners' squares (inner) and circles (outer), and \org's orange cross (with a circle in Keep), in device pixels as the other tools' handles.
 
 The render check is `hikari_backends_visual_perspective_render_tests`: libass renders the tool's tags and the ink's corners must lie within a pixel of the quad, at the script's size and at twice it.
+## The Gradient tool (AU7)
+
+AU7 ([#843](https://github.com/altqx/hikari/issues/843), owner gate Q227–Q229 on 2026-11-10) adds a thirteenth family, `GradientTool` (`visual_gradient.h`), last on the rail. Its command is VIDEO_TOOL_GRADIENT (2043, W). It does natively what Gradient Factory, Skew gradient, lyger's GradientEverything, GradientByChar and ClipGrad, phos.VectorGradient and RotateGradient, zf.gradientCut, petzku's CombineGradientLines, ua.Colorize and l0.LerpByChar do. The bundled scripts still ship unchanged; their defects are [#885](https://github.com/altqx/hikari/issues/885). Departures are [AU7-gradient](compatibility-decisions.md#au7-gradient).
+
+The UI-free parts are shared with AU22 and NE5:
+
+- `tag_lerp.h`: tag values (number, colour, alpha, point, rect), RGB or HSL blending, Style defaults, ASS formatting, stops and Accel (t^a).
+- `gradient_geometry.h`: polygons in script pixels, filled nonzero as libass fills clips. Sutherland–Hodgman against strips (always convex), `positiveRegion` to rebuild a self-intersecting or self-touching outline, `inset` and `insetBands` for strips along a clip (round joins at reflex corners), drawings in and out, and the five phos masks.
+- `gradient.h`: a `Spec` and the target Lines in, the new texts out, or a `Problem` saying why not.
+
+**Modes** (icon toggles): Rectangle strips (snapped to the drag's dominant axis, `\clip(x1,y1,x2,y2)`), Rotated strips, Skewed strips (a handle tilts the strip edges; a 4-point vector clip seeds it), Strips along the clip (rings inward from the Line's clip, no drag), Wedge strips (P1–P3, or the Line's 3-point vector clip; Shape: Wedge, Box, Ring, Star or Vignette), By character (a block before each grapheme, t by measured width or by count) and By line (each picked Line by its index).
+
+**Stops.** Values: From and To for each tag in the gradient (the picker adds a tag, Remove drops the shown one), From seeded from the active Line. Picked lines (strip modes): every picked Line is a stop in Grid order, and tags that differ between them are interpolated block by block. Strip, Overlap, Accel, Blend and Merge equal strips (on by default) shape the strips.
+
+**Preview and commit.** After the drag (at once in the modes without one) the new Lines show over the video through `previewLines`, and `hiddenLines` leaves the originals out of the preview. Handles, values and options still change it. Apply or Enter commits one "Gradient" step through `Gesture::stageReplacement`: each target is commented and its strips follow it (the stops are all commented, and the strips follow the last), or its text is changed in the other modes. The new Lines are selected. Esc drops the preview. A gradient that can't be made says why over the video, and Apply rings the bell.
+
 ## Edit shapes and Edit tags (PU5)
 PU5 ([#307](https://github.com/altqx/hikari/issues/307), [mockup](https://github.com/altqx/hikari/issues/307#issuecomment-6336250092) approved by the owner 2026-10-22) puts both editors on DG1's frame as modeless, resizable windows (`ShapesEditionDialog.qml`, `AllTagsEditionDialog.qml`, kept where they were left under `shapesEdition` and `allTagsEdition`), one layout for both: the list on the left with New, Duplicate, Delete and ⋯ under it, the selected item's fields on the right, its preview, and a footer with Undo and Redo at the leading edge and Close at the trailing one.
 A click or Up and Down in either list chooses through the editor; the list's highlight follows the editor's selection only. The bar's chosen preset or tag follows a rename (the name typed, Replace, their Undo and Redo, Undo all: the history keeps each step's renames, and Redo brings back the step's own selection), and a change made while another family is shown reaches the drawing tool or Hydra all the same, so it comes back on the same entry, read again. New shape, Take from the active line and the tags preview read the Line editor's pending text, as the video shows it. A window that goes with the one it opened from (fullscreen left, a floating panel hidden) is not closed: the editor and its history stay, the bar showing the dialogs opens it again, and Edit shapes… or Edit tags… brings an open editor's window forward.

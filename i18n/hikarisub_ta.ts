@@ -6541,6 +6541,10 @@ Failed to copy %2 fonts.</source>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
         <source>Vector clip: move points</source>
         <translation>திசையன் கிளிப்: புள்ளிகளை நகர்த்து</translation>
     </message>
@@ -18817,6 +18821,18 @@ or codecs or a splitter may be missing</source>
         <translation>வரை</translation>
     </message>
     <message>
+        <source>Stops</source>
+        <translation>நிறுத்தங்கள்</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>கலவை</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>படிகள்</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>தோன்றல்</translation>
     </message>
@@ -19602,6 +19618,202 @@ increasing or decreasing the value.</source>
     <message>
         <source>Text alignment works the same as in styles</source>
         <translation>பாணிகளில் உள்ளதைப் போலவே உரைச் சீரமைப்பு செயல்படுகிறது</translation>
+    </message>
+    <message>
+        <source>Rectangle strips</source>
+        <translation>செவ்வகப் பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>சுழற்றிய பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>சாய்ந்த பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>கிளிப்பை ஒட்டிய பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>ஆப்பு பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>எழுத்து வாரியாக</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>வரி வாரியாக</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>முகமூடி வடிவம்</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>சாய்வின் மதிப்புகள் எங்கிருந்து வருகின்றன</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>சாய்வு மாற்றும் குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>சாய்விலிருந்து குறிச்சொல்லை அகற்று</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>நிறங்கள் கலக்கும் விதம்</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>உரையில் ஒவ்வொரு எழுத்தும் எவ்வளவு தூரத்தில் உள்ளது</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>ஒரே மாதிரியான பட்டைகளை இணை</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>சாய்வைப் பயன்படுத்து (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>ஆப்பு</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>பெட்டி</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>வளையம்</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>நட்சத்திரம்</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>விக்னெட்</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>மதிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>தேர்ந்த வரிகள்</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>அகல வாரியாக</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>எண்ணிக்கை வாரியாக</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>சாய்வில் உள்ளவை</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>நிறமும் ஆல்ஃபாவும்</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>விளிம்பு, நிழல், மங்கல்</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>உரை</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>இடைவெளி</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>தடிமன்</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>முனைகள்</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>மையம்</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>துளை</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>முடுக்கம்</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>பட்டை</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>மேல்படிதல்</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>சாய்மானம்</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>சாய்வுக்கு ஒரு குறிச்சொல்லைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>நிறுத்தங்களாக இரண்டு அல்லது அதற்கு மேற்பட்ட வரிகளைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>தேர்ந்த வரிகளில் அதே உரையும் குறிச்சொல் தொகுதிகளும் இருக்க வேண்டும்</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>தேர்ந்த வரிகளுக்கு இடையே எந்தக் குறிச்சொல்லும் வேறுபடவில்லை</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>சாய்வு தொடங்கும் இடத்திலிருந்து முடியும் இடம் வரை இழுக்கவும்</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>வரியில் மூட உரையோ கிளிப்போ இல்லை</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>கிளிப்பை ஒட்டிய பட்டைகளுக்கு வரியில் கிளிப் தேவை</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>தலைகீழ் கிளிப்பில் சாய்வுகள் வேலை செய்யாது</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>வரியில் எழுத்துகள் இல்லை</translation>
     </message>
     <message>
         <source>Edit</source>
