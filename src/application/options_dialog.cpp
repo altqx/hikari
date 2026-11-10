@@ -135,7 +135,6 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.alwaysSendCrashReports", Check, Updates},
     {"privacy.discordPresence", Check, Updates},
     {"privacy.discordFileName", Check, Updates},
-    {"privacy.starPrompt", Check, Updates},
     {"video.zoomModel", IndexChoice, Video, 0, 0, 2},
     {"video.scrollAction", IndexChoice, Video, 0, 0, 5},
     {"video.ctrlScrollAction", IndexChoice, Video, 0, 0, 5},
