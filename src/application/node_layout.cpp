@@ -3,6 +3,8 @@
 #include "hikari/application/karaoke_syllables.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/script_resolution.h"
+#include "hikari/core/graphemes.h"
+#include "hikari/core/text_projection.h"
 
 #include <charconv>
 #include <cmath>
@@ -99,13 +101,14 @@ std::size_t firstCharBytes(const std::string &s)
     return std::min(n, s.size());
 }
 
-std::vector<std::string> utf8Chars(const std::string &s)
+std::vector<std::string> graphemes(const std::string &s)
 {
+    const std::u16string text = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(s.data()), s.size()));
     std::vector<std::string> out;
-    for (std::size_t at = 0; at < s.size();) {
-        const std::size_t n = firstCharBytes(s.substr(at, 4));
-        out.push_back(s.substr(at, n));
-        at += n;
+    for (std::size_t at = 0; at < text.size();) {
+        const std::size_t end = core::graphemeEnd(text, at);
+        out.push_back(narrow(core::toUtf8(std::u16string_view(text).substr(at, end - at))));
+        at = end;
     }
     return out;
 }
@@ -575,7 +578,7 @@ Line Layout::line(const core::LineRecord &source, double li, bool chars, std::ve
         for (std::size_t s = 0; s < syls.size(); ++s) {
             std::vector<Unit> list;
             double at = syls[s].left;
-            for (const std::string &c : utf8Chars(syls[s].stripped)) {
+            for (const std::string &c : graphemes(syls[s].stripped)) {
                 const double w = measure(*styleref, c, problems).width;
                 Unit u;
                 u.text = c;

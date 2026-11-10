@@ -1473,6 +1473,59 @@ ScrollView {
         }
 
         SettingsSection {
+            objectName: "aiAgent"
+            visible: page.live
+            title: qsTr("Agent")
+            SettingsRow {
+                text: qsTr("Mode for new threads")
+                ComboBox {
+                    id: agentMode
+                    objectName: "setting_ai.agent.mode"
+                    readonly property var modes: ["manual", "auto", "full"]
+                    model: [qsTr("Manual"), qsTr("Auto"), qsTr("Full access")]
+                    Accessible.name: qsTr("Mode for new threads")
+                    Layout.preferredWidth: 200
+                    function refresh() { currentIndex = Math.max(0, modes.indexOf(page.dialog.values["ai.agent.mode"] ?? "auto")) }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { agentMode.refresh() } }
+                    onActivated: index => page.dialog.put("ai.agent.mode", modes[index])
+                }
+            }
+            Repeater {
+                model: [{setting: "ai.agent.threadCapCents", text: qsTr("Cost cap per thread"), to: 100000},
+                        {setting: "ai.agent.dailyCapCents", text: qsTr("Cost cap per day"), to: 1000000}]
+                SettingsRow {
+                    id: capRow
+                    required property var modelData
+                    text: modelData.text
+                    SpinBox {
+                        id: cap
+                        objectName: "setting_" + capRow.modelData.setting
+                        from: 0
+                        to: capRow.modelData.to
+                        stepSize: 50
+                        editable: true
+                        Accessible.name: capRow.modelData.text
+                        Layout.preferredWidth: 140
+                        textFromValue: (value, locale) => value === 0 ? qsTr("No cap")
+                                                                       : "$" + Number(value / 100).toLocaleString(locale, "f", 2)
+                        valueFromText: (text, locale) => {
+                            const n = Number.fromLocaleString(locale, text.replace("$", "").trim())
+                            return isNaN(n) ? 0 : Math.round(n * 100)
+                        }
+                        validator: RegularExpressionValidator { regularExpression: /.*/ }
+                        function refresh() { value = page.dialog.values[capRow.modelData.setting] ?? 0 }
+                        Component.onCompleted: refresh()
+                        Connections { target: page.dialog; function onReloaded() { cap.refresh() } }
+                        onValueModified: page.dialog.put(capRow.modelData.setting, value)
+                    }
+                }
+            }
+            Note { text: qsTr("At a cap the turn stops after its current change. The agent never raises a cap; only you can.") }
+            AiCheck { setting: "ai.agent.costMeter"; text: qsTr("Show the cost meter") }
+        }
+
+        SettingsSection {
             objectName: "aiPrivacy"
             visible: page.live
             title: qsTr("Privacy")

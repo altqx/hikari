@@ -1,5 +1,7 @@
 #include "fake_host.h"
 
+#include "hikari/application/hotkeys.h"
+#include "hikari/application/settings.h"
 #include "hikari/backends/ai_agent.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -9,6 +11,8 @@
 #include <QFile>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
+
+#include <set>
 
 using namespace hikari::backends::ai;
 namespace app = hikari::application::ai;
@@ -99,27 +103,114 @@ TEST(AgentPolicy, EachModeDecidesWrites)
         EXPECT_EQ(decide(mode, "commands.run", true, true), Decision::AlwaysAsk);
 }
 
-TEST(AgentPolicy, TheAlwaysAskListCoversAiSettingsRiskyCommandsAndFilesOutsideTheSafeFolders)
+const std::vector<std::string> kSafe{"/home/u/subs", "/home/u/.local/share/HikariSub"};
+
+std::optional<std::string> pathOf(std::string_view handle)
 {
-    const auto pathOf = [](std::string_view handle) -> std::optional<std::string> {
-        if (handle == "inside")
-            return "/home/u/subs/b.ass";
-        if (handle == "outside")
-            return "/home/u/subsidiary/b.ass";
-        return std::nullopt;
-    };
-    const std::vector<std::string> safe{"/home/u/subs", "/home/u/.local/share/HikariSub"};
-    const auto reason = [&](const std::string &operation, const Json &params) {
-        return alwaysAskReason(operation, params, pathOf, safe);
-    };
-    EXPECT_FALSE(reason("settings.set", Json::object({{"setting", "ai.off"}, {"value", true}})).empty());
-    EXPECT_TRUE(reason("settings.set", Json::object({{"setting", "video.zoom"}, {"value", 1}})).empty());
-    EXPECT_FALSE(reason("commands.run", Json::object({{"command", "GLOBAL_DELETE_TEMPORARY_FILES"}})).empty());
-    EXPECT_FALSE(reason("commands.run", Json::object({{"command", "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD"}})).empty());
-    EXPECT_TRUE(reason("commands.run", Json::object({{"command", "GLOBAL_SAVE_SUBS"}})).empty());
-    EXPECT_TRUE(reason("files.write", Json::object({{"file", "inside"}})).empty());
-    EXPECT_FALSE(reason("files.write", Json::object({{"file", "outside"}})).empty());
-    EXPECT_FALSE(reason("files.write", Json::object({{"file", "unknown"}})).empty());
+    if (handle == "inside")
+        return "/home/u/subs/b.ass";
+    if (handle == "outside")
+        return "/home/u/subsidiary/b.ass";
+    return std::nullopt;
+}
+
+Risk riskOf(const std::string &operation, const Json &params)
+{
+    return alwaysAsk(operation, params, pathOf, kSafe).risk;
+}
+
+Risk commandRisk(std::string_view command)
+{
+    return riskOf("commands.run", Json::object({{"command", std::string(command)}}));
+}
+
+Risk settingRisk(std::string_view setting, Json value = true)
+{
+    return riskOf("settings.set", Json::object({{"setting", std::string(setting)}, {"value", std::move(value)}}));
+}
+
+TEST(AgentPolicy, FilesOutsideTheSubtitlesFoldersAndTheUserFolderAsk)
+{
+    EXPECT_EQ(riskOf("files.write", Json::object({{"file", "inside"}})), Risk::None);
+    EXPECT_EQ(riskOf("files.write", Json::object({{"file", "outside"}})), Risk::Files);
+    EXPECT_EQ(riskOf("files.write", Json::object({{"file", "unknown"}})), Risk::Files);
+    EXPECT_EQ(commandRisk("GLOBAL_DELETE_TEMPORARY_FILES"), Risk::Files);
+    EXPECT_EQ(settingRisk("fontCollector.directory", "/home/u/subs/fonts"), Risk::None);
+    EXPECT_EQ(settingRisk("fontCollector.directory", "/home/u/subsidiary"), Risk::Files);
+    EXPECT_EQ(settingRisk("fontCollector.directory", "/home/u/subs/../elsewhere"), Risk::Files);
+    for (const char *save : {"GLOBAL_SAVE_SUBS", "GLOBAL_SAVE_ALL_SUBS", "GLOBAL_SAVE_SUBS_AS", "GLOBAL_EXPORT_SUBS_AS",
+                             "VIDEO_SAVE_FRAME_TO_PNG", "VIDEO_DELETE_FILE"})
+        EXPECT_EQ(commandRisk(save), Risk::None) << save;
+}
+
+TEST(AgentPolicy, RunningScriptsOrProgramsAsks)
+{
+    for (const char *command : {"GLOBAL_AUTOMATION_LOAD_SCRIPT", "GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT",
+                                "GLOBAL_AUTOMATION_REPEAT_LAST_RUN", "GLOBAL_AUTOMATION_RELOAD_AUTOLOAD", "plugin.x.run"})
+        EXPECT_EQ(commandRisk(command), Risk::Programs) << command;
+    for (const char *setting : {"automation.scriptEditor", "automation.lastScript", "automation.disabledAutoload",
+                                "updater.autoInstall"})
+        EXPECT_EQ(settingRisk(setting), Risk::Programs) << setting;
+}
+
+TEST(AgentPolicy, InstallingOrTrustingPluginsAndScriptsAsks)
+{
+    for (const char *setting : {"plugins.autoUpdate", "plugins.network", "automation.trustedFolders"})
+        EXPECT_EQ(settingRisk(setting), Risk::Plugins) << setting;
+    EXPECT_EQ(commandRisk("GLOBAL_PLUGINS"), Risk::None) << "the Plugins window installs only on the user's click";
+}
+
+TEST(AgentPolicy, SendingToTheNetworkAndAiSettingsAsk)
+{
+    for (const char *setting : {"privacy.alwaysSendCrashReports", "privacy.usageData", "privacy.discordFileName"})
+        EXPECT_EQ(settingRisk(setting), Risk::Network) << setting;
+    EXPECT_EQ(settingRisk("ai.off"), Risk::AiSettings);
+    EXPECT_EQ(settingRisk("video.zoom", 1), Risk::None);
+}
+
+TEST(AgentPolicy, EveryWriteOperationIsClassified)
+{
+    std::set<std::string> writes;
+    for (const hikari::api::Operation &op : hikari::api::Api::registry().operations())
+        if (op.access == hikari::api::Access::Write)
+            writes.insert(op.name);
+    EXPECT_EQ(writes, (std::set<std::string>{"commands.run", "document.apply", "files.write", "panels.close",
+                                             "panels.focus", "panels.open", "selection.set", "settings.set"}))
+        << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
+}
+
+TEST(AgentPolicy, EveryAutomationOrDeleteCommandIsClassified)
+{
+    const std::set<std::string_view> reviewedSafe{"GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW", "VIDEO_DELETE_FILE",
+                                                  "VIDEO_VECTOR_CLIP_DELETE"};
+    for (const hikari::application::HotkeyAction &action : hikari::application::hotkeyActions()) {
+        const std::string_view symbol = action.symbol;
+        if (symbol.find("AUTOMATION") == std::string_view::npos && symbol.find("DELETE") == std::string_view::npos)
+            continue;
+        if (!hikari::application::isRetiredHotkey(action.id))
+            EXPECT_NE(commandRisk(symbol) != Risk::None, reviewedSafe.contains(symbol)) << symbol;
+    }
+}
+
+TEST(AgentPolicy, EverySettingUnderARiskyPrefixIsClassified)
+{
+    const std::set<std::string_view> reviewedSafe{
+        "automation.loadingMethod",     "automation.oldScriptsCompatibility", "automation.traceLevel",
+        "automation.scriptResolutionFromVideo", "automation.runLogTimes", "automation.fillLastAnswers",
+        "automation.dialogAnswers",     "automation.dialogPresets",           "fontCollector.action",
+        "fontCollector.fromMkv",        "fontCollector.useSubsDirectory",     "fonts.externalDirectory",
+        "updater.autoCheck",            "updater.checkForStable",             "updater.nextCheck",
+        "updater.skippedVersion",       "plugins.checkUpdates"};
+    for (const hikari::application::SettingDefinition &d : hikari::application::settingDefinitions()) {
+        const std::string_view id = d.id;
+        if (d.disposition != hikari::application::SettingDisposition::Mapped)
+            continue;
+        if (!(id.starts_with("automation.") || id.starts_with("plugins.") || id.starts_with("privacy.") ||
+              id.starts_with("updater.") || id.starts_with("fontCollector.") || id.starts_with("fonts.")))
+            continue;
+        const bool risky = settingRisk(id, "/elsewhere") != Risk::None;
+        EXPECT_NE(risky, reviewedSafe.contains(id)) << id;
+    }
 }
 
 TEST(AgentPolicy, AllowingInAThreadCoversTheOperationOrTheOneCommand)
@@ -238,7 +329,7 @@ protected:
             AiSidecarHost::Options o;
             o.program = QStringLiteral(HIKARI_FAKE_AI_SIDECAR);
             o.arguments = {QStringLiteral("--build-id"), QString::fromLatin1(kBuildId), QStringLiteral("--api-version"),
-                           QString::number(hikari::api::kApiVersion)};
+                           QString::number(hikari::api::kApiVersion), QStringLiteral("--mode"), sidecarMode};
             o.workingDirectory = dir.filePath(QStringLiteral("ai/work"));
             o.buildId = kBuildId;
             o.shutdownMs = 600;
@@ -320,6 +411,7 @@ protected:
     std::unique_ptr<ThreadStore> store;
     AgentThreads::Defaults defaults;
     std::int64_t clock = 0;
+    QString sidecarMode = QStringLiteral("ok");
     std::unique_ptr<AgentThreads> threads;
 };
 
@@ -478,6 +570,19 @@ TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
     EXPECT_EQ(at(items(id, "ask")[0], "status"), "withdrawn");
     EXPECT_EQ(notice(id), "stopped");
     EXPECT_EQ(receivedAs("session/cancel").size(), 1u);
+}
+
+TEST_F(AgentThreadsTest, StopBeforeTheSidecarAnswersItsHandshakeEndsTheTurn)
+{
+    sidecarMode = QStringLiteral("silent");
+    const std::string id = threads->create();
+    threads->send(id, "Hello");
+    ASSERT_TRUE(threads->running(id));
+    ASSERT_EQ(sidecar()->state(), AiSidecarHost::State::Starting);
+    threads->stop(id);
+    EXPECT_FALSE(threads->running(id));
+    EXPECT_EQ(notice(id), "stopped");
+    EXPECT_TRUE(items(id, "text").empty());
 }
 
 TEST_F(AgentThreadsTest, TheThreadCapStopsTheTurnAndRaisingItLetsTheNextOneRun)
