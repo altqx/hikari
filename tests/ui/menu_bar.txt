@@ -103,7 +103,16 @@ Video > Shift by frames to video > Selected lines, start at video [GLOBAL_SHIFT_
 Video > Shift by frames to video > Selected lines, end at video [GLOBAL_SHIFT_FRAMES_TO_VIDEO_END]
 Video > Shift by frames to video > Following lines, start at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_START]
 Video > Shift by frames to video > Following lines, end at video [GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END]
-Video > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
+Video > Tracking >
+Video > Tracking > Apply motion data… [GLOBAL_APPLY_MOTION_DATA]
+Video > Tracking > Perspective tracking… [GLOBAL_PERSPECTIVE_TRACKING]
+Video > Tracking > Revert motion data [GLOBAL_REVERT_MOTION_DATA]
+Video > Tracking > -
+Video > Tracking > Copy motion data from lines [GLOBAL_COPY_MOTION_DATA]
+Video > Tracking > Copy Power-Pin track from lines [GLOBAL_COPY_POWER_PIN_TRACK]
+Video > Tracking > -
+Video > Tracking > Extend tracked lines… [GLOBAL_EXTEND_TRACKED_LINES]
+Video > Tracking > Extrapolate \move to the line [GLOBAL_EXTRAPOLATE_MOVE]
 Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
 Video > Next frame [GLOBAL_NEXT_FRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]

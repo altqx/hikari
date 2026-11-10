@@ -291,3 +291,100 @@ TEST(PerspectiveTracking, OutlinesCanKeepTheirSize)
 }
 
 }
+
+namespace {
+
+std::string narrowed(const std::u8string &text)
+{
+    return {reinterpret_cast<const char *>(text.data()), text.size()};
+}
+
+void setPlane(EditSession &session, std::size_t row, std::u8string_view plane)
+{
+    const core::LineId id = session.document().lines()[row]->id;
+    ASSERT_TRUE(session.run(Command{"Plane", session.revision(), {id}, [&](core::Document &d) {
+        return d.editLine(id, [&](core::LineRecord &l) { l.extra = core::withExtradata(l.extra, persp::kPlaneKey, std::u8string(plane)); });
+    }}));
+}
+
+}
+
+TEST(PerspectiveTracking, PowerPinFromTrackedLinesReadsBackAsTheirPlanes)
+{
+    FixedMeasure m;
+    EditSession session{load(signs({kCorpusLine}))};
+    selectAll(session);
+    ASSERT_TRUE(applyTracking(session, corpusVideo(), parsed(powerPin()), options(m)));
+    selectAll(session);
+    const auto text = derivePowerPinTrack(session, corpusVideo(), 23.976, 1080, options(m).measure);
+    ASSERT_TRUE(text);
+    const PowerPin back = parsed(narrowed(*text));
+    EXPECT_EQ(back.width, 1920);
+    EXPECT_EQ(back.height, 1080);
+    EXPECT_DOUBLE_EQ(back.fps, 23.976);
+    ASSERT_EQ(back.frames.size(), session.document().lines().size());
+    for (std::size_t i = 0; i < back.frames.size(); ++i) {
+        const auto plane = persp::parsePlane(*core::extradataValue(session.document().lines()[i]->extra, persp::kPlaneKey));
+        ASSERT_TRUE(plane);
+        for (std::size_t c = 0; c < 4; ++c) {
+            EXPECT_FLOAT_EQ(back.frames[i][c].x, (*plane)[c].x) << i << " " << c;
+            EXPECT_FLOAT_EQ(back.frames[i][c].y, (*plane)[c].y) << i << " " << c;
+        }
+    }
+}
+
+TEST(PerspectiveTracking, PowerPinIsWrittenAsDerivePerspectiveTrackWritesIt)
+{
+    FixedMeasure m;
+    EditSession session{load(signs({"Dialogue: 0,0:00:14.00,0:00:14.05,Sign,,0,0,0,,{\\pos(800,400)}a",
+                                    "Dialogue: 0,0:00:14.13,0:00:14.17,Sign,,0,0,0,,{\\pos(800,400)}b"}))};
+    setPlane(session, 0, u8"600.5;300|1000;300.25|1000;500|600;500");
+    setPlane(session, 1, u8"610;-3|1010;300|1010;500|610;500");
+    selectAll(session);
+    const auto text = derivePowerPinTrack(session, corpusVideo(), 23.976, 1080, options(m).measure);
+    ASSERT_TRUE(text);
+    const std::string expected = "Adobe After Effects 6.0 Keyframe Data\n\n\tUnits Per Second\t23.976\n"
+                                 "\tSource Width\t1920\n\tSource Height\t1080\n\tSource Pixel Aspect Ratio\t1\n"
+                                 "\tComp Pixel Aspect Ratio\t1\n\n"
+                                 "Effects\tCC Power Pin #1\tCC Power Pin-0002\n\tFrame\tX pixels\tY pixels\n"
+                                 "\t0\t600.5\t300\n\t1\t600.5\t300\n\t2\t600.5\t300\n\t3\t610\t-3\n\n"
+                                 "Effects\tCC Power Pin #1\tCC Power Pin-0003\n\tFrame\tX pixels\tY pixels\n"
+                                 "\t0\t1000\t300.25\n\t1\t1000\t300.25\n\t2\t1000\t300.25\n\t3\t1010\t300\n\n"
+                                 "Effects\tCC Power Pin #1\tCC Power Pin-0004\n\tFrame\tX pixels\tY pixels\n"
+                                 "\t0\t600\t500\n\t1\t600\t500\n\t2\t600\t500\n\t3\t610\t500\n\n"
+                                 "Effects\tCC Power Pin #1\tCC Power Pin-0005\n\tFrame\tX pixels\tY pixels\n"
+                                 "\t0\t1000\t500\n\t1\t1000\t500\n\t2\t1000\t500\n\t3\t1010\t500\n\n"
+                                 "End of Keyframe Data";
+    EXPECT_EQ(narrowed(*text), expected);
+}
+
+TEST(PerspectiveTracking, PowerPinFallsBackToTheTagsAndRefusesWhatItCannotRead)
+{
+    FixedMeasure m;
+    EditSession session{load(signs({kCorpusLine}))};
+    selectAll(session);
+    const auto text = derivePowerPinTrack(session, corpusVideo(), 23.976, 1080, options(m).measure);
+    ASSERT_TRUE(text);
+    const PowerPin pin = parsed(narrowed(*text));
+    ASSERT_EQ(pin.frames.size(), 5u);
+    EXPECT_TRUE(persp::convex(pin.frames.front()));
+    EXPECT_EQ(pin.frames.front(), pin.frames.back());
+    EXPECT_EQ(parsed(narrowed(writePowerPin(pin))).frames, pin.frames);
+
+    EditSession moving{load(signs({"Dialogue: 0,0:00:14.00,0:00:14.21,Sign,,0,0,0,,{\\move(1,2,3,4)}a"}))};
+    selectAll(moving);
+    EXPECT_EQ(derivePowerPinTrack(moving, corpusVideo(), 23.976, 1080, options(m).measure).error().problem,
+              PowerPinProblem::Move);
+
+    EditSession overlapping{load(signs({kCorpusLine, kCorpusLine}))};
+    selectAll(overlapping);
+    const auto overlap = derivePowerPinTrack(overlapping, corpusVideo(), 23.976, 1080, options(m).measure);
+    ASSERT_FALSE(overlap);
+    EXPECT_EQ(overlap.error().problem, PowerPinProblem::Overlap);
+    EXPECT_EQ(overlap.error().row, 2);
+
+    EditSession unmeasured{load(signs({kCorpusLine}))};
+    selectAll(unmeasured);
+    EXPECT_EQ(derivePowerPinTrack(unmeasured, corpusVideo(), 23.976, 1080, {}).error().problem,
+              PowerPinProblem::Unmeasured);
+}

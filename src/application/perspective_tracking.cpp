@@ -33,6 +33,8 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <charconv>
 #include <map>
 #include <set>
@@ -226,6 +228,121 @@ std::optional<PowerPin> parsePowerPin(std::u8string_view text)
     out.width = static_cast<int>(setting(lines, u8"Source Width").value_or(0));
     out.height = static_cast<int>(setting(lines, u8"Source Height").value_or(0));
     return out;
+}
+
+namespace {
+
+using Corners = std::array<std::array<std::string, 2>, 4>;
+
+std::string shortest(float v)
+{
+    char buffer[32];
+    const auto end = std::to_chars(buffer, buffer + sizeof buffer, v).ptr;
+    return {buffer, end};
+}
+
+Corners cornersOf(const persp::Quad &q)
+{
+    Corners out;
+    for (std::size_t i = 0; i < 4; ++i)
+        out[i] = {shortest(q[i].x), shortest(q[i].y)};
+    return out;
+}
+
+std::optional<Corners> planeCorners(std::u8string_view value)
+{
+    const std::string_view text(reinterpret_cast<const char *>(value.data()), value.size());
+    Corners out;
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < 8; ++i) {
+        const char end = i == 7 ? '\0' : i % 2 == 0 ? ';' : '|';
+        const std::size_t stop = end ? text.find(end, at) : text.size();
+        if (stop == std::string_view::npos || stop == at)
+            return std::nullopt;
+        const std::string_view part = text.substr(at, stop - at);
+        if (part.find_first_not_of("0123456789-.") != std::string_view::npos)
+            return std::nullopt;
+        out[i / 2][i % 2] = std::string(part);
+        at = stop + 1;
+    }
+    return out;
+}
+
+std::u8string powerPinText(const std::vector<Corners> &frames, double fps, int width, int height)
+{
+    std::string out = "Adobe After Effects 6.0 Keyframe Data\n\n";
+    char buffer[64];
+    std::snprintf(buffer, sizeof buffer, "\tUnits Per Second\t%.6g\n", fps);
+    out += buffer;
+    out += "\tSource Width\t" + std::to_string(width) + "\n\tSource Height\t" + std::to_string(height) +
+           "\n\tSource Pixel Aspect Ratio\t1\n\tComp Pixel Aspect Ratio\t1\n\n";
+    constexpr std::array<std::size_t, 4> kCorner{0, 1, 3, 2};
+    for (std::size_t c = 0; c < 4; ++c) {
+        out += "Effects\tCC Power Pin #1\tCC Power Pin-000" + std::to_string(c + 2) + "\n\tFrame\tX pixels\tY pixels\n";
+        for (std::size_t f = 0; f < frames.size(); ++f)
+            out += "\t" + std::to_string(f) + "\t" + frames[f][kCorner[c]][0] + "\t" + frames[f][kCorner[c]][1] + "\n";
+        out += "\n";
+    }
+    out += "End of Keyframe Data";
+    return {reinterpret_cast<const char8_t *>(out.data()), out.size()};
+}
+
+}
+
+std::u8string writePowerPin(const PowerPin &pin)
+{
+    std::vector<Corners> frames;
+    for (const auto &q : pin.frames)
+        frames.push_back(cornersOf(q));
+    return powerPinText(frames, pin.fps, pin.width, pin.height);
+}
+
+std::expected<std::u8string, PowerPinFailure> derivePowerPinTrack(const EditSession &session,
+                                                                  const LegacyTimebase &timebase, double fps,
+                                                                  int videoHeight, const persp::TextMeasure &measure,
+                                                                  const LineVisible &visible)
+{
+    const auto lines = shownSelected(session, visible);
+    if (lines.empty())
+        return std::unexpected(PowerPinFailure{PowerPinProblem::NoLines});
+    const core::Document &doc = session.document();
+    const Resolution res = scriptResolution(doc);
+    const int layout = layoutResY(doc);
+    const double z = persp::screenZ(res.height, layout > 0 ? layout : videoHeight > 0 ? videoHeight : res.height);
+    persp::Reader reader;
+    reader.document = &doc;
+    reader.width = res.width;
+    reader.height = res.height;
+    reader.measure = measure;
+    persp::StyleCache styles;
+    std::map<int, Corners> quads;
+    for (const auto *l : lines) {
+        std::optional<Corners> corners;
+        if (const auto plane = core::extradataValue(l->extra, persp::kPlaneKey))
+            corners = planeCorners(*plane);
+        if (!corners) {
+            const auto state = persp::readLine(reader, *l, styles);
+            if (!state)
+                return std::unexpected(PowerPinFailure{PowerPinProblem::Unmeasured, rowOf(doc, l->id)});
+            if (state->hasMove)
+                return std::unexpected(PowerPinFailure{PowerPinProblem::Move, rowOf(doc, l->id)});
+            corners = cornersOf(persp::textToQuad(state->transform, state->box, z));
+        }
+        const int first = timebase.frameAt(msOf(l->start.value)), end = timebase.frameAt(msOf(l->end.value));
+        for (int f = first; f < end; ++f)
+            if (!quads.emplace(f, *corners).second)
+                return std::unexpected(PowerPinFailure{PowerPinProblem::Overlap, rowOf(doc, l->id)});
+    }
+    if (quads.empty())
+        return std::unexpected(PowerPinFailure{PowerPinProblem::NoLines});
+    std::vector<Corners> frames;
+    Corners last = quads.begin()->second;
+    for (int f = quads.begin()->first; f <= quads.rbegin()->first; ++f) {
+        if (const auto it = quads.find(f); it != quads.end())
+            last = it->second;
+        frames.push_back(last);
+    }
+    return powerPinText(frames, fps, res.width, res.height);
 }
 
 std::optional<TrackedFrames> trackedFrames(const EditSession &session, const LegacyTimebase &timebase,

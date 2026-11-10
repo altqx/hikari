@@ -1,0 +1,141 @@
+{
+    "apply": {
+        "events": [
+            {
+                "end": 4310,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4150,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(633.33,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4350,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4310,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(640,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4400,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4350,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(646.67,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4440,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4400,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(653.33,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4480,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4440,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(660,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4520,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4480,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(666.67,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4560,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4520,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(673.33,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4600,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4560,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(680,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4650,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4600,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(686.67,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4690,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4650,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(693.33,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            }
+        ],
+        "outcome": "ok",
+        "selected": [
+        ],
+        "unchanged": 13,
+        "undo_steps": 1
+    }
+}

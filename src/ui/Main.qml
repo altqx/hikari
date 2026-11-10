@@ -2407,17 +2407,101 @@ ApplicationWindow {
                     }
                 }
             }
-            ShellMenuItem {
-                command: "GLOBAL_PERSPECTIVE_TRACKING"
-                help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
-                                          : qsTr("Open a video first: tracking data is per frame.")
-                iconRole: "tool-perspective"
-                objectName: "perspectiveTrackingMenuItem"
-                action: Action {
-                    id: perspectiveTrackingAction
-                    text: qsTr("Perspective tracking…")
-                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
+            ShellMenu {
+                iconRole: "motion-apply"
+                objectName: "trackingMenu"
+                title: qsTr("Tracking")
+                enabled: root.shell.hasEditingTarget
+                ShellMenuItem {
+                    command: "GLOBAL_APPLY_MOTION_DATA"
+                    help: root.video.hasVideo ? qsTr("Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "motion-apply"
+                    objectName: "applyMotionDataMenuItem"
+                    action: Action {
+                        id: applyMotionDataAction
+                        text: qsTr("Apply motion data…")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_APPLY_MOTION_DATA")) root.openMotionData()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_PERSPECTIVE_TRACKING"
+                    help: root.video.hasVideo ? qsTr("Applies Power-Pin tracking data to the selected lines, one line a frame")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "tool-perspective"
+                    objectName: "perspectiveTrackingMenuItem"
+                    action: Action {
+                        id: perspectiveTrackingAction
+                        text: qsTr("Perspective tracking…")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_PERSPECTIVE_TRACKING")) root.openPerspectiveTracking()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_REVERT_MOTION_DATA"
+                    help: qsTr("Puts the tracked lines of the selection back as the lines they were made from")
+                    iconRole: "motion-revert"
+                    objectName: "revertMotionDataMenuItem"
+                    action: Action {
+                        id: revertMotionDataAction
+                        text: qsTr("Revert motion data")
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_REVERT_MOTION_DATA")) root.revertMotionData()
+                    }
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_COPY_MOTION_DATA"
+                    help: root.video.hasVideo ? qsTr("Copies the selected frame-by-frame lines’ position, scale and rotation as motion data")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "motion-copy"
+                    objectName: "copyMotionDataMenuItem"
+                    action: Action {
+                        id: copyMotionDataAction
+                        text: qsTr("Copy motion data from lines")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_MOTION_DATA")) root.trackingToast(root.app.copyMotionData())
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_COPY_POWER_PIN_TRACK"
+                    help: root.video.hasVideo ? qsTr("Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "perspective-plane"
+                    objectName: "copyPowerPinTrackMenuItem"
+                    action: Action {
+                        id: copyPowerPinTrackAction
+                        text: qsTr("Copy Power-Pin track from lines")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_COPY_POWER_PIN_TRACK")) root.trackingToast(root.app.copyPowerPinTrack())
+                    }
+                }
+                MenuSeparator {}
+                ShellMenuItem {
+                    command: "GLOBAL_EXTEND_TRACKED_LINES"
+                    help: root.video.hasVideo ? qsTr("Fits the selected frame-by-frame lines’ motion and carries it on for more frames")
+                                              : qsTr("Open a video first: tracking data is per frame.")
+                    iconRole: "motion-extend"
+                    objectName: "extendTrackedLinesMenuItem"
+                    action: Action {
+                        id: extendTrackedLinesAction
+                        text: qsTr("Extend tracked lines…")
+                        enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTEND_TRACKED_LINES")) root.openExtendTracking()
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_EXTRAPOLATE_MOVE"
+                    help: qsTr("Carries each selected line’s timed %1 on at the same speed from its start to its end").arg("\\move")
+                    iconRole: "move-extend"
+                    objectName: "extrapolateMoveMenuItem"
+                    action: Action {
+                        id: extrapolateMoveAction
+                        text: qsTr("Extrapolate %1 to the line").arg("\\move")
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_EXTRAPOLATE_MOVE")) root.trackingToast(root.app.extrapolateMoves())
+                    }
                 }
             }
             ShellMenuItem {
@@ -7750,6 +7834,38 @@ ApplicationWindow {
             video: root.video
         }
     }
+    function openMotionData() {
+        motionDataLoader.active = true
+        motionDataLoader.item.openDialog()
+    }
+    Loader {
+        id: motionDataLoader
+        active: false
+        sourceComponent: MotionDataWindow {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    function openExtendTracking() {
+        extendTrackingLoader.active = true
+        extendTrackingLoader.item.openDialog()
+    }
+    Loader {
+        id: extendTrackingLoader
+        active: false
+        sourceComponent: ExtendTrackingWindow {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    function revertMotionData() {
+        const failure = root.app.revertMotionData()
+        if (failure.length > 0)
+            root.notify("warning", failure, "")
+    }
+    function trackingToast(result) {
+        root.notify(result.ok ? "info" : "warning", result.text, "")
+    }
     function openPerspectiveTracking() {
         perspectiveTrackingLoader.active = true
         perspectiveTrackingLoader.item.openDialog()
@@ -8388,6 +8504,12 @@ ApplicationWindow {
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
+        GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
+        GLOBAL_REVERT_MOTION_DATA: revertMotionDataAction,
+        GLOBAL_COPY_MOTION_DATA: copyMotionDataAction,
+        GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,
+        GLOBAL_EXTEND_TRACKED_LINES: extendTrackedLinesAction,
+        GLOBAL_EXTRAPOLATE_MOVE: extrapolateMoveAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,

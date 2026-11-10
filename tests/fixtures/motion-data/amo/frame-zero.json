@@ -1,0 +1,180 @@
+{
+    "apply": {
+        "events": [
+            {
+                "end": 4190,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4150,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(640,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
+            },
+            {
+                "end": 4230,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4190,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.61\\bord2.54\\frz10\\fscx122.08\\fscy81.38\\pos(649.48,355.74)\\shad1.53}Tracked {\\bord1.02\\fscx91.56\\xshad-2.03}sign"
+            },
+            {
+                "end": 4270,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4230,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.62\\bord2.59\\frz10\\fscx124.15\\fscy82.77\\pos(660.04,351.55)\\shad1.55}Tracked {\\bord1.03\\fscx93.12\\xshad-2.07}sign"
+            },
+            {
+                "end": 4310,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4270,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.63\\bord2.63\\frz10\\fscx126.23\\fscy84.15\\pos(671.68,347.42)\\shad1.58}Tracked {\\bord1.05\\fscx94.67\\xshad-2.1}sign"
+            },
+            {
+                "end": 4350,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4310,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.64\\bord2.67\\frz10\\fscx128.31\\fscy85.54\\pos(684.4,343.37)\\shad1.6}Tracked {\\bord1.07\\fscx96.23\\xshad-2.14}sign"
+            },
+            {
+                "end": 4400,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4350,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.65\\bord2.72\\frz10\\fscx130.39\\fscy86.92\\pos(698.2,339.37)\\shad1.63}Tracked {\\bord1.09\\fscx97.79\\xshad-2.17}sign"
+            },
+            {
+                "end": 4440,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4400,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.66\\bord2.76\\frz10\\fscx132.46\\fscy88.31\\pos(713.07,335.45)\\shad1.66}Tracked {\\bord1.1\\fscx99.35\\xshad-2.21}sign"
+            },
+            {
+                "end": 4480,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4440,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.67\\bord2.8\\frz10\\fscx134.54\\fscy89.69\\pos(729.03,331.59)\\shad1.68}Tracked {\\bord1.12\\fscx100.91\\xshad-2.24}sign"
+            },
+            {
+                "end": 4520,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4480,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.68\\bord2.85\\frz10\\fscx136.62\\fscy91.08\\pos(746.07,327.8)\\shad1.71}Tracked {\\bord1.14\\fscx102.46\\xshad-2.28}sign"
+            },
+            {
+                "end": 4560,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4520,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.69\\bord2.89\\frz10\\fscx138.69\\fscy92.46\\pos(764.19,324.07)\\shad1.73}Tracked {\\bord1.16\\fscx104.02\\xshad-2.31}sign"
+            },
+            {
+                "end": 4600,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4560,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.7\\bord2.93\\frz10\\fscx140.77\\fscy93.85\\pos(783.39,320.42)\\shad1.76}Tracked {\\bord1.17\\fscx105.58\\xshad-2.35}sign"
+            },
+            {
+                "end": 4650,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4600,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.71\\bord2.98\\frz10\\fscx142.85\\fscy95.23\\pos(803.67,316.82)\\shad1.79}Tracked {\\bord1.19\\fscx107.14\\xshad-2.38}sign"
+            },
+            {
+                "end": 4690,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4650,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.72\\bord3.02\\frz10\\fscx144.93\\fscy96.62\\pos(825.03,313.3)\\shad1.81}Tracked {\\bord1.21\\fscx108.69\\xshad-2.42}sign"
+            }
+        ],
+        "outcome": "ok",
+        "selected": [
+        ],
+        "unchanged": 13,
+        "undo_steps": 1
+    }
+}

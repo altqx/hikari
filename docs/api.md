@@ -107,7 +107,7 @@ The version is a running number. Every release that grows the API bumps it, and 
 
 ## Reference
 
-`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. The plugin reference (PL9) and the site build from it. The AI sidecar keeps a copy as `src/ai-sidecar/src/tools/api.json`, from which its tool schemas and types are built; see [AI tools](ai-tools.md).
+`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. It also writes `api.md`, the same reference as Markdown for authors, which [docs/api-reference.md](api-reference.md) holds; `ApiReferenceMarkdown.TheCheckedInReferenceIsCurrent` in `hikari_api_tests` fails when that file differs, and rerunning it with `HIKARI_API_WRITE_MARKDOWN_REFERENCE=docs/api-reference.md` rewrites it. The release attaches both in `hikarisub-docs-<version>.zip`, and the site builds its API reference from them. The AI sidecar keeps a copy as `src/ai-sidecar/src/tools/api.json`, from which its tool schemas and types are built; see [AI tools](ai-tools.md).
 
 ## Tests
 

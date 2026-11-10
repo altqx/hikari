@@ -347,6 +347,12 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_NEW_AI_THREAD", 5253},
         {"GLOBAL_OPEN_FOLDER", 5255},
         {"GLOBAL_CLOSE_PROJECT", 5256},
+        {"GLOBAL_APPLY_MOTION_DATA", 5257},
+        {"GLOBAL_REVERT_MOTION_DATA", 5258},
+        {"GLOBAL_COPY_MOTION_DATA", 5259},
+        {"GLOBAL_COPY_POWER_PIN_TRACK", 5260},
+        {"GLOBAL_EXTEND_TRACKED_LINES", 5261},
+        {"GLOBAL_EXTRAPOLATE_MOVE", 5262},
 };
 
 struct NameRow {
@@ -660,6 +666,12 @@ constexpr NameRow kNames[] = {
         {5253, "New agent thread"},
         {5255, "Open folder…"},
         {5256, "Close project"},
+        {5257, "Apply motion data…"},
+        {5258, "Revert motion data"},
+        {5259, "Copy motion data from lines"},
+        {5260, "Copy Power-Pin track from lines"},
+        {5261, "Extend tracked lines…"},
+        {5262, "Extrapolate \\move to the line"},
 };
 
 struct DefaultRow {

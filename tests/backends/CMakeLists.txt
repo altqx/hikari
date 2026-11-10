@@ -183,6 +183,17 @@ target_compile_definitions(hikari_backends_karaoke_presets_tests PRIVATE
 target_include_directories(hikari_backends_karaoke_presets_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_karaoke_presets_tests hikari_lua_helper hikari_automation_stage)
 
+hikari_add_gtest(hikari_backends_motion_parity_tests SOURCES motion_parity_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends PROPERTIES TIMEOUT 300)
+target_compile_definitions(hikari_backends_motion_parity_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
+    HIKARI_AMO_SCRIPT="${HIKARI_AUTOMATION_STAGE}/Autoload/a-mo.Aegisub-Motion.moon"
+    HIKARI_AUTOMATION_STAGE_DIR="${HIKARI_AUTOMATION_STAGE}"
+    HIKARI_MOTION_CORPUS="${PROJECT_SOURCE_DIR}/tests/fixtures/motion-data")
+target_include_directories(hikari_backends_motion_parity_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+add_dependencies(hikari_backends_motion_parity_tests hikari_lua_helper hikari_automation_stage)
+
 set(_hikari_thirdparty "${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty")
 set(_hikari_thirdparty_stage "${CMAKE_CURRENT_BINARY_DIR}/automation-thirdparty/stage")
 add_test(NAME automation-thirdparty-stage COMMAND "${CMAKE_COMMAND}"
@@ -205,6 +216,7 @@ target_compile_definitions(hikari_backends_automation_thirdparty_tests PRIVATE
     HIKARI_AUTOMATION_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/automation/capture-probe.lua")
+target_include_directories(hikari_backends_automation_thirdparty_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_backends_automation_thirdparty_tests hikari_lua_helper hikari_automation_stage)
 
 hikari_add_qttest(hikari_backends_general_player_tests SOURCES general_player_tests.cpp
