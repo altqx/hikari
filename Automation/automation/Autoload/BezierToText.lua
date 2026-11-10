@@ -1,5 +1,5 @@
+--Bezier Curve Imposition by an eer?, with fixes by Bakura. No licence is stated; bundled with credit to its authors.
 --Script Usage: Make a Bezier curve in aeigsub using the clip drawing function.
---fixes by Bakura
 --The Curve can not consist of more than one line.
 --Example Line: "{\clip(m 0 300 b 0 0 300 0 300 300)}It really works!"
 
