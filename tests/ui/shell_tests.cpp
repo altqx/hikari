@@ -18247,7 +18247,7 @@ private slots:
         QVERIFY(root->isVisible());
         QVERIFY(!findItem(body, QStringLiteral("pluginPanelPlaceholder"))->isVisible());
         QVERIFY(QMetaObject::invokeMethod(root, "countLines"));
-        QTRY_COMPARE(root->property("lines").toString(), QStringLiteral("2"));
+        QTRY_COMPARE(root ? root->property("lines").toString() : QString(), QStringLiteral("2"));
         QQuickItem *said = nullptr;
         QQuickItem *notesBody = item(at("pluginPanelBody_", notes).constData());
         QTRY_VERIFY((said = findItem(notesBody, QStringLiteral("pluginPanelTree"))) && said->isVisible());
@@ -18270,8 +18270,8 @@ private slots:
                 settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
                 QTRY_COMPARE(main->property("palette").value<QObject *>()->property("window").value<QColor>(),
                              ui::theme::current().roles.panel);
-                QVERIFY(root);
-                QTRY_COMPARE(root->property("accent").value<QColor>(), ui::theme::current().roles.accent);
+                QTRY_COMPARE(root ? root->property("accent").value<QColor>() : QColor(),
+                             ui::theme::current().roles.accent);
                 QTest::qWait(400);
                 QVERIFY(window->grabWindow().save(out + QStringLiteral("/qml-panel-") + ui::theme::codeName(code) +
                                                   QStringLiteral(".png")));

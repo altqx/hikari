@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QThread>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -65,6 +66,17 @@ TEST_F(HelperHostTest, HandshakeThenRoundTrip)
     EXPECT_EQ(textOf(r.events[0]->payload), "hello");
     EXPECT_EQ(r.events[1]->outcome, Outcome::Ok);
     EXPECT_EQ(host->outstanding(), 0u);
+}
+
+TEST_F(HelperHostTest, AHandshakeThatCameWhileTheOwnerWasBusyStillCounts)
+{
+    auto host = startHelper({}, HelperHost::Limits{.handshakeMs = 200});
+    QThread::msleep(1500);
+    QElapsedTimer t;
+    t.start();
+    while (host->state() == HelperHost::State::Starting && t.elapsed() < 2000)
+        QCoreApplication::processEvents(QEventLoop::ExcludeSocketNotifiers, 20);
+    EXPECT_EQ(host->state(), HelperHost::State::Ready);
 }
 
 TEST_F(HelperHostTest, AnEventWaitsBehindRunningWorkAndReachesTheEventHandler)
