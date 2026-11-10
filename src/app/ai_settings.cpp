@@ -321,6 +321,26 @@ void AiSettings::withSidecar(std::function<void(bool)> then)
     emit downloadChanged();
 }
 
+bool AiSettings::componentNeeded()
+{
+    prepareDownload();
+    return m_download != nullptr;
+}
+
+void AiSettings::installComponent()
+{
+    withSidecar([this, alive = std::weak_ptr(m_alive)](bool ready) {
+        if (alive.lock())
+            emit componentReady(ready);
+    });
+}
+
+void AiSettings::cancelComponent()
+{
+    if (m_installing || m_installWanted)
+        dropDownload();
+}
+
 void AiSettings::openDraft()
 {
     m_probed.reset();

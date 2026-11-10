@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var fontCatalogs
     required property var matroska
     required property var review
+    required property var agent
     required property var hotkeys
     required property var settingsImport
     required property VisualToolsController visualTools
@@ -397,6 +398,13 @@ ApplicationWindow {
             dockingArea.addDockWidget(templateDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
+    function addAgent() {
+        if (reviewDock.isOpen && !reviewDock.isFloating)
+            reviewDock.addDockWidgetAsTab(agentDock)
+        else
+            root.addRightOfGrid(agentDock, 446)
+    }
+
     function addRightOfGrid(dock, preferredWidth) {
         const grid = gridDock.isOpen && !gridDock.isFloating
         const left = Docking.placeInLayout(root.engineName("Grid")).x
@@ -422,10 +430,12 @@ ApplicationWindow {
 
     readonly property list<Item> builtInPanels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
                                                  timingPanel, postprocessorPanel, searchPanel, automationPanel, spellPanel,
-                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel]
+                                                 logPanel, stylesPanel, templatePanel, qcNotesPanel, reviewPanel,
+                                                 agentPanel]
     readonly property var builtInDocks: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
                                          postprocessorDock, searchDock, automationDock, spellDock, logDock, stylesDock,
                                          templateDock, qcNotesDock].concat(root.review.on ? [reviewDock] : [])
+                                         .concat(root.agent.on ? [agentDock] : [])
     property var pluginDocks: []
     readonly property var panels: Array.from(builtInPanels).concat(pluginDocks.map(d => d.panel))
     readonly property var dockList: builtInDocks.concat(pluginDocks)
@@ -791,6 +801,8 @@ ApplicationWindow {
             root.addStyles()
         else if (dock === templateDock && !Docking.hasPlace(root.engineName("Template")))
             root.addTemplate()
+        else if (dock === agentDock && !Docking.hasPlace(root.engineName("Agent")))
+            root.addAgent()
         else if (root.isPluginDock(dock) && !Docking.hasPlace(dock.uniqueName))
             root.addPluginDock(dock)
         else if (!Docking.hasPlace(dock.uniqueName))
@@ -6307,6 +6319,43 @@ ApplicationWindow {
         }
 
         PanelDock {
+            id: agentDock
+            objectName: "agentDock"
+            uniqueName: root.engineName("Agent")
+            affinities: root.dockAffinities
+            title: qsTranslate("HikariSub.Agent", "Agent")
+            Panel {
+                id: agentPanel
+                objectName: "agentPanel"
+                dockName: root.engineName("Agent")
+                minimumBodySize: Qt.size(300, 240)
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Agent", "Agent")
+                Loader {
+                    id: agentLoader
+                    anchors.fill: parent
+                    active: root.agent.on
+                    focus: true
+                    sourceComponent: AgentPanel {
+                        agent: root.agent
+                        onReviewRequested: root.showPanel(reviewDock)
+                        onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
+                        onSettingsRequested: root.openSettings("ai")
+                        onLogRequested: root.showPanel(logDock)
+                        onExportRequested: id => agentExportDialog.openFor(id)
+                    }
+                }
+                Connections {
+                    target: root.agent
+                    function onSwitched() {
+                        if (!root.agent.on && agentDock.isOpen)
+                            agentDock.close()
+                    }
+                }
+            }
+        }
+
+        PanelDock {
             id: searchDock
             objectName: "searchDock"
             uniqueName: root.engineName("Search")
@@ -7559,6 +7608,24 @@ ApplicationWindow {
         }
     }
     FileChooser {
+        id: agentExportDialog
+        objectName: "agentExportDialog"
+        property string thread
+        title: qsTranslate("HikariSub.Agent", "Export as Markdown")
+        fileMode: FileDialog.SaveFile
+        defaultSuffix: "md"
+        nameFilters: [qsTranslate("HikariSub.Agent", "Markdown (*.md)")]
+        function openFor(id) {
+            thread = id
+            open()
+        }
+        onAccepted: {
+            if (!root.agent.exportMarkdown(thread, selectedFile))
+                root.notices.post("warning", qsTranslate("HikariSub.Agent", "Export as Markdown"),
+                                  qsTranslate("HikariSub.Agent", "The thread couldn't be saved there."))
+        }
+    }
+    FileChooser {
         id: translationFileDialog
         title: qsTranslate("HikariSub.Translation", "Choose subtitle file")
         nameFilters: [qsTranslate("HikariSub.Translation", "Subtitle files (*.ass *.srt *.sub *.txt)")]
@@ -8273,6 +8340,23 @@ ApplicationWindow {
         onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_ALL_AI_CHANGES")) root.undoAllAiChanges()
     }
     Action {
+        id: showAiAgentAction
+        text: qsTranslate("HikariSub.Agent", "Agent panel")
+        enabled: root.agent.on
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_AI_AGENT")) root.showPanel(agentDock)
+    }
+    Action {
+        id: newAiThreadAction
+        text: qsTranslate("HikariSub.Agent", "New agent thread")
+        enabled: root.agent.on
+        onTriggered: {
+            if (root.hotkeyGesture("GLOBAL_NEW_AI_THREAD"))
+                return
+            root.agent.newThread()
+            root.showPanel(agentDock)
+        }
+    }
+    Action {
         id: showAiReviewAction
         text: qsTranslate("HikariSub.Review", "Show panel")
         enabled: root.review.on
@@ -8327,6 +8411,7 @@ ApplicationWindow {
         GLOBAL_NEXT_AI_CHANGE: nextAiChangeAction, GLOBAL_PREVIOUS_AI_CHANGE: previousAiChangeAction,
         GLOBAL_KEEP_ALL_AI_CHANGES: keepAllAiChangesAction, GLOBAL_UNDO_ALL_AI_CHANGES: undoAllAiChangesAction,
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
+        GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }

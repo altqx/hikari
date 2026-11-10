@@ -3,6 +3,7 @@ import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method } from "../src
 import { Peer, RpcError } from "../src/rpc";
 import { HikariApi, Sidecar } from "../src/sidecar";
 import { kOwnReference } from "../src/tools/catalogue";
+import { kDefaultImageBudget, kImageBudgets } from "../src/tools/images";
 
 const limits = { maxOutstanding: 4, maxOutstandingBytes: 1024, maxMessageBytes: 512 };
 
@@ -168,6 +169,17 @@ describe("Sidecar", () => {
         feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet, params: { providers: [], searchService: "brave" } });
         await settle();
         expect(sessionTools("t1").list(true).map((t) => t.name)).toContain("web_search");
+    });
+
+    test("a session's image budget is its provider's wire's", async () => {
+        const { peer, feed } = link();
+        const sidecar = new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet,
+            params: { providers: [{ id: "g", preset: "gemini", wire: "gemini", baseUrl: "https://example.invalid" }] } });
+        await settle();
+        expect(sidecar.providers.imageBudget("g")).toEqual(kImageBudgets.gemini);
+        expect(sidecar.providers.imageBudget("gone")).toEqual(kDefaultImageBudget);
     });
 
     test("a session's tool calls name the session, so Qt checks them against its thread", async () => {

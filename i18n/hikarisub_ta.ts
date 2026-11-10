@@ -10728,6 +10728,30 @@ Failed to copy %2 fonts.</source>
         <translation>Claude Code, Codex மற்றும் பிற முகவர்கள் திறந்த ஆவணங்களைப் படிக்கும். நீங்கள் வைத்துக்கொள்ளும் வரை அல்லது செயல்தவிர்க்கும் வரை அவற்றின் திருத்தங்கள் மதிப்பாய்வில் காத்திருக்கும்.</translation>
     </message>
     <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP க்கு AI கூறு தேவை, அது ஒருமுறை பதிவிறக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>ஒரு முகவர் HikariSub ஐப் பயன்படுத்தும்போது மட்டுமே இயங்கும், AI அணைக்கப்பட்டிருக்கும்போது ஒருபோதும் இயங்காது.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>பதிவிறக்கு</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>இதற்கு AI கூறு தேவை</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP அணைந்தே இருக்கும். %1.</translation>
+    </message>
+    <message>
         <source>Also listen on http://127.0.0.1</source>
         <translation>http://127.0.0.1 இலும் கேள்</translation>
     </message>
@@ -10742,6 +10766,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Copy setup</source>
         <translation>அமைப்பை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>டோக்கனை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>புதிய டோக்கன் சேமிக்கப்பட்டது.</translation>
     </message>
     <message>
         <source>Copied. Run it in a terminal.</source>
@@ -10762,6 +10794,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>JSON with the address and token</source>
         <translation>முகவரியும் டோக்கனும் உள்ள JSON</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>உங்கள் டோக்கன் இதில் உள்ளது; அதைத் தனிப்பட்டதாக வைத்திருங்கள்.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>டோக்கனை மீட்டமை ஒரு புதிய டோக்கனை உருவாக்கும். பழைய டோக்கனுடன் அமைக்கப்பட்ட முகவர்கள், நீங்கள் அமைப்பை மீண்டும் நகலெடுக்கும் வரை வேலை செய்யாது.</translation>
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>

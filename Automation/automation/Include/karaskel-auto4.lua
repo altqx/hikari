@@ -253,6 +253,22 @@ function karaskel.preproc_line_text(meta, styles, line)
 end
 
 
+local function measure_all(style, texts, n)
+	local measure_many = aegisub.__karaskel_impl and aegisub.__karaskel_impl.measure_many
+	if measure_many then
+		return measure_many(style, texts, n)
+	end
+	local extents = {}
+	for i = 1, n do
+		extents[i*4-3], extents[i*4-2], extents[i*4-1], extents[i*4] = aegisub.text_extents(style, texts[i])
+	end
+	return extents
+end
+
+local function extents_at(extents, i)
+	return extents[i*4-3], extents[i*4-2], extents[i*4-1], extents[i*4]
+end
+
 -- Pre-calculate sizing information for the given line, no layouting is done
 -- Modifies the object passed for line
 function karaskel.preproc_line_size(meta, styles, line)
@@ -268,18 +284,27 @@ function karaskel.preproc_line_size(meta, styles, line)
 		line.styleref = styles[1]
 	end
 	
+	local texts, n = { line.text_stripped }, 1
+	for s = 0, line.kara.n do
+		local syl = line.kara[s]
+		texts[n+1], texts[n+2], texts[n+3] = syl.text_spacestripped, syl.prespace, syl.postspace
+		n = n + 3
+	end
+	local extents = measure_all(line.styleref, texts, n)
+
 	-- Calculate whole line sizing
-	line.width, line.height, line.descent, line.extlead = aegisub.text_extents(line.styleref, line.text_stripped)
+	line.width, line.height, line.descent, line.extlead = extents_at(extents, 1)
 	line.width = line.width * meta.video_x_correct_factor
 
 	-- Calculate syllable sizing
 	for s = 0, line.kara.n do
 		local syl = line.kara[s]
+		local at = 2 + s * 3
 		syl.style = line.styleref
-		syl.width, syl.height = aegisub.text_extents(syl.style, syl.text_spacestripped)
+		syl.width, syl.height = extents_at(extents, at)
 		syl.width = syl.width * meta.video_x_correct_factor
-		syl.prespacewidth = aegisub.text_extents(syl.style, syl.prespace) * meta.video_x_correct_factor
-		syl.postspacewidth = aegisub.text_extents(syl.style, syl.postspace) * meta.video_x_correct_factor
+		syl.prespacewidth = extents_at(extents, at + 1) * meta.video_x_correct_factor
+		syl.postspacewidth = extents_at(extents, at + 2) * meta.video_x_correct_factor
 	end
 	
 	-- Calculate furigana sizing
@@ -290,10 +315,16 @@ function karaskel.preproc_line_size(meta, styles, line)
 		line.furistyle = false
 	end
 	if line.furistyle then
+		local furitexts = {}
+		for f = 1, line.furi.n do
+			local furi = line.furi[f]
+			furitexts[f] = furi.text
+		end
+		local furiextents = measure_all(line.furistyle, furitexts, line.furi.n)
 		for f = 1, line.furi.n do
 			local furi = line.furi[f]
 			furi.style = line.furistyle
-			furi.width, furi.height = aegisub.text_extents(furi.style, furi.text)
+			furi.width, furi.height = extents_at(furiextents, f)
 			furi.width = furi.width * meta.video_x_correct_factor
 			furi.prespacewidth = 0
 			furi.postspacewidth = 0
