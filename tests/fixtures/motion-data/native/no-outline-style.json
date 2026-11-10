@@ -1,0 +1,179 @@
+{
+  "apply": {
+    "events": [
+      {
+        "end": 4190,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4150,
+        "style": "Flat",
+        "text": "{\\frz-1.88\\fscx93.52\\fscy93.52\\pos(597.09,375.48)}No outline"
+      },
+      {
+        "end": 4230,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4190,
+        "style": "Flat",
+        "text": "{\\frz-1.41\\fscx95.14\\fscy95.14\\pos(606.18,371.52)}No outline"
+      },
+      {
+        "end": 4270,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4230,
+        "style": "Flat",
+        "text": "{\\frz-0.94\\fscx96.76\\fscy96.76\\pos(616.36,367.61)}No outline"
+      },
+      {
+        "end": 4310,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4270,
+        "style": "Flat",
+        "text": "{\\frz-0.47\\fscx98.38\\fscy98.38\\pos(627.64,363.77)}No outline"
+      },
+      {
+        "end": 4350,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4310,
+        "style": "Flat",
+        "text": "{\\frz0\\fscx100\\fscy100\\pos(640,360)}No outline"
+      },
+      {
+        "end": 4400,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4350,
+        "style": "Flat",
+        "text": "{\\frz0.47\\fscx101.62\\fscy101.62\\pos(653.46,356.29)}No outline"
+      },
+      {
+        "end": 4440,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4400,
+        "style": "Flat",
+        "text": "{\\frz0.94\\fscx103.24\\fscy103.24\\pos(668.01,352.64)}No outline"
+      },
+      {
+        "end": 4480,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4440,
+        "style": "Flat",
+        "text": "{\\frz1.41\\fscx104.86\\fscy104.86\\pos(683.65,349.06)}No outline"
+      },
+      {
+        "end": 4520,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4480,
+        "style": "Flat",
+        "text": "{\\frz1.88\\fscx106.48\\fscy106.48\\pos(700.38,345.54)}No outline"
+      },
+      {
+        "end": 4560,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4520,
+        "style": "Flat",
+        "text": "{\\frz2.35\\fscx108.09\\fscy108.09\\pos(718.2,342.09)}No outline"
+      },
+      {
+        "end": 4600,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4560,
+        "style": "Flat",
+        "text": "{\\frz2.82\\fscx109.71\\fscy109.71\\pos(737.12,338.69)}No outline"
+      },
+      {
+        "end": 4650,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4600,
+        "style": "Flat",
+        "text": "{\\frz3.29\\fscx111.33\\fscy111.33\\pos(757.13,335.36)}No outline"
+      },
+      {
+        "end": 4690,
+        "extra": {
+          "a-mo": {
+            "originalText": "{\\pos(640,360)}No outline",
+            "uuid": "<uuid>"
+          }
+        },
+        "layer": 0,
+        "start": 4650,
+        "style": "Flat",
+        "text": "{\\frz3.76\\fscx112.95\\fscy112.95\\pos(778.23,332.1)}No outline"
+      }
+    ],
+    "outcome": "ok",
+    "unchanged": 13,
+    "undo_steps": 1
+  },
+  "departure": "D13"
+}

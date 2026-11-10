@@ -1,5 +1,6 @@
 # Translation contexts by surface; ctest hikari_i18n_contexts_are_semantic fails on a context missing here.
 context	surface
+HikariSub.Agent	AI agent: the Agent panel, its threads, questions, modes and caps, and its commands (AI7)
 HikariSub.Audio	The audio panel: waveform and spectrum, playback, audio files and tracks
 HikariSub.Automation	Automation: the manager, script notices and dialogs, macros and their shortcuts
 HikariSub.Colours	The colour pickers and the screen dropper
@@ -7,24 +8,29 @@ HikariSub.Conversion	Format conversion, the FPS change and resampling (subtitle 
 HikariSub.Discord	What Discord shows while Discord presence is on (Settings › Updates and privacy)
 HikariSub.Documents	Opening, saving, closing and reloading Documents; Untitled Documents, associated files, refused commands
 HikariSub.Editor	The line editor panel: text fields and their menu, the line inspector, counters, alignment, tag buttons
+HikariSub.Export	Export as: its window, the formats and options, and the report of what each format drops
 HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
+HikariSub.GettingStarted	Getting started, the setup of the first start (FR1)
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
-HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the recent files and their menu
+HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the Project, the recent projects and files and their menus
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
 HikariSub.Karaoke	The karaoke check: its window, problems and their details
-HikariSub.Export	Export as: its window, the formats and options, and the report of what each format drops
 HikariSub.MainWindow	The main window: title, its title bar (menus, window buttons, the window menu), menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files
+HikariSub.NodeEffects	The Node effects mode: its graph canvas, node inspector, source Lines, preview and Apply
+HikariSub.Nodes	The node catalogue: node names, categories and the summaries of nodes and their fields
 HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language
 HikariSub.Reports	Crash and freeze reports, their notices, and Report an issue (CR1)
+HikariSub.Project	Projects: Open folder, Close project, the offer to open a file's Project
+HikariSub.Plugins	Plugins: the plugin manager, installing, signatures and permissions (PL1)
 HikariSub.Reference	The protected reference panel and its tray
+HikariSub.Review	AI review: the Review panel, the Line editor strip, Keep, Undo, checkpoints and their commands (AI2)
 HikariSub.ScriptProperties	The script properties dialog
 HikariSub.Search	Find and replace: its panel, questions and results
 HikariSub.SelectLines	The Select lines dialog
 HikariSub.Session	Sessions, autosaves and their recovery, temporary files
 HikariSub.SettingsImport	Importing the settings of a legacy installation
-HikariSub.GettingStarted	Getting started, the setup of the first start (FR1)
-HikariSub.Plugins	Plugins: the plugin manager, installing, signatures and permissions (PL1)
+HikariSub.QcNotes	The QC notes panel: notes kept in the file, their editor, import and export (FA20)
 HikariSub.Spelling	The spellchecker, dictionaries and fix suggestions
 HikariSub.StatusBar	The status bar: its fields, the selection status and progress
 HikariSub.Styles	The Style manager and style catalogs
@@ -33,6 +39,7 @@ HikariSub.TagList	The ASS override tag list and its popup
 HikariSub.TemplateEditor	The Template editor panel: template and code Lines, their preview on a karaoke Line, Apply
 HikariSub.TextMenu	The menu of every text field: undo, redo, the clipboard and selection
 HikariSub.TimeShift	The Shift times panel
+HikariSub.Tracking	Perspective tracking: the Power-Pin dialog and its status
 HikariSub.Translation	Translation mode: its switch and toggles, translation files and matching
 HikariSub.Video	The video panel and full screen: playback, menus, streams, chapters, keyframes, dummy video, indexing, player errors
 HikariSub.VisualTools	The visual tools: rail, options, values, and the tag and shape editing dialogs

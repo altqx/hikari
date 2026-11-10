@@ -1,17 +1,21 @@
 import type { Collector } from "./collector";
 import type { Model, ProviderConfig, Request, StopReason } from "./types";
 
-/** One provider, reached through its official SDK and the egress fetch. */
+/** One provider, reached through its official SDK and the relay fetch. */
 export interface Client {
-    /** Streams `request` into `out`; throws a ProviderError, or anything `providerErrorOf` maps. */
-    complete(request: Request, out: Collector, signal: AbortSignal): Promise<StopReason>;
+    /**
+     * Streams `request` into `out`; throws a ProviderError, or anything `providerErrorOf` maps. With `cache`, the
+     * provider's explicit cache already holds the request's system, tools and context, which then stay out.
+     */
+    complete(request: Request, out: Collector, signal: AbortSignal, cache?: string): Promise<StopReason>;
     models(signal: AbortSignal): Promise<Model[]>;
+    /** Stores the request's system, tools and context on the provider; answers the cache's name. */
+    createCache?(request: Request, ttlSeconds: number, signal: AbortSignal): Promise<string>;
+    deleteCache?(name: string, signal: AbortSignal): Promise<void>;
 }
 
 export interface ClientOptions {
     config: ProviderConfig;
-    /** Empty for a provider that needs none. */
-    key: string;
     fetch: typeof fetch;
 }
 

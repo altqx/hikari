@@ -24,7 +24,7 @@ _Avoid_: Tab as a synonym for the Document's content or Workspace.
 
 **Session**:
 A restorable set of open Documents and associated media, view positions and each tab's Workspace. Every tab belongs to a shell window; the Session does not yet record which ([MW4 #628](https://github.com/altqx/hikari/issues/628)).
-_Avoid_: Project file, Workspace layout or complete undo archive.
+_Avoid_: Project (the folder a window opened), Workspace layout or complete undo archive.
 
 **Script properties**:
 Document-level subtitle information, including title, credits, resolutions and ASS options. Script Info is the ASS section name.
@@ -42,7 +42,7 @@ _Avoid_: Filter without qualification where automation or presentation is also d
 
 **Workspace**:
 The arrangement of subtitle-editing panels and tools in a shell window and its floating panels. Each Document tab has its own, in its own window, and switching tabs shows that tab's ([ADR 0020](docs/adr/0020-per-document-tab-layouts.md)); it places panels and never changes which Document is the editing target.
-_Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents.
+_Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents or for an opened folder (a Project).
 
 **Editing target**:
 The subtitle document to which ordinary editing commands apply: the current tab of the shell window that was active last ([ADR 0025](docs/adr/0025-multiple-windows.md)). A tool with an explicit pinned target may name a different unprotected document. Within a window it is distinct from the control or panel that currently has keyboard focus; focus moving to another window makes that window's current tab the editing target.
@@ -82,6 +82,10 @@ _Avoid_: Video effect.
 A video frame identified by media indexing or an imported keyframe list, usable for navigation or snapping.
 _Avoid_: Scene cut or ASS animation point as an equivalent term.
 
+**Ink bounds**:
+The smallest rectangle, in video pixels, that holds every pixel the subtitle renderer draws for one Line, or for every Line, on a frame.
+_Avoid_: A Line's box, which is where its layout places it whether or not anything is drawn.
+
 **Time shift**:
 An offset or alignment of chosen Line start or end times.
 _Avoid_: Timing postprocessor as a synonym.
@@ -116,6 +120,14 @@ _Avoid_: Grid filter as a synonym.
 The one typed, versioned set of operations over the running application that plugins, AI tools, the MCP server and node-editor nodes call.
 _Avoid_: Automation API or Lua API, which name Aegisub automation's interface.
 
+**Node effect**:
+A graph of typed nodes, stored in its Document as a `graph <name>` Comment Line, that turns karaoke Lines into generated Lines marked `fx <name>`.
+_Avoid_: Template or effector, which name the stock karaoke templater's Lines and Kara Effector.
+
+**Node effects mode**:
+The window mode that edits a Document's node effects on a canvas, with its own panel layout and a preview on the video.
+_Avoid_: Node editor as the mode's name; it is one panel (Graph) of the mode.
+
 **Plugin**:
 A `.hikariplugin` package that extends HikariSub through the Hikari API, installed per user and run in its own helper.
 _Avoid_: Automation script or macro, which name Aegisub automation; extension or add-on.
@@ -128,6 +140,10 @@ _Avoid_: Trusted key as a synonym; a pinned key says who signed before, not that
 HikariSub's own signed index of plugins, run only by us, and the one source of listed plugins and their automatic updates ([ADR 0022](docs/adr/0022-hikarisub-plugins.md)).
 _Avoid_: Store, feed or curated index; there are no third-party feeds.
 
+**Install link**:
+`hikarisub://plugin/install?id=<id>`, the marketplace website's Install in HikariSub. It only chooses a listing: the index, the download checks and the install question are HikariSub's own.
+_Avoid_: Deep link or protocol handler as the product term; there are no other `hikarisub://` links.
+
 **Unverified**:
 A plugin sideloaded from a `.hikariplugin` file rather than installed from the Plugin marketplace, signed or not. It never updates by itself.
 
@@ -135,8 +151,31 @@ A plugin sideloaded from a `.hikariplugin` file rather than installed from the P
 One named, read- or write-marked entry of the Hikari API, with schemas for its parameters and result.
 _Avoid_: Command, which names a menu, toolbar or shortcut action.
 
+**AI tool**:
+A function a model can call: an Operation offered under a model-safe name, or a search the AI sidecar answers itself. The core tools are always offered; the others are in groups that `search_tools` finds.
+_Avoid_: Operation as a synonym; tool target, which names a tool's Document.
+
+**Attached Document**:
+A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
+
+**MCP server**:
+HikariSub serving its AI tools and the open Documents over MCP to agents outside it, such as Claude Code. It is off until the user turns it on, and never on with AI off.
+_Avoid_: MCP client, which is the sidecar reaching other servers.
+
 ### Files
 
 **User folder**:
 The one folder holding what a user may edit or keep: settings, automation scripts and modules, dictionaries, catalogues, presets, autosaves, recovery and logs. Automation's `?user` is this folder. Bundled scripts, modules and dictionaries are copied into it; caches live elsewhere.
 _Avoid_: Settings folder, data folder or config folder as names for it; program folder for the bundled files' source.
+
+**Project**:
+A folder opened in a shell window as its context: the Explorer shows it, the AI may read inside it, and its Project tier applies to the window. A window has one Project or none, and a subtitle file opened by itself has none ([ADR 0030](docs/adr/0030-open-a-folder-as-a-project.md)). The Project is the folder; the Session is what is open in which window; a Workspace is how one tab's panels are arranged.
+_Avoid_: Workspace or Session as names for the folder; Project as a name for the Document.
+
+**Project file**:
+The optional `.hikari/project.toml` in a Project. A Project exists without one; HikariSub writes it when a Project-level setting first changes.
+_Avoid_: Session file.
+
+**Project tier**:
+Where a shared thing (a Style catalogue, a layout, dictionary words, a preset or a setting) is kept in the Project's `.hikari/` folder rather than the User folder. The UI marks the two tiers **Project** and **Mine**.
+_Avoid_: Workspace settings.

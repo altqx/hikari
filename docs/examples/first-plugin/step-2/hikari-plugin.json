@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../schemas/hikari-plugin.schema.json",
+  "id": "com.example.first-plugin",
+  "name": "First plugin",
+  "version": "0.2.0",
+  "api": 1,
+  "main": "main.lua",
+  "authors": ["Your name"],
+  "license": "MIT",
+  "contributes": {
+    "commands": [{"id": "count", "title": "Count lines"}],
+    "panels": [{"id": "summary", "title": "Summary", "area": "right"}]
+  }
+}

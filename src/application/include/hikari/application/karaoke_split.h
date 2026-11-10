@@ -28,12 +28,14 @@ private:
     std::size_t m_longest = 0;
 };
 
-// everyN: kan|ji, not ka|n|ji; doubleConsonantApart: so|ma|t|ta. Without
+// everyN: kan|ji, not ka|n|ji; doubleConsonantApart: so|ma|t|ta;
+// thaiClusters: กิ|น, else a Thai word is one syllable. Without
 // `hyphenation` an English word is one syllable.
 struct KaraokeSplitRules {
     bool everyN = false;
     bool doubleConsonantApart = false;
     const Hyphenation *hyphenation = nullptr;
+    bool thaiClusters = false;
 };
 
 // Syllable starts of a Line without \k tags, 0 first, ascending; empty past

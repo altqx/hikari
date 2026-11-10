@@ -2,11 +2,13 @@
 
 // Ports run on the GUI thread; a port that is not attached answers Unavailable.
 
+#include "hikari/application/aegisub_frame_times.h"
 #include "hikari/application/audio_display.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/resample.h"
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -26,13 +28,13 @@ public:
     };
     struct Project {
         std::int64_t videoFrameShown = 0;
-        std::string audioFile, videoFile, keyframesFile;
+        std::string audioFile, videoFile, keyframesFile, timecodesFile;
         double videoZoom = 1;
     };
     // nullopt everywhere: no video (or no audio) open.
     virtual std::optional<std::int64_t> frameFromMs(std::int64_t ms) const = 0;
     virtual std::optional<std::int64_t> msFromFrame(std::int64_t frame) const = 0;
-    virtual std::optional<std::vector<std::int64_t>> frameStartsMs() const = 0;
+    virtual std::optional<AegisubFrameTimes> frameTimes() const = 0;
     virtual std::optional<VideoSize> videoSize() const = 0;
     virtual std::optional<std::vector<std::int64_t>> keyframes() const = 0;
     virtual void frame(std::int64_t frame, bool withSubtitles, std::function<void(std::optional<Frame>)> reply) = 0;
@@ -59,6 +61,9 @@ public:
     virtual ~TextMeasurePort() = default;
     // `style` holds the positional ASS v4+ style fields, Name first.
     virtual std::optional<TextExtents> measure(const std::vector<std::string> &style, const std::string &text) = 0;
+    // One answer per text, in order, each as measure() gives it.
+    virtual std::vector<std::optional<TextExtents>> measureMany(const std::vector<std::string> &style,
+                                                                const std::vector<std::string> &texts);
 };
 
 struct FilePickerRequest {
@@ -152,7 +157,7 @@ public:
     void setTranslation(std::function<std::string(const std::string &)> translate) { m_translate = std::move(translate); }
 
     void handle(const HostServiceRequest &request, Reply reply);
-    // Withdraws an open picker or resolution question and drops its answer.
+    // Withdraws an open picker or resolution question and drops its answer, and forgets the run's frames.
     void withdraw();
 
 private:
@@ -164,8 +169,19 @@ private:
     ScriptResolutionPort *m_resolution = nullptr;
     std::function<AutomationPathContext()> m_paths;
     std::function<std::string(const std::string &)> m_translate;
+    struct HeldFrame {
+        std::string script;
+        std::uint64_t run = 0;
+        std::int64_t number = 0;
+        bool withSubtitles = false;
+        std::shared_ptr<const MacroMediaPort::Frame> frame;
+    };
+    using FrameReply = std::function<void(std::shared_ptr<const MacroMediaPort::Frame>)>;
+    void frameFor(const HostServiceRequest &request, FrameReply reply);
+
     bool m_pickerOpen = false;
     bool m_resolutionOpen = false;
+    std::vector<HeldFrame> m_frames;
 };
 
 }

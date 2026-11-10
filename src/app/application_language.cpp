@@ -49,13 +49,16 @@ void Application::languageSwitched()
         }
         m_untitledTitle = untitled;
     }
-    m_shell->retranslate();
     m_video->retranslate();
     m_audio->retranslate();
-    m_statusBar->retranslate();
     for (auto *layout : layouts())
         layout->retranslate();
-    m_visualTools->retranslate();
+    for (auto *views : allViews()) {
+        views->shell->retranslate();
+        views->statusBar->retranslate();
+        views->visualTools->retranslate();
+        views->nodeEffects->retranslate();
+    }
     if (m_hotkeys)
         m_hotkeys->retranslate();
     emit tabsChanged();

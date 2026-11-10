@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""HTML contact sheet of the icon set: contact_sheet.py [output.html]; HIKARI_ICON_SHEET_ROLES limits it to those roles."""
+"""HTML contact sheet of the icon set: contact_sheet.py [output.html].
+
+HIKARI_ICON_SHEET_ROLES limits it to those roles (comma-separated). HIKARI_ICON_SHEET_SECTIONS names a JSON
+file of [{"title": ..., "roles": [...]}] that groups the sheet. HIKARI_ICON_SHEET_BEFORE names a folder of
+earlier SVGs: a role whose earlier SVG differs gets a "before" row above its own. HIKARI_ICON_SHEET_SIZES
+(comma-separated pixels, default 16,32) sets the sizes each cell shows before the disabled 16 px one.
+"""
 
 import html
 import json
@@ -20,6 +26,7 @@ APPEARANCES = [
     ("highContrastBlack", "High contrast black", "HighContrastBlack"),
 ]
 SLOTS = ["normal", "accent", "disabled"]
+SIZES = [int(s) for s in os.environ.get("HIKARI_ICON_SHEET_SIZES", "16,32").split(",") if s]
 RGB = r'rgb\(0x([0-9A-Fa-f]{6})\)'
 
 
@@ -57,12 +64,46 @@ def inline(svg, size):
     return svg.replace('<g id="accent">', '<g class="accent">').strip()
 
 
+def row(role, meta, svg, surfaces, cls=""):
+    cells = "".join(
+        '<td class="sw %s">%s<span class="off">%s</span></td>'
+        % (aid, "".join("<span>%s</span>" % inline(svg, size) for size in SIZES), inline(svg, 16))
+        for aid, _, _ in APPEARANCES)
+    return "<tr%s><td><code>%s</code><div class=meta>%s</div></td>%s<td class=meta>%s</td></tr>" % (
+        cls, html.escape(role), meta, cells, html.escape(surfaces))
+
+
+def rows_for(icon, before_dir):
+    svg = open(os.path.join(ICONS, icon["file"]), encoding="utf-8").read()
+    out = []
+    old = os.path.join(before_dir, icon["file"]) if before_dir else None
+    if old and os.path.exists(old):
+        before = open(old, encoding="utf-8").read()
+        if before != svg:
+            out.append(row(icon["role"], "before", before, "", " class=before"))
+    meta = html.escape(icon["label"]) + (" &middot; mirrors in RTL" if icon["mirror"] else "")
+    if icon.get("pending"):
+        meta += " &middot; pending " + html.escape(icon["pending"])
+    out.append(row(icon["role"], meta, svg, ", ".join(icon["surfaces"])))
+    return out
+
+
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "out", "k1", "index.html")
     manifest = json.load(open(os.path.join(ICONS, "manifest.json"), encoding="utf-8"))
     roles = [r for r in os.environ.get("HIKARI_ICON_SHEET_ROLES", "").split(",") if r]
     if roles:
         manifest["icons"] = [i for i in manifest["icons"] if i["role"] in roles]
+    by_role = {i["role"]: i for i in manifest["icons"]}
+    sections_file = os.environ.get("HIKARI_ICON_SHEET_SECTIONS")
+    if sections_file:
+        sections = json.load(open(sections_file, encoding="utf-8"))
+        missing = [r for s in sections for r in s["roles"] if r not in by_role]
+        if missing:
+            sys.exit("not in the set: " + ", ".join(missing))
+    else:
+        sections = [{"title": None, "roles": [i["role"] for i in manifest["icons"]]}]
+    before_dir = os.environ.get("HIKARI_ICON_SHEET_BEFORE")
     colours = theme_colours()
     css = []
     for aid, _, _ in APPEARANCES:
@@ -75,19 +116,13 @@ def main():
             % {"a": aid, "bg": bg, "fg": fg, "n": c["normal"], "ac": c["accent"],
                "dis": c["disabled"]})
     rows = []
-    for icon in manifest["icons"]:
-        svg = open(os.path.join(ICONS, icon["file"]), encoding="utf-8").read()
-        cells = []
-        for aid, _, _ in APPEARANCES:
-            cells.append(
-                '<td class="sw %s"><span>%s</span><span>%s</span><span class="off">%s</span></td>'
-                % (aid, inline(svg, 16), inline(svg, 32), inline(svg, 16)))
-        rows.append(
-            "<tr><td><code>%s</code><div class=meta>%s%s</div></td>%s"
-            "<td class=meta>%s</td></tr>" % (
-                html.escape(icon["role"]), html.escape(icon["label"]),
-                " &middot; mirrors in RTL" if icon["mirror"] else "", "".join(cells),
-                html.escape(", ".join(icon["surfaces"]))))
+    count = 0
+    for section in sections:
+        if section["title"]:
+            rows.append('<tr class=section><th colspan=6>%s</th></tr>' % html.escape(section["title"]))
+        for role in section["roles"]:
+            rows.extend(rows_for(by_role[role], before_dir))
+            count += 1
     sheets = []
     for aid, name, _ in APPEARANCES:
         for pct in (100, 150, 200):
@@ -109,6 +144,8 @@ h1{font-size:22px;margin:0 0 4px}p{max-width:72ch;color:var(--muted)}
 table{border-collapse:collapse;width:100%%;margin-top:16px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle}
 th{position:sticky;top:0;background:var(--bg);font-weight:600}
+tr.section th{position:static;font-size:16px;padding-top:18px}
+tr.before td{opacity:.8;border-bottom:none}
 td.sw span{display:inline-flex;align-items:center;margin-right:10px}
 td.sw svg{display:block}
 .meta{color:var(--muted);font-size:12px}
@@ -120,7 +157,7 @@ td.sw svg{display:block}
 </style></head><body>
 <h1>HikariSub icon set (K1)</h1>
 <p>%d icons drawn in house on a 16-unit grid (docs/ux/icons.md). Each appearance column shows the icon
-at 16 and 32 px, then disabled at 16 px, in the theme layer's colours (Light and Dark
+at %s px, then disabled at 16 px, in the theme layer's colours (Light and Dark
 with the default accent); the accent layer is the second colour. PNG sheets rendered by the
 application's Icon item: <span class=sheets>%s</span></p>
 %s
@@ -130,7 +167,7 @@ application's Icon item: <span class=sheets>%s</span></p>
 %s
 </tbody></table></div>
 </body></html>
-""" % ("".join(css), len(manifest["icons"]), " ".join(sheets), "".join(swatches), "\n".join(rows))
+""" % ("".join(css), count, ", ".join(map(str, SIZES)), " ".join(sheets), "".join(swatches), "\n".join(rows))
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.write(page)

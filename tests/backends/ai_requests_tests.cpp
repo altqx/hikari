@@ -1,3 +1,4 @@
+#include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 
@@ -42,23 +43,15 @@ struct MemoryConfigs final : app::ConfigStore {
 
 struct Keys final : app::KeyStore {
     std::map<std::string, std::string> keys;
-    bool deferReads = false;
-    std::deque<std::function<void()>> deferred;
     int reads = 0;
 
     void read(const std::string &id, std::function<void(app::KeyResult)> done) override
     {
         ++reads;
-        auto answer = [this, id, done] {
-            if (const auto it = keys.find(id); it != keys.end())
-                done(it->second);
-            else
-                done(app::KeyError::NotFound);
-        };
-        if (deferReads)
-            deferred.push_back(answer);
+        if (const auto it = keys.find(id); it != keys.end())
+            done(it->second);
         else
-            answer();
+            done(app::KeyError::NotFound);
     }
     void write(const std::string &id, const std::string &key, std::function<void(std::optional<app::KeyError>)> done) override
     {
@@ -173,36 +166,39 @@ TEST_F(AiRequestsTest, WithAiOffOrNoSidecarInstalledTheRequestFails)
     EXPECT_EQ(run.error().kind, app::ErrorKind::Network);
 }
 
-TEST_F(AiRequestsTest, AMissingKeyFailsTheRequestWithoutAskingForTheSidecar)
+TEST_F(AiRequestsTest, TheRelayReachesAProviderWithItsKeychainKey)
 {
     configure({{app::Role::Chat, "a/model"}});
-    keys.keys.clear();
+    app::Provider local = app::presetProvider(app::Preset::Custom, "ollama", "Ollama");
+    local.baseUrl = "http://127.0.0.1:11434/v1";
+    local.needsKey = false;
+    configs.stored.providers.push_back(local);
+    app::Provider locked = app::presetProvider(app::Preset::OpenAI, "locked", "Locked");
+    configs.stored.providers.push_back(locked);
     app::Providers providers(configs, keys);
-    AiRequests requests(providers, [this] { return sidecar(); });
-    Stream run;
-    requests.complete(app::Role::Chat, chat(), run.sink());
-    ASSERT_EQ(run.events.size(), 1u);
-    EXPECT_EQ(run.error().kind, app::ErrorKind::Key);
-    EXPECT_EQ(hostsAskedFor, 0);
+    const RelayTargets targets = providerTargets(providers);
+    const auto lookup = [&](Json target) {
+        std::optional<RelayTargetResult> found;
+        targets(target, [&](RelayTargetResult r) { found = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return found.has_value(); }));
+        return found.value_or(std::unexpected(app::Error{}));
+    };
+    const auto provider = [](const char *id) { return Json::object({{"kind", "provider"}, {"id", id}}); };
+
+    const auto openRouterTarget = lookup(provider("or"));
+    ASSERT_TRUE(openRouterTarget);
+    EXPECT_EQ(openRouterTarget->base, QUrl(QString::fromStdString(openRouter.baseUrl)));
+    EXPECT_EQ(openRouterTarget->key, kKey);
+    const auto keyless = lookup(provider("ollama"));
+    ASSERT_TRUE(keyless);
+    EXPECT_EQ(keyless->key, "");
+    EXPECT_EQ(lookup(provider("locked")).error().kind, app::ErrorKind::Key);
+    EXPECT_EQ(lookup(provider("nobody")).error().kind, app::ErrorKind::NoProvider);
+    EXPECT_EQ(lookup(Json::object({{"kind", "search"}, {"id", "or"}})).error().kind, app::ErrorKind::Rejected);
+    EXPECT_EQ(keys.reads, 2);
 }
 
-TEST_F(AiRequestsTest, CancelBeforeTheKeyArrivesSendsNothing)
-{
-    configure({{app::Role::Chat, "a/model"}});
-    keys.deferReads = true;
-    app::Providers providers(configs, keys);
-    AiRequests requests(providers, [this] { return sidecar(); });
-    Stream run;
-    const app::StreamId id = requests.complete(app::Role::Chat, chat(), run.sink());
-    requests.cancel(id);
-    ASSERT_EQ(run.events.size(), 1u);
-    EXPECT_EQ(run.error().kind, app::ErrorKind::Cancelled);
-    keys.deferred.front()();
-    EXPECT_EQ(run.events.size(), 1u);
-    EXPECT_EQ(hostsAskedFor, 0);
-}
-
-TEST_F(AiRequestsTest, RequestsCarryTheRolesModelAndTheKeyAndStreamTheAnswer)
+TEST_F(AiRequestsTest, RequestsCarryTheRolesModelButNeverAKeyAndStreamTheAnswer)
 {
     configure({{app::Role::Chat, "a/model"}, {app::Role::Translator, "t/model"}});
     app::Providers providers(configs, keys);
@@ -215,7 +211,8 @@ TEST_F(AiRequestsTest, RequestsCarryTheRolesModelAndTheKeyAndStreamTheAnswer)
     const auto &finished = std::get<app::Finished>(run.events[1]);
     EXPECT_EQ(finished.reason, app::StopReason::End);
     EXPECT_EQ(finished.text, "Hi");
-    EXPECT_EQ(finished.usage, (app::Usage{.inputTokens = 3, .outputTokens = 1}));
+    EXPECT_EQ(finished.usage,
+              (app::Usage{.inputTokens = 3, .outputTokens = 1, .cacheWriteTokens = 2, .cacheWriteHourTokens = 1}));
 
     const Json sent = received();
     ASSERT_EQ(sent.asArray().size(), 2u);
@@ -229,28 +226,14 @@ TEST_F(AiRequestsTest, RequestsCarryTheRolesModelAndTheKeyAndStreamTheAnswer)
     const Json &complete = *sent.asArray()[1].find("params");
     EXPECT_EQ(*complete.find("stream"), Json(id));
     EXPECT_EQ(*complete.find("providerId"), Json("or"));
-    EXPECT_EQ(*complete.find("key"), Json(kKey));
+    EXPECT_FALSE(complete.find("key"));
+    EXPECT_EQ(sent.dump().find(kKey), std::string::npos);
     EXPECT_EQ(*complete.find("request")->find("model"), Json("t/model"));
 
     Stream second;
     requests.complete(app::Role::Judge, chat(), second.sink());
     ASSERT_TRUE(waitFor([&] { return second.done(); }));
     EXPECT_EQ(*received().asArray()[3].find("params")->find("request")->find("model"), Json("a/model"));
-    EXPECT_EQ(keys.reads, 1);
-}
-
-TEST_F(AiRequestsTest, AKeylessProviderSendsAnEmptyKey)
-{
-    app::Provider local = app::presetProvider(app::Preset::Custom, "ollama", "Ollama");
-    local.baseUrl = "http://127.0.0.1:11434/v1";
-    configs.stored.providers.push_back(local);
-    configs.stored.roles[app::Role::Chat] = {"ollama", "llama"};
-    app::Providers providers(configs, keys);
-    AiRequests requests(providers, [this] { return sidecar(); });
-    Stream run;
-    requests.complete(app::Role::Chat, chat(), run.sink());
-    ASSERT_TRUE(waitFor([&] { return run.done(); }));
-    EXPECT_EQ(*received().asArray()[1].find("params")->find("key"), Json(""));
     EXPECT_EQ(keys.reads, 0);
 }
 
@@ -296,5 +279,173 @@ TEST_F(AiRequestsTest, RefreshingTheCatalogueKeepsTheUsersCorrections)
     EXPECT_EQ(app::capabilitiesOf(p, "b/model"), (app::Capabilities{.tools = true, .vision = true}));
     const Json list = received().asArray().back();
     EXPECT_EQ(list, Json::object({{"method", "_hikari/models.list"},
-                                  {"params", Json::object({{"providerId", "or"}, {"key", kKey}})}}));
+                                  {"params", Json::object({{"providerId", "or"}})}}));
+}
+
+TEST_F(AiRequestsTest, EndingAConversationAsksTheSidecarToDropItsCache)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    requests.endConversation("nobody", "thread-1");
+    requests.endConversation("or", "");
+    EXPECT_EQ(hostsAskedFor, 0);
+    requests.endConversation("or", "thread-1");
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 2u);
+    EXPECT_EQ(sent.asArray()[1], Json::object({{"method", "_hikari/conversation.end"},
+                                               {"params", Json::object({{"providerId", "or"},
+                                                                        {"cacheKey", "thread-1"}})}}));
+}
+
+TEST_F(AiRequestsTest, TestingAProviderBeforeItIsAddedListsItsModelsAndStoresNothing)
+{
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    app::Provider draft = app::presetProvider(app::Preset::Gemini, "gemini", "Google Gemini");
+    std::optional<AiRequests::Probed> probed;
+    requests.probe(draft, "AIza-typed", [&](AiRequests::Probed p) { probed = std::move(p); });
+    const auto lookUp = [&] {
+        std::optional<RelayTargetResult> found;
+        requests.relayTargets()(Json::object({{"kind", "provider"}, {"id", "gemini"}}),
+                                [&](RelayTargetResult r) { found = std::move(r); });
+        return found;
+    };
+    const auto during = lookUp();
+    ASSERT_TRUE(during && *during);
+    EXPECT_EQ((*during)->key, "AIza-typed");
+    EXPECT_EQ((*during)->base, QUrl(QString::fromStdString(draft.baseUrl)));
+    ASSERT_TRUE(waitFor([&] { return probed.has_value(); }));
+    const auto after = lookUp();
+    ASSERT_TRUE(after && !*after);
+    EXPECT_EQ(after->error().kind, app::ErrorKind::NoProvider);
+    ASSERT_TRUE(std::holds_alternative<std::vector<app::Model>>(*probed));
+    EXPECT_EQ(std::get<std::vector<app::Model>>(*probed), (std::vector<app::Model>{{.id = "b/model", .name = "B"}}));
+    EXPECT_FALSE(providers.enabled());
+    EXPECT_TRUE(keys.keys.empty());
+    EXPECT_TRUE(configs.stored.providers.empty());
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 2u);
+    const Json &set = *sent.asArray()[0].find("params")->find("providers");
+    ASSERT_EQ(set.asArray().size(), 1u);
+    EXPECT_EQ(*set.asArray()[0].find("id"), Json("gemini"));
+    EXPECT_EQ(*set.asArray()[0].find("wire"), Json("gemini"));
+    EXPECT_EQ(sent.asArray()[1], Json::object({{"method", "_hikari/models.list"},
+                                               {"params", Json::object({{"providerId", "gemini"}})}}));
+
+    std::optional<AiRequests::Probed> offline;
+    AiRequests none(providers, [] { return nullptr; });
+    none.probe(draft, "AIza-typed", [&](AiRequests::Probed p) { offline = std::move(p); });
+    ASSERT_TRUE(offline.has_value());
+    EXPECT_EQ(std::get<app::Error>(*offline).kind, app::ErrorKind::Network);
+}
+
+TEST_F(AiRequestsTest, WithCachingOffRequestsAskTheSidecarForNoCache)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    Stream cached;
+    requests.complete(app::Role::Chat, chat(), cached.sink());
+    ASSERT_TRUE(waitFor([&] { return cached.done(); }));
+    requests.setCaching(false);
+    Stream plain;
+    requests.complete(app::Role::Chat, chat(), plain.sink());
+    ASSERT_TRUE(waitFor([&] { return plain.done(); }));
+    const Json sent = received();
+    EXPECT_EQ(sent.asArray()[1].find("params")->find("request")->find("caching"), nullptr);
+    EXPECT_EQ(*sent.asArray()[3].find("params")->find("request")->find("caching"), Json(false));
+}
+
+TEST_F(AiRequestsTest, WebSearchReachesTheSidecarOnlyWhileTheSwitchIsOn)
+{
+    configure({{app::Role::Chat, "a/model"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    const auto ask = [&] {
+        Stream run;
+        Json request = chat();
+        request["webSearch"] = true;
+        requests.complete(app::Role::Chat, std::move(request), run.sink());
+        EXPECT_TRUE(waitFor([&] { return run.done(); }));
+    };
+    requests.setWebSearch(false, app::SearchService::Brave);
+    ask();
+    EXPECT_EQ(requests.searchService(), std::nullopt);
+    requests.setWebSearch(true, app::SearchService::Brave);
+    ask();
+    EXPECT_EQ(requests.searchService(), app::SearchService::Brave);
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 4u);
+    EXPECT_FALSE(sent.asArray()[0].find("params")->find("searchService"));
+    EXPECT_FALSE(sent.asArray()[1].find("params")->find("request")->find("webSearch"));
+    EXPECT_EQ(*sent.asArray()[2].find("params")->find("searchService"), Json("brave"));
+    EXPECT_EQ(*sent.asArray()[3].find("params")->find("request")->find("webSearch"), Json(true));
+}
+
+TEST_F(AiRequestsTest, CitationsAndSearchSuggestionsComeBackWithTheAnswer)
+{
+    configure({{app::Role::Chat, "cites"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    Stream run;
+    requests.complete(app::Role::Chat, chat(), run.sink());
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+    const auto &finished = std::get<app::Finished>(run.events.back());
+    EXPECT_EQ(finished.citations,
+              (std::vector<app::Citation>{{.index = 1, .url = "https://example.org/a", .title = "A", .quote = "Aimer"}}));
+    EXPECT_EQ(finished.searchSuggestions, "<div>chips</div>");
+    EXPECT_EQ(Json::parse(finished.providerState).value_or(Json()),
+              Json::object({{"type", "providerState"}, {"wire", "gemini"}, {"json", "[]"}}));
+}
+
+TEST_F(AiRequestsTest, TestingASearchServiceReachesItOnlyWhileTheTestRunsWithTheTypedKey)
+{
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Brave), std::nullopt);
+    std::optional<std::optional<app::Error>> answer;
+    requests.testSearch(app::SearchService::Brave, "BSA-typed", [&](std::optional<app::Error> e) { answer = e; });
+    const std::optional<SearchAccess> during = requests.searchAccess(app::SearchService::Brave);
+    ASSERT_TRUE(during);
+    EXPECT_EQ(during->typedKey, "BSA-typed");
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Exa), std::nullopt);
+    ASSERT_TRUE(waitFor([&] { return answer.has_value(); }));
+    EXPECT_EQ(*answer, std::nullopt);
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Brave), std::nullopt);
+    EXPECT_TRUE(keys.keys.empty());
+
+    answer.reset();
+    requests.testSearch(app::SearchService::Exa, std::nullopt, [&](std::optional<app::Error> e) { answer = e; });
+    const std::optional<SearchAccess> stored = requests.searchAccess(app::SearchService::Exa);
+    ASSERT_TRUE(stored);
+    EXPECT_EQ(stored->typedKey, std::nullopt);
+    ASSERT_TRUE(waitFor([&] { return answer.has_value(); }));
+    ASSERT_TRUE(answer->has_value());
+    EXPECT_EQ((*answer)->kind, app::ErrorKind::Unauthorized);
+    EXPECT_EQ((*answer)->httpStatus, 401);
+
+    requests.setWebSearch(true, app::SearchService::Exa);
+    ASSERT_TRUE(requests.searchAccess(app::SearchService::Exa));
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Exa)->typedKey, std::nullopt);
+    requests.setWebSearch(false, app::SearchService::Exa);
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Exa), std::nullopt);
+
+    const Json sent = received();
+    ASSERT_EQ(sent.asArray().size(), 4u);
+    EXPECT_EQ(*sent.asArray()[1].find("params"), Json::object({{"service", "brave"}}));
+    EXPECT_EQ(*sent.asArray()[3].find("params"), Json::object({{"service", "exa"}}));
+}
+
+TEST_F(AiRequestsTest, TestingASearchServiceWithoutTheAiComponentFails)
+{
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [] { return nullptr; });
+    std::optional<std::optional<app::Error>> answer;
+    requests.testSearch(app::SearchService::Brave, "BSA-typed", [&](std::optional<app::Error> e) { answer = e; });
+    ASSERT_TRUE(answer.has_value() && answer->has_value());
+    EXPECT_EQ((*answer)->kind, app::ErrorKind::Network);
+    EXPECT_EQ(requests.searchAccess(app::SearchService::Brave), std::nullopt);
 }

@@ -47,6 +47,7 @@ inline constexpr int kGridFirst = 4001;
 inline constexpr int kGridFilterIgnoreInActions = 4546;
 inline constexpr int kGlobalFirst = 5000;
 inline constexpr int kGlobalQuit = 5108;
+inline constexpr int kGlobalCloseWindow = 5263;
 inline constexpr int kLegacyHotkeyActions = 243;
 inline constexpr int kFirstScriptHotkey = 30100;
 // Rows from kFirstScriptHotkey up are macros', and plugin commands' when named "plugin.<id>.<command>".
@@ -67,9 +68,11 @@ std::span<const HotkeyAction> hotkeyActions();
 int hotkeyIdOf(std::string_view symbol);
 // "" for an id without a symbol.
 std::string_view hotkeySymbol(int id);
+// Its symbol has an AI token: "Turn off all AI features" unregisters it.
+bool aiCommand(int id);
 // The English names the Options list shows, by id.
 const std::map<int, std::string> &hotkeyNames();
-// "" when the id has no name (scripts, GLOBAL_QUIT...).
+// "" when the id has no name (scripts...).
 std::string hotkeyName(int id);
 // A retired action keeps its symbol, so stored lines naming it are
 // recognised, but has no name and its bindings are dropped as lists are read.
@@ -143,7 +146,7 @@ struct HotkeyCapture {
     std::string accel;   // Accepted: the binding
     std::string message; // Refused: the message box shown; the window stays open
 };
-HotkeyCapture captureHotkey(const HotkeyPress &press, int type);
+HotkeyCapture captureHotkey(const HotkeyPress &press, int type, int command = 0);
 
 // The accelerators the Line editor's text fields keep whatever a binding says
 // (numpad digits only when TEXT_FIELD_ALLOW_NUMPAD_HOTKEYS is off).
@@ -181,8 +184,9 @@ public:
     HotkeyList(const HotkeyList &) = delete;
     HotkeyList &operator=(const HotkeyList &) = delete;
 
-    // Selects the first row. clear() keeps the history and the modified flag.
-    void build(const HotkeyMap &live);
+    // Selects the first row; a named command `hidden` takes gets no row.
+    // clear() keeps the history and the modified flag.
+    void build(const HotkeyMap &live, const std::function<bool(int id)> &hidden = {});
     void clear();
     // Rows added while the page is open (a macro registered meanwhile),
     // at the end and in every step of the history, shown as the filter shows

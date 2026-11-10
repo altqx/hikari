@@ -50,6 +50,10 @@ constexpr std::pair<ErrorKind, std::string_view> kErrorKinds[] = {
     {ErrorKind::Rejected, "rejected"}, {ErrorKind::Server, "server"},
     {ErrorKind::Malformed, "malformed"}, {ErrorKind::Cancelled, "cancelled"},
 };
+constexpr std::pair<SearchService, std::string_view> kSearchServices[] = {
+    {SearchService::Brave, "brave"}, {SearchService::Tavily, "tavily"}, {SearchService::Exa, "exa"},
+    {SearchService::Firecrawl, "firecrawl"},
+};
 constexpr std::pair<Role, std::string_view> kRoleIds[] = {
     {Role::Chat, "chat"}, {Role::Translator, "translator"}, {Role::Reviewer, "reviewer"},
     {Role::Vision, "vision"}, {Role::Judge, "judge"},
@@ -77,6 +81,26 @@ std::string_view presetId(Preset preset) { return toId(kPresets, preset); }
 std::optional<Preset> presetFromId(std::string_view id) { return fromId(kPresets, id); }
 std::string_view roleId(Role role) { return toId(kRoleIds, role); }
 std::optional<Role> roleFromId(std::string_view id) { return fromId(kRoleIds, id); }
+std::string_view searchServiceId(SearchService service) { return toId(kSearchServices, service); }
+std::optional<SearchService> searchServiceFromId(std::string_view id) { return fromId(kSearchServices, id); }
+std::string searchKeyEntry(SearchService service) { return "search:" + std::string(searchServiceId(service)); }
+
+bool searchesNatively(const Provider &provider)
+{
+    switch (provider.preset) {
+    case Preset::Anthropic:
+        return provider.wire == Wire::AnthropicMessages;
+    case Preset::OpenAI:
+        return provider.wire == Wire::Responses;
+    case Preset::Gemini:
+        return provider.wire == Wire::Gemini;
+    case Preset::OpenRouter:
+        return provider.wire == Wire::ChatCompletions;
+    case Preset::Custom:
+        return false;
+    }
+    return false;
+}
 std::optional<StopReason> stopReasonFromId(std::string_view id) { return fromId(kStopReasons, id); }
 std::string_view errorKindId(ErrorKind kind) { return toId(kErrorKinds, kind); }
 std::optional<ErrorKind> errorKindFromId(std::string_view id) { return fromId(kErrorKinds, id); }
@@ -148,9 +172,13 @@ std::optional<double> costOf(const Usage &usage, const std::optional<Price> &pri
         return usage.reportedCost;
     if (!price)
         return std::nullopt;
-    const double cached = static_cast<double>(usage.cachedInputTokens);
-    const double uncached = static_cast<double>(usage.inputTokens - usage.cachedInputTokens);
-    return (uncached * price->input + cached * price->cachedInput.value_or(price->input) +
+    const auto tokens = [](std::int64_t n) { return static_cast<double>(n); };
+    const double hourWrites = tokens(usage.cacheWriteHourTokens);
+    const double minuteWrites = tokens(usage.cacheWriteTokens - usage.cacheWriteHourTokens);
+    const double uncached = tokens(usage.inputTokens - usage.cachedInputTokens - usage.cacheWriteTokens);
+    const double write = price->cacheWrite.value_or(price->input);
+    return (uncached * price->input + tokens(usage.cachedInputTokens) * price->cachedInput.value_or(price->input) +
+            minuteWrites * write + hourWrites * price->cacheWriteHour.value_or(write) +
             static_cast<double>(usage.outputTokens) * price->output) /
            1'000'000.0;
 }
@@ -166,33 +194,57 @@ void Providers::add(Provider provider, std::string key, std::function<void(std::
         done(SaveError::Key);
         return;
     }
-    auto commit = [this, provider, key, done](std::optional<KeyError> error) mutable {
+    store(std::move(provider), std::move(key), std::move(done));
+}
+
+void Providers::update(Provider provider, std::optional<std::string> key,
+                       std::function<void(std::optional<SaveError>)> done)
+{
+    if (!m_config.provider(provider.id)) {
+        done(SaveError::Config);
+        return;
+    }
+    if (key && key->empty() && provider.needsKey) {
+        done(SaveError::Key);
+        return;
+    }
+    store(std::move(provider), std::move(key), std::move(done));
+}
+
+void Providers::store(Provider provider, std::optional<std::string> key,
+                      std::function<void(std::optional<SaveError>)> done)
+{
+    const bool newKey = key && !key->empty();
+    auto commit = [this, provider, key, newKey, done](std::optional<KeyError> error) mutable {
         if (error) {
             done(saveErrorOf(*error));
             return;
         }
         Config next = m_config;
-        std::erase_if(next.providers, [&](const Provider &p) { return p.id == provider.id; });
-        next.providers.push_back(provider);
+        const auto it = std::ranges::find(next.providers, provider.id, &Provider::id);
+        if (it == next.providers.end())
+            next.providers.push_back(provider);
+        else
+            *it = provider;
         if (!next.roles.contains(Role::Chat) && !provider.models.empty())
             next.roles[Role::Chat] = {provider.id, provider.models.front().id};
         if (!m_configs.save(next)) {
-            if (!key.empty())
+            if (newKey && !m_config.provider(provider.id))
                 m_keys.remove(provider.id, [](std::optional<KeyError>) {});
             done(SaveError::Config);
             return;
         }
         m_config = std::move(next);
-        if (key.empty())
+        if (newKey)
+            m_keyCache[provider.id] = *key;
+        else if (key)
             m_keyCache.erase(provider.id);
-        else
-            m_keyCache[provider.id] = key;
         done(std::nullopt);
     };
-    if (key.empty())
-        commit(std::nullopt);
+    if (newKey)
+        m_keys.write(provider.id, *key, std::move(commit));
     else
-        m_keys.write(provider.id, key, std::move(commit));
+        commit(std::nullopt);
 }
 
 void Providers::remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done)
@@ -211,12 +263,51 @@ void Providers::remove(const std::string &providerId, std::function<void(std::op
     });
 }
 
+void Providers::signOut(const std::string &providerId, std::function<void(std::optional<SaveError>)> done)
+{
+    if (!m_config.provider(providerId)) {
+        done(std::nullopt);
+        return;
+    }
+    m_keys.remove(providerId, [this, providerId, done = std::move(done)](std::optional<KeyError> error) {
+        if (error && *error != KeyError::NotFound) {
+            done(saveErrorOf(*error));
+            return;
+        }
+        m_keyCache.erase(providerId);
+        Config next = m_config;
+        const auto it = std::ranges::find(next.providers, providerId, &Provider::id);
+        if (it == next.providers.end()) {
+            done(std::nullopt);
+            return;
+        }
+        it->signedIn = false;
+        if (!m_configs.save(next)) {
+            done(SaveError::Config);
+            return;
+        }
+        m_config = std::move(next);
+        done(std::nullopt);
+    });
+}
+
 bool Providers::assign(Role role, ModelRef model)
 {
     if (!m_config.provider(model.providerId) || model.modelId.empty())
         return false;
     Config next = m_config;
     next.roles[role] = std::move(model);
+    if (!m_configs.save(next))
+        return false;
+    m_config = std::move(next);
+    return true;
+}
+
+bool Providers::unassign(Role role)
+{
+    Config next = m_config;
+    if (!next.roles.erase(role))
+        return true;
     if (!m_configs.save(next))
         return false;
     m_config = std::move(next);
@@ -243,6 +334,8 @@ bool Providers::setModels(const std::string &providerId, std::vector<Model> mode
     if (it == next.providers.end())
         return false;
     it->models = std::move(models);
+    if (!next.roles.contains(Role::Chat) && !it->models.empty())
+        next.roles[Role::Chat] = {providerId, it->models.front().id};
     if (!m_configs.save(next))
         return false;
     m_config = std::move(next);
@@ -271,6 +364,48 @@ void Providers::readKey(const std::string &providerId, std::function<void(std::o
             return;
         }
         m_keyCache[providerId] = *key;
+        done(*key);
+    });
+}
+
+void SearchKeys::store(SearchService service, std::string key, std::function<void(std::optional<SaveError>)> done)
+{
+    if (key.empty()) {
+        done(SaveError::Key);
+        return;
+    }
+    m_keys.write(searchKeyEntry(service), key,
+                 [this, service, key, done = std::move(done)](std::optional<KeyError> error) {
+                     if (error) {
+                         done(saveErrorOf(*error));
+                         return;
+                     }
+                     m_cache[service] = key;
+                     done(std::nullopt);
+                 });
+}
+
+void SearchKeys::remove(SearchService service, std::function<void(std::optional<SaveError>)> done)
+{
+    m_cache.erase(service);
+    m_keys.remove(searchKeyEntry(service), [done = std::move(done)](std::optional<KeyError> error) {
+        done(error && *error != KeyError::NotFound ? std::optional(saveErrorOf(*error)) : std::nullopt);
+    });
+}
+
+void SearchKeys::read(SearchService service, std::function<void(std::optional<std::string>)> done)
+{
+    if (const auto it = m_cache.find(service); it != m_cache.end()) {
+        done(it->second);
+        return;
+    }
+    m_keys.read(searchKeyEntry(service), [this, service, done = std::move(done)](KeyResult result) {
+        auto *key = std::get_if<std::string>(&result);
+        if (!key || key->empty()) {
+            done(std::nullopt);
+            return;
+        }
+        m_cache[service] = *key;
         done(*key);
     });
 }

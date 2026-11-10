@@ -62,6 +62,7 @@ VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [i
 | Position shifter | VIDEO_TOOL_POSITION_SHIFTER (2031) | A | free (the A nudge retired) | Audio Scroll left |
 | Hydra | VIDEO_TOOL_HYDRA (2032) | H | free | Audio Stop |
 | Perspective (VT3) | VIDEO_TOOL_PERSPECTIVE (2033) | Q | free | Audio Play 500 ms before |
+| Gradient (AU7) | VIDEO_TOOL_GRADIENT (2043) | W | free | Audio Play 500 ms after |
 
 The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPanel::SetAccels), not over the video, so they keep their keys.
 
@@ -73,11 +74,15 @@ The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPane
 | Text moving | the start one script pixel; Alt+arrows the end | a tenth | A/D/W/S, J/L/I/K (L never reached it: VIDEO_5_SECONDS_FORWARD) |
 | Text scaling | Left/Right the X arrow, Up/Down the Y arrow, one percent | a tenth | W/A/S/D |
 | Rectangle clipping | the second corner one unit | a tenth | A/D/W/S |
-| Vector clipping | the selected points one unit | one unit (the clip is written in whole units) | W/A/S/D |
+| Vector clipping | the selected points one unit | one unit | W/A/S/D |
 | Vector drawing | the selected points one unit | a tenth | W/A/S/D |
 | Perspective (VT3) | the corner grabbed last one unit, the whole quad before one is | a tenth | none (arch1t3cht's fork) |
 
 The legacy probes' presses replay as HikariSub's (`tests/application/legacy_visual_keys.h`): a press legacy nudged with becomes the arrow for the same nudge.
+
+**The vector clip modes** (FA9, [#566](https://github.com/altqx/hikari/issues/566)). Each button on the vector clip's row has a Video command with no default key: VIDEO_VECTOR_CLIP_DRAG, _LINE, _BEZIER, _BSPLINE, _POINT and _DELETE (2034-2039) choose a mode, and VIDEO_VECTOR_CLIP_INVERT (2040) toggles Invert clip. `vectorClipOptionOfHotkey` maps them to the row's options. When another tool is on, the command switches to the vector clip first.
+
+**Handle size** (FA9). Settings › Video › Handle size (`video.handleSize`, 50-400 %, default 100) scales every tool's handles, and the distances they can be grabbed and snapped from, through `VisualHost::handleScale` and `unitOf`. This is arch1t3cht's shape-handle size setting.
 
 ## What T2 added for the families
 
@@ -219,11 +224,38 @@ VT3 ([#273](https://github.com/altqx/hikari/issues/273), mockup approved 2026-10
 
 **The plane.** Show surrounding plane adds the outer quad, a rectangle of the same plane twice the inner one's size at first: matched to a rectangle in the shot, it holds the perspective while the inner quad is placed in it (an inner corner moves within the plane, the tags following). Lock outer quad (greyed while the plane is hidden) swaps the roles: the outer quad is placed by itself and an inner corner sets the perspective. Show grid draws an 8 × 8 grid over the outer quad (4 × 4 over the inner one without it). The outer quad is saved with each Line it edits, in Aegisub's extradata as arch1t3cht's Aegisub saves it (`_aegi_perspective_ambient_plane`, XD1; see document-model.md), in the same history step as the tags. A locked resize writes no tag but changes that value, so it is a step of its own. Undo brings back the value the Line had, and a file saved by either editor opens with its planes in place. Hiding the plane leaves the value as it was. A Line neither moving nor stacked is read again only when the script changes, not every frame. A plane shown when its Line cannot be read for a while (a stacking obstacle that cannot be measured) comes back where it was once the Line can be. Shown, it stays put while a \move carries the inner quad, and when the Line is read again after an edit, an Undo or a new Style; showing it fixes it from then on. Hidden, it stays where it was: shown again after the inner quad moved, the inner quad is placed in it as arch1t3cht does (its first and third corners in the plane's coordinates). It is shown only where it holds (`planeHolds`: the outer quad finite, convex and short of the plane's horizon, where the projective map's divisor reaches 0): a steeply turned quad's plane starts smaller than twice it, down to the inner quad itself, and an edit that would take the plane past its horizon is not taken.
 
+**Perspective tracking.** FA13 ([#570](https://github.com/altqx/hikari/issues/570), approved 2026-11-04) ports arch1t3cht's Perspective-Motion 0.4.1 (MIT) as Video › Tracking › Perspective tracking… (GLOBAL_PERSPECTIVE_TRACKING, 5240, no default key; greyed without a video). It reads pasted After Effects CC Power Pin data (`parsePowerPin`, perspective_tracking.h), whose length must equal the frames the selection covers. Lines that overlap must all show at the relative frame. Apply splits each Line frame by frame (`lineFrames`, grid_split.h) and maps each part's quad from the relative frame's plane to that frame's (`toUV`/`fromUV`, `quadToTransform`), with optional "Fit flat lines to the plane first" (the script's Apply perspective), clips moved with the plane (`mapClip`) and outline and shadow scaled. The frame's quad is always saved as the plane. It is one history step, "Perspective tracking", and the new Lines are selected. Data tracked at another size is scaled to the video, with a warning in the dialog.
+
+**Motion data.** AU8 ([#842](https://github.com/altqx/hikari/issues/842), approved 2026-11-09) does natively what Aegisub-Motion, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do, in Video › Tracking (5257–5262, no default keys). The bundled Aegisub-Motion still ships unchanged. Its departures are [AU8-motion-data](compatibility-decisions.md#au8-motion-data). The parity table and corpus are in `docs/research/motion-data-parity.md`.
+
+- **Apply motion data…** (`motion_data.h` `applyMotion`) reads pasted or opened After Effects 6.0 keyframe data (Position, Scale, Rotation) and does Aegisub-Motion's per-frame maths (`motion_tags.cpp`). Each selected Line becomes one Line a frame, or one Line with `\move` and `\t` in Linear mode, in one undo step. The new Lines keep Aegisub-Motion's `a-mo` extradata, so either Revert undoes either Apply. **Track clips with other data** adds a second data box; the clips follow it from the same relative frame. **Extrapolate past the data** fits data shorter than the Lines past its ends (`extendTrack`), and the status line warns when a fit is poor.
+- **Revert motion data** puts each tracked Line back as the Line it was made from, spanning all its pieces.
+- **Copy motion data from lines** writes the selected frame-by-frame Lines' first-block `\pos` (or the `\move` point), `\fscx`, `\fscy` and `\frz` as keyframe data at the video's frame rate. Applying it again to the first Line gives back the same Lines.
+- **Copy Power-Pin track from lines** (`derivePowerPinTrack`) writes each Line's saved plane, else its tags' quad, in arch.DerivePerspTrack's layout. A frame no Line shows keeps the quad before it. FA13's `parsePowerPin` reads it back.
+- **Extend tracked lines…** fits each value of frame-by-frame Lines with phos's method (`motion_fit.h`: degree 1 to 3 by k-fold cross-validation, the window halved towards the extended end while the error is 0.003 or more). It then grows the first or last Line by N frames and applies the fit as motion data.
+- **Extrapolate \move to the line** carries each selected Line's timed `\move` on at the same speed to its whole span, written to two decimals.
+
 **The bar.** Plane (the three toggles, K1 roles perspective-plane, perspective-lock-outer and perspective-grid), Origin (the mode as a text dropdown, then X and Y, editable in Keep), Rotation (X, Y and Z, °) and Shear (\fax). Values in the group of the option before them (Origin's X and Y) join that group as one item of the bar's Flow, under its label, so a wrap never parts them from it (`VisualToolBar.qml`'s `joined`).
 
 **Drawing.** The inner quad in red at two pixels, the outer quad dashed, the grid faint, the corners' squares (inner) and circles (outer), and \org's orange cross (with a circle in Keep), in device pixels as the other tools' handles.
 
 The render check is `hikari_backends_visual_perspective_render_tests`: libass renders the tool's tags and the ink's corners must lie within a pixel of the quad, at the script's size and at twice it.
+## The Gradient tool (AU7)
+
+AU7 ([#843](https://github.com/altqx/hikari/issues/843), owner gate Q227–Q229 on 2026-11-10) adds a thirteenth family, `GradientTool` (`visual_gradient.h`), last on the rail. Its command is VIDEO_TOOL_GRADIENT (2043, W). It does natively what Gradient Factory, Skew gradient, lyger's GradientEverything, GradientByChar and ClipGrad, phos.VectorGradient and RotateGradient, zf.gradientCut, petzku's CombineGradientLines, ua.Colorize and l0.LerpByChar do. The bundled scripts still ship unchanged; their defects are [#885](https://github.com/altqx/hikari/issues/885). Departures are [AU7-gradient](compatibility-decisions.md#au7-gradient).
+
+The UI-free parts are shared with AU22 and NE5:
+
+- `tag_lerp.h`: tag values (number, colour, alpha, point, rect), RGB or HSL blending, Style defaults, ASS formatting, stops and Accel (t^a).
+- `gradient_geometry.h`: polygons in script pixels, filled nonzero as libass fills clips. Sutherland–Hodgman against strips (always convex), `positiveRegion` to rebuild a self-intersecting or self-touching outline, `inset` and `insetBands` for strips along a clip (round joins at reflex corners), drawings in and out, and the five phos masks.
+- `gradient.h`: a `Spec` and the target Lines in, the new texts out, or a `Problem` saying why not.
+
+**Modes** (icon toggles): Rectangle strips (snapped to the drag's dominant axis, `\clip(x1,y1,x2,y2)`), Rotated strips, Skewed strips (a handle tilts the strip edges; a 4-point vector clip seeds it), Strips along the clip (rings inward from the Line's clip, no drag), Wedge strips (P1–P3, or the Line's 3-point vector clip; Shape: Wedge, Box, Ring, Star or Vignette), By character (a block before each grapheme, t by measured width or by count) and By line (each picked Line by its index).
+
+**Stops.** Values: From and To for each tag in the gradient (the picker adds a tag, Remove drops the shown one), From seeded from the active Line. Picked lines (strip modes): every picked Line is a stop in Grid order, and tags that differ between them are interpolated block by block. Strip, Overlap, Accel, Blend and Merge equal strips (on by default) shape the strips.
+
+**Preview and commit.** After the drag (at once in the modes without one) the new Lines show over the video through `previewLines`, and `hiddenLines` leaves the originals out of the preview. Handles, values and options still change it. Apply or Enter commits one "Gradient" step through `Gesture::stageReplacement`: each target is commented and its strips follow it (the stops are all commented, and the strips follow the last), or its text is changed in the other modes. The new Lines are selected. Esc drops the preview. A gradient that can't be made says why over the video, and Apply rings the bell.
+
 ## Edit shapes and Edit tags (PU5)
 PU5 ([#307](https://github.com/altqx/hikari/issues/307), [mockup](https://github.com/altqx/hikari/issues/307#issuecomment-6336250092) approved by the owner 2026-10-22) puts both editors on DG1's frame as modeless, resizable windows (`ShapesEditionDialog.qml`, `AllTagsEditionDialog.qml`, kept where they were left under `shapesEdition` and `allTagsEdition`), one layout for both: the list on the left with New, Duplicate, Delete and ⋯ under it, the selected item's fields on the right, its preview, and a footer with Undo and Redo at the leading edge and Close at the trailing one.
 A click or Up and Down in either list chooses through the editor; the list's highlight follows the editor's selection only. The bar's chosen preset or tag follows a rename (the name typed, Replace, their Undo and Redo, Undo all: the history keeps each step's renames, and Redo brings back the step's own selection), and a change made while another family is shown reaches the drawing tool or Hydra all the same, so it comes back on the same entry, read again. New shape, Take from the active line and the tags preview read the Line editor's pending text, as the video shows it. A window that goes with the one it opened from (fullscreen left, a floating panel hidden) is not closed: the editor and its history stay, the bar showing the dialogs opens it again, and Edit shapes… or Edit tags… brings an open editor's window forward.

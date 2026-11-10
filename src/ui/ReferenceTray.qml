@@ -84,7 +84,7 @@ FocusScope {
             model: tray.shell.referenceLines
             columnWidths: tray.shell.gridColumnWidths
             onColumnWidthsEdited: tray.shell.gridColumnWidths = columnWidths
-            GridHeaderToolTip { grid: referenceGrid }
+            GridToolTip { grid: referenceGrid }
             GridScrollBars { grid: referenceGrid }
             onActiveLineRequested: id => tray.app.selectReferenceLine(id)
             onExtendRequested: rows => tray.app.extendReferenceSelection(rows)
@@ -137,21 +137,42 @@ FocusScope {
     ShellMenu {
         id: occurrenceMenu
         objectName: "referenceOccurrenceMenu"
+        readonly property bool found: occurrences.count > 0
+        ShellMenuItem {
+            objectName: "referenceCopy"
+            iconRole: "edit-copy"
+            text: qsTr("Copy")
+            shortcutText: ShellMenus.keyText("Ctrl+C")
+            onTriggered: tray.app.copyReferenceLines()
+        }
+        MenuSeparator {}
+        MenuHeading {
+            objectName: "referenceOccurrencesHeading"
+            text: qsTr("Also in")
+            visible: occurrenceMenu.found
+            height: occurrenceMenu.found ? implicitHeight : 0
+        }
         Instantiator {
             id: occurrences
             model: []
-            delegate: ShellMenuItem {
+            delegate: MenuRadioItem {
                 required property var modelData
                 required property int index
                 objectName: "referenceOccurrence" + index
                 text: modelData.text
-                checkable: true
                 checked: modelData.checked
-                keepsMenuOpen: false
                 onTriggered: tray.app.chooseReferenceOccurrence(index)
             }
-            onObjectAdded: (index, object) => occurrenceMenu.insertItem(index, object)
+            // MUST KILL: 3 counts Copy, the separator and the heading before the occurrence rows
+            onObjectAdded: (index, object) => occurrenceMenu.insertItem(3 + index, object)
             onObjectRemoved: (index, object) => occurrenceMenu.removeItem(object)
+        }
+        ShellMenuItem {
+            objectName: "referenceNoOccurrences"
+            text: qsTr("No other occurrences")
+            enabled: false
+            visible: !occurrenceMenu.found
+            height: occurrenceMenu.found ? 0 : implicitHeight
         }
     }
 }

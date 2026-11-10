@@ -25,6 +25,13 @@ std::optional<Preset> presetFromId(std::string_view id);
 std::string_view roleId(Role role);
 std::optional<Role> roleFromId(std::string_view id);
 
+/// Searches the web for providers without a search of their own.
+enum class SearchService { Brave, Tavily, Exa, Firecrawl };
+std::string_view searchServiceId(SearchService service);
+std::optional<SearchService> searchServiceFromId(std::string_view id);
+/// The keychain entry of the service's key; no provider id contains ':'.
+std::string searchKeyEntry(SearchService service);
+
 struct Capabilities {
     bool tools = false;
     bool vision = false;
@@ -37,6 +44,8 @@ struct Price {
     double input = 0;
     double output = 0;
     std::optional<double> cachedInput;
+    std::optional<double> cacheWrite;
+    std::optional<double> cacheWriteHour;
     bool operator==(const Price &) const = default;
 };
 
@@ -58,6 +67,8 @@ struct Provider {
     /// Ends before the endpoint path, e.g. "https://api.openai.com/v1".
     std::string baseUrl;
     bool needsKey = true;
+    /// The key came from signing in to the provider, not from a paste.
+    bool signedIn = false;
     Capabilities defaults;
     std::vector<Model> models;
     /// The user's corrections to the catalogue, by model id.
@@ -68,6 +79,8 @@ struct Provider {
 /// A provider entry for a preset, with its endpoint, wire and default capabilities.
 Provider presetProvider(Preset preset, std::string id, std::string name);
 Capabilities capabilitiesOf(const Provider &provider, std::string_view modelId);
+/// The sidecar's searchesNatively: the others search through the user's search service.
+bool searchesNatively(const Provider &provider);
 
 struct ModelRef {
     std::string providerId;
@@ -90,8 +103,12 @@ struct Config {
 struct Usage {
     std::int64_t inputTokens = 0;
     std::int64_t outputTokens = 0;
-    /// Part of inputTokens.
+    /// Part of inputTokens: read from the provider's cache.
     std::int64_t cachedInputTokens = 0;
+    /// Part of inputTokens: written to the provider's cache.
+    std::int64_t cacheWriteTokens = 0;
+    /// Part of cacheWriteTokens: kept for an hour.
+    std::int64_t cacheWriteHourTokens = 0;
     /// What the provider says the request cost, when it says.
     std::optional<double> reportedCost;
     bool operator==(const Usage &) const = default;
@@ -151,11 +168,25 @@ struct ToolCallArguments {
     int index = 0;
     std::string delta;
 };
+/// A source the answer cites; `index` numbers one completion's sources from 1.
+struct Citation {
+    int index = 0;
+    std::string url;
+    std::string title;
+    std::string quote;
+    bool operator==(const Citation &) const = default;
+};
 struct Finished {
     StopReason reason = StopReason::End;
     std::string text;
     std::vector<ToolCall> toolCalls;
     Usage usage;
+    std::vector<Citation> citations;
+    /// Google's search suggestions as HTML; its terms require showing them with a Gemini answer that searched.
+    std::string searchSuggestions;
+    /// The protocol's providerState part as JSON text, empty when there is none. It goes back among the assistant
+    /// message's parts when the conversation continues.
+    std::string providerState;
 };
 struct Failed {
     Error error;
@@ -202,8 +233,15 @@ public:
     /// Stores the key first; the provider is added only once the key is safe. An empty key is for
     /// providers that need none.
     void add(Provider provider, std::string key, std::function<void(std::optional<SaveError>)> done);
+    /// Changes an added provider in place. Nullopt keeps its stored key; its roles stay.
+    void update(Provider provider, std::optional<std::string> key, std::function<void(std::optional<SaveError>)> done);
     void remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done);
+    /// Deletes a signed-in provider's key from the keychain. The provider and its roles stay, without a key, until
+    /// the user signs in again or pastes one.
+    void signOut(const std::string &providerId, std::function<void(std::optional<SaveError>)> done);
     bool assign(Role role, ModelRef model);
+    /// The role goes back to the chat model.
+    bool unassign(Role role);
     bool setCapabilities(const std::string &providerId, const std::string &modelId, Capabilities capabilities);
     /// Replaces the provider's catalogue; the user's capability corrections stay.
     bool setModels(const std::string &providerId, std::vector<Model> models);
@@ -213,10 +251,27 @@ public:
     void readKey(const std::string &providerId, std::function<void(std::optional<std::string>)> done);
 
 private:
+    void store(Provider provider, std::optional<std::string> key, std::function<void(std::optional<SaveError>)> done);
+
     ConfigStore &m_configs;
     KeyStore &m_keys;
     Config m_config;
     std::map<std::string, std::string, std::less<>> m_keyCache;
+};
+
+/// The search services' keys, kept in the keychain like the providers'.
+class SearchKeys {
+public:
+    explicit SearchKeys(KeyStore &keys) : m_keys(keys) {}
+
+    void store(SearchService service, std::string key, std::function<void(std::optional<SaveError>)> done);
+    void remove(SearchService service, std::function<void(std::optional<SaveError>)> done);
+    /// Read from the keychain once; nullopt when there is none or it can't be read.
+    void read(SearchService service, std::function<void(std::optional<std::string>)> done);
+
+private:
+    KeyStore &m_keys;
+    std::map<SearchService, std::string> m_cache;
 };
 
 }

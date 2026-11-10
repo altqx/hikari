@@ -6,6 +6,7 @@
 
 #include "hikari/backends/helper_host.h"
 #include "hikari/backends/plugin_protocol.h"
+#include "hikari/backends/sandbox.h"
 
 #include <QElapsedTimer>
 #include <QObject>
@@ -14,9 +15,14 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace hikari::backends {
+
+// HikariSub.Plugin.<hash of the id>: the helper's folder to read and execute, the plugin's package folder to read,
+// nothing else, and no network.
+sandbox::Profile pluginProfile(const QString &helperPath, const QString &packageFolder, const std::string &id);
 
 class PluginProcess : public QObject {
     Q_OBJECT
@@ -34,11 +40,11 @@ public:
         plugin::Service service = plugin::Service::Notify;
         plugin::Level level = plugin::Level::Info; // Notify
         bool toast = false;                        // Notify
-        std::string name;                          // Call: operation; SetSetting: id; Subscribe: event
-        std::string json;                          // Call: params; SetSetting: value
+        std::string name;                          // Call, Ui, Files, Net: operation; SetSetting: id; Subscribe: event
+        std::string json;                          // Call, Ui, Files, Net: params; SetSetting: value
         std::string text;                          // Notify
     };
-    // Call answers the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
+    // Call, Ui, Files and Net answer the JSON envelope, SetSetting, Subscribe and Lock a refusal (empty: done), Notify and
     // Unlock anything.
     using ServiceReply = std::function<void(std::string)>;
     using ServiceHandler = std::function<void(const ServiceRequest &, ServiceReply)>;
@@ -50,13 +56,19 @@ public:
     ~PluginProcess() override;
 
     void setServiceHandler(ServiceHandler handler) { m_services = std::move(handler); }
+    // Every later helper starts confined to `profile`; where that can't be enforced it still runs.
+    void setSandbox(std::optional<sandbox::Profile> profile) { m_sandbox = std::move(profile); }
+    bool sandboxed() const { return m_sandbox.has_value(); }
 
+    // Also tries again after a failed load.
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
     bool run(const std::string &command);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
-    bool push(const std::string &event, const std::string &json);
+    bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
+    // As push, but a queued event takes the newer data only when both carry the same non-empty key.
+    bool deliver(const std::string &event, const std::string &json, const std::string &coalesceKey);
     void forceStop();
 
     State state() const { return m_state; }
@@ -83,6 +95,7 @@ private:
         enum class Kind { Load, Command, Event } kind = Kind::Command;
         std::string name;
         std::string json;
+        std::string key;
     };
     void startHelper();
     void next();
@@ -98,6 +111,8 @@ private:
     LoadSource m_load;
     Limits m_limits;
     ServiceHandler m_services;
+    std::optional<sandbox::Profile> m_sandbox;
+    std::unique_ptr<sandbox::Launcher> m_launcher;
     std::unique_ptr<helper::HelperHost> m_host;
     State m_state = State::Idle;
     QString m_loadError;

@@ -87,6 +87,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n rotated line could not keep its shape.</numerusform>
+            <numerusform>%n rotated lines could not keep their shape.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n comment line(s) removed.</source>
         <translation>
             <numerusform>%n comment line removed.</numerusform>
@@ -126,13 +133,6 @@
         <translation>
             <numerusform>%n line gets the conversion style “%1”.</numerusform>
             <numerusform>%n lines get the conversion style “%1”.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>Layer, style, actor, margins or effect removed from %n line.</numerusform>
-            <numerusform>Layer, style, actor, margins or effect removed from %n lines.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -195,6 +195,13 @@
         <translation>
             <numerusform>%n line with nothing to show skipped.</numerusform>
             <numerusform>%n lines with nothing to show skipped.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>Style options for %n style saved in the subtitle file.</numerusform>
+            <numerusform>Style options for %n styles saved in the subtitle file.</numerusform>
         </translation>
     </message>
 </context>
@@ -270,9 +277,30 @@
             <numerusform>The fonts of every style and every %1 tag in all %n open files.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>%n font file already exists in “%1”.</numerusform>
+            <numerusform>%n font files already exist in “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>and %n more</numerusform>
+            <numerusform>and %n more</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Grid</name>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n QC note</numerusform>
+            <numerusform>%n QC notes</numerusform>
+        </translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation>
@@ -313,6 +341,27 @@
         <translation>
             <numerusform>Delete line</numerusform>
             <numerusform>Delete %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>This file has %n Aegisub fold.</numerusform>
+            <numerusform>This file has %n Aegisub folds.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n Aegisub fold became a line group.</numerusform>
+            <numerusform>%n Aegisub folds became line groups.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>%n fold was skipped: it overlaps a line group or does not pair.</numerusform>
+            <numerusform>%n folds were skipped: they overlap a line group or do not pair.</numerusform>
         </translation>
     </message>
 </context>
@@ -389,6 +438,74 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.NodeEffects</name>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation>
+            <numerusform>%n node</numerusform>
+            <numerusform>%n nodes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation>
+            <numerusform>%n wire</numerusform>
+            <numerusform>%n wires</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation>
+            <numerusform>%n more output</numerusform>
+            <numerusform>%n more outputs</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation>
+            <numerusform>%n node selected.</numerusform>
+            <numerusform>%n nodes selected.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation>
+            <numerusform>Wrote %n line in %1 on the last run</numerusform>
+            <numerusform>Wrote %n lines in %1 on the last run</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation>
+            <numerusform>%n karaoke line</numerusform>
+            <numerusform>%n karaoke lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problems</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation>
+            <numerusform>Applied: %n line from %1 in %2</numerusform>
+            <numerusform>Applied: %n lines from %1 in %2</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
         <source>%n rules</source>
@@ -418,14 +535,136 @@
             <numerusform>%n skipped: their keys are taken.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>Up to date · checked %n minute ago</numerusform>
+            <numerusform>Up to date · checked %n minutes ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>Up to date · checked %n hour ago</numerusform>
+            <numerusform>Up to date · checked %n hours ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>Connected · %n model</numerusform>
+            <numerusform>Connected · %n models</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>Not tested · %n model</numerusform>
+            <numerusform>Not tested · %n models</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>It ran for more than %n second.</numerusform>
+            <numerusform>It ran for more than %n seconds.</numerusform>
+        </translation>
+    </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
         <translation>
             <numerusform>The plugin ran for more than %n second, so HikariSub stopped it. Its next command starts it again.</numerusform>
             <numerusform>The plugin ran for more than %n seconds, so HikariSub stopped it. Its next command starts it again.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>Imported %n note.</numerusform>
+            <numerusform>Imported %n notes.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n was already in the file.</numerusform>
+            <numerusform>%n were already in the file.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n note has no line within 15 seconds of its time.</numerusform>
+            <numerusform>%n notes have no line within 15 seconds of their time.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 has %n note</numerusform>
+            <numerusform>%1 has %n notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>in %n section.</numerusform>
+            <numerusform>in %n sections.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>This file already has %n note.</numerusform>
+            <numerusform>This file already has %n notes.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>Adding skips %n note that is already here.</numerusform>
+            <numerusform>Adding skips %n notes that are already here.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>Add %n note</numerusform>
+            <numerusform>Add %n notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>Remove the %n QC note from this file?</numerusform>
+            <numerusform>Remove all %n QC notes from this file?</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>Exported %n note.</numerusform>
+            <numerusform>Exported %n notes.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n note</numerusform>
+            <numerusform>%n notes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>Export %n note…</numerusform>
+            <numerusform>Export %n notes…</numerusform>
         </translation>
     </message>
 </context>
@@ -443,6 +682,58 @@
         <translation>
             <numerusform>HikariSub stopped responding for %n second %1.</numerusform>
             <numerusform>HikariSub stopped responding for %n seconds %1.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation>
+            <numerusform>%n AI change to review</numerusform>
+            <numerusform>%n AI changes to review</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation>
+            <numerusform>Also undo my edits to %n line I changed after the AI</numerusform>
+            <numerusform>Also undo my edits to %n lines I changed after the AI</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation>
+            <numerusform>%n other change</numerusform>
+            <numerusform>%n other changes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation>
+            <numerusform>%n change to review</numerusform>
+            <numerusform>%n changes to review</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>You changed %n line after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</numerusform>
+            <numerusform>You changed %n lines after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation>
+            <numerusform>%n change</numerusform>
+            <numerusform>%n changes</numerusform>
         </translation>
     </message>
 </context>
@@ -771,6 +1062,110 @@
         <translation>
             <numerusform>%n more line changes.</numerusform>
             <numerusform>%n more lines change.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tracking</name>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>The data has %n frame, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</numerusform>
+            <numerusform>The data has %n frames, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n frame at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</numerusform>
+            <numerusform>%n frames at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n frame. Covers the selection’s frames %1–%2.</numerusform>
+            <numerusform>%n frames. Covers the selection’s frames %1–%2.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>The video has fewer than %n frame before line %1.</numerusform>
+            <numerusform>The video has fewer than %n frames before line %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%n frame of data for %1 frames: %2 extrapolated before, %3 after.</numerusform>
+            <numerusform>%n frames of data for %1 frames: %2 extrapolated before, %3 after.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>The data has %n frame, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</numerusform>
+            <numerusform>The data has %n frames, but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>The clip data has %n frame; the motion data has %1.</numerusform>
+            <numerusform>The clip data has %n frames; the motion data has %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n frame. Moves the clips from frame %1.</numerusform>
+            <numerusform>%n frames. Moves the clips from frame %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>Copied %n frame of motion data</numerusform>
+            <numerusform>Copied %n frames of motion data</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Copied %n frame of Power-Pin data</numerusform>
+            <numerusform>Copied %n frames of Power-Pin data</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>Extrapolated \move on %n line</numerusform>
+            <numerusform>Extrapolated \move on %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>Fits position, scale and rotation over the %n selected line (degree %1, error %2 px).</numerusform>
+            <numerusform>Fits position, scale and rotation over the %n selected lines (degree %1, error %2 px).</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Video</name>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n frame (%1)</numerusform>
+            <numerusform>%n frames (%1)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Searching… %n frame checked</numerusform>
+            <numerusform>Searching… %n frames checked</numerusform>
         </translation>
     </message>
 </context>

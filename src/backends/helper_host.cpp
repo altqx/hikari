@@ -43,8 +43,13 @@ void HelperHost::start()
     if (m_state != State::Idle)
         return;
     m_state = State::Starting;
+    if (m_prepare)
+        m_prepare(m_process);
     m_process.start(m_program, m_arguments);
     QTimer::singleShot(m_limits.handshakeMs, this, [this] {
+        // A busy owner may not have read the hello: Qt watches stdout only after the start notification.
+        if (m_state == State::Starting && m_process.state() != QProcess::NotRunning)
+            m_process.waitForReadyRead(0);
         if (m_state == State::Starting)
             stop();
     });

@@ -53,6 +53,8 @@ public:
     // Call once the window shows: completes a pending report and, with "Always send", sends it.
     void started(const QString &package, int screens, qreal scale, const QString &layout);
     void freezeRecovered(const crash::Record &record);
+    // With "Always send", reports a rolled-back AI component; `failure` is "initialize" or "crashed". True when it went.
+    bool aiComponentFailed(const QString &failedVersion, const QString &failure);
 
     QString pending() const;
     bool freezeOffered() const { return m_freeze.has_value(); }

@@ -12,6 +12,8 @@ Rectangle {
     required property var fieldsController
     property string selectionText
     property string saveText
+    property string reviewText
+    signal reviewClicked()
     readonly property color warningColour: Theme.warning
     default property alias trailing: trailingItems.data
 
@@ -90,6 +92,12 @@ Rectangle {
         Field {
             objectName: "saveStatus"
             text: bar.saveText
+        }
+        Field {
+            objectName: "statusReview"
+            text: bar.reviewText
+            tip: qsTranslate("HikariSub.Review", "Show the Review panel")
+            TapHandler { onTapped: bar.reviewClicked() }
         }
         Repeater {
             model: [

@@ -73,6 +73,8 @@ public:
     }
     void setEditorSelectionPlacer(std::function<void(long, long)> place) { m_placeSelection = std::move(place); }
     void refresh();
+    // Whether the video shows this controller's Document; the overlay stays empty while it doesn't.
+    void setPictureShown(std::function<bool()> shown) { m_pictureShown = std::move(shown); }
     void setShapesFile(std::shared_ptr<ListFile> file) { m_shapesFile = std::move(file); }
     const std::shared_ptr<ListFile> &shapesFile() const { return m_shapesFile; }
     ShapeEditor *shapeEditor() const { return m_shapeEditor; }
@@ -145,6 +147,7 @@ public:
     void cancelGesture() override { (void)escape(); }
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
+    float handleScale() const override;
     std::int64_t videoTimeMs() const override;
     application::LegacyTimebase timebase() const override;
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }
@@ -207,6 +210,7 @@ private:
     VideoController &m_video;
     SettingsStore &m_settings;
     SessionProvider m_session;
+    std::function<bool()> m_pictureShown;
     std::function<void()> m_edited;
     std::function<void(const core::Document *)> m_preview;
     std::function<void(const QString &)> m_log;

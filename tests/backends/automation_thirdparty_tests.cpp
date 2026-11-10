@@ -3,6 +3,8 @@
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 
+#include "stage_paths.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
@@ -27,6 +29,8 @@
 
 using hikari::backends::LuaScriptHost;
 namespace app = hikari::application;
+using hikari::testing::kWindows;
+using hikari::testing::normalizedPaths;
 
 namespace {
 
@@ -57,45 +61,6 @@ void writeArtifact(const QString &name, const QJsonDocument &doc)
 
 QString fixtureDir() { return QStringLiteral(HIKARI_THIRDPARTY_DIR); }
 QString stageDir() { return QStringLiteral(HIKARI_THIRDPARTY_STAGE); }
-
-#ifdef _WIN32
-constexpr bool kWindows = true;
-#else
-constexpr bool kWindows = false;
-#endif
-
-// Windows messages mix separators and drive-letter case, double separators, and DependencyControl's Logger.moon turns "C:/" into "C: /".
-QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kWindows)
-{
-    const Qt::CaseSensitivity cs = windows ? Qt::CaseInsensitive : Qt::CaseSensitive;
-    if (windows)
-        text.replace(QLatin1Char('\\'), QLatin1Char('/'));
-    for (QString dir : dirs) {
-        if (windows)
-            dir.replace(QLatin1Char('\\'), QLatin1Char('/'));
-        text.replace(dir, QStringLiteral("<stage>"), cs);
-        if (windows && dir.size() > 2 && dir.at(1) == QLatin1Char(':'))
-            text.replace(dir.left(2) + QLatin1Char(' ') + dir.mid(2), QStringLiteral("<stage>"), cs);
-    }
-    QString out = text;
-    if (windows) {
-        static const QRegularExpression staged(QStringLiteral(R"(<stage>[^"'\s()]*)"));
-        static const QRegularExpression doubled(QStringLiteral("/{2,}"));
-        out.clear();
-        qsizetype at = 0;
-        for (auto it = staged.globalMatch(text); it.hasNext();) {
-            const QRegularExpressionMatch m = it.next();
-            QString path = m.captured();
-            out += text.mid(at, m.capturedStart() - at) + path.replace(doubled, QStringLiteral("/"));
-            at = m.capturedEnd();
-        }
-        out += text.mid(at);
-    }
-    // Lua truncates a long chunk name, so it depends on the build path.
-    static const QRegularExpression chunk(QStringLiteral(R"(\[string "[^"]*"\])"));
-    out.replace(chunk, QStringLiteral(R"([string "<chunk>"])"));
-    return out;
-}
 
 struct Script {
     QString project, file;
@@ -159,12 +124,12 @@ struct FixtureVideo : app::MacroMediaPort {
     }();
     std::optional<std::int64_t> frameFromMs(std::int64_t) const override { return std::nullopt; }
     std::optional<std::int64_t> msFromFrame(std::int64_t) const override { return std::nullopt; }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return starts; }
+    std::optional<app::AegisubFrameTimes> frameTimes() const override { return app::AegisubFrameTimes::fromFrameStarts(starts); }
     std::optional<VideoSize> videoSize() const override { return VideoSize{1920, 1080, 16, 9}; }
     std::optional<std::vector<std::int64_t>> keyframes() const override { return std::vector<std::int64_t>{0, 96, 336}; }
     void frame(std::int64_t, bool, std::function<void(std::optional<Frame>)> reply) override { reply(std::nullopt); }
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
-    std::optional<Project> project() const override { return Project{96, "", "", "", 1}; }
+    std::optional<Project> project() const override { return Project{96, "", "", "", "", 1}; }
     std::optional<std::string> fileName() const override { return std::nullopt; }
 };
 

@@ -7,6 +7,7 @@
 using namespace hikari::backends::helper;
 namespace protocol = hikari::backends::plugin;
 using hikari::api::Json;
+using hikari::plugin_helper::Area;
 using hikari::plugin_helper::Host;
 using hikari::plugin_helper::Level;
 using hikari::plugin_helper::Options;
@@ -23,16 +24,17 @@ public:
 
     std::expected<Json, Json> call(const std::string &operation, const Json &params) override
     {
-        Writer w;
-        w.i32(static_cast<std::int32_t>(protocol::Service::Call)).str(operation).str(params.dump());
-        const auto reply = answerText(w.take());
-        const auto parsed = Json::parse(reply ? *reply : std::string());
-        if (!parsed || !parsed->isObject())
-            return std::unexpected(Json::object({{"code", "unavailable"}, {"message", kStopped}}));
-        if (const Json *result = parsed->find("result"))
-            return *result;
-        const Json *error = parsed->find("error");
-        return std::unexpected(error ? *error : Json::object({{"code", "unavailable"}, {"message", kStopped}}));
+        return envelope(protocol::Service::Call, operation, params);
+    }
+
+    std::expected<Json, Json> request(Area area, const std::string &operation, const Json &params) override
+    {
+        switch (area) {
+        case Area::Files: return envelope(protocol::Service::Files, operation, params);
+        case Area::Net: return envelope(protocol::Service::Net, operation, params);
+        case Area::Ui: break;
+        }
+        return envelope(protocol::Service::Ui, operation, params);
     }
 
     void notify(Level level, bool toast, const std::string &text) override
@@ -74,6 +76,20 @@ public:
     }
 
 private:
+    std::expected<Json, Json> envelope(protocol::Service service, const std::string &operation, const Json &params)
+    {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(service)).str(operation).str(params.dump());
+        const auto reply = answerText(w.take());
+        const auto parsed = Json::parse(reply ? *reply : std::string());
+        if (!parsed || !parsed->isObject())
+            return std::unexpected(Json::object({{"code", "unavailable"}, {"message", kStopped}}));
+        if (const Json *result = parsed->find("result"))
+            return *result;
+        const Json *error = parsed->find("error");
+        return std::unexpected(error ? *error : Json::object({{"code", "unavailable"}, {"message", kStopped}}));
+    }
+
     std::expected<std::string, Outcome> answerText(std::vector<std::byte> payload)
     {
         auto answer = m_responder.call(std::move(payload));

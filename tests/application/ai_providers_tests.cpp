@@ -134,6 +134,19 @@ TEST(AiConfig, CostIsTheProvidersFigureElseThePriceTimesTheTokens)
     EXPECT_DOUBLE_EQ(*costOf(reported, price), 0.0123);
 }
 
+TEST(AiConfig, CacheWritesCostTheWritePriceAndReadsTheCachedPrice)
+{
+    const Usage usage{.inputTokens = 1'000'000, .outputTokens = 0, .cachedInputTokens = 500'000,
+                      .cacheWriteTokens = 300'000, .cacheWriteHourTokens = 100'000};
+    const Price price{.input = 3.0, .output = 15.0, .cachedInput = 0.3, .cacheWrite = 3.75, .cacheWriteHour = 6.0};
+    EXPECT_DOUBLE_EQ(*costOf(usage, price), 0.2 * 3.0 + 0.5 * 0.3 + 0.2 * 3.75 + 0.1 * 6.0);
+    const Price noWritePrice{.input = 3.0, .output = 15.0, .cachedInput = 0.3};
+    EXPECT_DOUBLE_EQ(*costOf(usage, noWritePrice), 0.5 * 3.0 + 0.5 * 0.3);
+    Price minutesOnly = price;
+    minutesOnly.cacheWriteHour.reset();
+    EXPECT_DOUBLE_EQ(*costOf(usage, minutesOnly), 0.2 * 3.0 + 0.5 * 0.3 + 0.3 * 3.75);
+}
+
 TEST(AiConfig, IdsRoundTrip)
 {
     for (const Role role : kRoles)
@@ -215,6 +228,82 @@ TEST_F(AiProvidersTest, RemovingAProviderDropsItsKeyAndRoles)
     EXPECT_FALSE(keys.keys.contains("or"));
 }
 
+TEST_F(AiProvidersTest, SigningOutDeletesTheKeyAndKeepsTheProviderAndItsRoles)
+{
+    Providers providers(configs, keys);
+    Provider signedIn = openRouter();
+    signedIn.signedIn = true;
+    ASSERT_EQ(add(providers, signedIn, "sk-or-v1-signed"), std::nullopt);
+    ASSERT_TRUE(providers.assign(Role::Vision, {"or", "v"}));
+    std::optional<std::optional<SaveError>> done;
+    providers.signOut("or", [&](std::optional<SaveError> e) { done = e; });
+    ASSERT_TRUE(done.has_value());
+    EXPECT_EQ(*done, std::nullopt);
+    EXPECT_FALSE(keys.keys.contains("or"));
+    EXPECT_EQ(readKey(providers, "or"), std::nullopt);
+    ASSERT_EQ(configs.stored.providers.size(), 1u);
+    EXPECT_FALSE(configs.stored.providers[0].signedIn);
+    EXPECT_EQ(configs.stored.roles.at(Role::Vision), (ModelRef{"or", "v"}));
+}
+
+TEST_F(AiProvidersTest, EditingAProviderKeepsItsPlaceRolesAndKeyUnlessGivenANewOne)
+{
+    Providers providers(configs, keys);
+    ASSERT_EQ(add(providers, openRouter(), "sk-old"), std::nullopt);
+    Provider local = presetProvider(Preset::Custom, "ollama", "Ollama");
+    local.baseUrl = "http://127.0.0.1:11434/v1";
+    ASSERT_EQ(add(providers, local, ""), std::nullopt);
+    ASSERT_TRUE(providers.assign(Role::Judge, {"or", "a/model"}));
+
+    Provider renamed = *providers.config().provider("or");
+    renamed.name = "My OpenRouter";
+    std::optional<std::optional<SaveError>> result;
+    providers.update(renamed, std::nullopt, [&](std::optional<SaveError> e) { result = e; });
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(*result, std::nullopt);
+    EXPECT_EQ(providers.config().providers[0].name, "My OpenRouter");
+    EXPECT_EQ(providers.config().providers[1].id, "ollama");
+    EXPECT_EQ(keys.keys.at("or"), "sk-old");
+    EXPECT_EQ(configs.stored.roles.at(Role::Judge), (ModelRef{"or", "a/model"}));
+
+    result.reset();
+    providers.update(renamed, std::string("sk-new"), [&](std::optional<SaveError> e) { result = e; });
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(*result, std::nullopt);
+    EXPECT_EQ(keys.keys.at("or"), "sk-new");
+    EXPECT_EQ(readKey(providers, "or"), "sk-new");
+    EXPECT_EQ(providers.config().providers[0].id, "or");
+
+    result.reset();
+    providers.update(presetProvider(Preset::OpenAI, "nobody", "Nobody"), std::string("sk"),
+                     [&](std::optional<SaveError> e) { result = e; });
+    EXPECT_EQ(result, std::optional<std::optional<SaveError>>(SaveError::Config));
+    EXPECT_FALSE(keys.keys.contains("nobody"));
+}
+
+TEST_F(AiProvidersTest, UnassigningARoleFallsBackToTheChatModel)
+{
+    Providers providers(configs, keys);
+    ASSERT_EQ(add(providers, openRouter(), "sk"), std::nullopt);
+    ASSERT_TRUE(providers.assign(Role::Reviewer, {"or", "b/model"}));
+    ASSERT_TRUE(providers.unassign(Role::Reviewer));
+    EXPECT_FALSE(configs.stored.roles.contains(Role::Reviewer));
+    EXPECT_EQ(providers.config().modelFor(Role::Reviewer), (ModelRef{"or", "a/model"}));
+}
+
+TEST_F(AiProvidersTest, TheFirstCatalogueFillsAnEmptyChatRole)
+{
+    Providers providers(configs, keys);
+    Provider bare = presetProvider(Preset::Anthropic, "anthropic", "Anthropic");
+    ASSERT_EQ(add(providers, bare, "sk"), std::nullopt);
+    EXPECT_FALSE(providers.config().roles.contains(Role::Chat));
+    ASSERT_TRUE(providers.setModels("anthropic", {{.id = "claude", .name = "Claude"}}));
+    EXPECT_EQ(configs.stored.roles.at(Role::Chat), (ModelRef{"anthropic", "claude"}));
+    ASSERT_TRUE(providers.assign(Role::Chat, {"anthropic", "other"}));
+    ASSERT_TRUE(providers.setModels("anthropic", {{.id = "claude", .name = "Claude"}}));
+    EXPECT_EQ(configs.stored.roles.at(Role::Chat), (ModelRef{"anthropic", "other"}));
+}
+
 TEST_F(AiProvidersTest, ANewCatalogueKeepsTheUsersCorrections)
 {
     Providers providers(configs, keys);
@@ -254,4 +343,57 @@ TEST_F(AiProvidersTest, AConfigThatCannotBeSavedChangesNothing)
     configs.failSave = true;
     EXPECT_EQ(add(providers, openRouter(), "sk"), SaveError::Config);
     EXPECT_FALSE(providers.enabled());
+}
+
+TEST(SearchServices, IdsRoundTripAndKeysLiveApartFromProviders)
+{
+    for (const SearchService service :
+         {SearchService::Brave, SearchService::Tavily, SearchService::Exa, SearchService::Firecrawl})
+        EXPECT_EQ(searchServiceFromId(searchServiceId(service)), service);
+    EXPECT_EQ(searchServiceFromId("bing"), std::nullopt);
+    EXPECT_EQ(searchKeyEntry(SearchService::Brave), "search:brave");
+}
+
+TEST(SearchServices, PresetsSearchNativelyOnlyOnTheirOwnWire)
+{
+    const auto on = [](Preset preset, Wire wire) {
+        Provider p = presetProvider(preset, "p", "P");
+        p.wire = wire;
+        return searchesNatively(p);
+    };
+    EXPECT_TRUE(on(Preset::Anthropic, Wire::AnthropicMessages));
+    EXPECT_TRUE(on(Preset::OpenAI, Wire::Responses));
+    EXPECT_FALSE(on(Preset::OpenAI, Wire::ChatCompletions));
+    EXPECT_TRUE(on(Preset::Gemini, Wire::Gemini));
+    EXPECT_TRUE(on(Preset::OpenRouter, Wire::ChatCompletions));
+    EXPECT_FALSE(on(Preset::OpenRouter, Wire::Responses));
+    EXPECT_FALSE(on(Preset::Custom, Wire::Responses));
+    EXPECT_FALSE(on(Preset::Custom, Wire::ChatCompletions));
+}
+
+TEST(SearchServices, AKeyIsReadFromTheKeychainOnceAndRemovedFromIt)
+{
+    FakeKeys store;
+    SearchKeys keys(store);
+    std::optional<SaveError> stored = SaveError::Config;
+    keys.store(SearchService::Tavily, "tvly-0123", [&](std::optional<SaveError> e) { stored = e; });
+    EXPECT_EQ(stored, std::nullopt);
+    EXPECT_EQ(store.keys.at("search:tavily"), "tvly-0123");
+
+    SearchKeys fresh(store);
+    std::optional<std::string> read;
+    fresh.read(SearchService::Tavily, [&](std::optional<std::string> k) { read = k; });
+    fresh.read(SearchService::Tavily, [&](std::optional<std::string> k) { read = k; });
+    EXPECT_EQ(read, "tvly-0123");
+    EXPECT_EQ(store.reads, 1);
+
+    fresh.remove(SearchService::Tavily, [&](std::optional<SaveError> e) { stored = e; });
+    EXPECT_EQ(stored, std::nullopt);
+    EXPECT_FALSE(store.keys.contains("search:tavily"));
+    read = "stale";
+    fresh.read(SearchService::Tavily, [&](std::optional<std::string> k) { read = k; });
+    EXPECT_EQ(read, std::nullopt);
+
+    keys.store(SearchService::Exa, "", [&](std::optional<SaveError> e) { stored = e; });
+    EXPECT_EQ(stored, SaveError::Key);
 }

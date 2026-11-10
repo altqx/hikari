@@ -106,6 +106,9 @@ KDDWViews.TabBarBase {
         font.bold: true
         elide: Text.ElideRight
         Accessible.ignored: true
+        HoverHandler { id: titleHover }
+        ToolTip.visible: titleHover.hovered && ToolTip.text.length > 0
+        ToolTip.text: Docking.headerRevision >= 0 ? Docking.panelTip(root.currentName) : ""
     }
 
     readonly property real slotWidth: toolbarSlot.width > 0 ? toolbarSlot.width + 8 : 0
@@ -185,6 +188,8 @@ KDDWViews.TabBarBase {
                     font.bold: tab.selected
                     elide: tab.cutOff ? Text.ElideNone : Text.ElideRight
                     Accessible.ignored: true
+                    ToolTip.visible: tab.hovered && ToolTip.text.length > 0
+                    ToolTip.text: Docking.headerRevision >= 0 ? Docking.panelTip(root.nameAt(tab.index)) : ""
                 }
                 Rectangle {
                     objectName: "dockTabFade"
@@ -301,7 +306,7 @@ KDDWViews.TabBarBase {
         z: root.mouseAreaZ + 1
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
-        cursorShape: Qt.SizeAllCursor
+        cursorShape: Docking.layoutLocked ? Qt.ArrowCursor : Qt.SizeAllCursor
         onPressed: mouse => {
             const at = root.count === 1 ? 0 : root.getTabIndexAtPosition(mapToGlobal(mouse.x, mouse.y))
             const index = at >= 0 ? at : root.currentTabIndex

@@ -35,6 +35,7 @@ DialogWindow {
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["Harper", "Automattic and Harper contributors", "Apache 2.0"],
+            ["YTSubConverter", "arcusmaximus", "MIT"],
             ["en_US Hunspell dictionary", "Kevin Atkinson, Geoff Kuenning and others", "LGPL and BSD"],
             ["sjp.pl Polish dictionary", "sjp.pl contributors", "GPL 2, LGPL 2.1, MPL 1.1, Apache 2.0 or CC BY 4.0"],
             ["th_TH Hunspell dictionary", "NECTEC (LEXiTRON) and libthai contributors", "LGPL"],
@@ -49,7 +50,9 @@ DialogWindow {
     }
     readonly property var sources: [
         ["Aegisub", "Aegisub contributors", "BSD 3-Clause and ISC"],
-        ["Aegisub, arch1t3cht's fork", "arch1t3cht and Aegisub contributors", "BSD 3-Clause"]
+        ["Aegisub, arch1t3cht's fork", "arch1t3cht and Aegisub contributors", "BSD 3-Clause and ISC"],
+        ["Align to video, from arch1t3cht's fork", "2019 Charlie Jiang", "BSD 3-Clause"],
+        ["arch1t3cht's Aegisub scripts", "arch1t3cht", "MIT"]
     ]
 
     component CreditRow: Item {
@@ -102,6 +105,7 @@ DialogWindow {
         Layout.preferredWidth: 492
         SectionLabel { text: qsTr("Development"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 6 }
         Person { objectName: "creditsDevelopment"; name: "altqx"; role: qsTr("Design and development"); Layout.fillWidth: true }
+        Person { objectName: "creditsThaiSupport"; name: "Jibrill"; role: qsTr("Thai support for automation scripts"); Layout.fillWidth: true }
         SectionLabel { text: qsTr("Translation"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }
         Person { objectName: "creditsTranslation"; name: "altqx"; role: qsTr("Korean, Polish, Tamil and Thai"); Layout.fillWidth: true }
         SectionLabel { text: qsTr("Built with"); font: credits.fontAt(11, Font.DemiBold); Layout.topMargin: 12 }

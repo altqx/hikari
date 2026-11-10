@@ -8,7 +8,8 @@ target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFAC
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp
+    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
           translation=translationModeStacksOriginalAboveTranslated
@@ -39,9 +40,13 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json"
     HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
+    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
+    HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-${HIKARI_QT_VERSION}/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
-add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
-    hikari_lua_helper hikari_automation_stage hikari_lrelease)
+target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends")
+add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper hikari_plugin_helper
+    hikari_lua_helper hikari_automation_stage hikari_lrelease hikari_fake_ai_sidecar)
 # MSVC: shell_tests.cpp outgrows an object file's default section count (C1128).
 if(MSVC)
     target_compile_options(hikari_ui_shell_tests PRIVATE /bigobj)
@@ -178,6 +183,12 @@ hikari_add_qttest(hikari_ui_automation_progress_tests SOURCES automation_progres
 target_compile_definitions(hikari_ui_automation_progress_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_progress_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_packages_tests SOURCES automation_packages_tests.cpp
+    LIBRARIES hikari_composition Qt6::Network)
+target_compile_definitions(hikari_ui_automation_packages_tests PRIVATE
+    HIKARI_AUTOMATION_ROOT="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_THIRDPARTY_RUNS="${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty/runs.json")
+add_dependencies(hikari_ui_automation_packages_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_automation_runs_tests SOURCES automation_runs_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation_document_scripts_tests.cpp
     LIBRARIES hikari_composition)
@@ -210,6 +221,11 @@ target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui" "${PROJECT_SOURCE_DIR}/tests/support")
 add_dependencies(hikari_ui_template_editor_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_node_effects_controller_tests SOURCES node_effects_controller_tests.cpp
+    LIBRARIES hikari_ui OFFSCREEN_ONLY)
+target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 foreach(mode offscreen xvfb native)
     if(TEST hikari_ui_template_editor_tests.${mode})
         set_tests_properties(hikari_ui_template_editor_tests.${mode} PROPERTIES TIMEOUT 300)
@@ -268,7 +284,10 @@ hikari_add_qttest(hikari_ui_layout_migration_tests SOURCES layout_migration_test
 target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest
+    PARTS windows sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
+          moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt)
+target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
@@ -301,6 +320,8 @@ target_compile_definitions(hikari_ui_saved_layouts_tests PRIVATE
 add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
+target_include_directories(hikari_ui_update_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_link_libraries(hikari_ui_update_checker_tests PRIVATE Hikari::sodium)
 hikari_add_qttest(hikari_ui_whats_new_tests SOURCES whats_new_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_whats_new_tests PRIVATE
     HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json")
@@ -329,19 +350,56 @@ target_compile_definitions(hikari_ui_analytics_session_tests PRIVATE
 add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_media_fixtures hikari_lua_helper
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
-hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp LIBRARIES hikari_composition LABELS ui)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
+add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
+hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
+    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
+target_include_directories(hikari_ui_ai_features_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
+    "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_ai_features_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
     HIKARI_MENU_LEDGER="${CMAKE_CURRENT_SOURCE_DIR}/menu_bar.txt")
 add_dependencies(hikari_ui_ai_features_tests hikari_fake_ai_sidecar)
+if(HIKARI_AI_SIDECAR)
+    hikari_add_qttest(hikari_ui_ai_mcp_review_tests SOURCES ai_mcp_review_tests.cpp
+        LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+    target_compile_definitions(hikari_ui_ai_mcp_review_tests PRIVATE
+        HIKARI_AI_RUNTIME_FILE="${HIKARI_AI_RUNTIME_FILE}" HIKARI_AI_BUNDLE_FILE="${HIKARI_AI_BUNDLE_FILE}"
+        HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
+    add_dependencies(hikari_ui_ai_mcp_review_tests hikari_ai_sidecar)
+endif()
+hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
+    LIBRARIES hikari_composition Qt6::Test Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
+target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
+    "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_ai_settings_tests PRIVATE
+    HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
+    HIKARI_FAKE_AGENT_CLI="$<TARGET_FILE:hikari_fake_agent_cli>" HIKARI_EXE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
+add_dependencies(hikari_ui_ai_settings_tests hikari_fake_ai_sidecar hikari_fake_agent_cli)
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+hikari_add_qttest(hikari_ui_plugin_marketplace_tests SOURCES plugin_marketplace_tests.cpp
+    ${PROJECT_SOURCE_DIR}/tests/plugins/test_signer.cpp LIBRARIES hikari_composition Hikari::sodium)
+target_include_directories(hikari_ui_plugin_marketplace_tests PRIVATE ${PROJECT_SOURCE_DIR}/tests/plugins)
+target_compile_definitions(hikari_ui_plugin_marketplace_tests PRIVATE
+    HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures"
+    HIKARI_MINISIGN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/minisign/fixtures")
 hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_runtime_tests.cpp LIBRARIES hikari_composition hikari_translations)
-target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>")
+target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
+    HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper)
+hikari_add_qttest(hikari_ui_plugin_qml_panels_tests OFFSCREEN_ONLY SOURCES plugin_qml_panels_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_plugin_qml_panels_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
+    HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+add_dependencies(hikari_ui_plugin_qml_panels_tests hikari_plugin_helper)
+hikari_add_qttest(hikari_ui_plugin_network_tests OFFSCREEN_ONLY SOURCES plugin_network_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC.
 target_compile_definitions(hikari_ui_update_apply_tests PRIVATE HIKARI_UPDATE_APPLY_WINDOWS_TESTS=$<BOOL:${WIN32}>)
@@ -355,6 +413,7 @@ hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARI
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
     HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
@@ -385,8 +444,11 @@ hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.
 hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
-    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
+    HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
 add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
+hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition)
+target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_guide_tests SOURCES user_guide_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_user_guide_tests PRIVATE HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
@@ -453,6 +515,7 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
 hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_font_faces_tests SOURCES font_faces_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_font_family_filter_tests SOURCES font_family_filter_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_font_faces_tests PRIVATE
     HIKARI_SYMBOL_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-symf020.ttf"
     HIKARI_NO_LETTERS_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-arabic.ttf")

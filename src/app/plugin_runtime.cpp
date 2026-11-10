@@ -4,10 +4,15 @@
 
 #include <QCollator>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QLoggingCategory>
 
 #include <algorithm>
 
 namespace hikari::app {
+
+Q_LOGGING_CATEGORY(lcPluginsSandbox, "hikari.plugins.sandbox")
 
 namespace {
 
@@ -44,6 +49,20 @@ ui::LogController::Severity severityOf(protocol::Level level)
     return ui::LogController::Info;
 }
 
+QString stopReason(PluginProcess::StopReason reason, int timeLimitMs)
+{
+    switch (reason) {
+    case PluginProcess::StopReason::TimeLimit:
+        return QCoreApplication::translate("HikariSub.Plugins", "It ran for more than %n second(s).", nullptr,
+                                           std::max(1, timeLimitMs / 1000));
+    case PluginProcess::StopReason::Crashed:
+        return QCoreApplication::translate("HikariSub.Plugins", "It stopped unexpectedly.");
+    case PluginProcess::StopReason::ForceStopped:
+        break;
+    }
+    return QCoreApplication::translate("HikariSub.Plugins", "It was force stopped.");
+}
+
 std::string envelope(const api::Result &result)
 {
     if (result)
@@ -59,39 +78,120 @@ struct PluginRuntime::Running {
     std::string id;
     plugins::Manifest manifest;
     api::Caller caller;
+    PluginFiles::Plugin files;
     std::unique_ptr<PluginProcess> process;
     std::vector<std::uint64_t> subscriptions;
 };
 
 PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), m_wiring(std::move(wiring))
 {
+    m_ui = new PluginUi(
+        [this](const std::string &plugin, const std::string &event, const std::string &json, const std::string &key) {
+            const auto it = m_plugins.find(plugin);
+            return it != m_plugins.end() && it->second->process->deliver(event, json, key);
+        },
+        this);
     const auto &f = m_wiring.folders;
     if (!f.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(f.plugins), path(f.data), path(f.cache), path(f.registry)},
                             api::kApiVersion);
+    if (!m_wiring.network) {
+        m_ownNetwork = std::make_unique<QNetworkAccessManager>();
+        m_wiring.network = m_ownNetwork.get();
+    }
+    if (m_wiring.sandbox) {
+        const backends::sandbox::Coverage coverage = backends::sandbox::systemCoverage(backends::sandbox::Network::None);
+        if (!coverage.complete())
+            qCWarning(lcPluginsSandbox) << "Restricted plugins run without a complete sandbox:" << coverage.missing;
+    }
+    m_network = new PluginNetwork(*m_wiring.network, m_wiring.networkAllowed, this);
+    m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui);
+    m_ui->setGrantDrop([this](const std::string &plugin, const QString &file) {
+        const auto it = m_plugins.find(plugin);
+        return it == m_plugins.end() ? api::Json() : m_files->grantDropped(it->second->files, file);
+    });
+    wireQmlPanels();
+}
+
+void PluginRuntime::wireQmlPanels()
+{
+    m_ui->setQmlHooks({
+        [this](const std::string &plugin, const std::string &operation, const api::Json &params,
+               std::function<void(api::Result)> done) {
+            const auto it = m_plugins.find(plugin);
+            if (it == m_plugins.end() || !m_wiring.api) {
+                done(api::fail(api::errors::kUnavailable, "the Hikari API isn't available here"));
+                return;
+            }
+            m_wiring.api->call(it->second->caller, operation, params, std::move(done));
+        },
+        [this](const std::string &plugin, const std::string &setting, const api::Json &value) {
+            return setSetting(plugin, setting, value);
+        },
+        [this](const std::string &plugin) {
+            const auto it = m_plugins.find(plugin);
+            if (it == m_plugins.end() || !m_installer)
+                return api::Json::object();
+            api::Json stored = api::Json::object();
+            if (const auto registry = m_installer->registry(); registry && registry->contains(plugin))
+                stored = registry->at(plugin).settings;
+            return plugins::settingValues(it->second->manifest, stored);
+        },
+        [this] { return m_wiring.language ? m_wiring.language() : QString(); },
+        [this](const QString &pluginName, const QString &text, bool error) {
+            if (m_wiring.log)
+                m_wiring.log->log(text, error ? ui::LogController::Error : ui::LogController::Warning, pluginName);
+        },
+    });
+    if (!m_wiring.folders.registry.isEmpty())
+        m_ui->keepLoadedPanelsIn(QFileInfo(m_wiring.folders.registry).dir().filePath(QStringLiteral("plugin-panels.json")));
+}
+
+std::optional<std::string> PluginRuntime::setSetting(const std::string &plugin, const std::string &setting,
+                                                     const api::Json &value)
+{
+    if (m_wiring.setSetting) {
+        const QString refused = m_wiring.setSetting(qs(plugin), qs(setting), qs(value.dump()));
+        return refused.isEmpty() ? std::nullopt : std::optional(refused.toStdString());
+    }
+    if (!m_installer)
+        return "HikariSub can’t keep settings here";
+    if (const auto kept = m_installer->setSetting(plugin, setting, value); !kept)
+        return kept.error();
+    settingChanged(qs(plugin), qs(setting), qs(value.dump()));
+    return std::nullopt;
 }
 
 PluginRuntime::~PluginRuntime()
 {
     m_lockWaiters.clear();
-    for (auto &[id, plugin] : m_plugins)
+    for (auto &[id, plugin] : m_plugins) {
         unsubscribe(*plugin);
+        endAccess(*plugin);
+    }
+    delete m_network;
 }
 
 void PluginRuntime::sync()
 {
     std::map<std::string, plugins::Manifest> wanted;
+    std::vector<PluginUi::Plugin> installed;
     if (m_installer) {
         if (const auto registry = m_installer->registry())
             for (const auto &[id, entry] : *registry) {
-                if (!entry.enabled)
-                    continue;
                 auto manifest = m_installer->installedManifest(id);
-                if (manifest)
+                if (!manifest) {
+                    if (entry.enabled && m_wiring.log)
+                        m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Can’t start: %1").arg(qs(manifest.error())),
+                                          ui::LogController::Error, qs(id));
+                    continue;
+                }
+                const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+                installed.push_back({id, manifest->name, entry.enabled, manifest->panels,
+                                     QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
+                                     manifest->tier == plugins::Tier::Unrestricted, manifest->version});
+                if (entry.enabled)
                     wanted.emplace(id, std::move(*manifest));
-                else if (m_wiring.log)
-                    m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Can’t start: %1").arg(qs(manifest.error())),
-                                      ui::LogController::Error, qs(id));
             }
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
@@ -102,6 +202,7 @@ void PluginRuntime::sync()
         }
         unsubscribe(*it->second);
         releaseLock(*it->second);
+        endAccess(*it->second);
         PluginProcess *process = it->second->process.get();
         disconnect(process, nullptr, this, nullptr);
         process->forceStop();
@@ -110,6 +211,7 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    m_ui->setPlugins(std::move(installed));
     relist();
 }
 
@@ -120,6 +222,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     raw->id = id;
     raw->manifest = std::move(manifest);
     raw->caller = api::Caller{"plugin:" + id, raw->manifest.name, raw->manifest.permissions.allDocuments.has_value()};
+    raw->files = PluginFiles::Plugin{id, raw->caller.id, raw->manifest.permissions.files};
     auto load = [this, raw] {
         protocol::LoadRequest request;
         const plugins::Manifest &m = raw->manifest;
@@ -140,15 +243,26 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     };
     raw->process = std::make_unique<PluginProcess>(m_wiring.helperPath, load, m_wiring.limits);
     PluginProcess *process = raw->process.get();
+    if (m_wiring.sandbox && m_installer && raw->manifest.tier == plugins::Tier::Restricted) {
+        const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+        process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
+    }
     process->setServiceHandler([this, raw](const PluginProcess::ServiceRequest &request, PluginProcess::ServiceReply reply) {
         serve(*raw, request, std::move(reply));
     });
     const QString name = qs(raw->manifest.name);
     auto log = [this] { return m_wiring.log; };
-    connect(process, &PluginProcess::unitEnded, this, [this, raw] { releaseLock(*raw); });
+    connect(process, &PluginProcess::unitEnded, this, [this, raw] {
+        releaseLock(*raw);
+        emit idle(qs(raw->id));
+    });
+    connect(process, &PluginProcess::stopped, this, [this, raw] { emit idle(qs(raw->id)); });
+    connect(process, &PluginProcess::loaded, this, [this, raw] { m_ui->running(raw->id); });
     connect(process, &PluginProcess::loadFailed, this, [this, raw, name, log](const QString &message) {
         unsubscribe(*raw);
         releaseLock(*raw);
+        endAccess(*raw);
+        m_ui->stopped(raw->id, QStringLiteral("failed"), message);
         if (log())
             log()->notice(ui::LogController::Error, name, QCoreApplication::translate("HikariSub.Plugins", "The plugin didn’t start."), message);
     });
@@ -167,6 +281,8 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     connect(process, &PluginProcess::stopped, this, [this, raw, name, log](PluginProcess::StopReason reason) {
         unsubscribe(*raw);
         releaseLock(*raw);
+        endAccess(*raw);
+        m_ui->stopped(raw->id, QStringLiteral("stopped"), stopReason(reason, m_wiring.limits.timeLimitMs));
         if (!log())
             return;
         switch (reason) {
@@ -221,6 +337,8 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
             return;
         }
         const auto kept = m_installer->setSetting(plugin.id, request.name, *value);
+        if (kept)
+            m_ui->settingsChanged(plugin.id);
         reply(kept ? std::string() : kept.error());
         return;
     }
@@ -249,6 +367,31 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         unlock(plugin);
         reply({});
         return;
+    case protocol::Service::Ui: {
+        auto params = api::Json::parse(request.json);
+        if (!params || !params->isObject()) {
+            reply(envelope(api::fail(api::errors::kInvalidParams, "the parameters must be a JSON object")));
+            return;
+        }
+        m_ui->serve(plugin.id, request.name, *params, std::move(reply));
+        return;
+    }
+    case protocol::Service::Files:
+    case protocol::Service::Net: {
+        auto params = api::Json::parse(request.json);
+        if (!params || !params->isObject()) {
+            reply(envelope(api::fail(api::errors::kInvalidParams, "the parameters must be a JSON object")));
+            return;
+        }
+        auto answer = [reply](api::Result result) { reply(envelope(result)); };
+        if (request.service == protocol::Service::Files)
+            m_files->serve(plugin.files, request.name, *params, std::move(answer));
+        else if (request.name == "net.fetch")
+            m_network->fetch(plugin.id, plugin.manifest.permissions.networkHosts, *params, std::move(answer));
+        else
+            answer(api::fail(api::errors::kUnknownOperation, "there is no operation \xE2\x80\x9C" + request.name + "\xE2\x80\x9D"));
+        return;
+    }
     }
     reply({});
 }
@@ -293,6 +436,18 @@ void PluginRuntime::releaseLock(Running &plugin)
 {
     std::erase_if(m_lockWaiters, [&plugin](const LockWaiter &w) { return w.plugin == &plugin; });
     unlock(plugin);
+}
+
+void PluginRuntime::endAccess(Running &plugin)
+{
+    m_network->cancel(plugin.id);
+    m_files->end(plugin.id, plugin.caller.id);
+}
+
+void PluginRuntime::endFileAccess(const QString &pluginId)
+{
+    if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())
+        m_files->end(it->first, it->second->caller.id);
 }
 
 void PluginRuntime::unsubscribe(Running &plugin)
@@ -352,16 +507,44 @@ bool PluginRuntime::run(const QString &commandId)
     return process.run(command);
 }
 
+void PluginRuntime::restart(const QString &pluginId)
+{
+    if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())
+        it->second->process->start();
+}
+
+void PluginRuntime::settingChanged(const QString &pluginId, const QString &setting, const QString &json)
+{
+    const auto it = m_plugins.find(pluginId.toStdString());
+    const auto value = api::Json::parse(json.toStdString());
+    if (it == m_plugins.end() || !value)
+        return;
+    m_ui->settingsChanged(it->first);
+    const api::Json data = api::Json::object({{"id", setting.toStdString()}, {"value", *value}});
+    it->second->process->deliver("settings:changed", data.dump(), "settings:changed#" + setting.toStdString());
+}
+
 void PluginRuntime::forceStop(const QString &pluginId)
 {
     if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())
         it->second->process->forceStop();
 }
 
+bool PluginRuntime::sandboxed() const
+{
+    return m_wiring.sandbox && backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete();
+}
+
 backends::PluginProcess *PluginRuntime::process(const QString &pluginId) const
 {
     const auto it = m_plugins.find(pluginId.toStdString());
     return it == m_plugins.end() ? nullptr : it->second->process.get();
+}
+
+bool PluginRuntime::busy(const QString &pluginId) const
+{
+    const PluginProcess *running = process(pluginId);
+    return running && running->busy();
 }
 
 }

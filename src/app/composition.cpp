@@ -7,6 +7,7 @@
 #include "hikari/app/hang_watchdog.h"
 #include "hikari/app/launcher.h"
 #include "hikari/app/local_only_network.h"
+#include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/docs_export.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/single_instance.h"
@@ -16,6 +17,7 @@
 #include "hikari/app/user_folder.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/update_check.h"
+#include "hikari/backends/ai_mcp_bridge.h"
 #include "hikari/backends/legacy_spelling.h"
 
 #include <QCryptographicHash>
@@ -34,6 +36,7 @@
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <functional>
 #include <memory>
@@ -52,6 +55,7 @@
 
 // The UI module is a static QML module; its plugin must be imported explicitly.
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+Q_IMPORT_QML_PLUGIN(Hikari_PluginPlugin)
 
 namespace hikari::app {
 
@@ -188,6 +192,13 @@ QString usagePackage(application::PackageKind kind, bool portableCopy)
     return portableCopy ? QStringLiteral("portable") : QStringLiteral("build_tree");
 }
 
+UserFolder::Environment folderEnvironmentOf(const UpdateEnvironment &updateEnvironment)
+{
+    return UserFolder::Environment::current(
+        updateEnvironment.package.kind == application::PackageKind::Portable &&
+        QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Automation/automation")));
+}
+
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
               UpdateInstaller::ExitAction &exitAction, const std::function<void()> &windowShown)
 {
@@ -199,9 +210,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
     const UpdateEnvironment updateEnvironment = UpdateEnvironment::current();
-    const auto folderEnvironment = UserFolder::Environment::current(
-        updateEnvironment.package.kind == application::PackageKind::Portable &&
-        QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Automation/automation")));
+    const auto folderEnvironment = folderEnvironmentOf(updateEnvironment);
     const UserFolder userFolder = UserFolder::locate(folderEnvironment);
     const UserFolder::OldFolders oldFolders = UserFolder::OldFolders::of(folderEnvironment);
     QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
@@ -217,7 +226,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     }
 #endif
     SingleInstance instance(mode == StartupMode::Run ? SingleInstance::forSession() : SingleInstance::Location{});
-    const SingleInstance::Role role = instance.claim({files, activationToken}, startup.healthFile.empty());
+    const SingleInstance::Role role =
+        instance.claim({files, activationToken, startup.window}, startup.healthFile.empty());
     if (role == SingleInstance::Role::Forwarded)
         return 0;
     QTimer reclaim;
@@ -236,6 +246,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.userFolder = userFolder.root();
     options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
     options.gettingStarted = true;
+    options.askVideoProperties = true;
     options.settingsFile = userFolder.settingsFile();
     options.recoveryDir = userFolder.recovery();
     options.spellingBackend = backends::hunspellSpellingLoader();
@@ -249,6 +260,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.systemUiLanguages = QLocale::system().uiLanguages();
     options.updateEnvironment = updateEnvironment;
     options.userAutomationDir = userFolder.root();
+    options.compileCacheDir = userFolder.cache() + QStringLiteral("/MoonScript");
     QDir().mkpath(userFolder.cache());
     options.analytics.key = Analytics::compiledKey();
     options.analytics.queueFile = userFolder.cache() + QStringLiteral("/analytics-queue.json");
@@ -260,15 +272,19 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.crashReports.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.doNotTrack = Analytics::doNotTrack(qgetenv("DO_NOT_TRACK"));
+    options.marketplace = MarketplaceFeed::hikarisub();
 #ifdef HIKARI_UPDATE_TEST_FEED
     if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
-        options.updateFeed = UpdateFeed::local(QUrl(feed));
+        std::vector<minisign::PublicKey> keys;
+        if (const auto key = minisign::parsePublicKey(qEnvironmentVariable("HIKARISUB_UPDATE_KEY").toStdString()))
+            keys.push_back(*key);
+        options.updateFeed = UpdateFeed::local(QUrl(feed), std::move(keys));
         const QString feedOrigin = originOf(QUrl(feed));
         options.updateEnvironment.allowRedirect = [feedOrigin](const QUrl &to) { return originOf(to) == feedOrigin; };
     }
 #endif
     Application application(options);
-    application.setStartedWithPaths(!files.isEmpty());
+    application.setStartedWithPaths(std::ranges::any_of(files, [](const QString &file) { return !isAppLink(file); }));
     crash::install(options.crashReports.crashRecord, QCoreApplication::applicationDirPath(), QStringLiteral(HIKARI_VERSION));
     std::unique_ptr<HangWatchdog> watchdog;
     {
@@ -298,7 +314,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                                                                                                    : QString();
     const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
     if (startPath.isEmpty() && !files.isEmpty())
-        forwarded.take({files, {}});
+        forwarded.take({files, {}, startup.window});
 
     hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;
@@ -306,6 +322,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
+    attachAlignToVideoStill(engine, application.alignToVideo());
+    attachMarketplaceImages(engine, *application.pluginMarketplace());
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);
@@ -330,6 +348,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         application.updates().checkOnStartup();
         // MUST KILL: after checkOnStartup(), whose list it shares.
         application.whatsNew().start();
+        application.pluginMarketplace()->start();
     });
     if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()))
         QObject::connect(
@@ -419,6 +438,11 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
         QCoreApplication core(argc, argv);
         std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
         return 0;
+    }
+    if (startup.mcp) {
+        QCoreApplication core(argc, argv);
+        const UserFolder userFolder = UserFolder::locate(folderEnvironmentOf(UpdateEnvironment::current()));
+        backends::ai::runMcpBridge(backends::ai::mcpEndpointFile(userFolder.root()));
     }
     if (startup.exportDocs) {
         qputenv("QT_QPA_PLATFORM", "offscreen");

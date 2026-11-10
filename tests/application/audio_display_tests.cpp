@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <deque>
 #include <filesystem>
@@ -348,6 +349,65 @@ TEST(AudioScene, InactiveLinesAndTheirOneColumnShades)
     EXPECT_TRUE(shapes(audioScene(view, columns, marks, none, width30), AudioShape::Kind::Fill, o.inactiveBackground).empty());
 }
 
+TEST(AudioVideoFrame, FrameStartsAndMiddles)
+{
+    const LegacyTimebase timebase({0, 40, 90, 130}, 0.0);
+    EXPECT_EQ(audioVideoFrame(timebase, 2), (AudioVideoFrame{40, 90, 130, 70, 115}));
+    EXPECT_EQ(audioVideoFrame(timebase, 0), (AudioVideoFrame{0, 0, 40, 0, 25}));
+}
+
+TEST(AudioScene, VideoFrameShadesThePreviousAndCurrentFramesUnderTheKeyframes)
+{
+    const AudioView view = minuteView();
+    AudioMarks marks;
+    marks.startMs = 1000;
+    marks.endMs = 2000;
+    marks.keyframesMs = {1000};
+    marks.videoFrame = audioVideoFrame(LegacyTimebase({}, 25.0), 25);
+    WaveformColumns columns;
+    columns.min.assign(1000, 60);
+    columns.peak.assign(1000, 70);
+    const AudioDisplayOptions o;
+    const std::uint32_t rgb = o.cursor & 0x00FFFFFFu;
+    const auto scene = audioScene(view, columns, marks, o, width30);
+    const auto previous = shapes(scene, AudioShape::Kind::Fill, 55u << 24 | rgb);
+    const auto current = shapes(scene, AudioShape::Kind::Fill, 95u << 24 | rgb);
+    ASSERT_EQ(previous.size(), 1u);
+    ASSERT_EQ(current.size(), 1u);
+    EXPECT_EQ(previous[0].x1, static_cast<int>(view.xAtMs(961)));
+    EXPECT_EQ(previous[0].x2, static_cast<int>(view.xAtMs(1000)) + 1);
+    EXPECT_EQ(current[0].x1, static_cast<int>(view.xAtMs(1001)));
+    EXPECT_EQ(current[0].x2, static_cast<int>(view.xAtMs(1040)) + 1);
+    EXPECT_EQ(current[0].y1, 0);
+    EXPECT_EQ(current[0].y2, view.height());
+    const auto at = [&](std::uint32_t colour, AudioShape::Kind kind) {
+        return std::ranges::find_if(scene, [&](const AudioShape &s) { return s.kind == kind && s.colour == colour; }) -
+               scene.begin();
+    };
+    EXPECT_LT(at(o.cursor, AudioShape::Kind::Line), at(o.keyframe, AudioShape::Kind::Line));
+    EXPECT_FLOAT_EQ(shapes(scene, AudioShape::Kind::Line, o.cursor).front().x1, view.xAtMs(1000));
+
+    marks.videoFrame = audioVideoFrame(LegacyTimebase({}, 25.0), 0);
+    const auto first = audioScene(view, columns, marks, o, width30);
+    EXPECT_TRUE(shapes(first, AudioShape::Kind::Fill, 55u << 24 | rgb).empty());
+    EXPECT_EQ(shapes(first, AudioShape::Kind::Fill, 95u << 24 | rgb).size(), 1u);
+
+    AudioDisplayOptions hidden;
+    hidden.drawVideoPosition = false;
+    const auto none = audioScene(view, columns, marks, hidden, width30);
+    EXPECT_TRUE(shapes(none, AudioShape::Kind::Fill, 95u << 24 | rgb).empty());
+    EXPECT_TRUE(shapes(none, AudioShape::Kind::Line, hidden.cursor).empty());
+}
+
+TEST(AudioView, CentresOnATime)
+{
+    AudioView view = minuteView();
+    view.centreOn(30000, 16);
+    EXPECT_NEAR(view.xAtMs(30000), view.width() / 2.f, 1.f);
+    view.centreOn(100, 16);
+    EXPECT_EQ(view.position(), 0);
+}
+
 TEST(AudioScene, KeyframeVideoAndRulerMarks)
 {
     const AudioView view = minuteView();
@@ -355,7 +415,7 @@ TEST(AudioScene, KeyframeVideoAndRulerMarks)
     marks.startMs = 1000;
     marks.endMs = 2000;
     marks.keyframesMs = {0, 1001, 2002, 70000, 1500};
-    marks.videoMs = 1001;
+    marks.videoFrame = AudioVideoFrame{960, 1001, 1042, 980, 1020};
     WaveformColumns columns;
     columns.min.assign(1000, 60);
     columns.peak.assign(1000, 70);
@@ -1068,6 +1128,48 @@ TEST(AudioBox, TheChooserPicksTheTrack)
     f.source.probed({{1, true, true, "A", "eng", "aac"}, {3, true, true, "B", "jpn", "aac"}});
     EXPECT_FALSE(answer);
     EXPECT_EQ(f.source.openedTrack, 3);
+}
+
+TEST(AudioBox, ReopenOpensTheSameTrackWithoutTheChooser)
+{
+    BoxFixture f("reopen");
+    std::function<void(std::optional<int>)> answer;
+    int asked = 0;
+    f.box.setChooser([&](const std::vector<std::string> &, std::function<void(std::optional<int>)> a) {
+        ++asked;
+        answer = std::move(a);
+    });
+    EXPECT_FALSE(f.box.reopen());
+    f.box.open("/media/a.mkv");
+    f.source.probed({{1, true, false, "A", {}, "aac"}, {2, true, false, "B", {}, "aac"}});
+    std::exchange(answer, nullptr)(1);
+    f.source.opened(1, 1000, false);
+    f.source.answer(4, 1);
+    ASSERT_EQ(f.box.state(), AudioBox::State::Ready);
+    const auto serial = f.box.serial();
+    f.source.openedTrack = -1;
+    f.source.probedPath.clear();
+    ASSERT_TRUE(f.box.reopen());
+    EXPECT_EQ(asked, 1);
+    EXPECT_TRUE(f.source.probedPath.empty());
+    EXPECT_EQ(f.source.openedTrack, 2);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Opening);
+    EXPECT_EQ(f.box.path(), "/media/a.mkv");
+    EXPECT_NE(f.box.serial(), serial);
+    f.source.opened(1, 1000, false);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_EQ(f.box.track(), 2);
+
+    f.box.openFromVideo("/media/v.mkv", 3, false);
+    f.source.opened(1, 1000, false);
+    f.source.openedTrack = -1;
+    ASSERT_TRUE(f.box.reopen());
+    EXPECT_TRUE(f.box.fromVideo());
+    EXPECT_EQ(f.source.openedTrack, 3);
+
+    f.box.open(AudioBox::kDummyName);
+    EXPECT_FALSE(f.box.reopen());
+    EXPECT_EQ(f.box.path(), AudioBox::kDummyName);
 }
 
 TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)

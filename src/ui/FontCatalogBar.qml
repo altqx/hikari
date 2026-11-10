@@ -15,7 +15,6 @@ RowLayout {
     property bool listed: false
     // MUST KILL: staleText emulates legacy's choice text going stale past the list's new end
     property string staleText: ""
-    signal listMade()
 
     function reset() {
         listed = true
@@ -32,7 +31,6 @@ RowLayout {
         const value = staleText !== "" ? staleText
                     : choice.currentIndex >= 0 && choice.currentIndex < choices.length ? choices[choice.currentIndex] : ""
         fonts = catalogs.fontList(choice.currentIndex, value, filter.checked, filterTextAtOpen)
-        listMade()
     }
     function catalogsChangedByWindow() {
         let sel = choice.currentIndex

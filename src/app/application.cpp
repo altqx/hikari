@@ -1,5 +1,7 @@
 #include "hikari/app/application.h"
 
+#include "docking.h"
+
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
@@ -15,6 +17,7 @@
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
+#include "hikari/application/fold_groups.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/grid_translation.h"
@@ -25,6 +28,8 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
 #include "hikari/application/video_matrix.h"
+#include "hikari/application/script_resolution.h"
+#include "hikari/application/video_properties.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "hikari/core/conversion.h"
@@ -59,6 +64,7 @@
 #include <cstring>
 #include <QCollator>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QLocale>
 #include <QDir>
 #include <QUuid>
@@ -71,6 +77,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <iterator>
 #include <QFileInfo>
 #include <QBuffer>
 #include <QLinearGradient>
@@ -90,6 +97,8 @@
 namespace hikari::app {
 
 namespace {
+
+QString refusalText(application::CommandRefusal refusal);
 
 // QString::toCaseFolded is simple case folding (one code point to one), so offsets carry over.
 std::u16string unicodeFold(std::u16string_view s)
@@ -250,7 +259,7 @@ ui::ListFile::Report listFileReport(ui::LogController &logController)
 
 class Application::FindHost : public application::FindReplaceHost {
 public:
-    explicit FindHost(Application &app) : m_app(app) {}
+    FindHost(Application &app, int shellWindow) : m_app(app), m_window(shellWindow) {}
 
     static QString qs(std::u8string_view s)
     {
@@ -267,8 +276,8 @@ public:
     }
     std::optional<application::FindTab> current() override
     {
-        const auto target = m_app.m_workspace.editingTarget();
-        return target ? tab(*target) : std::nullopt;
+        const auto current = m_app.m_workspace.currentTab(m_window);
+        return current ? tab(*current) : std::nullopt;
     }
     std::vector<application::FindTab> tabs() override
     {
@@ -313,7 +322,7 @@ public:
         const int id = ++m_app.m_findQuestionId;
         if (answer)
             m_app.m_findAnswers.emplace(id, std::move(answer));
-        emit m_app.findQuestion(id, kindName, shown);
+        emit m_app.findQuestion(id, kindName, shown, m_window);
         emit m_app.findBusyChanged();
     }
     static QString questionKind(application::FindQuestion::Kind kind)
@@ -386,7 +395,7 @@ public:
         return {{QStringLiteral("title"), title}, {QStringLiteral("text"), text},
                 {QStringLiteral("detail"), detail}, {QStringLiteral("severity"), severity}};
     }
-    void finished() override { m_app.findFinished(); }
+    void finished() override { m_app.findFinished(m_window); }
     void logLine(const application::FindLog &line) override
     {
         using K = application::FindLog::Kind;
@@ -410,7 +419,7 @@ public:
         }
         return qs(line.text);
     }
-    void recentAdded(const application::FindReplaceSettings &window) override { m_app.saveFindRecent(window); }
+    void recentAdded(const application::FindReplaceSettings &window) override { m_app.saveFindRecent(m_window, window); }
     void showLine(application::DocumentId document, core::LineId line, bool keepSelection, int role, int start,
                   int end) override
     {
@@ -431,15 +440,15 @@ public:
         if (!m_app.applySelection(next))
             return;
         if (role == 1)
-            m_app.m_editor->selectRaw(application::translationMode(*session) ? 1 : 0, start, end);
+            m_app.editor().selectRaw(application::translationMode(*session) ? 1 : 0, start, end);
         else if (role == 0)
-            m_app.m_editor->selectRaw(0, start, end);
+            m_app.editor().selectRaw(0, start, end);
         else if (role == 2 || role == 3)
-            m_app.m_editor->selectInBox(role, start, end);
+            m_app.editor().selectInBox(role, start, end);
     }
     void changed(application::DocumentId) override
     {
-        m_app.m_editor->reloadFromSession();
+        m_app.editor().reloadFromSession();
         m_app.refreshViews();
     }
     std::optional<std::vector<std::u8string>> listFiles(const std::u8string &folder, const std::u8string &filter,
@@ -575,6 +584,7 @@ private:
     }
 
     Application &m_app;
+    int m_window;
 };
 
 Application::Application(QObject *parent) : Application(Options{}, parent) {}
@@ -590,14 +600,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_writes = std::make_unique<application::WriteCoordinator>(*m_port, [this](const application::WriteResult &r) {
         m_files->onWriteResult(r);
-        m_editor->writeFinished();
+        for (auto *views : allViews())
+            views->editor->writeFinished();
         writeFinished(r);
     });
     m_files = std::make_unique<application::DocumentFiles>(*m_reader, *m_writes);
     m_log = std::make_unique<ui::LogController>();
-    m_shell = std::make_unique<ui::ShellController>(m_workspace);
-    m_editor = std::make_unique<ui::LineEditorController>(*m_files);
-    m_editor->setCommittedListener([this] { refreshViews(); });
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_renderer.setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
     m_renderer.setLog([this](const std::string &text) { m_log->log(QString::fromStdString(text)); });
@@ -622,65 +630,28 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 return made ? out : nullptr;
             });
     });
+    m_luaHelper = luaHelperPath(options.luaHelper);
     m_automation = std::make_unique<AutomationShell>(
-        AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir),
-                               options.userAutomationDir},
+        AutomationShell::Paths{m_luaHelper, automationPath(options.automationDir),
+                               options.userAutomationDir, options.compileCacheDir},
         *m_files,
-        m_workspace, *m_editor, *m_video, *m_shell, *m_mediaSource);
+        m_workspace, [this]() -> ui::LineEditorController & { return editor(); }, *m_video,
+        [this]() -> ui::ShellController & { return shell(); }, *m_mediaSource);
     m_automation->setDocumentChanged([this] { refreshViews(); });
-    m_templateEditor = std::make_unique<ui::TemplateEditorController>();
-    m_templateEditor->setDocumentKey([this]() -> ui::TemplateEditorController::DocumentKey {
-        const auto target = m_workspace.editingTarget();
-        return target ? ui::TemplateEditorController::DocumentKey{target->value, m_files->generation(*target)}
-                      : ui::TemplateEditorController::DocumentKey{};
-    });
-    m_templateEditor->setSessionSource([this]() -> application::EditSession * {
-        const auto target = m_workspace.editingTarget();
-        return target ? m_files->session(*target) : nullptr;
-    });
-    m_templateEditor->setSessionOf([this](ui::TemplateEditorController::DocumentKey key) -> application::EditSession * {
-        const application::DocumentId id{key.first};
-        auto *session = m_files->session(id);
-        return session && m_files->generation(id) == key.second ? session : nullptr;
-    });
-    m_templateEditor->setTemplater(&m_automation->templater());
-    m_templateEditor->setHostState([this] { return m_automation->hostState(); });
-    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        if (!m_video->playing())
-            m_templateEditor->hostChanged();
-    });
-    m_automation->setBeforeRun([this] { m_templateEditor->commit(); });
-    m_files->setBeforeSave([this] { m_templateEditor->commit(); });
-    connect(m_templateEditor.get(), &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
-    connect(m_templateEditor.get(), &ui::TemplateEditorController::otherDocumentEdited, this,
-            [this](std::pair<std::uint64_t, std::uint64_t> document) {
-                scheduleAutosave(application::DocumentId{document.first});
-            });
-    connect(m_templateEditor.get(), &ui::TemplateEditorController::videoChanged, this, [this] {
-        if (m_videoShowsTemplate || m_templateEditor->videoPreview())
-            showVideoSubtitles();
-    });
-    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        if (!m_templateEditor->videoPreview())
-            return;
-        const auto &video = m_video->session();
-        const auto frame = video.reportedFrame();
-        const auto at = frame ? video.frameStart(*frame) : std::nullopt;
-        const auto window = m_templateEditor->videoWindow(at ? at->microseconds() / 1000 : 0, video.playing());
-        if (m_templateWindow != std::pair(window.fromMs, window.toMs))
-            showVideoSubtitles();
-    });
+    m_automation->setBeforeRun([this] { commitTemplates(); });
+    m_files->setBeforeSave([this] { commitTemplates(); });
     connect(m_automation.get(), &AutomationShell::karaokeApplied, this,
             [this](quint64 document, const QByteArray &report) {
                 const application::DocumentId id{document};
-                if (m_files->session(id))
-                    m_templateEditor->applied(report.toStdString(),
-                                              ui::TemplateEditorController::DocumentKey{document, m_files->generation(id)});
+                if (!m_files->session(id))
+                    return;
+                for (auto *views : allViews())
+                    views->templateEditor->applied(
+                        report.toStdString(), ui::TemplateEditorController::DocumentKey{document, m_files->generation(id)});
             });
-    connect(m_automation.get(), &AutomationShell::progressChanged, m_templateEditor.get(),
-            [this] { m_templateEditor->refresh(); });
     m_settingsFile = options.settingsFile;
     m_userFolder = options.userFolder;
+    m_readingDictionary = readingDictionaryPath(options.readingDictionaryDir);
     // MUST KILL: must run before anything writes the session
     rememberStartSession();
     m_dictionaryDir = options.dictionaryDir;
@@ -724,6 +695,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     if (firstStart && options.gettingStarted)
         m_settings->set("workspace.gettingStarted", QStringLiteral("due"));
+    m_askVideoProperties = options.askVideoProperties;
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_automation->manager().setTraceLevel(m_settings->integer("automation.traceLevel"));
     m_automation->setSettings(m_settings.get());
@@ -735,68 +707,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
-    m_editor->setOptionsSource([this] {
-        ui::LineEditorController::Options o;
-        o.liveEditing = !m_settings->boolean("video.disableLiveEditing");
-        o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
-        o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
-        o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
-        o.softLineBreak = m_settings->boolean("editor.softLineBreak");
-        return o;
-    });
-    m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
-                                   [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
-    m_editor->setShowTagsSetting(!m_settings->boolean("editor.hideTags"),
-                                 [this](bool show) { m_settings->set("editor.hideTags", !show); });
-    connect(m_editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [this] {
-        const auto *frames = m_editor->frameTimebase();
-        m_shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
-    });
     m_selectOptions = m_settings->integer("selectLines.options");
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
         options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
-    m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
-    m_visualTools->setShownLines([this] { return shownLines(); });
-    m_visualTools->setEditorHotkey([this](int id) {
-        if (!m_hotkeys)
-            return application::defaultHotkey({id, application::EditorHotkey});
-        return m_hotkeys->accelOf(QString::fromUtf8(std::string(application::hotkeySymbol(id))), application::EditorHotkey)
-            .toStdString();
-    });
-    m_visualTools->setEdited([this] {
-        m_editor->reloadFromSession();
-        refreshViews();
-    });
-    m_visualTools->setPreview([this](const core::Document *preview) {
-        auto *session = targetSession();
-        if (!session)
-            return;
-        setVideoFonts(m_workspace.editingTarget());
-        m_video->session().setSubtitles(rendererScript(preview ? *preview : session->document()));
-        m_videoScript.clear();
-    });
-    m_visualTools->setLog([this](const QString &text) { m_log->notice(ui::LogController::Warning, m_visualTools->toolName(), text); });
-    m_visualTools->setIgnoreFiltered([this] { return m_gridFilter->ignoreInActions(); });
-    const auto visualRole = [this] {
-        int role = 0;
-        if (const auto *s = targetSession(); s && application::translationMode(*s) && s->selection().active) {
-            const auto draft = s->draftRecord();
-            for (const auto *line : s->document().lines())
-                if (line->id == *s->selection().active)
-                    role = !((draft && draft->id == line->id) ? draft->translation : line->translation).empty() ? 1 : 0;
-        }
-        return role;
-    };
-    m_visualTools->setEditorSelection([this, visualRole]() { return m_editor->rawFieldSelection(visualRole()); });
-    m_visualTools->setEditorSelectionPlacer([this, visualRole](long from, long to) {
-        m_editor->selectRaw(visualRole(), static_cast<int>(from), static_cast<int>(to));
-    });
-    m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
-    m_videoView->setPlayer(m_generalPlayer.get());
-    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView, *m_settings);
+    makeViews(m_mainViews, 0);
+    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_mainViews.videoView, *m_settings);
     choosePlayer();
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         if (directShowPlayback())
@@ -808,12 +726,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     setUpTranslationControls();
     setUpFileArrangements();
-    m_statusBar = std::make_unique<ui::StatusBarController>(*m_video, *m_visualTools, [this]() -> const core::Document * {
-        auto *session = targetSession();
-        return session ? &session->document() : nullptr;
-    });
-    m_findHost = std::make_unique<FindHost>(*this);
-    createFindReplace();
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     m_automation->setLog([this](const QString &line, AutomationShell::LogLine kind) {
@@ -832,29 +744,81 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                     });
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
-        [this](application::Selection next) { return applySelection(std::move(next)); }, [this] { refreshViews(); },
+        [this](application::Selection next) { return applySelection(std::move(next)); },
+        [this](application::DocumentId document) {
+            for (WindowViews *v : allViews())
+                if (v->editor && v->editorDocument == document)
+                    v->editor->reloadFromSession();
+            refreshViews();
+        },
         [this](std::string_view command) {
             const QString accel = m_hotkeys->accelOf(
                 QString::fromUtf8(command.data(), qsizetype(command.size())),
                 application::hotkeyType(application::hotkeyIdOf(command)));
             return accel.isEmpty() ? std::vector<std::string>{} : std::vector<std::string>{accel.toStdString()};
-        }});
-    m_ai = std::make_unique<AiFeatures>(
-        *m_settings, options.aiPorts ? std::move(*options.aiPorts)
-                                     : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
-                                                                options.appVersion.isEmpty()
-                                                                    ? QStringLiteral(HIKARI_VERSION)
-                                                                    : options.appVersion));
+        },
+        [this]() -> const application::VideoSession * { return m_video ? &m_video->session() : nullptr; },
+        [this](const core::Document &document) { return rendererScript(document); },
+        [this](application::DocumentId document) { return subtitleFonts(document); },
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
+    AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
+                                                : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
+                                                                           options.appVersion.isEmpty()
+                                                                               ? QStringLiteral(HIKARI_VERSION)
+                                                                               : options.appVersion);
+    aiPorts.reportRollback = [this](const QString &version, const QString &reason) {
+        if (m_analytics)
+            m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
+        return m_crashReports && m_crashReports->aiComponentFailed(version, reason);
+    };
+    m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
+    m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
+                                      m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get());
+    m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
+        m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
+        [this](application::Selection next) { return applySelection(std::move(next)); },
+        [this](application::DocumentId document) { m_apiHost->committed(document); },
+        [this](application::CommandRefusal refusal) {
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Review", "Review"),
+                          refusalText(refusal));
+        },
+        [this] { refreshViews(); }});
+    m_agent = std::make_unique<AgentController>(AgentController::Wiring{
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {}});
+    const auto hideAiCommands = [this] {
+        m_hotkeys->setHidden([this](int id) { return !m_ai->on() && application::aiCommand(id); });
+    };
+    hideAiCommands();
+    connect(m_ai.get(), &AiFeatures::switched, this, [this, hideAiCommands] {
+        hideAiCommands();
+        refreshViews();
+    });
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
-    m_pluginRuntime = std::make_unique<PluginRuntime>(PluginRuntime::Wiring{
-        pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
-        [this] { return m_localisation ? m_localisation->language() : QString(); }});
+    m_pluginMarketplace = std::make_unique<PluginMarketplace>(
+        *m_pluginManager, m_settings.get(), options.marketplace,
+        options.plugins.registry.isEmpty() ? QString()
+                                           : QFileInfo(options.plugins.registry).dir().filePath(QStringLiteral("marketplace.json")),
+        options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.marketplaceNetwork);
+    PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
+                                       [this] { return m_localisation ? m_localisation->language() : QString(); }};
+    pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    pluginWiring.sandbox = true;
+    pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
+        return m_pluginManager->setSetting(id, setting, json);
+    };
+    m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
+    connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
     m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
             [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
+    m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
     m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
     m_presence->setMode(m_workspaceLayout->preset());
@@ -872,7 +836,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 if (const std::string *title = m_workspace.title(id))
                     names << QString::fromStdString(*title);
             for (const auto &[id, media] : m_tabMedia)
-                names << media.video << media.audio << media.keyframes;
+                names << media.video << media.audio << media.keyframes << media.timecodes;
             names.removeAll(QString());
             return names;
         },
@@ -953,6 +917,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                  : QDir::temp().filePath(QStringLiteral("hikari-catalogs-%1").arg(QCoreApplication::applicationPid()));
         StyleManagerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
+        hooks.windowTarget = [this](int shellWindow) { return windowSession(shellWindow); };
         hooks.targetDocument = [this] { return m_workspace.editingTarget(); };
         hooks.session = [this](application::DocumentId id) -> application::EditSession * {
             return id == m_workspace.reference() ? nullptr : m_files->session(id);
@@ -965,7 +930,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return out;
         };
         hooks.refresh = [this] {
-            m_editor->reloadFromSession();
+            editor().reloadFromSession();
             refreshViews();
         };
         hooks.fonts = [this] {
@@ -976,19 +941,39 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
-        KanjiTimerController::Hooks hooks;
+        AlignToVideoController::Hooks hooks;
+        hooks.video = [this] { return videoState() == application::VideoState::None ? nullptr : &m_video->session(); };
         hooks.target = [this] { return targetSession(); };
-        hooks.targetId = [this] { return m_workspace.editingTarget() ? m_workspace.editingTarget()->value : 0; };
+        hooks.pause = [this] {
+            if (m_video->playing())
+                m_video->pause();
+        };
         hooks.refresh = [this] {
-            m_editor->reloadFromSession();
+            editor().reloadFromSession();
             refreshViews();
         };
-        hooks.dictionary = [folder = readingDictionaryPath(options.readingDictionaryDir)]() -> application::ReadingAnalyzer {
-            std::shared_ptr<const backends::MecabReadings> readings =
-                backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
-            return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
+        m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
+    }
+    {
+        QcNotesController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.editable = [this] {
+            const auto target = m_workspace.editingTarget();
+            return target && m_workspace.checkContentCommand(*target).has_value();
         };
-        m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.selectLine = [this](core::LineId line) { selectLine(line.value); };
+        hooks.seek = [this](int ms) { return m_video->hasVideo() && m_video->session().seekToMs(ms); };
+        hooks.videoTime = [this]() -> std::optional<int> {
+            return m_video->hasVideo() ? std::optional(m_video->session().tellMs()) : std::nullopt;
+        };
+        hooks.marks = [this](QcNotesController::Marks marks, std::optional<core::LineId> current) {
+            shell().setQcMarks(std::move(marks), current);
+        };
+        m_qcNotes = std::make_unique<QcNotesController>(*m_settings, std::move(hooks));
     }
     {
         FontCollectorController::Hooks hooks;
@@ -1120,89 +1105,53 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     m_spellingOn = m_settings->boolean("editor.spellchecker");
     if (!m_dictionaryDir.isEmpty() && options.spellingBackend) {
-        std::vector<std::filesystem::path> folders{std::filesystem::path(m_dictionaryDir.toStdU16String())};
+        m_spellingFolders.emplace_back(m_dictionaryDir.toStdU16String());
         if (!m_bundledDictionaryDir.isEmpty() && m_bundledDictionaryDir != m_dictionaryDir)
-            folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
-        m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
-        m_spellChecker->setLoadedHandler(
-            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
+            m_spellingFolders.emplace_back(m_bundledDictionaryDir.toStdU16String());
     }
     setUpGrammar(options);
     m_spellingLoader = options.spellingBackend;
-    m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
-        application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
-        return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
-                                                  spell && m_settings->boolean("editor.spellchecker") && checker ? checker->wordCheck()
-                                                                                   : core::legacy::WordCheck{},
-                                                  replaceTagsLen);
-    });
-    m_shell->setChangeStates(
-        [this](const core::LineRecord &line) {
-            const auto *session = targetSession();
-            return session ? session->changeState(line) : 0;
-        },
-        [this](const core::LineRecord &line) {
-            const auto reference = m_workspace.reference();
-            const auto *session = reference ? m_files->session(*reference) : nullptr;
-            return session ? session->changeState(line) : 0;
-        });
-    m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
-    m_editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
-                                         [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
-    m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
-    connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
-            [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
-    m_shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
-    connect(m_shell.get(), &ui::ShellController::gridColumnWidthsChanged, this,
-            [this] { m_settings->set("grid.columnWidths", columnWidthEntries(m_shell->gridColumnWidths())); });
-    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
-    connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this, [this] {
-        // MUST KILL: the guard keeps Set default's re-sync from setting the key
-        if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
-            m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
-    });
-    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
-    connect(m_shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this] {
-        selectFoldedRunsWhole();
-        if (m_settings->boolean("grid.foldGenerated") != m_shell->foldGenerated())
-            m_settings->set("grid.foldGenerated", m_shell->foldGenerated());
-    });
+    spellSlot(m_settings->text("editor.dictionaryLanguage"));
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened"));
+    m_projects = std::make_unique<ProjectWindows>(
+        *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
+    connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_editRefresh = new QTimer(this);
     m_editRefresh->setSingleShot(true);
     m_editRefresh->setInterval(0);
     connect(m_editRefresh, &QTimer::timeout, this, &Application::refreshVideo);
-    connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
-        if (const auto *session = targetSession())
-            m_shell->setDraft(session->draftRecord());
-        m_editRefresh->start();
-        scheduleAutosave();
-        if (m_templateEditor && m_templateEditor->shown())
-            m_templateEditor->refresh();
-    });
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
         const bool ready = video.state() == application::VideoSession::State::Ready;
-        const QString path = ready ? QString::fromStdString(video.path()) : QString();
-        if (path == m_editorTimebaseVideo)
+        const auto timedBy = ready || video.replacedFrameTimes()
+                                 ? std::optional(std::pair(ready ? video.path() : std::string(), video.frameTimesSerial()))
+                                 : std::nullopt;
+        if (timedBy == m_editorTimebaseFor)
             return;
-        m_editorTimebaseVideo = path;
-        m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
+        m_editorTimebaseFor = timedBy;
+        for (auto *views : allViews())
+            views->editor->setVideoTimebase(timedBy ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logPlaybackFailure);
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
+        if (video.state() == application::VideoSession::State::Opening)
+            m_resolutionCheckedVideo.clear();
         if (video.state() != application::VideoSession::State::Ready || !video.lastFrame())
             return;
         const QString path = QString::fromStdString(video.path());
         if (path == m_resolutionCheckedVideo)
             return;
         m_resolutionCheckedVideo = path;
+        checkVideoMatrix();
         checkResolution();
+        checkLayoutResolution();
     });
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         if (m_pendingKeyframes.isEmpty() || m_video->session().state() != application::VideoSession::State::Ready)
@@ -1213,28 +1162,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"),
                           problem);
     });
-    connect(m_editor.get(), &ui::LineEditorController::leftLineCommitted, this,
-            [this](qulonglong id) { m_leftEditedLine = core::LineId{id}; });
-    connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
-        const auto target = m_workspace.editingTarget();
-        auto *session = target ? m_files->session(*target) : nullptr;
-        if (!session)
-            return;
-        session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
-        m_shell->setSelection(session->selection());
-        m_editor->selectionChanged();
-        followEditingLine();
-        if (m_templateEditor)
-            m_templateEditor->refresh();
-    });
-    m_editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
-        const auto &session = m_video->session();
-        const auto frame = session.reportedFrame();
-        const auto start = frame ? session.frameStart(*frame) : std::nullopt;
-        if (!start)
-            return std::nullopt;
-        return start->microseconds() / 1000;
-    });
     m_audioSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_audio = std::make_unique<ui::AudioController>(*m_audioSource);
     m_automation->setAudioBox([this]() -> const application::AudioBox * { return m_audio ? &m_audio->box() : nullptr; });
@@ -1244,7 +1171,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             const auto media = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
             return media == m_tabMedia.end() ? std::string() : media->second.keyframes.toStdString();
         },
-        [this] { return m_visualTools ? m_visualTools->videoView().displayScale() : 1.0; });
+        [this] { return timecodesFile().toStdString(); },
+        [this] { return activeViews().visualTools ? visualTools().videoView().displayScale() : 1.0; });
     {
         const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
                                  : !m_settingsFile.isEmpty()
@@ -1292,6 +1220,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 return m_audio ? m_audio->box().sharedAudio() : nullptr;
             }));
         m_audio->setPlayer(m_audioPlayer.get());
+        m_audioPlayer->setMono(m_settings->boolean("audio.playMono"));
         m_audio->setPlaybackSettings([this] { return m_settings->integer("audio.markPlayTime"); });
         m_audio->setVideoPlayback([this] { return m_video->playing(); }, [this] { m_video->pause(); });
         m_audioConnections << connect(m_audioPlayer.get(), &backends::AudioBoxPlayer::failed, this,
@@ -1345,14 +1274,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->notice(error ? ui::LogController::Error : ui::LogController::Warning,
                           QCoreApplication::translate("HikariSub.MainWindow", "Open audio"), message);
     });
-    m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::findingOnsetsChanged, this,
                                   &Application::noticeOnsets);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
-        if (m_templateEditor && !m_video->playing())
-            m_templateEditor->hostChanged();
+        if (!m_video->playing())
+            for (auto *views : allViews())
+                views->templateEditor->hostChanged();
     });
     m_audio->setTimingSettings([this] {
         application::AudioTimingOptions timing;
@@ -1419,7 +1348,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (home())
             newDocument();
     };
-    m_video->setBeforeOpen(documentForMedia);
+    m_video->setBeforeOpen([this, documentForMedia] {
+        documentForMedia();
+        if (!m_enteringTabMedia)
+            closeTimecodes();
+    });
     m_audio->setBeforeOpen(documentForMedia);
     trackTabMedia();
     trackVideoSources();
@@ -1595,12 +1528,14 @@ void Application::followVideoInAudio()
             m_audio->setKeyframes({});
             m_audio->setKeyframeSnapTimes({});
         }
-        m_audio->setVideoTime(std::nullopt);
+        m_audio->setVideoFrame(std::nullopt);
         syncAudioWithVideo();
         return;
     }
-    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioKeyframes != video.keyframes()) {
+    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioTimebaseSerial != video.frameTimesSerial()
+        || m_audioKeyframes != video.keyframes()) {
         m_audioTimebasePath = video.path();
+        m_audioTimebaseSerial = video.frameTimesSerial();
         m_audioKeyframes = video.keyframes();
         m_audioTimebase = video.legacyTimebase();
         std::vector<int> ms;
@@ -1614,11 +1549,11 @@ void Application::followVideoInAudio()
         m_audio->setKeyframeSnapTimes(std::move(snap));
         m_audio->setKeyframes(std::move(ms));
     }
-    std::optional<int> paused;
+    std::optional<application::AudioVideoFrame> paused;
     if (!video.playing() && !video.stopped())
         if (const auto frame = video.reportedFrame())
-            paused = m_audioTimebase->msAt(*frame);
-    m_audio->setVideoTime(paused);
+            paused = application::audioVideoFrame(*m_audioTimebase, *frame);
+    m_audio->setVideoFrame(paused);
     syncAudioWithVideo();
 }
 
@@ -1633,14 +1568,14 @@ void Application::rememberRecentAudio(const QString &path)
 bool Application::commitAudioTimes(const application::AudioCommitRequest &request)
 {
     auto *session = targetSession();
-    if (!session || !m_editor->editable())
+    if (!session || !editor().editable())
         return false;
     const bool before = std::exchange(m_audioCommitting, true);
-    m_editor->timesFromAudio(request.startMs, request.endMs, request.duration);
+    editor().timesFromAudio(request.startMs, request.endMs, request.duration);
     const auto outcome = application::commitAudioTimes(*session, request, shownLines());
     if (request.save)
-        m_editor->audioSent();
-    m_editor->reloadFromSession();
+        editor().audioSent();
+    editor().reloadFromSession();
     if (outcome && outcome->stepped)
         refreshViews();
     m_audioCommitting = before;
@@ -1735,11 +1670,341 @@ QUrl Application::audioDialogFolder() const
     return QUrl::fromLocalFile(QFileInfo(from).absolutePath());
 }
 
+void Application::makeViews(WindowViews &v, int shellWindow)
+{
+    v.settings = std::make_unique<WindowSettings>(m_settings->storage());
+    if (m_projects)
+        if (const QString root = m_projects->root(shellWindow); !root.isEmpty())
+            v.settings->setProject(root, projectTrusted(root));
+    const auto active = [this, &v] { return &v == &activeViews(); };
+    v.shell = std::make_unique<ui::ShellController>(m_workspace);
+    v.shell->setShellWindow(shellWindow);
+    v.editor = std::make_unique<ui::LineEditorController>(*m_files);
+    v.editor->setCommittedListener([this] { refreshViews(); });
+    v.editor->setOptionsSource([this] {
+        ui::LineEditorController::Options o;
+        o.liveEditing = !m_settings->boolean("video.disableLiveEditing");
+        o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
+        o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
+        o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        o.softLineBreak = m_settings->boolean("editor.softLineBreak");
+        return o;
+    });
+    v.editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
+                                   [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
+    v.editor->setShowTagsSetting(!m_settings->boolean("editor.hideTags"),
+                                 [this](bool show) { m_settings->set("editor.hideTags", !show); });
+    v.editor->setMoveTags(v.settings->settings().boolean("translation.autoMoveTagsFromOriginal"));
+    v.shell->setRunMarks(v.settings->settings().boolean("translation.autoMoveTagsFromOriginal"));
+    connect(v.editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [&v] {
+        const auto *frames = v.editor->frameTimebase();
+        v.shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
+    });
+    const auto &video = m_video->session();
+    if (video.state() == application::VideoSession::State::Ready || video.replacedFrameTimes())
+        v.editor->setVideoTimebase(video.legacyTimebase());
+    v.editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
+        const auto &session = m_video->session();
+        const auto frame = session.reportedFrame();
+        const auto start = frame ? session.frameStart(*frame) : std::nullopt;
+        if (!start)
+            return std::nullopt;
+        return start->microseconds() / 1000;
+    });
+    connect(v.editor.get(), &ui::LineEditorController::changed, this, [this, active, &v] {
+        if (!active())
+            return;
+        if (const auto *session = targetSession())
+            shell().setDraft(session->draftRecord());
+        m_editRefresh->start();
+        scheduleAutosave();
+        if (v.templateEditor->shown())
+            v.templateEditor->refresh();
+        if (m_grammarDelay)
+            scheduleGrammar();
+        refreshAudio();
+    });
+    connect(v.editor.get(), &ui::LineEditorController::leftLineCommitted, this, [this, active](qulonglong id) {
+        if (active())
+            m_leftEditedLine = core::LineId{id};
+    });
+    connect(v.editor.get(), &ui::LineEditorController::lineChanged, this, [this, active, &v](qulonglong id) {
+        const auto target = m_workspace.editingTarget();
+        auto *session = target ? m_files->session(*target) : nullptr;
+        if (!session || !active())
+            return;
+        session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
+        shell().setSelection(session->selection());
+        editor().selectionChanged();
+        followEditingLine();
+        v.templateEditor->refresh();
+    });
+    v.shell->setSpelling([this, shellWindow](std::u16string_view text, core::SubtitleFormat format, bool spell,
+                                             int replaceTagsLen) {
+        application::SpellChecker *checker = startedSpellChecker(shellWindow);
+        const bool on = spell && windowSettings(shellWindow).boolean("editor.spellchecker") && checker;
+        return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
+                                                  on ? checker->wordCheck() : core::legacy::WordCheck{}, replaceTagsLen);
+    });
+    v.shell->setChangeStates(
+        [this, shellWindow](const core::LineRecord &line) {
+            const auto *session = windowSession(shellWindow);
+            return session ? session->changeState(line) : 0;
+        },
+        [this](const core::LineRecord &line) {
+            const auto reference = m_workspace.reference();
+            const auto *session = reference ? m_files->session(*reference) : nullptr;
+            return session ? session->changeState(line) : 0;
+        });
+    const auto reviewOf = [this](std::optional<application::DocumentId> document) {
+        return [this, document](core::LineId line) -> std::optional<ui::LineTableModel::ReviewMark> {
+            const ReviewController::Mark *mark = document ? m_review->mark(*document, line) : nullptr;
+            if (!mark)
+                return std::nullopt;
+            return ui::LineTableModel::ReviewMark{mark->editedSince, mark->before};
+        };
+    };
+    v.shell->setReview(
+        [this, shellWindow, reviewOf](core::LineId line) { return reviewOf(m_workspace.currentTab(shellWindow))(line); },
+        [this, reviewOf](core::LineId line) { return reviewOf(m_workspace.reference())(line); });
+    connect(v.editor.get(), &ui::LineEditorController::changed, m_review.get(), &ReviewController::currentChanged);
+    v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
+                                         [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
+    v.shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    connect(v.shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
+            [this, &v] { m_settings->set("grid.hideColumns", v.shell->hiddenColumns()); });
+    v.shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
+    connect(v.shell.get(), &ui::ShellController::gridColumnWidthsChanged, this,
+            [this, &v] { m_settings->set("grid.columnWidths", columnWidthEntries(v.shell->gridColumnWidths())); });
+    v.shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    connect(v.shell.get(), &ui::ShellController::autoHideColumnsChanged, this, [this, &v] {
+        // MUST KILL: the guard keeps Set default's re-sync from setting the key
+        if (m_settings->boolean("grid.autoHideColumns") != v.shell->autoHideColumns())
+            m_settings->set("grid.autoHideColumns", v.shell->autoHideColumns());
+    });
+    v.shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+    connect(v.shell.get(), &ui::ShellController::foldGeneratedChanged, this, [this, &v, active] {
+        if (active())
+            selectFoldedRunsWhole();
+        if (m_settings->boolean("grid.foldGenerated") != v.shell->foldGenerated())
+            m_settings->set("grid.foldGenerated", v.shell->foldGenerated());
+    });
+    v.visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings,
+                                                                [this, shellWindow] { return windowSession(shellWindow); });
+    v.visualTools->setPictureShown([this, shellWindow] { return pictureShowsWindow(shellWindow); });
+    v.visualTools->setShownLines([this] { return shownLines(); });
+    v.visualTools->setEditorHotkey([this](int id) {
+        if (!m_hotkeys)
+            return application::defaultHotkey({id, application::EditorHotkey});
+        return m_hotkeys->accelOf(QString::fromUtf8(std::string(application::hotkeySymbol(id))), application::EditorHotkey)
+            .toStdString();
+    });
+    v.visualTools->setEdited([this] {
+        editor().reloadFromSession();
+        refreshViews();
+    });
+    v.visualTools->setPreview([this](const core::Document *preview) {
+        auto *session = targetSession();
+        if (!session)
+            return;
+        setVideoFonts(m_workspace.editingTarget());
+        m_video->session().setSubtitles(rendererScript(preview ? *preview : session->document()));
+        m_videoScript.clear();
+    });
+    v.visualTools->setLog([this, &v](const QString &text) {
+        m_log->notice(ui::LogController::Warning, v.visualTools->toolName(), text);
+    });
+    v.visualTools->setIgnoreFiltered([this] { return m_gridFilter->ignoreInActions(); });
+    const auto visualRole = [this, shellWindow] {
+        int role = 0;
+        if (const auto *s = windowSession(shellWindow); s && application::translationMode(*s) && s->selection().active) {
+            const auto draft = s->draftRecord();
+            for (const auto *line : s->document().lines())
+                if (line->id == *s->selection().active)
+                    role = !((draft && draft->id == line->id) ? draft->translation : line->translation).empty() ? 1 : 0;
+        }
+        return role;
+    };
+    v.visualTools->setEditorSelection([&v, visualRole]() { return v.editor->rawFieldSelection(visualRole()); });
+    v.visualTools->setEditorSelectionPlacer([&v, visualRole](long from, long to) {
+        v.editor->selectRaw(visualRole(), static_cast<int>(from), static_cast<int>(to));
+    });
+    v.editor->setVisualToolActive([&v] { return v.visualTools && v.visualTools->activeFamily() != 0; });
+    if (m_mainViews.visualTools) {
+        v.visualTools->setShapesFile(m_mainViews.visualTools->shapesFile());
+        v.visualTools->setAllTagsFile(m_mainViews.visualTools->allTagsFile());
+        std::vector<std::string> names;
+        for (const auto &[bytes, own] : m_leasedFontNames)
+            names.insert(names.end(), own.begin(), own.end());
+        v.visualTools->setLeasedFonts(names);
+    }
+    v.videoView = std::make_unique<ui::VideoViewController>(*m_video, *v.visualTools, *m_settings);
+    v.videoView->setPlayer(m_activePlayer ? m_activePlayer : m_generalPlayer.get());
+    v.statusBar = std::make_unique<ui::StatusBarController>(*m_video, *v.visualTools,
+                                                            [this, shellWindow]() -> const core::Document * {
+                                                                auto *session = windowSession(shellWindow);
+                                                                return session ? &session->document() : nullptr;
+                                                            });
+    const auto showTimecodes = [this, &v, shellWindow] {
+        v.statusBar->setTimecodesFile(tabTimecodes(m_workspace.currentTab(shellWindow)));
+    };
+    showTimecodes();
+    connect(this, &Application::timecodesChanged, v.statusBar.get(), showTimecodes);
+    makeTemplateEditor(v, shellWindow);
+    makeNodeEffects(v, shellWindow);
+    makeKanjiTimer(v, shellWindow);
+    createFindReplace(v, shellWindow);
+}
+
+void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
+{
+    using DocumentKey = ui::TemplateEditorController::DocumentKey;
+    const auto active = [this, &v] { return &v == &activeViews(); };
+    v.templateEditor = std::make_unique<ui::TemplateEditorController>();
+    auto *editor = v.templateEditor.get();
+    editor->setDocumentKey([this, shellWindow]() -> DocumentKey {
+        const auto tab = m_workspace.currentTab(shellWindow);
+        return tab ? DocumentKey{tab->value, m_files->generation(*tab)} : DocumentKey{};
+    });
+    editor->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
+    editor->setSessionOf([this](DocumentKey key) -> application::EditSession * {
+        const application::DocumentId id{key.first};
+        auto *session = m_files->session(id);
+        return session && m_files->generation(id) == key.second ? session : nullptr;
+    });
+    editor->setTemplater(&m_automation->templater());
+    editor->setHostState([this] { return m_automation->hostState(); });
+    connect(m_video.get(), &ui::VideoController::changed, editor, [this, editor] {
+        if (!m_video->playing())
+            editor->hostChanged();
+    });
+    connect(editor, &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
+    connect(editor, &ui::TemplateEditorController::otherDocumentEdited, this,
+            [this](std::pair<std::uint64_t, std::uint64_t> document) {
+                scheduleAutosave(application::DocumentId{document.first});
+            });
+    connect(editor, &ui::TemplateEditorController::videoChanged, this, [this, active, editor] {
+        if (active() && (m_videoShowsTemplate || editor->videoPreview()))
+            showVideoSubtitles();
+    });
+    connect(m_video.get(), &ui::VideoController::changed, editor, [this, active, editor] {
+        if (!active() || !editor->videoPreview())
+            return;
+        const auto &video = m_video->session();
+        const auto frame = video.reportedFrame();
+        const auto at = frame ? video.frameStart(*frame) : std::nullopt;
+        const auto window = editor->videoWindow(at ? at->microseconds() / 1000 : 0, video.playing());
+        if (m_templateWindow != std::pair(window.fromMs, window.toMs))
+            showVideoSubtitles();
+    });
+    connect(m_automation.get(), &AutomationShell::progressChanged, editor, [editor] { editor->refresh(); });
+}
+
+void Application::makeNodeEffects(WindowViews &v, int shellWindow)
+{
+    const auto active = [this, &v] { return &v == &activeViews(); };
+    v.nodeEffects = std::make_unique<ui::NodeEffectsController>();
+    auto *effects = v.nodeEffects.get();
+    effects->setSessionSource([this, shellWindow] { return windowSession(shellWindow); });
+    effects->setLibraryFolder(std::filesystem::path(m_userFolder.toStdU16String()) / u"node-effects");
+    connect(effects, &ui::NodeEffectsController::documentEdited, this, [this] { refreshViews(); });
+    connect(effects, &ui::NodeEffectsController::videoChanged, this, [this, active, effects] {
+        if (active() && (m_videoShowsTemplate || effects->videoPreview()))
+            showVideoSubtitles();
+    });
+    effects->shareTrustWith(v.templateEditor.get());
+    effects->setLuaNodes([this] { return &luaNodes(); });
+}
+
+void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
+{
+    KanjiTimerController::Hooks hooks;
+    hooks.target = [this, shellWindow] { return windowSession(shellWindow); };
+    hooks.targetId = [this, shellWindow] {
+        const auto tab = m_workspace.currentTab(shellWindow);
+        return tab ? tab->value : 0;
+    };
+    hooks.refresh = [this] {
+        editor().reloadFromSession();
+        refreshViews();
+    };
+    hooks.dictionary = [folder = m_readingDictionary]() -> application::ReadingAnalyzer {
+        std::shared_ptr<const backends::MecabReadings> readings =
+            backends::MecabReadings::open(std::filesystem::path(folder.toStdU16String()));
+        return readings ? backends::MecabReadings::analyzer(std::move(readings)) : application::ReadingAnalyzer{};
+    };
+    v.kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
+}
+
+bool Application::kanjiPending(application::DocumentId document)
+{
+    return std::ranges::any_of(allViews(), [&](const WindowViews *views) {
+        return views->kanjiTimer->pendingFor(document.value) > 0;
+    });
+}
+
+bool Application::applyKanji(application::DocumentId document, application::EditSession &session)
+{
+    return std::ranges::all_of(allViews(),
+                               [&](WindowViews *views) { return views->kanjiTimer->applyTo(document.value, session); });
+}
+
+void Application::commitTemplates()
+{
+    for (auto *views : allViews()) {
+        views->templateEditor->commit();
+        views->nodeEffects->commit();
+    }
+}
+
+Application::WindowViews::WindowViews() = default;
+Application::WindowViews::~WindowViews() = default;
+
+Application::WindowViews &Application::views(int shellWindow)
+{
+    if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end() && found->second.views)
+        return *found->second.views;
+    return m_mainViews;
+}
+
+const Application::WindowViews &Application::views(int shellWindow) const
+{
+    if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end() && found->second.views)
+        return *found->second.views;
+    return m_mainViews;
+}
+
+std::vector<Application::WindowViews *> Application::allViews()
+{
+    std::vector<WindowViews *> out;
+    if (m_mainViews.shell)
+        out.push_back(&m_mainViews);
+    for (auto &[id, shell] : m_shellWindows)
+        if (shell.views)
+            out.push_back(shell.views.get());
+    return out;
+}
+
+application::EditSession *Application::windowSession(int shellWindow) const
+{
+    const auto tab = m_workspace.currentTab(shellWindow);
+    return tab ? m_files->session(*tab) : nullptr;
+}
+
+bool Application::pictureShowsWindow(int shellWindow) const
+{
+    return m_workspace.activeWindow() == shellWindow;
+}
+
 Application::~Application()
 {
     ui::DialogPlacement::setOpenedHook(nullptr);
     m_renderer.observeCost(nullptr);
     endSession();
+    // MUST KILL: AutomationShell's teardown refreshes the Template editors, so they go first
+    for (auto *views : allViews())
+        views->templateEditor.reset();
     // MUST KILL: teardown order: the audio side before the video and helpers it reads through
     for (const auto &connection : std::as_const(m_audioConnections))
         disconnect(connection);
@@ -1753,6 +2018,14 @@ Application::~Application()
     m_port->waitIdle();
     if (m_localisation)
         QGuiApplication::setFont(m_startFont);
+}
+
+application::LuaNodePort &Application::luaNodes()
+{
+    if (!m_luaNodes)
+        m_luaNodes = std::make_unique<backends::LuaNodeHelper>(
+            backends::LuaNodeHelper::Options{m_luaHelper, 10'000, backends::luaNodeProfile(m_luaHelper)});
+    return *m_luaNodes;
 }
 
 namespace {
@@ -1780,7 +2053,7 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
-        if (staged.error().lyrics)
+        if (staged.error().lyrics || staged.error().srv3)
             m_log->log(openProblem(path, staged.error()));
         return std::nullopt;
     }
@@ -1790,6 +2063,13 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
 QString Application::openProblem(const QString &path, const application::StageFailure &failure)
 {
     const QString name = QFileInfo(path).fileName();
+    if (failure.srv3) {
+        QString reason = QString::fromStdString(*failure.srv3);
+        if (!reason.endsWith(QLatin1Char('.')))
+            reason += QLatin1Char('.');
+        return QCoreApplication::translate("HikariSub.Documents", "Could not import %1 as YouTube timed text. %2 Nothing was imported.")
+            .arg(name, reason);
+    }
     if (!failure.lyrics)
         return QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.").arg(name);
     using Kind = core::LyricsProblem::Kind;
@@ -1871,8 +2151,13 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     m_workspace.add(*id, (imported ? QFileInfo(saveAs).fileName() : file.fileName()).toStdString(), asReference);
     takeFileArrangement(*id);
     recordFileTime(*id);
-    if (!asReference)
+    if (!asReference) {
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
+        offerProjectFor(*id, path);
+    }
+    if (const auto *session = m_files->session(*id); session && !asReference)
+        if (const auto folds = application::foldConversion(session->document()).converted)
+            emit aegisubFoldsFound(id->value, static_cast<int>(folds));
     return *id;
 }
 
@@ -1960,10 +2245,12 @@ void Application::protectReference()
 
 void Application::refreshViews()
 {
+    noteLastUsedWindow();
     protectReference();
-    showTabArrangement();
-    if (m_workspace.editingTarget())
-        spellChecker();
+    showTabArrangement(m_workspace.activeWindow());
+    for (const int window : sessionWindows())
+        if (m_workspace.currentTab(window))
+            spellChecker(window);
     reportGroupBreak();
     scheduleAutosave();
     if (m_styleManager)
@@ -1973,41 +2260,96 @@ void Application::refreshViews()
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     refreshComparison();
-    m_shell->setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
-    m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
+    if (m_review)
+        m_review->refreshed();
+    if (m_agent)
+        m_agent->refreshed();
+    shell().setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference));
+    shell().refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession) {
-        m_shell->setDraft(targetSession->draftRecord());
-        m_shell->setSelection(targetSession->selection());
-        m_editor->selectionChanged();
+        shell().setDraft(targetSession->draftRecord());
+        shell().setSelection(targetSession->selection());
+        editor().selectionChanged();
     }
     if (referenceSession)
-        m_shell->setReferenceSelection(referenceSession->selection());
+        shell().setReferenceSelection(referenceSession->selection());
     followEditingLine();
-    if (m_templateEditor) {
-        m_templateEditor->setEditable(target && m_workspace.checkContentCommand(*target).has_value());
-        m_templateEditor->refresh();
+    templateEditor().setEditable(target && m_workspace.checkContentCommand(*target).has_value());
+    templateEditor().refresh();
+    nodeEffects().setEditable(target && m_workspace.checkContentCommand(*target).has_value());
+    nodeEffects().refresh();
+    if (auto &active = activeViews(); target != active.editorDocument) {
+        active.editorDocument = target;
+        editor().setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
     }
-    if (target != m_editorDocument) {
-        m_editorDocument = target;
-        m_editor->setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
-        if (m_find)
-            m_find->reset();
-    }
-    // MUST KILL: must run after m_editor->setDocument above
+    if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
+        active.find->reset();
+    // MUST KILL: must run after editor().setDocument above
     if (m_styleManager)
         m_styleManager->documentEdited();
-    if (m_kanjiTimer)
-        m_kanjiTimer->documentEdited();
+    kanjiTimer().documentEdited();
+    if (m_qcNotes)
+        m_qcNotes->documentEdited();
     refreshVideo();
     refreshAudio();
-    if (m_statusBar)
-        m_statusBar->refresh();
+    if (activeViews().statusBar)
+        statusBar().refresh();
+    const int left = std::exchange(m_viewsWindow, m_workspace.activeWindow());
+    if (m_projects && left != m_viewsWindow && m_projects->root(left) != m_projects->root(m_viewsWindow)) {
+        applyGrammarSettings();
+        emit spellingChanged();
+    }
+    for (const auto &[shellWindow, shell] : m_shellWindows)
+        refreshInactiveViews(shellWindow, left);
+    refreshInactiveViews(0, left);
     emit tabsChanged();
     if (m_apiHost)
         m_apiHost->observe();
+}
+
+void Application::refreshInactiveViews(int shellWindow, int left)
+{
+    if (shellWindow == m_workspace.activeWindow())
+        return;
+    const auto &v = views(shellWindow);
+    const auto *session = windowSession(shellWindow);
+    if (shellWindow == left || m_workspace.currentTab(shellWindow) != v.editorDocument ||
+        (session ? session->revision() : 0) != v.shownRevision)
+        refreshWindowViews(shellWindow);
+}
+
+void Application::refreshWindowViews(int shellWindow)
+{
+    auto &v = views(shellWindow);
+    const auto tab = m_workspace.currentTab(shellWindow);
+    auto *session = windowSession(shellWindow);
+    v.shownRevision = session ? session->revision() : 0;
+    v.shell->setShowOriginal(tab && showOriginal(*tab), false);
+    v.shell->refresh(session ? &session->document() : nullptr, nullptr, tab ? m_comparison.table(*tab) : nullptr,
+                     nullptr);
+    if (session) {
+        v.shell->setDraft(session->draftRecord());
+        v.shell->setSelection(session->selection());
+    }
+    if (tab != v.editorDocument) {
+        v.editorDocument = tab;
+        v.editor->setDocument(tab, tab && m_workspace.checkContentCommand(*tab).has_value());
+    } else {
+        v.editor->reloadFromSession();
+    }
+    if (tab != std::exchange(v.findDocument, tab))
+        v.find->reset();
+    v.templateEditor->setEditable(tab && m_workspace.checkContentCommand(*tab).has_value());
+    v.templateEditor->refresh();
+    v.nodeEffects->setEditable(tab && m_workspace.checkContentCommand(*tab).has_value());
+    v.nodeEffects->refresh();
+    v.kanjiTimer->documentEdited();
+    v.visualTools->refresh();
+    v.statusBar->setTimecodesFile(tabTimecodes(tab));
+    v.statusBar->refresh();
 }
 
 bool Application::showVideoSubtitles()
@@ -2020,16 +2362,18 @@ bool Application::showVideoSubtitles()
         m_videoScript.clear();
     bool edited = false;
     std::optional<core::Document> draft;
-    if (!m_settings->boolean("video.disableLiveEditing") && m_editorDocument == target && m_video->hasVideo())
-        draft = m_editor->draftDocument();
+    if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && m_video->hasVideo())
+        draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (m_templateEditor && m_templateEditor->videoPreview()) {
+    if (nodeEffects().videoPreview()) {
+        templated = nodeEffects().videoDocument(draft ? *draft : session->document());
+    } else if (templateEditor().videoPreview()) {
         const auto &video = m_video->session();
         const auto frame = video.reportedFrame();
         const auto at = frame ? video.frameStart(*frame) : std::nullopt;
         const std::int64_t ms = at ? at->microseconds() / 1000 : 0;
-        templated = m_templateEditor->videoDocument(draft ? *draft : session->document(), ms, video.playing());
-        const auto window = m_templateEditor->videoWindow(ms, video.playing());
+        templated = templateEditor().videoDocument(draft ? *draft : session->document(), ms, video.playing());
+        const auto window = templateEditor().videoWindow(ms, video.playing());
         m_templateWindow = std::pair(window.fromMs, window.toMs);
     }
     if (draft || templated || m_videoShowsDraft || m_videoShowsTemplate || session->revision() != m_videoRevision) {
@@ -2038,7 +2382,7 @@ bool Application::showVideoSubtitles()
         m_videoRevision = session->revision();
         m_videoShowsDraft = draft.has_value();
         m_videoShowsTemplate = templated.has_value();
-        auto script = m_visualTools->subtitles(templated ? *templated : draft ? *draft : session->document(),
+        auto script = visualTools().subtitles(templated ? *templated : draft ? *draft : session->document(),
                                                [this](const core::Document &d) { return rendererScript(d); });
         if (script != m_videoScript) {
             m_videoScript = script;
@@ -2086,7 +2430,7 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     if (std::ranges::equal(fonts, m_videoFonts, same))
         return false;
     m_videoFonts = fonts;
-    if (m_visualTools) {
+    if (m_mainViews.visualTools) {
         decltype(m_leasedFontNames) read;
         std::vector<std::string> names;
         for (const auto &font : m_videoFonts) {
@@ -2098,7 +2442,8 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
             read.emplace_back(font.bytes, std::move(own));
         }
         m_leasedFontNames = std::move(read);
-        m_visualTools->setLeasedFonts(names);
+        for (auto *views : allViews())
+            views->visualTools->setLeasedFonts(names);
     }
     m_video->session().setFonts(std::move(fonts));
     return true;
@@ -2126,7 +2471,7 @@ void Application::refreshVideo()
         }
         enterTabMedia(previous, target);
     }
-    m_visualTools->refresh();
+    visualTools().refresh();
     if (!session)
         return;
     const bool edited = showVideoSubtitles();
@@ -2179,8 +2524,7 @@ void Application::endFindOpen(bool opened)
 
 QVariantList Application::reviewClose(const QString &then)
 {
-    if (m_templateEditor)
-        m_templateEditor->commit();
+    commitTemplates();
     endFindOpen(false);
     const bool quitReplaced = m_closeThen == QLatin1String("quit");
     m_closeThen = then;
@@ -2189,6 +2533,9 @@ QVariantList Application::reviewClose(const QString &then)
     if (then == QLatin1String("quit"))
         ++m_quitReviews;
     m_closing.clear();
+    m_closeApproved.reset();
+    if (then != QLatin1String("window"))
+        m_closingWindow.reset();
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
@@ -2199,23 +2546,32 @@ QVariantList Application::reviewClose(const QString &then)
     if (then != QLatin1String("files"))
         m_pendingFiles.reset();
     std::vector<application::DocumentId> scope;
-    if (then != QLatin1String("tab"))
-        m_closingTab.reset();
+    if (then != QLatin1String("tab")) {
+        m_closingTabs.clear();
+        m_tabAfterClose.reset();
+    }
+    if (then != QLatin1String("project"))
+        m_projectClosing.reset();
     m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset();
     if (then == QLatin1String("quit") || then == QLatin1String("session"))
         scope = m_workspace.documents();
     else if (then == QLatin1String("tab"))
-        scope = m_closingTab ? std::vector{*m_closingTab} : std::vector<application::DocumentId>{};
+        scope = m_closingTabs;
     else if (then == QLatin1String("all"))
         scope = m_workspace.allTabs();
+    else if (then == QLatin1String("project") && m_projectClosing)
+        scope = m_workspace.tabs(*m_projectClosing);
+    else if (then == QLatin1String("window"))
+        std::ranges::copy_if(m_workspace.documents(), std::back_inserter(scope),
+                             [&](application::DocumentId id) { return m_workspace.window(id) == m_closingWindow; });
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
     for (const auto id : scope) {
         auto *session = m_files->session(id);
-        if (!session || (!session->isDirty() && !(m_kanjiTimer && m_kanjiTimer->pendingFor(id.value) > 0)))
+        if (!session || (!session->isDirty() && !kanjiPending(id)))
             continue;
         const std::string *title = m_workspace.title(id);
         const auto destination = m_files->destination(id);
@@ -2231,6 +2587,7 @@ QVariantList Application::reviewClose(const QString &then)
 
 namespace {
 QString extensionFor(core::SubtitleFormat format);
+bool savesAsAss(core::SubtitleFormat format, const QString &path, const QString &chosen);
 }
 
 void Application::resolveClose(const QVariantList &choices)
@@ -2243,7 +2600,7 @@ void Application::resolveClose(const QVariantList &choices)
         if (!session)
             continue;
         Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
-        if (c.save && m_kanjiTimer && !m_kanjiTimer->applyTo(id.value, *session)) {
+        if (c.save && !applyKanji(id, *session)) {
             m_closing.clear();
             emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
                                                                   "A document could not be saved; nothing was closed."));
@@ -2251,8 +2608,17 @@ void Application::resolveClose(const QVariantList &choices)
         }
         if (c.save) {
             QString path = row.value(QStringLiteral("path")).toString();
-            if (const QString ext = extensionFor(session->document().format()); !path.isEmpty() && !path.endsWith(ext))
+            const bool toAss = !path.isEmpty() && savesAsAss(session->document().format(), path,
+                                                              row.value(QStringLiteral("format")).toString());
+            if (const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
+                !path.isEmpty() && QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
                 path += u'.' + ext;
+            if (toAss && !convertToAss(id)) {
+                m_closing.clear();
+                emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
+                                                                      "A document could not be saved; nothing was closed."));
+                return;
+            }
             auto plan = m_files->prepareSave(
                 id, path.isEmpty() ? std::nullopt
                                    : std::optional(application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()}));
@@ -2367,7 +2733,7 @@ void Application::finishClose()
         return;
     }
     const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
-        && then != QLatin1String("all");
+        && then != QLatin1String("all") && then != QLatin1String("window") && then != QLatin1String("project");
     if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
         if (!m_workspace.setEditingTarget(*reviewed)) {
             m_closeThen = then;
@@ -2380,6 +2746,7 @@ void Application::finishClose()
     if (then == QLatin1String("quit")) {
         for (const auto id : m_workspace.documents())
             discardRecovery(id);
+        saveLayoutForQuit();
         m_quitApproved = true;
         emit quitApprovedChanged();
     } else if (then == QLatin1String("new")) {
@@ -2415,10 +2782,21 @@ void Application::finishClose()
     } else if (then == QLatin1String("session")) {
         applySession();
     } else if (then == QLatin1String("tab")) {
-        if (const auto tab = std::exchange(m_closingTab, std::nullopt))
-            closeDocument(*tab);
+        const auto target = m_workspace.editingTarget();
+        const auto closing = std::exchange(m_closingTabs, {});
+        const auto after = std::exchange(m_tabAfterClose, std::nullopt);
+        for (const auto tab : closing)
+            closeDocument(tab);
+        if (after && target && std::ranges::find(closing, *target) != closing.end() &&
+            m_workspace.setEditingTarget(*after))
+            refreshViews();
     } else if (then == QLatin1String("all")) {
         closeAllTabs();
+    } else if (then == QLatin1String("project")) {
+        if (const auto window = std::exchange(m_projectClosing, std::nullopt))
+            closeProject(*window);
+    } else if (then == QLatin1String("window")) {
+        m_closeApproved = std::exchange(m_closingWindow, std::nullopt);
     } else if (then == QLatin1String("files")) {
         if (auto files = std::exchange(m_pendingFiles, std::nullopt))
             applyFiles(std::move(*files), false);
@@ -2435,12 +2813,14 @@ void Application::cancelClose()
     m_closing.clear();
     const bool quit = m_closeThen == QLatin1String("quit");
     m_closeThen.clear();
+    m_closingWindow.reset();
     if (quit)
         emit quitCancelled();
     m_pendingOpen.reset();
     m_pendingOpenPath.clear();
     m_pendingSession.reset();
-    m_closingTab.reset();
+    m_closingTabs.clear();
+    m_tabAfterClose.reset();
     m_videoAfterOpen.clear();
     m_videoAfterOpenFullscreen = false;
     m_openFromVideo = false;
@@ -2477,6 +2857,12 @@ QString extensionFor(core::SubtitleFormat format)
                                                                                           : QStringLiteral("txt");
 }
 
+bool savesAsAss(core::SubtitleFormat format, const QString &path, const QString &chosen)
+{
+    return extensionFor(format) != QLatin1String("ass")
+           && (chosen == QLatin1String("ass") || QFileInfo(path).suffix().compare(u"ass", Qt::CaseInsensitive) == 0);
+}
+
 bool readOnly(const QString &path)
 {
     const QFileInfo info(path);
@@ -2503,7 +2889,7 @@ QString Application::saveRouteFor(qulonglong id) const
     const auto destination = m_files->destination(*document);
     const QString path = destination ? QString::fromStdString(destination->value) : QString();
     const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
-    if (path.isEmpty() || m_formatChanged.contains(document->value) || (saveWithVideoName() && !video.isEmpty() &&
+    if (path.isEmpty() || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
@@ -2530,10 +2916,18 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
     const QString ext = extensionFor(session->document().format());
     const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
                                .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
+    QStringList filters{filter};
+    QStringList formats{QString()};
+    if (ext != QLatin1String("ass")) {
+        filters << QCoreApplication::translate("HikariSub.Documents", "ASS subtitles (*.ass)");
+        formats << QStringLiteral("ass");
+    }
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
             {QStringLiteral("filter"), filter},
+            {QStringLiteral("filters"), filters},
+            {QStringLiteral("formats"), formats},
             {QStringLiteral("extension"), ext}};
 }
 
@@ -2542,7 +2936,7 @@ QString Application::saveChosen(const QUrl &file)
     return saveChosenFor(0, file);
 }
 
-QString Application::saveChosenFor(qulonglong id, const QUrl &file)
+QString Application::saveChosenFor(qulonglong id, const QUrl &file, const QString &format)
 {
     const auto document = documentOf(id);
     auto *session = document ? m_files->session(*document) : nullptr;
@@ -2551,18 +2945,22 @@ QString Application::saveChosenFor(qulonglong id, const QUrl &file)
         return QStringLiteral("failed");
     if (readOnly(path))
         return QStringLiteral("readonly");
-    const QString ext = extensionFor(session->document().format());
-    if (!path.endsWith(ext))
+    const bool toAss = savesAsAss(session->document().format(), path, format);
+    const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
+    if (QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
         path += u'.' + ext;
     if (readOnly(path))
         return QStringLiteral("readonly");
+    if (toAss && !convertToAss(*document))
+        return QStringLiteral("failed");
     auto plan = m_files->prepareSave(*document, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
     if (!plan || !m_files->startSave(std::move(*plan)))
         return QStringLiteral("failed");
-    m_formatChanged.erase(document->value);
     if (*document == m_workspace.editingTarget())
-        m_editor->reloadFromSession();
+        editor().reloadFromSession();
     refreshViews();
+    if (toAss)
+        checkResolution();
     return {};
 }
 
@@ -2572,7 +2970,7 @@ bool Application::saveDocument(qulonglong id)
     if (!document)
         return false;
     if (*document == m_workspace.editingTarget())
-        return m_editor->save();
+        return editor().save();
     auto plan = m_files->prepareSave(*document);
     const std::string *title = m_workspace.title(*document);
     const QString name = title ? QString::fromStdString(*title) : QString();
@@ -2587,7 +2985,7 @@ bool Application::saveDocument(qulonglong id)
 
 QVariantList Application::saveAll()
 {
-    m_templateEditor->commit();
+    commitTemplates();
     QVariantList later;
     for (const auto id : m_workspace.allTabs()) {
         auto *session = m_files->session(id);
@@ -2604,7 +3002,7 @@ QVariantList Application::saveAll()
         if (auto plan = m_files->prepareSave(id))
             m_files->startSave(std::move(*plan));
     }
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return later;
 }
@@ -2618,7 +3016,7 @@ bool Application::turnOffTranslationMode()
     if (!application::turnOffTranslationMode(*session))
         return false;
     originalColumns(*m_workspace.editingTarget()).turnedOff(session->document());
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return true;
 }
@@ -2689,17 +3087,7 @@ namespace {
 
 bool recentMissing(const std::string &path)
 {
-    return application::isMissingLocalFile(
-        path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
-        [](char drive) {
-#ifdef _WIN32
-            const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
-            return ::GetDriveTypeW(root) == DRIVE_REMOTE;
-#else
-            (void)drive;
-            return false;
-#endif
-        });
+    return recentPathMissing(path, false);
 }
 
 }
@@ -2831,7 +3219,7 @@ bool Application::reloadTarget()
     m_videoLine.reset();
     m_comparedRevisions.erase(target->value);
     refreshComparison();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return true;
 }
@@ -2868,7 +3256,7 @@ application::GridSelection Application::gridSelection() const
     if (auto *session = target ? m_files->session(*target) : nullptr)
         for (const auto *line : session->document().lines())
             document.push_back(line->id);
-    application::GridSelection rules(std::move(document), m_shell->displayedLines());
+    application::GridSelection rules(std::move(document), shell().displayedLines());
     rules.setChangeActiveOnSelection(m_settings->boolean("grid.changeActiveOnSelection"));
     return rules;
 }
@@ -2879,13 +3267,12 @@ bool Application::applySelection(application::Selection next)
     auto *session = target ? m_files->session(*target) : nullptr;
     if (!session)
         return false;
-    if (next.active && next.active != session->selection().active && !m_editor->showLine(next.active->value))
+    if (next.active && next.active != session->selection().active && !editor().showLine(next.active->value))
         return false;
     session->setSelection(std::move(next));
-    m_shell->setSelection(session->selection());
-    m_editor->selectionChanged();
-    if (m_templateEditor)
-        m_templateEditor->refresh();
+    shell().setSelection(session->selection());
+    editor().selectionChanged();
+    templateEditor().refresh();
     refreshVideo();
     followEditingLine();
     if (m_apiHost)
@@ -2907,38 +3294,38 @@ void Application::selectLine(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(m_shell->withFoldedRuns(gridSelection().plain(session->selection(), core::LineId{id})));
+        applySelection(shell().withFoldedRuns(gridSelection().plain(session->selection(), core::LineId{id})));
 }
 
 void Application::extendSelection(int rows)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(m_shell->withFoldedRuns(gridSelection().shiftKey(session->selection(), rows)));
+        applySelection(shell().withFoldedRuns(gridSelection().shiftKey(session->selection(), rows)));
 }
 
 void Application::toggleFold(qulonglong first)
 {
     const core::LineId id{first};
-    if (!m_shell->foldGenerated() || m_shell->runFirst(id) != id)
+    if (!shell().foldGenerated() || shell().runFirst(id) != id)
         return;
-    const bool fold = !m_shell->runFolded(id);
+    const bool fold = !shell().runFolded(id);
     if (auto *session = targetSession(); fold && session) {
         const application::Selection &current = session->selection();
-        application::Selection next = m_shell->foldedWhole(current, id);
+        application::Selection next = shell().foldedWhole(current, id);
         if ((next.active != current.active || next.selected != current.selected) && !applySelection(std::move(next)))
             return;
     }
-    m_shell->setRunFolded(id, fold);
+    shell().setRunFolded(id, fold);
 }
 
 void Application::selectFoldedRunsWhole()
 {
     auto *session = targetSession();
-    if (!session || !m_shell->foldGenerated())
+    if (!session || !shell().foldGenerated())
         return;
     const application::Selection &current = session->selection();
-    application::Selection next = m_shell->foldedWhole(current);
+    application::Selection next = shell().foldedWhole(current);
     if (next.active != current.active || next.selected != current.selected)
         applySelection(std::move(next));
 }
@@ -2959,13 +3346,13 @@ void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool d
     m_lineChangeOrigin = origin;
     if (doubleClick) {
         if (ctrl && !shift)
-            applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
+            applySelection(shell().withFoldedRuns(rules.plain(session->selection(), line)));
     } else if (shift)
-        applySelection(m_shell->withFoldedRuns(rules.shiftClick(session->selection(), line, ctrl)));
+        applySelection(shell().withFoldedRuns(rules.shiftClick(session->selection(), line, ctrl)));
     else if (ctrl)
-        applySelection(m_shell->withFoldedRuns(rules.ctrlClick(session->selection(), line)));
+        applySelection(shell().withFoldedRuns(rules.ctrlClick(session->selection(), line)));
     else
-        applySelection(m_shell->withFoldedRuns(rules.plain(session->selection(), line)));
+        applySelection(shell().withFoldedRuns(rules.plain(session->selection(), line)));
     if (origin && m_lineChangeOrigin && session->selection().active == before)
         followShownLine(false, *origin);
     m_lineChangeOrigin.reset();
@@ -2977,7 +3364,7 @@ void Application::dragSelection(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
-        applySelection(m_shell->withFoldedRuns(gridSelection().shiftClick(session->selection(), core::LineId{id}, false)));
+        applySelection(shell().withFoldedRuns(gridSelection().shiftClick(session->selection(), core::LineId{id}, false)));
 }
 
 void Application::selectAllLines()
@@ -3011,7 +3398,7 @@ bool Application::insertLine(bool before, const QString &timing)
         else
             done = application::insertLine(*session, where, startMs);
     }
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done.has_value();
 }
@@ -3024,7 +3411,7 @@ application::EditSession *Application::targetSession() const
 
 application::LineVisible Application::shownLines() const
 {
-    const auto shown = m_shell->actionLines();
+    const auto shown = shell().actionLines();
     const std::set<core::LineId> set(shown.begin(), shown.end());
     return [set](core::LineId id) { return set.contains(id); };
 }
@@ -3088,7 +3475,7 @@ bool Application::pasteLines()
         return false;
     const bool done =
         application::pasteRows(*session, toU8(clipboardText()), shownLines(), {}, clipboardExtradata()).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -3174,7 +3561,7 @@ bool Application::pasteColumns(int columns)
     rememberColumns(true, columns);
     const bool done =
         application::pasteColumns(*session, toU8(clipboardText()), columns, shownLines()).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -3188,7 +3575,7 @@ bool Application::setNewFps(const QString &oldFps, const QString &newFps)
     if (!session || !okOld || !okNew)
         return false;
     const bool done = application::setNewFps(*session, from, to).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -3202,7 +3589,7 @@ bool Application::setFpsFromVideo()
     if (!session || !start)
         return false;
     const bool done = application::setFpsFromVideo(*session, start->microseconds() / 1000, shownLines()).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -3215,9 +3602,9 @@ bool Application::runFilter(
         return false;
     const bool done = command(*session).has_value();
     const application::Selection kept = session->selection();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     if (kept.active)
-        m_editor->showLine(kept.active->value);
+        editor().showLine(kept.active->value);
     session->setSelection(kept);
     refreshViews();
     return done;
@@ -3339,15 +3726,17 @@ bool Application::autosave(application::DocumentId document)
     auto *session = m_files->session(document);
     if (!session || !m_recovery->enabled())
         return false;
-    m_shell->setStatusText(QCoreApplication::translate("HikariSub.Session", "Autosave"));
+    shell().setStatusText(QCoreApplication::translate("HikariSub.Session", "Autosave"));
     // Qt::CoarseTimer may fire up to 5 % early.
-    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this] { m_shell->setStatusText(QString()); });
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this] { shell().setStatusText(QString()); });
     application::RecoveryContent content;
     const auto activeLine = application::activeLineToSave(*session);
     const auto layout = m_files->layoutToSave(document, session->document());
     core::Document saved = application::withActiveLine(session->document(), activeLine);
     if (layout)
         saved.setHikariProperty(application::kLayoutKey, *layout);
+    m_files->applyProjectGarbage(document, m_files->destination(document).value_or(application::DestinationKey{}),
+                                 saved);
     content.bytes = core::encodeSubtitle(saved, m_files->saveOptions());
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
@@ -3641,8 +4030,11 @@ bool Application::splitLines(const QString &kind)
         const std::int64_t tell = start->microseconds() / 1000;
         return runFilter([&](application::EditSession &s) { return application::splitAtVideoTime(s, timebase, tell, shown); });
     }
-    if (kind == QLatin1String("frames"))
-        return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, shown); });
+    if (kind == QLatin1String("frames")) {
+        const auto animations = m_settings->boolean("grid.splitFramesBakeAnimations") ? application::FrameAnimations::Bake
+                                                                                       : application::FrameAnimations::Keep;
+        return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, animations, shown); });
+    }
     const auto text = kind == QLatin1String("chars")   ? application::SplitText::Characters
                       : kind == QLatin1String("words") ? application::SplitText::Words
                       : kind == QLatin1String("wraps") ? application::SplitText::Wraps
@@ -3706,7 +4098,7 @@ bool Application::pasteTranslationFile(const QUrl &file)
     const bool done = application::pasteTranslation(*session, toU8(text), toU8(extension), shown).has_value();
     if (done)
         originalColumns(*m_workspace.editingTarget()).pasted(session->document());
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -3728,9 +4120,9 @@ bool Application::shiftTranslation(int mode)
     const auto shown = shownLines();
     const bool done =
         application::moveTranslation(*session, static_cast<application::TranslationMove>(mode), shown).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     if (const auto active = session->selection().active)
-        m_editor->showLine(active->value);
+        editor().showLine(active->value);
     refreshViews();
     return done;
 }
@@ -3761,17 +4153,21 @@ QString Application::openKeyframes(const QUrl &file)
 
 bool Application::exactTimebase() const
 {
-    return m_video->session().state() == application::VideoSession::State::Ready &&
-           m_video->session().legacyTimebase().exact();
+    const auto &video = m_video->session();
+    return (video.state() == application::VideoSession::State::Ready || video.replacedFrameTimes()) &&
+           video.legacyTimebase().exact();
 }
 
 application::ShiftContext Application::shiftContext(application::LegacyTimebase &timebase) const
 {
     const auto &video = m_video->session();
     application::ShiftContext context;
-    if (video.state() == application::VideoSession::State::Ready) {
+    const bool hasVideo = video.state() == application::VideoSession::State::Ready;
+    if (hasVideo || video.replacedFrameTimes()) {
         timebase = video.legacyTimebase();
         context.timebase = &timebase;
+    }
+    if (hasVideo) {
         context.keyframes = video.keyframes();
         if (const auto frame = video.reportedFrame()) {
             context.videoFrame = *frame;
@@ -3827,7 +4223,7 @@ QString Application::applyShift(const QString &tool)
         return {};
     const std::string step = postprocessor ? "Timing postprocessor" : "Shift times";
     const auto result = application::shiftTimes(*session, settings, context, visible, step);
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     if (!result)
         return shiftFailureText(result.error());
@@ -3840,14 +4236,14 @@ QString Application::applyShift(const QString &tool)
     return {};
 }
 
-QVariantMap Application::shiftPreview(const QString &tool)
+QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
 {
     constexpr qsizetype kRows = 8;
     QVariantMap out{{QStringLiteral("problem"), QString()}, {QStringLiteral("changed"), 0},
                     {QStringLiteral("total"), 0},          {QStringLiteral("amount"), 0},
                     {QStringLiteral("targetMs"), -1},      {QStringLiteral("rows"), QVariantList()},
                     {QStringLiteral("more"), 0},           {QStringLiteral("ruleCounts"), QVariantMap()}};
-    auto *session = targetSession();
+    auto *session = windowSession(shellWindow);
     if (!session) {
         out.insert(QStringLiteral("problem"), QCoreApplication::translate("HikariSub.TimeShift", "No document open"));
         return out;
@@ -3882,10 +4278,10 @@ QVariantMap Application::shiftPreview(const QString &tool)
     for (const auto &l : plan->lines)
         if (selected.contains(l.id) && std::ssize(shown) < kRows)
             shown.push_back(&l);
-    if (shown.empty())
-        for (const auto &l : plan->lines)
-            if (l.changed() && std::ssize(shown) < kRows)
-                shown.push_back(&l);
+    for (const auto &l : plan->lines)
+        if (!selected.contains(l.id) && l.changed() && std::ssize(shown) < kRows)
+            shown.push_back(&l);
+    std::ranges::sort(shown, {}, &application::ShiftedLine::row);
     QVariantList rows;
     int shownChanged = 0;
     for (const auto *l : shown) {
@@ -4037,7 +4433,7 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
         if (result->clipboard)
             setClipboardText(*result->clipboard);
     }
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     std::vector<std::u8string> recent;
     for (const QString &r : std::as_const(m_selectRecent))
@@ -4085,6 +4481,23 @@ void noticeUnscaled(ui::LogController &log, const QStringList &values)
                QCoreApplication::translate("HikariSub.Conversion", "%n value(s) could not be scaled.", nullptr,
                                            int(values.size())),
                values.join(QLatin1Char('\n')));
+}
+
+QString unadjustedRotation(int row)
+{
+    return QCoreApplication::translate("HikariSub.Conversion",
+                                       "Line %1 was only scaled: it moves, changes shape over time or cannot be measured.")
+        .arg(row);
+}
+
+void noticeUnadjusted(ui::LogController &log, const QStringList &rows)
+{
+    if (rows.isEmpty())
+        return;
+    log.notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Conversion", "Resample subtitles"),
+               QCoreApplication::translate("HikariSub.Conversion", "%n rotated line(s) could not keep their shape.",
+                                           nullptr, int(rows.size())),
+               rows.join(QLatin1Char('\n')));
 }
 
 QString regexMatchError(const std::u16string &error)
@@ -4256,20 +4669,39 @@ void Application::convertListFiles()
                                    listFileReport(*m_log));
     for (const auto &file : {shapes, tags})
         file->convert();
-    m_visualTools->setShapesFile(std::move(shapes));
-    m_visualTools->setAllTagsFile(std::move(tags));
+    for (auto *views : allViews()) {
+        views->visualTools->setShapesFile(shapes);
+        views->visualTools->setAllTagsFile(tags);
+    }
 }
 
-application::SpellChecker *Application::spellChecker()
+Application::SpellSlot *Application::spellSlot(const QString &language)
 {
-    if (!m_spellChecker)
+    if (m_spellingFolders.empty() || !m_spellingLoader)
         return nullptr;
-    if (!m_spellingStarted) {
-        m_spellingStarted = true;
-        if (m_settings->boolean("editor.spellchecker")) {
-            const auto status = m_spellChecker->initialize(dictionaryLanguage().toStdU16String());
+    auto &slot = m_spellCheckers[language];
+    if (!slot.checker) {
+        slot.checker = std::make_unique<application::SpellChecker>(m_spellingFolders, m_spellingLoader);
+        slot.checker->setLoadedHandler(
+            [this] { QMetaObject::invokeMethod(this, [this] { spellingRefresh(); }, Qt::QueuedConnection); });
+    }
+    return &slot;
+}
+
+application::SpellChecker *Application::spellChecker(int shellWindow)
+{
+    const auto &settings = windowSettings(shellWindow);
+    const QString language = QString::fromStdString(settings.text("editor.dictionaryLanguage"));
+    auto *slot = spellSlot(language);
+    if (!slot)
+        return nullptr;
+    if (!slot->started) {
+        slot->started = true;
+        if (settings.boolean("editor.spellchecker")) {
+            const auto status = slot->checker->initialize(language.toStdU16String());
             if (status != application::SpellChecker::Status::Ready) {
-                m_settings->set("editor.spellchecker", false);
+                if (!views(shellWindow).settings->overridden("editor.dictionaryLanguage"))
+                    m_settings->set("editor.spellchecker", false);
                 const bool noDictionary = status == application::SpellChecker::Status::NoDictionary;
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
@@ -4286,14 +4718,36 @@ application::SpellChecker *Application::spellChecker()
             }
         }
     }
-    return m_spellChecker.get();
+    return slot->checker.get();
+}
+
+application::SpellChecker *Application::startedSpellChecker(int shellWindow)
+{
+    const auto slot =
+        m_spellCheckers.find(QString::fromStdString(windowSettings(shellWindow).text("editor.dictionaryLanguage")));
+    return slot != m_spellCheckers.end() && slot->second.started ? slot->second.checker.get() : nullptr;
+}
+
+application::SpellChecker *Application::anySpellChecker() const
+{
+    return m_spellCheckers.empty() ? nullptr : m_spellCheckers.begin()->second.checker.get();
+}
+
+void Application::userWordsChanged(const application::SpellChecker *by)
+{
+    for (auto &[language, slot] : m_spellCheckers)
+        if (slot.checker.get() != by) {
+            slot.checker->clear();
+            slot.started = false;
+        }
 }
 
 void Application::restartSpellChecker()
 {
-    if (m_spellChecker)
-        m_spellChecker->clear();
-    m_spellingStarted = false;
+    for (auto &[language, slot] : m_spellCheckers) {
+        slot.checker->clear();
+        slot.started = false;
+    }
     emit spellCheckerRestarted();
 }
 
@@ -4305,12 +4759,18 @@ void Application::spellingRefresh()
 
 bool Application::spellingOn() const
 {
-    return m_settings->boolean("editor.spellchecker");
+    return windowSettings(m_workspace.activeWindow()).boolean("editor.spellchecker");
+}
+
+bool Application::editorSpellingOn() const
+{
+    const int window = m_workspace.activeWindow();
+    return views(window).settings->overridden("editor.spellchecker") ? spellingOn() : m_spellingOn;
 }
 
 QString Application::dictionaryLanguage() const
 {
-    return m_settings->text("editor.dictionaryLanguage");
+    return QString::fromStdString(windowSettings(m_workspace.activeWindow()).text("editor.dictionaryLanguage"));
 }
 
 bool Application::suggestionsOnDoubleClick() const
@@ -4348,9 +4808,10 @@ int Application::spellingRole() const
     return session && application::spellsTranslation(session->document()) ? 1 : 0;
 }
 
-std::optional<std::u16string> Application::editorRaw(int role) const
+namespace {
+
+std::optional<std::u16string> activeLineRaw(const application::EditSession *session, int role)
 {
-    const auto *session = targetSession();
     if (!session || !session->selection().active)
         return std::nullopt;
     const auto active = *session->selection().active;
@@ -4366,10 +4827,27 @@ std::optional<std::u16string> Application::editorRaw(int role) const
     return core::toUtf16(role == 1 ? record->translation : record->text);
 }
 
+int spellingRoleOf(const application::EditSession *session)
+{
+    return session && application::spellsTranslation(session->document()) ? 1 : 0;
+}
+
+}
+
+std::optional<std::u16string> Application::editorRaw(int role) const
+{
+    return activeLineRaw(targetSession(), role);
+}
+
+std::optional<std::u16string> Application::windowLineRaw(int shellWindow, int role) const
+{
+    return activeLineRaw(windowSession(shellWindow), role);
+}
+
 QVariantList Application::editorSpellingMarks(int role)
 {
     QVariantList out;
-    if (!m_spellingOn || role != spellingRole() || !core::syntax::spellChecked(m_editor->syntaxState()))
+    if (!editorSpellingOn() || role != spellingRole() || !core::syntax::spellChecked(editor().syntaxState()))
         return out;
     const auto raw = editorRaw(role);
     if (!raw || raw->empty())
@@ -4378,7 +4856,7 @@ QVariantList Application::editorSpellingMarks(int role)
     auto *checker = spellChecker();
     const auto marks = checker ? application::editorMarks(*raw, format, *checker, m_spellingText)
                                : core::legacy::checkTextAndBrackets(*raw, format, m_spellingText.segment, {});
-    const bool hidden = !m_editor->showTags();
+    const bool hidden = !editor().showTags();
     const core::Projection projection = hidden ? core::project(*raw) : core::Projection{};
     for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2) {
         if (!hidden) {
@@ -4392,7 +4870,7 @@ QVariantList Application::editorSpellingMarks(int role)
 
 QVariantMap Application::editorMisspellAt(int role, int position)
 {
-    if (!m_spellingOn || role != spellingRole() || !core::syntax::spellChecked(m_editor->syntaxState()))
+    if (!editorSpellingOn() || role != spellingRole() || !core::syntax::spellChecked(editor().syntaxState()))
         return {};
     const auto raw = editorRaw(role);
     auto *checker = spellChecker();
@@ -4401,7 +4879,7 @@ QVariantMap Application::editorMisspellAt(int role, int position)
     const auto format = targetSession()->document().format();
     const auto marks = application::editorMarks(*raw, format, *checker, m_spellingText, true);
     int at = position;
-    if (!m_editor->showTags())
+    if (!editor().showTags())
         at = static_cast<int>(core::rawOffset(core::project(*raw), static_cast<std::size_t>(std::max(position, 0)), true));
     const auto found = application::misspellAt(marks, at);
     if (!found)
@@ -4429,12 +4907,12 @@ bool Application::replaceEditorMisspell(int role, int position, const QString &r
                                                     replacement.toStdU16String());
     if (!caret)
         return false;
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     int shown = *caret;
-    if (!m_editor->showTags())
+    if (!editor().showTags())
         if (const auto raw = editorRaw(role))
             shown = static_cast<int>(core::displayOffset(core::project(*raw), static_cast<std::size_t>(*caret)));
-    m_editor->selectInField(shown, shown);
+    editor().selectInField(shown, shown);
     spellingRefresh();
     return true;
 }
@@ -4444,31 +4922,36 @@ bool Application::addEditorWord(const QString &word)
     auto *checker = spellChecker();
     if (!checker || !checker->addWord(word.toStdU16String()))
         return false;
+    userWordsChanged(checker);
     spellingRefresh();
     return true;
 }
 
-QVariantMap Application::spellCheckState(bool changed, const QString &problem)
+QVariantMap Application::spellCheckState(int shellWindow, bool changed, const QString &problem)
 {
-    if (problem.isEmpty() && m_spellWalk && m_spellWalk->refused())
-        return spellCheckState(changed, QCoreApplication::translate("HikariSub.Spelling", "The edited line cannot be committed."));
-    const auto *current = m_spellWalk && m_spellWalk->current() ? &*m_spellWalk->current() : nullptr;
+    const auto &walk = views(shellWindow).spellWalk;
+    const auto &editor = *views(shellWindow).editor;
+    if (problem.isEmpty() && walk && walk->refused())
+        return spellCheckState(shellWindow, changed,
+                               QCoreApplication::translate("HikariSub.Spelling", "The edited line cannot be committed."));
+    const auto *current = walk && walk->current() ? &*walk->current() : nullptr;
     QStringList suggestions;
     if (current)
         for (const auto &s : current->suggestions)
             suggestions << qstr(s);
     int row = 0;
     QString before, after;
-    if (const auto *session = current ? targetSession() : nullptr) {
+    if (const auto *session = current ? windowSession(shellWindow) : nullptr) {
         const auto lines = session->document().lines();
         for (std::size_t i = 0; i < lines.size(); ++i)
             if (lines[i]->id == current->line)
                 row = static_cast<int>(i) + 1;
-        const auto raw = session->selection().active == current->line ? editorRaw(spellingRole()) : std::nullopt;
+        const auto raw = session->selection().active == current->line ? activeLineRaw(session, spellingRoleOf(session))
+                                                                        : std::nullopt;
         if (raw) {
             QString text = qstr(*raw);
             int from = current->start, to = current->end + 1;
-            if (!m_editor->showTags()) {
+            if (!editor.showTags()) {
                 const auto projection = core::project(*raw);
                 if (const auto range = displayRange(projection, current->start, current->end)) {
                     text = QString::fromStdU16String(projection.text);
@@ -4487,7 +4970,7 @@ QVariantMap Application::spellCheckState(bool changed, const QString &problem)
         }
     }
     return {{QStringLiteral("found"), current != nullptr},
-            {QStringLiteral("available"), m_spellChecker && m_spellChecker->ready()},
+            {QStringLiteral("available"), startedSpellChecker(shellWindow) && startedSpellChecker(shellWindow)->ready()},
             {QStringLiteral("line"), row},
             {QStringLiteral("before"), before},
             {QStringLiteral("after"), after},
@@ -4498,69 +4981,76 @@ QVariantMap Application::spellCheckState(bool changed, const QString &problem)
             {QStringLiteral("problem"), problem}};
 }
 
-void Application::showSpellCheckWord()
+void Application::showSpellCheckWord(int shellWindow)
 {
-    m_editor->reloadFromSession();
-    const auto *current = m_spellWalk ? &m_spellWalk->current() : nullptr;
+    auto &v = views(shellWindow);
+    v.editor->reloadFromSession();
+    const auto *current = v.spellWalk ? &v.spellWalk->current() : nullptr;
     if (current && *current) {
-        m_editor->showLine((*current)->line.value);
+        v.editor->showLine((*current)->line.value);
         int from = (*current)->start, to = (*current)->end + 1;
-        if (!m_editor->showTags())
-            if (const auto raw = editorRaw(spellingRole()))
+        const auto *session = windowSession(shellWindow);
+        if (!v.editor->showTags())
+            if (const auto raw = activeLineRaw(session, spellingRoleOf(session)))
                 if (const auto range = displayRange(core::project(*raw), (*current)->start, (*current)->end)) {
                     from = range->first;
                     to = range->second;
                 }
-        m_editor->selectInField(from, to);
+        v.editor->selectInField(from, to);
     }
     spellingRefresh();
 }
 
-QVariantMap Application::openSpellChecker(const QVariantMap &options)
+QVariantMap Application::openSpellChecker(const QVariantMap &options, int shellWindow)
 {
-    auto *session = targetSession();
+    auto &v = views(shellWindow);
+    auto *session = windowSession(shellWindow);
     auto *checker = spellChecker();
-    m_spellWalk.reset();
+    v.spellWalk.reset();
     if (!session || !checker)
-        return spellCheckState(false);
-    m_editor->commit();
-    m_spellWalk = std::make_unique<application::SpellCheckWalk>(*checker, m_spellingText);
-    m_spellWalkDocument = m_workspace.editingTarget();
-    m_spellWalk->next(*session, walkOptions(options));
-    showSpellCheckWord();
-    return spellCheckState(false);
+        return spellCheckState(shellWindow, false);
+    v.editor->commit();
+    v.spellWalk = std::make_unique<application::SpellCheckWalk>(*checker, m_spellingText);
+    v.spellWalkDocument = m_workspace.currentTab(shellWindow);
+    v.spellWalk->next(*session, walkOptions(options));
+    showSpellCheckWord(shellWindow);
+    return spellCheckState(shellWindow, false);
 }
 
 std::optional<QVariantMap> Application::restartStaleSpellCheck(application::EditSession &session,
                                                                const QVariantMap &options)
 {
-    m_editor->commit();
-    const bool other = m_workspace.editingTarget() != m_spellWalkDocument;
-    if (!m_spellWalk->current() || !m_spellWalk->stale(session, other))
+    auto &v = activeViews();
+    const int shellWindow = m_workspace.activeWindow();
+    editor().commit();
+    const bool other = m_workspace.editingTarget() != v.spellWalkDocument;
+    if (!v.spellWalk->current() || !v.spellWalk->stale(session, other))
         return std::nullopt;
-    m_spellWalkDocument = m_workspace.editingTarget();
-    m_spellWalk->restart(session, walkOptions(options));
-    showSpellCheckWord();
-    QVariantMap state = spellCheckState(false);
+    v.spellWalkDocument = m_workspace.editingTarget();
+    v.spellWalk->restart(session, walkOptions(options));
+    showSpellCheckWord(shellWindow);
+    QVariantMap state = spellCheckState(shellWindow, false);
     state.insert(QStringLiteral("restarted"), true);
     return state;
 }
 
 QVariantMap Application::spellCheckerActivated(const QVariantMap &options)
 {
+    auto &v = activeViews();
+    const int shellWindow = m_workspace.activeWindow();
     auto *session = targetSession();
-    if (!m_spellWalk || !session)
-        return spellCheckState(false);
-    m_editor->commit();
-    const bool other = m_workspace.editingTarget() != m_spellWalkDocument;
-    m_spellWalkDocument = m_workspace.editingTarget();
+    if (!v.spellWalk || !session)
+        return spellCheckState(shellWindow, false);
+    editor().commit();
+    const bool other = m_workspace.editingTarget() != v.spellWalkDocument;
+    v.spellWalkDocument = m_workspace.editingTarget();
     QVariantMap state;
-    if (m_spellWalk->activated(*session, walkOptions(options), other)) {
-        showSpellCheckWord();
-        state = spellCheckState(false);
+    if (v.spellWalk->activated(*session, walkOptions(options), other)) {
+        showSpellCheckWord(shellWindow);
+        state = spellCheckState(shellWindow, false);
         state.insert(QStringLiteral("restarted"), true);
     } else {
-        state = spellCheckState(false);
+        state = spellCheckState(shellWindow, false);
         state.insert(QStringLiteral("restarted"), false);
     }
     return state;
@@ -4590,85 +5080,96 @@ QVariantMap unchangedState()
 
 QVariantMap Application::spellCheckerReplace(const QString &replacement, const QVariantMap &options)
 {
+    auto &walk = activeViews().spellWalk;
+    const int shellWindow = m_workspace.activeWindow();
     auto *session = targetSession();
-    if (!m_spellWalk || !session)
+    if (!walk || !session)
         return unchangedState();
     if (auto restarted = restartStaleSpellCheck(*session, options))
         return *restarted;
-    const auto result = m_spellWalk->replace(*session, replacement.toStdU16String(), walkOptions(options));
+    const auto result = walk->replace(*session, replacement.toStdU16String(), walkOptions(options));
     if (!result)
-        return spellCheckState(false, refusalText(result.error()));
+        return spellCheckState(shellWindow, false, refusalText(result.error()));
     if (*result == application::SpellCheckWalk::Result::Unchanged)
         return unchangedState();
-    showSpellCheckWord();
-    return spellCheckState(true);
+    showSpellCheckWord(shellWindow);
+    return spellCheckState(shellWindow, true);
 }
 
 QVariantMap Application::spellCheckerReplaceAll(const QString &misspell, const QString &replacement,
                                                 const QVariantMap &options)
 {
+    auto &walk = activeViews().spellWalk;
+    const int shellWindow = m_workspace.activeWindow();
     auto *session = targetSession();
-    if (!m_spellWalk || !session)
+    if (!walk || !session)
         return unchangedState();
     if (auto restarted = restartStaleSpellCheck(*session, options))
         return *restarted;
-    const auto result = m_spellWalk->replaceAll(*session, misspell.toStdU16String(), replacement.toStdU16String(),
+    const auto result = walk->replaceAll(*session, misspell.toStdU16String(), replacement.toStdU16String(),
                                                 walkOptions(options));
     if (!result)
-        return spellCheckState(false, refusalText(result.error()));
+        return spellCheckState(shellWindow, false, refusalText(result.error()));
     if (*result == application::SpellCheckWalk::Result::Unchanged)
         return unchangedState();
-    showSpellCheckWord();
-    return spellCheckState(*result == application::SpellCheckWalk::Result::Replaced);
+    showSpellCheckWord(shellWindow);
+    return spellCheckState(shellWindow, *result == application::SpellCheckWalk::Result::Replaced);
 }
 
 QVariantMap Application::spellCheckerIgnore(const QVariantMap &options)
 {
+    auto &walk = activeViews().spellWalk;
+    const int shellWindow = m_workspace.activeWindow();
     auto *session = targetSession();
-    if (!m_spellWalk || !session)
-        return spellCheckState(false);
+    if (!walk || !session)
+        return spellCheckState(shellWindow, false);
     if (auto restarted = restartStaleSpellCheck(*session, options))
         return *restarted;
-    m_spellWalk->ignore(*session, walkOptions(options));
-    showSpellCheckWord();
-    return spellCheckState(false);
+    walk->ignore(*session, walkOptions(options));
+    showSpellCheckWord(shellWindow);
+    return spellCheckState(shellWindow, false);
 }
 
 QVariantMap Application::spellCheckerIgnoreAll(const QString &word, const QVariantMap &options)
 {
+    auto &walk = activeViews().spellWalk;
+    const int shellWindow = m_workspace.activeWindow();
     auto *session = targetSession();
-    if (!m_spellWalk || !session)
-        return spellCheckState(false);
+    if (!walk || !session)
+        return spellCheckState(shellWindow, false);
     if (auto restarted = restartStaleSpellCheck(*session, options))
         return *restarted;
-    m_spellWalk->ignoreAll(*session, word.toStdU16String(), walkOptions(options));
-    showSpellCheckWord();
-    return spellCheckState(false);
+    walk->ignoreAll(*session, word.toStdU16String(), walkOptions(options));
+    showSpellCheckWord(shellWindow);
+    return spellCheckState(shellWindow, false);
 }
 
 QVariantMap Application::spellCheckerAddWord(const QString &word, const QVariantMap &options)
 {
+    auto &walk = activeViews().spellWalk;
+    const int shellWindow = m_workspace.activeWindow();
     auto *session = targetSession();
-    if (!m_spellWalk || !session)
-        return spellCheckState(false);
+    if (!walk || !session)
+        return spellCheckState(shellWindow, false);
     if (auto restarted = restartStaleSpellCheck(*session, options))
         return *restarted;
-    m_spellWalk->addWord(*session, word.toStdU16String(), walkOptions(options));
-    showSpellCheckWord();
-    return spellCheckState(false);
+    walk->addWord(*session, word.toStdU16String(), walkOptions(options));
+    showSpellCheckWord(shellWindow);
+    return spellCheckState(shellWindow, false);
 }
 
-void Application::closeSpellChecker()
+void Application::closeSpellChecker(int shellWindow)
 {
-    m_spellWalk.reset();
-    m_spellWalkDocument.reset();
+    auto &v = views(shellWindow);
+    v.spellWalk.reset();
+    v.spellWalkDocument.reset();
 }
 
 QStringList Application::addedDictionaryWords() const
 {
     QStringList out;
-    if (m_spellChecker)
-        for (const auto &word : m_spellChecker->addedWords())
+    if (const auto *checker = anySpellChecker())
+        for (const auto &word : checker->addedWords())
             out << qstr(word);
     return out;
 }
@@ -4681,27 +5182,38 @@ bool Application::removeDictionaryWords(const QStringList &words)
         list.push_back(w.toStdU16String());
     if (!checker || !checker->removeWords(list))
         return false;
+    userWordsChanged(checker);
     spellingRefresh();
     return true;
 }
 
-void Application::createFindReplace()
+void Application::createFindReplace(WindowViews &views, int shellWindow)
 {
-    m_find = std::make_unique<application::FindReplace>(*m_findHost, unicodeFold);
+    views.find.reset();
+    views.findHost = std::make_unique<FindHost>(*this, shellWindow);
+    views.find = std::make_unique<application::FindReplace>(*views.findHost, unicodeFold);
+    if (m_findOpened)
+        setFindRecent(views);
+}
+
+void Application::setFindRecent(WindowViews &views)
+{
+    const auto list = [this](const char *id) {
+        std::vector<std::u8string> out;
+        for (const QString &entry : m_settings->list(id))
+            out.push_back(toU8(entry));
+        return out;
+    };
+    views.find->setRecent({list("find.recentFinds"), list("find.recentReplacements"), list("findInSubs.recentFilters"),
+                           list("findInSubs.recentPaths")});
 }
 
 QVariantMap Application::openFindReplace()
 {
     if (!m_findOpened) {
-        const auto list = [this](const char *id) {
-            std::vector<std::u8string> out;
-            for (const QString &entry : m_settings->list(id))
-                out.push_back(toU8(entry));
-            return out;
-        };
-        m_find->setRecent({list("find.recentFinds"), list("find.recentReplacements"), list("findInSubs.recentFilters"),
-                           list("findInSubs.recentPaths")});
         m_findOpened = true;
+        for (auto *views : allViews())
+            setFindRecent(*views);
     }
     return findReplaceSettings();
 }
@@ -4709,9 +5221,9 @@ QVariantMap Application::openFindReplace()
 QVariantMap Application::findReplaceSettings() const
 {
     auto s = application::findReplaceFromOptions(m_settings->integer("find.options"));
-    findFirstEntries(s, m_find->recent());
+    findFirstEntries(s, finder().recent());
     s.styles = toU8(m_settings->text("find.styles"));
-    return findMap(s, m_find->recent());
+    return findMap(s, finder().recent());
 }
 
 void Application::saveFindReplaceSettings(const QVariantMap &settings)
@@ -4721,9 +5233,12 @@ void Application::saveFindReplaceSettings(const QVariantMap &settings)
     m_settings->set("find.styles", findQs(s.styles));
 }
 
-void Application::saveFindRecent(const application::FindReplaceSettings &window)
+void Application::saveFindRecent(int shellWindow, const application::FindReplaceSettings &window)
 {
-    const auto &r = m_find->recent();
+    const auto &r = views(shellWindow).find->recent();
+    for (auto *other : allViews())
+        if (other != &views(shellWindow))
+            other->find->setRecent(r);
     m_settings->set("find.recentFinds", findList(r.finds));
     if (window.replaceShown)
         m_settings->set("find.recentReplacements", findList(r.replacements));
@@ -4737,62 +5252,65 @@ void Application::runFindReplace(const QString &action, const QVariantMap &setti
 {
     using Scope = application::FindReplaceSettings::Scope;
     const auto s = findSettings(settings);
+    auto &find = finder();
     if (action == QLatin1String("find")) {
-        m_find->find(s);
+        find.find(s);
     } else if (action == QLatin1String("findPrevious")) {
-        m_find->findPrevious(s);
+        find.findPrevious(s);
     } else if (action == QLatin1String("findAll")) {
         switch (s.scope) {
-        case Scope::Document: m_find->findAllInCurrent(s); break;
-        case Scope::OpenDocuments: m_find->findInAllOpened(s); break;
-        case Scope::Folder: m_find->findInFiles(s); break;
+        case Scope::Document: find.findAllInCurrent(s); break;
+        case Scope::OpenDocuments: find.findInAllOpened(s); break;
+        case Scope::Folder: find.findInFiles(s); break;
         }
     } else if (action == QLatin1String("replace")) {
-        m_find->replace(s);
+        find.replace(s);
     } else if (action == QLatin1String("replaceAll")) {
         switch (s.scope) {
-        case Scope::Document: m_find->replaceAll(s); break;
-        case Scope::OpenDocuments: m_find->replaceInAllOpened(s); break;
-        case Scope::Folder: m_find->replaceInFiles(s); break;
+        case Scope::Document: find.replaceAll(s); break;
+        case Scope::OpenDocuments: find.replaceInAllOpened(s); break;
+        case Scope::Folder: find.replaceInFiles(s); break;
         }
     }
 }
 
-QVariantMap Application::findCount(const QVariantMap &settings)
+QVariantMap Application::findCount(const QVariantMap &settings, int shellWindow)
 {
-    const auto count = m_find->count(findSettings(settings));
+    const auto count = views(shellWindow).find->count(findSettings(settings));
     return {{QStringLiteral("total"), count.total}, {QStringLiteral("current"), count.current}};
 }
 
 QString Application::findPatternError(const QVariantMap &settings) const
 {
-    const std::u16string error = m_find->patternError(findSettings(settings));
+    const std::u16string error = finder().patternError(findSettings(settings));
     QString text = QString::fromStdU16String(error);
     if (!text.isEmpty())
         text[0] = text[0].toUpper();
     return text;
 }
 
-void Application::findFinished()
+void Application::findFinished(int shellWindow)
 {
+    const auto &find = *views(shellWindow).find;
     emit findResultsChanged();
     emit findBusyChanged();
-    emit findFinished(findMap(m_find->window(), m_find->recent()));
+    emit findFinished(findMap(find.window(), find.recent()));
 }
 
 void Application::findNext()
 {
-    m_find->findNext();
+    finder().findNext();
 }
 
 void Application::findPrevious()
 {
-    m_find->findPrevious();
+    finder().findPrevious();
 }
 
 bool Application::findBusy() const
 {
-    return m_find && m_find->busy();
+    const auto &find = activeViews().find;
+    return find && find->busy();
 }
 
 void Application::answerFindQuestion(int id, const QString &answer)
@@ -4816,24 +5334,26 @@ void Application::setFindQuestionHandler(std::function<int(int, const QString &)
     m_findQuestionHandler = std::move(handler);
 }
 
-QString Application::findReplaceActivated(const QString &find)
+QString Application::findReplaceActivated(const QString &find, int shellWindow)
 {
-    auto *session = targetSession();
-    if (!session || !m_editor->hasLine())
+    auto *session = windowSession(shellWindow);
+    auto &editor = *views(shellWindow).editor;
+    auto &finder = *views(shellWindow).find;
+    if (!session || !editor.hasLine())
         return find;
     const bool tl = application::translationMode(*session);
     std::vector<int> roles{tl ? 1 : 0};
     if (tl)
         roles.push_back(0);
     for (const int role : roles) {
-        const auto [from, to] = m_editor->fieldSelectionOf(role);
+        const auto [from, to] = editor.fieldSelectionOf(role);
         if (from >= to)
             continue;
-        if (std::pair(from, to) == m_editor->displaySpan(role, m_find->lastStart(), m_find->lastEnd()))
+        if (std::pair(from, to) == editor.displaySpan(role, finder.lastStart(), finder.lastEnd()))
             return find;
-        const QString shown = role == 1 ? m_editor->translationText() : m_editor->text();
+        const QString shown = role == 1 ? editor.translationText() : editor.text();
         const QString selected = shown.mid(from, to - from);
-        m_find->selectionAdopted();
+        finder.selectionAdopted();
         const auto lower = [](const QString &t) { return t.toCaseFolded(); };
         return lower(selected) != lower(find) ? selected : find;
     }
@@ -4842,13 +5362,13 @@ QString Application::findReplaceActivated(const QString &find)
 
 void Application::resetFindReplace()
 {
-    m_find->reset();
+    finder().reset();
 }
 
-QVariantList Application::findResults() const
+QVariantList Application::findResults(int shellWindow) const
 {
     QVariantList rows;
-    for (const auto &r : m_find->results()) {
+    for (const auto &r : views(shellWindow).find->results()) {
         const QString text = QString(reinterpret_cast<const QChar *>(r.text.data()), static_cast<qsizetype>(r.text.size()));
         QVariantMap row{{QStringLiteral("header"), r.header},
                         {QStringLiteral("text"), text},
@@ -4866,42 +5386,42 @@ QVariantList Application::findResults() const
     return rows;
 }
 
-bool Application::findResultsShown() const
+bool Application::findResultsShown(int shellWindow) const
 {
-    return m_find->resultsShown();
+    return views(shellWindow).find->resultsShown();
 }
 
-bool Application::canReplaceFindResults() const
+bool Application::canReplaceFindResults(int shellWindow) const
 {
-    return m_find->canReplaceChecked();
+    return views(shellWindow).find->canReplaceChecked();
 }
 
 void Application::checkFindResults(bool check)
 {
-    m_find->checkAll(check);
+    finder().checkAll(check);
     emit findResultsChanged();
 }
 
 void Application::toggleFindResult(int row)
 {
-    m_find->toggleChecked(static_cast<std::size_t>(std::max(row, 0)));
+    finder().toggleChecked(static_cast<std::size_t>(std::max(row, 0)));
     emit findResultsChanged();
 }
 
 void Application::toggleFindGroup(int row)
 {
-    m_find->toggleGroup(static_cast<std::size_t>(std::max(row, 0)));
+    finder().toggleGroup(static_cast<std::size_t>(std::max(row, 0)));
     emit findResultsChanged();
 }
 
 void Application::showFindResult(int row)
 {
-    m_find->showResult(static_cast<std::size_t>(std::max(row, 0)));
+    finder().showResult(static_cast<std::size_t>(std::max(row, 0)));
 }
 
 void Application::replaceFindResults(const QString &replacement)
 {
-    m_find->replaceChecked(toU8(replacement));
+    finder().replaceChecked(toU8(replacement));
     emit findResultsChanged();
 }
 
@@ -4914,7 +5434,8 @@ void Application::checkResolution()
         video.state() != application::VideoSession::State::Ready || !video.lastFrame())
         return;
     const auto subs = application::scriptResolution(session->document());
-    const int width = video.lastFrame()->width, height = video.lastFrame()->height;
+    const auto geometry = video.sourceGeometry();
+    const int width = geometry.width, height = geometry.height;
     if (subs.width == width && subs.height == height)
         return;
     emit resolutionMismatch({{QStringLiteral("subsWidth"), subs.width},
@@ -4933,7 +5454,7 @@ QVariantMap Application::resampleValues() const
     application::Resolution video = subs;
     const bool hasVideo = m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame();
     if (hasVideo)
-        video = {m_video->session().lastFrame()->width, m_video->session().lastFrame()->height};
+        video = {m_video->session().sourceGeometry().width, m_video->session().sourceGeometry().height};
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
@@ -4941,94 +5462,200 @@ QVariantMap Application::resampleValues() const
             {QStringLiteral("hasVideo"), hasVideo}};
 }
 
-bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch)
+bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations)
 {
-    auto *session = targetSession();
-    if (!session || (subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
+    if ((subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
-    QStringList unscaled;
-    const auto warn = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
-        unscaled << unscaledValue(row, value, tag);
-    };
-    const bool done = application::changeResolution(*session, {subsWidth, subsHeight}, {width, height}, true, stretch, warn)
-                          .has_value();
-    noticeUnscaled(*m_log, unscaled);
-    m_editor->reloadFromSession();
-    refreshViews();
-    return done;
+    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations);
 }
 
 bool Application::matchVideoResolution(int option)
 {
-    auto *session = targetSession();
     const auto values = resampleValues();
-    if (!session || values.isEmpty())
+    if (values.isEmpty())
         return false;
-    const application::Resolution subs{values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt()};
-    const application::Resolution video{values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt()};
-    QStringList unscaled;
-    const auto warn = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
+    return changeResolution(values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt(),
+                            values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt(),
+                            option != 0, option == 2, true);
+}
+
+bool Application::changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
+                                   bool adjustRotations)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    QStringList unscaled, unadjusted;
+    application::ResampleOptions options;
+    options.stretch = stretch;
+    options.adjustRotations = adjustRotations;
+    const auto &video = m_video->session();
+    if (video.state() == application::VideoSession::State::Ready && video.lastFrame())
+        options.frameHeight = video.lastFrame()->height;
+    options.measure = perspectiveMeasure();
+    options.unscaled = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
         unscaled << unscaledValue(row, value, tag);
     };
-    const bool done = application::changeResolution(*session, subs, video, option != 0, option == 2, warn).has_value();
+    options.unadjusted = [&unadjusted](int row) { unadjusted << unadjustedRotation(row); };
+    const bool done =
+        application::changeResolution(*session, {fromWidth, fromHeight}, {width, height}, resample, options).has_value();
     noticeUnscaled(*m_log, unscaled);
-    m_editor->reloadFromSession();
+    noticeUnadjusted(*m_log, unadjusted);
+    editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+application::visual::perspective::TextMeasure Application::perspectiveMeasure() const
+{
+    application::visual::perspective::TextMeasure measure;
+    if (const ui::VisualToolsController *tools = activeViews().visualTools.get()) {
+        measure.port = tools->textMeasure();
+        measure.leased = [tools](const std::string &name) { return tools->fontLeased(name); };
+        measure.fallsBackToLeased = [tools](const std::string &font, bool bold, bool italic, std::u16string_view text) {
+            return tools->fallsBackToLeased(font, bold, italic, text);
+        };
+    }
+    return measure;
+}
+
+namespace {
+
+QVariantMap sizeOf(application::Resolution r)
+{
+    return {{QStringLiteral("width"), r.width}, {QStringLiteral("height"), r.height}};
+}
+
+application::Resolution resolutionOf(const QVariant &size)
+{
+    const auto map = size.toMap();
+    return {map.value(QStringLiteral("width")).toInt(), map.value(QStringLiteral("height")).toInt()};
+}
+
+const char *questionSetting(const QString &kind)
+{
+    if (kind == QLatin1String("missingMatrix"))
+        return "video.missingMatrix";
+    if (kind == QLatin1String("matrixMismatch"))
+        return "video.matrixMismatch";
+    if (kind == QLatin1String("missingLayoutRes"))
+        return "video.missingLayoutRes";
+    if (kind == QLatin1String("layoutResMismatch"))
+        return "video.layoutResMismatch";
+    if (kind == QLatin1String("untaggedMatrix"))
+        return "video.untaggedMatrixWarning";
+    if (kind == QLatin1String("hdr"))
+        return "video.hdrWarning";
+    return nullptr;
+}
+
+}
+
+void Application::checkVideoMatrix()
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!m_askVideoProperties || video.dummy() || !session || session->document().format() != core::SubtitleFormat::Ass)
+        return;
+    const auto geometry = video.sourceGeometry();
+    const auto &colour = video.colour();
+    const QString recommended = QString::fromStdString(application::recommendedMatrix(colour, geometry.width, geometry.height));
+    const QString path = QString::fromStdString(video.path());
+    if (application::untaggedMatrix(colour) && m_settings->boolean("video.untaggedMatrixWarning"))
+        emit videoPropertyQuestion({{QStringLiteral("kind"), QStringLiteral("untaggedMatrix")},
+                                    {QStringLiteral("video"), path},
+                                    {QStringLiteral("recommended"), recommended}});
+    if (application::hdrOrWideGamut(colour) && m_settings->boolean("video.hdrWarning"))
+        emit videoPropertyQuestion({{QStringLiteral("kind"), QStringLiteral("hdr")}, {QStringLiteral("video"), path}});
+    const auto check = application::checkMatrix(session->document(), recommended.toStdString());
+    if (check.question == application::MatrixQuestion::None)
+        return;
+    const QString kind = check.question == application::MatrixQuestion::Missing ? QStringLiteral("missingMatrix")
+                                                                                 : QStringLiteral("matrixMismatch");
+    const auto action = static_cast<application::VideoPropertyAction>(m_settings->integer(questionSetting(kind)));
+    const QVariantMap question{{QStringLiteral("kind"), kind},
+                               {QStringLiteral("video"), path},
+                               {QStringLiteral("script"), QString::fromStdString(check.script)},
+                               {QStringLiteral("recommended"), recommended}};
+    if (action == application::VideoPropertyAction::Set)
+        answerVideoProperty(question, 1);
+    else if (action == application::VideoPropertyAction::Ask)
+        emit videoPropertyQuestion(question);
+}
+
+void Application::checkLayoutResolution()
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!m_askVideoProperties || video.dummy() || !session || session->document().format() != core::SubtitleFormat::Ass)
+        return;
+    const auto geometry = video.sourceGeometry();
+    const application::Resolution size{geometry.width, geometry.height};
+    const auto check = application::checkLayoutResolution(
+        session->document(), size,
+        static_cast<application::LayoutResMismatch>(m_settings->integer("video.layoutResMismatch")));
+    if (check.question == application::LayoutQuestion::None)
+        return;
+    const bool missing = check.question == application::LayoutQuestion::Missing;
+    const QVariantMap question{{QStringLiteral("kind"), missing ? QStringLiteral("missingLayoutRes") : QStringLiteral("layoutResMismatch")},
+                               {QStringLiteral("video"), QString::fromStdString(video.path())},
+                               {QStringLiteral("videoSize"), sizeOf(size)},
+                               {QStringLiteral("layoutSize"), sizeOf(check.layout)},
+                               {QStringLiteral("playSize"), sizeOf(check.play)},
+                               {QStringLiteral("aspectChanged"), check.aspectChanged}};
+    if (!missing) {
+        emit videoPropertyQuestion(question);
+        return;
+    }
+    switch (static_cast<application::VideoPropertyAction>(m_settings->integer("video.missingLayoutRes"))) {
+    case application::VideoPropertyAction::Ask: emit videoPropertyQuestion(question); break;
+    case application::VideoPropertyAction::Set: answerVideoProperty(question, 1); break;
+    case application::VideoPropertyAction::SetToPlayRes: answerVideoProperty(question, 2); break;
+    case application::VideoPropertyAction::Ignore: break;
+    }
+}
+
+bool Application::answerVideoProperty(const QVariantMap &question, int choice)
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!session || choice < 1 || video.state() != application::VideoSession::State::Ready ||
+        QString::fromStdString(video.path()) != question.value(QStringLiteral("video")).toString())
+        return false;
+    const QString kind = question.value(QStringLiteral("kind")).toString();
+    bool done = false;
+    if (kind == QLatin1String("missingMatrix") || kind == QLatin1String("matrixMismatch")) {
+        done = application::setMatrix(*session, question.value(QStringLiteral("recommended")).toString().toStdString())
+                   .has_value();
+    } else if (kind == QLatin1String("missingLayoutRes") || kind == QLatin1String("layoutResMismatch")) {
+        const auto layout = choice == 2 ? application::writtenScriptResolution(session->document())
+                                        : resolutionOf(question.value(QStringLiteral("videoSize")));
+        done = application::setLayoutResolution(*session, layout).has_value();
+    }
+    if (done)
+        refreshViews();
+    return done;
+}
+
+void Application::stopAskingVideoProperty(const QString &kind, int choice)
+{
+    using application::VideoPropertyAction;
+    const char *setting = questionSetting(kind);
+    if (!setting)
+        return;
+    if (kind == QLatin1String("untaggedMatrix") || kind == QLatin1String("hdr"))
+        m_settings->set(setting, false);
+    else if (kind == QLatin1String("layoutResMismatch"))
+        m_settings->set(setting, static_cast<int>(application::LayoutResMismatch::Never));
+    else
+        m_settings->set(setting, static_cast<int>(choice == 2   ? VideoPropertyAction::SetToPlayRes
+                                                  : choice == 1 ? VideoPropertyAction::Set
+                                                                : VideoPropertyAction::Ignore));
 }
 
 void Application::setAskForBadResolution(bool on)
 {
     m_settings->set("video.dontAskForBadResolution", !on);
-}
-
-namespace {
-
-constexpr std::pair<const char *, const char *> kConversionOptions[] = {
-    {"fps", "convert.fps"},
-    {"fpsFromVideo", "convert.fpsFromVideo"},
-    {"style", "convert.style"},
-    {"styleCatalog", "convert.styleCatalog"},
-    {"newEndTimes", "convert.newEndTimes"},
-    {"timePerCharacter", "convert.timePerCharacter"},
-    {"prefix", "convert.assTagsToInsertInLine"},
-    {"resolutionWidth", "convert.resolutionWidth"},
-    {"resolutionHeight", "convert.resolutionHeight"},
-};
-
-std::optional<core::SubtitleFormat> formatNamed(const QString &name)
-{
-    if (name == QLatin1String("ass"))
-        return core::SubtitleFormat::Ass;
-    if (name == QLatin1String("srt"))
-        return core::SubtitleFormat::Srt;
-    if (name == QLatin1String("tmp"))
-        return core::SubtitleFormat::TMPlayer;
-    if (name == QLatin1String("mdvd"))
-        return core::SubtitleFormat::MicroDvd;
-    if (name == QLatin1String("mpl2"))
-        return core::SubtitleFormat::Mpl2;
-    return std::nullopt;
-}
-
-}
-
-QVariantMap Application::conversionOptions() const
-{
-    QVariantMap out;
-    for (const auto &[key, setting] : kConversionOptions) {
-        const QVariant v = m_settings->value(QLatin1String(setting));
-        out.insert(QLatin1String(key), v.typeId() == QMetaType::LongLong ? QVariant(v.toInt()) : v);
-    }
-    return out;
-}
-
-void Application::setConversionOptions(const QVariantMap &options)
-{
-    for (const auto &[key, setting] : kConversionOptions)
-        if (options.contains(QLatin1String(key)))
-            m_settings->set(setting, options.value(QLatin1String(key)));
-    m_conversionPlan.reset();
 }
 
 QString Application::activeLineStyle() const
@@ -5042,140 +5669,115 @@ QString Application::activeLineStyle() const
     return {};
 }
 
-QStringList Application::conversionTargets() const
+std::optional<core::ConversionOptions> Application::assConversionOptions() const
 {
-    auto *session = targetSession();
-    if (!session || session->document().scriptInfo(u8"TLMode") == std::optional<std::u8string>(u8"Yes"))
-        return {};
-    const auto format = session->document().format();
-    QStringList out;
-    if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
-        out << QStringLiteral("ass");
-    if (format != core::SubtitleFormat::Srt)
-        out << QStringLiteral("srt");
-    if (format != core::SubtitleFormat::MicroDvd)
-        out << QStringLiteral("mdvd");
-    if (format != core::SubtitleFormat::Mpl2)
-        out << QStringLiteral("mpl2");
-    if (format != core::SubtitleFormat::TMPlayer)
-        out << QStringLiteral("tmp");
-    return out;
-}
-
-QStringList Application::conversionStyles(const QString &catalog) const
-{
-    QStringList out;
-    if (const auto styles = m_styleManager->catalogStore().list(utf8(catalog)))
-        for (const auto &style : *styles)
-            out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), qsizetype(style.name.size()));
-    return out;
-}
-
-QVariantMap Application::previewConversion(const QString &targetName)
-{
-    m_conversionPlan.reset();
-    auto *session = targetSession();
-    const auto target = formatNamed(targetName);
-    if (!session || !target || !conversionTargets().contains(targetName))
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
-    const QVariantMap o = conversionOptions();
     core::ConversionOptions options;
     const auto &video = m_video->session();
     const bool hasVideo = video.state() == application::VideoSession::State::Ready;
     const float frameMs = hasVideo ? video.legacyTimebase().frameDuration() : 0.f;
-    options.fps = o.value(QStringLiteral("fpsFromVideo")).toBool() && hasVideo && frameMs > 0.f
+    options.fps = m_settings->boolean("convert.fpsFromVideo") && hasVideo && frameMs > 0.f
                       ? 1000.0 / frameMs
-                      : o.value(QStringLiteral("fps")).toString().toDouble();
+                      : m_settings->value(QStringLiteral("convert.fps")).toString().toDouble();
     if (!std::isfinite(options.fps) || options.fps < 1 || options.fps > 1000)
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("fpsInvalid"), true},
-                {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "Invalid FPS. Correct it in options and try again.")}};
+        return std::nullopt;
     options.videoFps = hasVideo && frameMs > 0.f ? 1000.0 / frameMs : 23.976;
-    options.prefix = utf8(o.value(QStringLiteral("prefix")).toString());
-    options.newEndTimes = o.value(QStringLiteral("newEndTimes")).toBool();
-    options.timePerCharacter = o.value(QStringLiteral("timePerCharacter")).toInt();
-    options.resolutionWidth = utf8(o.value(QStringLiteral("resolutionWidth")).toString());
-    options.resolutionHeight = utf8(o.value(QStringLiteral("resolutionHeight")).toString());
-    const std::u8string styleName = utf8(o.value(QStringLiteral("style")).toString());
-    if (const auto found = m_styleManager->catalogStore().find(utf8(o.value(QStringLiteral("styleCatalog")).toString()), styleName))
+    options.prefix = utf8(m_settings->text("convert.assTagsToInsertInLine"));
+    options.newEndTimes = m_settings->boolean("convert.newEndTimes");
+    options.timePerCharacter = m_settings->integer("convert.timePerCharacter");
+    options.resolutionWidth = utf8(m_settings->text("convert.resolutionWidth"));
+    options.resolutionHeight = utf8(m_settings->text("convert.resolutionHeight"));
+    const std::u8string styleName = utf8(m_settings->text("convert.style"));
+    if (const auto found = m_styleManager->catalogStore().find(utf8(m_settings->text("convert.styleCatalog")), styleName))
         options.style = *found;
     else
         options.style = application::defaultStyle(styleName);
-    const QCollator collator;
-    auto result = core::convertDocument(session->document(), *target, options, [&](std::u8string_view a, std::u8string_view b) {
-        return collator.compare(QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
-                                QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
-    });
-    if (!result)
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This document can’t be converted to that format.")}};
-    const auto &r = result->report;
-    QStringList losses;
-    QStringList kinds;
-    const auto add = [&](const QString &text, bool removes) {
-        losses << text;
-        kinds << (removes ? QStringLiteral("warning") : QStringLiteral("info"));
-    };
-    if (r.headerDropped)
-        add(QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed."), true);
-    if (r.commentsRemoved)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved), true);
-    if (r.drawingsCleared)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared), true);
-    if (r.emptyRemoved)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved), true);
-    if (r.duplicatesRemoved)
-        add(QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved), true);
-    if (r.reordered)
-        add(QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time."), false);
-    if (r.textChanged)
-        add(QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
-                                        r.textChanged),
-            *target != core::SubtitleFormat::Ass);
-    if (r.fieldsDropped)
-        add(*target == core::SubtitleFormat::Ass
-                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
-                                              r.fieldsDropped)
-                      .arg(o.value(QStringLiteral("style")).toString())
-                : QCoreApplication::translate("HikariSub.Conversion",
-                                              "Layer, style, actor, margins or effect removed from %n line(s).", nullptr,
-                                              r.fieldsDropped),
-            *target != core::SubtitleFormat::Ass);
-    if (r.markersDropped)
-        add(QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
-                                        nullptr, r.markersDropped),
-            true);
-    if (r.timesChanged)
-        add(QCoreApplication::translate("HikariSub.Conversion",
-                                        "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
-                                        r.timesChanged),
-            false);
-    m_conversionPlan = std::make_unique<ConversionPlan>(
-        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, frameMs, std::move(result->document)});
-    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}, {QStringLiteral("kinds"), kinds}};
+    return options;
 }
 
-bool Application::acceptConversion()
+namespace {
+
+QString invalidConversionFrameRate()
 {
-    auto plan = std::move(m_conversionPlan);
-    auto *session = targetSession();
-    const auto target = m_workspace.editingTarget();
-    const auto &video = m_video->session();
-    const float frameMs =
-        video.state() == application::VideoSession::State::Ready ? video.legacyTimebase().frameDuration() : 0.f;
-    if (!plan || !session || !target || target->value != plan->document || session->revision() != plan->revision ||
-        conversionOptions() != plan->options || frameMs != plan->frameMs)
+    return QCoreApplication::translate("HikariSub.Documents",
+                                       "The frame rate in Settings › Conversion isn’t valid. Correct it and save again.");
+}
+
+QStringList assConversionChanges(const core::ConversionReport &r, const QString &style)
+{
+    QStringList out;
+    if (r.commentsRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved);
+    if (r.drawingsCleared)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared);
+    if (r.emptyRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+    if (r.duplicatesRemoved)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+    if (r.reordered)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time.");
+    if (r.textChanged)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
+                                           r.textChanged);
+    if (r.fieldsDropped)
+        out << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style “%1”.", nullptr,
+                                           r.fieldsDropped)
+                   .arg(style);
+    if (r.markersDropped)
+        out << QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
+                                           nullptr, r.markersDropped);
+    if (r.timesChanged)
+        out << QCoreApplication::translate("HikariSub.Conversion",
+                                           "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
+                                           r.timesChanged);
+    return out;
+}
+
+}
+
+std::optional<core::ConversionResult> Application::convertedToAss(const application::EditSession &session) const
+{
+    const auto options = assConversionOptions();
+    if (!options)
+        return std::nullopt;
+    const QCollator collator;
+    return core::convertDocument(session.document(), core::SubtitleFormat::Ass, *options,
+                                 [&](std::u8string_view a, std::u8string_view b) {
+                                     return collator.compare(
+                                         QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
+                                         QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
+                                 });
+}
+
+QVariantMap Application::assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const
+{
+    const auto document = documentOf(id);
+    const auto *session = document ? m_files->session(*document) : nullptr;
+    if (!session || !savesAsAss(session->document().format(), file.toLocalFile(), format))
+        return {};
+    const auto result = convertedToAss(*session);
+    if (!result)
+        return {{QStringLiteral("convert"), true}, {QStringLiteral("problem"), invalidConversionFrameRate()}};
+    return {{QStringLiteral("convert"), true},
+            {QStringLiteral("changes"), assConversionChanges(result->report, m_settings->text("convert.style"))}};
+}
+
+bool Application::convertToAss(application::DocumentId document)
+{
+    auto *session = m_files->session(document);
+    if (!session)
         return false;
+    const QString title = QCoreApplication::translate("HikariSub.Documents", "Save as ASS");
+    auto result = convertedToAss(*session);
+    if (!result) {
+        m_log->notice(ui::LogController::Error, title, invalidConversionFrameRate());
+        return false;
+    }
     std::set<core::LineId> touches;
     for (const auto *line : session->document().lines())
         touches.insert(line->id);
     application::Command command{"Subtitles conversion", session->revision(), touches,
                                  [&](core::Document &d) {
-                                     d = plan->converted;
+                                     d = std::move(result->document);
                                      return true;
                                  }};
     command.keepGroups = false;
@@ -5191,10 +5793,11 @@ bool Application::acceptConversion()
     selection.anchor = selection.active;
     selection.extent.reset();
     session->setSelection(selection);
-    m_formatChanged.insert(target->value);
-    m_editor->reloadFromSession();
+    if (document == m_workspace.editingTarget())
+        editor().reloadFromSession();
     refreshViews();
-    checkResolution();
+    if (const QStringList changes = assConversionChanges(result->report, m_settings->text("convert.style")); !changes.isEmpty())
+        m_log->notice(ui::LogController::Info, title, changes.join(u' '));
     return true;
 }
 
@@ -5212,9 +5815,10 @@ QVariantMap Application::scriptProperties()
     for (const auto &m : application::matrixNames())
         matrices << q(m);
     int videoWidth = 0, videoHeight = 0;
-    if (const auto frame = m_video->session().lastFrame(); frame && m_video->session().state() == application::VideoSession::State::Ready) {
-        videoWidth = frame->width;
-        videoHeight = frame->height;
+    if (m_video->session().lastFrame()) {
+        const auto geometry = m_video->session().sourceGeometry();
+        videoWidth = geometry.width;
+        videoHeight = geometry.height;
     }
     const bool link = m_settings->boolean("scriptProperties.linkResolutions");
     return {{QStringLiteral("title"), q(p.title)},
@@ -5280,7 +5884,7 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     e.layoutResX = edited("layoutResX");
     e.layoutResY = edited("layoutResY");
     const bool done = application::applyScriptProperties(*session, p, e, linkResolutions).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5289,6 +5893,27 @@ bool Application::makeGroups()
 {
     const auto shown = shownLines();
     return runFilter([&](application::EditSession &s) { return application::makeGroups(s, shown); });
+}
+
+bool Application::canConvertFolds() const
+{
+    const auto *session = targetSession();
+    return session && application::foldConversion(session->document()).converted > 0;
+}
+
+bool Application::convertFoldsToGroups()
+{
+    std::optional<application::FoldConversion> result;
+    const bool done = runFilter([&](application::EditSession &s) -> std::expected<void, application::CommandRefusal> {
+        auto converted = application::convertFoldsToGroups(s);
+        if (!converted)
+            return std::unexpected(converted.error());
+        result = *converted;
+        return {};
+    });
+    if (result)
+        emit foldsConverted(static_cast<int>(result->converted), static_cast<int>(result->skipped));
+    return done;
 }
 
 bool Application::toggleGroup(qulonglong description)
@@ -5367,7 +5992,7 @@ bool Application::sortLines(const QString &key, bool selectedOnly)
                                                  return collator.compare(q(a), q(b));
                                              })
                           .has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5380,7 +6005,7 @@ bool Application::duplicateLines()
         return false;
     const bool done =
         application::duplicateLines(*session, {}, m_settings->boolean("grid.duplicationDontChangeSelection")).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5392,15 +6017,15 @@ bool Application::deleteLines()
     if (!session)
         return false;
     const bool done = application::deleteLines(*session).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
 
 void Application::toggleHideTags()
 {
-    m_settings->set("grid.hideTags", !m_shell->hideTags());
-    m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    m_settings->set("grid.hideTags", !shell().hideTags());
+    shell().setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
 }
 
 bool Application::deleteText()
@@ -5409,7 +6034,7 @@ bool Application::deleteText()
     if (!session)
         return false;
     const bool done = application::deleteText(*session, shownLines()).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5427,7 +6052,7 @@ bool Application::joinLines(const QString &kind)
                        : kind == QLatin1String("last")   ? JoinKind::KeepLast
                                                          : JoinKind::Join;
     const bool done = application::joinLines(*session, k).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5439,7 +6064,7 @@ bool Application::swapLines()
     if (!session)
         return false;
     const bool done = application::swapLines(*session).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5451,7 +6076,7 @@ bool Application::makeContinuous(bool withPrevious)
     if (!session)
         return false;
     const bool done = application::makeContinuous(*session, withPrevious).has_value();
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return done;
 }
@@ -5471,6 +6096,9 @@ QQuickWindow *Application::openShellWindow(QQmlEngine &engine)
                 &ui::WorkspaceLayoutController::reloadSavedLayouts);
     }
     m_shellWindows[id].layout = std::move(layout);
+    auto views = std::make_unique<WindowViews>();
+    makeViews(*views, id);
+    m_shellWindows[id].views = std::move(views);
     QQmlComponent component(&engine, QStringLiteral("Hikari.Ui"), QStringLiteral("Main"));
     auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(qmlProperties(id)));
     if (!window) {
@@ -5551,18 +6179,194 @@ std::vector<ui::WorkspaceLayoutController *> Application::layouts()
     return out;
 }
 
+namespace {
+
+void notePlace(const QWindow &window, application::SessionWindow &place)
+{
+    if (!window.isVisible())
+        return;
+    place.maximized = window.windowStates().testFlag(Qt::WindowMaximized);
+    if (const QRect g = window.geometry(); window.windowStates() == Qt::WindowNoState && !g.isEmpty())
+        place.geometry = application::SessionGeometry{g.x(), g.y(), g.width(), g.height()};
+}
+
+}
+
+void Application::shellWindowLoaded(QQuickWindow *window)
+{
+    const auto id = shellWindowOf(window);
+    if (!id)
+        return;
+    if (*id == 0)
+        m_firstWindow = window;
+    const auto keepPlace = [this, window, id = *id] { notePlace(*window, m_windowPlaces[id]); };
+    for (const auto changed : {&QWindow::xChanged, &QWindow::yChanged, &QWindow::widthChanged, &QWindow::heightChanged})
+        connect(window, changed, this, keepPlace);
+    connect(window, &QWindow::windowStateChanged, this, keepPlace);
+    keepPlace();
+}
+
+QQuickWindow *Application::shellQuickWindow(int shellWindow) const
+{
+    if (shellWindow == 0)
+        return m_firstWindow;
+    const auto found = m_shellWindows.find(shellWindow);
+    return found == m_shellWindows.end() ? nullptr : found->second.window.data();
+}
+
+std::vector<int> Application::sessionWindows() const
+{
+    std::vector<int> out;
+    if (!m_firstWindowHidden)
+        out.push_back(0);
+    for (const auto &[id, shell] : m_shellWindows)
+        if (shell.window && !shell.closing)
+            out.push_back(id);
+    for (const auto tab : m_workspace.allTabs())
+        if (const auto window = m_workspace.window(tab); window && std::ranges::find(out, *window) == out.end())
+            out.push_back(*window);
+    if (out.empty())
+        out.push_back(0);
+    return out;
+}
+
+application::SessionWindow Application::sessionWindow(int shellWindow)
+{
+    auto &place = m_windowPlaces[shellWindow];
+    if (const QQuickWindow *window = shellQuickWindow(shellWindow))
+        notePlace(*window, place);
+    return place;
+}
+
+void Application::placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved)
+{
+    if (window.windowStates() != Qt::WindowNoState)
+        window.setWindowStates(Qt::WindowNoState);
+    if (const auto &g = saved.geometry) {
+        const QRect client(g->x, g->y, g->width, g->height);
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland"))) {
+            window.resize(client.size());
+        } else if (QScreen *primary = QGuiApplication::primaryScreen()) {
+            QList<QRect> available;
+            for (QScreen *screen : QGuiApplication::screens())
+                available << screen->availableGeometry();
+            const QMargins margins = window.frameMargins();
+            const QRect fitted = ui::fitOnScreens(client.marginsAdded(margins), margins.top() + ui::dockchrome::kHeaderHeight,
+                                                  available, primary->availableGeometry());
+            window.setGeometry(fitted.marginsRemoved(margins));
+        }
+    }
+    if (saved.maximized)
+        window.setWindowStates(Qt::WindowMaximized);
+}
+
+bool Application::saveLayoutForQuit()
+{
+    const int active = m_workspace.activeWindow();
+    if (const auto target = m_workspace.editingTarget(); active != 0 && target)
+        if (const auto arrangement = layoutOf(active).tabArrangement(target->value))
+            return m_workspaceLayout->saveForQuit(*arrangement);
+    return m_workspaceLayout->saveForQuit();
+}
+
+QVariantList Application::reviewCloseWindow(int shellWindow)
+{
+    m_closingWindow = shellWindow;
+    return reviewClose(QStringLiteral("window"));
+}
+
+bool Application::otherShellWindowOpen(int shellWindow) const
+{
+    if (shellWindow != 0 && m_firstWindow && !m_firstWindowHidden && m_firstWindow->isVisible())
+        return true;
+    return std::ranges::any_of(m_shellWindows, [&](const auto &entry) {
+        const auto &[id, shell] = entry;
+        return id != shellWindow && shell.window && !shell.closing && shell.window->isVisible();
+    });
+}
+
+std::optional<int> Application::otherUsableWindow(int besides) const
+{
+    if (besides != 0 && m_firstWindow && !m_firstWindowHidden)
+        return 0;
+    for (const auto &[id, shell] : m_shellWindows)
+        if (id != besides && shell.window && !shell.closing)
+            return id;
+    return std::nullopt;
+}
+
+void Application::leaveShellWindow(int shellWindow)
+{
+    if (m_workspace.activeWindow() != shellWindow)
+        return;
+    if (const auto next = otherUsableWindow(shellWindow))
+        activateShellWindow(*next);
+}
+
+void Application::hideFirstWindow()
+{
+    if (!m_firstWindow || m_firstWindowHidden)
+        return;
+    leaveShellWindow(0);
+    m_firstWindowHidden = true;
+    m_closeApproved.reset();
+    m_windowPlaces.erase(0);
+    closeShellWindowDocuments(0);
+    m_hiddenFloating.clear();
+    for (QWindow *floating : ui::hideFloatingPanelsOf(m_firstWindow))
+        m_hiddenFloating << floating;
+    m_firstWindow->hide();
+    noteLastUsedWindow();
+    saveLastSession();
+}
+
+void Application::showFirstWindow()
+{
+    if (!m_firstWindowHidden)
+        return;
+    m_firstWindowHidden = false;
+    if (m_firstWindow)
+        m_firstWindow->show();
+    for (const auto &floating : std::exchange(m_hiddenFloating, {}))
+        if (floating)
+            floating->show();
+}
+
+void Application::noteLastUsedWindow()
+{
+    if (std::exchange(m_lastUsedWindow, m_workspace.activeWindow()) != m_workspace.activeWindow())
+        emit lastUsedWindowChanged();
+}
+
 void Application::shellWindowClosed(int shellWindow)
 {
+    forgetShellWindow(shellWindow);
+    saveLastSession();
+}
+
+void Application::forgetShellWindow(int shellWindow)
+{
+    if (m_closeApproved == shellWindow)
+        m_closeApproved.reset();
     const auto found = m_shellWindows.find(shellWindow);
     if (found == m_shellWindows.end())
         return;
+    if (found->second.closing)
+        return;
+    m_windowPlaces.erase(shellWindow);
     const QPointer<QQuickWindow> window = found->second.window;
     if (!window) {
         m_shellWindows.erase(found);
         return;
     }
+    keepProjectTabs(shellWindow);
+    m_projects->forget(shellWindow);
+    found->second.closing = true;
+    leaveShellWindow(shellWindow);
     closeShellWindowDocuments(shellWindow);
-    connect(window, &QObject::destroyed, this, [this, shellWindow] { m_shellWindows.erase(shellWindow); });
+    connect(window, &QObject::destroyed, this, [this, shellWindow] {
+        QMetaObject::invokeMethod(this, [this, shellWindow] { m_shellWindows.erase(shellWindow); }, Qt::QueuedConnection);
+    });
     window->deleteLater();
 }
 
@@ -5572,13 +6376,14 @@ QVariantMap Application::qmlProperties(int shellWindow)
     if (const auto found = m_shellWindows.find(shellWindow); found != m_shellWindows.end())
         layout = found->second.layout.get();
     return {{QStringLiteral("shellWindow"), shellWindow},
-            {QStringLiteral("shell"), QVariant::fromValue(m_shell.get())},
-            {QStringLiteral("editor"), QVariant::fromValue(m_editor.get())},
+            {QStringLiteral("shell"), QVariant::fromValue(views(shellWindow).shell.get())},
+            {QStringLiteral("editor"), QVariant::fromValue(views(shellWindow).editor.get())},
             {QStringLiteral("video"), QVariant::fromValue(m_video.get())},
             {QStringLiteral("audio"), QVariant::fromValue(m_audio.get())},
             {QStringLiteral("automation"), QVariant::fromValue(static_cast<QObject *>(m_automation.get()))},
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
-            {QStringLiteral("templateEditor"), QVariant::fromValue(m_templateEditor.get())},
+            {QStringLiteral("templateEditor"), QVariant::fromValue(views(shellWindow).templateEditor.get())},
+            {QStringLiteral("nodeEffects"), QVariant::fromValue(views(shellWindow).nodeEffects.get())},
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
             {QStringLiteral("automationResolution"), QVariant::fromValue(m_automation->resolutionPrompt())},
@@ -5588,9 +6393,9 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("workspaceLayout"), QVariant::fromValue(layout)},
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
-            {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
-            {QStringLiteral("videoView"), QVariant::fromValue(m_videoView.get())},
-            {QStringLiteral("statusBar"), QVariant::fromValue(m_statusBar.get())},
+            {QStringLiteral("visualTools"), QVariant::fromValue(views(shellWindow).visualTools.get())},
+            {QStringLiteral("videoView"), QVariant::fromValue(views(shellWindow).videoView.get())},
+            {QStringLiteral("statusBar"), QVariant::fromValue(views(shellWindow).statusBar.get())},
             {QStringLiteral("videoFullscreen"), QVariant::fromValue(m_videoFullscreen.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
@@ -5600,11 +6405,16 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("analytics"), QVariant::fromValue(static_cast<QObject *>(m_analytics.get()))},
             {QStringLiteral("starPrompt"), QVariant::fromValue(static_cast<QObject *>(m_starPrompt.get()))},
             {QStringLiteral("crashReports"), QVariant::fromValue(static_cast<QObject *>(m_crashReports.get()))},
+            {QStringLiteral("aiSettings"), QVariant::fromValue(static_cast<QObject *>(m_aiSettings.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
-            {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
+            {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
+            {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
+            {QStringLiteral("review"), QVariant::fromValue(static_cast<QObject *>(m_review.get()))},
+            {QStringLiteral("agent"), QVariant::fromValue(static_cast<QObject *>(m_agent.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 
@@ -5618,8 +6428,15 @@ void Application::settingChanged(const QString &id)
 {
     if (id.startsWith(QLatin1String("grammar.")) || id == QLatin1String("editor.spellchecker"))
         applyGrammarSettings();
+    if (id == QLatin1String("trust.folders") && m_projects)
+        for (const int window : sessionWindows())
+            if (const QString root = m_projects->root(window);
+                !root.isEmpty() && projectTrusted(root) != views(window).settings->trusted())
+                applyWindowProject(window);
     if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
         m_audioPlayer->reopenOutput();
+    if (id == QLatin1String("audio.playMono") && m_audioPlayer)
+        m_audioPlayer->setMono(m_settings->boolean("audio.playMono"));
     if (id == QLatin1String("audio.outputDevice") && m_audioRouting)
         m_audioRouting->refresh();
     if (id == QLatin1String("video.playbackPlayer"))
@@ -5628,28 +6445,34 @@ void Application::settingChanged(const QString &id)
         emit saveWithVideoNameChanged();
     else if (id == QLatin1String("video.dontAskForBadResolution"))
         emit askForBadResolutionChanged();
-    else if (id.startsWith(QLatin1String("convert.")))
-        m_conversionPlan.reset();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
-        m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+        for (auto *views : allViews())
+            views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)
-        m_shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
+        for (auto *views : allViews())
+            views->shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
     else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
-        m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+        for (auto *views : allViews())
+            views->shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     else if (id == QLatin1String("grid.foldGenerated") && !m_resettingSettings)
-        m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+        for (auto *views : allViews())
+            views->shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
-        m_editor->optionsChanged();
+        for (auto *views : allViews())
+            views->editor->optionsChanged();
         refreshVideo();
     }
     else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
-        m_editor->setShowTags(!m_settings->boolean("editor.hideTags"));
+        for (auto *views : allViews())
+            views->editor->setShowTags(!m_settings->boolean("editor.hideTags"));
     else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
-        m_editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
+        for (auto *views : allViews())
+            views->editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
     else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
-        m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+        for (auto *views : allViews())
+            views->shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     else if (id == QLatin1String("program.language"))
         switchLanguage();
     else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
@@ -5846,7 +6669,7 @@ QVariantMap Application::openSettingsDialog()
     addAppearance(values);
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
-    values.insert(QStringLiteral("automation.trustedFolders"), m_settings->list("automation.trustedFolders"));
+    values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
         rendererLabels << subtitleRendererLabel(name);
@@ -5940,12 +6763,12 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         m_settings->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
         m_automation->forgetRepeat();
     }
-    if (const auto trusted = values.constFind(QStringLiteral("automation.trustedFolders")); trusted != values.cend()) {
-        const QStringList kept = m_settings->list("automation.trustedFolders");
+    if (const auto trusted = values.constFind(QStringLiteral("trust.folders")); trusted != values.cend()) {
+        const QStringList kept = m_settings->list("trust.folders");
         QStringList list = trusted->toStringList();
         list.removeIf([&](const QString &folder) { return !kept.contains(folder); });
         if (list != kept)
-            m_settings->setValue(QStringLiteral("automation.trustedFolders"), list);
+            m_settings->setValue(QStringLiteral("trust.folders"), list);
     }
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
     const auto wrote = [&](std::string_view id) { return std::ranges::find(written, id) != written.end(); };
@@ -6143,10 +6966,13 @@ void Application::playTestSound(int device)
 
 void Application::destroyDialogs()
 {
-    if (m_findOpened && !m_find->busy()) {
+    if (m_findOpened && std::ranges::none_of(allViews(), [](const WindowViews *views) { return views->find->busy(); })) {
         emit findReplaceDestroyed();
         m_findOpened = false;
-        createFindReplace();
+        createFindReplace(m_mainViews, 0);
+        for (auto &[id, shell] : m_shellWindows)
+            if (shell.views)
+                createFindReplace(*shell.views, id);
         emit findResultsChanged();
     }
     if (m_selectLinesOpened) {
@@ -6175,7 +7001,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                 keep(b.sizeSetting);
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
-    refreshed.insert(QStringLiteral("automation.trustedFolders"), QStringList());
+    refreshed.insert(QStringLiteral("trust.folders"), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
 }
@@ -6204,7 +7030,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     if (*which == application::OptionsPage::General)
         out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     if (*which == application::OptionsPage::Automation)
-        out.insert(QStringLiteral("automation.trustedFolders"), QStringList());
+        out.insert(QStringLiteral("trust.folders"), QStringList());
     return out;
 }
 
@@ -6231,9 +7057,11 @@ void Application::resetAllSettings()
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_gridFilter->settingsReset();
     m_updates->reload();
-    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
-    m_shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
-    m_shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+    for (auto *views : allViews()) {
+        views->shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+        views->shell->setGridColumnWidths(columnWidthsFrom(m_settings->list("grid.columnWidths")));
+        views->shell->setFoldGenerated(m_settings->boolean("grid.foldGenerated"));
+    }
     if (!m_selectLinesOpened) {
         m_selectOptions = m_settings->integer("selectLines.options");
         m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);

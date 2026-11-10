@@ -18,7 +18,8 @@ struct Signer {
 };
 
 Signer signer(std::uint8_t seed);
-std::string sign(const Signer &signer, std::span<const std::byte> message);
+std::string sign(const Signer &signer, std::span<const std::byte> message,
+                 std::string_view trustedComment = "timestamp:1 file:test.hikariplugin");
 
 std::vector<std::byte> bytes(std::string_view text);
 // Stands in for the .hikariplugin file the signature covers.

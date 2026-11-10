@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { ErrorCode, kProtocolVersion, Method } from "../src/protocol";
+import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method } from "../src/protocol";
 import { Peer, RpcError } from "../src/rpc";
-import { Sidecar } from "../src/sidecar";
+import { HikariApi, Sidecar } from "../src/sidecar";
+import { kOwnReference } from "../src/tools/catalogue";
+import { kDefaultImageBudget, kImageBudgets } from "../src/tools/images";
 
 const limits = { maxOutstanding: 4, maxOutstandingBytes: 1024, maxMessageBytes: 512 };
 
@@ -105,51 +107,166 @@ describe("Peer", () => {
 });
 
 describe("Sidecar", () => {
-    const build = { buildId: "0.1.0+test", hikariApiVersion: 3 };
+    const build = { buildId: "1.4.0+test", hikariApiVersion: 3, version: "1.4.0", packages: { openai: "7.45.0" } };
 
-    test("initialize answers with the protocol, API and build versions", async () => {
+    test("initialize answers with the protocol, API, version and package versions", async () => {
         const { peer, sent, feed } = link();
         new Sidecar(peer, build);
         feed({ jsonrpc: "2.0", id: 1, method: Method.initialize,
-            params: { protocolVersion: kProtocolVersion, hikariApiVersion: 3, buildId: "0.1.0+test" } });
+            params: { protocolVersion: kProtocolVersion, hikariApiVersion: 3, buildId: "0.1.0+app" } });
         await settle();
         expect(sent).toEqual([{ jsonrpc: "2.0", id: 1, result: {
-            protocolVersion: kProtocolVersion, hikariApiVersion: 3, buildId: "0.1.0+test", capabilities: {} } }]);
+            protocolVersion: kProtocolVersion, hikariApiVersion: 3, requiredApiVersion: kRequiredApiVersion,
+            version: "1.4.0", buildId: "1.4.0+test", versions: { bun: Bun.version, openai: "7.45.0" }, capabilities: {} } }]);
     });
 
-    test("declared methods refuse before initialize and say they aren't implemented after it", async () => {
+    test("the tools are those of the app's reference: an operation it lacks is never offered", async () => {
+        const { peer, sent, feed } = link({ ...limits, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        new Sidecar(peer, build);
+        const older = { ...kOwnReference, operations: kOwnReference.operations.filter((op) =>
+            op.name !== "audio.peaks" && op.name !== "commands.list") };
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion, hikariApi: older } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.toolsList, params: { all: true } });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.toolsCall, params: { name: "audio_peaks", arguments: {} } });
+        await settle();
+        const names = ((sent.find((m) => m.id === 2)!.result as { tools: { name: string }[] }).tools).map((t) => t.name);
+        expect(names).toContain("lines_find");
+        expect(names).not.toContain("audio_peaks");
+        expect(names).not.toContain("search_commands");
+        expect(sent.find((m) => m.method === Method.apiCall)).toBeUndefined();
+        expect((sent.find((m) => m.id === 3)!.result as { isError: boolean }).isError).toBe(true);
+    });
+
+    test("initialize refuses a hikariApi that isn't a reference", async () => {
         const { peer, sent, feed } = link();
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion, hikariApi: { operations: 3 } } });
+        await settle();
+        expect((sent[0]!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
+    });
+
+    test("sessions refuse before initialize, and after it without a session id and a model", async () => {
+        const { peer, sent, feed } = link({ maxOutstanding: 16, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
         new Sidecar(peer, build);
         feed({ jsonrpc: "2.0", id: 1, method: Method.sessionNew, params: {} });
         await settle();
         feed({ jsonrpc: "2.0", id: 2, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
-        feed({ jsonrpc: "2.0", id: 3, method: Method.sessionNew, params: {} });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.sessionNew, params: { sessionId: "t1" } });
+        feed({ jsonrpc: "2.0", id: 4, method: Method.sessionNew, params: { sessionId: "t1", model: { providerId: "p", model: "m" } } });
+        feed({ jsonrpc: "2.0", id: 5, method: Method.sessionPrompt, params: { sessionId: "t2", prompt: [{ type: "text", text: "a" }] } });
+        feed({ jsonrpc: "2.0", id: 6, method: Method.sessionPrompt, params: { sessionId: "t1", prompt: [] } });
         await settle();
         expect(sent.map((m) => (m.error as { code?: number } | undefined)?.code ?? "ok")).toEqual(
-            [ErrorCode.notInitialized, "ok", ErrorCode.methodNotFound]);
+            [ErrorCode.notInitialized, "ok", ErrorCode.invalidParams, "ok", ErrorCode.invalidParams, ErrorCode.invalidParams]);
+    });
+
+    test("a session's tools include web search once a search service is set", async () => {
+        const { peer, feed } = link({ maxOutstanding: 16, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        const sidecar = new Sidecar(peer, build);
+        const sessionTools = (sidecar.sessions as unknown as { tools: (id: string) => { list(all: boolean): { name: string }[] } }).tools;
+        expect(sessionTools("t1").list(true).map((t) => t.name)).not.toContain("web_search");
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet, params: { providers: [], searchService: "brave" } });
+        await settle();
+        expect(sessionTools("t1").list(true).map((t) => t.name)).toContain("web_search");
+    });
+
+    test("a session's image budget is its provider's wire's", async () => {
+        const { peer, feed } = link();
+        const sidecar = new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.providersSet,
+            params: { providers: [{ id: "g", preset: "gemini", wire: "gemini", baseUrl: "https://example.invalid" }] } });
+        await settle();
+        expect(sidecar.providers.imageBudget("g")).toEqual(kImageBudgets.gemini);
+        expect(sidecar.providers.imageBudget("gone")).toEqual(kDefaultImageBudget);
+    });
+
+    test("a session's tool calls name the session, so Qt checks them against its thread", async () => {
+        const { peer, sent } = link();
+        void new HikariApi(peer, undefined, "t1").call("documents.get");
+        expect(sent).toEqual([{ jsonrpc: "2.0", id: 1, method: Method.apiCall, params: { operation: "documents.get", session: "t1" } }]);
     });
 
     test("_hikari/api.call round-trips an HA1 read and a write", async () => {
         const { peer, sent, feed } = link();
         const sidecar = new Sidecar(peer, build);
         const read = sidecar.api.call("documents.get");
-        const write = sidecar.api.call("document.apply", { revision: "r1", name: "Fix",
+        const write = sidecar.api.call("document.apply", { revision: 4, name: "Fix",
             edits: [{ op: "set_line", line: 1, fields: { text: "Hi" } }] });
         expect(sent).toEqual([
             { jsonrpc: "2.0", id: 1, method: Method.apiCall, params: { operation: "documents.get" } },
             { jsonrpc: "2.0", id: 2, method: Method.apiCall, params: { operation: "document.apply", params: {
-                revision: "r1", name: "Fix", edits: [{ op: "set_line", line: 1, fields: { text: "Hi" } }] } } },
+                revision: 4, name: "Fix", edits: [{ op: "set_line", line: 1, fields: { text: "Hi" } }] } } },
         ]);
-        feed({ jsonrpc: "2.0", id: 2, result: { inserted: [], changed: true } });
-        feed({ jsonrpc: "2.0", id: 1, result: { document: 1, revision: "r1" } });
-        expect(await read).toEqual({ document: 1, revision: "r1" });
-        expect(await write).toEqual({ inserted: [], changed: true });
+        feed({ jsonrpc: "2.0", id: 2, result: { revision: 5, inserted: [], changed: true } });
+        feed({ jsonrpc: "2.0", id: 1, result: { document: 1, revision: 4 } });
+        expect(await read).toEqual({ document: 1, revision: 4 });
+        expect(await write).toEqual({ revision: 5, inserted: [], changed: true });
     });
 
     test("an HA1 error arrives as an RpcError carrying HA1's code", async () => {
         const { peer, feed } = link();
-        const call = new Sidecar(peer, build).api.call("document.apply", { revision: "old", edits: [] });
+        const call = new Sidecar(peer, build).api.call("document.apply", { revision: 1, name: "Fix", edits: [] });
         feed({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "stale", data: { code: "stale_revision" } } });
         expect(call).rejects.toMatchObject({ code: -32000, data: { code: "stale_revision" } });
+    });
+
+    test("_hikari/tools.list offers the core tools, and every tool when asked", async () => {
+        const { peer, sent, feed } = link();
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.toolsList });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.toolsList, params: { all: true } });
+        await settle();
+        const names = (id: number) => ((sent.find((m) => m.id === id)!.result as { tools: { name: string }[] }).tools)
+            .map((t) => t.name);
+        expect(names(2)).toContain("lines_find");
+        expect(names(2)).not.toContain("audio_peaks");
+        expect(names(3)).toContain("audio_peaks");
+    });
+
+    test("_hikari/tools.call runs a tool through _hikari/api.call and answers MCP's result", async () => {
+        const { peer, sent, feed } = link();
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.toolsCall, params: { name: "documents_get", arguments: { document: 2 } } });
+        feed({ jsonrpc: "2.0", id: 3, method: Method.toolsCall, params: { arguments: {} } });
+        await settle();
+        const relayed = sent.find((m) => m.method === Method.apiCall)!;
+        expect(relayed.params).toEqual({ operation: "documents.get", params: { document: 2 } });
+        feed({ jsonrpc: "2.0", id: relayed.id, error: { code: -32000, message: "No open Document has id 2.",
+            data: { code: "not_found", data: { document: 2 } } } });
+        await settle();
+        expect(sent.find((m) => m.id === 2 && !m.method)!.result).toEqual({ isError: true, content: [{ type: "text",
+            text: "No open Document has id 2. Look the id up again, with documents_list, lines_find or lines_list." }] });
+        expect((sent.find((m) => m.id === 3)!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
+    });
+
+    test("_hikari/mcp.message answers an MCP client, with its calls marked as that connection's", async () => {
+        const { peer, sent, feed } = link({ ...limits, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        const initialize = { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25",
+            capabilities: {}, clientInfo: { name: "claude-code", title: "Claude Code", version: "3" } } };
+        feed({ jsonrpc: "2.0", id: 2, method: Method.mcpMessage, params: { connection: "s1", text: JSON.stringify(initialize) } });
+        const call = { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "documents_get" } };
+        feed({ jsonrpc: "2.0", id: 3, method: Method.mcpMessage, params: { connection: "s1", text: JSON.stringify(call) } });
+        await settle();
+        const relayed = sent.find((m) => m.method === Method.apiCall)!;
+        expect(relayed.params).toEqual({ operation: "documents.get", params: {},
+            mcp: { connection: "s1", client: "Claude Code" } });
+        feed({ jsonrpc: "2.0", id: relayed.id, result: { document: 1, revision: 2 } });
+        await settle();
+        const answers = [2, 3].map((id) => sent.find((m) => m.id === id && !m.method)!.result as
+            { reply: string; status: number });
+        expect(JSON.parse(answers[0]!.reply).result.serverInfo.name).toBe("hikarisub");
+        expect(answers[1]!.status).toBe(200);
+        expect(JSON.parse(answers[1]!.reply).result.content[0].text).toBe(JSON.stringify({ document: 1, revision: 2 }));
+
+        feed({ jsonrpc: "2.0", method: Method.mcpClosed, params: { connection: "s1" } });
+        feed({ jsonrpc: "2.0", id: 4, method: Method.mcpMessage, params: { connection: "s1" } });
+        await settle();
+        expect((sent.find((m) => m.id === 4)!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
     });
 });

@@ -304,6 +304,25 @@ const NameAlias *hotkeyAliasOf(std::string_view name)
     return it == all.end() ? nullptr : &*it;
 }
 
+bool numberLabel(std::string_view label)
+{
+    if (!label.empty() && (label.front() == '-' || label.front() == '+'))
+        label.remove_prefix(1);
+    return std::ranges::all_of(label, [](char c) { return c >= '0' && c <= '9'; });
+}
+
+int labelledAction(std::string_view label, bool windows)
+{
+    return numberLabel(label) ? hotkeyLabelNumber(label, windows) : hotkeyIdOf(label);
+}
+
+// Legacy's Exit on Alt-F4 is Close window here: https://github.com/altqx/hikari/issues/866
+int importedAction(const HotkeyRecord &record, bool windows)
+{
+    const int id = labelledAction(record.label, windows);
+    return id == kGlobalQuit && qtKeysOfAccel(record.accel) == qtKeysOfAccel("Alt-F4") ? kGlobalCloseWindow : id;
+}
+
 std::string windowLetter(int type)
 {
     return type >= 0 && type < kHotkeyWindows ? std::string(1, kWindowLetters[std::size_t(type)]) : std::string("?");
@@ -356,6 +375,12 @@ std::string_view retiredActionReason(int id)
                                "GLOBAL_VIEW_SUBS"})
         if (id == hotkeyIdOf(symbol))
             return "retired: layout presets and saved layouts replace the View arrangements (owner decision, 2026-10-18)";
+    if (id == hotkeyIdOf("GLOBAL_CONVERT_TO_ASS"))
+        return "retired: Save as converts to ASS (owner decision, 2026-11-02, #611)";
+    for (const auto *symbol : {"GLOBAL_CONVERT_TO_SRT", "GLOBAL_CONVERT_TO_TMP", "GLOBAL_CONVERT_TO_MDVD",
+                               "GLOBAL_CONVERT_TO_MPL2"})
+        if (id == hotkeyIdOf(symbol))
+            return "retired: Export as writes a copy in that format (owner decision, 2026-11-02, #611)";
     if (id == hotkeyIdOf("GLOBAL_EDITOR"))
         return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
     if (id == hotkeyIdOf("GLOBAL_MISSPELLS_REPLACER"))
@@ -1134,12 +1159,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
                     legacyMacros.emplace(record.label, LegacyBinding{&record, s.path});
                 continue;
             }
-            std::string_view digits = record.label;
-            if (!digits.empty() && (digits.front() == '-' || digits.front() == '+'))
-                digits.remove_prefix(1);
-            const bool number = std::ranges::all_of(digits, [](char c) { return c >= '0' && c <= '9'; });
-            const int id = number ? hotkeyLabelNumber(record.label, windows) : hotkeyIdOf(record.label);
-            legacyBindings[HotkeyId{id, record.window}] = {&record, s.path};
+            legacyBindings[HotkeyId{importedAction(record, windows), record.window}] = {&record, s.path};
         }
     };
     const SourceFile *hotkeys = findSource(sources, SourceKind::Hotkeys);
@@ -1218,11 +1238,10 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             continue;
         }
         row.kind = RowKind::Shortcut;
-        std::string_view digits = record->label;
-        if (!digits.empty() && (digits.front() == '-' || digits.front() == '+'))
-            digits.remove_prefix(1);
-        const bool number = std::ranges::all_of(digits, [](char c) { return c >= '0' && c <= '9'; });
-        const int id = number ? hotkeyLabelNumber(record->label, windows) : hotkeyIdOf(record->label);
+        const bool number = numberLabel(record->label);
+        const int id = importedAction(*record, windows);
+        if (id != labelledAction(record->label, windows))
+            because("legacy's Exit on Alt-F4 closes only its window here, as Close window (MW6)");
         const HotkeyId key{id, record->window};
         row.binding = key;
         const auto symbol = hotkeySymbol(id);

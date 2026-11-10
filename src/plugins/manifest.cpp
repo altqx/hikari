@@ -39,7 +39,7 @@ const Schema &schema()
 std::string text(const Json &object, std::string_view key)
 {
     const Json *value = object.find(key);
-    return value ? value->asString() : std::string();
+    return value && value->isString() ? value->asString() : std::string();
 }
 
 std::vector<Contribution> contributions(const Json *list)
@@ -49,6 +49,36 @@ std::vector<Contribution> contributions(const Json *list)
         for (const Json &item : list->asArray())
             out.push_back({text(item, "id"), text(item, "title")});
     return out;
+}
+
+std::vector<Panel> panels(const Json *list)
+{
+    std::vector<Panel> out;
+    if (list)
+        for (const Json &item : list->asArray()) {
+            const std::string area = text(item, "area");
+            out.push_back({text(item, "id"), text(item, "title"),
+                           area == "left"     ? PanelArea::Left
+                           : area == "bottom" ? PanelArea::Bottom
+                                              : PanelArea::Right,
+                           text(item, "qml")});
+        }
+    return out;
+}
+
+// Where a manifest that isn't Full trust names a QML panel, before the schema's own refusal.
+std::optional<std::string> restrictedQml(const Json &json)
+{
+    if (!json.isObject() || text(json, "tier") == "unrestricted")
+        return std::nullopt;
+    const Json *contributes = json.find("contributes");
+    const Json *panels = contributes && contributes->isObject() ? contributes->find("panels") : nullptr;
+    if (!panels || !panels->isArray())
+        return std::nullopt;
+    for (std::size_t i = 0; i < panels->asArray().size(); ++i)
+        if (const Json &panel = panels->asArray()[i]; panel.isObject() && panel.find("qml"))
+            return "/contributes/panels/" + std::to_string(i) + "/qml";
+    return std::nullopt;
 }
 
 template <typename Items>
@@ -131,6 +161,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (!parsed)
         return std::unexpected(ManifestProblem{Kind::NotJson, "", parsed.error().message, 0});
     const Json &json = *parsed;
+    if (auto at = restrictedQml(json))
+        return std::unexpected(ManifestProblem{Kind::QmlNeedsFullTrust, *at, "", 0});
     if (auto failure = api::validate(schema().root, json, schema().defs))
         return std::unexpected(ManifestProblem{Kind::Schema, failure->path, failure->message, 0});
 
@@ -156,24 +188,11 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         if (!m.publicKey)
             return std::unexpected(ManifestProblem{Kind::Schema, "/publicKey", "not a minisign public key", 0});
     }
-    if (const Json *permissions = json.find("permissions")) {
-        if (const Json *all = permissions->find("documents.all"))
-            m.permissions.allDocuments = all->asString();
-        if (const Json *network = permissions->find("network")) {
-            for (const Json &host : network->find("hosts")->asArray())
-                m.permissions.networkHosts.push_back(host.asString());
-            m.permissions.networkReason = text(*network, "reason");
-        }
-        if (const Json *files = permissions->find("files"))
-            for (const Json &f : files->asArray()) {
-                const Json *writable = f.find("writable");
-                m.permissions.files.push_back(
-                    {text(f, "id"), text(f, "title"), writable && writable->asBool(), text(f, "reason")});
-            }
-    }
+    if (const Json *permissions = json.find("permissions"))
+        m.permissions = readPermissions(*permissions);
     if (const Json *contributes = json.find("contributes")) {
         m.commands = contributions(contributes->find("commands"));
-        m.panels = contributions(contributes->find("panels"));
+        m.panels = panels(contributes->find("panels"));
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s});
@@ -184,12 +203,57 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.settings, "/contributes/settings")})
         if (problem)
             return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
+        if (const std::string &id = m.permissions.files[i].id; id == "data" || id == "cache")
+            return std::unexpected(ManifestProblem{Kind::Schema, "/permissions/files/" + std::to_string(i) + "/id",
+                                                   "\xE2\x80\x9C" + id + "\xE2\x80\x9D names the plugin's own folder", 0});
     for (std::size_t i = 0; i < m.settings.size(); ++i)
         if (auto problem = badDefault(m.settings[i], i))
             return std::unexpected(*problem);
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
+}
+
+bool Manifest::hasQmlPanels() const
+{
+    return std::ranges::any_of(panels, [](const Panel &p) { return !p.qml.empty(); });
+}
+
+PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next)
+{
+    PermissionIncrease more;
+    more.unrestricted = next.tier == Tier::Unrestricted && current.tier != Tier::Unrestricted;
+    more.allDocuments = next.permissions.allDocuments && !current.permissions.allDocuments;
+    for (const std::string &host : next.permissions.networkHosts)
+        if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
+            more.networkHosts.push_back(host);
+    for (const FileGrantRequest &request : next.permissions.files) {
+        const auto had = std::ranges::find(current.permissions.files, request.id, &FileGrantRequest::id);
+        if (had == current.permissions.files.end() || (request.writable && !had->writable))
+            more.files.push_back(request.id);
+    }
+    return more;
+}
+
+Permissions readPermissions(const Json &permissions)
+{
+    const auto list = [](const Json *value) { return value && value->isArray() ? value->asArray() : Json::Array(); };
+    Permissions out;
+    if (const Json *all = permissions.find("documents.all"); all && all->isString())
+        out.allDocuments = all->asString();
+    if (const Json *network = permissions.find("network")) {
+        for (const Json &host : list(network->find("hosts")))
+            if (host.isString())
+                out.networkHosts.push_back(host.asString());
+        out.networkReason = text(*network, "reason");
+    }
+    for (const Json &f : list(permissions.find("files"))) {
+        const Json *writable = f.find("writable");
+        out.files.push_back({text(f, "id"), text(f, "title"), writable && writable->isBool() && writable->asBool(),
+                             text(f, "reason")});
+    }
+    return out;
 }
 
 int compareVersions(std::string_view a, std::string_view b)

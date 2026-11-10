@@ -1,7 +1,6 @@
 pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -13,6 +12,7 @@ DialogWindow {
     property var hotkeys: null
     property var updates: null
     property var crashReports: null
+    property var ai: null
     property TagButtonsController tagButtons: null
     property var importer: null
     property string legacyNotFound: ""
@@ -53,6 +53,7 @@ DialogWindow {
         {id: "subtitleProperties", name: qsTr("Script properties"), iconRole: "script-properties"},
         {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
         {id: "hotkeys", name: qsTr("Shortcuts"), iconRole: "hotkeys"},
+        {id: "ai", name: qsTr("AI"), iconRole: "ai-assistant"},
         {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"}
     ]
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
@@ -132,6 +133,7 @@ DialogWindow {
         }, { title: name, alpha: false, focus: anchor })
     }
     function apply() {
+        aiPage.commit()
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
@@ -218,7 +220,7 @@ DialogWindow {
                 hotkeys.optionsMap(accel, window, "cancel")
             else
                 settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
-        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete() })
+        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete(), command: target.id })
     }
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
@@ -228,11 +230,15 @@ DialogWindow {
     }
 
     onAccepted: {
+        aiPage.commit()
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
     }
-    onVisibleChanged: if (!visible) Theme.endPreview()
+    onVisibleChanged: if (!visible) {
+        Theme.endPreview()
+        aiPage.closeForm()
+    }
 
     leadingActions: [
         RowLayout {
@@ -313,12 +319,16 @@ DialogWindow {
     component SettingCheck: CheckBox {
         id: check
         required property string setting
+        property string tip
         objectName: "setting_" + setting
         leftPadding: 1
         spacing: 9
         Layout.fillWidth: text.length > 0
         Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
         Accessible.name: text
+        Accessible.description: tip
+        ToolTip.text: tip
+        ToolTip.visible: hovered && tip !== ""
         function refresh() { checked = dialog.values[setting] === true }
         Component.onCompleted: {
             if (contentItem && contentItem.wrapMode !== undefined)
@@ -393,18 +403,16 @@ DialogWindow {
         required property string sizeSetting
         property string name
         spacing: 8
-        ComboBox {
+        FontFamilyBox {
             id: family
             objectName: "setting_" + fontRow.setting
-            editable: true
-            model: Qt.fontFamilies()
+            families: Qt.fontFamilies()
             Accessible.name: fontRow.name
             Layout.preferredWidth: 200
-            function refresh() { editText = dialog.values[fontRow.setting] ?? "" }
+            function refresh() { text = dialog.values[fontRow.setting] ?? "" }
             Component.onCompleted: refresh()
             Connections { target: dialog; function onReloaded() { family.refresh() } }
-            onActivated: dialog.put(fontRow.setting, currentText)
-            onAccepted: dialog.put(fontRow.setting, editText)
+            onPicked: name => dialog.put(fontRow.setting, name)
         }
         SpinBox {
             id: size
@@ -573,7 +581,7 @@ DialogWindow {
                                 Accessible.name: qsTr("User folder")
                             }
                             IconTextButton {
-                                iconRole: "folder-open"
+                                iconRole: "show-in-folder"
                                 objectName: "settingsOpenUserFolder"
                                 text: qsTr("Open")
                                 Accessible.name: qsTr("Open user folder")
@@ -589,6 +597,45 @@ DialogWindow {
                                 text: qsTr("Choose…")
                                 Accessible.name: qsTr("Choose external font folder")
                                 onClicked: fontsFolderDialog.open()
+                            }
+                        }
+                    }
+                    SettingsSection {
+                        objectName: "settingsTrustedFolders"
+                        title: qsTr("Trusted folders")
+                        SettingNote { text: qsTr("HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.") }
+                        Label {
+                            objectName: "settingsTrustedFoldersEmpty"
+                            visible: (dialog.values["trust.folders"] || []).length === 0
+                            text: qsTr("No trusted folders")
+                            color: Theme.muted
+                            Layout.leftMargin: 24
+                        }
+                        Repeater {
+                            model: dialog.values["trust.folders"] || []
+                            delegate: RowLayout {
+                                id: trustedRow
+                                required property string modelData
+                                spacing: 8
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 24
+                                Label {
+                                    text: trustedRow.modelData
+                                    textFormat: Text.PlainText
+                                    elide: Text.ElideMiddle
+                                    Layout.fillWidth: true
+                                    ToolTip.text: trustedRow.modelData
+                                    ToolTip.visible: truncated && trustedHover.hovered
+                                    HoverHandler { id: trustedHover }
+                                }
+                                Button {
+                                    objectName: "settingsUntrustFolder"
+                                    text: qsTr("Remove")
+                                    Accessible.description: qsTr("Stop trusting %1").arg(trustedRow.modelData)
+                                    onClicked: dialog.put("trust.folders",
+                                                          (dialog.values["trust.folders"] || [])
+                                                              .filter(f => f !== trustedRow.modelData))
+                                }
                             }
                         }
                     }
@@ -916,6 +963,10 @@ DialogWindow {
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
                     }
                     SettingsSection {
+                        title: qsTr("Splitting")
+                        SettingCheck { setting: "grid.splitFramesBakeAnimations"; text: qsTr("Bake animations when splitting into frames") }
+                    }
+                    SettingsSection {
                         title: qsTr("New lines")
                         SettingsRow {
                             iconRole: "time-offset-start"
@@ -1088,10 +1139,46 @@ DialogWindow {
                         }
                     }
                     SettingsSection {
+                        title: qsTr("Visual tools")
+                        SettingsRow {
+                            iconRole: "vector-point"
+                            text: qsTr("Handle size")
+                            SettingNumber {
+                                setting: "video.handleSize"; from: 50; to: 400; unit: "%"
+                                name: qsTr("Handle size"); tip: qsTr("Size of the visual tools’ handles. Range from 50 to 400")
+                            }
+                        }
+                    }
+                    SettingsSection {
                         title: qsTr("Script resolution")
                         SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off the visual tools warning") }
                         SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don’t warn about a resolution mismatch") }
                         SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                        Repeater {
+                            model: [
+                                { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
+                                  choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
+                                  choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
+                                { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),
+                                  choices: [qsTr("Never ask"), qsTr("Ask when the aspect ratio differs"), qsTr("Always ask")] }
+                            ]
+                            SettingsRow {
+                                required property var modelData
+                                iconRole: "script-properties"
+                                text: modelData.text
+                                SettingChoice {
+                                    setting: modelData.setting
+                                    model: modelData.choices
+                                    Accessible.name: modelData.text
+                                }
+                            }
+                        }
+                        SettingNote { text: qsTr("Checked when a video opens.") }
+                        SettingCheck { setting: "video.untaggedMatrixWarning"; text: qsTr("Warn when the video has no colour matrix tag") }
+                        SettingCheck { setting: "video.hdrWarning"; text: qsTr("Warn when the video has HDR or wide-gamut colours") }
                     }
                 }
 
@@ -1153,6 +1240,8 @@ DialogWindow {
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
+                        SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
                     }
                     SettingsSection {
                         title: qsTr("Display")
@@ -1186,6 +1275,11 @@ DialogWindow {
                         SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every “n” with the previous syllable") }
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
                         SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
+                        SettingCheck {
+                            setting: "audio.karaokeThaiClusters"
+                            text: qsTr("Split Thai into character clusters")
+                            tip: qsTr("Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.")
+                        }
                         SettingsRow {
                             iconRole: "karaoke"
                             text: qsTr("Long syllables for %1").arg("\\kf")
@@ -1317,45 +1411,6 @@ DialogWindow {
                                 text: qsTr("Clear last answers…")
                                 enabled: (dialog.values["automation.dialogAnswers"] || []).length > 0
                                 onClicked: dialog.clearLastAnswers()
-                            }
-                        }
-                    }
-                    SettingsSection {
-                        objectName: "settingsTrustedFolders"
-                        title: qsTr("Trusted script folders")
-                        SettingNote { text: qsTr("Scripts a subtitle file names load without asking when they are in one of these folders.") }
-                        Label {
-                            objectName: "settingsTrustedFoldersEmpty"
-                            visible: (dialog.values["automation.trustedFolders"] || []).length === 0
-                            text: qsTr("No trusted folders")
-                            color: Theme.muted
-                            Layout.leftMargin: 24
-                        }
-                        Repeater {
-                            model: dialog.values["automation.trustedFolders"] || []
-                            delegate: RowLayout {
-                                id: trustedRow
-                                required property string modelData
-                                spacing: 8
-                                Layout.fillWidth: true
-                                Layout.leftMargin: 24
-                                Label {
-                                    text: trustedRow.modelData
-                                    textFormat: Text.PlainText
-                                    elide: Text.ElideMiddle
-                                    Layout.fillWidth: true
-                                    ToolTip.text: trustedRow.modelData
-                                    ToolTip.visible: truncated && trustedHover.hovered
-                                    HoverHandler { id: trustedHover }
-                                }
-                                Button {
-                                    objectName: "settingsUntrustFolder"
-                                    text: qsTr("Remove")
-                                    Accessible.description: qsTr("Stop trusting %1").arg(trustedRow.modelData)
-                                    onClicked: dialog.put("automation.trustedFolders",
-                                                          (dialog.values["automation.trustedFolders"] || [])
-                                                              .filter(f => f !== trustedRow.modelData))
-                                }
                             }
                         }
                     }
@@ -1589,6 +1644,8 @@ DialogWindow {
                     }
                 }
 
+                SettingsAiPage { id: aiPage; dialog: dialog }
+
                 SettingsPage {
                     objectName: "settingsPageUpdates"
                     SettingsSection {
@@ -1675,8 +1732,8 @@ DialogWindow {
                             text: qsTr("Include the file name")
                             Layout.leftMargin: 22
                         }
-                        SettingCheck { setting: "privacy.starPrompt"; text: qsTr("Suggest starring HikariSub on GitHub") }
-                        SettingNote { text: qsTr("At most twice, after you have used HikariSub on several days. The counts stay on this computer.") }
+                        SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
+                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }
                 }
             }
@@ -1684,7 +1741,7 @@ DialogWindow {
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
     }
 
-    FolderDialog {
+    FolderChooser {
         id: fontsFolderDialog
         objectName: "fontsFolderDialog"
         title: qsTr("Choose external font folder")
@@ -1695,7 +1752,7 @@ DialogWindow {
         }
     }
 
-    FileDialog {
+    FileChooser {
         id: legacyHotkeysFile
         objectName: "legacyHotkeysFile"
         title: qsTr("Import legacy shortcuts")

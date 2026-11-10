@@ -2,6 +2,8 @@
 
 // Pure: the network, files and processes are the app layer's.
 
+#include "hikari/application/project.h"
+
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -142,7 +144,7 @@ struct ReleasePackages {
     Codebase codebase = Codebase::Qt;
     std::vector<Codebase> offerTo;
     std::map<std::string, UpdatePackage, std::less<>> packages;
-    bool fromManifest = false;
+    bool fromManifest = false; // from a manifest whose signature verified (ADR 0027)
 };
 
 // The manifest's fields as read from its JSON: a field that is missing or
@@ -189,8 +191,9 @@ struct UpdateOffer {
     bool requirementIsOs = false;
 };
 // `osVersion` is Windows' major.minor.build and `glibcVersion` glibc's; the
-// other may be empty. Install only with a package for the kind that has a
-// hash and a size within kMaxPackageBytes and fits the system.
+// other may be empty. Install only with a package of a signed manifest
+// (never from the assets' digests) for the kind that has a hash and a size
+// within kMaxPackageBytes and fits the system.
 UpdateOffer chooseOffer(PackageKind kind, bool windows, const ReleasePackages &packages, std::string_view osVersion,
                         std::string_view glibcVersion);
 // Dotted numbers ("10.0.17763", "2.34"): whether `have` is at least `need`.
@@ -277,6 +280,8 @@ struct StartupArguments {
     std::string updatedFrom; // --hikari-updated-from=<version>
     // --export-docs <dir> (or =<dir>); "" when the folder is missing.
     std::optional<std::string> exportDocs;
+    bool mcp = false; // --mcp: relay stdio to the running HikariSub's MCP server
+    WindowRequest window = WindowRequest::Default; // the last of -n/--new-window and -r/--reuse-window
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);

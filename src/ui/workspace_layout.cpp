@@ -21,6 +21,7 @@
 #include <QJsonObject>
 #include <QQuickWindow>
 #include <QSaveFile>
+#include <QHash>
 #include <QSet>
 #include <QScreen>
 #include <QTimer>
@@ -128,8 +129,51 @@ const QStringList &WorkspaceLayoutController::panelIds()
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
                                  QStringLiteral("Log"), QStringLiteral("Styles"), QStringLiteral("Template"),
                                  QStringLiteral("Spellchecker"),
-                                 QStringLiteral("Postprocessor")};
+                                 QStringLiteral("Postprocessor"), QStringLiteral("QcNotes"), QStringLiteral("Review"),
+                                 QStringLiteral("Agent"), QStringLiteral("NodeGraph"), QStringLiteral("NodeInspector"),
+                                 QStringLiteral("NodeSources")};
     return ids;
+}
+
+QString WorkspaceLayoutController::pluginPanelId(const QString &plugin, const QString &panel)
+{
+    return QStringLiteral("plugin:") + plugin + u'/' + panel;
+}
+
+bool WorkspaceLayoutController::isPluginPanel(const QString &name)
+{
+    static const QString prefix = QStringLiteral("plugin:");
+    if (!name.startsWith(prefix) || name.size() > 200)
+        return false;
+    const QStringView rest = QStringView(name).mid(prefix.size());
+    const qsizetype cut = rest.indexOf(u'/');
+    auto fits = [](QStringView part, bool dots) {
+        return !part.isEmpty() && std::all_of(part.begin(), part.end(), [dots](QChar c) {
+            return (c >= u'a' && c <= u'z') || (c >= u'0' && c <= u'9') || c == u'-' || (dots && c == u'.');
+        });
+    };
+    return cut > 0 && fits(rest.left(cut), true) && fits(rest.mid(cut + 1), false);
+}
+
+namespace {
+
+QHash<QString, QVariantMap> &pluginPanels()
+{
+    static QHash<QString, QVariantMap> known;
+    return known;
+}
+
+}
+
+QVariantMap WorkspaceLayoutController::pluginPanelInfo(const QString &dock)
+{
+    return pluginPanels().value(dock);
+}
+
+void WorkspaceLayoutController::rememberPluginPanel(const QString &dock, const QString &title, const QString &pluginName)
+{
+    if (isPluginPanel(dock))
+        pluginPanels().insert(dock, {{QStringLiteral("title"), title}, {QStringLiteral("pluginName"), pluginName}});
 }
 
 namespace {
@@ -273,7 +317,30 @@ void WorkspaceLayoutController::checkModal()
 
 namespace {
 
-QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, const QString &layout)
+QStringList pluginPanelsIn(const QJsonObject &payload)
+{
+    QStringList found;
+    auto take = [&found](const QJsonValue &dock) {
+        const QString name = dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString() : dock.toString();
+        if (WorkspaceLayoutController::isPluginPanel(name) && !found.contains(name))
+            found << name;
+    };
+    for (const char *list : {"allDockWidgets", "closedDockWidgets"})
+        for (const auto &dock : payload.value(QLatin1String(list)).toArray())
+            take(dock);
+    for (const char *list : {"mainWindows", "floatingWindows"})
+        for (const auto &window : payload.value(QLatin1String(list)).toArray()) {
+            const QJsonObject frames = window.toObject()
+                                           .value(QStringLiteral("multiSplitterLayout")).toObject()
+                                           .value(QStringLiteral("frames")).toObject();
+            for (const auto &frame : frames)
+                for (const auto &dock : frame.toObject().value(QStringLiteral("dockWidgets")).toArray())
+                    take(dock);
+        }
+    return found;
+}
+
+QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, const QString &layout, bool locked)
 {
     QJsonObject o;
     o.insert(QStringLiteral("schema"), WorkspaceLayoutController::kSchema);
@@ -282,22 +349,32 @@ QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, con
     o.insert(QStringLiteral("preset"), preset);
     if (!layout.isEmpty())
         o.insert(QStringLiteral("layout"), layout);
+    if (locked)
+        o.insert(QStringLiteral("locked"), true);
     o.insert(QStringLiteral("panels"), QJsonArray::fromStringList(WorkspaceLayoutController::panelIds()));
-    if (!payload.isEmpty())
-        o.insert(QStringLiteral("payload"), QJsonDocument::fromJson(payload).object());
+    if (payload.isEmpty())
+        return o;
+    const QJsonObject docks = QJsonDocument::fromJson(payload).object();
+    o.insert(QStringLiteral("payload"), docks);
+    QJsonObject plugins;
+    for (const QString &dock : pluginPanelsIn(docks))
+        plugins.insert(dock, QJsonObject::fromVariantMap(WorkspaceLayoutController::pluginPanelInfo(dock)));
+    if (!plugins.isEmpty())
+        o.insert(QStringLiteral("pluginPanels"), plugins);
     return o;
 }
 
 }
 
-QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset, const QString &layout)
+QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset, const QString &layout,
+                                              bool locked)
 {
-    return QJsonDocument(envelopeObject(payload, preset, layout)).toJson(QJsonDocument::Indented);
+    return QJsonDocument(envelopeObject(payload, preset, layout, locked)).toJson(QJsonDocument::Indented);
 }
 
 QByteArray WorkspaceArrangement::serialise() const
 {
-    return QJsonDocument(envelopeObject(payload, preset, layout)).toJson(QJsonDocument::Compact);
+    return QJsonDocument(envelopeObject(payload, preset, layout, locked)).toJson(QJsonDocument::Compact);
 }
 
 std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray &bytes, QString *problem)
@@ -308,10 +385,12 @@ std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray
         if (o.value(QStringLiteral("schema")).toInt(-1) == WorkspaceLayoutController::kSchema &&
             WorkspaceLayoutController::presets().contains(o.value(QStringLiteral("preset")).toString()))
             return WorkspaceArrangement{o.value(QStringLiteral("preset")).toString(), {},
-                                        o.value(QStringLiteral("layout")).toString()};
+                                        o.value(QStringLiteral("layout")).toString(),
+                                        o.value(QStringLiteral("locked")).toBool()};
     }
     WorkspaceArrangement arrangement;
-    const auto payload = WorkspaceLayoutController::payloadOf(bytes, problem, &arrangement.preset, &arrangement.layout);
+    const auto payload =
+        WorkspaceLayoutController::payloadOf(bytes, problem, &arrangement.preset, &arrangement.layout, &arrangement.locked);
     if (!payload)
         return std::nullopt;
     arrangement.payload = *payload;
@@ -769,7 +848,7 @@ QJsonObject envelopeWithoutRemovedPanels(QJsonObject envelope)
 }
 
 std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset,
-                                                               QString *layout)
+                                                               QString *layout, bool *locked)
 {
     auto fail = [&](const QString &why) {
         if (problem)
@@ -798,6 +877,8 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     const QJsonObject payload = o.value(QStringLiteral("payload")).toObject();
     if (payload.isEmpty())
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no layout"));
+    const QStringList pluginDocks = pluginPanelsIn(payload);
+    auto known = [](const QString &name) { return panelIds().contains(name) || isPluginPanel(name); };
     const QJsonArray mainWindows = payload.value(QStringLiteral("mainWindows")).toArray();
     bool classic = false;
     for (const auto &w : mainWindows)
@@ -806,10 +887,10 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no “Classic” arrangement"));
     // KDDockWidgets makes a window, group or layout item per entry: cap them at what our panels can fill.
     const QJsonArray floatingWindows = payload.value(QStringLiteral("floatingWindows")).toArray();
-    const qsizetype panels = panelIds().size();
+    const qsizetype panels = panelIds().size() + pluginDocks.size();
     const QString tooMany =
         QCoreApplication::translate("HikariSub.Workspace", "it holds more windows or panels than HikariSub has");
-    if (mainWindows.size() > 1 || floatingWindows.size() > panels)
+    if (mainWindows.size() > 1 || floatingWindows.size() > panels || pluginDocks.size() > kMaxPluginPanels)
         return fail(tooMany);
     qsizetype groups = 0;
     QSet<QString> grouped;
@@ -830,7 +911,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
             for (const auto &dock : frame.toObject().value(QStringLiteral("dockWidgets")).toArray()) {
                 const QString name = dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString()
                                                      : dock.toString();
-                if (!panelIds().contains(name))
+                if (!known(name))
                     return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
                 if (grouped.contains(name))
                     return fail(tooMany);
@@ -883,7 +964,7 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     QSet<QString> docks;
     for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray()) {
         const QString name = d.toObject().value(QStringLiteral("uniqueName")).toString();
-        if (!panelIds().contains(name))
+        if (!known(name))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
         if (!noAffinities(d.toObject()))
             return fail(unreadable);
@@ -916,11 +997,18 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     QSet<QString> closed;
     for (const auto &d : payload.value(QStringLiteral("closedDockWidgets")).toArray()) {
         const QString name = d.isObject() ? d.toObject().value(QStringLiteral("uniqueName")).toString() : d.toString();
-        if (!panelIds().contains(name))
+        if (!known(name))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
         if (closed.contains(name))
             return fail(tooMany);
         closed.insert(name);
+    }
+    const QJsonObject kept = o.value(QStringLiteral("pluginPanels")).toObject();
+    for (const QString &dock : pluginDocks) {
+        const QJsonObject info = kept.value(dock).toObject();
+        const QString title = info.value(QStringLiteral("title")).toString().left(100);
+        if (!title.isEmpty() && pluginPanelInfo(dock).isEmpty())
+            rememberPluginPanel(dock, title, info.value(QStringLiteral("pluginName")).toString().left(80));
     }
     if (preset) {
         const QString named = o.value(QStringLiteral("preset")).toString();
@@ -928,6 +1016,8 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     }
     if (layout)
         *layout = o.value(QStringLiteral("layout")).toString();
+    if (locked)
+        *locked = o.value(QStringLiteral("locked")).toBool();
     return QJsonDocument(payload).toJson(QJsonDocument::Compact);
 }
 
@@ -958,6 +1048,8 @@ void WorkspaceLayoutController::buildsArrangement(const QString &name)
 
 bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
 {
+    if (const QStringList docks = pluginPanelsIn(QJsonDocument::fromJson(payload).object()); !docks.isEmpty())
+        emit pluginDocksNeeded(docks);
     m_restoring = true;
     const KDDockWidgets::RestoreOptions options =
         inPlace ? KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_RelativeToMainWindow |
@@ -1005,7 +1097,8 @@ bool WorkspaceLayoutController::restoreSavedFile()
     if (!bytes && !unreadable)
         return false;
     QString problem, preset, layout;
-    const auto payload = bytes ? payloadOf(*bytes, &problem, &preset, &layout) : std::nullopt;
+    bool locked = false;
+    const auto payload = bytes ? payloadOf(*bytes, &problem, &preset, &layout, &locked) : std::nullopt;
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
             problem = QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it");
@@ -1031,34 +1124,46 @@ bool WorkspaceLayoutController::restoreSavedFile()
         m_layout = layout;
         emit changed();
     }
+    takeLock(locked);
     return true;
 }
 
 bool WorkspaceLayoutController::save()
 {
+    return write({m_preset, tabPayload(), m_layout, m_locked});
+}
+
+bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
+{
     if (m_file.isEmpty() || m_fileLocked || m_restoring || !m_loaded || m_quitting)
         return false;
-    const QByteArray current = serialiseWindow();
-    if (current == m_lastSaved)
+    if (arrangement.payload == m_lastSaved)
         return false;
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
         writeAtomically(backupFile(), *old);
     const QString failure = QCoreApplication::translate("HikariSub.Workspace", "The panel layout could not be written to %1.")
                                 .arg(QDir::toNativeSeparators(m_file));
-    if (!writeAtomically(m_file, envelope(current, m_preset, m_layout))) {
+    if (!writeAtomically(m_file, envelope(arrangement.payload, arrangement.preset, arrangement.layout, arrangement.locked))) {
         addPanelNotice(failure);
         emit changed();
         return false;
     }
     m_panelNotices.removeAll(failure);
-    m_lastSaved = current;
+    m_lastSaved = arrangement.payload;
     emit changed();
     return true;
 }
 
 bool WorkspaceLayoutController::saveForQuit()
 {
-    const bool saved = save();
+    return saveForQuit({m_preset, tabPayload(), m_layout, m_locked});
+}
+
+bool WorkspaceLayoutController::saveForQuit(const WorkspaceArrangement &active)
+{
+    const bool saved = write(active);
+    if (m_beforeNodeEffects && !nodeEffectsFile().isEmpty())
+        writeAtomically(nodeEffectsFile(), envelope(serialiseWindow()));
     if (m_loaded)
         m_quitArrangement = shownArrangement();
     m_quitting = true;
@@ -1069,6 +1174,11 @@ bool WorkspaceLayoutController::resetLayout()
 {
     if (m_default.isEmpty())
         return false;
+    if (m_beforeNodeEffects) {
+        buildNodeEffects();
+        emit arrangementSwapped();
+        return true;
+    }
     const bool done = restorePayload(m_default);
     emit arrangementSwapped();
     if (!m_layout.isEmpty()) {
@@ -1117,12 +1227,69 @@ bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
+    dropNodeEffects();
     const bool done = buildPreset(name, true);
     dismissPanelNotice();
+    takeLock(false);
     setPreset(name);
     emit arrangementSwapped();
     save();
     return done;
+}
+
+QString WorkspaceLayoutController::nodeEffectsFile() const
+{
+    if (m_file.isEmpty())
+        return {};
+    const QFileInfo file(m_file);
+    return file.dir().filePath(file.completeBaseName() + QStringLiteral("-node-effects.json"));
+}
+
+QByteArray WorkspaceLayoutController::tabPayload() const
+{
+    return m_beforeNodeEffects ? *m_beforeNodeEffects : serialiseWindow();
+}
+
+void WorkspaceLayoutController::buildNodeEffects()
+{
+    restorePayload(m_default, true);
+    emit buildArrangement(QStringLiteral("NodeEffects"));
+}
+
+bool WorkspaceLayoutController::enterNodeEffects()
+{
+    if (m_beforeNodeEffects || !m_loaded || m_default.isEmpty())
+        return false;
+    m_beforeNodeEffects = serialiseWindow();
+    const QString file = nodeEffectsFile();
+    const auto bytes = file.isEmpty() ? std::nullopt : readFile(file);
+    const auto payload = bytes ? payloadOf(*bytes, nullptr) : std::nullopt;
+    if (!payload || !restorePayload(*payload, true))
+        buildNodeEffects();
+    emit changed();
+    emit arrangementSwapped();
+    return true;
+}
+
+void WorkspaceLayoutController::dropNodeEffects()
+{
+    if (!m_beforeNodeEffects)
+        return;
+    if (const QString file = nodeEffectsFile(); !file.isEmpty())
+        writeAtomically(file, envelope(serialiseWindow()));
+    m_beforeNodeEffects.reset();
+    emit changed();
+}
+
+bool WorkspaceLayoutController::leaveNodeEffects()
+{
+    if (!m_beforeNodeEffects)
+        return false;
+    const QByteArray before = *m_beforeNodeEffects;
+    dropNodeEffects();
+    restorePayload(before, true);
+    emit arrangementSwapped();
+    return true;
 }
 
 bool WorkspaceLayoutController::hasBackup() const
@@ -1134,11 +1301,14 @@ bool WorkspaceLayoutController::restoreBackup()
 {
     const auto bytes = readFile(backupFile());
     QString preset, layout;
-    const auto payload = bytes ? payloadOf(*bytes, nullptr, &preset, &layout) : std::nullopt;
+    bool locked = false;
+    const auto payload = bytes ? payloadOf(*bytes, nullptr, &preset, &layout, &locked) : std::nullopt;
     if (!payload)
         return false;
+    dropNodeEffects();
     if (!restorePayload(*payload))
         return false;
+    takeLock(locked);
     emit arrangementSwapped();
     layout = knownLayout(layout);
     if (preset != m_preset || layout != m_layout) {
@@ -1214,11 +1384,12 @@ WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
 {
     if (m_quitArrangement)
         return *m_quitArrangement;
-    return {m_preset, serialiseWindow(), m_layout};
+    return {m_preset, tabPayload(), m_layout, m_locked};
 }
 
 bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arrangement)
 {
+    dropNodeEffects();
     bool shown = true;
     if (arrangement.payload.isEmpty()) {
         shown = buildPreset(arrangement.preset, true);
@@ -1234,6 +1405,7 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
         m_layout = layout;
         m_lastSaved.clear();
     }
+    takeLock(shown && arrangement.locked);
     emit changed();
     emit arrangementSwapped();
     return shown;
@@ -1660,6 +1832,8 @@ bool WorkspaceLayoutController::applySavedArrangement(const QString &name)
 
 bool WorkspaceLayoutController::resetCurrentLayout()
 {
+    if (m_beforeNodeEffects)
+        return resetLayout();
     if (const QString saved = layout(); !saved.isEmpty() && m_saved[static_cast<std::size_t>(savedLayoutIndex(saved))].arrangement)
         return applySavedArrangement(saved);
     return applyPresetArrangement(m_preset);
@@ -1696,6 +1870,38 @@ bool WorkspaceLayoutController::deleteSavedLayout(const QString &name)
 int WorkspaceLayoutController::keepFloatingPanelsOnScreen()
 {
     return hikari::ui::keepFloatingPanelsOnScreen();
+}
+
+namespace {
+
+bool anyPanelFloats()
+{
+    if (!KDDockWidgets::Core::Platform::instance())
+        return false;
+    const auto docks = KDDockWidgets::DockRegistry::self()->dockwidgets();
+    return std::any_of(docks.begin(), docks.end(), [](const auto *dock) { return dock->isOpen() && dock->isFloating(); });
+}
+
+}
+
+void WorkspaceLayoutController::takeLock(bool locked)
+{
+    locked = locked && !anyPanelFloats();
+    setLayoutLocked(locked);
+    if (locked == m_locked)
+        return;
+    m_locked = locked;
+    m_lastSaved.clear();
+    emit changed();
+}
+
+bool WorkspaceLayoutController::setLocked(bool locked)
+{
+    if (locked && anyPanelFloats())
+        return false;
+    takeLock(locked);
+    save();
+    return true;
 }
 
 }

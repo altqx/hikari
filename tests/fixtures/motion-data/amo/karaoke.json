@@ -1,0 +1,180 @@
+{
+    "apply": {
+        "events": [
+            {
+                "end": 4190,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4150,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord1.87\\fscx93.52\\fscy93.52\\k10\\pos(598.48,375.56)\\shad0.94}Ka{\\k20}ra{\\kf15}oke"
+            },
+            {
+                "end": 4230,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4190,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord1.9\\fscx95.14\\fscy95.14\\k8\\pos(607.24,371.57)\\shad0.95}Ka{\\k20}ra{\\kf15}oke"
+            },
+            {
+                "end": 4270,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4230,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord1.94\\fscx96.76\\fscy96.76\\k4\\pos(617.08,367.64)\\shad0.97}Ka{\\k20}ra{\\kf15}oke"
+            },
+            {
+                "end": 4310,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4270,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord1.97\\fscx98.38\\fscy98.38\\pos(628,363.79)\\shad0.98}Ka{\\k20}ra{\\kf15}oke"
+            },
+            {
+                "end": 4350,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4310,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2\\fscx100\\fscy100\\pos(640,360)\\shad1}Ka{\\k16}ra{\\kf15}oke"
+            },
+            {
+                "end": 4400,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4350,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.03\\fscx101.62\\fscy101.62\\pos(653.08,356.28)\\shad1.02}Ka{\\k12}ra{\\kf15}oke"
+            },
+            {
+                "end": 4440,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4400,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.06\\fscx103.24\\fscy103.24\\pos(667.24,352.62)\\shad1.03}Ka{\\k7}ra{\\kf15}oke"
+            },
+            {
+                "end": 4480,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4440,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.1\\fscx104.86\\fscy104.86\\pos(682.48,349.03)\\shad1.05}Ka{\\k3}ra{\\kf15}oke"
+            },
+            {
+                "end": 4520,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4480,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.13\\fscx106.48\\fscy106.48\\pos(698.8,345.51)\\shad1.06}Kara{\\kf-1\\kf15}oke"
+            },
+            {
+                "end": 4560,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4520,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.16\\fscx108.09\\fscy108.09\\pos(716.2,342.05)\\shad1.08}Kara{\\kf-5\\kf15}oke"
+            },
+            {
+                "end": 4600,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4560,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.19\\fscx109.71\\fscy109.71\\pos(734.68,338.67)\\shad1.1}Kara{\\kf-9\\kf15}oke"
+            },
+            {
+                "end": 4650,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4600,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.23\\fscx111.33\\fscy111.33\\pos(754.24,335.34)\\shad1.11}Kara{\\kf-13\\kf15}oke"
+            },
+            {
+                "end": 4690,
+                "extra": {
+                    "a-mo": {
+                        "originalText": "{\\pos(640,360)\\k10}Ka{\\k20}ra{\\kf15}oke",
+                        "uuid": "<uuid>"
+                    }
+                },
+                "layer": 0,
+                "start": 4650,
+                "style": "Sign",
+                "text": "{\\1a&H00&\\2a&H00&\\3a&H00&\\4a&H80&\\bord2.26\\fscx112.95\\fscy112.95\\pos(774.88,332.09)\\shad1.13}Karaoke"
+            }
+        ],
+        "outcome": "ok",
+        "selected": [
+        ],
+        "unchanged": 13,
+        "undo_steps": 1
+    }
+}

@@ -82,8 +82,9 @@ public:
         const auto frame = m_video.session().lastFrame();
         if (m_video.session().state() != application::VideoSession::State::Ready || !frame)
             return std::nullopt;
-        const int g = std::gcd(frame->width, frame->height);
-        return VideoSize{frame->width, frame->height, frame->width / g, frame->height / g};
+        const auto geometry = m_video.session().sourceGeometry();
+        const int g = std::gcd(geometry.width, geometry.height);
+        return VideoSize{geometry.width, geometry.height, geometry.width / g, geometry.height / g};
     }
     std::optional<std::vector<std::int64_t>> keyframes() const override
     {
@@ -136,6 +137,8 @@ public:
             p.audioFile = box->path();
         if (keyframesFile)
             p.keyframesFile = keyframesFile();
+        if (timecodesFile)
+            p.timecodesFile = timecodesFile();
         if (videoZoom)
             p.videoZoom = videoZoom();
         return p;
@@ -155,27 +158,13 @@ public:
             return std::nullopt;
         return box->audio();
     }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override
-    {
-        const auto &s = m_video.session();
-        if (s.state() != application::VideoSession::State::Ready)
-            return std::nullopt;
-        std::vector<std::int64_t> starts;
-        starts.reserve(static_cast<std::size_t>(s.frameCount()));
-        for (int i = 0; i < s.frameCount(); ++i) {
-            const auto start = s.frameStart(i);
-            if (!start)
-                return std::nullopt;
-            starts.push_back(start->microseconds() / 1000);
-        }
-        return starts;
-    }
-    // MUST KILL: the video path and frame count stand in for the frame times
+    std::optional<application::AegisubFrameTimes> frameTimes() const override { return m_video.session().aegisubFrameTimes(); }
+    // MUST KILL: the video path, frame count and frame-times serial stand in for the frame times
     std::string state() const
     {
         const auto &s = m_video.session();
         std::string out = s.path() + '\n' + std::to_string(static_cast<int>(s.state())) + ' ' +
-                          std::to_string(s.frameCount());
+                          std::to_string(s.frameCount()) + " times " + std::to_string(s.frameTimesSerial());
         if (const auto size = videoSize())
             out += " size " + std::to_string(size->width) + 'x' + std::to_string(size->height);
         if (const auto frames = keyframes())
@@ -194,6 +183,7 @@ public:
 
     std::function<const application::AudioBox *()> audioBox;
     std::function<std::string()> keyframesFile;
+    std::function<std::string()> timecodesFile;
     std::function<double()> videoZoom;
 
 private:
@@ -204,21 +194,21 @@ private:
 
 class EditorAdapter : public application::EditorPort {
 public:
-    EditorAdapter(ui::LineEditorController &editor, ui::ShellController &shell, application::DocumentFiles &files,
-                  application::Workspace &workspace)
-        : m_editor(editor), m_shell(shell), m_files(files), m_workspace(workspace)
+    EditorAdapter(AutomationShell::EditorSource editor, AutomationShell::ShellSource shell,
+                  application::DocumentFiles &files, application::Workspace &workspace)
+        : m_editor(std::move(editor)), m_shell(std::move(shell)), m_files(files), m_workspace(workspace)
     {
     }
     std::optional<std::pair<std::int64_t, std::int64_t>> selection() const override
     {
-        if (!m_editor.hasLine())
+        if (!m_editor().hasLine())
             return std::nullopt;
-        const auto [start, end] = m_editor.fieldSelection();
+        const auto [start, end] = m_editor().fieldSelection();
         return std::pair<std::int64_t, std::int64_t>{start, end};
     }
     void setSelection(std::int64_t start, std::int64_t end) override
     {
-        m_editor.selectInField(static_cast<int>(start), static_cast<int>(end));
+        m_editor().selectInField(static_cast<int>(start), static_cast<int>(end));
     }
     bool modified() const override
     {
@@ -226,11 +216,11 @@ public:
         auto *session = target ? m_files.session(*target) : nullptr;
         return session && session->draftLine().has_value();
     }
-    void setStatusText(const std::string &text) override { m_shell.setStatusText(QString::fromStdString(text)); }
+    void setStatusText(const std::string &text) override { m_shell().setStatusText(QString::fromStdString(text)); }
 
 private:
-    ui::LineEditorController &m_editor;
-    ui::ShellController &m_shell;
+    AutomationShell::EditorSource m_editor;
+    AutomationShell::ShellSource m_shell;
     application::DocumentFiles &m_files;
     application::Workspace &m_workspace;
 };
@@ -268,16 +258,16 @@ QString refusalText(const application::MacroApplyFailure &failure)
 }
 
 AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
-                                 ui::LineEditorController &editor, ui::VideoController &video,
-                                 ui::ShellController &shell, application::IndexedSourcePort &, QObject *parent)
-    : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(editor),
-      m_video(video), m_shell(shell),
+                                 EditorSource editor, ui::VideoController &video, ShellSource shell,
+                                 application::IndexedSourcePort &, QObject *parent)
+    : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(std::move(editor)),
+      m_video(video), m_shell(std::move(shell)),
       m_manager(m_paths.helper, sharedIncludes(m_paths))
 {
     for (const auto &dir : folders(m_paths).made)
         QDir().mkpath(QDir::fromNativeSeparators(QString::fromStdString(dir)));
     m_media = std::make_unique<MediaAdapter>(video, files, workspace);
-    m_editorPort = std::make_unique<EditorAdapter>(editor, shell, files, workspace);
+    m_editorPort = std::make_unique<EditorAdapter>(m_editor, m_shell, files, workspace);
     m_router.setMedia(m_media.get());
     m_router.setEditor(m_editorPort.get());
     m_router.setClipboard(&m_clipboard);
@@ -305,6 +295,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
 #endif
         return c;
     });
+    m_manager.setCompileCache(m_paths.compileCache);
     m_manager.setServiceHandler([this](const application::HostServiceRequest &r, backends::LuaScriptHost::ServiceReply reply) {
         m_router.handle(r, std::move(reply));
     });
@@ -312,33 +303,16 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_manager.setDialogHandler([this](const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply) {
         presentDialog(request, std::move(reply));
     });
+    connect(&m_manager, &backends::AutomationManager::runFinished, this, [this] { m_router.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
     connect(&m_manager, &backends::AutomationManager::logged, this,
-            [this](const QString &, const QString &text, int level) {
-                if (m_log.size() < ui::AutomationRuns::kMaxChars)
-                    m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
-                if (m_run && !text.isEmpty()) {
-                    m_runs.append(m_runId, text, level);
-                    m_logged = true;
-                    showCard();
-                }
-                emit progressChanged();
-            });
-    connect(&m_manager, &backends::AutomationManager::progressChanged, this, [this](const QString &, double p) {
-        m_progress = p;
-        m_progressKnown = true;
-        if (m_run)
-            m_runs.setProgress(m_runId, p);
-        emit progressChanged();
-    });
-    connect(&m_manager, &backends::AutomationManager::taskChanged, this, [this](const QString &, const QString &t) {
-        m_task = t.left(ui::AutomationRuns::kMaxText);
-        if (m_run)
-            m_runs.setTask(m_runId, m_task);
-        emit progressChanged();
-    });
+            [this](const QString &, const QString &text, int level) { runLogged(text, level); });
+    connect(&m_manager, &backends::AutomationManager::progressChanged, this,
+            [this](const QString &, double p) { runProgress(p); });
+    connect(&m_manager, &backends::AutomationManager::taskChanged, this,
+            [this](const QString &, const QString &t) { runTaskText(t); });
     m_cardTimer.setSingleShot(true);
     connect(&m_manager, &backends::AutomationManager::macroStarted, this, [this](const QString &path) {
         if (!m_run || m_run->active != m_run->path || path.toStdString() != m_run->path)
@@ -348,13 +322,13 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         updateCardTimer();
     });
     connect(&m_runs, &ui::AutomationRuns::removed, this, [this](int id) {
-        if (id == m_runId && !m_run && !m_cardState.isEmpty()) {
+        if (id == m_runId && !running() && !m_cardState.isEmpty()) {
             m_cardState.clear();
             emit progressChanged();
         }
     });
     connect(&m_cardTimer, &QTimer::timeout, this, [this] {
-        if (m_run && !waitingForUser())
+        if (running() && !waitingForUser())
             showCard();
     });
     connect(&m_dialogs, &ui::AutomationDialogController::changed, this, &AutomationShell::updateCardTimer);
@@ -380,6 +354,120 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
             return off;
         },
         [this](const QString &script, bool enabled) { setAutoloadEnabled(script, enabled); });
+    m_packages = std::make_unique<ScriptPackages>(*this, recommendedScripts());
+}
+
+void AutomationShell::runLogged(const QString &text, int level)
+{
+    if (m_log.size() < ui::AutomationRuns::kMaxChars)
+        m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
+    if (running() && !text.isEmpty()) {
+        m_runs.append(m_runId, text, level);
+        m_logged = true;
+        if (m_run)
+            showCard();
+    }
+    emit progressChanged();
+}
+
+void AutomationShell::runProgress(double percent)
+{
+    m_progress = percent;
+    m_progressKnown = true;
+    if (running())
+        m_runs.setProgress(m_runId, percent);
+    emit progressChanged();
+}
+
+void AutomationShell::runTaskText(const QString &text)
+{
+    m_taskText = text.left(ui::AutomationRuns::kMaxText);
+    if (running())
+        m_runs.setTask(m_runId, m_taskText);
+    emit progressChanged();
+}
+
+QString AutomationShell::userAutomationRoot() const
+{
+    return m_paths.userAutomationDir.isEmpty() ? m_paths.automationDir : m_paths.userAutomationDir;
+}
+
+bool AutomationShell::runTask(const QString &title, const QString &script, TaskDone done)
+{
+    using Host = backends::LuaScriptHost;
+    if (busy())
+        return false;
+    auto host = std::make_unique<Host>(m_paths.helper, script, sharedIncludes(m_paths));
+    host->setCompileCache(m_paths.compileCache);
+    Host *h = host.get();
+    h->setServiceHandler([this](const application::HostServiceRequest &r, Host::ServiceReply reply) {
+        m_router.handle(r, std::move(reply));
+    });
+    h->setDialogHandler([this](const application::DialogRequest &request, Host::DialogReply reply) {
+        m_dialogs.present(m_title, request, std::move(reply));
+    });
+    connect(h, &Host::loaded, this, [this, h] {
+        if (!h->run(0))
+            endTask(Host::RunOutcome::Failed, h->lastError());
+    });
+    connect(h, &Host::loadFailed, this, [this](const QString &message) { endTask(Host::RunOutcome::Failed, message); });
+    connect(h, &Host::unavailable, this, [this](const QString &reason) { endTask(Host::RunOutcome::HelperLost, reason); });
+    connect(h, &Host::finished, this, &AutomationShell::endTask);
+    connect(h, &Host::logged, this, &AutomationShell::runLogged);
+    connect(h, &Host::progressChanged, this, &AutomationShell::runProgress);
+    connect(h, &Host::taskChanged, this, &AutomationShell::runTaskText);
+    connect(h, &Host::macroStarted, this, [this] {
+        m_macroStarted = true;
+        m_cardTimer.stop();
+        updateCardTimer();
+    });
+    connect(h, &Host::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
+    connect(h, &Host::forceStopOffered, this, &AutomationShell::progressChanged);
+    connect(h, &Host::servicesWithdrawn, this, [this] { m_router.withdraw(); });
+    m_task = Task{std::move(host), std::move(done)};
+    m_macroStarted = false;
+    m_cardTimer.stop();
+    m_cardLeft = m_cardDelay;
+    m_title = title;
+    m_taskText.clear();
+    m_log.clear();
+    m_lastMessage.clear();
+    m_lastOutcome.clear();
+    m_progress = 0;
+    m_keepLog = false;
+    m_problems = 0;
+    m_logged = false;
+    m_cancelling = false;
+    m_progressKnown = false;
+    m_cardState = QStringLiteral("notice");
+    m_cardText.clear();
+    m_runId = m_runs.begin(m_title, QStringLiteral("DependencyControl"), QString());
+    h->load();
+    emit progressChanged();
+    return true;
+}
+
+void AutomationShell::endTask(backends::LuaScriptHost::RunOutcome outcome, const QString &message)
+{
+    using Outcome = backends::LuaScriptHost::RunOutcome;
+    if (!m_task)
+        return;
+    Task task = std::move(*m_task);
+    m_task.reset();
+    m_router.withdraw();
+    m_dialogs.withdraw();
+    const QString text = task.done(outcome, message);
+    const QString ended = outcome == Outcome::Ok          ? QStringLiteral("applied")
+                          : outcome == Outcome::Cancelled ? QStringLiteral("cancelled")
+                                                          : QStringLiteral("failed");
+    m_lastMessage = text;
+    m_lastOutcome = ended;
+    finishCard(ended, text, QString());
+    if (outcome == Outcome::Ok)
+        m_cardState.clear();
+    task.host.release()->deleteLater();
+    emit progressChanged();
+    continueLastScript();
 }
 
 std::string AutomationShell::hostState() const
@@ -392,10 +480,12 @@ void AutomationShell::setAudioBox(std::function<const application::AudioBox *()>
     static_cast<MediaAdapter *>(m_media.get())->audioBox = std::move(box);
 }
 
-void AutomationShell::setProjectSources(std::function<std::string()> keyframesFile, std::function<double()> videoZoom)
+void AutomationShell::setProjectSources(std::function<std::string()> keyframesFile,
+                                        std::function<std::string()> timecodesFile, std::function<double()> videoZoom)
 {
     auto *media = static_cast<MediaAdapter *>(m_media.get());
     media->keyframesFile = std::move(keyframesFile);
+    media->timecodesFile = std::move(timecodesFile);
     media->videoZoom = std::move(videoZoom);
 }
 
@@ -610,7 +700,7 @@ std::string AutomationShell::trustKey(application::DocumentId document, const st
 
 QStringList AutomationShell::trustedFolders() const
 {
-    return m_settings ? m_settings->list("automation.trustedFolders") : QStringList();
+    return m_settings ? m_settings->list("trust.folders") : QStringList();
 }
 
 namespace {
@@ -714,7 +804,7 @@ void AutomationShell::answerTrust(int id, const QString &answer)
             if (!folders.contains(folder, windowsPaths() ? Qt::CaseInsensitive : Qt::CaseSensitive))
                 folders << folder;
         }
-        m_settings->set("automation.trustedFolders", folders);
+        m_settings->set("trust.folders", folders);
         m_settings->sync();
     }
     if (session(question.document)) {
@@ -808,7 +898,7 @@ void AutomationShell::continueLastScript()
     using State = backends::LuaScriptHost::State;
     if (host && (host->state() == State::Loading || host->state() == State::Idle))
         return;
-    if (host && (m_run || m_manager.busy()))
+    if (host && busy())
         return;
     const std::string path = *m_pendingLast;
     m_pendingLast.reset();
@@ -991,18 +1081,21 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
 
 bool AutomationShell::forceStopOffered() const
 {
-    const auto *host = m_run ? m_manager.host(m_run->active) : nullptr;
+    const auto *host = m_task ? m_task->host.get() : m_run ? m_manager.host(m_run->active) : nullptr;
     return host && host->forceStopAvailable();
 }
 
 void AutomationShell::cancelRun()
 {
-    if (m_run && !m_cancelling) {
+    if (running() && !m_cancelling) {
         m_cancelling = true;
         showCard();
         emit progressChanged();
     }
-    m_manager.cancel();
+    if (m_task)
+        m_task->host->cancel();
+    else
+        m_manager.cancel();
 }
 
 void AutomationShell::finishCard(const QString &ended, const QString &text, const QString &validationError)
@@ -1035,7 +1128,7 @@ void AutomationShell::finishCard(const QString &ended, const QString &text, cons
 
 void AutomationShell::dismissCard()
 {
-    if (m_run || m_cardState.isEmpty())
+    if (running() || m_cardState.isEmpty())
         return;
     m_cardState.clear();
     emit progressChanged();
@@ -1048,7 +1141,7 @@ bool AutomationShell::waitingForUser() const
 
 void AutomationShell::updateCardTimer()
 {
-    if (!m_run || !m_macroStarted || m_cardState != QLatin1String("notice"))
+    if (!running() || !m_macroStarted || m_cardState != QLatin1String("notice"))
         return;
     if (waitingForUser()) {
         if (m_cardTimer.isActive()) {
@@ -1063,7 +1156,7 @@ void AutomationShell::updateCardTimer()
 void AutomationShell::showCard()
 {
     m_cardTimer.stop();
-    if (m_run && m_cardState != QLatin1String("running")) {
+    if (running() && m_cardState != QLatin1String("running")) {
         m_cardState = QStringLiteral("running");
         emit progressChanged();
     }
@@ -1071,12 +1164,14 @@ void AutomationShell::showCard()
 
 bool AutomationShell::forceStopRun()
 {
+    if (m_task)
+        return m_task->host->forceStop();
     return m_run && m_manager.forceStop(m_run->active);
 }
 
 bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin)
 {
-    if (m_run || m_manager.busy())
+    if (busy())
         return false;
     const auto target = m_workspace.editingTarget();
     auto *s = target ? session(*target) : nullptr;
@@ -1092,7 +1187,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     if (m_beforeRun)
         m_beforeRun();
     auto snapshot = application::snapshotForMacro(*s);
-    m_editor.reloadFromSession();
+    m_editor().reloadFromSession();
     if (!snapshot) {
         m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
                                                     "The line being edited can’t be committed, so the macro can’t start.");
@@ -1113,7 +1208,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_run = std::move(started);
     m_last = {path, ordinal};
     m_title = QString::fromStdString(macro);
-    m_task.clear();
+    m_taskText.clear();
     m_log.clear();
     m_lastMessage.clear();
     m_lastOutcome.clear();
@@ -1125,7 +1220,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_progressKnown = false;
     m_cardState = QStringLiteral("notice");
     m_cardText.clear();
-    m_runId = m_runs.begin(m_title, prettyName(path), m_shell.editingTitle());
+    m_runId = m_runs.begin(m_title, prettyName(path), m_shell().editingTitle());
     updateCardTimer();
     if (m_documentChanged)
         m_documentChanged();
@@ -1188,10 +1283,10 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
 void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
 {
     const QString summary = ui::karaokeReportSummary(report);
-    m_shell.setStatusText(summary);
+    m_shell().setStatusText(summary);
     QTimer::singleShot(10'000, Qt::PreciseTimer, this, [this, summary, serial = ++m_statusSerial] {
-        if (serial == m_statusSerial && m_shell.statusText() == summary)
-            m_shell.setStatusText(QString());
+        if (serial == m_statusSerial && m_shell().statusText() == summary)
+            m_shell().setStatusText(QString());
     });
     const QString details = ui::karaokeReportDetails(report);
     if (m_logLine)
@@ -1307,7 +1402,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     m_lastMessage = text;
     m_lastOutcome = ended;
     finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());
-    m_editor.reloadFromSession();
+    m_editor().reloadFromSession();
     if (m_documentChanged)
         m_documentChanged();
     emit progressChanged();

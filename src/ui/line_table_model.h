@@ -47,6 +47,7 @@ public:
     static constexpr int ComparisonColoursRole = Qt::UserRole + 53;
     // MUST KILL: LabelColoursRole is an untyped list whose order (normal, modified, saved, doubtful) is a hidden contract
     static constexpr int LabelColoursRole = Qt::UserRole + 54;
+    static constexpr int QcMarkedRole = Qt::UserRole + 55;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -78,7 +79,19 @@ public:
         FoldCountRole,
         HiddenBlockRowRole,
         GroupDepthRole,
+        QcNotesRole,
+        QcCurrentRole,
+        ReviewRole,
+        // MUST KILL: ReviewMarksRole is a flat list of inclusive [start, end] pairs
+        ReviewMarksRole,
     };
+    enum class ReviewState { None, Waiting, EditedSince };
+    // An AI change waiting on the Line; `before` is absent for an inserted Line.
+    struct ReviewMark {
+        bool editedSince = false;
+        std::optional<core::LineRecord> before;
+    };
+    using Review = std::function<std::optional<ReviewMark>(core::LineId)>;
     // MUST KILL: labelSlot returns a magic int (0 normal, 1 modified, 2 saved, 3 doubtful)
     static int labelSlot(int state);
     static int hideBit(Column column);
@@ -98,6 +111,7 @@ public:
     // MUST KILL: ChangeState returns a magic int (0 unchanged, 1 changed, 2 changed and saved)
     using ChangeState = std::function<int(const core::LineRecord &)>;
     void setChangeState(ChangeState changeState) { m_changeState = std::move(changeState); }
+    void setReview(Review review) { m_review = std::move(review); }
     void setHideTags(bool hide, const QString &swap);
     bool hideTags() const { return m_hideTags; }
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
@@ -111,10 +125,14 @@ public:
         if (show == m_showOriginal)
             return;
         m_showOriginal = show;
-        for (const Row &row : m_rows)
+        for (const Row &row : m_rows) {
             row.shownText.reset();
-        if (m_draft)
+            row.reviewMarks.reset();
+        }
+        if (m_draft) {
             m_draft->shownText.reset();
+            m_draft->reviewMarks.reset();
+        }
     }
     bool showOriginal() const { return m_showOriginal; }
     void setRunMarks(bool on);
@@ -127,6 +145,9 @@ public:
     int hiddenColumns() const { return m_hidden; }
     bool columnShown(int column) const;
     void setFrameTimebase(std::optional<application::LegacyTimebase> frames);
+    // Per Line id, the QC notes its flag lists.
+    using QcMarks = absl::flat_hash_map<std::uint64_t, QStringList>;
+    void setQcMarks(QcMarks marks, std::optional<core::LineId> current);
 
     void setFoldGenerated(bool on);
     bool foldGenerated() const { return m_foldGenerated; }
@@ -170,6 +191,8 @@ private:
         mutable std::optional<QString> shownText;
         mutable std::optional<bool> unplacedRuns;
         int run = -1;
+        std::optional<ReviewMark> review;
+        mutable std::optional<QVariantList> reviewMarks;
     };
     struct Run {
         int first = 0, count = 0;
@@ -188,8 +211,10 @@ private:
     const Measures &measuresOf(const Row &row) const;
     const QVariantList &spellMarksOf(const Row &row) const;
     bool unplacedRunsOf(const Row &row) const;
+    const QVariantList &reviewMarksOf(const Row &row) const;
     TagSpelling m_spelling;
     ChangeState m_changeState;
+    Review m_review;
     bool m_hideTags = false;
     QString m_tagSwap;
     void emitStateChanged(const std::vector<core::LineId> &ids);
@@ -210,6 +235,8 @@ private:
     std::vector<Run> m_runs;
     bool m_foldGenerated = false;
     absl::flat_hash_set<std::uint64_t> m_unfolded;
+    QcMarks m_qcMarks;
+    std::optional<core::LineId> m_qcCurrent;
     int m_headerBlock = 0;
     int m_hidden = 0;
     bool m_autoHide = false;

@@ -277,29 +277,31 @@ TEST(OutputEngine, UnrequestedStreamEndIsDeviceLoss)
     EXPECT_FALSE(engine.clock(10).valid);
 }
 
-TEST(OutputEngine, ClockSnapshotsAreNeverTorn)
+TEST(OutputEngine, ClockSnapshotsAreNeverTornOrEmpty)
 {
     OutputEngine engine(kStereo, 0.02, 0.1);
     engine.started();
+    std::vector<float> out(kFrames * 2);
+    engine.render(out, {0.5, 0, 0, false});
     std::atomic<bool> done{false};
     std::thread callback([&] {
-        std::vector<float> out(kFrames * 2);
         for (int k = 1; k <= 300'000; ++k)
             engine.render(out, {k + 0.5, double(k), double(k), false});
         done = true;
     });
-    int reads = 0, torn = 0;
+    int reads = 0, torn = 0, empty = 0;
     while (!done) {
         const auto e = engine.clock(0);
-        if (e.epoch == 0 && e.streamTimeSeconds == 0)
-            continue;
         ++reads;
-        if (e.dacTimeSeconds != e.streamTimeSeconds + 0.5 || e.monotonicSeconds != e.streamTimeSeconds
-            || e.bufferFrames != kFrames)
+        if (e.epoch == 0)
+            ++empty;
+        else if (e.dacTimeSeconds != e.streamTimeSeconds + 0.5 || e.monotonicSeconds != e.streamTimeSeconds
+                 || e.bufferFrames != kFrames)
             ++torn;
     }
     callback.join();
     EXPECT_EQ(torn, 0) << "of " << reads << " reads";
+    EXPECT_EQ(empty, 0) << "of " << reads << " reads: a publish in progress is waited out";
 }
 
 }

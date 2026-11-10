@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <initializer_list>
 #include <memory>
 #include <string_view>
@@ -48,6 +49,18 @@ HostServiceReply strings(std::vector<std::string> values)
     return reply;
 }
 
+constexpr std::size_t kHeldFrames = 2;
+
+}
+
+std::vector<std::optional<TextExtents>> TextMeasurePort::measureMany(const std::vector<std::string> &style,
+                                                                     const std::vector<std::string> &texts)
+{
+    std::vector<std::optional<TextExtents>> out;
+    out.reserve(texts.size());
+    for (const auto &text : texts)
+        out.push_back(measure(style, text));
+    return out;
 }
 
 namespace {
@@ -177,8 +190,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
     switch (r.service) {
     case HostService::FrameFromMs:
     case HostService::MsFromFrame: {
-        auto starts = m_media ? m_media->frameStartsMs() : std::nullopt;
-        const auto times = starts ? AegisubFrameTimes::fromFrameStarts(std::move(*starts)) : std::nullopt;
+        const auto times = m_media ? m_media->frameTimes() : std::nullopt;
         if (!times)
             return unavailable();
         return reply(integers({r.service == HostService::FrameFromMs ? times->frameFromMs(integer(r, 0))
@@ -192,15 +204,36 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         auto v = m_media ? m_media->keyframes() : std::nullopt;
         return v ? reply(integers(std::move(*v))) : unavailable();
     }
+    case HostService::FrameTimes: {
+        const auto times = m_media ? m_media->frameTimes() : std::nullopt;
+        if (!times)
+            return unavailable();
+        auto timecodes = times->timecodes();
+        HostServiceReply out = integers({timecodes.numerator, timecodes.last});
+        out.integers.insert(out.integers.end(), timecodes.startsMs.begin(), timecodes.startsMs.end());
+        return reply(std::move(out));
+    }
     case HostService::Frame:
+    case HostService::FrameSize:
+    case HostService::FramePixel:
         if (!m_media)
             return unavailable();
-        return m_media->frame(integer(r, 0), integer(r, 1) != 0, [reply](std::optional<MacroMediaPort::Frame> f) {
+        return frameFor(r, [service = r.service, x = integer(r, 2), y = integer(r, 3),
+                            reply](std::shared_ptr<const MacroMediaPort::Frame> f) {
             if (!f)
                 return reply(HostServiceReply::unavailable());
-            HostServiceReply out = integers({f->width, f->height});
-            out.pixels = std::move(f->bgra);
-            reply(std::move(out));
+            if (service != HostService::FramePixel) {
+                HostServiceReply out = integers({f->width, f->height});
+                if (service == HostService::Frame)
+                    out.pixels = f->bgra;
+                return reply(std::move(out));
+            }
+            if (x < 0 || y < 0 || x >= f->width || y >= f->height ||
+                f->bgra.size() != static_cast<std::size_t>(f->width) * static_cast<std::size_t>(f->height) * 4)
+                return reply(HostServiceReply::unavailable());
+            const auto *p = f->bgra.data() + (static_cast<std::size_t>(y) * f->width + static_cast<std::size_t>(x)) * 4;
+            reply(integers({std::to_integer<std::int64_t>(p[0]), std::to_integer<std::int64_t>(p[1]),
+                            std::to_integer<std::int64_t>(p[2])}));
         });
     case HostService::AudioSelection: {
         const auto v = m_media ? m_media->audioSelection() : std::nullopt;
@@ -211,7 +244,7 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         if (!v)
             return unavailable();
         HostServiceReply out = integers({v->videoFrameShown});
-        out.strings = {v->audioFile, v->videoFile, v->keyframesFile};
+        out.strings = {v->audioFile, v->videoFile, v->keyframesFile, v->timecodesFile};
         out.numbers = {v->videoZoom};
         return reply(std::move(out));
     }
@@ -225,6 +258,17 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
             return unavailable();
         HostServiceReply out;
         out.numbers = {v->width, v->height, v->descent, v->externalLeading};
+        return reply(std::move(out));
+    }
+    case HostService::TextExtentsMany: {
+        if (!m_measure)
+            return unavailable();
+        HostServiceReply out;
+        for (const auto &v : m_measure->measureMany(r.style, r.strings)) {
+            out.integers.push_back(v ? 1 : 0);
+            const TextExtents e = v.value_or(TextExtents{});
+            out.numbers.insert(out.numbers.end(), {e.width, e.height, e.descent, e.externalLeading});
+        }
         return reply(std::move(out));
     }
     case HostService::ClipboardGet:
@@ -318,8 +362,33 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
     unavailable();
 }
 
+void AutomationServiceRouter::frameFor(const HostServiceRequest &r, FrameReply reply)
+{
+    const std::int64_t number = integer(r, 0);
+    const bool withSubtitles = integer(r, 1) != 0;
+    std::erase_if(m_frames, [&](const HeldFrame &h) { return h.script != r.script || h.run != r.run; });
+    const auto held = std::ranges::find_if(
+        m_frames, [&](const HeldFrame &h) { return h.number == number && h.withSubtitles == withSubtitles; });
+    if (held != m_frames.end())
+        return reply(held->frame);
+    m_media->frame(number, withSubtitles,
+                   [this, script = r.script, run = r.run, number, withSubtitles,
+                    reply = std::move(reply)](std::optional<MacroMediaPort::Frame> f) {
+                       if (!f)
+                           return reply(nullptr);
+                       auto frame = std::make_shared<const MacroMediaPort::Frame>(std::move(*f));
+                       if (run != 0) {
+                           if (m_frames.size() >= kHeldFrames)
+                               m_frames.erase(m_frames.begin());
+                           m_frames.push_back({script, run, number, withSubtitles, frame});
+                       }
+                       reply(std::move(frame));
+                   });
+}
+
 void AutomationServiceRouter::withdraw()
 {
+    m_frames.clear();
     if (m_resolutionOpen) {
         m_resolutionOpen = false;
         if (m_resolution)

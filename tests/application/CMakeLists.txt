@@ -2,6 +2,10 @@ hikari_add_gtest(hikari_application_write_tests SOURCES write_coordinator_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_edit_tests SOURCES edit_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_ai_review_tests SOURCES ai_review_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_word_diff_tests SOURCES word_diff_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_editor_fields_tests SOURCES editor_fields_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_workspace_tests SOURCES workspace_tests.cpp
@@ -21,6 +25,8 @@ hikari_add_gtest(hikari_application_macro_validation_tests SOURCES macro_validat
 hikari_add_gtest(hikari_application_dialog_memory_tests SOURCES dialog_memory_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_services_tests SOURCES automation_services_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_compile_cache_tests SOURCES compile_cache_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_playback_pipeline_tests SOURCES playback_pipeline_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -42,15 +48,24 @@ hikari_add_gtest(hikari_application_grid_filtering_tests SOURCES grid_filtering_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_fold_groups_tests SOURCES fold_groups_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_fold_groups_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
 hikari_add_gtest(hikari_application_recovery_store_tests SOURCES recovery_store_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_hotkeys_tests SOURCES automation_hotkeys_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_frame_bake_tests SOURCES frame_bake_tests.cpp LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_project_tests SOURCES project_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_video_properties_tests SOURCES video_properties_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_script_properties_tests SOURCES script_properties_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -60,6 +75,10 @@ hikari_add_gtest(hikari_application_select_lines_tests SOURCES select_lines_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_update_check_tests SOURCES update_check_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_update_signature_tests SOURCES update_signature_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_update_signature_tests PRIVATE
+    HIKARI_MINISIGN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/minisign/fixtures")
 hikari_add_gtest(hikari_application_whats_new_tests SOURCES whats_new_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
@@ -192,6 +211,14 @@ target_compile_definitions(hikari_application_video_timing_tests PRIVATE
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
 hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
+    HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
+hikari_add_gtest(hikari_application_perspective_tracking_tests SOURCES perspective_tracking_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_translation_mode_tests PRIVATE
@@ -204,4 +231,23 @@ target_compile_definitions(hikari_application_associated_files_tests PRIVATE
 hikari_add_gtest(hikari_application_ai_providers_tests SOURCES ai_providers_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_aegisub_frame_times_tests SOURCES aegisub_frame_times_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_node_effects_tests SOURCES node_effects_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_node_effects_tests PRIVATE
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+hikari_add_gtest(hikari_application_node_graph_editing_tests SOURCES node_graph_editing_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_timecodes_file_tests SOURCES timecodes_file_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_timecodes_file_tests PRIVATE
+    HIKARI_TIMECODES_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timecodes")
+hikari_add_gtest(hikari_application_motion_data_tests SOURCES motion_data_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_motion_data_tests PRIVATE
+    HIKARI_MOTION_CORPUS="${PROJECT_SOURCE_DIR}/tests/fixtures/motion-data")
+target_include_directories(hikari_application_motion_data_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_gtest(hikari_application_gradient_tests SOURCES gradient_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradient_tests.cpp
     LIBRARIES hikari_application LABELS application)

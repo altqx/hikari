@@ -28,7 +28,7 @@ Signer signer(std::uint8_t seed)
     return s;
 }
 
-std::string sign(const Signer &signer, std::span<const std::byte> message)
+std::string sign(const Signer &signer, std::span<const std::byte> message, std::string_view trustedComment)
 {
     std::array<std::uint8_t, crypto_generichash_BYTES_MAX> digest{};
     crypto_generichash(digest.data(), digest.size(), reinterpret_cast<const std::uint8_t *>(message.data()),
@@ -36,7 +36,7 @@ std::string sign(const Signer &signer, std::span<const std::byte> message)
     std::array<std::uint8_t, 74> body{'E', 'D'};
     std::copy(signer.key.id.begin(), signer.key.id.end(), body.begin() + 2);
     crypto_sign_detached(body.data() + 10, nullptr, digest.data(), digest.size(), signer.secret.data());
-    const std::string comment = "timestamp:1 file:test.hikariplugin";
+    const std::string comment(trustedComment);
     std::vector<std::uint8_t> covered(body.begin() + 10, body.end());
     covered.insert(covered.end(), comment.begin(), comment.end());
     std::array<std::uint8_t, crypto_sign_BYTES> global{};

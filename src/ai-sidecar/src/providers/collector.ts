@@ -1,10 +1,13 @@
-import type { Finished, StopReason, ToolCall, Update, Usage } from "./types";
+import type { Citation, Finished, ProviderState, StopReason, ToolCall, Update, Usage, Wire } from "./types";
 
 /** Gathers one completion's text, tool calls and usage, sending each piece to Qt as it arrives. */
 export class Collector {
-    usage: Usage = { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 };
+    usage: Usage = { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, cacheWriteTokens: 0, cacheWriteHourTokens: 0 };
     private text = "";
     private readonly calls = new Map<number, ToolCall>();
+    private readonly citations = new Map<string, Citation>();
+    private searchSuggestions: string | undefined;
+    private providerState: ProviderState | undefined;
 
     constructor(private readonly emit: (update: Update) => void) {}
 
@@ -44,10 +47,33 @@ export class Collector {
             call.signature = signature;
     }
 
+    /** A source the answer cites; the same URL cited again keeps its first number and quote. */
+    addCitation(url: string, title: string, quote?: string): void {
+        if (!url || this.citations.has(url))
+            return;
+        const citation: Citation = { index: this.citations.size + 1, url, title: title || url, ...(quote ? { quote } : {}) };
+        this.citations.set(url, citation);
+        this.emit({ kind: "citation", citation });
+    }
+
+    setSearchSuggestions(html: string | undefined): void {
+        if (html)
+            this.searchSuggestions = html;
+    }
+
+    keepProviderState(wire: Wire, parts: unknown[]): void {
+        this.providerState = { type: "providerState", wire, json: JSON.stringify(parts) };
+    }
+
     finish(reason: StopReason): Finished {
         this.emit({ kind: "usage", usage: this.usage });
         const toolCalls = [...this.calls.entries()].sort(([a], [b]) => a - b).map(([, call]) => call);
-        return { reason, text: this.text, toolCalls, usage: this.usage };
+        return {
+            reason, text: this.text, toolCalls, usage: this.usage,
+            ...(this.citations.size ? { citations: [...this.citations.values()] } : {}),
+            ...(this.searchSuggestions ? { searchSuggestions: this.searchSuggestions } : {}),
+            ...(this.providerState ? { providerState: this.providerState } : {}),
+        };
     }
 }
 

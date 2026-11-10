@@ -32,8 +32,8 @@ export function errorDetail(body: string): string {
         return "";
     const { error, message } = parsed as { error?: unknown; message?: unknown };
     if (typeof error === "object" && error !== null) {
-        const inner = (error as { message?: unknown }).message;
-        return typeof inner === "string" ? inner : "";
+        const { message: inner, detail } = error as { message?: unknown; detail?: unknown };
+        return typeof inner === "string" ? inner : typeof detail === "string" ? detail : "";
     }
     if (typeof error === "string")
         return error;
@@ -54,7 +54,7 @@ function causeOf(error: unknown): ProviderError | undefined {
     return undefined;
 }
 
-/** An SDK error that only wraps one the egress fetch threw. */
+/** An SDK error that only wraps one the relay fetch threw. */
 export function wrapsProviderError(error: unknown): boolean {
     return causeOf(error) !== undefined;
 }

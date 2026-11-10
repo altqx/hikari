@@ -1,0 +1,53 @@
+name: AI sidecar bump
+
+# Weekly (ADR 0031): a PR that bumps the Claude Agent SDK, with Bun and the provider SDKs riding along, once each
+# version is 7 days old. Merged, it publishes through ai-sidecar.yml.
+on:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    name: Bump the sidecar's SDKs
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: false
+
+      - id: bump
+        run: python3 tools/release/bump-ai-sidecar.py . | tee -a "$GITHUB_OUTPUT"
+
+      - name: Lock, regenerate the notices and open the PR
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          TITLE: ${{ steps.bump.outputs.title }}
+        run: |
+          set -euo pipefail
+          bun=$(cmake -DDOWNLOADS="$RUNNER_TEMP/bun" -DPLATFORM=linux-x64 -P cmake/HikariBun.cmake 2>&1 | tail -n 1)
+          (cd src/ai-sidecar && "$bun" install --ignore-scripts && "$bun" tools/notices.ts)
+          branch="ai-bump/$(date -u +%Y-%m-%d)"
+          git switch -c "$branch"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/ai-sidecar/package.json src/ai-sidecar/bun.lock src/ai-sidecar/NOTICES.txt cmake/HikariBun.cmake
+          git commit -m "$TITLE"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "$TITLE" \
+            --body "The weekly bump (ADR 0031). Every version is at least 7 days old."
+          # A PR that GITHUB_TOKEN opens starts no workflows, so CI is dispatched on its branch.
+          for workflow in linux.yml windows.yml ai-sidecar.yml; do
+            gh workflow run "$workflow" --ref "$branch"
+          done

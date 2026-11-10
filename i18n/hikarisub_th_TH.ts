@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="th_TH">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>เอเจนต์</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>ส่งออกเป็น Markdown</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>บันทึกเธรดไว้ที่นั่นไม่ได้</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>แผงเอเจนต์</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>เธรดเอเจนต์ใหม่</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>ด้วยตนเอง</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>สิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>เปิดสิทธิ์เต็มไหม</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>เอเจนต์จะเปลี่ยนคำบรรยาย สไตล์ และการตั้งค่าโดยไม่ถาม การเปลี่ยนแปลงทุกครั้งยังคงอยู่ในการตรวจทานและเลิกทำได้</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>สิ่งเหล่านี้ยังคงถามในทุกโหมด: การลบหรือเขียนทับไฟล์นอกโฟลเดอร์ของคำบรรยาย การเรียกใช้โปรแกรมภายนอกและการติดตั้งปลั๊กอิน การส่งไฟล์ในเครื่องไปยังเครือข่าย และการเปลี่ยนสิทธิ์ คีย์ หรืองบประมาณของ AI</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>ไม่ต้องเตือนอีก</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>เปิดสิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>เธรด</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>เธรดใหม่</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>เมนูเธรด</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>เพิ่มผู้ให้บริการเพื่อใช้เอเจนต์</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub ไม่มีเซิร์ฟเวอร์ AI เอเจนต์ทำงานบนผู้ให้บริการที่คุณเพิ่ม: คีย์ API การลงชื่อเข้าใช้ ChatGPT หรือ OpenRouter หรือโมเดลในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>เปิดการตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>จะไม่มีการส่งหรือดาวน์โหลดสิ่งใดจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>ค้นหาเธรด</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>วันนี้</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>เมื่อวาน</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>ไม่ได้รายงานค่าใช้จ่าย</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>กำลังทำงาน</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>ถึงวงเงินแล้ว</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>อยู่ในคิว · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>ปรับทิศทางตอนนี้</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>นำออก</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>%1 จาก %2 โทเค็น</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>%1 โทเค็น</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · แท็บที่ใช้งานอยู่</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>ถาม หรือพิมพ์ @ เพื่อแนบ / สำหรับคำสั่ง</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>เพิ่มผู้ให้บริการก่อน</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>แนบ</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>หยุด</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>ส่ง</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>เปลี่ยนชื่อเธรด…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>ส่งออกเป็น Markdown…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>ลบเธรด</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>ลบเธรดนี้ไหม</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>บทสนทนาจะถูกลบ แต่การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในคำบรรยายและในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>เปลี่ยนโหมด</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>การตั้งค่า › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>คุณอนุมัติการเปลี่ยนแปลงทุกครั้ง การอ่านไม่ถามเลย</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>โมเดลผู้ตัดสินจะอนุมัติแต่ละการกระทำ หรือถามคุณ โมเดลเห็นการกระทำและข้อความของคุณ แต่ไม่เห็นไฟล์ของคุณ</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>ไม่มีการถามยกเว้นรายการที่ถามเสมอ การแก้ไขมีผลทันทีและยังเลิกทำได้</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>เปลี่ยนชื่อเธรด</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>ชื่อเธรด</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>ปรับทิศทางแล้ว</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>คืนค่าจุดตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>ผู้ตัดสินอนุมัติแล้ว</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>แผน</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>ผู้ตัดสินถามคุณ</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>อนุญาต %1 ไหม</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>เรียกใช้ %1 ไหม</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>ถามในทุกโหมด</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>เหตุผล: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>อนุญาต</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>อนุญาตครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>อนุญาตในเธรดนี้</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>ปฏิเสธ</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>ควรทำอะไรแทน</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>อนุญาตแล้ว</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>อนุญาตในเธรดนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>ปฏิเสธแล้ว</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>ไม่จำเป็นแล้ว</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>เธรดนี้ถึงวงเงิน %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>ถึงวงเงิน %1 ของวันนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>คอมโพเนนต์ AI หยุดทำงาน</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>รอบนี้ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>คุณหยุดรอบนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>คำตอบยาวถึงขีดจำกัดความยาวของโมเดล</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>โมเดลปฏิเสธที่จะตอบ</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>รอบนี้หยุดหลังจากส่งคำขอถึงโมเดลครบจำนวนสูงสุด</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>เลือกโมเดลแชตในการตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>คอมโพเนนต์ AI ยังไม่พร้อม</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>รอบนี้หยุดหลังการเปลี่ยนแปลงล่าสุด เพิ่มวงเงินของเธรดนี้เพื่อทำต่อ</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>ทุกเธรดจะหยุดจนถึงพรุ่งนี้ หรือจนกว่าคุณจะเพิ่มวงเงินในการตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>รอบนี้ถูกขัดจังหวะและจะไม่เริ่มใหม่เอง การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>เพิ่มเป็น %1 แล้วทำต่อ</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>ทำต่อ</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>ลองรอบนี้อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>แสดงล็อก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -308,6 +691,14 @@
     <message>
         <source>More audio options</source>
         <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Go to selection start</source>
+        <translation>ไปยังจุดเริ่มต้นของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>ไปยังจุดสิ้นสุดของส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -791,6 +1182,58 @@ Output device: %2</source>
         <translation>การโหลดสคริปต์จะเรียกใช้โค้ดของสคริปต์นั้น</translation>
     </message>
     <message>
+        <source>Not installed by DependencyControl. Remove the file from your autoload folder.</source>
+        <translation>ไม่ได้ติดตั้งผ่าน DependencyControl ลบไฟล์ออกจากโฟลเดอร์โหลดอัตโนมัติของคุณ</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>installing</source>
+        <translation>กำลังติดตั้ง</translation>
+    </message>
+    <message>
+        <source>uninstalling</source>
+        <translation>กำลังถอนการติดตั้ง</translation>
+    </message>
+    <message>
+        <source>waiting to install</source>
+        <translation>รอติดตั้ง</translation>
+    </message>
+    <message>
+        <source>couldn’t install</source>
+        <translation>ติดตั้งไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Uninstall script</source>
+        <translation>ถอนการติดตั้งสคริปต์</translation>
+    </message>
+    <message>
+        <source>Uninstall %1?</source>
+        <translation>ถอนการติดตั้ง %1 หรือไม่</translation>
+    </message>
+    <message>
+        <source>DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</source>
+        <translation>DependencyControl จะลบไฟล์ของสคริปต์นี้ออกจากโฟลเดอร์ผู้ใช้ของคุณ ส่วนโมดูลที่ติดตั้งมาด้วยจะยังคงอยู่เพื่อให้สคริปต์อื่นใช้</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>ถอนการติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Its macros are in Automation › %1.</source>
+        <translation>แมโครของสคริปต์นี้อยู่ใน สคริปต์อัตโนมัติ › %1</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>สคริปต์</translation>
     </message>
@@ -803,6 +1246,18 @@ Output device: %2</source>
         <translation>การเรียกใช้</translation>
     </message>
     <message>
+        <source>Recommended</source>
+        <translation>แนะนำ</translation>
+    </message>
+    <message>
+        <source>Filter scripts</source>
+        <translation>กรองสคริปต์</translation>
+    </message>
+    <message>
+        <source>Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</source>
+        <translation>ติดตั้งจากฟีดของผู้เขียนแต่ละคนผ่าน DependencyControl สคริปต์จะเรียกใช้โค้ดของตัวเองเมื่อโหลด</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>โหลด</translation>
     </message>
@@ -811,12 +1266,24 @@ Output device: %2</source>
         <translation>โหลดสคริปต์ที่ไฟล์นี้ระบุ</translation>
     </message>
     <message>
+        <source>Browse recommended scripts</source>
+        <translation>เรียกดูสคริปต์ที่แนะนำ</translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation>ไม่มีแมโครที่ตรงกัน</translation>
     </message>
     <message>
         <source>Macros</source>
         <translation>แมโคร</translation>
+    </message>
+    <message>
+        <source>No scripts match</source>
+        <translation>ไม่มีสคริปต์ที่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>Recommended scripts</source>
+        <translation>สคริปต์ที่แนะนำ</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
@@ -999,6 +1466,54 @@ Output device: %2</source>
     <message>
         <source>Remove shortcut</source>
         <translation>นำปุ่มลัดออก</translation>
+    </message>
+    <message>
+        <source>%1 (version %2)</source>
+        <translation>%1 (เวอร์ชัน %2)</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation>กำลังติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Uninstalling…</source>
+        <translation>กำลังถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation>กำลังรอ…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>Show in Scripts</source>
+        <translation>แสดงในมุมมองสคริปต์</translation>
+    </message>
+    <message>
+        <source>Open project page</source>
+        <translation>เปิดหน้าโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>ถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Installed by hand</source>
+        <translation>ติดตั้งด้วยตนเอง</translation>
     </message>
     <message>
         <source>Shortcut</source>
@@ -1339,6 +1854,138 @@ Output device: %2</source>
         <source>not ticked</source>
         <translation>ไม่ได้ทำเครื่องหมาย</translation>
     </message>
+    <message>
+        <source>DependencyControl’s updater is turned off.</source>
+        <translation>ตัวอัปเดตของ DependencyControl ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>DependencyControl is busy with another update. Try again later.</source>
+        <translation>DependencyControl กำลังทำการอัปเดตอื่นอยู่ ลองอีกครั้งในภายหลัง</translation>
+    </message>
+    <message>
+        <source>Its feed has no release that fits this system.</source>
+        <translation>ฟีดของสคริปต์นี้ไม่มีรุ่นที่เหมาะกับระบบนี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the feed: no network connection.</source>
+        <translation>อ่านฟีดไม่ได้: ไม่มีการเชื่อมต่อเครือข่าย</translation>
+    </message>
+    <message>
+        <source>A module it needs couldn’t be installed.</source>
+        <translation>ติดตั้งโมดูลที่สคริปต์นี้ต้องใช้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>DependencyControl doesn’t trust its feed.</source>
+        <translation>DependencyControl ไม่เชื่อถือฟีดของสคริปต์นี้</translation>
+    </message>
+    <message>
+        <source>The install was cancelled.</source>
+        <translation>ยกเลิกการติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>DependencyControl blocks its feed.</source>
+        <translation>DependencyControl บล็อกฟีดของสคริปต์นี้</translation>
+    </message>
+    <message>
+        <source>A downloaded file didn’t match its feed.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ตรงกับฟีด</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be written. Close what uses it and try again.</source>
+        <translation>เขียนไฟล์ไม่ได้ ปิดสิ่งที่ใช้ไฟล์นั้นอยู่แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be downloaded.</source>
+        <translation>ดาวน์โหลดไฟล์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>DependencyControl couldn’t install it (status %1).</source>
+        <translation>DependencyControl ติดตั้งไม่ได้ (สถานะ %1)</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
+        <source>Makes a power-pin track from the lines’ perspective, for Perspective-Motion.</source>
+        <translation>สร้างแทร็ก power-pin จากเพอร์สเปกทีฟของบรรทัด สำหรับ Perspective-Motion</translation>
+    </message>
+    <message>
+        <source>Draws moving focus lines, frame by frame.</source>
+        <translation>วาดเส้นโฟกัสที่เคลื่อนไหวทีละเฟรม</translation>
+    </message>
+    <message>
+        <source>Splits a line at its tags, one line per section.</source>
+        <translation>แยกบรรทัดตรงแท็ก เป็นหนึ่งบรรทัดต่อหนึ่งส่วน</translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Keeps earlier rewrites of a line and switches between them.</source>
+        <translation>เก็บข้อความที่เขียนใหม่ก่อนหน้าของบรรทัดและสลับไปมาระหว่างกัน</translation>
+    </message>
+    <message>
+        <source>QC</source>
+        <translation>QC</translation>
+    </message>
+    <message>
+        <source>Marks the lines changed since a git commit.</source>
+        <translation>ทำเครื่องหมายบรรทัดที่เปลี่ยนไปตั้งแต่ git commit</translation>
+    </message>
+    <message>
+        <source>Needs Git</source>
+        <translation>ต้องใช้ Git</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Fixes old KFX templates so Aegisub 3.5 runs them too.</source>
+        <translation>แก้เทมเพลต KFX รุ่นเก่าให้ Aegisub 3.5 เรียกใช้ได้ด้วย</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>Uninstall %1</source>
+        <translation>ถอนการติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>The user folder can’t be written.</source>
+        <translation>เขียนลงโฟลเดอร์ผู้ใช้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The uninstall was cancelled.</source>
+        <translation>ยกเลิกการถอนการติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 is uninstalled.</source>
+        <translation>ถอนการติดตั้ง %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>%1 is installed.</source>
+        <translation>ติดตั้ง %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>The run ended before it finished.</source>
+        <translation>การเรียกใช้สิ้นสุดก่อนทำงานเสร็จ</translation>
+    </message>
+    <message>
+        <source>DependencyControl has no record of it.</source>
+        <translation>DependencyControl ไม่มีบันทึกของสคริปต์นี้</translation>
+    </message>
+    <message>
+        <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
+        <translation>ลบไฟล์บางไฟล์ไม่ได้ ปิดสิ่งที่ใช้ไฟล์เหล่านั้นอยู่แล้วลองอีกครั้ง</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>
@@ -1417,6 +2064,10 @@ Output device: %2</source>
     <message>
         <source>0 is opaque, 255 fully transparent</source>
         <translation>0 คือทึบแสง 255 คือโปร่งใสทั้งหมด</translation>
+    </message>
+    <message>
+        <source>No colour</source>
+        <translation>ไม่มีสี</translation>
     </message>
     <message>
         <source>Less</source>
@@ -1614,94 +2265,6 @@ Output device: %2</source>
         <translation>เปลี่ยนความละเอียดของคำบรรยายให้ตรงกับวิดีโอหรือไม่? ทำภายหลังได้ด้วยคำบรรยาย › เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>แคตตาล็อก</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>ทุกบรรทัดจะใช้สไตล์นี้</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>แท็กที่ต้นบรรทัด</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>เขียนไว้ที่ต้นของทุกบรรทัด</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>ความละเอียด</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>ความกว้าง</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>ความสูง</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>ความละเอียดสคริปต์ของไฟล์ใหม่</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>อัตราเฟรม</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>เฟรม</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>ป้อนอัตราเฟรมตั้งแต่ 1 ถึง 1000</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD นับเป็นเฟรม: เวลาจะกลายเป็นเฟรมตามอัตรานี้</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>เวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>ต่ออักขระ</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>บรรทัดจะแสดงนานเท่ากับความยาว × ค่านี้ อย่างน้อย 1 วินาที และสิ้นสุดเมื่อบรรทัดถัดไปเริ่ม</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>สิ่งที่เปลี่ยน</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>ไม่มีสิ่งที่จะแสดงจนกว่าอัตราเฟรมจะถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>สไตล์</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>เวลาสิ้นสุดใหม่</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>แปลง</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>คำบรรยาย</translation>
     </message>
@@ -1762,6 +2325,14 @@ Output device: %2</source>
         <translation>อัตราส่วนภาพเปลี่ยนจาก %1 เป็น %2</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>ปรับการหมุนแบบ 3D</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>บรรทัดที่หมุนจะคงรูปร่างบนหน้าจอไว้</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>ยืด</translation>
     </message>
@@ -1776,16 +2347,14 @@ Output device: %2</source>
         </translation>
     </message>
     <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>ไม่สามารถแปลงเอกสารนี้เป็นรูปแบบนั้น</translation>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>บรรทัด %1 ถูกปรับขนาดเท่านั้น: บรรทัดนี้เคลื่อนที่ เปลี่ยนรูปร่างตามเวลา หรือวัดขนาดไม่ได้</translation>
     </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>ค่า FPS ไม่ถูกต้อง แก้ไขตัวเลือกแล้วลองอีกครั้ง</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>คุณสมบัติสคริปต์และสไตล์จะถูกลบ</translation>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>บรรทัดที่หมุน %n บรรทัดไม่สามารถคงรูปร่างไว้ได้</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
@@ -1828,12 +2397,6 @@ Output device: %2</source>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>ลบชั้น สไตล์ ผู้พูด ระยะขอบ หรือเอฟเฟกต์ออกจาก %n บรรทัด</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>ลบที่คั่นหน้า บรรทัดที่ซ่อน และกลุ่มออกจาก %n บรรทัด</numerusform>
@@ -1866,6 +2429,10 @@ Output device: %2</source>
     <message>
         <source>No</source>
         <translation>ไม่</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -1902,6 +2469,14 @@ Output device: %2</source>
     <message>
         <source>Keep mine</source>
         <translation>เก็บฉบับของฉัน</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>แปลง “%1” เป็น ASS ก่อนบันทึกหรือไม่</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>แปลงเป็น ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -1944,6 +2519,10 @@ Output device: %2</source>
         <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>ข้อความกำหนดเวลาของ YouTube (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>วิดีโอที่ฝังคำบรรยาย (*.mkv *.ogm)</translation>
     </message>
@@ -1970,6 +2549,10 @@ Output device: %2</source>
     <message>
         <source>Untitled</source>
         <translation>ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>นำเข้า %1 เป็นข้อความกำหนดเวลาของ YouTube ไม่ได้ %2 ไม่มีสิ่งใดถูกนำเข้า</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -2032,6 +2615,14 @@ Output device: %2</source>
         <translation>เลือกตำแหน่งที่จะบันทึกเอกสารที่ไม่มีชื่อ</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>อัตราเฟรมใน การตั้งค่า › การแปลง ไม่ถูกต้อง แก้ไขแล้วบันทึกอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>บันทึกเป็น ASS</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>บันทึกเอกสารไม่ได้ จึงไม่ได้ปิดสิ่งใด</translation>
     </message>
@@ -2046,6 +2637,10 @@ Output device: %2</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>เปิด %1 ไม่ได้ จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>คำบรรยาย ASS (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2072,12 +2667,21 @@ Output device: %2</source>
         <translation>คีย์เฟรม: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>ไทม์โค้ด: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>ไฟล์ที่เกี่ยวข้อง:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>วิดีโอจากไดเรกทอรี: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>ไม่พบไฟล์ที่ลิงก์ไว้:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2156,6 +2760,10 @@ Output device: %2</source>
     <message>
         <source>Close tab</source>
         <translation>ปิดแท็บ</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>ปิดหน้าต่าง</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -2720,8 +3328,16 @@ Output device: %2</source>
         <translation>ลบแท็กฟอนต์ ขนาด สเกล หรือระยะห่างแล้ว</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>นำแท็กมาตราส่วนหรือระยะห่างออกแล้ว</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>ลบขอบ เงา ความเบลอ ความโปร่งใส หรือสีอื่นแล้ว</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>นำแท็กขอบ เงา หรือเบลอออกแล้ว</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -2732,8 +3348,16 @@ Output device: %2</source>
         <translation>ลบตัวหนา ตัวเอียง ขีดเส้นใต้ หรือขีดฆ่าบางส่วนแล้ว</translation>
     </message>
     <message>
+        <source>Strikeout removed</source>
+        <translation>นำขีดฆ่าออกแล้ว</translation>
+    </message>
+    <message>
         <source>Position or alignment removed</source>
         <translation>ลบตำแหน่งหรือการจัดตำแหน่งแล้ว</translation>
+    </message>
+    <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>ประมาณตำแหน่งเป็นพื้นที่ที่ใกล้ที่สุดแล้ว</translation>
     </message>
     <message>
         <source>Karaoke timing removed</source>
@@ -2760,8 +3384,20 @@ Output device: %2</source>
         <translation>“%1” เป็นโฟลเดอร์</translation>
     </message>
     <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>ป้อนรหัสภาษา เช่น en หรือ pt-BR หรือเว้นว่างไว้</translation>
+    </message>
+    <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
+    </message>
+    <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>บันทึกตัวเลือกสไตล์ในไฟล์นี้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>สร้างข้อความกำหนดเวลาของ YouTube จากไฟล์นี้ไม่ได้: %1</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -2774,6 +3410,66 @@ Output device: %2</source>
     <message>
         <source>Plain text</source>
         <translation>ข้อความธรรมดา</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>ข้อความกำหนดเวลาของ YouTube (srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>เรืองแสง</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>เงาเรืองแสงของ %1</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>นุ่ม</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>เงานุ่มของ %1</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>คม</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>เงาคมของ %1</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>นูน</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>เงานูนของ %1</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>ข้อความของคำปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>สีข้อความของคำปัจจุบันของ %1</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>เส้นขอบของคำปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>สีเส้นขอบของคำปัจจุบันของ %1</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>เงาของคำปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>สีเงาของคำปัจจุบันของ %1</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -2836,6 +3532,46 @@ Output device: %2</source>
         <translation>ตัวเลือก</translation>
     </message>
     <message>
+        <source>srv3 style options</source>
+        <translation>ตัวเลือกสไตล์ srv3</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>สไตล์</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1 ไม่มีเงา (เงาเป็น 0) จึงไม่มีชนิดเงาที่ใช้ได้</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>คาราโอเกะของ %1</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>ไม่มีสี</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>รีเซ็ต %1</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>เงาคือวิธีที่ YouTube วาดเงาของสไตล์ เส้นขอบจะถูกวาดเป็นเรืองแสงเสมอ สีของคำปัจจุบันใช้กับบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>แสดงสไตล์ทั้งหมด (%1)</translation>
+    </message>
+    <message>
         <source>Alignment as %1 tags</source>
         <translation>การจัดตำแหน่งเป็นแท็ก %1</translation>
     </message>
@@ -2864,6 +3600,18 @@ Output device: %2</source>
         <translation>ชื่อผู้พูด</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>สไตล์ข้อความตามเวลาของ Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>เวลาเป็นเฟรม</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>รวมบรรทัดที่ซ้อนกันเป็นคำบรรยายเดียว</translation>
     </message>
@@ -2880,8 +3628,20 @@ Output device: %2</source>
         <translation>ใช้อัตราเฟรมของวิดีโอ</translation>
     </message>
     <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>ข้อความเป็นสีขาวและอยู่กึ่งกลางด้านบนหรือด้านล่าง คงไว้เฉพาะตัวเอียง และเวลาเป็นเฟรม</translation>
+    </message>
+    <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
         <translation>TMPlayer ไม่มีเวลาสิ้นสุด: บรรทัดที่ซ้อนกันจะถูกรวม และคำบรรยายว่างจะล้างหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>แปลงแบบเดียวกับ YTSubConverter 1.6.5 แบบอักษรและกราฟิกที่แนบในไฟล์จะไม่ถูกส่งออก</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>ตัวเลือกที่เปลี่ยนจะถูกบันทึกในไฟล์คำบรรยายเมื่อส่งออก</translation>
     </message>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
@@ -2903,6 +3663,12 @@ Output device: %2</source>
         <source>%n line(s) with nothing to show skipped.</source>
         <translation>
             <numerusform>ข้าม %n บรรทัดที่ไม่มีอะไรให้แสดง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>บันทึกตัวเลือกของ %n สไตล์ในไฟล์คำบรรยายแล้ว</numerusform>
         </translation>
     </message>
     <message>
@@ -3243,6 +4009,22 @@ Output device: %2</source>
     <message>
         <source>Writing the new archive replaces it.</source>
         <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>มีไฟล์ฟอนต์ %n ไฟล์อยู่แล้วใน “%1”</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>และอีก %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>เก็บไฟล์เดิมไว้</translation>
     </message>
     <message>
         <source>Action</source>
@@ -3772,6 +4554,10 @@ Output device: %2</source>
         <translation>การรวบรวมนี้ไม่ครบ ระบบจะเขียนก็ต่อเมื่อคุณรับทราบ และผลลัพธ์จะถูกระบุว่าไม่ครบ</translation>
     </message>
     <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” มีอยู่แล้วในโฟลเดอร์ จึงเก็บไว้ตามเดิม</translation>
+    </message>
+    <message>
         <source>Cannot create folder.</source>
         <translation>ไม่สามารถสร้างโฟลเดอร์ได้</translation>
     </message>
@@ -3884,6 +4670,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add fonts</source>
         <translation>เพิ่มแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4288,6 +5082,10 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่มีเอกสารที่เปิดอยู่</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>ตรึงแอนิเมชัน</translation>
+    </message>
+    <message>
         <source>Show subtitles preview</source>
         <translation>แสดงตัวอย่างคำบรรยาย</translation>
     </message>
@@ -4458,6 +5256,10 @@ Failed to copy %2 fonts.</source>
         <translation>กับบรรทัดถัดไป</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>เลือกบรรทัดที่ปรากฏในวิดีโอ</translation>
     </message>
@@ -4482,6 +5284,32 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Add description</source>
         <translation>เพิ่มคำอธิบาย</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>ส่วนยุบของ Aegisub</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>ไฟล์นี้มีส่วนยุบของ Aegisub %n ส่วน</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>แปลงเป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>ส่วนยุบของ Aegisub %n ส่วนกลายเป็นกลุ่มบรรทัดแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>ข้ามส่วนยุบ %n ส่วน เพราะซ้อนทับกลุ่มบรรทัดหรือไม่มีคู่</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -4616,6 +5444,12 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>bookmarked</source>
         <translation>มีที่คั่นหน้า</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>โน้ต QC %n รายการ</numerusform>
+        </translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -4763,6 +5597,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิด…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>เปิดโฟลเดอร์…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>เปิดวิดีโอ…</translation>
     </message>
@@ -4799,6 +5637,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Dismiss</source>
         <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>เปิดแท็บล่าสุดอีกครั้ง (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>โปรเจกต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>ไม่มีโปรเจกต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>ไม่มีโปรเจกต์ที่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>กรองโปรเจกต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>นำโฟลเดอร์ที่ไม่พบออก</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -4994,6 +5856,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>นำปุ่มลัด %1 ของ “แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)” ออกแล้ว เนื่องจากนำคุณลักษณะนี้ออกแล้ว</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น ASS” ถูกนำออกแล้ว: ให้เลือก ASS ใน ไฟล์ › บันทึกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น SRT” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น TMP” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น MDVD” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>ทางลัด %1 ของ “แปลงเป็น MPL2” ถูกนำออกแล้ว: ให้ใช้ ไฟล์ › ส่งออกเป็น แทน</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
@@ -5434,26 +6316,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Report an issue</source>
         <translation>รายงานปัญหา</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -5916,6 +6778,14 @@ Failed to copy %2 fonts.</source>
         <translation>เล่นเร็วขึ้น</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>ไปยังจุดเริ่มต้นของส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>ไปยังจุดสิ้นสุดของส่วนที่เลือก</translation>
+    </message>
+    <message>
         <source>Translation mode</source>
         <translation>โหมดการแปล</translation>
     </message>
@@ -6020,6 +6890,46 @@ Failed to copy %2 fonts.</source>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>ไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Vector clip: move points</source>
+        <translation>คลิปเวกเตอร์: ย้ายจุด</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นตรง</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นโค้ง Bézier</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>คลิปเวกเตอร์: เพิ่มเส้นโค้ง B-spline</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>คลิปเวกเตอร์: เพิ่มจุดแยกใหม่</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>คลิปเวกเตอร์: ลบจุด</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>คลิปเวกเตอร์: กลับด้าน</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>คัดลอกคำบรรยายไปยังคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>บันทึกคำบรรยายเป็น PNG</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>ตรวจคาราโอเกะ</translation>
     </message>
@@ -6064,12 +6974,148 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอิน</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>โหลดเสียงใหม่</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>แปลงส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>เปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>บันทึกไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>ปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>QC notes panel</source>
+        <translation>แผงโน้ต QC</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>โน้ต QC ถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>โน้ต QC ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>เพิ่มโน้ต QC</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>ย้อนกลับข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>คัดลอกข้อมูลการเคลื่อนไหวจากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>ขยายบรรทัดที่ติดตาม…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>ปิดหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>แผงเอเจนต์</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>เธรดเอเจนต์ใหม่</translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation>เปิดโฟลเดอร์…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>ปิดโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global</source>
@@ -6100,8 +7146,12 @@ Failed to copy %2 fonts.</source>
         <translation>คุณไม่สามารถใช้ปุ่มลัดสำหรับคัดลอก ตัด และวาง</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>คุณไม่สามารถใช้ปุ่มลัดสำหรับออกจากโปรแกรม</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Alt+F4 สงวนไว้สำหรับปิดหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
     </message>
 </context>
 <context>
@@ -6494,26 +7544,6 @@ Failed to copy %2 fonts.</source>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>เวลาเริ่มต้น</translation>
     </message>
@@ -6806,10 +7836,6 @@ Failed to copy %2 fonts.</source>
         <translation>แสดง</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>ซ่อน</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>ลอย</translation>
     </message>
@@ -6828,6 +7854,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Design and development</source>
         <translation>การออกแบบและการพัฒนา</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -6890,10 +7920,6 @@ Failed to copy %2 fonts.</source>
         <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>การแปลง</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>ตัวรวบรวมแบบอักษร</translation>
     </message>
@@ -6906,12 +7932,24 @@ Failed to copy %2 fonts.</source>
         <translation>ตรวจการสะกด</translation>
     </message>
     <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>ต่อ %1 ที่กำหนดเวลาไว้ของแต่ละบรรทัดที่เลือกด้วยความเร็วเท่าเดิม ตั้งแต่ต้นจนจบบรรทัด</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>ประมาณค่า %1 นอกช่วงให้เต็มบรรทัด</translation>
+    </message>
+    <message>
         <source>Install, turn on and off, and uninstall plugins</source>
         <translation>ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
     </message>
     <message>
         <source>Pl&amp;ugins…</source>
         <translation>&amp;ปลั๊กอิน…</translation>
+    </message>
+    <message>
+        <source>Remove from the layout</source>
+        <translation>นำออกจากเค้าโครง</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -6980,28 +8018,12 @@ Failed to copy %2 fonts.</source>
         <translation>ปิด</translation>
     </message>
     <message>
-        <source>Converts to ASS format</source>
-        <translation>แปลงเป็นรูปแบบ ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>แปลงเป็นรูปแบบ SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>แปลงเป็นรูปแบบ microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>แปลงเป็นรูปแบบ MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>แปลงเป็นรูปแบบ TMPlayer (ไม่แนะนำ)</translation>
-    </message>
-    <message>
         <source>Sort by start time</source>
         <translation>เรียงตามเวลาเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
     </message>
     <message>
         <source>Sort by end time</source>
@@ -7044,6 +8066,14 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>เปิดโฟลเดอร์เป็นโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>เปิด&amp;โฟลเดอร์…</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>คำบรรยายที่เพิ่งเปิด</translation>
     </message>
@@ -7054,6 +8084,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>นำคำบรรยายออกจากตัวแก้ไข</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>ปิดแท็บของหน้าต่างนี้และโปรเจกต์ของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>ปิดโปรเ&amp;จกต์</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -7128,6 +8166,14 @@ Failed to copy %2 fonts.</source>
         <translation>การตั้งค่าโปรแกรม</translation>
     </message>
     <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>ปิดหน้าต่างนี้ การปิดหน้าต่างสุดท้ายจะออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>ปิดหน้า&amp;ต่าง</translation>
+    </message>
+    <message>
         <source>Exit the program</source>
         <translation>ออกจากโปรแกรม</translation>
     </message>
@@ -7156,6 +8202,14 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>โน้ตจากการตรวจ QC ที่เก็บไว้ในไฟล์ พร้อมบรรทัดที่โน้ตนั้นชี้</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>โน้ต &amp;QC…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>เปลี่ยนอัตราเฟรมของเวลาคำบรรยาย</translation>
     </message>
@@ -7170,6 +8224,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set FPS from video</source>
         <translation>กำหนดค่า FPS จากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด VFR v1, v2 หรือ v4</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>เปิดไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>ไทม์โค้ดที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>บันทึกเป็นไฟล์ไทม์โค้ด VFR v2</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>บันทึกไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>ปิดไฟล์ไทม์โค้ดที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>ปิดไทม์โค้ด</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -7208,8 +8290,76 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดถัดไปทั้งหมด สิ้นสุดที่วิดีโอ</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>การติดตาม</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>ใช้ข้อมูลการเคลื่อนไหว After Effects จาก Mocha หรือ Blender กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้…</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>ใช้ข้อมูลการติดตาม Power-Pin กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>รายละเอียดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>โหลดวิดีโอใหม่</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>เปลี่ยนบรรทัดที่ติดตามในส่วนที่เลือกกลับเป็นบรรทัดเดิมที่ใช้สร้าง</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>ย้อนกลับข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>คัดลอกตำแหน่ง มาตราส่วน และการหมุนของบรรทัดแบบทีละเฟรมที่เลือกเป็นข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>คัดลอกข้อมูลการเคลื่อนไหวจากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>คัดลอกระนาบเพอร์สเปกทีฟของบรรทัดที่เลือกเป็นข้อมูล Power-Pin โดยเป็นสี่เหลี่ยมหนึ่งรูปต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>ประมาณการเคลื่อนไหวของบรรทัดแบบทีละเฟรมที่เลือก แล้วต่อการเคลื่อนไหวนั้นไปอีกหลายเฟรม</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>ขยายบรรทัดที่ติดตาม…</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>ต้นทุนการเรนเดอร์</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>โหลดเสียงใหม่</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7218,6 +8368,102 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>วิดีโอไม่มีแท็ก</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>วิดีโอไม่ได้ระบุว่าใช้เมทริกซ์สีใด</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub คาดว่าเป็น %1 แต่เครื่องเล่นอื่นอาจคาดต่างออกไป สีของวิดีโอและสีคำบรรยายที่ปรับให้ตรงกับสีนั้นจึงอาจต่างกันในแต่ละเครื่องเล่น ให้ระบุเมทริกซ์สีในวิดีโอ เพื่อให้ทุกเครื่องเล่นแสดงผลเหมือนกัน</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>วิดีโอ HDR หรือขอบเขตสีกว้าง</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>วิดีโอมีสี HDR หรือขอบเขตสีกว้าง</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>คำบรรยายทั่วไปใช้กับวิดีโอนี้ได้ แต่สีของคำบรรยายจะไม่ตรงกับสีของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>ตั้งเมทริกซ์ YCbCr หรือไม่?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>หากคำบรรยายทำสำหรับวิดีโอนี้ ให้ตั้งเป็นค่าของวิดีโอ (%1) หากทำสำหรับวิดีโออื่น ให้ปล่อยว่างไว้จนกว่าจะเปิดวิดีโอนั้น</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>ไม่ตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>ตั้งเป็น %1</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>เมทริกซ์ YCbCr ไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>เมทริกซ์ YCbCr ของวิดีโอ (%1) ต่างจากของคำบรรยาย (%2)</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>ตั้งความละเอียดเค้าโครงหรือไม่?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>คำบรรยายไม่มีความละเอียดเค้าโครง</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>หากคำบรรยายทำสำหรับวิดีโอนี้ ให้ตั้งเป็นค่าของวิดีโอ (%1) หากเป็นไฟล์เก่า ให้ตั้งเป็นความละเอียดของวิดีโอที่ใช้ทำคำบรรยายนั้น ซึ่งมักเป็นความละเอียดสคริปต์ (%2)</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>ตั้งเป็นค่าของวิดีโอ (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>ตั้งเป็นความละเอียดสคริปต์ (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>ความละเอียดเค้าโครงไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>วิดีโอมีขนาด %1 และความละเอียดเค้าโครงของคำบรรยายคือ %2</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>อัตราส่วนภาพต่างกัน ตั้งความละเอียดเค้าโครงเป็นค่าของวิดีโอหรือไม่?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>โดยปกติไม่เป็นปัญหา หากคำบรรยายยังไม่มีการจัดรูปแบบที่สำคัญ และคุณจะจัดรูปแบบบนวิดีโอนี้ ให้ตั้งความละเอียดเค้าโครงเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7350,10 +8596,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens Script properties</source>
         <translation>เปิดคุณสมบัติของสคริปต์</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -7957,6 +9199,18 @@ Failed to copy %2 fonts.</source>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>นำแก้ไขข้อผิดพลาดเล็กน้อยออกแล้ว กฎของคุณยังอยู่ใน %1 แต่ไม่ได้ใช้งาน</translation>
     </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>ตั้งเวลาบรรทัดปัจจุบันให้ตรงกับเฟรมรอบเฟรมของวิดีโอที่จุดที่เลือกยังคงสีเดิม</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>จัดให้ตรงกับวิดีโอ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -8011,6 +9265,1049 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Indexing error occurred: %1</source>
         <translation>เกิดข้อผิดพลาดขณะสร้างดัชนี: %1</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.NodeEffects</name>
+    <message>
+        <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, %2: %3 of %4 inputs wired</source>
+        <extracomment>A node on the canvas for a screen reader: &quot;Choose, palette: 1 of 1 inputs wired&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 node</source>
+        <extracomment>The graph&apos;s size in the Graph header: &quot;12 nodes · 13 wires&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 wire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fit the graph in view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The canvas zoom: &quot;100 %&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has a problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 more output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fewer outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no node effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph can’t be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph turns karaoke lines into new lines. It is saved in the file as a Comment line, and the lines it writes are marked fx with its name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From a preset</source>
+        <translation type="unfinished">จากพรีเซ็ต</translation>
+    </message>
+    <message>
+        <source>From the library…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">ข้อความ</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">สี</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished">อัลฟา</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">แท็ก</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished">ภาพวาด</translation>
+    </message>
+    <message>
+        <source>Yes or no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes with a %1 input, for %2 › %3</source>
+        <extracomment>Over the Add node list after a wire is dropped in empty space: &quot;Nodes with a Tags input, for fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No node matches.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter adds %1 here, wired from %2 › %3</source>
+        <extracomment>Under the filtered Add node list: &quot;Enter adds Transform here, wired from fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A time a node effect took: %1 milliseconds
+----------
+The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;</extracomment>
+        <translation type="unfinished">%1 มิลลิวินาที</translation>
+    </message>
+    <message>
+        <source>Not wired</source>
+        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Select a node to see its fields.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">ชื่อ</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ graph seed %1</source>
+        <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Y position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to %1</source>
+        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On line %1, from the last run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the file’s Lua is not trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No values: this node didn’t run on the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last run %1 on line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished">1 บรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Preview on the video</source>
+        <translation type="unfinished">แสดงตัวอย่างบนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Loop the line</source>
+        <translation type="unfinished">เล่นบรรทัดวนซ้ำ</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">ตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Preview on line %1</source>
+        <translation type="unfinished">ตัวอย่างบนบรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Kept from the last run that worked</source>
+        <translation type="unfinished">เก็บไว้จากการทำงานครั้งล่าสุดที่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>No karaoke line of this graph’s style to preview on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing runs until the file’s Lua is trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No preview: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The graph writes no lines for line %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 karaoke line</source>
+        <extracomment>Which karaoke lines the graph applies to: &quot;24 karaoke lines, Default&quot; or &quot;24 karaoke lines, all styles&quot;</extracomment>
+        <translation type="unfinished">บรรทัดคาราโอเกะ 1 บรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation type="unfinished">
+            <numerusform>บรรทัดคาราโอเกะ %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>all styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1, %2</source>
+        <translation type="unfinished">บรรทัด %1, %2</translation>
+    </message>
+    <message>
+        <source>Pick or add a graph to see the karaoke lines it applies to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">สไตล์</translation>
+    </message>
+    <message>
+        <source>All styles</source>
+        <translation type="unfinished">สไตล์ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply stopped with a problem; nothing changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Apply to every karaoke line</source>
+        <translation type="unfinished">นำไปใช้กับทุกบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Apply options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file’s node effects run Lua code with your rights. Preview them if you trust the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph was saved by a newer HikariSub, so it opens read-only. Update HikariSub to edit it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">ทำสำเนา</translation>
+    </message>
+    <message>
+        <source>Save to the library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keeps a copy of this graph in your user folder, to add to other files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removes the graph line and the lines it wrote. Undo brings them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines</source>
+        <translation type="unfinished">นำไปใช้กับบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">เปลี่ยนชื่อ</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
+        <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation type="unfinished">&lt;b&gt;ตัวอย่าง&lt;/b&gt; · บรรทัด %1 · %2</translation>
+    </message>
+    <message>
+        <source>last run that worked</source>
+        <translation type="unfinished">การทำงานครั้งล่าสุดที่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>not applied</source>
+        <translation type="unfinished">ยังไม่ได้นำไปใช้</translation>
+    </message>
+    <message>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no graph to wire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A %1 can’t connect to a %2 input.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A node can’t take its own output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That port doesn’t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That wire would make a loop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another graph in this file has that name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Nodes</name>
+    <message>
+        <source>For each</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat</source>
+        <translation type="unfinished">วนซ้ำ</translation>
+    </message>
+    <message>
+        <source>Each unit `count` times; j runs from 1 to count.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">เฟรม</translation>
+    </message>
+    <message>
+        <source>Unit info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit of every karaoke line the graph applies to: the line itself, its syllables, their characters or the furigana. Blank units (no duration or only spaces) can be skipped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">ข้อความ</translation>
+    </message>
+    <message>
+        <source>A text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">สี</translation>
+    </message>
+    <message>
+        <source>A colour.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A point from its coordinates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose</source>
+        <translation type="unfinished">เลือก</translation>
+    </message>
+    <message>
+        <source>One of a list of values by its place (from 1); places past the end wrap around.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calculate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished">เปรียบเทียบ</translation>
+    </message>
+    <message>
+        <source>Whether a stands in that relation to b.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">ความคืบหน้า</translation>
+    </message>
+    <message>
+        <source>How far index is through count, from 0 at the first to 1 at the last, eased.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A seeded random number from min to max, in multiples of step from min when step is above 0. The same graph seed, node and scope give the same number on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line’s start and end as the templater’s retime(mode, start_offset, end_offset) sets them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The units of the current line joined: each one’s tags as an override block, then its text (unwired, the unit’s own).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per unit: the source line with these times, Layer, tags and text (or drawing), Effect “fx &lt;graph name&gt;”. Unwired times are the source line’s. Lines come in the templater’s order: Line units first, then by syllable, then by `order`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph inside a node. Its inputs are its Group input’s ports, its outputs its Group output’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code run in the automation helper once per line for all its units, only once the user trusts the document’s Lua. Its inputs are globals and it sets its outputs as globals; it gets no random numbers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first step’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last step’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values’ type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One number per output line, per unit (the same across repeats and frames) or per line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the graph’s seed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The templater’s retime mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it starts, from the line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text or drawing is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stagger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished">แท็ก</translation>
+    </message>
+    <message>
+        <source>One override tag after `before`. pos and org take point, clip and iclip take point and point2 (or drawing), colours take colour, alpha tags take alpha, fn and r take text, raw writes text as it is, and the others take value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\move after `before`, with its times when timed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\fad after `before`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t over `tags` after `before`; t1 and t2 when timed, accel when it is not 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished">ไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">รูปร่าง</translation>
+    </message>
+    <message>
+        <source>A vector drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished">ต่อ</translation>
+    </message>
+    <message>
+        <source>Emit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its inputs, as outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its outputs, as inputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What one unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out units with no duration or only spaces.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many times.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The second operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The relation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The easing (quadratic).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place, from 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The smallest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The largest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0: any value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the start (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the end (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the first unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The time between places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tag, without its backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its point, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its second point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its alpha, 0 (opaque) to 255.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it starts, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write t1 and t2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade in, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade out, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The acceleration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How far along.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The drawing commands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The \p scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its place among the emits for one unit; ties keep graph order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inner nodes and wires.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The ports, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its inputs, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Math</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">แท็ก</translation>
+    </message>
+    <message>
+        <source>Colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation type="unfinished">เอาต์พุต</translation>
+    </message>
+    <message>
+        <source>Groups</source>
+        <translation type="unfinished">กลุ่ม</translation>
     </message>
 </context>
 <context>
@@ -8262,6 +10559,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>แยกพยัญชนะซ้อนเป็นพยางค์ของตัวเอง (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>แยกภาษาไทยเป็นกลุ่มอักขระ</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>แบ่งอัตโนมัติจะให้กลุ่มอักขระภาษาไทยแต่ละกลุ่มเป็นพยางค์ของตัวเอง กิน จึงกลายเป็น กิ|น ปิดตัวเลือกนี้เพื่อให้คำภาษาไทยแต่ละคำเป็นพยางค์เดียว</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -8622,6 +10927,14 @@ Failed to copy %2 fonts.</source>
         <translation>นับช่องว่างและเครื่องหมายวรรคตอนในการคำนวณ CPS</translation>
     </message>
     <message>
+        <source>Splitting</source>
+        <translation>การแบ่ง</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>ตรึงแอนิเมชันเมื่อแบ่งเป็นเฟรม</translation>
+    </message>
+    <message>
         <source>New lines</source>
         <translation>บรรทัดใหม่</translation>
     </message>
@@ -8774,6 +11087,18 @@ Failed to copy %2 fonts.</source>
         <translation>การซูมเริ่มต้น</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>ขนาดจุดจับ</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>ขนาดจุดจับของเครื่องมือภาพสามารถกำหนดค่าได้ตั้งแต่ 50 ถึง 400</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>ความละเอียดสคริปต์</translation>
     </message>
@@ -8784,6 +11109,66 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>ไม่ต้องเตือนเมื่อความละเอียดไม่ตรงกัน</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>ไม่ต้องตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>ถาม</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>ตั้งเป็นค่าของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>เมทริกซ์ YCbCr ต่างจากของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>คงค่าของคำบรรยายไว้</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>คำบรรยายไม่มีความละเอียดเค้าโครง</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>ตั้งเป็นความละเอียดสคริปต์</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>ความละเอียดเค้าโครงต่างจากของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>ไม่ต้องถาม</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>ถามเมื่ออัตราส่วนภาพต่างกัน</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>ถามทุกครั้ง</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>ตรวจสอบเมื่อเปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>เตือนเมื่อวิดีโอไม่มีแท็กเมทริกซ์สี</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>เตือนเมื่อวิดีโอมีสี HDR หรือขอบเขตสีกว้าง</translation>
     </message>
     <message>
         <source>Output</source>
@@ -8808,6 +11193,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>ไม่ต้องเล่นหลังเปลี่ยนบรรทัด</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>เล่นแบบโมโน</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>ผสมช่องเสียงสำหรับแผงเสียงและการเล่นขณะแก้ไข การเล่นวิดีโอทั่วไปจะคงช่องเสียงของไฟล์ไว้</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -8951,11 +11344,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>โฟลเดอร์สคริปต์ที่เชื่อถือ</translation>
+        <translation type="vanished">โฟลเดอร์สคริปต์ที่เชื่อถือ</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถามเมื่ออยู่ในโฟลเดอร์ใดโฟลเดอร์หนึ่งเหล่านี้</translation>
+        <translation type="vanished">สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถามเมื่ออยู่ในโฟลเดอร์ใดโฟลเดอร์หนึ่งเหล่านี้</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9008,6 +11401,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import legacy shortcuts…</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม…</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>โฟลเดอร์ที่เชื่อถือ</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub เชื่อถือโฟลเดอร์เหล่านี้และโฟลเดอร์ที่อยู่ข้างใน: สคริปต์ที่ไฟล์คำบรรยายระบุจะโหลดโดยไม่ถาม และไฟล์ที่อยู่ในโปรเจกต์จะเปิดโปรเจกต์นั้น</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -9139,11 +11544,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>แนะนำให้ให้ดาว HikariSub บน GitHub</translation>
+        <translation type="vanished">แนะนำให้ให้ดาว HikariSub บน GitHub</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
+        <translation type="vanished">แสดงไม่เกินสองครั้ง หลังจากที่คุณใช้ HikariSub มาหลายวัน ตัวนับเก็บไว้ในคอมพิวเตอร์เครื่องนี้เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>HikariSub เป็นผู้ส่งคำขอทุกรายการผ่าน HTTPS และเฉพาะไปยังโฮสต์ที่ปลั๊กอินระบุไว้ตอนติดตั้ง ปิด: HikariSub ปฏิเสธคำขอทุกรายการที่ปลั๊กอินส่งผ่าน HikariSub แต่ปลั๊กอินแบบเชื่อถือเต็มที่ยังเชื่อมต่อเองได้</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -9284,6 +11697,1018 @@ Failed to copy %2 fonts.</source>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>คำในภาษาอื่นจะตรวจด้วยพจนานุกรมอื่นที่ติดตั้งไว้สำหรับระบบอักษรของคำนั้น คำในระบบอักษรที่ไม่มีพจนานุกรมจะไม่ถูกทำเครื่องหมาย</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>แชต</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation>ผู้แปล</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation>ผู้ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Vision</source>
+        <translation>การมองเห็น</translation>
+    </message>
+    <message>
+        <source>Judge</source>
+        <translation>ผู้ตัดสิน</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>เอนด์พอยต์ที่กำหนดเอง…</translation>
+    </message>
+    <message>
+        <source>Delete provider</source>
+        <translation>ลบผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Delete the provider “%1”?</source>
+        <translation>ลบผู้ให้บริการ “%1” หรือไม่?</translation>
+    </message>
+    <message>
+        <source>Its key is removed from the keychain. Roles that use its models go back to the chat model.</source>
+        <translation>คีย์ของผู้ให้บริการนี้จะถูกลบออกจากพวงกุญแจ บทบาทที่ใช้โมเดลของผู้ให้บริการนี้จะกลับไปใช้โมเดลแชต</translation>
+    </message>
+    <message>
+        <source>Roles that use its models go back to the chat model.</source>
+        <translation>บทบาทที่ใช้โมเดลของผู้ให้บริการนี้จะกลับไปใช้โมเดลแชต</translation>
+    </message>
+    <message>
+        <source>Chat Completions</source>
+        <translation>Chat Completions</translation>
+    </message>
+    <message>
+        <source>Responses</source>
+        <translation>Responses</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation>Messages</translation>
+    </message>
+    <message>
+        <source>Gemini API</source>
+        <translation>Gemini API</translation>
+    </message>
+    <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai ปฏิเสธการลงชื่อเข้าใช้</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com ปฏิเสธการลงชื่อเข้าใช้ อนุมัติคำขอของ HikariSub ด้วยบัญชี ChatGPT ที่ต้องการ แล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>พื้นที่ทำงาน ChatGPT ของคุณปิดรหัสลงชื่อเข้าใช้ไว้ ให้ลงชื่อเข้าใช้ผ่านเบราว์เซอร์แทน</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>รหัสหมดอายุก่อนที่จะป้อน</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>การลงชื่อเข้าใช้หมดเวลาระหว่างรอเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>ลงชื่อเข้าใช้ผ่านเบราว์เซอร์ไม่ได้ขณะที่แอปอื่นใช้พอร์ต 1455 อยู่ ปิดการลงชื่อเข้าใช้ของแอปนั้นเพื่อใช้งาน</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>ติดต่อ %1 ไม่ได้ ตรวจสอบการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>~/.codex ไม่มีการลงชื่อเข้าใช้ ChatGPT ให้นำเข้า</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>ลงชื่อเข้าใช้ไม่สำเร็จ ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Key rejected (%1)</source>
+        <translation>คีย์ถูกปฏิเสธ (%1)</translation>
+    </message>
+    <message>
+        <source>Too many requests (%1)</source>
+        <translation>คำขอมากเกินไป (%1)</translation>
+    </message>
+    <message>
+        <source>Request refused (%1)</source>
+        <translation>คำขอถูกปฏิเสธ (%1)</translation>
+    </message>
+    <message>
+        <source>Provider error (%1)</source>
+        <translation>ข้อผิดพลาดของผู้ให้บริการ (%1)</translation>
+    </message>
+    <message>
+        <source>Can’t reach the provider</source>
+        <translation>ติดต่อผู้ให้บริการไม่ได้</translation>
+    </message>
+    <message>
+        <source>No answer from the provider</source>
+        <translation>ผู้ให้บริการไม่ตอบกลับ</translation>
+    </message>
+    <message>
+        <source>Unexpected answer</source>
+        <translation>คำตอบที่ไม่คาดคิด</translation>
+    </message>
+    <message>
+        <source>A key goes only over HTTPS, to this computer or to a Tailscale peer</source>
+        <translation>คีย์จะส่งผ่าน HTTPS ไปยังคอมพิวเตอร์เครื่องนี้ หรือไปยังเพียร์ Tailscale เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Enter a key</source>
+        <translation>ป้อนคีย์</translation>
+    </message>
+    <message>
+        <source>No system keychain is available</source>
+        <translation>ไม่มีพวงกุญแจของระบบให้ใช้</translation>
+    </message>
+    <message>
+        <source>Access to the keychain was refused</source>
+        <translation>พวงกุญแจปฏิเสธการเข้าถึง</translation>
+    </message>
+    <message>
+        <source>Can’t save the provider list</source>
+        <translation>บันทึกรายการผู้ให้บริการไม่ได้</translation>
+    </message>
+    <message>
+        <source>Fill in the name and a valid address</source>
+        <translation>กรอกชื่อและที่อยู่ที่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Can’t download the AI component</source>
+        <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>ตรวจสอบไม่ได้: ลายเซ็นไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component is damaged</source>
+        <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดมาเสียหาย</translation>
+    </message>
+    <message>
+        <source>Can’t save the AI component</source>
+        <translation>บันทึกคอมโพเนนต์ AI ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Test failed</source>
+        <translation>ทดสอบไม่ผ่าน</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อสักครู่</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %n นาทีที่แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %n ชั่วโมงที่แล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>เป็นเวอร์ชันล่าสุด · ตรวจสอบเมื่อ %1</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>กำลังตรวจสอบ…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>กำลังดาวน์โหลด %1 · %2 จาก %3 MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>ตรวจสอบไม่ได้: ไม่มีการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 พร้อมแล้ว · จะเริ่มเมื่อไม่ได้ใช้ AI เป็นเวลา 2 นาที</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>มี %1 ให้ใช้งาน · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>ใหม่ที่สุดที่ HikariSub นี้ใช้ได้</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>เป็นเวอร์ชันล่าสุด</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>ตรวจสอบล่าสุดเมื่อ %1 HikariSub จะลองอีกครั้งในหนึ่งชั่วโมง</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub จะลองอีกครั้งในหนึ่งชั่วโมง</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub ยังใช้ %1 และไม่ติดตั้งอะไรจากรายการนั้น</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>อัปเดต HikariSub เพื่อรับฟีเจอร์ AI ที่ใหม่กว่า</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>ตัวติดตั้งของ Claude</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>ตัวติดตั้งของ Codex</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>กำลังเรียกใช้ %1 เซสชันใหม่จะใช้เวอร์ชันใหม่</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>ยังเป็น %1 หลัง %2 ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 ทำงานไม่เสร็จ ลองเรียกใช้ในเทอร์มินัลเพื่อดูสาเหตุ</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>มีเซสชัน %1 ทำงานอยู่ในแผงเอเจนต์ อัปเดตเลยจะรอจนกว่าเซสชันจะจบ</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>ติดตั้งด้วย %1</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>ติดตั้งด้วย %1 HikariSub จึงไม่อัปเดตให้ เรียกใช้คำสั่งนี้ในเทอร์มินัล:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>ติดตั้งด้วย %1 โปรดอัปเดตด้วยวิธีเดียวกับที่ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>ติดตั้งด้วยวิธีที่ไม่ทราบ โปรดอัปเดตด้วยวิธีเดียวกับที่ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>%1 มีข้อบกพร่องที่ทำให้เอเจนต์ของ HikariSub ใช้งานไม่ได้</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>%1 เก่ากว่าเวอร์ชันเก่าที่สุดที่ HikariSub รองรับ (%2)</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · %2 ออกแล้ว · ติดตั้งด้วย %3</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · %2 ออกแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · ติดตั้งด้วย %2</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · ติดตั้งด้วยวิธีที่ไม่ทราบ</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>กำลังอัปเดต…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>อัปเดตไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>มีอัปเดต</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>เวอร์ชันที่ไม่รองรับ</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>เวอร์ชันที่ทราบว่ามีปัญหา</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>อัปเดตเลย</translation>
+    </message>
+    <message>
+        <source>Edit “%1”</source>
+        <translation>แก้ไข “%1”</translation>
+    </message>
+    <message>
+        <source>Add a custom endpoint</source>
+        <translation>เพิ่มเอนด์พอยต์ที่กำหนดเอง</translation>
+    </message>
+    <message>
+        <source>Add %1</source>
+        <translation>เพิ่ม %1</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>ชื่อ</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>URL ฐาน</translation>
+    </message>
+    <message>
+        <source>Gemini API key</source>
+        <translation>คีย์ API ของ Gemini</translation>
+    </message>
+    <message>
+        <source>OpenRouter key</source>
+        <translation>คีย์ OpenRouter</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>คีย์ API (ไม่บังคับ)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>คีย์ API</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย OpenRouter…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>ลงชื่อเข้าใช้แล้ว (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>ออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>หรือวางคีย์</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. Type a new key to replace it</source>
+        <translation>บันทึกไว้ในพวงกุญแจแล้ว พิมพ์คีย์ใหม่เพื่อแทนที่</translation>
+    </message>
+    <message>
+        <source>Hide key</source>
+        <translation>ซ่อนคีย์</translation>
+    </message>
+    <message>
+        <source>Show key</source>
+        <translation>แสดงคีย์</translation>
+    </message>
+    <message>
+        <source>Get a key in Google AI Studio</source>
+        <translation>รับคีย์ใน Google AI Studio</translation>
+    </message>
+    <message>
+        <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
+        <translation>คีย์จาก Google AI Studio ไม่รองรับ Vertex AI และการลงชื่อเข้าใช้ Google Cloud</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>การลงชื่อเข้าใช้จะเปิด openrouter.ai ในเบราว์เซอร์และสร้างคีย์สำหรับ HikariSub คีย์นี้จะเก็บในพวงกุญแจเหมือนคีย์ที่วาง</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>การออกจากระบบจะลบคีย์ออกจากคอมพิวเตอร์นี้ คีย์ยังอยู่ใน %1 จนกว่าคุณจะลบที่นั่น</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>คีย์ OpenRouter ของคุณ</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>กำลังรอ openrouter.ai ในเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>เปิดหน้าอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
+        <translation>เซิร์ฟเวอร์ภายในเครื่องอย่าง Ollama หรือ LM Studio ไม่ต้องใช้คีย์ คีย์จะส่งผ่าน HTTPS ไปยังคอมพิวเตอร์เครื่องนี้ หรือไปยังเพียร์ Tailscale เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once: %1 MB.</source>
+        <translation>ผู้ให้บริการรายแรกจะดาวน์โหลดคอมโพเนนต์ AI ครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once.</source>
+        <translation>ผู้ให้บริการรายแรกจะดาวน์โหลดคอมโพเนนต์ AI ครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.</source>
+        <translation>ทดสอบการเชื่อมต่อ และ เพิ่ม จะดาวน์โหลดคอมโพเนนต์นี้ คอมโพเนนต์ทำงานเฉพาะเมื่อคุณใช้ฟีเจอร์ AI และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>%1 of %2 MB</source>
+        <translation>%1 จาก %2 MB</translation>
+    </message>
+    <message>
+        <source>Tests when the download finishes</source>
+        <translation>จะทดสอบเมื่อดาวน์โหลดเสร็จ</translation>
+    </message>
+    <message>
+        <source>Testing…</source>
+        <translation>กำลังทดสอบ…</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>กำลังบันทึก…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>เชื่อมต่อแล้ว · %n โมเดล</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>ทดสอบการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>เพิ่ม</translation>
+    </message>
+    <message>
+        <source>AI features</source>
+        <translation>ฟีเจอร์ AI</translation>
+    </message>
+    <message>
+        <source>Turn off all AI features</source>
+        <translation>ปิดฟีเจอร์ AI ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>จะไม่มีสิ่งใดที่เกี่ยวกับ AI แสดง ดาวน์โหลด เริ่มทำงาน หรืออ่านพวงกุญแจของคุณ ผู้ให้บริการ คีย์ และเธรดจะยังเก็บไว้ และเมื่อเปิด AI อีกครั้งทุกอย่างจะกลับมาโดยไม่ต้องรีสตาร์ต</translation>
+    </message>
+    <message>
+        <source>Kept while AI is off</source>
+        <translation>สิ่งที่เก็บไว้ขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Your providers, and their keys in the keychain</source>
+        <translation>ผู้ให้บริการของคุณและคีย์ในพวงกุญแจ</translation>
+    </message>
+    <message>
+        <source>Your agent threads</source>
+        <translation>เธรดเอเจนต์ของคุณ</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component</source>
+        <translation>คอมโพเนนต์ AI ที่ดาวน์โหลดไว้</translation>
+    </message>
+    <message>
+        <source>Hidden while AI is off</source>
+        <translation>สิ่งที่ซ่อนขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>The agent panel, inline AI actions and AI rows in every menu</source>
+        <translation>แผงเอเจนต์ การทำงาน AI ในบรรทัด และรายการ AI ในทุกเมนู</translation>
+    </message>
+    <message>
+        <source>AI commands in command search, their shortcuts and toolbar buttons</source>
+        <translation>คำสั่ง AI ในการค้นหาคำสั่ง ปุ่มลัด และปุ่มบนแถบเครื่องมือ</translation>
+    </message>
+    <message>
+        <source>AI in Getting started and What’s new</source>
+        <translation>AI ใน เริ่มต้นใช้งาน และ มีอะไรใหม่</translation>
+    </message>
+    <message>
+        <source>MCP server, which stops listening</source>
+        <translation>เซิร์ฟเวอร์ MCP ซึ่งจะหยุดรอรับการเชื่อมต่อ</translation>
+    </message>
+    <message>
+        <source>Press OK or Apply to turn AI back on.</source>
+        <translation>กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>ผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>No providers yet. AI sends nothing until you add one.</source>
+        <translation>ยังไม่มีผู้ให้บริการ AI จะไม่ส่งอะไรเลยจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>ยังไม่ได้ทดสอบ · %n โมเดล</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the key with Edit</source>
+        <translation>แทนที่คีย์ด้วย แก้ไข</translation>
+    </message>
+    <message>
+        <source>Sign in again with Edit</source>
+        <translation>ลงชื่อเข้าใช้อีกครั้งด้วย แก้ไข</translation>
+    </message>
+    <message>
+        <source>Key in keychain</source>
+        <translation>มีคีย์ในพวงกุญแจ</translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation>ไม่มีคีย์</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Add provider</source>
+        <translation>เพิ่มผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Changes to providers and keys apply at once.</source>
+        <translation>การเปลี่ยนแปลงผู้ให้บริการและคีย์มีผลทันที</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>โมเดล</translation>
+    </message>
+    <message>
+        <source>Refresh models</source>
+        <translation>รีเฟรชโมเดล</translation>
+    </message>
+    <message>
+        <source>Same as chat</source>
+        <translation>เหมือนแชต</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>เพิ่มผู้ให้บริการก่อน</translation>
+    </message>
+    <message>
+        <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
+        <translation>บทบาทที่ไม่มีโมเดลของตัวเองจะใช้โมเดลแชต การมองเห็นแสดงเฉพาะโมเดลที่อ่านภาพได้</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>เอเจนต์ภายนอก</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>ไม่พบใน PATH</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>พบใน PATH</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>ยังไม่ได้ลงชื่อเข้าใช้</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย ChatGPT…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>นำเข้าจาก ~/.codex (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>นำเข้าการลงชื่อเข้าใช้ ChatGPT</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>นำเข้าการลงชื่อเข้าใช้ ChatGPT จาก ~/.codex หรือไม่ HikariSub กับ Codex ในเทอร์มินัลจะใช้การลงชื่อเข้าใช้เดียวกัน และเมื่อฝั่งหนึ่งรีเฟรช อีกฝั่งต้องลงชื่อเข้าใช้ใหม่</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>นำเข้า</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub เก็บการลงชื่อเข้าใช้ ChatGPT สำหรับ Codex ของตัวเอง แยกจากของ ~/.codex จึงไม่มีฝั่งใดทำให้อีกฝั่งออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>ลงชื่อเข้าใช้เป็น %1</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex ทำงานด้วยการลงชื่อเข้าใช้นี้ การออกจากระบบที่นี่ไม่ทำให้ Codex ในเทอร์มินัลออกจากระบบ</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>การลงชื่อเข้าใช้หมดอายุ</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>ลงชื่อเข้าใช้อีกครั้ง…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>ChatGPT สิ้นสุดเซสชันของ HikariSub แล้ว เช่น หลังเปลี่ยนรหัสผ่านหรือออกจากระบบทุกอุปกรณ์ ลงชื่อเข้าใช้อีกครั้งเพื่อใช้ Codex ต่อ</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>ลงชื่อเข้าใช้ด้วย ChatGPT</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>เปิด auth.openai.com ลงชื่อเข้าใช้ ChatGPT แล้วป้อนรหัสนี้</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>เปิด auth.openai.com</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com เปิดอยู่ในเบราว์เซอร์ ลงชื่อเข้าใช้ที่นั่น HikariSub จะทำงานเสร็จเมื่อหน้าเว็บบอกว่าปิดได้</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>กำลังรอรหัส · หมดอายุใน %1</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>กำลังรอเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>ใช้รหัสไม่ได้ใช่ไหม ลงชื่อเข้าใช้ผ่านเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>ลงชื่อเข้าใช้ผ่านเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>รับรหัสใหม่</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>ให้เอเจนต์ภายนอก HikariSub แก้ไขผ่าน MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex และเอเจนต์อื่นอ่านเอกสารที่เปิดอยู่ การแก้ไขของเอเจนต์จะรออยู่ในการตรวจทานจนกว่าคุณจะเก็บไว้หรือเลิกทำ</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว: %1 MB</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP ต้องใช้คอมโพเนนต์ AI ซึ่งดาวน์โหลดครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>คอมโพเนนต์ทำงานเฉพาะเมื่อเอเจนต์ใช้ HikariSub และไม่ทำงานเลยขณะปิด AI</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>ต้องใช้คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP ยังปิดอยู่ %1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>รับการเชื่อมต่อที่ http://127.0.0.1:%1 ด้วย</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP เข้าถึงได้จากคอมพิวเตอร์เครื่องนี้เท่านั้น และต้องมีโทเค็น</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>คัดลอกการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>รีเซ็ตโทเค็น</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>บันทึกโทเค็นใหม่แล้ว</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>คัดลอกแล้ว เรียกใช้ในเทอร์มินัล</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>คัดลอกแล้ว วางลงในการตั้งค่าของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>คำสั่ง Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON พร้อมที่อยู่และโทเค็น</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>มีโทเค็นของคุณอยู่ โปรดเก็บไว้เป็นความลับ</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>รีเซ็ตโทเค็น จะสร้างโทเค็นใหม่ เอเจนต์ที่ตั้งค่าด้วยโทเค็นเดิมจะหยุดทำงานจนกว่าคุณจะคัดลอกการตั้งค่าอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>การตั้งค่า JSON มีไว้สำหรับเอเจนต์ที่เชื่อมต่อผ่าน HTTP จึงต้องเปิด “รับการเชื่อมต่อที่ http://127.0.0.1 ด้วย”</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>เอเจนต์</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>โหมดสำหรับเธรดใหม่</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>ด้วยตนเอง</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>สิทธิ์เต็ม</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>วงเงินค่าใช้จ่ายต่อเธรด</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>วงเงินค่าใช้จ่ายต่อวัน</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>ไม่จำกัด</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>เมื่อถึงวงเงิน รอบนี้จะหยุดหลังการเปลี่ยนแปลงปัจจุบัน เอเจนต์จะไม่เพิ่มวงเงินเอง มีเพียงคุณที่เพิ่มได้</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>แสดงมาตรวัดค่าใช้จ่าย</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>มีอะไรใหม่</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>คอมโพเนนต์ AI %1 หยุดทำงาน HikariSub จึงกลับไปใช้ %2 และจะไม่ติดตั้ง %1 อีก</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>ส่งรายงานข้อขัดข้องแล้ว</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>คอมโพเนนต์ AI</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>ทำงานบน</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>ไลบรารีของผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>สถานะ</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>ตรวจสอบเลย</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>อัปเดตคอมโพเนนต์ AI โดยอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>ผู้ดูแลระบบปิดการอัปเดตอัตโนมัติในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>HikariSub ตรวจสอบทุกชั่วโมงขณะที่เปิด AI อยู่ เวอร์ชันใหม่จะดาวน์โหลดเบื้องหลังและเริ่มเมื่อไม่ได้ใช้ AI เป็นเวลา 2 นาที หากเริ่มไม่ได้ HikariSub จะกลับไปใช้เวอร์ชันก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub ยังตรวจสอบทุกชั่วโมง และจะดาวน์โหลดเมื่อคุณกด อัปเดตเลย เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Use prompt caching</source>
+        <translation>ใช้การแคชพรอมต์</translation>
+    </message>
+    <message>
+        <source>The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</source>
+        <translation>ผู้ให้บริการจะเก็บช่วงต้นของบทสนทนาไว้สองสามนาที รอบถัดไปจึงมีค่าใช้จ่ายน้อยลง ไม่มีสิ่งใดถูกเก็บไว้ในคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>What is sent to providers</source>
+        <translation>สิ่งที่ส่งไปยังผู้ให้บริการ</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
+        <translation type="vanished">คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มเท่านั้น ระบบปฏิบัติการยังไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
+        <source>Web search</source>
+        <translation>การค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>ให้ AI ค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>เอเจนต์ค้นหาชื่อ คำศัพท์ เนื้อเพลง และข้อมูลอ้างอิงได้ และบอกว่าพบจากที่ใด ผู้ให้บริการหรือบริการค้นหาของคุณจะได้รับคำค้นทุกคำที่เอเจนต์เขียนและหน้าที่เอเจนต์เปิด</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Google Search และอ่านหน้าเว็บได้</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>ค้นหาเอง และอ่านหน้าเว็บได้</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>ต้องใช้บริการค้นหา</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>คำตอบของ Gemini ที่มีการค้นหาจะแสดงคำแนะนำการค้นหาของ Google ตามข้อกำหนดของ Google</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>บริการค้นหา</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (ค้นหาอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search ค้นหาได้อย่างเดียว ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะใช้บริการนี้อ่านหน้าเว็บไม่ได้</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>สำหรับผู้ให้บริการที่ไม่มีการค้นหาของตัวเอง Anthropic, Google Gemini, OpenAI และ OpenRouter ค้นหาได้โดยไม่ต้องใช้</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>คีย์ %1</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>แทนที่คีย์…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>เพิ่มอยู่ดี</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>นำคีย์ออก</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>รับคีย์ %1</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>เชื่อมต่อแล้ว</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>ใช้การค้นหาหมดแล้ว (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>เพิ่มผู้ให้บริการเพื่อทดสอบคีย์</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>เชื่อมต่อ %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>บริการค้นหาผิดพลาด (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>ยังไม่ได้ทดสอบ</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>บันทึกในพวงกุญแจ HikariSub ส่งเฉพาะคำค้นที่เอเจนต์เขียน ไม่ส่งไฟล์ของคุณ ทดสอบการเชื่อมต่อจะค้นหาหนึ่งครั้ง ซึ่งนับรวมในแพ็กเกจ %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 ปฏิเสธคีย์ วางคีย์ใหม่จากแดชบอร์ด %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>แพ็กเกจ %1 ของคุณไม่มีการค้นหาเหลือแล้ว จนกว่าจะรีเซ็ต ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะตอบโดยไม่ค้นหาและแจ้งให้ทราบ</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>คีย์อยู่ในพวงกุญแจ ผู้ให้บริการคิดค่าการค้นหาของตัวเองเพิ่มจากโทเค็น %1 คิดค่าการค้นหาตามแพ็กเกจ %1 ของคุณ</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>ลบคีย์ %1 ไหม</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>คีย์จะถูกลบออกจากพวงกุญแจ ผู้ให้บริการที่ไม่มีการค้นหาของตัวเองจะหยุดค้นหาจนกว่าคุณจะเพิ่มคีย์</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -9312,6 +12737,10 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอินนี้ต้องใช้ Hikari API %1 แต่ HikariSub นี้มี API %2 อัปเดต HikariSub เพื่อติดตั้งปลั๊กอินนี้</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>เฉพาะปลั๊กอินที่เชื่อถือเต็มที่เท่านั้นที่มีแผง QML ได้</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json ไม่ผ่านสคีมาปลั๊กอินที่ %1: %2</translation>
     </message>
@@ -9332,12 +12761,24 @@ Failed to copy %2 fonts.</source>
         <translation>แพ็กเกจไม่เป็นไปตามกฎของสื่อ: %1 %2</translation>
     </message>
     <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>แพ็กเกจไม่มีไฟล์แผง %1</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 นำเข้า %2 ซึ่งแผงของปลั๊กอินใช้ไม่ได้</translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>แพ็กเกจมีลายเซ็น แต่แมนิเฟสต์ไม่ได้ระบุ publicKey สำหรับตรวจสอบลายเซ็นนั้น</translation>
     </message>
     <message>
         <source>plugins.json in the user folder can’t be read: %1</source>
         <translation>อ่าน plugins.json ในโฟลเดอร์ผู้ใช้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ใช่ปลั๊กอินที่มาร์เก็ตเพลสระบุไว้: %1</translation>
     </message>
     <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
@@ -9360,6 +12801,10 @@ Failed to copy %2 fonts.</source>
         <translation>เชื่อถือเต็มที่: อาจเรียกใช้โค้ดเนทีฟนอกขอบเขตที่ HikariSub จำกัดไว้</translation>
     </message>
     <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>แสดงแผงของตัวเองภายใน HikariSub</translation>
+    </message>
+    <message>
         <source>Read and edit every open subtitle file: %1</source>
         <translation>อ่านและแก้ไขไฟล์คำบรรยายทุกไฟล์ที่เปิดอยู่: %1</translation>
     </message>
@@ -9376,6 +12821,18 @@ Failed to copy %2 fonts.</source>
         <translation>ขอโฟลเดอร์จากคุณเพื่ออ่าน %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชันนี้แล้ว ติดตั้งเวอร์ชันอื่นเพื่อเปิดใช้</translation>
+    </message>
+    <message>
+        <source>Command: %1</source>
+        <translation>คำสั่ง: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>แผง: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub ทำงานไม่เสร็จ: %1</translation>
     </message>
@@ -9388,12 +12845,36 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub อ่าน %1 ไม่ได้</translation>
     </message>
     <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>ปลั๊กอินเปลี่ยนไประหว่างดาวน์โหลดอัปเดต</translation>
+    </message>
+    <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>แพ็กเกจนี้คือ “%1” ไม่ใช่การอัปเดตของ “%2”</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>เลือกแพ็กเกจปลั๊กอินก่อน</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>หยุดแล้ว</translation>
+    </message>
+    <message>
+        <source>From the marketplace</source>
+        <translation>จากมาร์เก็ตเพลส</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9422,6 +12903,18 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Install plugin</source>
         <translation>ติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>ติดตั้ง “%1” ไม่ได้ขณะที่ปิดการอัปเดตปลั๊กอินอยู่</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>ลิงก์นี้มาจากเว็บไซต์มาร์เก็ตเพลส HikariSub ค้นหาปลั๊กอินในรายการที่ลงนามของตัวเอง จึงต้องตรวจสอบมาร์เก็ตเพลสก่อน</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>เปิดการอัปเดตปลั๊กอิน</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -9460,12 +12953,28 @@ Failed to copy %2 fonts.</source>
         <translation>ปลั๊กอินนี้ไม่ขอสิทธิ์ใดนอกเหนือจากไฟล์คำบรรยายที่ใช้งานอยู่</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>ติดตั้งเฉพาะเมื่อคุณเชื่อถือ %1 ปลั๊กอินนี้จะเข้าถึงคอมพิวเตอร์ของคุณได้เต็มที่</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>ลงนามโดย %1 และตรวจสอบกับมาร์เก็ตเพลสแล้ว</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>เชื่อถือและติดตั้ง</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>ติดตั้งพร้อมสิทธิ์เต็ม</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>ปลั๊กอินทุกตัวอ่านและแก้ไขเอกสารที่คุณทำงานอยู่ได้ โดยเลิกทำได้ในขั้นเดียว</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -9496,8 +13005,40 @@ Failed to copy %2 fonts.</source>
         <translation>ไม่ได้ถอนการติดตั้งปลั๊กอิน</translation>
     </message>
     <message>
+        <source>Installed %1</source>
+        <translation>ติดตั้งแล้ว %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>มาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>ตรวจหาอัปเดต</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>อัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>กรองปลั๊กอิน</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>ไม่มีปลั๊กอินที่ติดตั้งไว้ ติดตั้งได้จากไฟล์ .hikariplugin</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>ไม่มีปลั๊กอินที่ตรงกับตัวกรอง</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9505,7 +13046,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>เปิดใช้งาน</translation>
+        <translation type="vanished">เปิดใช้งาน</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9520,8 +13061,240 @@ Failed to copy %2 fonts.</source>
         <translation>เชื่อถือเต็มที่</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>ถูกเพิกถอน</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 รอคุณอยู่</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>ใหม่</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>อนุญาตอยู่แล้ว</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่า %1</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>การเปลี่ยนแปลงใน %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>ค้นหาปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>ทุกหมวดหมู่</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>หมวดหมู่</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>กำลังโหลดมาร์เก็ตเพลส…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>มาร์เก็ตเพลสยังไม่มีปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>ไม่มีปลั๊กอินที่ตรงกับการค้นหา</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>ปลั๊กอินในมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>อัปเดต</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>กำลังดาวน์โหลด…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>อัปเดตเป็น %1</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>ต้องใช้ HikariSub %1 ขึ้นไป อัปเดต HikariSub เพื่อติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>ไม่มีสิทธิ์เกินพื้นฐาน: ไม่ใช้เครือข่าย ไม่ใช้โฟลเดอร์ ไม่ใช้เอกสารอื่น</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>มีอะไรใหม่ใน %1</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>ต้องใช้</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 ขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>สัญญาอนุญาต</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>อัปเดตเมื่อ</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>ซอร์ส</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>“%1” อยู่ในมาร์เก็ตเพลส ลงนามด้วยคีย์เดียวกัน ย้ายไปที่นั่นเพื่อรับอัปเดต</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>ไม่ใช่ตอนนี้</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>ย้ายไปมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชัน %1 HikariSub จึงปิดไว้: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1 ขอมากกว่า %2 จึงรอให้คุณตัดสินใจ</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>ตรวจทาน…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>ย้อนกลับเป็น %1</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>ไม่ได้ย้อนปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>ไม่ได้เปลี่ยนปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>ติดตั้งอัปเดตโดยอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>หยุดทำงานแล้ว</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>เริ่มใหม่</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>สิทธิ์</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub จำกัดปลั๊กอินนี้ไว้ที่สิทธิ์เหล่านี้ แต่ระบบนี้ไม่ได้รันปลั๊กอินในแซนด์บ็อกซ์</translation>
+    </message>
+    <message>
+        <source>Remembered folders</source>
+        <translation>โฟลเดอร์ที่จำไว้</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>ลืม</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>%1 จะถามอีกครั้งเมื่อต้องใช้โฟลเดอร์นี้ครั้งถัดไป</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>สิ่งที่เพิ่ม</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>อัปเดตจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>เปิดโฟลเดอร์ข้อมูล</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>ถอนการติดตั้ง…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>ไม่ได้เก็บการตั้งค่า</translation>
+    </message>
+    <message>
         <source>Install from file…</source>
         <translation>ติดตั้งจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>ตรวจหาอัปเดตปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>ตอนเริ่มและวันละครั้ง HikariSub ดาวน์โหลดทั้งรายการ และไม่ส่งข้อมูลว่าคุณมีปลั๊กอินใดบ้าง</translation>
+    </message>
+    <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>เฉพาะปลั๊กอินจากมาร์เก็ตเพลส เมื่อทำงานที่ค้างอยู่เสร็จ อัปเดตที่ขอมากกว่าเดิมจะรอคุณ</translation>
     </message>
     <message>
         <source>Close</source>
@@ -9538,6 +13311,20 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>ปลั๊กอินไม่ได้ติดตั้งไว้ ถูกปิดอยู่ หรือไม่มีคำสั่งนี้แล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>ทำงานนานกว่า %n วินาที</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>หยุดทำงานโดยไม่คาดคิด</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>ถูกบังคับหยุด</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9572,6 +13359,494 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>ปลั๊กอินไม่ได้ทำงานอยู่</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>เกี่ยวกับ %1…</translation>
+    </message>
+    <message>
+        <source>%1 rolled back to %2</source>
+        <translation>ย้อน %1 กลับเป็น %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>การอัปเดตอัตโนมัติจะข้ามเวอร์ชันที่คุณย้อนออกมา</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>เลิกทำ</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>ปิด %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>มาร์เก็ตเพลสเพิกถอนเวอร์ชัน %1: %2</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของ %1 เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>โหลดแผงไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>แผงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>โหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>ไม่ได้ติดตั้ง %1</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>ปลั๊กอินของแผงนี้</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 ไม่ได้เริ่มทำงาน</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 หยุดทำงานแล้ว</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>เค้าโครงเก็บตำแหน่งนี้ไว้ให้แผง “%1”</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>เปิดปลั๊กอิน…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>รายการของมาร์เก็ตเพลสไม่ได้ลงนามด้วยคีย์ของมาร์เก็ตเพลส HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>ลายเซ็นของมาร์เก็ตเพลสเป็นของไฟล์อื่น HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>มาร์เก็ตเพลสส่งรายการที่เก่ากว่ารายการที่ HikariSub เคยเห็นแล้ว HikariSub จึงไม่สนใจรายการนี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>อ่านรายการของมาร์เก็ตเพลสไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub เชื่อมต่อมาร์เก็ตเพลสไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>“%1” ไม่มีในมาร์เก็ตเพลสสำหรับ HikariSub รุ่นนี้</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>มาร์เก็ตเพลสระบุไฟล์ดาวน์โหลดที่อยู่นอกเว็บไซต์ของตัวเอง HikariSub จึงจะไม่ดาวน์โหลด</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>ดาวน์โหลดปลั๊กอินไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1 ขอโฟลเดอร์สำหรับอ่านและเขียน: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1 ขอโฟลเดอร์สำหรับอ่าน: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>จำโฟลเดอร์นี้ไว้สำหรับ %1</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>เลือกโฟลเดอร์…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: บันทึกไฟล์</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: เลือกไฟล์</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub ปิดไปขณะที่แผงของปลั๊กอินนี้เปิดอยู่ แผงจึงจะปิดไว้จนกว่าคุณจะเลือกโหลดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>รากของแผงไม่ใช่ Item</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>โหลดแผง “%1” ไม่ได้: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>การตั้งค่าโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>อ่าน %1 ไม่ได้ จึงไม่ใช้การตั้งค่าในไฟล์นั้น</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>อ่าน %1 ไม่ได้ จึงไม่ใช้การตั้งค่าในไฟล์นั้น และเก็บไฟล์ไว้เป็น %2</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>โปรเจกต์ตั้งค่า %1 ไม่ได้ จึงไม่ใช้ค่าในไฟล์โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>เปิดโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1 ไม่ใช่โฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>แท็บนี้ใช้โปรเจกต์ %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>ไฟล์นี้อยู่ในโปรเจกต์ %1</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>เปิดโปรเจกต์</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>โน้ต QC</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>ไม่มีโน้ตเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>นำเข้าไฟล์โน้ต…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>ส่งออกโน้ต…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>ลบโน้ตทั้งหมด…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 ไม่มีโน้ต โน้ตคือบรรทัดที่ขึ้นต้นด้วยเวลา เช่น 3:24 หรือ 0:03:24</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>คลิปบอร์ดไม่มีโน้ต โน้ตคือบรรทัดที่ขึ้นต้นด้วยเวลา เช่น 3:24 หรือ 0:03:24</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>นำเข้าโน้ต %n รายการแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n รายการมีอยู่ในไฟล์แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>โน้ต %n รายการไม่มีบรรทัดภายใน 15 วินาทีจากเวลาของโน้ต</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>คลิปบอร์ด</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>นำเข้าโน้ต QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 มีโน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>ใน %n หมวด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>ไฟล์นี้มีโน้ตอยู่แล้ว %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>การเพิ่มจะข้ามโน้ตที่มีอยู่แล้ว %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>เพิ่มโน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>แทนที่โน้ตในไฟล์นี้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>อ่าน %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>ลบโน้ตทั้งหมด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>เลิกทำเพื่อนำกลับมาได้</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>ลบทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>นำเข้าไฟล์โน้ต</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>โน้ต QC (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ทุกไฟล์ (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>ส่งออกโน้ต QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>ส่งออกโน้ต %n รายการแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>เขียนโน้ตไม่ได้</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>ในไฟล์นี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>โน้ต %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>เพิ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>รวมโน้ตที่เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>เฉพาะหมวดที่เลือก (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>เฉพาะหมวดที่เลือก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>ส่งออกโน้ต %n รายการ…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>ไม่มีบรรทัด</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>ยังไม่เสร็จ</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>ไม่มีบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>วางไฟล์โน้ตที่นี่</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>เปิดไฟล์คำบรรยายเพื่อเก็บโน้ต QC ไว้ในไฟล์</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>วางโน้ต</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>โน้ตขึ้นต้นด้วยเวลา: 3:24 - …
+บรรทัด [หมวด] ใช้จัดกลุ่มโน้ต</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>ถัดไป</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>ซ่อนที่เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>เวลา</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>เวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>จุดเริ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>หมวด</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>โน้ต</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>สิ่งที่ต้องแก้</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter บันทึก · Esc ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
     </message>
 </context>
 <context>
@@ -9625,8 +13900,24 @@ Failed to copy %2 fonts.</source>
         <translation>บรรทัดอ้างอิง (ป้องกันไว้ อ่านอย่างเดียว)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>คัดลอก</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>พบใน</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>ไม่พบที่อื่น</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>คำบรรยายอ้างอิงถูกป้องกันไว้ (อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1 บรรทัด %2</translation>
     </message>
 </context>
 <context>
@@ -9982,6 +14273,235 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>“ส่งรายงานการขัดข้องเสมอ” เปิดอยู่ นี่คือสิ่งที่ส่งไป</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">บรรทัด</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">ใหม่</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>คืนค่าจุดตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">คงไว้</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%1 จาก %2</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>คุณแก้ไข %n บรรทัดหลังการเปลี่ยนแปลงนี้ การเลิกทำจะคืนการเปลี่ยนแปลงทั้งหมดเป็นแบบก่อนใช้ AI และทิ้งการแก้ไขของคุณ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10854,6 +15374,10 @@ because it was edited.</source>
         <translation>คีย์เฟรม</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>ไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>ไม่พบ %1 ซึ่งเป็นคำบรรยายของแท็บนี้</translation>
     </message>
@@ -10868,6 +15392,10 @@ because it was edited.</source>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>ไม่พบ %1 ซึ่งเป็นคีย์เฟรมของแท็บนี้</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>ไม่พบ %1 ซึ่งเป็นไฟล์ไทม์โค้ดของแท็บนี้</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -10888,6 +15416,10 @@ because it was edited.</source>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>ไฟล์คีย์เฟรม (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>ไฟล์ไทม์โค้ด (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -11036,6 +15568,18 @@ because it was edited.</source>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” ไม่ใช่ true หรือ false</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” ไม่ใช่รายการ</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>หน้าต่าง %1 ไม่ใช่ออบเจ็กต์</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>หน้าต่าง %1: “%2” มีชนิดข้อมูลไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -11753,6 +16297,10 @@ because it was edited.</source>
     <message>
         <source>Frames per second</source>
         <translation>เฟรมต่อวินาที</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>เฟรมต่อวินาที ค่าเฉลี่ยของไฟล์ไทม์โค้ด %1</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -12504,8 +17052,12 @@ Styles deleted:
         <translation>นำไปใช้กับบรรทัดที่เลือก: กำหนดสไตล์ของบรรทัดเหล่านั้น (Enter หรือดับเบิลคลิกที่สไตล์)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>แก้ไข…</translation>
+        <source>New style…</source>
+        <translation>สไตล์ใหม่…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>แก้ไขสไตล์…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12514,10 +17066,6 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>เปิดในตัวจัดการสไตล์</translation>
     </message>
 </context>
 <context>
@@ -12547,6 +17095,26 @@ Styles deleted:
         <translation>เปิดแท็บใหม่</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>เสียง</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>คีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>แท็บใหม่</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>บันทึก</translation>
     </message>
@@ -12555,24 +17123,36 @@ Styles deleted:
         <translation>บันทึกทั้งหมด</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>แสดงในโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>คัดลอกเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>สลับไปที่</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>ปิดแท็บอื่น</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>ปิดแท็บทางขวา</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>ปิดแท็บทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>แสดงไฟล์คำบรรยายในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>แสดงวิดีโอในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>แสดงเสียงในโฟลเดอร์</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>แสดงคีย์เฟรมในโฟลเดอร์</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -12643,6 +17223,10 @@ Styles deleted:
     <message>
         <source>Video only</source>
         <translation>วิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>ย้ายแท็บไปที่หน้าต่าง</translation>
     </message>
 </context>
 <context>
@@ -14265,6 +18849,437 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>บรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>บรรทัด %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>วางข้อมูล Power-Pin ที่ส่งออกจาก After Effects หรือ Blender ปุ่มนำไปใช้จะอ่านมุมทั้งสี่ของ CC Power Pin</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>นี่ไม่ใช่ข้อมูล Power-Pin: ไม่พบมุมของ CC Power Pin</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>เลือกบรรทัดที่จะติดตาม</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>ข้อมูลมี %n เฟรม แต่บรรทัดที่เลือกครอบคลุม %1 เฟรม (%2–%3) เลือกบรรทัดที่ครอบคลุมเฟรมที่ติดตาม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>ไม่มีบรรทัดที่เลือกแสดงที่เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>บรรทัดซ้อนทับกัน แต่บรรทัด %1 ไม่แสดงที่เฟรม %2 เลือกเฟรมที่ทุกบรรทัดแสดง หรือนำไปใช้ทีละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>ติดตามที่ขนาด %1 × %2 แต่วิดีโอมีขนาด %3 × %4 มุมจะถูกปรับขนาดให้เข้ากับวิดีโอ</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n เฟรมที่ %1 fps ติดตามที่ขนาด %2 × %3 ครอบคลุมเฟรม %4–%5 ของส่วนที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n เฟรม ครอบคลุมเฟรม %1–%2 ของส่วนที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>ติดตามบางบรรทัดไม่ได้: วัดขนาดข้อความไม่ได้ หรือระนาบพับบรรทัดนั้น</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>การติดตามเพอร์สเปกทีฟ</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>ข้อมูล Power-Pin</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>อ้างอิงเฟรม</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>จาก %1 · เฟรมวิดีโอ %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>จุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>กลาง</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>ไม่มี %1</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>คงไว้</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>ปรับบรรทัดที่แบนให้เข้ากับระนาบก่อน</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>ย้ายคลิปไปพร้อมกับระนาบ</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>ปรับขนาดเส้นขอบและเงา</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>ระนาบจะถูกบันทึกไว้กับแต่ละบรรทัด สำหรับเครื่องมือเพอร์สเปกทีฟและ Derive Perspective Track</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · เฟรม %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>มาตราส่วน</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>เลือกบรรทัดตั้งแต่สองบรรทัดขึ้นไป เฟรมละหนึ่งบรรทัด</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>บรรทัด %1 ไม่ใช่เฟรมถัดไปของป้าย: แต่ละบรรทัดต้องครอบคลุมหนึ่งเฟรมและต่อจากบรรทัดก่อนหน้า โดยมีข้อความและชั้นเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>บรรทัด %1 มีแอนิเมชัน (\t, \move, \fad หรือคาราโอเกะ) ให้ขยายบรรทัดที่อยู่นิ่งในแต่ละเฟรม</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>บรรทัด %1 ไม่มี \pos</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>วิดีโอมีน้อยกว่า %n เฟรมก่อนบรรทัด %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>ขยายบรรทัดไม่ได้</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>วางข้อมูลคีย์เฟรม After Effects ที่ส่งออกจาก Mocha หรือ Blender ปุ่มนำไปใช้จะอ่านตำแหน่ง มาตราส่วน และการหมุนจากข้อมูลนั้น</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>นี่ไม่ใช่ข้อมูลการเคลื่อนไหว: ไม่พบข้อมูลคีย์เฟรม After Effects ที่มีตำแหน่ง มาตราส่วน และการหมุน</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>ข้อมูลเริ่มที่เฟรม %1 และเลยเฟรมสุดท้ายของส่วนที่เลือก เลือกจุดเริ่มที่เร็วกว่านี้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>ข้อมูล %n เฟรมสำหรับ %1 เฟรม: ประมาณค่านอกช่วงก่อนหน้า %2 เฟรม หลัง %3 เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1 เข้ากันได้ไม่ดีในช่วงต้น ตรวจสอบเฟรม %2–%3</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1 เข้ากันได้ไม่ดีในช่วงท้าย ตรวจสอบเฟรม %2–%3</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>ข้อมูลมี %n เฟรม แต่บรรทัดที่เลือกครอบคลุม %1 เฟรม (%2–%3) เลือกบรรทัดที่ครอบคลุมเฟรมที่ติดตาม หรือประมาณค่านอกช่วง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>วางข้อมูลที่คลิปจะเคลื่อนตาม</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>นี่ไม่ใช่ข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>ข้อมูลคลิปมี %n เฟรม แต่ข้อมูลการเคลื่อนไหวมี %1 เฟรม</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n เฟรม ย้ายคลิปตั้งแต่เฟรม %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>ข้อมูลไม่ครอบคลุมเฟรมของบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>ไม่มีบรรทัดที่เลือกที่มีข้อมูลการเคลื่อนไหวให้ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการเคลื่อนไหวเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>เลือกบรรทัดของป้ายเดียวกันตั้งแต่สองบรรทัดขึ้นไป ทีละเฟรม</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>บรรทัด %1 ไม่ได้ต่อจากบรรทัดก่อนหน้าที่มีข้อความและชั้นเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>บรรทัด %1 ไม่มี \pos หรือ \move</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>คัดลอกข้อมูลการเคลื่อนไหว %n เฟรมแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>เลือกบรรทัดที่จะคัดลอก</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>บรรทัด %1 ซ้อนทับกับบรรทัดอื่นที่เลือก คัดลอกทีละป้าย</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>บรรทัด %1 มี \move ซึ่งแทร็ก Power-Pin เก็บไว้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>วัดขนาดข้อความของบรรทัด %1 ไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>คัดลอกข้อมูล Power-Pin %n เฟรมแล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>ประมาณค่า \move นอกช่วงใน %n บรรทัดแล้ว</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>ไม่มีบรรทัดที่เลือกที่มี \move พร้อมเวลาเริ่มและเวลาสิ้นสุด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>ประมาณตำแหน่ง มาตราส่วน และการหมุนจาก %n บรรทัดที่เลือก (ดีกรี %1 ความคลาดเคลื่อน %2 px)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1 เข้ากันได้ไม่ดี (ความคลาดเคลื่อน %2) ตรวจสอบเฟรมใหม่</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>ไฟล์ใหญ่เกินกว่าจะเป็นข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>อ่านไฟล์ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>วาง</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>เปิดไฟล์…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>เปิดข้อมูลการติดตาม</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>ข้อมูลการติดตาม (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>นำข้อมูลการเคลื่อนไหวไปใช้</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>ข้อมูลการเคลื่อนไหว</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>ข้อมูลคลิป</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>เคลื่อนตาม</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>ค่าสัมบูรณ์</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>ตำแหน่ง x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>ตำแหน่ง y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>ตัวคูณความเบลอ เป็นเปอร์เซ็นต์</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>คลิปสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>คลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>สี่เหลี่ยมเป็นเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>เฉพาะคลิป</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>ติดตามคลิปด้วยข้อมูลอื่น</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>ตรึงการแปลงและการจาง</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>บรรทัดเดียวด้วย %1 และ %2</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>ประมาณค่าเลยช่วงข้อมูล</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>ข้อมูลเริ่มที่เฟรม</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>ขยายบรรทัดที่ติดตาม</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>เพิ่ม</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>จำนวนเฟรมที่จะเพิ่ม</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>เฟรม</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>ก่อนบรรทัดแรก</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>หลังบรรทัดสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>ตำแหน่งที่จะเพิ่ม</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>ย้ายจุดศูนย์กลาง (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>ขยาย</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Translation</name>
     <message>
         <source>Translation</source>
@@ -14742,6 +19757,14 @@ Styles deleted:
         <translation>เลือกไฟล์คีย์เฟรม</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>ไฟล์ไทม์โค้ด (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>บันทึกไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
@@ -14831,6 +19854,14 @@ Styles deleted:
         <translation>คัดลอกพร้อมคำบรรยาย</translation>
     </message>
     <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>บันทึกเฉพาะคำบรรยายเป็น PNG…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>คัดลอกเฉพาะคำบรรยาย</translation>
+    </message>
+    <message>
         <source>Audio track</source>
         <translation>แทร็กเสียง</translation>
     </message>
@@ -14883,8 +19914,12 @@ Styles deleted:
         <translation>ตัวกรอง</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>เลื่อนวิดีโอเมื่อ</translation>
+        <source>Move video to the selected line</source>
+        <translation>เลื่อนวิดีโอไปยังบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>หลังเลื่อนแล้วเล่น</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -14909,10 +19944,6 @@ Styles deleted:
     <message>
         <source>Editing</source>
         <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>จากนั้นเล่น</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -15083,6 +20114,69 @@ or codecs or a splitter may be missing</source>
         <translation>เฟรม %1 จาก %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>ช่วง PC</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>ช่วง TV</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>วิดีโอจำลอง</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>ไม่คงที่</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 fps (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 fps</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n เฟรม (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>ไม่ทราบ</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1 บิต</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>ระดับสีเทา, %1 บิต</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1 บิต</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2 บิต</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (ไฟล์ไม่ได้ระบุ คาดเดาจากขนาด)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>อัตราส่วนภาพ: %1</translation>
     </message>
@@ -15116,6 +20210,196 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>จัดให้ตรงกับวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>เปิดวิดีโอก่อน</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>เลือกบรรทัดที่จะจัดก่อน</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>อ่านเฟรมของวิดีโอไม่ได้</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>คำบรรยายเป็นแบบอ่านอย่างเดียว</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>คลิกจุดที่ยังคงสีเดิมตลอดช่วงที่บรรทัดควรแสดง บรรทัดจะถูกตั้งเวลาให้ครอบคลุมทุกเฟรมรอบเฟรมนี้ที่จุดนั้นยังคงสีเดิม</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>ปุ่มลูกศรย้ายจุด กด Enter เพื่อจัด</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>จุด X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>จุด Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>สี %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>ค่าความคลาดเคลื่อน</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>สีเปลี่ยนไปได้มากเท่าใดแล้วยังนับว่าเป็นสีเดิม ตั้งแต่ 0 ถึง 255</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>กำลังค้นหา… ตรวจแล้ว %n เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>จัด</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>รูปแบบไทม์โค้ดที่ไม่รู้จัก</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>บรรทัดไทม์โค้ดไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>ต้องมีไทม์โค้ดอย่างน้อยสองค่า</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>ไฟล์ไทม์โค้ดเกินขีดจำกัด 10000000 รายการ</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>ไทม์โค้ดเรียงลำดับไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>ไทม์โค้ดเหมือนกันทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>ไม่สามารถกำหนดอัตราเฟรมให้เฟรมติดลบได้</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>เฟรมสิ้นสุดต้องมากกว่าหรือเท่ากับเฟรมเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>ช่วงไทม์โค้ด V1 เกินขีดจำกัด 10000000 เฟรม</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS ต้องมากกว่าศูนย์</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS ต้องไม่เกิน 1000</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>ช่วงที่กำหนดทับต้องไม่ซ้อนกัน</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>ไทม์โค้ดเกินช่วงเวลาที่รองรับ</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>บรรทัด %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>แยกวิเคราะห์ไฟล์ไทม์โค้ดไม่สำเร็จ: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>ไม่สามารถเปิดไฟล์ไทม์โค้ด %1</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>ไฟล์ไทม์โค้ดจบก่อนวิดีโอ (เฟรม %1 จาก %2) เฟรมถัดไปจะใช้อัตราเฟรมเฉลี่ยของไฟล์</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>ไม่มีเวลาเฟรมให้บันทึก</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>ไม่สามารถบันทึกไฟล์ไทม์โค้ด %1</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation type="vanished">ไม่พบไฟล์ไทม์โค้ด: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>รายละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>ความละเอียด</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>อัตราเฟรม</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>อัตราเฟรมของสตรีมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>เวลาเฟรมจาก</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>ความยาว</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>ปริภูมิสี</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>เมทริกซ์สี</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>ที่ใช้กับซับไตเติล</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
     </message>
 </context>
 <context>
@@ -15175,6 +20459,18 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>To</source>
         <translation>ถึง</translation>
+    </message>
+    <message>
+        <source>Stops</source>
+        <translation>จุดหยุด</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>การผสม</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>ขั้น</translation>
     </message>
     <message>
         <source>In</source>
@@ -15957,6 +21253,202 @@ increasing or decreasing the value.</source>
         <translation>การจัดแนวข้อความทำงานเหมือนในสไตล์</translation>
     </message>
     <message>
+        <source>Rectangle strips</source>
+        <translation>แถบสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>แถบหมุน</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>แถบเอียง</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>แถบตามคลิป</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>แถบลิ่ม</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>ตามตัวอักษร</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>ตามบรรทัด</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>รูปร่างมาสก์</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>ค่าของการไล่ระดับมาจากที่ใด</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>แท็กที่การไล่ระดับเปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>นำแท็กออกจากการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>วิธีผสมสี</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>ตำแหน่งของตัวอักษรแต่ละตัวในข้อความ</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>รวมแถบที่เหมือนกัน</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>ใช้การไล่ระดับ (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>ลิ่ม</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>กล่อง</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>วงแหวน</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>ดาว</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>ขอบมืด</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>ค่า</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>ตามความกว้าง</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>ตามจำนวน</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>อยู่ในการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>สีและอัลฟา</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>ขอบ เงา และความเบลอ</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>ข้อความ</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>ระยะห่าง</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>ความหนา</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>แฉก</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>กึ่งกลาง</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>รู</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>เร่ง</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>แถบ</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>ซ้อนทับ</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>ความเอียง</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>เลือกแท็กสำหรับการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>เลือกบรรทัดอย่างน้อยสองบรรทัดเป็นจุดหยุด</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>บรรทัดที่เลือกต้องมีข้อความและบล็อกแท็กเหมือนกัน</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>ไม่มีแท็กที่ต่างกันระหว่างบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>ลากจากจุดเริ่มต้นถึงจุดสิ้นสุดของการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>บรรทัดไม่มีข้อความหรือคลิปให้ครอบคลุม</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>แถบตามคลิปต้องมีคลิปในบรรทัด</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>การไล่ระดับใช้กับคลิปกลับด้านไม่ได้</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>บรรทัดไม่มีตัวอักษร</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>แก้ไข</translation>
     </message>
@@ -16198,14 +21690,6 @@ do not work on comments</source>
         <translation>ย้ายแท็บไปทางขวา</translation>
     </message>
     <message>
-        <source>Undock</source>
-        <translation>เลิกยึดติด</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>ปิดเอกสารอ้างอิง</translation>
-    </message>
-    <message>
         <source>Move panel</source>
         <translation>ย้ายแผง</translation>
     </message>
@@ -16220,6 +21704,26 @@ do not work on comments</source>
     <message>
         <source>Panel</source>
         <translation>แผง</translation>
+    </message>
+    <message>
+        <source>Dock floating panels to lock the layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock it to move panels. Resizing still works.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Tab with</source>
@@ -16410,8 +21914,16 @@ do not work on comments</source>
         <translation>เค้าโครง: %1</translation>
     </message>
     <message>
+        <source>Layout: %1, locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Layout of this tab</source>
         <translation>เค้าโครงของแท็บนี้</translation>
+    </message>
+    <message>
+        <source>Layout of this tab, locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save layout as…</source>

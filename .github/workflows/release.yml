@@ -1,6 +1,7 @@
 name: Release
 
-# A v* tag of main (0.1.0 or higher) builds the packages, publishes the release, its update manifest, then the AUR packages.
+# A v* tag of main (0.1.0 or higher) builds the packages, drafts the release with its update manifest, signs the manifest
+# and SHA256SUMS (ADR 0027), then publishes the release and the AUR packages.
 # offer_to stays ["qt"]: legacy 0.0.2-rc.1 and later install a release that names legacy without asking;
 # legacy users get an opt-in `offer` instead (ADR-0021).
 # Only the called workflows' provisioning steps receive the Qt installer secret.
@@ -182,17 +183,9 @@ jobs:
       QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
       HIKARI_POSTHOG_KEY: ${{ secrets.HIKARI_POSTHOG_KEY }} # AN1 (#404)
 
-  ai-sidecar:
-    name: AI sidecar
-    needs: release-version
-    if: ${{ !inputs.dry_run }}
-    uses: ./.github/workflows/ai-sidecar.yml
-    with:
-      version: ${{ needs.release-version.outputs.version }}
-
   release:
     name: Release
-    needs: [release-version, linux, windows, ai-sidecar]
+    needs: [release-version, linux, windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -231,11 +224,6 @@ jobs:
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: hikari-ai
-          path: artifacts/ai-sidecar
-
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
           name: hikarisub-linux-symbols
           path: artifacts/linux-symbols
 
@@ -259,8 +247,6 @@ jobs:
             "hikarisub-docs-$VERSION.zip"
             "hikarisub-symbols-$VERSION-linux-x86_64.tar.xz"
             "HikariSub-$VERSION-windows-x64-symbols.zip"
-            "hikari-ai-$VERSION-linux-x64.gz"
-            "hikari-ai-$VERSION-windows-x64.gz"
           )
           for name in "${names[@]}"; do
             if ! [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
@@ -340,7 +326,7 @@ jobs:
             echo "::warning::Some symbols did not reach PostHog: their crashes show unresolved frames."
           fi
 
-      # Draft first: clients see the release only once its manifest is up; before that they fall back to the asset digests.
+      # Draft first: clients see the release only once it is published, after the sign job has signed its manifest.
       - name: Create the release as a draft
         env:
           NOTES: ${{ needs.release-version.outputs.notes }}
@@ -378,6 +364,86 @@ jobs:
       - name: Refuse a manifest not offered to qt only
         run: python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --verify manifest/hikarisub-update.json
 
+  # A job of its own, so the signing key never meets the built packages: it runs only the pinned minisign and the
+  # repository's scripts, and only its signing step receives the key.
+  sign:
+    name: Sign
+    needs: [release-version, release]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Fetch minisign and build the app's signature check
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libsodium-dev
+          echo "MINISIGN=$(packaging/linux/fetch-tool.sh minisign "$RUNNER_TEMP/tools")" >> "$GITHUB_ENV"
+          tools/release/build-verifier.sh "$RUNNER_TEMP/verify-release-signature"
+
+      - name: Download the manifest and SHA256SUMS from the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$GITHUB_REF_NAME" --dir signing --pattern hikarisub-update.json --pattern SHA256SUMS
+          gh release view "$GITHUB_REF_NAME" --json assets \
+            --jq '.assets[] | select(.name == "hikarisub-update.json" or .name == "SHA256SUMS") | "\(.digest | ltrimstr("sha256:"))  signing/\(.name)"' |
+            sha256sum -c
+
+      - name: Sign
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: tools/release/sign-release.sh "$MINISIGN" "$GITHUB_REF_NAME" signing/hikarisub-update.json signing/SHA256SUMS
+
+      # Against the keys the app ships: a key that installed copies would refuse fails the release here.
+      - name: Check the signatures with the app's check
+        run: |
+          set -euo pipefail
+          for name in hikarisub-update.json SHA256SUMS; do
+            "$RUNNER_TEMP/verify-release-signature" "signing/$name" "signing/$name.minisig" "$GITHUB_REF_NAME"
+          done
+
+      - name: Upload the signatures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release upload "$GITHUB_REF_NAME" signing/hikarisub-update.json.minisig signing/SHA256SUMS.minisig --clobber
+          for name in hikarisub-update.json.minisig SHA256SUMS.minisig; do
+            got=$(gh release view "$GITHUB_REF_NAME" --json assets --jq ".assets[] | select(.name == \"$name\") | .digest")
+            if [[ "$got" != "sha256:$(sha256sum < "signing/$name" | cut -d' ' -f1)" ]]; then
+              echo "::error::$name does not read back as signed."
+              exit 1
+            fi
+          done
+
+  publish:
+    name: Publish
+    needs: [release-version, sign]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+      contents: write
+    env:
+      VERSION: ${{ needs.release-version.outputs.version }}
+      PRERELEASE: ${{ needs.release-version.outputs.prerelease }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
       # --latest only for the highest stable version, so HikariSub and HikariSub legacy releases don't take Latest from each other.
       - name: Publish the release
         run: |
@@ -397,6 +463,14 @@ jobs:
           echo "Publishing with $flag"
           gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
 
+      # On main, because the ai-release environment admits only main (ADR 0031). It publishes only when the sidecar
+      # changed since the last ai-v* tag.
+      - name: Publish the matching AI sidecar
+        run: |
+          if ! gh workflow run ai-sidecar.yml --ref main -f publish=true; then
+            echo "::warning::The AI sidecar's publish was not started; run ai-sidecar.yml on main with publish."
+          fi
+
       # A failure here is only a warning: the release is out, and aur-publish.yml can publish the AUR packages later.
       - name: Publish to the AUR
         env:
@@ -405,6 +479,7 @@ jobs:
           set -euo pipefail
           gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
             --jq '.[] | {tag_name, draft, prerelease}' | jq -s . > releases.json
+          gh release download "$GITHUB_REF_NAME" --dir release --pattern "hikarisub-$VERSION-linux-x86_64.tar.gz"
           packaging/linux/aur/release-aur.sh --releases releases.json \
             "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz" aur-artifact
 
@@ -459,8 +534,7 @@ jobs:
           mkdir release manifest
           for name in "HikariSub-$VERSION-windows-x64-setup.exe" "HikariSub-$VERSION-windows-x64.zip" \
               "HikariSub-$VERSION-linux-x86_64.AppImage" "hikarisub-$VERSION-linux-amd64.deb" \
-              "hikarisub-$VERSION-linux-x86_64.rpm" "hikarisub-$VERSION-linux-x86_64.tar.gz" \
-              "hikari-ai-$VERSION-linux-x64.gz" "hikari-ai-$VERSION-windows-x64.gz"; do
+              "hikarisub-$VERSION-linux-x86_64.rpm" "hikarisub-$VERSION-linux-x86_64.tar.gz"; do
             echo "stand-in for $name" > "release/$name"
           done
           python3 - release > assets.json <<'PY'
@@ -489,6 +563,44 @@ jobs:
       - name: Refuse a manifest not offered to qt only
         run: python3 tools/release/make-update-manifest.py --tag "v$VERSION" --verify manifest/hikarisub-update.json
 
+      - name: Sign with a throwaway key and check with the app's check
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y --no-install-recommends libsodium-dev
+          minisign=$(packaging/linux/fetch-tool.sh minisign "$RUNNER_TEMP/tools")
+          verify="$RUNNER_TEMP/verify-release-signature"
+          tools/release/build-verifier.sh "$verify"
+          (cd release && sha256sum -- * > ../manifest/SHA256SUMS)
+          printf 'dry-run\ndry-run\n' | "$minisign" -G -p "$RUNNER_TEMP/throwaway.pub" -s "$RUNNER_TEMP/throwaway.key" > /dev/null
+          if MINISIGN_SECRET_KEY=$(cat "$RUNNER_TEMP/throwaway.key") MINISIGN_PASSWORD=wrong \
+              tools/release/sign-release.sh "$minisign" "v$VERSION" manifest/SHA256SUMS; then
+            echo "::error::The throwaway key signed with a wrong password."
+            exit 1
+          fi
+          MINISIGN_SECRET_KEY=$(cat "$RUNNER_TEMP/throwaway.key") MINISIGN_PASSWORD=dry-run \
+            tools/release/sign-release.sh "$minisign" "v$VERSION" manifest/hikarisub-update.json manifest/SHA256SUMS
+          rm "$RUNNER_TEMP/throwaway.key"
+          for name in hikarisub-update.json SHA256SUMS; do
+            "$verify" "manifest/$name" "manifest/$name.minisig" "v$VERSION" "$RUNNER_TEMP/throwaway.pub"
+          done
+          (cd manifest && "$minisign" -Vm SHA256SUMS -p "$RUNNER_TEMP/throwaway.pub")
+          if "$verify" manifest/hikarisub-update.json manifest/hikarisub-update.json.minisig "v$VERSION.1" \
+              "$RUNNER_TEMP/throwaway.pub"; then
+            echo "::error::A signature for v$VERSION passed as another release's."
+            exit 1
+          fi
+          if "$verify" manifest/hikarisub-update.json manifest/hikarisub-update.json.minisig "v$VERSION"; then
+            echo "::error::The app's shipped keys accepted the throwaway key."
+            exit 1
+          fi
+          {
+            echo
+            echo 'Signed with a throwaway key:'
+            echo '```'
+            cat manifest/hikarisub-update.json.minisig
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Check a bad offer_to is refused
         run: |
           set -euo pipefail
@@ -509,13 +621,17 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hikarisub-update-manifest-dry-run
-          path: manifest/hikarisub-update.json
+          path: |
+            manifest/hikarisub-update.json
+            manifest/hikarisub-update.json.minisig
+            manifest/SHA256SUMS
+            manifest/SHA256SUMS.minisig
           if-no-files-found: error
 
   # A job of its own that runs nothing from the repository, so the site's token never meets the release's code.
   site:
     name: Tell the site
-    needs: [release-version, release]
+    needs: [release-version, publish]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:

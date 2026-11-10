@@ -56,19 +56,20 @@ void Api::unsubscribe(std::uint64_t subscription)
     std::erase_if(m_subscriptions, [&](const Subscription &s) { return s.id == subscription; });
 }
 
-void Api::publish(const Event &event, std::optional<application::DocumentId> document, const Event *narrowed)
+void Api::publish(const Event &event, std::optional<application::DocumentId> document,
+                  const std::function<Event(const Caller &)> &narrowed)
 {
     const auto target = m_host.documents ? m_host.documents->workspace().editingTarget() : std::nullopt;
     const std::vector<Subscription> current = m_subscriptions;
     for (const Subscription &s : current) {
         if (!s.events.empty() && std::find(s.events.begin(), s.events.end(), event.name) == s.events.end())
             continue;
-        if (document && !s.caller.allDocuments && target != document)
+        if (document && !detail::sees(s.caller, target, *document))
             continue;
         const bool live = std::any_of(m_subscriptions.begin(), m_subscriptions.end(),
                                       [&](const Subscription &l) { return l.id == s.id; });
         if (live)
-            s.listener(narrowed && !s.caller.allDocuments ? *narrowed : event);
+            s.listener(narrowed && !s.caller.allDocuments ? narrowed(s.caller) : event);
     }
 }
 
@@ -103,14 +104,17 @@ void Api::documentsChanged()
         return;
     const application::Workspace &workspace = m_host.documents->workspace();
     const auto target = workspace.editingTarget();
-    Json all = Json::array();
-    for (const application::DocumentId id : workspace.documents())
-        all.push(Json(id.value));
     const Json editing = target ? Json(target->value) : Json(nullptr);
-    const Event full{"documents.changed", Json::object({{"documents", all}, {"editingTarget", editing}})};
-    const Event narrow{"documents.changed",
-                       Json::object({{"documents", target ? Json::array({editing}) : Json::array()}, {"editingTarget", editing}})};
-    publish(full, std::nullopt, &narrow);
+    const auto seenBy = [&](const Caller &caller) {
+        Json seen = Json::array();
+        for (const application::DocumentId id : workspace.documents())
+            if (detail::sees(caller, target, id))
+                seen.push(Json(id.value));
+        return Event{"documents.changed", Json::object({{"documents", seen}, {"editingTarget", editing}})};
+    };
+    Caller everyone;
+    everyone.allDocuments = true;
+    publish(seenBy(everyone), std::nullopt, seenBy);
 }
 
 void Api::panelChanged(std::string_view panel)

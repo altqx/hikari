@@ -207,6 +207,19 @@ ShellMenu {
             command: "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD"
             text: qsTr("Copy with subtitles")
         }
+        MenuSeparator {}
+        SnapshotItem {
+            objectName: videoMenu.itemPrefix + "SaveSubtitles"
+            iconRole: "subtitles-snapshot"
+            command: "VIDEO_SAVE_SUBTITLES_TO_PNG"
+            text: qsTr("Save subtitles only as PNG…")
+        }
+        SnapshotItem {
+            objectName: videoMenu.itemPrefix + "CopySubtitles"
+            iconRole: "subtitles-copy"
+            command: "VIDEO_COPY_SUBTITLES_TO_CLIPBOARD"
+            text: qsTr("Copy subtitles only")
+        }
     }
     ShellMenu {
         id: streamsMenu

@@ -19,25 +19,31 @@ FocusScope {
     signal restoreRequested()
     signal autosavesRequested()
     signal recentChosen(string path)
+    signal projectChosen(string path)
+    signal openFolderRequested()
 
+    property int shellWindow: 0
     property var rows: []
+    property var projectRows: []
     property var sessionNames: []
-    readonly property var shownRows: {
-        const query = filterField.text.trim().toLocaleLowerCase()
-        if (query.length === 0)
-            return rows
-        return rows.filter(r => r.name.toLocaleLowerCase().includes(query) || r.path.toLocaleLowerCase().includes(query))
-    }
-    readonly property bool anyMissing: rows.some(r => r.missing)
+    property string projectName: ""
+    property var lastTabs: []
 
     function reload() {
         rows = app.homeRecent()
+        projectRows = app.homeRecentProjects()
         sessionNames = app.lastSessionSummary().names
+        reloadProject()
         now = new Date()
     }
+    function reloadProject() {
+        projectName = app.projectName(shellWindow)
+        lastTabs = app.projectLastTabs(shellWindow).names
+    }
     function takeFocus() {
-        if (recentList.count > 0)
-            recentList.forceActiveFocus(Qt.OtherFocusReason)
+        const list = recentProjects.list.count > 0 ? recentProjects.list : recentFiles.list
+        if (list.count > 0)
+            list.forceActiveFocus(Qt.OtherFocusReason)
         else
             newButton.forceActiveFocus(Qt.OtherFocusReason)
     }
@@ -52,17 +58,6 @@ FocusScope {
         if (days === 1)
             return qsTr("Yesterday %1").arg(time)
         return opened.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
-    }
-    function open(row) {
-        if (row && !row.missing)
-            home.recentChosen(row.path)
-    }
-    function remove(row) {
-        if (!row)
-            return
-        const index = recentList.currentIndex
-        home.app.removeRecent(row.path)
-        recentList.currentIndex = Math.min(index, recentList.count - 1)
     }
 
     Timer {
@@ -83,6 +78,8 @@ FocusScope {
     Connections {
         target: home.app
         function onRecentChanged() { home.rows = home.app.homeRecent() }
+        function onRecentProjectsChanged() { home.projectRows = home.app.homeRecentProjects() }
+        function onProjectsChanged() { home.reloadProject() }
     }
 
     Accessible.role: Accessible.Pane
@@ -124,6 +121,12 @@ FocusScope {
                 iconRole: "open-subtitles"
                 text: qsTr("Open…")
                 onClicked: home.openRequested()
+            }
+            IconTextButton {
+                objectName: "homeOpenFolder"
+                iconRole: "open-project"
+                text: qsTr("Open folder…")
+                onClicked: home.openFolderRequested()
             }
             IconTextButton {
                 objectName: "homeOpenVideo"
@@ -271,235 +274,92 @@ FocusScope {
                 }
 
                 Rectangle {
-                    objectName: "homeRecent"
+                    objectName: "homeProject"
+                    visible: home.projectName.length > 0
+                    Layout.fillWidth: true
+                    implicitHeight: projectRow.implicitHeight + 20
+                    color: Theme.panel
+                    border.color: Theme.line
+                    Accessible.role: Accessible.Grouping
+                    Accessible.name: projectTitle.text
+                    RowLayout {
+                        id: projectRow
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 12
+                        Icon { iconRole: "project"; size: 20 }
+                        ColumnLayout {
+                            spacing: 0
+                            Layout.fillWidth: true
+                            Label {
+                                id: projectTitle
+                                objectName: "homeProjectName"
+                                text: home.projectName
+                                font.bold: true
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                            Label {
+                                objectName: "homeProjectTabs"
+                                visible: home.lastTabs.length > 0
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                color: Theme.muted
+                                text: home.lastTabs.join(", ")
+                            }
+                        }
+                        IconTextButton {
+                            iconRole: "last-session"
+                            objectName: "homeReopenTabs"
+                            visible: home.lastTabs.length > 0
+                            text: qsTr("Reopen last tabs (%1)").arg(home.lastTabs.length)
+                            Accessible.description: projectTitle.text
+                            onClicked: home.app.reopenProjectTabs(home.shellWindow)
+                        }
+                    }
+                }
+
+                RecentList {
+                    id: recentProjects
+                    page: home
+                    prefix: "homeProjects"
+                    visible: rows.length > 0
+                    rows: home.projectRows
+                    title: qsTr("Recent projects")
+                    emptyText: qsTr("No recent projects")
+                    noMatchText: qsTr("No matching projects")
+                    filterName: qsTr("Filter recent projects")
+                    removeMissingText: qsTr("Remove missing folders")
+                    iconRole: "recent-projects"
+                    openIconRole: "open-project"
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: 120
+                    Layout.preferredHeight: Math.min(naturalHeight, 260)
+                    onChosen: row => home.projectChosen(row.path)
+                    onRemoveRequested: path => home.app.removeRecentProject(path)
+                    onRemoveMissingRequested: home.app.removeMissingRecentProjects()
+                }
+
+                RecentList {
+                    id: recentFiles
+                    page: home
+                    prefix: "home"
+                    listFocus: true
+                    rows: home.rows
+                    title: qsTr("Recent files")
+                    emptyText: qsTr("No recent files")
+                    noMatchText: qsTr("No matching files")
+                    filterName: qsTr("Filter recent files")
+                    removeMissingText: qsTr("Remove missing files")
+                    iconRole: "recent-subtitles"
+                    openIconRole: "open-subtitles"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 160
-                    color: Theme.panel
-                    border.color: Theme.line
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        spacing: 0
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.minimumHeight: 40
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            spacing: 12
-                            Label {
-                                text: qsTr("Recent files")
-                                font.bold: true
-                                Layout.fillWidth: true
-                            }
-                            TextField {
-                                id: filterField
-                                objectName: "homeFilter"
-                                visible: home.rows.length > 0
-                                Layout.preferredWidth: 220
-                                placeholderText: qsTr("Filter")
-                                Accessible.name: qsTr("Filter recent files")
-                                Keys.onDownPressed: recentList.forceActiveFocus(Qt.TabFocusReason)
-                            }
-                        }
-                        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
-                        RowLayout {
-                            visible: home.rows.length > 0
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 15
-                            Layout.rightMargin: 12
-                            Layout.topMargin: 3
-                            Layout.bottomMargin: 3
-                            Label { text: qsTr("Name"); color: Theme.muted; font: home.smallFont; Layout.fillWidth: true }
-                            Label { text: qsTr("Last opened"); color: Theme.muted; font: home.smallFont }
-                        }
-                        Rectangle { visible: home.rows.length > 0; Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
-                        Label {
-                            objectName: "homeNoRecent"
-                            visible: home.shownRows.length === 0
-                            Layout.margins: 12
-                            color: Theme.muted
-                            text: home.rows.length === 0 ? qsTr("No recent files") : qsTr("No matching files")
-                        }
-                        Item { visible: !recentList.visible; Layout.fillHeight: true }
-                        ListView {
-                            id: recentList
-                            objectName: "homeRecentList"
-                            visible: count > 0
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            clip: true
-                            focus: true
-                            activeFocusOnTab: true
-                            boundsBehavior: Flickable.StopAtBounds
-                            keyNavigationEnabled: true
-                            highlightMoveDuration: 0
-                            model: home.shownRows
-                            Accessible.role: Accessible.List
-                            Accessible.name: qsTr("Recent files")
-                            ScrollBar.vertical: ScrollBar { policy: recentList.contentHeight > recentList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
-                            property bool keyboardFocus: false
-                            onActiveFocusChanged: {
-                                if (!activeFocus)
-                                    keyboardFocus = false
-                                else if (currentIndex < 0 && count > 0)
-                                    currentIndex = 0
-                            }
-                            MenuKey.onRequested: {
-                                if (currentItem)
-                                    rowMenu.show(home.shownRows[currentIndex], currentItem, 12, currentItem.height)
-                            }
-                            Keys.onPressed: event => {
-                                const row = home.shownRows[currentIndex]
-                                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                    home.open(row)
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Delete) {
-                                    home.remove(row)
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Home) {
-                                    currentIndex = 0
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_End) {
-                                    currentIndex = count - 1
-                                    event.accepted = true
-                                }
-                                if (event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab)
-                                    keyboardFocus = true
-                            }
-                            delegate: Item {
-                                id: row
-                                required property var modelData
-                                required property int index
-                                readonly property bool current: ListView.isCurrentItem
-                                objectName: "homeRecentRow" + index
-                                width: ListView.view.width
-                                implicitHeight: rowContent.implicitHeight + 10
-                                Accessible.role: Accessible.ListItem
-                                Accessible.name: modelData.name + ", " + modelData.path
-                                                 + (whenLabel.text.length > 0 ? ", " + qsTr("last opened %1").arg(whenLabel.text) : "")
-                                                 + (modelData.missing ? ", " + qsTr("missing") : "")
-                                Accessible.selected: current
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: row.current && recentList.activeFocus ? Theme.select
-                                         : hover.hovered ? Theme.raised : "transparent"
-                                }
-                                Rectangle {
-                                    visible: row.current && recentList.activeFocus
-                                    width: 3
-                                    height: parent.height
-                                    color: Theme.accent
-                                }
-                                Rectangle {
-                                    anchors.bottom: parent.bottom
-                                    width: parent.width
-                                    height: 1
-                                    color: Theme.highContrast ? Theme.line : Theme.raised
-                                }
-                                Rectangle {
-                                    objectName: "homeRowFocus"
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    border.width: 1
-                                    border.color: Theme.focus
-                                    visible: row.current && recentList.activeFocus && recentList.keyboardFocus
-                                }
-                                HoverHandler { id: hover }
-                                TapHandler {
-                                    acceptedButtons: Qt.LeftButton
-                                    onTapped: {
-                                        recentList.currentIndex = row.index
-                                        recentList.forceActiveFocus(Qt.MouseFocusReason)
-                                    }
-                                    onDoubleTapped: home.open(row.modelData)
-                                }
-                                TapHandler {
-                                    acceptedButtons: Qt.RightButton
-                                    onTapped: eventPoint => {
-                                        recentList.currentIndex = row.index
-                                        recentList.forceActiveFocus(Qt.MouseFocusReason)
-                                        rowMenu.show(row.modelData, row, eventPoint.position.x, eventPoint.position.y)
-                                    }
-                                }
-                                RowLayout {
-                                    id: rowContent
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.leftMargin: 15
-                                    anchors.rightMargin: 12
-                                    spacing: 12
-                                    ColumnLayout {
-                                        spacing: 0
-                                        Layout.fillWidth: true
-                                        RowLayout {
-                                            spacing: 8
-                                            Layout.fillWidth: true
-                                            Label {
-                                                text: row.modelData.name
-                                                font.bold: !row.modelData.missing
-                                                color: row.modelData.missing ? Theme.muted : Theme.text
-                                                elide: Text.ElideRight
-                                                Layout.maximumWidth: Math.max(80, rowContent.width - 220)
-                                            }
-                                            Label {
-                                                objectName: "homeMissing" + row.index
-                                                visible: row.modelData.missing
-                                                text: qsTr("Missing")
-                                                color: Theme.warning
-                                                font: home.smallFont
-                                                leftPadding: 5
-                                                rightPadding: 5
-                                                background: Rectangle {
-                                                    color: "transparent"
-                                                    border.color: Theme.warning
-                                                    radius: 3
-                                                }
-                                            }
-                                            Item { Layout.fillWidth: true }
-                                        }
-                                        Label {
-                                            text: row.modelData.path
-                                            color: Theme.muted
-                                            font: home.smallFont
-                                            elide: Text.ElideMiddle
-                                            Layout.fillWidth: true
-                                        }
-                                    }
-                                    IconTextButton {
-                                        iconRole: "remove"
-                                        objectName: "homeRemove" + row.index
-                                        visible: row.modelData.missing
-                                        text: qsTr("Remove")
-                                        focusPolicy: Qt.NoFocus
-                                        Accessible.description: row.modelData.name
-                                        onClicked: home.remove(row.modelData)
-                                    }
-                                    IconButton {
-                                        objectName: "homeShowInFolder" + row.index
-                                        visible: !row.modelData.missing && hover.hovered
-                                        iconRole: "show-in-folder"
-                                        text: qsTr("Show in folder")
-                                        flat: true
-                                        focusPolicy: Qt.NoFocus
-                                        onClicked: home.app.showInFolder(row.modelData.path)
-                                    }
-                                    Label {
-                                        id: whenLabel
-                                        objectName: "homeOpened" + row.index
-                                        text: home.openedText(row.modelData.opened)
-                                        color: Theme.muted
-                                        font.features: { "tnum": 1 }
-                                        horizontalAlignment: Text.AlignRight
-                                        Layout.preferredWidth: Math.max(implicitWidth, 120)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    onChosen: row => home.recentChosen(row.path)
+                    onRemoveRequested: path => home.app.removeRecent(path)
+                    onRemoveMissingRequested: home.app.removeMissingRecent()
                 }
             }
 
@@ -528,50 +388,5 @@ FocusScope {
     Label {
         id: fontSource
         visible: false
-    }
-
-    ShellMenu {
-        id: rowMenu
-        objectName: "homeRowMenu"
-        property var row: null
-        function show(row, item, x, y) {
-            rowMenu.row = row
-            rowMenu.popup(item, x, y)
-        }
-        ShellMenuItem {
-            objectName: "homeMenuOpen"
-            iconRole: "open-subtitles"
-            text: qsTr("Open")
-            shortcutText: ShellMenus.keyText("Enter")
-            enabled: rowMenu.row !== null && !rowMenu.row.missing
-            onTriggered: home.open(rowMenu.row)
-        }
-        ShellMenuItem {
-            objectName: "homeMenuShowInFolder"
-            iconRole: "show-in-folder"
-            text: qsTr("Show in folder")
-            onTriggered: home.app.showInFolder(rowMenu.row.path)
-        }
-        ShellMenuItem {
-            objectName: "homeMenuCopyPath"
-            iconRole: "edit-copy"
-            text: qsTr("Copy path")
-            onTriggered: home.app.copyText(rowMenu.row.path)
-        }
-        MenuSeparator {}
-        ShellMenuItem {
-            objectName: "homeMenuRemove"
-            iconRole: "remove"
-            text: qsTr("Remove from list")
-            shortcutText: ShellMenus.keyText("Del")
-            onTriggered: home.remove(rowMenu.row)
-        }
-        ShellMenuItem {
-            objectName: "homeMenuRemoveMissing"
-            iconRole: "remove"
-            text: qsTr("Remove missing files")
-            enabled: home.anyMissing
-            onTriggered: home.app.removeMissingRecent()
-        }
     }
 }

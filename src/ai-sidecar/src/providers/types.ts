@@ -13,15 +13,32 @@ export interface ProviderConfig {
     baseUrl: string;
 }
 
+export const kSearchServices = ["brave", "tavily", "exa", "firecrawl"] as const;
+export type SearchService = typeof kSearchServices[number];
+
 export interface ProvidersSetParams {
     providers: ProviderConfig[];
+    /** The service that searches for providers without their own search; absent when web search is off or none is set. */
+    searchService?: SearchService;
 }
 
 export type Part =
     | { type: "text"; text: string }
     | { type: "image"; mediaType: string; base64: string }
     | ToolCall
-    | { type: "toolResult"; callId: string; content: string; isError?: boolean };
+    | { type: "toolResult"; callId: string; content: string; isError?: boolean }
+    | ProviderState;
+
+/**
+ * An assistant message's content as the provider sent it, which goes back in its place on the same wire: the server
+ * tool parts Gemini needs back as they were, and Anthropic's search results.
+ */
+export interface ProviderState {
+    type: "providerState";
+    wire: Wire;
+    /** A JSON array of the wire's own parts or content blocks. */
+    json: string;
+}
 
 export interface ToolCall {
     type: "toolCall";
@@ -44,51 +61,95 @@ export interface ToolDefinition {
     parametersJson: string;
 }
 
+export type CacheLifetime = "minutes" | "hour";
+
+/**
+ * Sent as system, tools sorted by name, context, then messages, so everything before the messages is a prefix the
+ * provider can cache. Nothing that changes per turn belongs in system, tools or context.
+ */
 export interface Request {
     model: string;
     system?: string;
     messages: Message[];
     tools?: ToolDefinition[];
+    /** Pinned material that changes rarely, such as the document summary or the style list. */
+    context?: string;
+    /** The same for every turn of one conversation, so the provider routes its turns to one cache. */
+    cacheKey?: string;
+    cacheLifetime?: CacheLifetime;
+    /**
+     * Keeps system, tools and context in an explicit provider cache for the conversation (Gemini), for a large fixed
+     * context reused over many turns. Needs cacheKey. Where no cache can be made, the request goes out whole.
+     */
+    explicitCache?: boolean;
+    /**
+     * False sends no cache markers, cache key or explicit cache. Providers that cache on their own (OpenAI, Gemini's
+     * implicit cache) still may.
+     */
+    caching?: boolean;
     maxOutputTokens?: number;
+    /** Offers the provider's own web search and page reading, where it has them. */
+    webSearch?: boolean;
 }
 
 export interface CompleteParams {
     /** Names this completion in its `session/update` notifications. */
     stream: number;
     providerId: string;
-    /** Empty or absent for a provider that needs none. */
-    key?: string;
     request: Request;
+}
+
+/** Deletes the explicit cache kept for one conversation. */
+export interface ConversationEndParams {
+    providerId: string;
+    cacheKey: string;
 }
 
 export interface ModelsListParams {
     providerId: string;
-    key?: string;
 }
 
 export interface Usage {
     inputTokens: number;
     outputTokens: number;
-    /** Part of inputTokens. */
+    /** Part of inputTokens: read from the provider's cache. */
     cachedInputTokens: number;
+    /** Part of inputTokens: written to the provider's cache. */
+    cacheWriteTokens: number;
+    /** Part of cacheWriteTokens: kept for an hour. */
+    cacheWriteHourTokens: number;
     /** What the provider says the request cost, when it says. */
     reportedCost?: number;
 }
 
 export type StopReason = "end" | "toolUse" | "maxTokens" | "refused";
 
+/** A source an answer cites; `index` numbers the sources of one completion from 1, in the order first cited. */
+export interface Citation {
+    index: number;
+    url: string;
+    title: string;
+    quote?: string;
+}
+
 export interface Finished {
     reason: StopReason;
     text: string;
     toolCalls: ToolCall[];
     usage: Usage;
+    citations?: Citation[];
+    /** Google's search suggestions as the HTML Gemini returned; its terms require showing them with the answer. */
+    searchSuggestions?: string;
+    /** Goes back in the assistant message's parts when the conversation continues. */
+    providerState?: ProviderState;
 }
 
 export type Update =
     | { kind: "text"; text: string }
     | { kind: "toolCall"; index: number; id: string; name: string }
     | { kind: "toolArguments"; index: number; delta: string }
-    | { kind: "usage"; usage: Usage };
+    | { kind: "usage"; usage: Usage }
+    | { kind: "citation"; citation: Citation };
 
 export interface UpdateParams {
     stream: number;
@@ -120,6 +181,8 @@ export interface Price {
     input: number;
     output: number;
     cachedInput?: number;
+    cacheWrite?: number;
+    cacheWriteHour?: number;
 }
 
 export interface Model {

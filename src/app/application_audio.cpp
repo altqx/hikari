@@ -61,21 +61,21 @@ void Application::noticeOnsets()
     //: Status bar while Snap to vocal onsets (the audio panel's Tap menu, Karaoke mode) reads the audio
     const QString finding = QCoreApplication::translate("HikariSub.Audio", "Finding vocal onsets…");
     if (m_audio->findingOnsets()) {
-        m_shell->setStatusText(finding);
+        shell().setStatusText(finding);
         return;
     }
-    if (m_shell->statusText() != finding)
+    if (shell().statusText() != finding)
         return;
     if (!m_audio->onsetsFound()) {
-        m_shell->setStatusText(QString());
+        shell().setStatusText(QString());
         return;
     }
     //: Status bar once Snap to vocal onsets has read the audio and boundaries snap
     const QString found = QCoreApplication::translate("HikariSub.Audio", "Vocal onsets found");
-    m_shell->setStatusText(found);
+    shell().setStatusText(found);
     QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, found] {
-        if (m_shell->statusText() == found)
-            m_shell->setStatusText(QString());
+        if (shell().statusText() == found)
+            shell().setStatusText(QString());
     });
 }
 
@@ -116,7 +116,8 @@ void Application::showVideoAtAudio(int ms)
 {
     auto &video = m_video->session();
     if (video.state() != application::VideoSession::State::Ready || video.playing() || video.frameCount() <= 0
-        || !m_audioTimebase || m_audioTimebasePath != video.path())
+        || !m_audioTimebase || m_audioTimebasePath != video.path()
+        || m_audioTimebaseSerial != video.frameTimesSerial())
         return;
     const int frame = std::clamp(m_audioTimebase->frameShownAt(ms), 0, video.frameCount() - 1);
     if (frame == video.requestedFrame()) {

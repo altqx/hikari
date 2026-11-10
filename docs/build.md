@@ -128,7 +128,7 @@ A failure in any of them reopens the build decision rather than substituting ano
 - **SDK state:** `out/sdk` holds the Qt mirror, the Qt installation (stamped with the lock digest), the metadata cache and the vcpkg checkout. It is shared by presets, ignored, and reconstructible. A Qt installation from a different lock stops the configure instead of being reused.
 - **Authentication:** with `QT_INSTALLER_JWT_TOKEN` set, the installer runs under a private HOME (on Windows also a private `APPDATA` and `LOCALAPPDATA`, where it keeps its account file) that is deleted afterwards. Without it, the installer uses the developer's existing Qt Account login. The owner authorized local and CI installs under the locked license set on 2026-09-29.
 - **Isolation in CI:** `cmake --workflow --preset provision` is the only step given the secret. The credential-free `*-verify` workflow then reuses the stamped installation.
-- **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip, plus the ALSA development files (PortAudio's host API links the system ALSA library) and the PulseAudio client library `libpulse.so.0`, which the official Qt Multimedia build links. At run time its FFmpeg plugin also loads X11, Xrandr, Xext, libdrm, bzip2 and zlib; both Linux workflows install them.
+- **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, LLD (`ld.lld`, the linker for our own targets; `-DCMAKE_LINKER_TYPE=BFD` switches back to GNU ld), make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip, plus the ALSA development files (PortAudio's host API links the system ALSA library) and the PulseAudio client library `libpulse.so.0`, which the official Qt Multimedia build links. At run time its FFmpeg plugin also loads X11, Xrandr, Xext, libdrm, bzip2 and zlib; both Linux workflows install them.
 
 Failure behavior exercised locally: a corrupted or stray Qt mirror object and a vcpkg checkout at another commit each stop the configure with the path named; a tampered vcpkg tool is replaced by the verified download. The wx Linux root build moved to `cmake/linux-compat/LegacyWxLinux.CMakeLists.txt` as reference.
 
@@ -203,7 +203,7 @@ The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/Automat
 
 ## Grammar check (GR1, 2026-10-27)
 
-**harper-ls** 3.0.0, Automattic's Harper as a language server, is upstream's release build pinned in `cmake/HikariHarper.cmake`: the archive, the binary in it and Harper's `LICENSE` at the tag, each by SHA-256. Linux takes the static musl build, so it needs no host library and passes the packages' glibc ceiling; Windows takes the MSVC build, whose VCRUNTIME140 the package already ships. Configure fetches them into `<build>/harper-downloads` (the cache path `HIKARI_HARPER_DOWNLOADS` names another; a folder already holding them works offline), and the install tree puts `harper-ls` (`harper-ls.exe`) beside the application, with `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, the cargo-about list of the licences of the crates built into it. The application starts it only while Settings › Spelling & grammar has an English chosen, and talks LSP to it over stdio (`hikari::backends::HarperClient`). Its rule groups (`src/core/grammar_rules.inc`) are generated from the pinned tag; `tools/harper/README.md` lists what moves with the pin. harper-ls 3.0.0 deadlocks when two of its texts are opened at once (each opening pulls the settings and takes their write lock while another holds a read lock it takes twice, `load_user_dictionary`), so the client keeps one text open at a time and queues the rest.
+**harper-ls** 3.1.0, Automattic's Harper as a language server, is upstream's release build pinned in `cmake/HikariHarper.cmake`: the archive, the binary in it and Harper's `LICENSE` at the tag, each by SHA-256. Linux takes the static musl build, so it needs no host library and passes the packages' glibc ceiling; Windows takes the MSVC build, whose VCRUNTIME140 the package already ships. Configure fetches them into `<build>/harper-downloads` (the cache path `HIKARI_HARPER_DOWNLOADS` names another; a folder already holding them works offline), and the install tree puts `harper-ls` (`harper-ls.exe`) beside the application, with `licenses/harper/LICENSE` and `licenses/harper/THIRD-PARTY.txt`, the cargo-about list of the licences of the crates built into it. The application starts it only while Settings › Spelling & grammar has an English chosen, and talks LSP to it over stdio (`hikari::backends::HarperClient`). Its rule groups (`src/core/grammar_rules.inc`) are generated from the pinned tag; `tools/harper/README.md` lists what moves with the pin. harper-ls before 3.1.0 deadlocked when two of its texts were opened at once (each opening pulls the settings and takes their write lock while another holds a read lock it takes twice, `load_user_dictionary`), so the client keeps one text open at a time and queues the rest.
 
 ## AI sidecar (SC1, 2026-11-02)
 
@@ -215,16 +215,20 @@ The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/Automat
 **The build.** With `HIKARI_AI_SIDECAR` on (the default), the `hikari_ai_sidecar` target builds `src/ai-sidecar` in three steps:
 
 1. `bun ci --ignore-scripts` installs the locked packages. It is frozen, runs no lifecycle scripts and has no `trustedDependencies`. `bunfig.toml` sets `minimumReleaseAge` to 7 days for any lock change.
-2. `bun tools/build.ts` runs `bun build --compile --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig --target=bun-<platform>-baseline --compile-executable-path=<pinned bun>`, with the build id (`<version>+<commit>`) and HA1's `kApiVersion` defined in. The output is `<build>/src/ai-sidecar/hikari-ai[.exe]`.
+2. `bun tools/build.ts` builds the two parts into `<build>/src/ai-sidecar/hikari-ai/` ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)):
+   - the runtime, `hikari-ai-runtime[.exe]`: `src/runtime.ts` built with `bun build --compile --bytecode --no-compile-autoload-dotenv --no-compile-autoload-bunfig --target=bun-<platform>-baseline --compile-executable-path=<pinned bun>`;
+   - the bundle, `hikari-ai.js` and `hikari-ai.js.jsc`, and each provider SDK as `hikari-ai-<sdk>.js` with its `.jsc`, which the bundle loads on first use: `bun build --target=bun --format=cjs --bytecode`, with the build id (`<version>+<commit>`), HA1's `kApiVersion`, the sidecar's version and its package versions defined in;
+   - `build.json`, what the channel manifest says about the build. `--single` also builds today's single executable, for the startup check.
 3. It then checks the bundle's metafile: no input from `@anthropic-ai/claude-agent-sdk`, and `NOTICES.txt` current.
 
-Without the two `--no-compile-autoload-*` flags, a `.env` or `bunfig.toml` in the working directory would reach the binary; `test/compile.test.ts` proves both ways.
+Without the two `--no-compile-autoload-*` flags, a `.env` or `bunfig.toml` in the working directory would reach the binary; `test/compile.test.ts` proves both ways, and that the runtime reads neither when it runs a bundle.
 
 **Tests and the local sidecar.**
 
 - ctest runs `bun test` as `hikari_ai_sidecar_bun_tests` (label `ai-sidecar`).
-- `-DHIKARI_AI_LOCAL_SIDECAR=ON` makes the app run that build's sidecar instead of downloading one. Packages leave it off.
-- `tools/release/build-ai-sidecar.sh <version> <out>` makes the release assets. The commit must match the app's, because the build id must match.
+- `-DHIKARI_AI_LOCAL_SIDECAR=ON` makes the app run that build's runtime and bundle instead of downloading one, with no update checks. Packages leave it off.
+- `tools/release/build-ai-sidecar.sh <version> <out>` makes the release assets ([distribution](distribution.md#the-ai-sidecar)) and runs `tools/startup.ts`, the startup check.
+- `bun tools/compat.ts --runtime <runtime> --bundle <bundle> --app <name>=<api.json>...` runs `initialize` against each app's API reference.
 
 ## Editor audio output tests (N6, 2026-10-03)
 

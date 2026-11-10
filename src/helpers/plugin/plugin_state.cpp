@@ -1,6 +1,6 @@
 #include "plugin_state.h"
 
-#include "document_prelude.h"
+#include "preludes.h"
 
 #include "hikari/api/api.h"
 
@@ -11,6 +11,7 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
@@ -402,6 +403,53 @@ int call(lua_State *L)
     return pushCallResult(L, Access::host(L).call(operation, *params));
 }
 
+int request(lua_State *L, Area area)
+{
+    const std::string operation = luaL_checkstring(L, 1);
+    auto params = toJson(L, 2, 0);
+    if (!params)
+        raise(L, params.error());
+    return pushCallResult(L, Access::host(L).request(area, operation, *params));
+}
+
+int uiCall(lua_State *L)
+{
+    return request(L, Area::Ui);
+}
+
+int filesCall(lua_State *L)
+{
+    return request(L, Area::Files);
+}
+
+int netCall(lua_State *L)
+{
+    return request(L, Area::Net);
+}
+
+void addHandler(lua_State *L, const std::string &name, int function)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, kEventsKey);
+    lua_getfield(L, -1, name.c_str());
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, name.c_str());
+    }
+    lua_pushvalue(L, function);
+    lua_rawseti(L, -2, static_cast<int>(lua_objlen(L, -2) + 1));
+    lua_pop(L, 2);
+}
+
+int listen(lua_State *L)
+{
+    const std::string name = luaL_checkstring(L, 1);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+    addHandler(L, name, 2);
+    return 0;
+}
+
 int lock(lua_State *L)
 {
     const auto held = Access::host(L).lock();
@@ -446,16 +494,12 @@ int onEvent(lua_State *L)
     luaL_checktype(L, 2, LUA_TFUNCTION);
     lua_getfield(L, LUA_REGISTRYINDEX, kEventsKey);
     lua_getfield(L, -1, name.c_str());
-    if (lua_isnil(L, -1)) {
+    const bool first = lua_isnil(L, -1);
+    lua_pop(L, 2);
+    if (first)
         if (auto subscribed = Access::host(L).subscribe(name); !subscribed)
             raise(L, subscribed.error());
-        lua_pop(L, 1);
-        lua_newtable(L);
-        lua_pushvalue(L, -1);
-        lua_setfield(L, -3, name.c_str());
-    }
-    lua_pushvalue(L, 2);
-    lua_rawseti(L, -2, static_cast<int>(lua_objlen(L, -2) + 1));
+    addHandler(L, name, 2);
     return 0;
 }
 
@@ -683,21 +727,27 @@ std::expected<void, std::string> PluginState::open()
 std::expected<void, std::string> PluginState::runPrelude()
 {
     lua_State *L = m_lua;
-    const std::string_view source = documentPrelude();
-    if (luaL_loadbufferx(L, source.data(), source.size(), "=hikari", "t") != 0) {
-        std::string message = text(L, -1);
-        lua_pop(L, 1);
-        return std::unexpected(std::move(message));
-    }
-    lua_getglobal(L, "hikari");
-    for (const lua_CFunction function : {lock, unlock}) {
-        lua_pushlightuserdata(L, this);
-        lua_pushcclosure(L, function, 1);
-    }
-    if (lua_pcall(L, 3, 0, 0) != 0) {
-        std::string message = text(L, -1);
-        lua_pop(L, 1);
-        return std::unexpected(std::move(message));
+    const std::pair<std::string_view, std::array<lua_CFunction, 2>> preludes[] = {
+        {documentPrelude(), {lock, unlock}},
+        {uiPrelude(), {uiCall, listen}},
+        {filesPrelude(), {filesCall, netCall}},
+    };
+    for (const auto &[source, functions] : preludes) {
+        if (luaL_loadbufferx(L, source.data(), source.size(), "=hikari", "t") != 0) {
+            std::string message = text(L, -1);
+            lua_pop(L, 1);
+            return std::unexpected(std::move(message));
+        }
+        lua_getglobal(L, "hikari");
+        for (const lua_CFunction function : functions) {
+            lua_pushlightuserdata(L, this);
+            lua_pushcclosure(L, function, 1);
+        }
+        if (lua_pcall(L, 3, 0, 0) != 0) {
+            std::string message = text(L, -1);
+            lua_pop(L, 1);
+            return std::unexpected(std::move(message));
+        }
     }
     return {};
 }
@@ -717,8 +767,10 @@ std::expected<void, std::string> PluginState::protectedCall(int arguments, Host 
     else if (status != 0)
         message = text(L, -1);
     lua_settop(L, base - 1);
-    if (status != 0)
+    if (status != 0) {
+        lua_gc(L, LUA_GCCOLLECT, 0);
         return std::unexpected(message);
+    }
     return {};
 }
 
@@ -773,6 +825,14 @@ std::expected<void, std::string> PluginState::run(const std::string &command, Ho
 std::expected<void, std::string> PluginState::dispatch(const std::string &event, const Json &data, Host &host)
 {
     lua_State *L = m_lua;
+    if (event == "settings:changed") {
+        const Json *id = data.find("id");
+        const Json *value = data.find("value");
+        Json &settings = m_options.settings;
+        if (id && id->isString() && value && settings.find(id->asString()))
+            settings[id->asString()] = *value;
+        return {};
+    }
     lua_getfield(L, LUA_REGISTRYINDEX, kEventsKey);
     lua_getfield(L, -1, event.c_str());
     lua_remove(L, -2);

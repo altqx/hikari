@@ -1,7 +1,10 @@
 #include "hikari/app/plugin_manager.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include <QDir>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -166,8 +169,124 @@ private slots:
         QCOMPARE(refusal(manager, "bad-icon.hikariplugin"),
                  QStringLiteral("The package breaks the media rules: icon.png is 128x128 px, not 256x256 px."));
         QVERIFY(refusal(manager, "missing.hikariplugin").contains(QStringLiteral("can’t read")));
+        QCOMPARE(refusal(manager, "board-restricted-qml.hikariplugin"), QStringLiteral("Only Full trust plugins can ship QML panels."));
+        QCOMPARE(refusal(manager, "board-ui-import.hikariplugin"),
+                 QStringLiteral("qml/parts/Badge.qml imports Hikari.Ui, which plugin panels can’t use."));
         QVERIFY(manager.plugins().isEmpty());
         QVERIFY(!QDir(folders().plugins).exists());
+    }
+
+    void aPluginWithQmlPanelsSaysItShowsItsOwnPanels()
+    {
+        PluginManager manager(folders());
+        const QVariantMap review = manager.review(fixture("board-1.0.0-qml.hikariplugin"));
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(review.value(QStringLiteral("permissions")).toStringList(),
+                 (QStringList{QStringLiteral("Full trust: it may run native code outside HikariSub’s limits."),
+                              QStringLiteral("Shows its own panels inside HikariSub")}));
+        QCOMPARE(manager.install(true), QString());
+        QCOMPARE(only(manager).value(QStringLiteral("permissions")).toStringList().size(), 2);
+    }
+
+    void detailsListWhatAPluginAsksForAddsAndKeeps()
+    {
+        PluginManager manager(folders());
+        QVERIFY(manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        QFile manifest(installed("hikari-plugin.json"));
+        QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        manifest.write(R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "main": "main.lua",
+            "authors": ["Ana", "Bo"], "icon": "icon.png",
+            "permissions": {"documents.all": "It checks every tab."},
+            "contributes": {"commands": [{"id": "greet", "title": "Say hello"}],
+                            "panels": [{"id": "notes", "title": "Notes"}],
+                            "settings": [{"id": "count", "title": "Count", "type": "integer", "default": 1, "maximum": 5}]}})");
+        manifest.close();
+        PluginManager reread(folders());
+        const QVariantMap row = only(reread);
+        QCOMPARE(row.value(QStringLiteral("authors")).toString(), QStringLiteral("Ana, Bo"));
+        QCOMPARE(row.value(QStringLiteral("icon")).toUrl(), QUrl::fromLocalFile(installed("icon.png")));
+        QCOMPARE(row.value(QStringLiteral("adds")).toStringList(),
+                 (QStringList{QStringLiteral("Command: Say hello"), QStringLiteral("Panel: Notes")}));
+        QCOMPARE(row.value(QStringLiteral("permissions")).toStringList().size(), 1);
+        QVERIFY(row.value(QStringLiteral("permissions")).toStringList().first().contains(QStringLiteral("It checks every tab.")));
+        QUrl opened;
+        const auto routes = hikari::backends::desktop::replaceRoutes({[&](const QUrl &url) { opened = url; return true; }, {}, {}});
+        QVERIFY(reread.openDataFolder(QStringLiteral("com.example.hello")));
+        hikari::backends::desktop::replaceRoutes(routes);
+        QCOMPARE(opened, QUrl::fromLocalFile(m_dir.filePath(QStringLiteral("user/plugin-data/com.example.hello"))));
+        QVERIFY(QDir(m_dir.filePath(QStringLiteral("user/plugin-data/com.example.hello"))).exists());
+        QVariantMap count = row.value(QStringLiteral("settings")).toList().value(0).toMap();
+        QCOMPARE(count.value(QStringLiteral("id")).toString(), QStringLiteral("count"));
+        QCOMPARE(count.value(QStringLiteral("type")).toString(), QStringLiteral("integer"));
+        QCOMPARE(count.value(QStringLiteral("value")).toInt(), 1);
+
+        QSignalSpy kept(&reread, &PluginManager::settingChanged);
+        QCOMPARE(reread.setSetting(QStringLiteral("com.example.hello"), QStringLiteral("count"), QStringLiteral("4")), QString());
+        QCOMPARE(kept.count(), 1);
+        QCOMPARE(kept.first().at(2).toString(), QStringLiteral("4"));
+        count = only(reread).value(QStringLiteral("settings")).toList().value(0).toMap();
+        QCOMPARE(count.value(QStringLiteral("value")).toInt(), 4);
+        QVERIFY(!reread.setSetting(QStringLiteral("com.example.hello"), QStringLiteral("count"), QStringLiteral("9")).isEmpty());
+        QCOMPARE(kept.count(), 1);
+    }
+
+    void rememberedFoldersAreListedAndCanBeForgotten()
+    {
+        PluginManager manager(folders());
+        QVERIFY(manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        QFile manifest(installed("hikari-plugin.json"));
+        QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        manifest.write(R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "main": "main.lua",
+            "authors": ["Ana"],
+            "permissions": {"files": [{"id": "fonts", "title": "Font folder", "writable": false, "reason": "It measures lines."}]}})");
+        manifest.close();
+        QFile registry(folders().registry);
+        QVERIFY(registry.open(QIODevice::ReadOnly));
+        QJsonObject json = QJsonDocument::fromJson(registry.readAll()).object();
+        registry.close();
+        QJsonObject hello = json.value(QStringLiteral("plugins")).toObject().value(QStringLiteral("com.example.hello")).toObject();
+        const QString fonts = m_dir.filePath(QStringLiteral("fonts"));
+        hello.insert(QStringLiteral("grants"),
+                     QJsonObject{{QStringLiteral("fonts"), QJsonObject{{QStringLiteral("path"), fonts}, {QStringLiteral("writable"), true}}}});
+        QJsonObject plugins = json.value(QStringLiteral("plugins")).toObject();
+        plugins.insert(QStringLiteral("com.example.hello"), hello);
+        json.insert(QStringLiteral("plugins"), plugins);
+        QVERIFY(registry.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        registry.write(QJsonDocument(json).toJson());
+        registry.close();
+
+        PluginManager reread(folders());
+        const QVariantList rows = only(reread).value(QStringLiteral("folders")).toList();
+        QCOMPARE(rows.size(), 1);
+        const QVariantMap row = rows.first().toMap();
+        QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("fonts"));
+        QCOMPARE(row.value(QStringLiteral("title")).toString(), QStringLiteral("Font folder"));
+        QCOMPARE(row.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(fonts));
+        QVERIFY(!row.value(QStringLiteral("writable")).toBool());
+
+        QSignalSpy forgotten(&reread, &PluginManager::folderForgotten);
+        QVERIFY(!reread.forgetFolder(QStringLiteral("com.example.hello"), QStringLiteral("home")).isEmpty());
+        QCOMPARE(forgotten.count(), 0);
+        QCOMPARE(reread.forgetFolder(QStringLiteral("com.example.hello"), QStringLiteral("fonts")), QString());
+        QCOMPARE(forgotten.count(), 1);
+        QCOMPARE(forgotten.first().at(0).toString(), QStringLiteral("com.example.hello"));
+        QVERIFY(only(reread).value(QStringLiteral("folders")).toList().isEmpty());
+        QVERIFY(only(PluginManager(folders())).value(QStringLiteral("folders")).toList().isEmpty());
+    }
+
+    void anUpdateFromFileTakesOnlyTheSamePlugin()
+    {
+        PluginManager manager(folders());
+        QVERIFY(manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        const QVariantMap other = manager.reviewUpdate(fixture("hello-1.1.0.hikariplugin"), QStringLiteral("com.example.other"));
+        QVERIFY(!other.value(QStringLiteral("ok")).toBool());
+        QVERIFY(other.value(QStringLiteral("message")).toString().contains(QStringLiteral("com.example.other")));
+        QVERIFY(!manager.install(false).isEmpty());
+        const QVariantMap same = manager.reviewUpdate(fixture("hello-1.1.0.hikariplugin"), QStringLiteral("com.example.hello"));
+        QCOMPARE(same.value(QStringLiteral("change")).toString(), QStringLiteral("update"));
     }
 
     void anUnreadablePluginsFileIsReported()

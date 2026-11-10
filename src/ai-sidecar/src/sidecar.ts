@@ -1,23 +1,83 @@
-import { ErrorCode, kDeclaredMethods, kProtocolVersion, Method, type ApiCallParams, type InitializeParams,
-    type InitializeResult } from "./protocol";
+import { AgentSessions } from "./agent/session";
+import { McpServer } from "./mcp/server";
+import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
+    type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
+    type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
+    type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
-import { InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
-import type { UpdateParams } from "./providers/types";
+import { LinkRelay } from "./providers/relay";
+import { kSchemas } from "./providers/schema";
+import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./providers/service";
+import type { SearchService, UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
+import type { OperationName, Operations } from "./tools/api.gen";
+import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
+import { ToolSet, type HikariCalls } from "./tools/toolset";
+import { WebSearch } from "./tools/web";
 
 export interface Build {
     buildId: string;
     hikariApiVersion: number;
+    version: string;
+    /** The bundled packages' versions. */
+    packages: Record<string, string>;
+}
+
+function isReference(value: unknown): value is Reference {
+    if (typeof value !== "object" || value === null)
+        return false;
+    const { operations, $defs } = value as Partial<Reference>;
+    return Array.isArray(operations) && operations.every((op) => typeof op?.name === "string" && typeof op.params === "object")
+        && typeof $defs === "object" && $defs !== null;
 }
 
 /** Hikari's tools: every call goes into HA1's `Api::call` in Qt. */
-export class HikariApi {
-    constructor(private readonly peer: Peer) {}
+export class HikariApi implements HikariCalls {
+    constructor(private readonly peer: Peer, private readonly via?: () => McpVia, private readonly session?: string) {}
 
-    call(operation: string, params?: unknown): Promise<unknown> {
+    call<O extends OperationName>(operation: O, params?: Operations[O]["params"]): Promise<Operations[O]["result"]> {
         const body: ApiCallParams = params === undefined ? { operation } : { operation, params };
-        return this.peer.request(Method.apiCall, body);
+        if (this.via)
+            body.mcp = this.via();
+        if (this.session !== undefined)
+            body.session = this.session;
+        return this.peer.request(Method.apiCall, body) as Promise<Operations[O]["result"]>;
     }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isSessionModel(value: unknown): boolean {
+    return isObject(value) && typeof value.providerId === "string" && typeof value.model === "string";
+}
+
+function sessionId(method: string, params: unknown): string {
+    const id = isObject(params) ? params.sessionId : undefined;
+    if (typeof id !== "string" || id.length === 0)
+        throw new RpcError(ErrorCode.invalidParams, `${method} needs a sessionId`);
+    return id;
+}
+
+function checkedNew(params: unknown): SessionNewParams {
+    sessionId(Method.sessionNew, params);
+    const p = params as Record<string, unknown>;
+    if (!isSessionModel(p.model))
+        throw new RpcError(ErrorCode.invalidParams, "session/new needs a model with a providerId and a model");
+    if (p.history !== undefined && !Array.isArray(p.history))
+        throw new RpcError(ErrorCode.invalidParams, "session/new's history is a list of messages");
+    return p as unknown as SessionNewParams;
+}
+
+function checkedPrompt<T extends SessionPromptParams | SessionSteerParams>(method: string, params: unknown): T {
+    sessionId(method, params);
+    const p = params as Record<string, unknown>;
+    if (!Array.isArray(p.prompt) || p.prompt.length === 0)
+        throw new RpcError(ErrorCode.invalidParams, `${method} needs a prompt`);
+    if (p.model !== undefined && !isSessionModel(p.model))
+        throw new RpcError(ErrorCode.invalidParams, `${method}'s model needs a providerId and a model`);
+    return p as unknown as T;
 }
 
 /** A provider's failure as its JSON-RPC error. */
@@ -36,20 +96,69 @@ async function wire<T>(work: () => T | Promise<T>): Promise<T> {
 export class Sidecar {
     readonly api: HikariApi;
     readonly providers: ProviderService;
+    tools: ToolSet;
+    readonly web: WebSearch;
+    catalogue: Catalogue = kCatalogue;
+    readonly mcp: McpServer;
+    readonly sessions: AgentSessions;
     private initialized = false;
 
-    constructor(readonly peer: Peer, private readonly build: Build, providers: ServiceOptions = {}) {
+    constructor(readonly peer: Peer, private readonly build: Build, providers?: ServiceOptions) {
         this.api = new HikariApi(peer);
-        this.providers = new ProviderService(providers);
+        const options = providers ?? { relay: new LinkRelay(peer) };
+        this.providers = new ProviderService(options);
+        this.web = new WebSearch(options.relay, () => this.providers.searchService);
+        this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
+        this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
+            { name: "hikarisub", title: "HikariSub", version: build.buildId }, () => this.catalogue);
+        this.sessions = new AgentSessions((id) => new ToolSet(new HikariApi(peer, undefined, id), this.catalogue, [this.web]),
+            (params, signal, emit) => this.providers.complete(params, signal, emit),
+            (method, params) => peer.notify(method, params),
+            (providerId) => this.providers.imageBudget(providerId));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
-        for (const method of kDeclaredMethods)
-            this.handle(method, () => {
-                throw new RpcError(ErrorCode.methodNotFound, `${method} isn't implemented in this build`);
-            });
+        this.handle(Method.sessionNew, (params) => this.sessions.open(checkedNew(params)));
+        this.handle(Method.sessionPrompt, (params) =>
+            wire(() => this.sessions.prompt(checkedPrompt<SessionPromptParams>(Method.sessionPrompt, params))));
+        this.handle(Method.sessionSteer, (params) =>
+            this.sessions.steer(checkedPrompt<SessionSteerParams>(Method.sessionSteer, params)));
+        this.handle(Method.sessionCancel, (params) => {
+            this.sessions.cancel(sessionId(Method.sessionCancel, params));
+            return null;
+        });
+        peer.onNotification(Method.sessionCancel, (params) => {
+            const id = (params as Partial<SessionIdParams> | null)?.sessionId;
+            if (typeof id === "string")
+                this.sessions.cancel(id);
+        });
+        this.handle(Method.sessionClose, (params) => {
+            this.sessions.close(sessionId(Method.sessionClose, params));
+            return null;
+        });
         this.handle(Method.providersSet, (params) => wire(() => this.providers.set(params)));
         this.handle(Method.modelsList, (params, signal) => wire(() => this.providers.models(params, signal)));
+        this.handle(Method.conversationEnd, (params, signal) => wire(() => this.providers.endConversation(params, signal)));
         this.handle(Method.complete, (params, signal) => wire(() => this.providers.complete(params, signal,
             (stream, update) => peer.notify(Method.sessionUpdate, { stream, update } satisfies UpdateParams))));
+        this.handle(Method.searchTest, (params) => wire(() =>
+            this.web.test(checked<{ service: SearchService }>(kSchemas.searchTestParams, params).service)));
+        this.handle(Method.toolsList, (params) => ({ tools: this.tools.list((params as ToolsListParams | null)?.all === true) }));
+        this.handle(Method.toolsCall, (params) => {
+            const p = (params ?? {}) as Partial<ToolsCallParams>;
+            if (typeof p.name !== "string")
+                throw new RpcError(ErrorCode.invalidParams, "_hikari/tools.call needs a tool name");
+            return this.tools.call(p.name, p.arguments);
+        });
+        this.handle(Method.mcpMessage, (params): Promise<McpMessageResult> => {
+            const p = (params ?? {}) as Partial<McpMessageParams>;
+            if (typeof p.connection !== "string" || typeof p.text !== "string")
+                throw new RpcError(ErrorCode.invalidParams, "_hikari/mcp.message needs a connection and a text");
+            return this.mcp.message(p.connection, p.text, p.http);
+        });
+        peer.onNotification(Method.mcpClosed, (params) => {
+            const connection = (params as Partial<McpClosedParams> | null)?.connection;
+            if (typeof connection === "string")
+                this.mcp.closed(connection);
+        });
     }
 
     /** Registers a Qt request that only runs after `initialize`. */
@@ -65,11 +174,20 @@ export class Sidecar {
         const p = (params ?? {}) as Partial<InitializeParams>;
         if (typeof p.protocolVersion !== "number")
             throw new RpcError(ErrorCode.invalidParams, "initialize needs protocolVersion");
+        if (p.hikariApi !== undefined) {
+            if (!isReference(p.hikariApi))
+                throw new RpcError(ErrorCode.invalidParams, "initialize's hikariApi isn't an HA1 reference");
+            this.catalogue = new Catalogue(p.hikariApi);
+            this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
+        }
         this.initialized = true;
         return {
             protocolVersion: kProtocolVersion,
             hikariApiVersion: this.build.hikariApiVersion,
+            requiredApiVersion: kRequiredApiVersion,
+            version: this.build.version,
             buildId: this.build.buildId,
+            versions: { bun: Bun.version, ...this.build.packages },
             capabilities: {},
         };
     }

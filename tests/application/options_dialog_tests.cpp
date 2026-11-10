@@ -254,18 +254,12 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(id), nullptr);
         EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
     }
-    const auto &starPrompt = all[std::size(kLegacy) + 38];
-    EXPECT_EQ(starPrompt.setting, "privacy.starPrompt");
-    EXPECT_EQ(starPrompt.control, OptionsControl::Check);
-    EXPECT_EQ(starPrompt.page, OptionsPage::Updates);
-    ASSERT_NE(findSetting("privacy.starPrompt"), nullptr);
-    EXPECT_EQ(std::get<bool>(findSetting("privacy.starPrompt")->defaultValue), true);
     const std::pair<std::string_view, std::int64_t> zoom[] = {{"video.zoomModel", 0},
                                                               {"video.scrollAction", 4},
                                                               {"video.ctrlScrollAction", 0},
                                                               {"video.shiftScrollAction", 2}};
     for (std::size_t i = 0; i < std::size(zoom); ++i) {
-        const auto &binding = all[std::size(kLegacy) + 39 + i];
+        const auto &binding = all[std::size(kLegacy) + 38 + i];
         EXPECT_EQ(binding.setting, zoom[i].first);
         EXPECT_EQ(binding.control, OptionsControl::IndexChoice) << zoom[i].first;
         EXPECT_EQ(binding.page, OptionsPage::Video) << zoom[i].first;
@@ -273,15 +267,107 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(zoom[i].first), nullptr);
         EXPECT_EQ(std::get<std::int64_t>(findSetting(zoom[i].first)->defaultValue), zoom[i].second) << zoom[i].first;
     }
-    const auto &softBreak = all[std::size(kLegacy) + 43];
+    const auto &softBreak = all[std::size(kLegacy) + 42];
     EXPECT_EQ(softBreak.setting, "editor.softLineBreak");
     EXPECT_EQ(softBreak.control, OptionsControl::Check);
     EXPECT_EQ(softBreak.page, OptionsPage::LineEditor);
     ASSERT_NE(findSetting("editor.softLineBreak"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("editor.softLineBreak")->defaultValue), false);
+    const auto &bake = all[std::size(kLegacy) + 43];
+    EXPECT_EQ(bake.setting, "grid.splitFramesBakeAnimations");
+    EXPECT_EQ(bake.control, OptionsControl::Check);
+    EXPECT_EQ(bake.page, OptionsPage::Grid);
+    ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
+    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", false}, std::pair{"ai.autoUpdate", true},
+                                                            std::pair{"ai.promptCaching", true}}) {
+        const auto &binding = all[std::size(kLegacy) + 44 + i++];
+        EXPECT_EQ(binding.setting, id);
+        EXPECT_EQ(binding.control, OptionsControl::Check);
+        EXPECT_EQ(binding.page, OptionsPage::Ai);
+        ASSERT_NE(findSetting(id), nullptr);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), on) << id;
+    }
+    const auto &handleSize = all[std::size(kLegacy) + 47];
+    EXPECT_EQ(handleSize.setting, "video.handleSize");
+    EXPECT_EQ(handleSize.control, OptionsControl::Number);
+    EXPECT_EQ(handleSize.page, OptionsPage::Video);
+    EXPECT_EQ(handleSize.min, 50);
+    EXPECT_EQ(handleSize.max, 400);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.handleSize")->defaultValue), 100);
+    for (std::size_t i = 0; const auto &[id, entries] : {std::pair<std::string_view, int>{"video.missingMatrix", 3},
+                                      {"video.matrixMismatch", 3},
+                                      {"video.missingLayoutRes", 4},
+                                      {"video.layoutResMismatch", 3}}) {
+        const auto &prompt = all[std::size(kLegacy) + 48 + i++];
+        EXPECT_EQ(prompt.setting, id);
+        EXPECT_EQ(prompt.control, OptionsControl::IndexChoice);
+        EXPECT_EQ(prompt.page, OptionsPage::Video);
+        EXPECT_EQ(prompt.entries, entries) << id;
+        EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), 1) << id;
+    }
+    for (std::size_t i = 0; const std::string_view id : {"video.untaggedMatrixWarning", "video.hdrWarning"}) {
+        const auto &warning = all[std::size(kLegacy) + 52 + i++];
+        EXPECT_EQ(warning.setting, id);
+        EXPECT_EQ(warning.control, OptionsControl::Check);
+        EXPECT_EQ(warning.page, OptionsPage::Video);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), true) << id;
+    }
+    const auto &mono = all[std::size(kLegacy) + 54];
+    EXPECT_EQ(mono.setting, "audio.playMono");
+    EXPECT_EQ(mono.control, OptionsControl::Check);
+    EXPECT_EQ(mono.page, OptionsPage::Audio);
+    ASSERT_NE(findSetting("audio.playMono"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("audio.playMono")->defaultValue), false);
+    const auto &pluginNetwork = all[std::size(kLegacy) + 55];
+    EXPECT_EQ(pluginNetwork.setting, "plugins.network");
+    EXPECT_EQ(pluginNetwork.control, OptionsControl::Check);
+    EXPECT_EQ(pluginNetwork.page, OptionsPage::Updates);
+    ASSERT_NE(findSetting("plugins.network"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("plugins.network")->defaultValue), true);
+    const auto &webSearch = all[std::size(kLegacy) + 56];
+    EXPECT_EQ(webSearch.setting, "ai.webSearch");
+    EXPECT_EQ(webSearch.control, OptionsControl::Check);
+    EXPECT_EQ(webSearch.page, OptionsPage::Ai);
+    ASSERT_NE(findSetting("ai.webSearch"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("ai.webSearch")->defaultValue), true);
+    const auto &searchService = all[std::size(kLegacy) + 57];
+    EXPECT_EQ(searchService.setting, "ai.searchService");
+    EXPECT_EQ(searchService.control, OptionsControl::Text);
+    EXPECT_EQ(searchService.page, OptionsPage::Ai);
+    ASSERT_NE(findSetting("ai.searchService"), nullptr);
+    EXPECT_EQ(std::get<std::string>(findSetting("ai.searchService")->defaultValue), "");
+    for (std::size_t i = 0; const char *id : {"ai.mcp.server", "ai.mcp.http"}) {
+        const auto &mcp = all[std::size(kLegacy) + 58 + i++];
+        EXPECT_EQ(mcp.setting, id);
+        EXPECT_EQ(mcp.control, OptionsControl::Check);
+        EXPECT_EQ(mcp.page, OptionsPage::Ai);
+        ASSERT_NE(findSetting(id), nullptr);
+        EXPECT_EQ(std::get<bool>(findSetting(id)->defaultValue), false) << id;
+    }
+    const auto &thai = all[std::size(kLegacy) + 60];
+    EXPECT_EQ(thai.setting, "audio.karaokeThaiClusters");
+    EXPECT_EQ(thai.control, OptionsControl::Check);
+    EXPECT_EQ(thai.page, OptionsPage::Audio);
+    ASSERT_NE(findSetting("audio.karaokeThaiClusters"), nullptr);
+    EXPECT_EQ(std::get<bool>(findSetting("audio.karaokeThaiClusters")->defaultValue), true);
+    for (std::size_t i = 0; const auto &[id, control] : {std::pair{"ai.agent.mode", OptionsControl::Text},
+                                                         std::pair{"ai.agent.threadCapCents", OptionsControl::Number},
+                                                         std::pair{"ai.agent.dailyCapCents", OptionsControl::Number},
+                                                         std::pair{"ai.agent.costMeter", OptionsControl::Check}}) {
+        const auto &agent = all[std::size(kLegacy) + 61 + i++];
+        EXPECT_EQ(agent.setting, id);
+        EXPECT_EQ(agent.control, control) << id;
+        EXPECT_EQ(agent.page, OptionsPage::Ai) << id;
+        ASSERT_NE(findSetting(id), nullptr) << id;
+    }
+    EXPECT_EQ(std::get<std::string>(findSetting("ai.agent.mode")->defaultValue), "auto");
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.threadCapCents")->defaultValue), 200);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.dailyCapCents")->defaultValue), 1000);
+    EXPECT_EQ(findOptionsBinding("ai.agent.fullAccessWarned"), nullptr);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 46);
-    const auto &hostApi = all[std::size(kLegacy) + 44];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 67);
+    const auto &hostApi = all[std::size(kLegacy) + 65];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -292,7 +378,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 44);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 65);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -678,11 +764,13 @@ TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
     for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor,
                             OptionsPage::Spelling, OptionsPage::Grid,
                             OptionsPage::Video, OptionsPage::Audio, OptionsPage::Conversion,
-                            OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates})
+                            OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates,
+                            OptionsPage::Ai})
         EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
     EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
     EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates");
     EXPECT_EQ(optionsPageId(OptionsPage::Spelling), "spelling");
+    EXPECT_EQ(optionsPageId(OptionsPage::Ai), "ai");
     EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt);
     EXPECT_EQ(optionsPageOfId(""), std::nullopt);
 

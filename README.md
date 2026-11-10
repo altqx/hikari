@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="packaging/linux/icons/hicolor/128x128/apps/hikarisub.png" width="96" alt="">
+  <img src="packaging/linux/icons/hicolor/scalable/apps/hikarisub.svg" width="96" alt="">
 </p>
 
 <h1 align="center">HikariSub</h1>
@@ -201,7 +201,7 @@ cd hikari
 cmake --workflow --preset ubuntu-x64-release   # or fedora-x64-release, windows-x64-release
 ```
 
-You need Git, CMake 3.28, Ninja, GCC or the latest MSVC, and a Qt Account login (or `QT_INSTALLER_JWT_TOKEN`) for the Qt installer. [docs/build.md](docs/build.md) lists the Linux packages and the other presets.
+You need Git, CMake 3.29, Ninja, GCC and LLD on Linux or the latest MSVC on Windows, and a Qt Account login (or `QT_INSTALLER_JWT_TOKEN`) for the Qt installer. [docs/build.md](docs/build.md) lists the Linux packages and the other presets.
 
 ## License
 

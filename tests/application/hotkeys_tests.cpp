@@ -62,6 +62,7 @@ constexpr ToolCommand kToolCommands[] = {
         {2031, "VIDEO_TOOL_POSITION_SHIFTER", "Position shifter", "A"},
         {2032, "VIDEO_TOOL_HYDRA", "Hydra", "H"},
         {2033, "VIDEO_TOOL_PERSPECTIVE", "Perspective", "Q"},
+        {2043, "VIDEO_TOOL_GRADIENT", "Gradient", "W"},
 };
 
 }
@@ -69,7 +70,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 295u);
+    ASSERT_EQ(hotkeyActions().size(), 342u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -78,9 +79,9 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
         EXPECT_FALSE(ids().contains(std::string(a.symbol))) << a.symbol;
         EXPECT_TRUE(std::ranges::none_of(ids(), [&](const auto &l) { return l.second == a.id; })) << a.symbol;
         const bool editor = std::string_view(a.symbol).starts_with("EDITBOX_");
-        const bool audio = a.id >= 1028 && a.id <= 1032;
+        const bool audio = a.id >= 1028 && a.id <= 1034;
         EXPECT_EQ(hotkeyType(a.id), editor                         ? EditorHotkey
-                                    : a.id >= 2021 && a.id <= 2033 ? VideoHotkey
+                                    : a.id >= 2021 && a.id <= 2043 ? VideoHotkey
                                     : audio                        ? AudioHotkey
                                                                    : GlobalHotkey)
             << a.symbol;
@@ -99,6 +100,8 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("AUDIO_TAP"), 1030);
     EXPECT_EQ(hotkeyIdOf("AUDIO_SPEED_DOWN"), 1031);
     EXPECT_EQ(hotkeyIdOf("AUDIO_SPEED_UP"), 1032);
+    EXPECT_EQ(hotkeyIdOf("AUDIO_GOTO_START"), 1033);
+    EXPECT_EQ(hotkeyIdOf("AUDIO_GOTO_END"), 1034);
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(hotkeyIdOf(tool.symbol), tool.id) << tool.symbol;
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CHECK_KARAOKE"), 5172);
@@ -109,6 +112,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_FIND_PREVIOUS"), 5213);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHOW_TIMING_POSTPROCESSOR"), 5214);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_TIMING_POSTPROCESSOR"), 5215);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_TOGGLE_LOCK_LAYOUT"), 5230);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"), 5216);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"), 5217);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_END"), 5218);
@@ -116,8 +120,47 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FOLLOWING_FRAMES_TO_VIDEO_END"), 5220);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_INSERT_HARD_SPACE"), 5228);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_PLUGINS"), 5231);
+    EXPECT_EQ(hotkeyIdOf("VIDEO_VECTOR_CLIP_DRAG"), 2034);
+    EXPECT_EQ(hotkeyIdOf("VIDEO_VECTOR_CLIP_INVERT"), 2040);
+    EXPECT_EQ(hotkeyIdOf("VIDEO_COPY_SUBTITLES_TO_CLIPBOARD"), 2041);
+    EXPECT_EQ(hotkeyIdOf("VIDEO_SAVE_SUBTITLES_TO_PNG"), 2042);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_RELOAD_VIDEO"), 5232);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_RELOAD_AUDIO"), 5233);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_SHOW_QC_NOTES"), 5241);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_NEXT_QC_NOTE"), 5242);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_PREVIOUS_QC_NOTE"), 5243);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ADD_QC_NOTE"), 5254);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_MOVE_TAB_TO_NEW_WINDOW"), 5221);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_MOVE_TAB_TO_WINDOW"), 5222);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CLOSE_WINDOW"), 5263);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CENTER_TIMES_IN_FRAMES"), 5229);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_ALIGN_TO_VIDEO"), 5238);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_IMPORT_LEGACY_SETTINGS"), 5223);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_OPEN_TIMECODES"), 5234);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_SAVE_TIMECODES"), 5235);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_CLOSE_TIMECODES"), 5236);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_VIDEO_DETAILS"), 5237);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_NODE_EFFECTS"), 5244);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_PERSPECTIVE_TRACKING"), 5240);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_APPLY_MOTION_DATA"), 5257);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_REVERT_MOTION_DATA"), 5258);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_COPY_MOTION_DATA"), 5259);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_COPY_POWER_PIN_TRACK"), 5260);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_EXTEND_TRACKED_LINES"), 5261);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_EXTRAPOLATE_MOVE"), 5262);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_KEEP_AI_CHANGE"), 5245);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_UNDO_AI_CHANGE"), 5246);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_NEXT_AI_CHANGE"), 5247);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_PREVIOUS_AI_CHANGE"), 5248);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_KEEP_ALL_AI_CHANGES"), 5249);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_UNDO_ALL_AI_CHANGES"), 5250);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_SHOW_AI_REVIEW"), 5251);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_SHOW_AI_AGENT"), 5252);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_NEW_AI_THREAD"), 5253);
+    for (int id = 5245; id <= 5253; ++id)
+        EXPECT_TRUE(aiCommand(id)) << id;
+    EXPECT_FALSE(aiCommand(5231));
+    EXPECT_FALSE(aiCommand(hotkeyIdOf("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")));
     std::istringstream csv(readFile(HIKARI_ACTIONS_CSV));
     std::string line;
     std::getline(csv, line);
@@ -135,6 +178,34 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeySymbol(30100), "");
     EXPECT_EQ(kGridFilterIgnoreInActions, ids().at("GRID_FILTER_IGNORE_IN_ACTIONS"));
     EXPECT_EQ(kGlobalQuit, ids().at("GLOBAL_QUIT"));
+}
+
+TEST(Hotkeys, AltF4ClosesTheWindowAndExitHasNoDefault)
+{
+    EXPECT_EQ(hotkeyName(kGlobalCloseWindow), "Close window");
+    EXPECT_EQ(hotkeyType(kGlobalCloseWindow), GlobalHotkey);
+    EXPECT_EQ(defaultHotkey(HotkeyId{kGlobalCloseWindow, GlobalHotkey}), "Alt-F4");
+    EXPECT_EQ(defaultHotkey(HotkeyId{kGlobalQuit, GlobalHotkey}), "");
+    EXPECT_EQ(defaultHotkey(HotkeyId{4534, GridHotkey}), "Ctrl-Q");
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    list.build(defaultHotkeys());
+    EXPECT_EQ(rowNamed(list, "Global Close window").accel, "Alt-F4");
+}
+
+TEST(Hotkeys, OnlyCloseWindowCanTakeAltF4)
+{
+    using R = HotkeyCapture::Result;
+    const HotkeyPress altF4{wxk::F4, true, false, false, false};
+    const HotkeyPress altShiftF4{wxk::F4, true, false, true, false};
+    EXPECT_EQ(captureHotkey(altF4, GlobalHotkey, kGlobalCloseWindow).accel, "Alt-F4");
+    EXPECT_EQ(captureHotkey(altShiftF4, GlobalHotkey, kGlobalCloseWindow).accel, "Alt-Shift-F4");
+    for (const int command : {0, kGlobalQuit}) {
+        const auto refused = captureHotkey(altF4, GlobalHotkey, command);
+        EXPECT_EQ(refused.result, R::Refused) << command;
+        EXPECT_EQ(refused.message, "Alt+F4 is kept for closing the window.") << command;
+    }
+    EXPECT_EQ(captureHotkey(altF4, VideoHotkey, 2001).result, R::Refused);
 }
 
 TEST(Hotkeys, TypesFollowGetType)
@@ -161,7 +232,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -254,7 +325,7 @@ TEST(Hotkeys, MappingWindowReadsKeysAsOnKeyPress)
     EXPECT_EQ(captureHotkey(press('Z', false, true, false), GridHotkey).result, R::Refused);
     EXPECT_EQ(captureHotkey(press('V', false, true, true), GridHotkey).accel, "Ctrl-Shift-V");
     c = captureHotkey(press(wxk::F4, true, false, false), VideoHotkey);
-    EXPECT_EQ(c.message, "You cannot use the program exit shortcut.");
+    EXPECT_EQ(c.message, "Alt+F4 is kept for closing the window.");
     EXPECT_EQ(captureHotkey(press(wxk::F4, true, true, false), VideoHotkey).accel, "Alt-Ctrl-F4");
     EXPECT_EQ(captureHotkey(press(wxk::Escape, false, false, false), VideoHotkey).result, R::Ignored);
     EXPECT_EQ(captureHotkey(press('#', false, true, false), VideoHotkey).result, R::Ignored);
@@ -282,13 +353,15 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 270u);
+    ASSERT_EQ(list.rowCount(), 313u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Render cost").accel, "");
     EXPECT_EQ(rowNamed(list, "Video Full screen bar: when the pointer moves / always / never").accel, "Tab");
     EXPECT_EQ(rowNamed(list, "Audio Tap to time").accel, "Y");
+    EXPECT_EQ(rowNamed(list, "Audio Go to selection start").accel, "");
+    EXPECT_EQ(rowNamed(list, "Audio Go to selection end").accel, "");
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(rowNamed(list, std::string("Video ") + tool.name).accel, tool.accel);
     EXPECT_EQ(rowNamed(list, "Global Check karaoke").accel, "");
@@ -301,10 +374,25 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Shift following lines by frames: end at video").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Plugins").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Centre times within frames").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Align to video…").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Convert Aegisub folds to line groups").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Import legacy settings…").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Open timecodes").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Save timecodes").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Close timecodes").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Video details…").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Keep AI change").accel, "Ctrl-Shift-Enter");
+    EXPECT_EQ(rowNamed(list, "Global Undo AI change").accel, "Ctrl-Shift-Backspace");
+    EXPECT_EQ(rowNamed(list, "Global Next AI change").accel, "Ctrl-Alt-Down");
+    EXPECT_EQ(rowNamed(list, "Global Previous AI change").accel, "Ctrl-Alt-Up");
+    EXPECT_EQ(rowNamed(list, "Global Keep all AI changes").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Undo all AI changes").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Review panel").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Agent panel").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global New agent thread").accel, "");
     EXPECT_EQ(rowNamed(list, "Subtitles Hide line wraps").key.id, 4513);
     EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Apply changes alt");
-    EXPECT_EQ(list.find("Global Exit"), -1);
+    EXPECT_EQ(rowNamed(list, "Global Exit").accel, "");
     EXPECT_EQ(list.selection(), 0);
     EXPECT_FALSE(list.modified());
     int last = -1;
@@ -321,7 +409,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 272u);
+    ASSERT_EQ(more.rowCount(), 315u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -335,13 +423,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 269u);
+    EXPECT_EQ(cut.rowCount(), 312u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 270u);
+    EXPECT_EQ(whole.rowCount(), 313u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -377,9 +465,9 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 112u);
+    EXPECT_EQ(count(1), 114u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
-    EXPECT_EQ(count(6), 28u);
+    EXPECT_EQ(count(6), 30u);
     list.filter(5);
     EXPECT_EQ(list.row(list.selection()).key.type, VideoHotkey);
     list.selectShown(2);
@@ -387,12 +475,12 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 112u);
+    EXPECT_EQ(list.shown().size(), 114u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 111u);
+    EXPECT_EQ(list.shown().size(), 113u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 270u);
+    EXPECT_EQ(list.shown().size(), 313u);
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -567,13 +655,13 @@ TEST(Hotkeys, ConflictsPerWindow)
         HotkeyList list(copy);
         list.build(live);
         const int stop = list.find("Video Stop");
-        auto c = list.mapConflict(stop, "W", VideoHotkey, live);
+        auto c = list.mapConflict(stop, "E", VideoHotkey, live);
         ASSERT_TRUE(c);
         EXPECT_TRUE(c->doubled);
-        EXPECT_EQ(c->message, "This hotkey already exists for \"Play 500 ms after\".\nWhat to do?");
-        list.map(stop, "W", VideoHotkey, HotkeyAnswer::Delete, live);
-        EXPECT_EQ(list.row(stop).accel, "W");
-        EXPECT_EQ(rowNamed(list, "Audio Play 500 ms after").accel, "W");
+        EXPECT_EQ(c->message, "This hotkey already exists for \"Play first 500 ms\".\nWhat to do?");
+        list.map(stop, "E", VideoHotkey, HotkeyAnswer::Delete, live);
+        EXPECT_EQ(list.row(stop).accel, "E");
+        EXPECT_EQ(rowNamed(list, "Audio Play first 500 ms").accel, "E");
         const int insert = list.find("Subtitles Insert before");
         c = list.mapConflict(insert, "L", GridHotkey, live);
         ASSERT_TRUE(c);
@@ -608,17 +696,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 271u);
-    const auto &added = list.row(270);
+    ASSERT_EQ(list.rowCount(), 314u);
+    const auto &added = list.row(313);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 271u);
-    EXPECT_EQ(list.row(270).accel, "F6");
-    EXPECT_EQ(list.selection(), 270);
+    EXPECT_EQ(list.rowCount(), 314u);
+    EXPECT_EQ(list.row(313).accel, "F6");
+    EXPECT_EQ(list.selection(), 313);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -699,7 +787,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 270u);
+    EXPECT_EQ(third.shown().size(), 313u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -721,16 +809,16 @@ TEST(Hotkeys, GestureMapsAtOnce)
     ASSERT_TRUE(c);
     EXPECT_TRUE(c->doubled);
     EXPECT_EQ(c->message, "This hotkey already exists for \"Save\".\nWhat to do?");
-    c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "W", VideoHotkey);
+    c = mapHotkeyNowConflict(live, ids().at("VIDEO_STOP"), "E", VideoHotkey);
     ASSERT_TRUE(c);
     EXPECT_FALSE(c->doubled);
-    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play 500 ms "
-                          "after\".\nWhat would you like to do?");
-    auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "W", VideoHotkey, HotkeyAnswer::SetAnyway);
+    EXPECT_EQ(c->message, "This shortcut already exists in another window as a shortcut for \"Audio Play first 500 "
+                          "ms\".\nWhat would you like to do?");
+    auto r = mapHotkeyNow(live, ids().at("VIDEO_STOP"), "Stop", "E", VideoHotkey, HotkeyAnswer::SetAnyway);
     EXPECT_TRUE(r.changed);
     EXPECT_TRUE(r.saveAudio);
-    EXPECT_EQ(live.at(HotkeyId{ids().at("VIDEO_STOP"), VideoHotkey}).accel, "W");
-    EXPECT_EQ(live.at(HotkeyId{ids().at("AUDIO_PLAY_500MS_AFTER"), AudioHotkey}).accel, "W");
+    EXPECT_EQ(live.at(HotkeyId{ids().at("VIDEO_STOP"), VideoHotkey}).accel, "E");
+    EXPECT_EQ(live.at(HotkeyId{ids().at("AUDIO_PLAY_500MS_FIRST"), AudioHotkey}).accel, "E");
     r = mapHotkeyNow(live, kNextDoubtful, "Next unconfirmed line", "Ctrl-R", EditorHotkey, HotkeyAnswer::Switch);
     EXPECT_FALSE(r.saveAudio);
     EXPECT_EQ(live.at(HotkeyId{kNextDoubtful, EditorHotkey}).accel, "Ctrl-R");
@@ -946,6 +1034,37 @@ TEST(Hotkeys, RetiredViewAndEditorBindingsAreDropped)
         EXPECT_EQ(line.find("GLOBAL_VIEW_"), std::string::npos) << line;
         EXPECT_NE(line.rfind("GLOBAL_EDITOR ", 0), 0u) << line;
     }
+}
+
+TEST(Hotkeys, RetiredConversionBindingsAreDropped)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_CONVERT_TO_ASS G=F9", "GLOBAL_CONVERT_TO_SRT G=F8", "5022 G=Ctrl-F12",
+                          "GLOBAL_CONVERT_TO_MDVD G=Ctrl-Alt-M", "GLOBAL_CONVERT_TO_MPL2 G=F11", "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    std::vector<int> retired;
+    for (const char *symbol : {"GLOBAL_CONVERT_TO_ASS", "GLOBAL_CONVERT_TO_SRT", "GLOBAL_CONVERT_TO_TMP",
+                               "GLOBAL_CONVERT_TO_MDVD", "GLOBAL_CONVERT_TO_MPL2"}) {
+        const int id = ids().at(symbol);
+        EXPECT_TRUE(isRetiredHotkey(id)) << symbol;
+        EXPECT_EQ(hotkeyName(id), "") << symbol;
+        EXPECT_EQ(defaultHotkey(HotkeyId{id, GlobalHotkey}), "") << symbol;
+        retired.push_back(id);
+    }
+    EXPECT_EQ(ids().at("GLOBAL_CONVERT_TO_TMP"), 5022);
+    EXPECT_FALSE(isRetiredHotkey(5019));
+    EXPECT_FALSE(isRetiredHotkey(5025));
+    EXPECT_FALSE(isRetiredHotkey(hotkeyIdOf("GLOBAL_EXPORT_SUBS_AS")));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 5u);
+    for (const auto &[key, hotkey] : dropped)
+        EXPECT_NE(std::find(retired.begin(), retired.end(), key.id), retired.end()) << key.id;
+    EXPECT_EQ(map.size(), 1u);
+    for (const auto &line : hotkeyLines(map, false))
+        EXPECT_EQ(line.find("GLOBAL_CONVERT_TO_"), std::string::npos) << line;
+    HotkeyMap defaults;
+    loadDefaultHotkeys(defaults, false);
+    for (const int id : retired)
+        EXPECT_FALSE(defaults.contains(HotkeyId{id, GlobalHotkey})) << id;
 }
 
 TEST(Hotkeys, RetiredBlankAudioBindingsAreDropped)

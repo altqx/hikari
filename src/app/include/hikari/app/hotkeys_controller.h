@@ -47,6 +47,9 @@ public:
                       std::function<void(const QString &, bool warning)> log = {}, QObject *parent = nullptr);
     ~HotkeysController() override;
 
+    // Hidden commands keep their stored keys but are neither bound nor listed.
+    void setHidden(std::function<bool(int id)> hidden);
+
     QVariantMap keys() const;
     QVariantList globalShortcuts() const;
     QStringList globalSequences() const;
@@ -107,7 +110,7 @@ public:
     void resetDefaults();
 
     // {result: "ignored" | "refused" | "accepted", accel, keys (portable text), message}.
-    Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window) const;
+    Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window, int command = 0) const;
 
     // The last input was a button or menu click with Shift alone (exact) or with Shift held.
     Q_INVOKABLE bool shiftClicked(bool exact = true) const;
@@ -145,6 +148,7 @@ private:
     ui::SettingsStore &m_settings;
     application::HotkeyMap m_live;
     application::HotkeyMap m_installed;
+    std::function<bool(int id)> m_hidden;
     application::HotkeyMap m_copy;
     std::unique_ptr<application::HotkeyList> m_list;
     int m_installedTagButtons = 0;

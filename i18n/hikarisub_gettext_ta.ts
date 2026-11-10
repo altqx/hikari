@@ -7790,5 +7790,41 @@ Styles deleted:
         <source>Delete unused ASS styles</source>
         <translation>பயன்படுத்தப்படாத ASS பாணிகளை நீக்கு</translation>
     </message>
+    <message>
+        <source>Letter spacing to positioned clusters</source>
+        <translation>எழுத்து இடைவெளியை நிலைப்படுத்திய எழுத்துக் கொத்துகளாக</translation>
+    </message>
+    <message>
+        <source>Replace \fsp letter spacing with one positioned line per character cluster, keeping marks on their base characters</source>
+        <translation>\fsp எழுத்து இடைவெளியை ஒவ்வொரு எழுத்துக் கொத்துக்கும் ஒரு நிலைப்படுத்திய வரியாக மாற்றி, குறிகளை அவற்றின் அடிப்படை எழுத்துடன் வைத்திருக்கும்</translation>
+    </message>
+    <message>
+        <source>Letter spacing</source>
+        <translation>எழுத்து இடைவெளி</translation>
+    </message>
+    <message>
+        <source>Pixels added after each character cluster</source>
+        <translation>ஒவ்வொரு எழுத்துக் கொத்துக்கும் பின் சேர்க்கப்படும் படப்புள்ளிகள்</translation>
+    </message>
+    <message>
+        <source>Use the &amp;line’s spacing</source>
+        <translation>வரியின் இடைவெளியைப் பயன்படுத்து (&amp;l)</translation>
+    </message>
+    <message>
+        <source>Use &amp;this value</source>
+        <translation>இந்த மதிப்பைப் பயன்படுத்து (&amp;t)</translation>
+    </message>
+    <message>
+        <source>Spacing line %d of %d</source>
+        <translation>வரி %d / %d இடைவெளியிடப்படுகிறது</translation>
+    </message>
+    <message>
+        <source>Lines with \move or a drawing were left as they are.</source>
+        <translation>\move அல்லது வரைபடம் உள்ள வரிகள் அப்படியே விடப்பட்டன.</translation>
+    </message>
+    <message>
+        <source>Letter spacing to positioned clusters…</source>
+        <translation>எழுத்து இடைவெளியை நிலைப்படுத்திய எழுத்துக் கொத்துகளாக…</translation>
+    </message>
 </context>
 </TS>

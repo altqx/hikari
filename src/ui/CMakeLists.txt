@@ -1,14 +1,14 @@
 qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_grid.cpp line_grid.h line_grid_accessible.cpp line_grid_accessible.h
     shell_controller.cpp shell_controller.h line_editor_controller.cpp line_editor_controller.h
     automation_dialog_controller.cpp automation_dialog_controller.h script_dialog_memory.cpp script_dialog_memory.h video_presenter.cpp video_presenter.h
-    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h
+    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h node_effects_controller.cpp node_effects_controller.h node_catalogue_text.cpp node_catalogue_text.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h panel_dock.cpp panel_dock.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
     editor_highlighter.cpp editor_highlighter.h
-    settings_store.cpp settings_store.h settings_files.cpp settings_files.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
+    settings_store.cpp settings_store.h settings_files.cpp settings_files.h project_file.cpp project_file.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h command_names.cpp command_names.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h
@@ -23,10 +23,12 @@ qt_add_qml_module(hikari_ui
         DocumentTabBar.qml SessionWindows.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml TimingPostprocessorPanel.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
-qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
+qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml RecentList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 qt_target_qml_sources(hikari_ui QML_FILES TagButton.qml TagButtonEditor.qml)
+qt_target_qml_sources(hikari_ui QML_FILES NodeGraphCanvas.qml NodePort.qml NodeAddPopup.qml NodeInspector.qml
+    NodeSourceLines.qml NodeModeBar.qml NodePresetMenu.qml NodeLibraryMenu.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
 target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
@@ -41,17 +43,20 @@ target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidge
 target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
+qt_target_qml_sources(hikari_ui QML_FILES FileChooser.qml FolderChooser.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationProgress.qml RunLogLine.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml)
-qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml MoveTabMenu.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ReferenceTray.qml)
-qt_target_qml_sources(hikari_ui QML_FILES GridHeaderToolTip.qml GridScrollBars.qml)
+qt_target_qml_sources(hikari_ui QML_FILES GridToolTip.qml GridScrollBars.qml)
+qt_target_qml_sources(hikari_ui QML_FILES QcNotesPanel.qml QcNoteEditor.qml)
 qt_target_qml_sources(hikari_ui QML_FILES WindowFooter.qml FooterButton.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml)
 qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES KanjiTimerDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AlignToVideoDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ExportDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml SettingsImportReview.qml)
 qt_target_qml_sources(hikari_ui QML_FILES GettingStartedDialog.qml)
@@ -59,17 +64,18 @@ qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.q
 set_source_files_properties(FontWindows.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES FilterChip.qml FontResolutionNote.qml FontWindows.qml)
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
-qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml AlignmentChoice.qml TimeField.qml
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.qml VideoChaptersMenu.qml
-    VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
+    VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml VideoDetailsDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
     ManageLayoutsDialog.qml)
-qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PluginManagerDialog.qml PluginWidget.qml PluginList.qml PluginCanvas.qml PluginPanelBody.qml
+    PluginDialog.qml PluginFilePicker.qml)
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h menu_key.cpp menu_key.h)
 set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
@@ -87,8 +93,9 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsAiPage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 add_subdirectory(style)
+add_subdirectory(plugin_api)
 target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
 target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
 target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscreen_controller.h)
@@ -96,6 +103,7 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoFullscreen.qml FullscreenBarMenu.
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoRenderCost.qml
     VideoTemplateBadge.qml
+    VideoNodeBadge.qml
     VideoVolumeSlider.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml MenuRadioItem.qml MenuHeading.qml)
@@ -106,8 +114,8 @@ qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextToo
 target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
 qt_target_qml_sources(hikari_ui QML_FILES ScreenDropperView.qml)
 qt_target_qml_sources(hikari_ui QML_FILES ColourPopover.qml ColourSwatchGrid.qml)
-target_sources(hikari_ui PRIVATE font_faces.cpp font_faces.h)
-qt_target_qml_sources(hikari_ui QML_FILES FontFamilyRow.qml)
+target_sources(hikari_ui PRIVATE font_faces.cpp font_faces.h font_family_filter.cpp font_family_filter.h)
+qt_target_qml_sources(hikari_ui QML_FILES FontFamilyRow.qml FontFamilyBox.qml)
 if(UNIX AND NOT APPLE)
     find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS DBus)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
@@ -155,9 +163,11 @@ qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popove
 qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
-qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ConversionWindow.qml ResampleWindow.qml)
-set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
-set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
+qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml
+    ExtendTrackingWindow.qml)
+set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/icons/dawn-peek/app.svg")
+set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.svg")
 qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")
 # LibreOffice's hyph_en_US.dic (BSD-style; README_hyph_en_US.txt beside it).
 qt_add_resources(hikari_ui "hikari_hyphenation" PREFIX "/hikari/ui" FILES hyphenation/hyph_en_US.dic)

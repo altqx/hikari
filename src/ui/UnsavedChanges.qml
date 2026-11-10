@@ -14,6 +14,7 @@ Item {
     property var pickerFolder: picker => ""
     property var rememberPickerFolder: (picker, file) => {}
     property var confirmOverDisk: (ids, then, cancelled) => then()
+    property var confirmConversion: (id, file, format, from, then, cancelled) => then()
     property var rows: []
     property var choices: []
     property string problem: ""
@@ -77,12 +78,17 @@ Item {
         setAll(false)
         app.resolveClose(choices)
     }
+    function pickCancelled() {
+        if (rows.length === 1 && !(window && window.visible))
+            askOne()
+    }
     function pick(i, then) {
         const v = app.saveDialogValuesFor(rows[i].id)
         saveAs.row = i
         saveAs.then = then || null
+        saveAs.formats = v.formats
         saveAs.title = qsTr("Save “%1” as").arg(rows[i].title)
-        saveAs.nameFilters = [v.filter, qsTr("All files (*)")]
+        saveAs.nameFilters = v.filters.concat([qsTr("All files (*)")])
         if (v.folder.toString() !== "")
             saveAs.currentFolder = v.folder
         else if (pickerFolder("subtitles").length > 0)
@@ -109,6 +115,11 @@ Item {
                      many: qsTr("Save the changes to %n documents before loading the session?", "", n),
                      one: qsTr("Save the changes to “%1” before loading the session?").arg(name),
                      save: qsTr("Save and load"), discard: qsTr("Load without saving") }
+        case "window":
+            return { title: qsTr("Close window"),
+                     many: qsTr("Save the changes to %n documents before closing them?", "", n),
+                     one: qsTr("Save the changes to “%1” before closing?").arg(name),
+                     save: qsTr("Save and close"), discard: qsTr("Close without saving") }
         case "close":
         case "tab":
             return { title: qsTr("Close tab"), many: "",
@@ -158,26 +169,31 @@ Item {
         settings: unsaved.settings
     }
 
-    FileDialog {
+    FileChooser {
         id: saveAs
         objectName: "closeSaveAs"
         property int row: -1
         property var then: null
+        property var formats: []
         fileMode: FileDialog.SaveFile
         onAccepted: {
             unsaved.rememberPickerFolder("subtitles", selectedFile)
-            const list = unsaved.choices.slice()
-            list[row] = Object.assign({}, list[row], { path: unsaved.app.localPath(selectedFile) })
-            unsaved.choices = list
+            const i = row
+            const file = selectedFile
+            const format = formats[selectedNameFilter.index] ?? ""
             const next = then
             then = null
-            if (next)
-                next()
+            unsaved.confirmConversion(unsaved.rows[i].id, file, format, unsaved.window, () => {
+                const list = unsaved.choices.slice()
+                list[i] = Object.assign({}, list[i], { path: unsaved.app.localPath(file), format: format })
+                unsaved.choices = list
+                if (next)
+                    next()
+            }, () => unsaved.pickCancelled())
         }
         onRejected: {
             then = null
-            if (unsaved.rows.length === 1 && !(unsaved.window && unsaved.window.visible))
-                unsaved.askOne()
+            unsaved.pickCancelled()
         }
     }
 

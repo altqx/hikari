@@ -5,6 +5,7 @@
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_drawing.h"
+#include "hikari/application/visual_gradient.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -14,7 +15,9 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <memory>
 #include <set>
+#include <string>
 
 namespace hikari::application::visual {
 
@@ -34,6 +37,27 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
         if (line->id == id)
             return line;
     return nullptr;
+}
+
+bool replaceLine(core::Document &document, core::LineId target, const std::vector<std::u8string> &texts,
+                 std::vector<core::LineId> *added)
+{
+    const core::LineRecord *source = findLine(document, target);
+    if (!source)
+        return false;
+    core::LineRecord copy = *source;
+    copy.comment = false;
+    core::LineId after = target;
+    for (const auto &text : texts) {
+        copy.text = text;
+        const auto id = document.insertLineAfter(after, copy);
+        if (!id)
+            return false;
+        after = *id;
+        if (added)
+            added->push_back(*id);
+    }
+    return document.editLine(target, [](core::LineRecord &line) { line.comment = true; });
 }
 
 }
@@ -76,6 +100,7 @@ const std::array<FamilyInfo, kFamilyCount> &families()
          "VIDEO_TOOL_POSITION_SHIFTER"},
         {Family::Hydra, "ALL_TAGS", "Hydra", "Visual Hydra tool", "VIDEO_TOOL_HYDRA"},
         {Family::Perspective, "perspective", "Perspective", "Visual perspective tool", "VIDEO_TOOL_PERSPECTIVE"},
+        {Family::Gradient, "gradient", "Gradient", "Gradient", "VIDEO_TOOL_GRADIENT"},
     }};
     return table;
 }
@@ -85,7 +110,8 @@ const std::array<Family, kFamilyCount> &railOrder()
     static const std::array<Family, kFamilyCount> order{
         Family::Crosshair,     Family::Position,   Family::Move,    Family::Scale,
         Family::RotationZ,     Family::RotationXY, Family::Perspective, Family::RectangleClip,
-        Family::VectorClip,    Family::Drawing,    Family::PositionShifter, Family::Hydra};
+        Family::VectorClip,    Family::Drawing,    Family::PositionShifter, Family::Hydra,
+        Family::Gradient};
     return order;
 }
 
@@ -99,6 +125,19 @@ std::optional<Family> familyOfHotkey(std::string_view symbol)
     for (const FamilyInfo &f : families())
         if (f.hotkey == symbol)
             return f.family;
+    return std::nullopt;
+}
+
+std::optional<std::string> vectorClipOptionOfHotkey(std::string_view symbol)
+{
+    static constexpr std::string_view kModes[] = {"VIDEO_VECTOR_CLIP_DRAG",    "VIDEO_VECTOR_CLIP_LINE",
+                                                  "VIDEO_VECTOR_CLIP_BEZIER",  "VIDEO_VECTOR_CLIP_BSPLINE",
+                                                  "VIDEO_VECTOR_CLIP_POINT",   "VIDEO_VECTOR_CLIP_DELETE"};
+    for (std::size_t i = 0; i < std::size(kModes); ++i)
+        if (kModes[i] == symbol)
+            return "mode" + std::to_string(i);
+    if (symbol == "VIDEO_VECTOR_CLIP_INVERT")
+        return "invert";
     return std::nullopt;
 }
 
@@ -165,8 +204,16 @@ void Gesture::stageExtradata(core::LineId line, std::vector<core::Extradata> ext
         m_stagedExtra[line] = std::move(extra);
 }
 
+void Gesture::stageReplacement(core::LineId line, std::vector<std::u8string> texts)
+{
+    if (m_before.contains(line))
+        m_replacements[line] = std::move(texts);
+}
+
 bool Gesture::changesAnyLine() const
 {
+    if (!m_replacements.empty())
+        return true;
     for (const auto &[key, text] : m_staged) {
         const core::LineRecord &line = m_before.at(key.first);
         if ((key.second ? line.translation : line.text) != text)
@@ -186,8 +233,26 @@ std::optional<std::u8string> Gesture::staged(core::LineId line, bool translation
     return it->second;
 }
 
+std::u8string Gesture::stagedKey() const
+{
+    std::u8string key;
+    const auto add = [&](core::LineId id, char8_t kind, const std::u8string &text) {
+        for (const char c : std::to_string(id.value))
+            key += static_cast<char8_t>(c);
+        key += kind + text + u8'\x1f';
+    };
+    for (const auto &[at, text] : m_staged)
+        add(at.first, at.second ? u8't' : u8's', text);
+    for (const auto &[id, texts] : m_replacements)
+        for (const auto &text : texts)
+            add(id, u8'r', text);
+    return key;
+}
+
 void Gesture::applyTo(core::Document &document) const
 {
+    for (const auto &[id, texts] : m_replacements)
+        (void)replaceLine(document, id, texts, nullptr);
     for (const auto &[key, text] : m_staged)
         (void)document.editLine(key.first, [&](core::LineRecord &line) {
             (key.second ? line.translation : line.text) = text;
@@ -231,7 +296,13 @@ std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
     command.name = m_history;
     command.expectedRevision = session.revision();
     command.touches = touches;
-    command.apply = [staged = m_staged, stagedExtra = m_stagedExtra](core::Document &document) {
+    auto added = std::make_shared<std::vector<core::LineId>>();
+    command.apply = [staged = m_staged, stagedExtra = m_stagedExtra, replacements = m_replacements,
+                     added](core::Document &document) {
+        added->clear();
+        for (const auto &[id, texts] : replacements)
+            if (!replaceLine(document, id, texts, added.get()))
+                return false;
         for (const auto &[key, text] : staged) {
             const bool translation = key.second;
             if (!document.editLine(key.first, [&](core::LineRecord &line) {
@@ -244,7 +315,14 @@ std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
                 return false;
         return true;
     };
-    return session.run(command);
+    const auto ran = session.run(command);
+    if (ran && !added->empty()) {
+        Selection selection;
+        selection.active = added->front();
+        selection.selected.insert(added->begin(), added->end());
+        session.setSelection(selection);
+    }
+    return ran;
 }
 
 void BatchPicker::pick(std::vector<core::LineId> lines)
@@ -301,6 +379,8 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
         return std::make_unique<AllTagsTool>();
     case Family::Perspective:
         return std::make_unique<PerspectiveTool>();
+    case Family::Gradient:
+        return std::make_unique<GradientTool>();
     default:
         return nullptr;
     }

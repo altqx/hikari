@@ -2,6 +2,389 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="pl">
 <context>
+    <name>HikariSub.Agent</name>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Export as Markdown</source>
+        <translation>Eksportuj jako Markdown</translation>
+    </message>
+    <message>
+        <source>Markdown (*.md)</source>
+        <translation>Markdown (*.md)</translation>
+    </message>
+    <message>
+        <source>The thread couldn’t be saved there.</source>
+        <translation>Nie można zapisać tam wątku.</translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>Panel agenta</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>Nowy wątek agenta</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>Ręczny</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>Pełny dostęp</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatyczny</translation>
+    </message>
+    <message>
+        <source>Turn on Full access?</source>
+        <translation>Włączyć Pełny dostęp?</translation>
+    </message>
+    <message>
+        <source>The agent changes subtitles, styles and settings without asking. Every change still lands in the review and can be undone.</source>
+        <translation>Agent zmienia napisy, style i ustawienia bez pytania. Każda zmiana i tak trafia do przeglądu i można ją cofnąć.</translation>
+    </message>
+    <message>
+        <source>These still ask, in every mode: deleting or overwriting files outside the subtitles’ folders, running external programs and installing plugins, sending local files to the network, and changing AI permissions, keys or budgets.</source>
+        <translation>W każdym trybie nadal pytają: usuwanie lub nadpisywanie plików poza folderami napisów, uruchamianie zewnętrznych programów i instalowanie wtyczek, wysyłanie plików lokalnych do sieci oraz zmiana uprawnień, kluczy lub budżetów AI.</translation>
+    </message>
+    <message>
+        <source>Don’t warn me again</source>
+        <translation>Nie ostrzegaj ponownie</translation>
+    </message>
+    <message>
+        <source>Turn on Full access</source>
+        <translation>Włącz Pełny dostęp</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Threads</source>
+        <translation>Wątki</translation>
+    </message>
+    <message>
+        <source>New thread</source>
+        <translation>Nowy wątek</translation>
+    </message>
+    <message>
+        <source>Thread menu</source>
+        <translation>Menu wątku</translation>
+    </message>
+    <message>
+        <source>Add a provider to use the agent</source>
+        <translation>Dodaj dostawcę, aby używać agenta</translation>
+    </message>
+    <message>
+        <source>HikariSub has no AI server. The agent runs on a provider you add: an API key, a ChatGPT or OpenRouter sign-in, or a model on this computer.</source>
+        <translation>HikariSub nie ma własnego serwera AI. Agent działa u dostawcy, którego dodasz: przez klucz API, logowanie ChatGPT lub OpenRouter albo model na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation>Otwórz Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Nothing is sent or downloaded until you add one.</source>
+        <translation>Nic nie jest wysyłane ani pobierane, dopóki go nie dodasz.</translation>
+    </message>
+    <message>
+        <source>Search threads</source>
+        <translation>Szukaj wątków</translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation>Dzisiaj</translation>
+    </message>
+    <message>
+        <source>Yesterday</source>
+        <translation>Wczoraj</translation>
+    </message>
+    <message>
+        <source>cost not reported</source>
+        <translation>koszt nieznany</translation>
+    </message>
+    <message>
+        <source>running</source>
+        <translation>działa</translation>
+    </message>
+    <message>
+        <source>at cap</source>
+        <translation>limit osiągnięty</translation>
+    </message>
+    <message>
+        <source>Queued · %1</source>
+        <translation>W kolejce · %1</translation>
+    </message>
+    <message>
+        <source>Steer now</source>
+        <translation>Pokieruj teraz</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edytuj</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tokens</source>
+        <translation>%1 z %2 tokenów</translation>
+    </message>
+    <message>
+        <source>%1 tokens</source>
+        <translation>Tokeny: %1</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 z %2</translation>
+    </message>
+    <message>
+        <source>%1 · active tab</source>
+        <translation>%1 · aktywna karta</translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach, / for commands</source>
+        <translation>Zapytaj albo wpisz @, aby dołączyć, / dla poleceń</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>Najpierw dodaj dostawcę</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>Wiadomość</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Dołącz</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
+        <source>Send</source>
+        <translation>Wyślij</translation>
+    </message>
+    <message>
+        <source>Rename thread…</source>
+        <translation>Zmień nazwę wątku…</translation>
+    </message>
+    <message>
+        <source>Export as Markdown…</source>
+        <translation>Eksportuj jako Markdown…</translation>
+    </message>
+    <message>
+        <source>Delete thread</source>
+        <translation>Usuń wątek</translation>
+    </message>
+    <message>
+        <source>Delete this thread?</source>
+        <translation>Usunąć ten wątek?</translation>
+    </message>
+    <message>
+        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
+        <translation>Rozmowa zostanie usunięta. Wprowadzone w niej zmiany zostają w napisach i w przeglądzie.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Change mode</source>
+        <translation>Zmień tryb</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>Ustawienia › AI…</translation>
+    </message>
+    <message>
+        <source>You approve every change. Reading never asks.</source>
+        <translation>Zatwierdzasz każdą zmianę. Odczyt nigdy nie pyta.</translation>
+    </message>
+    <message>
+        <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
+        <translation>Model sędziego zatwierdza każdą akcję albo pyta Ciebie. Widzi akcję i Twoje wiadomości, nigdy Twoich plików.</translation>
+    </message>
+    <message>
+        <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
+        <translation>Pyta tylko lista „zawsze pytaj”. Zmiany działają od razu i można je cofnąć.</translation>
+    </message>
+    <message>
+        <source>Default for new threads…</source>
+        <translation>Domyślny dla nowych wątków…</translation>
+    </message>
+    <message>
+        <source>Rename thread</source>
+        <translation>Zmień nazwę wątku</translation>
+    </message>
+    <message>
+        <source>Thread name</source>
+        <translation>Nazwa wątku</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
+    </message>
+    <message>
+        <source>steered</source>
+        <translation>pokierowano</translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>Przywróć punkt kontrolny</translation>
+    </message>
+    <message>
+        <source>judge approved</source>
+        <translation>zatwierdzone przez sędziego</translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation>Przegląd</translation>
+    </message>
+    <message>
+        <source>Plan</source>
+        <translation>Plan</translation>
+    </message>
+    <message>
+        <source>Judge asks you</source>
+        <translation>Sędzia pyta Ciebie</translation>
+    </message>
+    <message>
+        <source>Allow %1?</source>
+        <translation>Zezwolić na %1?</translation>
+    </message>
+    <message>
+        <source>Run %1?</source>
+        <translation>Uruchomić %1?</translation>
+    </message>
+    <message>
+        <source>asks in every mode</source>
+        <translation>pyta w każdym trybie</translation>
+    </message>
+    <message>
+        <source>Why: %1</source>
+        <translation>Powód: %1</translation>
+    </message>
+    <message>
+        <source>Allow</source>
+        <translation>Zezwól</translation>
+    </message>
+    <message>
+        <source>Allow once</source>
+        <translation>Zezwól raz</translation>
+    </message>
+    <message>
+        <source>Allow in this thread</source>
+        <translation>Zezwól w tym wątku</translation>
+    </message>
+    <message>
+        <source>Deny</source>
+        <translation>Odmów</translation>
+    </message>
+    <message>
+        <source>Deny and tell the agent…</source>
+        <translation>Odmów i powiedz agentowi…</translation>
+    </message>
+    <message>
+        <source>What should it do instead?</source>
+        <translation>Co ma zrobić zamiast tego?</translation>
+    </message>
+    <message>
+        <source>Allowed</source>
+        <translation>Zezwolono</translation>
+    </message>
+    <message>
+        <source>Allowed in this thread</source>
+        <translation>Zezwolono w tym wątku</translation>
+    </message>
+    <message>
+        <source>Denied</source>
+        <translation>Odmówiono</translation>
+    </message>
+    <message>
+        <source>No longer needed</source>
+        <translation>Już niepotrzebne</translation>
+    </message>
+    <message>
+        <source>This thread reached its %1 cap</source>
+        <translation>Ten wątek osiągnął limit %1</translation>
+    </message>
+    <message>
+        <source>Today’s %1 cap is reached</source>
+        <translation>Osiągnięto dzisiejszy limit %1</translation>
+    </message>
+    <message>
+        <source>AI component stopped</source>
+        <translation>Komponent AI zatrzymał się</translation>
+    </message>
+    <message>
+        <source>Turn failed</source>
+        <translation>Tura nie powiodła się</translation>
+    </message>
+    <message>
+        <source>You stopped the turn.</source>
+        <translation>Zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>The answer reached the model’s length limit.</source>
+        <translation>Odpowiedź osiągnęła limit długości modelu.</translation>
+    </message>
+    <message>
+        <source>The model declined to answer.</source>
+        <translation>Model odmówił odpowiedzi.</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its most model requests.</source>
+        <translation>Tura zatrzymała się po maksymalnej liczbie zapytań do modelu.</translation>
+    </message>
+    <message>
+        <source>Choose a chat model in Settings › AI</source>
+        <translation>Wybierz model czatu w Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>AI component isn’t ready</source>
+        <translation>Komponent AI nie jest gotowy</translation>
+    </message>
+    <message>
+        <source>The turn stopped after its last change. Raise the cap for this thread to go on.</source>
+        <translation>Tura zatrzymała się po ostatniej zmianie. Aby kontynuować, podnieś limit tego wątku.</translation>
+    </message>
+    <message>
+        <source>Every thread stops until tomorrow, or until you raise the cap in Settings › AI.</source>
+        <translation>Każdy wątek stoi do jutra albo do podniesienia limitu w Ustawienia › AI.</translation>
+    </message>
+    <message>
+        <source>The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.</source>
+        <translation>Tura została przerwana i nie uruchomi się ponownie sama. Wprowadzone zmiany zostają w przeglądzie.</translation>
+    </message>
+    <message>
+        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
+        <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+    </message>
+    <message>
+        <source>Raise to %1 and continue</source>
+        <translation>Podnieś do %1 i kontynuuj</translation>
+    </message>
+    <message>
+        <source>Continue.</source>
+        <translation>Kontynuuj.</translation>
+    </message>
+    <message>
+        <source>Retry the turn</source>
+        <translation>Ponów turę</translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation>Pokaż dziennik</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -308,6 +691,14 @@
     <message>
         <source>More audio options</source>
         <translation>Więcej opcji audio</translation>
+    </message>
+    <message>
+        <source>Go to selection start</source>
+        <translation>Przejdź do początku zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>Przejdź do końca zaznaczenia</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -801,6 +1192,58 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wczytanie skryptu uruchamia jego kod.</translation>
     </message>
     <message>
+        <source>Not installed by DependencyControl. Remove the file from your autoload folder.</source>
+        <translation>Skrypt nie został zainstalowany przez DependencyControl. Usuń plik z folderu autoload.</translation>
+    </message>
+    <message>
+        <source>installed</source>
+        <translation>zainstalowany</translation>
+    </message>
+    <message>
+        <source>installing</source>
+        <translation>instalowanie</translation>
+    </message>
+    <message>
+        <source>uninstalling</source>
+        <translation>odinstalowywanie</translation>
+    </message>
+    <message>
+        <source>waiting to install</source>
+        <translation>oczekuje na instalację</translation>
+    </message>
+    <message>
+        <source>couldn’t install</source>
+        <translation>nie udało się zainstalować</translation>
+    </message>
+    <message>
+        <source>not installed</source>
+        <translation>niezainstalowany</translation>
+    </message>
+    <message>
+        <source>Uninstall script</source>
+        <translation>Odinstaluj skrypt</translation>
+    </message>
+    <message>
+        <source>Uninstall %1?</source>
+        <translation>Odinstalować %1?</translation>
+    </message>
+    <message>
+        <source>DependencyControl deletes its files from your user folder. The modules it brought stay, for other scripts.</source>
+        <translation>DependencyControl usuwa jego pliki z folderu użytkownika. Moduły zainstalowane razem z nim zostają dla innych skryptów.</translation>
+    </message>
+    <message>
+        <source>Uninstall</source>
+        <translation>Odinstaluj</translation>
+    </message>
+    <message>
+        <source>Its macros are in Automation › %1.</source>
+        <translation>Jego makra są w menu Automatyzacja › %1.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
         <source>Scripts</source>
         <translation>Skrypty</translation>
     </message>
@@ -813,6 +1256,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Uruchomienia</translation>
     </message>
     <message>
+        <source>Recommended</source>
+        <translation>Zalecane</translation>
+    </message>
+    <message>
+        <source>Filter scripts</source>
+        <translation>Filtruj skrypty</translation>
+    </message>
+    <message>
+        <source>Installs from each author’s feed through DependencyControl. A script runs its code when it loads.</source>
+        <translation>Instaluje z kanału każdego autora przez DependencyControl. Skrypt uruchamia swój kod przy wczytaniu.</translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation>Wczytaj</translation>
     </message>
@@ -821,12 +1276,24 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wczytaj skrypty wymienione w tym pliku</translation>
     </message>
     <message>
+        <source>Browse recommended scripts</source>
+        <translation>Przeglądaj zalecane skrypty</translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation>Żadne makro nie pasuje</translation>
     </message>
     <message>
         <source>Macros</source>
         <translation>Makra</translation>
+    </message>
+    <message>
+        <source>No scripts match</source>
+        <translation>Żaden skrypt nie pasuje</translation>
+    </message>
+    <message>
+        <source>Recommended scripts</source>
+        <translation>Zalecane skrypty</translation>
     </message>
     <message>
         <source>No macro has run yet</source>
@@ -1011,6 +1478,54 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Remove shortcut</source>
         <translation>Usuń skrót</translation>
+    </message>
+    <message>
+        <source>%1 (version %2)</source>
+        <translation>%1 (wersja %2)</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation>Instalowanie…</translation>
+    </message>
+    <message>
+        <source>Uninstalling…</source>
+        <translation>Odinstalowywanie…</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation>Oczekiwanie…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowany</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Show in Scripts</source>
+        <translation>Pokaż w widoku Skrypty</translation>
+    </message>
+    <message>
+        <source>Open project page</source>
+        <translation>Otwórz stronę projektu</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>Odinstaluj…</translation>
+    </message>
+    <message>
+        <source>Installed by hand</source>
+        <translation>Zainstalowany ręcznie</translation>
     </message>
     <message>
         <source>Shortcut</source>
@@ -1359,6 +1874,138 @@ Urządzenie wyjściowe: %2</translation>
         <source>not ticked</source>
         <translation>niezaznaczone</translation>
     </message>
+    <message>
+        <source>DependencyControl’s updater is turned off.</source>
+        <translation>Aktualizator DependencyControl jest wyłączony.</translation>
+    </message>
+    <message>
+        <source>DependencyControl is busy with another update. Try again later.</source>
+        <translation>DependencyControl jest zajęty inną aktualizacją. Spróbuj ponownie później.</translation>
+    </message>
+    <message>
+        <source>Its feed has no release that fits this system.</source>
+        <translation>Jego kanał nie ma wydania pasującego do tego systemu.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the feed: no network connection.</source>
+        <translation>Nie można odczytać kanału: brak połączenia z siecią.</translation>
+    </message>
+    <message>
+        <source>A module it needs couldn’t be installed.</source>
+        <translation>Nie można zainstalować wymaganego modułu.</translation>
+    </message>
+    <message>
+        <source>DependencyControl doesn’t trust its feed.</source>
+        <translation>DependencyControl nie ufa jego kanałowi.</translation>
+    </message>
+    <message>
+        <source>The install was cancelled.</source>
+        <translation>Instalacja została anulowana.</translation>
+    </message>
+    <message>
+        <source>DependencyControl blocks its feed.</source>
+        <translation>DependencyControl blokuje jego kanał.</translation>
+    </message>
+    <message>
+        <source>A downloaded file didn’t match its feed.</source>
+        <translation>Pobrany plik nie zgadza się z kanałem.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be written. Close what uses it and try again.</source>
+        <translation>Nie można zapisać pliku. Zamknij to, co go używa, i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>A file couldn’t be downloaded.</source>
+        <translation>Nie można pobrać pliku.</translation>
+    </message>
+    <message>
+        <source>DependencyControl couldn’t install it (status %1).</source>
+        <translation>DependencyControl nie mógł go zainstalować (stan %1).</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>Typesetting</translation>
+    </message>
+    <message>
+        <source>Makes a power-pin track from the lines’ perspective, for Perspective-Motion.</source>
+        <translation>Tworzy ścieżkę power-pin z perspektywy linijek, dla Perspective-Motion.</translation>
+    </message>
+    <message>
+        <source>Draws moving focus lines, frame by frame.</source>
+        <translation>Rysuje ruchome linie skupienia, klatka po klatce.</translation>
+    </message>
+    <message>
+        <source>Splits a line at its tags, one line per section.</source>
+        <translation>Dzieli linijkę w miejscach tagów, po jednej linijce na sekcję.</translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation>Edycja</translation>
+    </message>
+    <message>
+        <source>Keeps earlier rewrites of a line and switches between them.</source>
+        <translation>Przechowuje wcześniejsze wersje linijki i przełącza między nimi.</translation>
+    </message>
+    <message>
+        <source>QC</source>
+        <translation>QC</translation>
+    </message>
+    <message>
+        <source>Marks the lines changed since a git commit.</source>
+        <translation>Zaznacza linijki zmienione od commita git.</translation>
+    </message>
+    <message>
+        <source>Needs Git</source>
+        <translation>Wymaga Gita</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>Fixes old KFX templates so Aegisub 3.5 runs them too.</source>
+        <translation>Poprawia stare szablony KFX, aby działały też w Aegisub 3.5.</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>Zainstaluj %1</translation>
+    </message>
+    <message>
+        <source>Uninstall %1</source>
+        <translation>Odinstaluj %1</translation>
+    </message>
+    <message>
+        <source>The user folder can’t be written.</source>
+        <translation>Nie można zapisywać w folderze użytkownika.</translation>
+    </message>
+    <message>
+        <source>The uninstall was cancelled.</source>
+        <translation>Odinstalowanie zostało anulowane.</translation>
+    </message>
+    <message>
+        <source>%1 is uninstalled.</source>
+        <translation>Odinstalowano %1.</translation>
+    </message>
+    <message>
+        <source>%1 is installed.</source>
+        <translation>Zainstalowano %1.</translation>
+    </message>
+    <message>
+        <source>The run ended before it finished.</source>
+        <translation>Uruchomienie zakończyło się przed ukończeniem.</translation>
+    </message>
+    <message>
+        <source>DependencyControl has no record of it.</source>
+        <translation>DependencyControl nie ma o nim zapisu.</translation>
+    </message>
+    <message>
+        <source>Some of its files couldn’t be deleted. Close what uses them and try again.</source>
+        <translation>Nie można usunąć niektórych jego plików. Zamknij to, co ich używa, i spróbuj ponownie.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>
@@ -1437,6 +2084,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>0 is opaque, 255 fully transparent</source>
         <translation>0 to pełne krycie, 255 to pełna przezroczystość</translation>
+    </message>
+    <message>
+        <source>No colour</source>
+        <translation>Brak koloru</translation>
     </message>
     <message>
         <source>Less</source>
@@ -1634,94 +2285,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
-        <source>Catalogue</source>
-        <translation>Katalog</translation>
-    </message>
-    <message>
-        <source>Every line gets this style.</source>
-        <translation>Każda linijka otrzyma ten styl.</translation>
-    </message>
-    <message>
-        <source>Tags at start</source>
-        <translation>Tagi na początku</translation>
-    </message>
-    <message>
-        <source>Written at the start of every line.</source>
-        <translation>Wstawiane na początku każdej linijki.</translation>
-    </message>
-    <message>
-        <source>Resolution</source>
-        <translation>Rozdzielczość</translation>
-    </message>
-    <message>
-        <source>Width</source>
-        <translation>Szerokość</translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation>Wysokość</translation>
-    </message>
-    <message>
-        <source>The new file’s script resolution.</source>
-        <translation>Rozdzielczość skryptu nowego pliku.</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Liczba klatek na sekundę</translation>
-    </message>
-    <message>
-        <source>Frames</source>
-        <translation>Klatki</translation>
-    </message>
-    <message>
-        <source>fps</source>
-        <translation>fps</translation>
-    </message>
-    <message>
-        <source>Enter a frame rate from 1 to 1000.</source>
-        <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
-    </message>
-    <message>
-        <source>MicroDVD counts frames: times become frames at this rate.</source>
-        <translation>MicroDVD liczy klatki: czasy są zamieniane na klatki według tej liczby klatek na sekundę.</translation>
-    </message>
-    <message>
-        <source>End times</source>
-        <translation>Czasy końcowe</translation>
-    </message>
-    <message>
-        <source>Per character</source>
-        <translation>Na znak</translation>
-    </message>
-    <message>
-        <source>ms</source>
-        <translation>ms</translation>
-    </message>
-    <message>
-        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
-        <translation>Linijka trwa tyle, ile jej długość × ta wartość, co najmniej 1 s, i kończy się tam, gdzie zaczyna się następna.</translation>
-    </message>
-    <message>
-        <source>What changes</source>
-        <translation>Co się zmieni</translation>
-    </message>
-    <message>
-        <source>Nothing to show until the frame rate is valid.</source>
-        <translation>Nic do pokazania, dopóki liczba klatek na sekundę nie będzie poprawna.</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Styl</translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation>Nowe czasy końcowe</translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation>Konwertuj</translation>
-    </message>
-    <message>
         <source>Subtitles</source>
         <translation>Napisy</translation>
     </message>
@@ -1782,6 +2345,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Proporcje obrazu zmieniają się z %1 na %2.</translation>
     </message>
     <message>
+        <source>Adjust 3D rotations</source>
+        <translation>Dostosuj obroty 3D</translation>
+    </message>
+    <message>
+        <source>Rotated lines keep their shape on screen.</source>
+        <translation>Obrócone linijki zachowują swój kształt na ekranie.</translation>
+    </message>
+    <message>
         <source>Stretch</source>
         <translation>Rozciągnij</translation>
     </message>
@@ -1798,16 +2369,16 @@ Urządzenie wyjściowe: %2</translation>
         </translation>
     </message>
     <message>
-        <source>This document can’t be converted to that format.</source>
-        <translation>Tego dokumentu nie można przekonwertować do tego formatu.</translation>
+        <source>Line %1 was only scaled: it moves, changes shape over time or cannot be measured.</source>
+        <translation>Linijka %1 została tylko przeskalowana: porusza się, zmienia kształt w czasie lub nie da się jej zmierzyć.</translation>
     </message>
-    <message>
-        <source>Invalid FPS. Correct it in options and try again.</source>
-        <translation>Nieprawidłowy FPS. Popraw opcje i spróbuj ponownie.</translation>
-    </message>
-    <message>
-        <source>The script properties and styles are removed.</source>
-        <translation>Właściwości skryptu i style zostaną usunięte.</translation>
+    <message numerus="yes">
+        <source>%n rotated line(s) could not keep their shape.</source>
+        <translation>
+            <numerusform>%n obrócona linijka nie mogła zachować kształtu.</numerusform>
+            <numerusform>%n obrócone linijki nie mogły zachować kształtu.</numerusform>
+            <numerusform>%n obróconych linijek nie mogło zachować kształtu.</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>%n comment line(s) removed.</source>
@@ -1862,14 +2433,6 @@ Urządzenie wyjściowe: %2</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <source>Layer, style, actor, margins or effect removed from %n line(s).</source>
-        <translation>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijki.</numerusform>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
-            <numerusform>Warstwa, styl, aktor, marginesy lub efekt zostaną usunięte z %n linijek.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Bookmarks, hidden lines and groups removed from %n line(s).</source>
         <translation>
             <numerusform>Zakładki, ukrycie i grupy zostaną usunięte z %n linijki.</numerusform>
@@ -1908,6 +2471,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
@@ -1942,6 +2509,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Keep mine</source>
         <translation>Zachowaj moje</translation>
+    </message>
+    <message>
+        <source>Convert “%1” to ASS before saving it?</source>
+        <translation>Przekonwertować „%1” do ASS przed zapisaniem?</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>Konwertuj do ASS</translation>
     </message>
     <message>
         <source>Save “%1” as</source>
@@ -1984,6 +2559,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
+        <source>YouTube timed text (*.ytt *.srv3)</source>
+        <translation>Napisy czasowe YouTube (*.ytt *.srv3)</translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>Wideo z osadzonymi napisami (*.mkv *.ogm)</translation>
     </message>
@@ -2010,6 +2589,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Untitled</source>
         <translation>Bez nazwy</translation>
+    </message>
+    <message>
+        <source>Could not import %1 as YouTube timed text. %2 Nothing was imported.</source>
+        <translation>Nie można zaimportować %1 jako napisów czasowych YouTube. %2 Nic nie zaimportowano.</translation>
     </message>
     <message>
         <source>the text is not UTF-8</source>
@@ -2072,6 +2655,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wybierz, gdzie zapisać dokument bez nazwy.</translation>
     </message>
     <message>
+        <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
+        <translation>Liczba klatek na sekundę w Ustawienia › Konwersja jest nieprawidłowa. Popraw ją i zapisz ponownie.</translation>
+    </message>
+    <message>
+        <source>Save as ASS</source>
+        <translation>Zapisz jako ASS</translation>
+    </message>
+    <message>
         <source>A document could not be saved; nothing was closed.</source>
         <translation>Nie można zapisać dokumentu; nic nie zostało zamknięte.</translation>
     </message>
@@ -2086,6 +2677,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>ASS subtitles (*.ass)</source>
+        <translation>Napisy ASS (*.ass)</translation>
     </message>
     <message>
         <source>Reload subtitles</source>
@@ -2112,12 +2707,21 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Klatki kluczowe: %1</translation>
     </message>
     <message>
+        <source>Timecodes: %1</source>
+        <translation>Kody czasowe: %1</translation>
+    </message>
+    <message>
         <source>Associated files:</source>
         <translation>Skojarzone pliki:</translation>
     </message>
     <message>
         <source>Video from directory: %1</source>
         <translation>Wideo z folderu: %1</translation>
+    </message>
+    <message>
+        <source>Linked files not found:</source>
+        <extracomment>Heading of the association bar&apos;s list of files the subtitle file links but that do not exist</extracomment>
+        <translation>Nie znaleziono powiązanych plików:</translation>
     </message>
     <message>
         <source>Load associated</source>
@@ -2202,6 +2806,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Close tab</source>
         <translation>Zamknij zakładkę</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -2766,8 +3374,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Usunięto tagi czcionki, rozmiaru, skali lub odstępów</translation>
     </message>
     <message>
+        <source>Scale or spacing tags removed</source>
+        <translation>Usunięto znaczniki skali lub odstępów</translation>
+    </message>
+    <message>
         <source>Border, shadow, blur, transparency or other colours removed</source>
         <translation>Usunięto obramowanie, cień, rozmycie, przezroczystość lub inne kolory</translation>
+    </message>
+    <message>
+        <source>Border, shadow or blur tags removed</source>
+        <translation>Usunięto znaczniki obramowania, cienia lub rozmycia</translation>
     </message>
     <message>
         <source>Text colour removed</source>
@@ -2778,8 +3394,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Usunięto część pogrubienia, kursywy, podkreślenia lub przekreślenia</translation>
     </message>
     <message>
+        <source>Strikeout removed</source>
+        <translation>Usunięto przekreślenie</translation>
+    </message>
+    <message>
         <source>Position or alignment removed</source>
         <translation>Usunięto położenie lub wyrównanie</translation>
+    </message>
+    <message>
+        <source>Position approximated by the nearest region</source>
+        <translation>Położenie przybliżone najbliższym regionem</translation>
     </message>
     <message>
         <source>Karaoke timing removed</source>
@@ -2806,8 +3430,20 @@ Urządzenie wyjściowe: %2</translation>
         <translation>„%1” jest folderem.</translation>
     </message>
     <message>
+        <source>Enter a language code such as en or pt-BR, or leave it empty.</source>
+        <translation>Wpisz kod języka, np. en lub pt-BR, albo zostaw puste.</translation>
+    </message>
+    <message>
         <source>Enter a frame rate between 1 and 1000.</source>
         <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
+    </message>
+    <message>
+        <source>The style options can’t be saved in this file.</source>
+        <translation>Nie można zapisać opcji stylów w tym pliku.</translation>
+    </message>
+    <message>
+        <source>YouTube timed text couldn’t be made from this file: %1</source>
+        <translation>Nie można utworzyć napisów czasowych YouTube z tego pliku: %1</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -2820,6 +3456,66 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Plain text</source>
         <translation>Zwykły tekst</translation>
+    </message>
+    <message>
+        <source>YouTube timed text (srv3)</source>
+        <translation>Napisy czasowe YouTube (srv3)</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>Poświata</translation>
+    </message>
+    <message>
+        <source>Glow shadow for %1</source>
+        <translation>Cień poświaty dla %1</translation>
+    </message>
+    <message>
+        <source>Soft</source>
+        <translation>Miękki</translation>
+    </message>
+    <message>
+        <source>Soft shadow for %1</source>
+        <translation>Miękki cień dla %1</translation>
+    </message>
+    <message>
+        <source>Hard</source>
+        <translation>Twardy</translation>
+    </message>
+    <message>
+        <source>Hard shadow for %1</source>
+        <translation>Twardy cień dla %1</translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation>Faza</translation>
+    </message>
+    <message>
+        <source>Bevel shadow for %1</source>
+        <translation>Cień fazowany dla %1</translation>
+    </message>
+    <message>
+        <source>Current word text</source>
+        <translation>Tekst bieżącego słowa</translation>
+    </message>
+    <message>
+        <source>Current word text colour for %1</source>
+        <translation>Kolor tekstu bieżącego słowa dla %1</translation>
+    </message>
+    <message>
+        <source>Current word outline</source>
+        <translation>Obrys bieżącego słowa</translation>
+    </message>
+    <message>
+        <source>Current word outline colour for %1</source>
+        <translation>Kolor obrysu bieżącego słowa dla %1</translation>
+    </message>
+    <message>
+        <source>Current word shadow</source>
+        <translation>Cień bieżącego słowa</translation>
+    </message>
+    <message>
+        <source>Current word shadow colour for %1</source>
+        <translation>Kolor cienia bieżącego słowa dla %1</translation>
     </message>
     <message>
         <source>Untitled</source>
@@ -2882,6 +3578,46 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Opcje</translation>
     </message>
     <message>
+        <source>srv3 style options</source>
+        <translation>Opcje stylów srv3</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>%1 has no shadow (its Shadow is 0), so no shadow type applies.</source>
+        <translation>%1 nie ma cienia (Cień wynosi 0), więc typ cienia nie ma zastosowania.</translation>
+    </message>
+    <message>
+        <source>Karaoke for %1</source>
+        <translation>Karaoke dla %1</translation>
+    </message>
+    <message>
+        <source>no colour</source>
+        <translation>brak koloru</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>Przywróć %1</translation>
+    </message>
+    <message>
+        <source>Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.</source>
+        <translation>Cień określa, jak YouTube rysuje cień stylu; obrys zawsze jest rysowany jako poświata. Kolory bieżącego słowa dotyczą wierszy karaoke.</translation>
+    </message>
+    <message>
+        <source>Show all styles (%1)</source>
+        <translation>Pokaż wszystkie style (%1)</translation>
+    </message>
+    <message>
         <source>Alignment as %1 tags</source>
         <translation>Wyrównanie jako tagi %1</translation>
     </message>
@@ -2910,6 +3646,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nazwy aktorów</translation>
     </message>
     <message>
+        <source>Netflix timed-text style</source>
+        <translation>Styl napisów Netflix</translation>
+    </message>
+    <message>
+        <source>Times in frames</source>
+        <translation>Czas w klatkach</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Język</translation>
+    </message>
+    <message>
         <source>Merge overlapping lines into one subtitle</source>
         <translation>Scal nakładające się linijki w jeden napis</translation>
     </message>
@@ -2926,8 +3674,20 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Użyj liczby klatek wideo</translation>
     </message>
     <message>
+        <source>Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.</source>
+        <translation>Tekst pozostaje biały i wyśrodkowany u góry lub u dołu, zachowywana jest tylko kursywa, a czas jest w klatkach.</translation>
+    </message>
+    <message>
         <source>TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.</source>
         <translation>TMPlayer nie ma czasów końca: nakładające się linijki są scalane, a pusty napis czyści ekran.</translation>
+    </message>
+    <message>
+        <source>Converted as YTSubConverter 1.6.5 converts it. Fonts and graphics attached to the file are not exported.</source>
+        <translation>Konwersja taka sama jak w YTSubConverter 1.6.5. Czcionki i grafiki dołączone do pliku nie są eksportowane.</translation>
+    </message>
+    <message>
+        <source>Changed options are saved in the subtitle file when you export.</source>
+        <translation>Zmienione opcje zostaną zapisane w pliku napisów podczas eksportu.</translation>
     </message>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
@@ -2955,6 +3715,14 @@ Urządzenie wyjściowe: %2</translation>
             <numerusform>Pominięto %n linijkę bez treści do wyświetlenia.</numerusform>
             <numerusform>Pominięto %n linijki bez treści do wyświetlenia.</numerusform>
             <numerusform>Pominięto %n linijek bez treści do wyświetlenia.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Style options for %n style(s) saved in the subtitle file.</source>
+        <translation>
+            <numerusform>Zapisano w pliku napisów opcje %n stylu.</numerusform>
+            <numerusform>Zapisano w pliku napisów opcje %n stylów.</numerusform>
+            <numerusform>Zapisano w pliku napisów opcje %n stylów.</numerusform>
         </translation>
     </message>
     <message>
@@ -3307,6 +4075,26 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Writing the new archive replaces it.</source>
         <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font files already exist in “%1”.</source>
+        <translation>
+            <numerusform>%n plik czcionki już istnieje w “%1”.</numerusform>
+            <numerusform>%n pliki czcionek już istnieją w “%1”.</numerusform>
+            <numerusform>%n plików czcionek już istnieje w “%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>i %n inny</numerusform>
+            <numerusform>i %n inne</numerusform>
+            <numerusform>i %n innych</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Keep existing</source>
+        <translation>Zachowaj istniejące</translation>
     </message>
     <message>
         <source>Action</source>
@@ -3840,6 +4628,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Ta kolekcja jest niekompletna. Zostanie zapisana dopiero po potwierdzeniu tego faktu, a wynik zostanie oznaczony jako niekompletny.</translation>
     </message>
     <message>
+        <source>“%1” already exists in the folder and was kept.</source>
+        <translation>“%1” już istnieje w folderze i został zachowany.</translation>
+    </message>
+    <message>
         <source>Cannot create folder.</source>
         <translation>Nie można utworzyć folderu.</translation>
     </message>
@@ -3956,6 +4748,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Add fonts</source>
         <translation>Dodaj czcionki</translation>
+    </message>
+    <message>
+        <source>Show fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font matches</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4360,6 +5160,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Brak otwartego dokumentu</translation>
     </message>
     <message>
+        <source>Bake animations</source>
+        <translation>Utrwal animacje</translation>
+    </message>
+    <message>
         <source>Show subtitles preview</source>
         <translation>Pokaż podgląd napisów</translation>
     </message>
@@ -4532,6 +5336,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Z następną linijką</translation>
     </message>
     <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
         <source>Select lines visible on video</source>
         <translation>Zaznacz linijki widoczne na wideo</translation>
     </message>
@@ -4558,6 +5366,38 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Add description</source>
         <translation>Dodaj opis</translation>
+    </message>
+    <message>
+        <source>Aegisub folds</source>
+        <translation>Zwinięcia Aegisub</translation>
+    </message>
+    <message numerus="yes">
+        <source>This file has %n Aegisub folds.</source>
+        <translation>
+            <numerusform>Ten plik ma %n zwinięcie Aegisub.</numerusform>
+            <numerusform>Ten plik ma %n zwinięcia Aegisub.</numerusform>
+            <numerusform>Ten plik ma %n zwinięć Aegisub.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Convert to line groups</source>
+        <translation>Konwertuj na grupy linijek</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n Aegisub folds became line groups.</source>
+        <translation>
+            <numerusform>%n zwinięcie Aegisub stało się grupą linijek.</numerusform>
+            <numerusform>%n zwinięcia Aegisub stały się grupami linijek.</numerusform>
+            <numerusform>%n zwinięć Aegisub stało się grupami linijek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n folds were skipped: they overlap a line group or do not pair.</source>
+        <translation>
+            <numerusform>Pominięto %n zwinięcie: nakłada się na grupę linijek lub nie ma pary.</numerusform>
+            <numerusform>Pominięto %n zwinięcia: nakładają się na grupę linijek lub nie mają pary.</numerusform>
+            <numerusform>Pominięto %n zwinięć: nakładają się na grupę linijek lub nie mają pary.</numerusform>
+        </translation>
     </message>
     <message>
         <source>This would leave lines outside their line group</source>
@@ -4694,6 +5534,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>bookmarked</source>
         <translation>z zakładką</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n QC note(s)</source>
+        <translation>
+            <numerusform>%n notatka QC</numerusform>
+            <numerusform>%n notatki QC</numerusform>
+            <numerusform>%n notatek QC</numerusform>
+        </translation>
     </message>
     <message>
         <source>uncommitted</source>
@@ -4847,6 +5695,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz…</translation>
     </message>
     <message>
+        <source>Open folder…</source>
+        <translation>Otwórz folder…</translation>
+    </message>
+    <message>
         <source>Open video…</source>
         <translation>Otwórz wideo…</translation>
     </message>
@@ -4885,6 +5737,30 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Dismiss</source>
         <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>Reopen last tabs (%1)</source>
+        <translation>Otwórz ponownie ostatnie zakładki (%1)</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation>Ostatnie projekty</translation>
+    </message>
+    <message>
+        <source>No recent projects</source>
+        <translation>Brak ostatnich projektów</translation>
+    </message>
+    <message>
+        <source>No matching projects</source>
+        <translation>Brak pasujących projektów</translation>
+    </message>
+    <message>
+        <source>Filter recent projects</source>
+        <translation>Filtruj ostatnie projekty</translation>
+    </message>
+    <message>
+        <source>Remove missing folders</source>
+        <translation>Usuń brakujące foldery</translation>
     </message>
     <message>
         <source>Recent files</source>
@@ -5080,6 +5956,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The shortcut %1 of “Fix minor errors (experimental)” was removed: the feature is removed.</source>
         <translation>Usunięto skrót %1 polecenia “Popraw drobne błędy (eksperymentalne)”: ta funkcja została usunięta.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to ASS” was removed: choose ASS in File › Save as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do ASS” został usunięty: zamiast tego wybierz ASS w Plik › Zapisz jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to SRT” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do SRT” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to TMP” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do TMP” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MDVD” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do MDVD” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of “Convert to MPL2” was removed: use File › Export as instead.</source>
+        <translation>Skrót %1 polecenia „Konwertuj do MPL2” został usunięty: zamiast tego użyj Plik › Eksportuj jako.</translation>
     </message>
     <message>
         <source>The shortcut %1 of “Open blank 2h30m audio” was removed: the command is retired and a dummy video brings its own silent audio.</source>
@@ -5520,26 +6416,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Report an issue</source>
         <translation>Zgłoś problem</translation>
-    </message>
-    <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -6002,6 +6878,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Szybciej</translation>
     </message>
     <message>
+        <source>Go to selection start</source>
+        <translation>Przejdź do początku zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Go to selection end</source>
+        <translation>Przejdź do końca zaznaczenia</translation>
+    </message>
+    <message>
         <source>Translation mode</source>
         <translation>Tryb tłumaczenia</translation>
     </message>
@@ -6106,6 +6990,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Perspektywa</translation>
     </message>
     <message>
+        <source>Gradient</source>
+        <translation>Gradient</translation>
+    </message>
+    <message>
+        <source>Vector clip: move points</source>
+        <translation>Wycinek wektorowy: przesuń punkty</translation>
+    </message>
+    <message>
+        <source>Vector clip: add line</source>
+        <translation>Wycinek wektorowy: dodaj linię</translation>
+    </message>
+    <message>
+        <source>Vector clip: add Bézier curve</source>
+        <translation>Wycinek wektorowy: dodaj krzywą Béziera</translation>
+    </message>
+    <message>
+        <source>Vector clip: add B-spline</source>
+        <translation>Wycinek wektorowy: dodaj krzywą B-sklejaną</translation>
+    </message>
+    <message>
+        <source>Vector clip: add separate point</source>
+        <translation>Wycinek wektorowy: dodaj oddzielny punkt</translation>
+    </message>
+    <message>
+        <source>Vector clip: delete point</source>
+        <translation>Wycinek wektorowy: usuń punkt</translation>
+    </message>
+    <message>
+        <source>Vector clip: invert</source>
+        <translation>Wycinek wektorowy: odwróć</translation>
+    </message>
+    <message>
+        <source>Copy subtitles to clipboard</source>
+        <translation>Kopiuj napisy do schowka</translation>
+    </message>
+    <message>
+        <source>Save subtitles as PNG</source>
+        <translation>Zapisz napisy jako PNG</translation>
+    </message>
+    <message>
         <source>Check karaoke</source>
         <translation>Sprawdź karaoke</translation>
     </message>
@@ -6150,12 +7074,148 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wtyczki</translation>
     </message>
     <message>
+        <source>Reload video</source>
+        <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>Wczytaj ponownie audio</translation>
+    </message>
+    <message>
         <source>Centre times within frames</source>
         <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
         <source>Import legacy settings…</source>
         <translation>Importuj ustawienia starej wersji…</translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub folds to line groups</source>
+        <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>Otwórz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>Zapisz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>Zamknij kody czasowe</translation>
+    </message>
+    <message>
+        <source>QC notes panel</source>
+        <translation>Panel notatek QC</translation>
+    </message>
+    <message>
+        <source>Next QC note</source>
+        <translation>Następna notatka QC</translation>
+    </message>
+    <message>
+        <source>Previous QC note</source>
+        <translation>Poprzednia notatka QC</translation>
+    </message>
+    <message>
+        <source>Add QC note</source>
+        <translation>Dodaj notatkę QC</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>Zastosuj dane ruchu…</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>Wycofaj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>Kopiuj dane ruchu z linijek</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>Przedłuż śledzone linijki…</translation>
+    </message>
+    <message>
+        <source>Extrapolate \move to the line</source>
+        <translation>Ekstrapoluj \move na całą linijkę</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
+    </message>
+    <message>
+        <source>Close window</source>
+        <translation>Zamknij okno</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all AI changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent panel</source>
+        <translation>Panel agenta</translation>
+    </message>
+    <message>
+        <source>New agent thread</source>
+        <translation>Nowy wątek agenta</translation>
+    </message>
+    <message>
+        <source>Open folder…</source>
+        <translation>Otwórz folder…</translation>
+    </message>
+    <message>
+        <source>Close project</source>
+        <translation>Zamknij projekt</translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global</source>
@@ -6186,8 +7246,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie można używać skrótów kopiowania, wycinania i wklejania.</translation>
     </message>
     <message>
-        <source>You cannot use the program exit shortcut.</source>
-        <translation>Nie można używać skrótu zamykania programu.</translation>
+        <source>Alt+F4 is kept for closing the window.</source>
+        <translation>Skrót Alt+F4 jest zarezerwowany do zamykania okna.</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>Dopasuj do wideo…</translation>
     </message>
 </context>
 <context>
@@ -6584,26 +7648,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>%1 - HikariSub</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
-    </message>
-    <message>
         <source>Start time</source>
         <translation>Czas początkowy</translation>
     </message>
@@ -6896,10 +7940,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pokaż</translation>
     </message>
     <message>
-        <source>Hide</source>
-        <translation>Ukryj</translation>
-    </message>
-    <message>
         <source>Float</source>
         <translation>Odepnij</translation>
     </message>
@@ -6918,6 +7958,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Design and development</source>
         <translation>Projekt i programowanie</translation>
+    </message>
+    <message>
+        <source>Thai support for automation scripts</source>
+        <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
     </message>
     <message>
         <source>Translation</source>
@@ -6980,10 +8024,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Właściwości skryptu</translation>
     </message>
     <message>
-        <source>Conversion</source>
-        <translation>Konwersja</translation>
-    </message>
-    <message>
         <source>Font collector</source>
         <translation>Kolekcjoner czcionek</translation>
     </message>
@@ -6996,12 +8036,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sprawdź pisownię</translation>
     </message>
     <message>
+        <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
+        <translation>Przedłuża %1 z podanymi czasami w każdej zaznaczonej linijce, z tą samą prędkością, od jej początku do końca</translation>
+    </message>
+    <message>
+        <source>Extrapolate %1 to the line</source>
+        <translation>Ekstrapoluj %1 na całą linijkę</translation>
+    </message>
+    <message>
         <source>Install, turn on and off, and uninstall plugins</source>
         <translation>Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
     </message>
     <message>
         <source>Pl&amp;ugins…</source>
         <translation>W&amp;tyczki…</translation>
+    </message>
+    <message>
+        <source>Remove from the layout</source>
+        <translation>Usuń z układu</translation>
     </message>
     <message>
         <source>Hide tags</source>
@@ -7072,28 +8124,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <source>Converts to ASS format</source>
-        <translation>Konwertuje do formatu ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>Konwertuje do formatu SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>Konwertuje do formatu microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>Konwertuje do formatu MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>Konwertuje do formatu TMPlayer (niezalecane)</translation>
-    </message>
-    <message>
         <source>Sort by start time</source>
         <translation>Sortuj według czasu początkowego</translation>
+    </message>
+    <message>
+        <source>%1 - %2 - HikariSub</source>
+        <translation>%1 - %2 - HikariSub</translation>
     </message>
     <message>
         <source>Sort by end time</source>
@@ -7136,6 +8172,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz plik napisów</translation>
     </message>
     <message>
+        <source>Open a folder as a project</source>
+        <translation>Otwórz folder jako projekt</translation>
+    </message>
+    <message>
+        <source>Open &amp;folder…</source>
+        <translation>Otwórz &amp;folder…</translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation>Ostatnio otwarte napisy</translation>
     </message>
@@ -7146,6 +8190,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Remove subtitles from the editor</source>
         <translation>Usuń napisy z edytora</translation>
+    </message>
+    <message>
+        <source>Close this window’s tabs and its project</source>
+        <translation>Zamknij zakładki tego okna i jego projekt</translation>
+    </message>
+    <message>
+        <source>Close pro&amp;ject</source>
+        <translation>Zamknij pro&amp;jekt</translation>
     </message>
     <message>
         <source>Opens video file</source>
@@ -7220,6 +8272,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustawienia programu</translation>
     </message>
     <message>
+        <source>Close this window; closing the last window exits the program</source>
+        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Close &amp;window</source>
+        <translation>Zamknij o&amp;kno</translation>
+    </message>
+    <message>
         <source>Exit the program</source>
         <translation>Zakończ działanie programu</translation>
     </message>
@@ -7248,6 +8308,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacza linijki według wyrażeń</translation>
     </message>
     <message>
+        <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
+        <translation>Notatki z kontroli jakości, zapisane w pliku, z linijkami, które oznaczają</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes…</source>
+        <translation>Notatki &amp;QC…</translation>
+    </message>
+    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>Zmienia liczbę klatek na sekundę czasów napisów</translation>
     </message>
@@ -7262,6 +8330,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Set FPS from video</source>
         <translation>Ustaw FPS z wideo</translation>
+    </message>
+    <message>
+        <source>Open a VFR timecodes v1, v2 or v4 file</source>
+        <translation>Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
+    </message>
+    <message>
+        <source>Open timecodes</source>
+        <translation>Otwórz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Recently opened timecodes</source>
+        <translation>Ostatnio otwarte kody czasowe</translation>
+    </message>
+    <message>
+        <source>Save a VFR timecodes v2 file</source>
+        <translation>Zapisuje plik kodów czasowych VFR v2</translation>
+    </message>
+    <message>
+        <source>Save timecodes</source>
+        <translation>Zapisz kody czasowe</translation>
+    </message>
+    <message>
+        <source>Close the currently open timecodes file</source>
+        <translation>Zamyka otwarty plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Close timecodes</source>
+        <translation>Zamknij kody czasowe</translation>
     </message>
     <message>
         <source>Shift by frames to video</source>
@@ -7300,8 +8396,76 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Następne linijki, koniec na wideo</translation>
     </message>
     <message>
+        <source>Tracking</source>
+        <translation>Śledzenie</translation>
+    </message>
+    <message>
+        <source>Applies After Effects motion data from Mocha or Blender to the selected lines, one line a frame</source>
+        <translation>Stosuje dane ruchu After Effects z programu Mocha lub z Blendera do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Apply motion data…</source>
+        <translation>Zastosuj dane ruchu…</translation>
+    </message>
+    <message>
+        <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
+        <translation>Stosuje dane śledzenia Power-Pin do zaznaczonych linijek, jedna linijka na klatkę</translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking…</source>
+        <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
+        <source>Video details…</source>
+        <translation>Szczegóły wideo…</translation>
+    </message>
+    <message>
+        <source>Reload video</source>
+        <translation>Wczytaj ponownie wideo</translation>
+    </message>
+    <message>
+        <source>Puts the tracked lines of the selection back as the lines they were made from</source>
+        <translation>Zamienia śledzone linijki zaznaczenia z powrotem na linijki, z których powstały</translation>
+    </message>
+    <message>
+        <source>Revert motion data</source>
+        <translation>Wycofaj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copies the selected frame-by-frame lines’ position, scale and rotation as motion data</source>
+        <translation>Kopiuje pozycję, skalę i obrót zaznaczonych linijek klatka po klatce jako dane ruchu</translation>
+    </message>
+    <message>
+        <source>Copy motion data from lines</source>
+        <translation>Kopiuj dane ruchu z linijek</translation>
+    </message>
+    <message>
+        <source>Copies the selected lines’ perspective planes as Power-Pin data, one quad a frame</source>
+        <translation>Kopiuje płaszczyzny perspektywy zaznaczonych linijek jako dane Power-Pin, jeden czworokąt na klatkę</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin track from lines</source>
+        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
+        <translation>Dopasowuje ruch zaznaczonych linijek klatka po klatce i przedłuża go o kolejne klatki</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines…</source>
+        <translation>Przedłuż śledzone linijki…</translation>
+    </message>
+    <message>
         <source>Render cost</source>
         <translation>Koszt renderowania</translation>
+    </message>
+    <message>
+        <source>Reload audio</source>
+        <translation>Wczytaj ponownie audio</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -7310,6 +8474,102 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Join with previous line using the audio selection</source>
         <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+    </message>
+    <message>
+        <source>Untagged video</source>
+        <translation>Wideo bez oznaczenia</translation>
+    </message>
+    <message>
+        <source>The video doesn’t say which colour matrix it uses.</source>
+        <translation>Wideo nie podaje, jakiej macierzy kolorów używa.</translation>
+    </message>
+    <message>
+        <source>HikariSub guesses %1, but other players may guess differently, so the video’s colours, and subtitle colours matched to them, can differ between players. Tag the video with its colour matrix so that every player shows it the same.</source>
+        <translation>HikariSub przyjmuje %1, ale inne odtwarzacze mogą przyjąć coś innego, więc kolory wideo i dopasowane do nich kolory napisów mogą się różnić między odtwarzaczami. Oznacz wideo jego macierzą kolorów, aby każdy odtwarzacz pokazywał je tak samo.</translation>
+    </message>
+    <message>
+        <source>HDR or wide-gamut video</source>
+        <translation>Wideo HDR lub o szerokiej gamie kolorów</translation>
+    </message>
+    <message>
+        <source>The video has HDR or wide-gamut colours.</source>
+        <translation>Wideo ma kolory HDR lub o szerokiej gamie.</translation>
+    </message>
+    <message>
+        <source>Ordinary subtitles work on it, but subtitle colours can’t match the video’s colours.</source>
+        <translation>Zwykłe napisy działają na nim poprawnie, ale kolory napisów nie mogą odpowiadać kolorom wideo.</translation>
+    </message>
+    <message>
+        <source>Set the YCbCr matrix?</source>
+        <translation>Ustawić macierz YCbCr?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix.</source>
+        <translation>Napisy nie mają macierzy YCbCr.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). If they are for another video, leave it unset until you open that one.</source>
+        <translation>Jeśli napisy są do tego wideo, ustaw ją jak w wideo (%1). Jeśli są do innego wideo, nie ustawiaj jej, dopóki go nie otworzysz.</translation>
+    </message>
+    <message>
+        <source>Leave unset</source>
+        <translation>Nie ustawiaj</translation>
+    </message>
+    <message>
+        <source>Set to %1</source>
+        <translation>Ustaw %1</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix mismatch</source>
+        <translation>Niezgodność macierzy YCbCr</translation>
+    </message>
+    <message>
+        <source>The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).</source>
+        <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
+    </message>
+    <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Set the layout resolution?</source>
+        <translation>Ustawić rozdzielczość układu?</translation>
+    </message>
+    <message>
+        <source>The subtitles have no layout resolution.</source>
+        <translation>Napisy nie mają rozdzielczości układu.</translation>
+    </message>
+    <message>
+        <source>If they are for this video, set it to the video’s (%1). For an older file, set it to the resolution of the video it was made for, which is often its script resolution (%2).</source>
+        <translation>Jeśli napisy są do tego wideo, ustaw ją jak w wideo (%1). W przypadku starszego pliku ustaw rozdzielczość wideo, do którego powstał; często jest to jego rozdzielczość skryptu (%2).</translation>
+    </message>
+    <message>
+        <source>Set to the video’s (%1)</source>
+        <translation>Ustaw jak w wideo (%1)</translation>
+    </message>
+    <message>
+        <source>Set to the script resolution (%1)</source>
+        <translation>Ustaw rozdzielczość skryptu (%1)</translation>
+    </message>
+    <message>
+        <source>Layout resolution mismatch</source>
+        <translation>Niezgodność rozdzielczości układu</translation>
+    </message>
+    <message>
+        <source>The video is %1 and the subtitles’ layout resolution is %2.</source>
+        <translation>Wideo ma rozdzielczość %1, a rozdzielczość układu napisów to %2.</translation>
+    </message>
+    <message>
+        <source>Their aspect ratios differ. Set the layout resolution to the video’s?</source>
+        <translation>Ich proporcje obrazu się różnią. Ustawić rozdzielczość układu jak w wideo?</translation>
+    </message>
+    <message>
+        <source>This is usually fine. If the subtitles have no significant formatting yet and you’ll format them on this video, set the layout resolution to the video’s.</source>
+        <translation>Zwykle nie stanowi to problemu. Jeśli napisy nie mają jeszcze istotnego formatowania, a będziesz je formatować na tym wideo, ustaw rozdzielczość układu jak w wideo.</translation>
     </message>
     <message>
         <source>Inserts a hard space (%1) at the cursor in the line editor</source>
@@ -7442,10 +8702,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Opens Script properties</source>
         <translation>Otwiera właściwości skryptu</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>Konwertuje napisy z jednego formatu na inny</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
@@ -8059,6 +9315,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Fix minor errors was removed. Your rules stay in %1, unused.</source>
         <translation>Funkcja Popraw drobne błędy została usunięta. Twoje reguły pozostają w %1, nieużywane.</translation>
     </message>
+    <message>
+        <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
+        <translation>Ustawia czasy aktywnej linijki na klatki wokół klatki wideo, w których wybrany punkt zachowuje swój kolor</translation>
+    </message>
+    <message>
+        <source>Align to video…</source>
+        <translation>Dopasuj do wideo…</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>Dopasuj do wideo</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -8113,6 +9381,1067 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Indexing error occurred: %1</source>
         <translation>Wystąpił błąd indeksowania: %1</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.NodeEffects</name>
+    <message>
+        <source>Edits this file’s node effects on a canvas, with a preview on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, %2: %3 of %4 inputs wired</source>
+        <extracomment>A node on the canvas for a screen reader: &quot;Choose, palette: 1 of 1 inputs wired&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add node</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 node</source>
+        <extracomment>The graph&apos;s size in the Graph header: &quot;12 nodes · 13 wires&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 wire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n wires</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fit the graph in view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The canvas zoom: &quot;100 %&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has a problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not trusted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 more output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more outputs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fewer outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no node effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph can’t be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph turns karaoke lines into new lines. It is saved in the file as a Comment line, and the lines it writes are marked fx with its name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From a preset</source>
+        <translation type="unfinished">Z presetu</translation>
+    </message>
+    <message>
+        <source>From the library…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Tekst</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">Kolor</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation type="unfinished">Alfa</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">Tagi</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished">Rysunek</translation>
+    </message>
+    <message>
+        <source>Yes or no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes with a %1 input, for %2 › %3</source>
+        <extracomment>Over the Add node list after a wire is dropped in empty space: &quot;Nodes with a Tags input, for fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nodes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No node matches.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter adds %1 here, wired from %2 › %3</source>
+        <extracomment>Under the filtered Add node list: &quot;Enter adds Transform here, wired from fade › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A time a node effect took: %1 milliseconds
+----------
+The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;</extracomment>
+        <translation type="unfinished">%1 ms</translation>
+    </message>
+    <message>
+        <source>Not wired</source>
+        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n nodes selected.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Select a node to see its fields.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nazwa</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ graph seed %1</source>
+        <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>New seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Y position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to %1</source>
+        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On line %1, from the last run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not run: the file’s Lua is not trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No values: this node didn’t run on the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished">Timing</translation>
+    </message>
+    <message numerus="yes">
+        <source>Wrote %n lines in %1 on the last run</source>
+        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last run %1 on line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Preview on the video</source>
+        <translation type="unfinished">Podgląd na wideo</translation>
+    </message>
+    <message>
+        <source>Loop the line</source>
+        <translation type="unfinished">Zapętl linijkę</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">Podgląd</translation>
+    </message>
+    <message>
+        <source>Preview on line %1</source>
+        <translation type="unfinished">Podgląd na linijce %1</translation>
+    </message>
+    <message>
+        <source>Kept from the last run that worked</source>
+        <translation type="unfinished">Z ostatniego udanego uruchomienia</translation>
+    </message>
+    <message>
+        <source>No karaoke line of this graph’s style to preview on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing runs until the file’s Lua is trusted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No preview: the graph has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The graph writes no lines for line %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 karaoke line</source>
+        <extracomment>Which karaoke lines the graph applies to: &quot;24 karaoke lines, Default&quot; or &quot;24 karaoke lines, all styles&quot;</extracomment>
+        <translation type="unfinished">1 linijka karaoke</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n karaoke lines</source>
+        <translation type="unfinished">
+            <numerusform>%n linijka karaoke</numerusform>
+            <numerusform>%n linijki karaoke</numerusform>
+            <numerusform>%n linijek karaoke</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>all styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1, %2</source>
+        <translation type="unfinished">Linijka %1, %2</translation>
+    </message>
+    <message>
+        <source>Pick or add a graph to see the karaoke lines it applies to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All styles</source>
+        <translation type="unfinished">Wszystkie style</translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problems</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply stopped with a problem; nothing changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied: %n lines from %1 in %2</source>
+        <extracomment>After Apply: %n the Lines written, %1 the karaoke Lines they came from, %2 the run&apos;s time</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Zastosuj</translation>
+    </message>
+    <message>
+        <source>Apply to every karaoke line</source>
+        <translation type="unfinished">Zastosuj do wszystkich linijek karaoke</translation>
+    </message>
+    <message>
+        <source>Apply options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file’s node effects run Lua code with your rights. Preview them if you trust the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This graph was saved by a newer HikariSub, so it opens read-only. Update HikariSub to edit it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished">Duplikuj</translation>
+    </message>
+    <message>
+        <source>Save to the library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keeps a copy of this graph in your user folder, to add to other files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete graph</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removes the graph line and the lines it wrote. Undo brings them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines</source>
+        <translation type="unfinished">Zastosuj do zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Graph name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished">Zmień nazwę</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
+        <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation type="unfinished">&lt;b&gt;Podgląd&lt;/b&gt; · linijka %1 · %2</translation>
+    </message>
+    <message>
+        <source>last run that worked</source>
+        <translation type="unfinished">ostatnie udane uruchomienie</translation>
+    </message>
+    <message>
+        <source>not applied</source>
+        <translation type="unfinished">nie zastosowano</translation>
+    </message>
+    <message>
+        <source>yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished">Wartość</translation>
+    </message>
+    <message>
+        <source>There is no graph to wire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A %1 can’t connect to a %2 input.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A node can’t take its own output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That port doesn’t exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That wire would make a loop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another graph in this file has that name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Nodes</name>
+    <message>
+        <source>For each</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat</source>
+        <translation type="unfinished">Powtarzaj</translation>
+    </message>
+    <message>
+        <source>Each unit `count` times; j runs from 1 to count.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">Klatki</translation>
+    </message>
+    <message>
+        <source>Unit info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit of every karaoke line the graph applies to: the line itself, its syllables, their characters or the furigana. Blank units (no duration or only spaces) can be skipped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit’s own span.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Tekst</translation>
+    </message>
+    <message>
+        <source>A text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished">Kolor</translation>
+    </message>
+    <message>
+        <source>A colour.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A point from its coordinates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose</source>
+        <translation type="unfinished">Wybierz</translation>
+    </message>
+    <message>
+        <source>One of a list of values by its place (from 1); places past the end wrap around.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calculate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). One-input operations use a.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished">Porównaj</translation>
+    </message>
+    <message>
+        <source>Whether a stands in that relation to b.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">Postęp</translation>
+    </message>
+    <message>
+        <source>How far index is through count, from 0 at the first to 1 at the last, eased.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Random</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A seeded random number from min to max, in multiples of step from min when step is above 0. The same graph seed, node and scope give the same number on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line’s start and end as the templater’s retime(mode, start_offset, end_offset) sets them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The units of the current line joined: each one’s tags as an override block, then its text (unwired, the unit’s own).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One line per unit: the source line with these times, Layer, tags and text (or drawing), Effect “fx &lt;graph name&gt;”. Unwired times are the source line’s. Lines come in the templater’s order: Line units first, then by syllable, then by `order`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A graph inside a node. Its inputs are its Group input’s ports, its outputs its Group output’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua code run in the automation helper once per line for all its units, only once the user trusts the document’s Lua. Its inputs are globals and it sets its outputs as globals; it gets no random numbers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first step’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last step’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values’ type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One number per output line, per unit (the same across repeats and frames) or per line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the graph’s seed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The templater’s retime mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it starts, from the line’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The unit’s text while no text or drawing is wired: without tags, with them, or none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stagger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished">Tag</translation>
+    </message>
+    <message>
+        <source>One override tag after `before`. pos and org take point, clip and iclip take point and point2 (or drawing), colours take colour, alpha tags take alpha, fn and r take text, raw writes text as it is, and the others take value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\move after `before`, with its times when timed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\fad after `before`.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>\t over `tags` after `before`; t1 and t2 when timed, accel when it is not 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished">Gradient</translation>
+    </message>
+    <message>
+        <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">Kształt</translation>
+    </message>
+    <message>
+        <source>A vector drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished">Złącz</translation>
+    </message>
+    <message>
+        <source>Emit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its inputs, as outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inside a group: its outputs, as inputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What one unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out units with no duration or only spaces.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many times.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The values, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The operation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The first operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The second operand.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The relation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The easing (quadratic).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The place, from 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The smallest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The largest value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0: any value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the start (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the end (sylpct: a percentage).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the first unit is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The time between places.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tag, without its backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its point, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its second point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its colour, as #RRGGBB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its alpha, 0 (opaque) to 255.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it starts, as [x, y].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write t1 and t2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade in, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fade out, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The acceleration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How far along.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The drawing commands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The \p scale.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its place among the emits for one unit; ties keep graph order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inner nodes and wires.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The ports, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its inputs, each a name and a port type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its outputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Units</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Math</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished">Tagi</translation>
+    </message>
+    <message>
+        <source>Colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation type="unfinished">Wyjście</translation>
+    </message>
+    <message>
+        <source>Groups</source>
+        <translation type="unfinished">Grupy</translation>
     </message>
 </context>
 <context>
@@ -8364,6 +10693,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
         <translation>Wydzielaj podwojoną spółgłoskę w osobną sylabę (so|ma|t|ta)</translation>
+    </message>
+    <message>
+        <source>Split Thai into character clusters</source>
+        <translation>Dziel tajski na klastry znaków</translation>
+    </message>
+    <message>
+        <source>Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.</source>
+        <translation>Automatyczny podział daje każdemu tajskiemu klastrowi znaków osobną sylabę, więc กิน staje się กิ|น. Wyłącz, aby każde tajskie słowo było jedną sylabą.</translation>
     </message>
     <message>
         <source>Long syllables for %1</source>
@@ -8726,6 +11063,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Licz spacje i interpunkcję w CPS</translation>
     </message>
     <message>
+        <source>Splitting</source>
+        <translation>Dzielenie</translation>
+    </message>
+    <message>
+        <source>Bake animations when splitting into frames</source>
+        <translation>Utrwalaj animacje przy dzieleniu na klatki</translation>
+    </message>
+    <message>
         <source>New lines</source>
         <translation>Nowe linijki</translation>
     </message>
@@ -8878,6 +11223,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Początkowe powiększenie</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
+        <source>Handle size</source>
+        <translation>Rozmiar uchwytów</translation>
+    </message>
+    <message>
+        <source>Size of the visual tools’ handles. Range from 50 to 400</source>
+        <translation>Rozmiar uchwytów narzędzi wizualnych można ustawić od 50 do 400</translation>
+    </message>
+    <message>
         <source>Script resolution</source>
         <translation>Rozdzielczość skryptu</translation>
     </message>
@@ -8888,6 +11245,66 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Don’t warn about a resolution mismatch</source>
         <translation>Nie ostrzegaj o niezgodności rozdzielczości</translation>
+    </message>
+    <message>
+        <source>No YCbCr matrix in the subtitles</source>
+        <translation>Brak macierzy YCbCr w napisach</translation>
+    </message>
+    <message>
+        <source>Leave it unset</source>
+        <translation>Nie ustawiaj</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Pytaj</translation>
+    </message>
+    <message>
+        <source>Set it to the video’s</source>
+        <translation>Ustaw jak w wideo</translation>
+    </message>
+    <message>
+        <source>A different YCbCr matrix from the video’s</source>
+        <translation>Macierz YCbCr inna niż w wideo</translation>
+    </message>
+    <message>
+        <source>Keep the subtitles’</source>
+        <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>No layout resolution in the subtitles</source>
+        <translation>Brak rozdzielczości układu w napisach</translation>
+    </message>
+    <message>
+        <source>Set it to the script resolution</source>
+        <translation>Ustaw rozdzielczość skryptu</translation>
+    </message>
+    <message>
+        <source>A different layout resolution from the video’s</source>
+        <translation>Rozdzielczość układu inna niż w wideo</translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation>Nigdy nie pytaj</translation>
+    </message>
+    <message>
+        <source>Ask when the aspect ratio differs</source>
+        <translation>Pytaj, gdy proporcje obrazu się różnią</translation>
+    </message>
+    <message>
+        <source>Always ask</source>
+        <translation>Zawsze pytaj</translation>
+    </message>
+    <message>
+        <source>Checked when a video opens.</source>
+        <translation>Sprawdzane przy otwieraniu wideo.</translation>
+    </message>
+    <message>
+        <source>Warn when the video has no colour matrix tag</source>
+        <translation>Ostrzegaj, gdy wideo nie ma oznaczenia macierzy kolorów</translation>
+    </message>
+    <message>
+        <source>Warn when the video has HDR or wide-gamut colours</source>
+        <translation>Ostrzegaj, gdy wideo ma kolory HDR lub o szerokiej gamie</translation>
     </message>
     <message>
         <source>Output</source>
@@ -8912,6 +11329,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Don’t play after changing the line</source>
         <translation>Nie odtwarzaj po zmianie linijki</translation>
+    </message>
+    <message>
+        <source>Play in mono</source>
+        <translation>Odtwarzaj w mono</translation>
+    </message>
+    <message>
+        <source>Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.</source>
+        <translation>Miesza kanały dla panelu audio i odtwarzania podczas edycji. Zwykłe odtwarzanie wideo zachowuje kanały pliku.</translation>
     </message>
     <message>
         <source>Show the time beside the cursor</source>
@@ -9055,11 +11480,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Trusted script folders</source>
-        <translation>Zaufane foldery skryptów</translation>
+        <translation type="vanished">Zaufane foldery skryptów</translation>
     </message>
     <message>
         <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation>Skrypty wymienione w pliku napisów wczytują się bez pytania, gdy leżą w jednym z tych folderów.</translation>
+        <translation type="vanished">Skrypty wymienione w pliku napisów wczytują się bez pytania, gdy leżą w jednym z tych folderów.</translation>
     </message>
     <message>
         <source>No trusted folders</source>
@@ -9112,6 +11537,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Import legacy shortcuts…</source>
         <translation>Importuj skróty ze starej wersji…</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Trusted folders</source>
+        <translation>Zaufane foldery</translation>
+    </message>
+    <message>
+        <source>HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.</source>
+        <translation>HikariSub ufa tym folderom i folderom w nich: skrypty wymienione w pliku napisów wczytują się bez pytania, a plik w projekcie otwiera ten projekt.</translation>
     </message>
     <message>
         <source>Legacy</source>
@@ -9243,11 +11680,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Suggest starring HikariSub on GitHub</source>
-        <translation>Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+        <translation type="vanished">Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
     </message>
     <message>
         <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation>Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
+        <translation type="vanished">Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>Let plugins connect to the internet</source>
+        <translation>Pozwól wtyczkom łączyć się z internetem</translation>
+    </message>
+    <message>
+        <source>HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.</source>
+        <translation>Każde żądanie wysyła HikariSub, przez HTTPS i tylko do hostów, które wtyczka podała przy instalacji. Wyłączone: HikariSub odrzuca każde żądanie, które wtyczka wysyła przez niego. Wtyczka z pełnym zaufaniem nadal może łączyć się sama.</translation>
     </message>
     <message>
         <source>Shortcuts (Hotkeys.txt)</source>
@@ -9394,6 +11839,1026 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.</source>
         <translation>Słowa w innych językach są sprawdzane innymi zainstalowanymi słownikami dla ich pisma. Słowa w piśmie, dla którego nie ma słownika, nie są oznaczane.</translation>
     </message>
+    <message>
+        <source>Chat</source>
+        <translation>Czat</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation>Tłumacz</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation>Recenzent</translation>
+    </message>
+    <message>
+        <source>Vision</source>
+        <translation>Obraz</translation>
+    </message>
+    <message>
+        <source>Judge</source>
+        <translation>Sędzia</translation>
+    </message>
+    <message>
+        <source>Custom endpoint…</source>
+        <translation>Własny punkt końcowy…</translation>
+    </message>
+    <message>
+        <source>Delete provider</source>
+        <translation>Usuń dostawcę</translation>
+    </message>
+    <message>
+        <source>Delete the provider “%1”?</source>
+        <translation>Usunąć dostawcę “%1”?</translation>
+    </message>
+    <message>
+        <source>Its key is removed from the keychain. Roles that use its models go back to the chat model.</source>
+        <translation>Jego klucz zostanie usunięty z magazynu kluczy. Role korzystające z jego modeli wrócą do modelu czatu.</translation>
+    </message>
+    <message>
+        <source>Roles that use its models go back to the chat model.</source>
+        <translation>Role korzystające z jego modeli wrócą do modelu czatu.</translation>
+    </message>
+    <message>
+        <source>Chat Completions</source>
+        <translation>Chat Completions</translation>
+    </message>
+    <message>
+        <source>Responses</source>
+        <translation>Responses</translation>
+    </message>
+    <message>
+        <source>Messages</source>
+        <translation>Messages</translation>
+    </message>
+    <message>
+        <source>Gemini API</source>
+        <translation>Gemini API</translation>
+    </message>
+    <message>
+        <source>openrouter.ai refused the sign-in.</source>
+        <translation>openrouter.ai odrzucił logowanie.</translation>
+    </message>
+    <message>
+        <source>auth.openai.com refused the sign-in. Approve HikariSub’s request with the ChatGPT account you want, then try again.</source>
+        <translation>auth.openai.com odrzucił logowanie. Zatwierdź prośbę HikariSub na wybranym koncie ChatGPT i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Your ChatGPT workspace turns off sign-in codes. Sign in through the browser instead.</source>
+        <translation>Twój obszar roboczy ChatGPT wyłącza kody logowania. Zaloguj się zamiast tego przez przeglądarkę.</translation>
+    </message>
+    <message>
+        <source>The code expired before it was entered.</source>
+        <translation>Kod wygasł, zanim został wpisany.</translation>
+    </message>
+    <message>
+        <source>Sign-in timed out waiting for the browser.</source>
+        <translation>Logowanie przekroczyło limit czasu, czekając na przeglądarkę.</translation>
+    </message>
+    <message>
+        <source>Browser sign-in isn’t available while another app uses port 1455. Close that app’s sign-in to use it.</source>
+        <translation>Logowanie przez przeglądarkę jest niedostępne, gdy inna aplikacja używa portu 1455. Aby z niego skorzystać, zamknij logowanie tamtej aplikacji.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach %1. Check the connection.</source>
+        <translation>Nie można połączyć się z %1. Sprawdź połączenie.</translation>
+    </message>
+    <message>
+        <source>~/.codex has no ChatGPT sign-in to import.</source>
+        <translation>W ~/.codex nie ma logowania ChatGPT do zaimportowania.</translation>
+    </message>
+    <message>
+        <source>Sign-in failed. Try again.</source>
+        <translation>Logowanie nie powiodło się. Spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Key rejected (%1)</source>
+        <translation>Klucz odrzucony (%1)</translation>
+    </message>
+    <message>
+        <source>Too many requests (%1)</source>
+        <translation>Zbyt wiele żądań (%1)</translation>
+    </message>
+    <message>
+        <source>Request refused (%1)</source>
+        <translation>Żądanie odrzucone (%1)</translation>
+    </message>
+    <message>
+        <source>Provider error (%1)</source>
+        <translation>Błąd dostawcy (%1)</translation>
+    </message>
+    <message>
+        <source>Can’t reach the provider</source>
+        <translation>Nie można połączyć się z dostawcą</translation>
+    </message>
+    <message>
+        <source>No answer from the provider</source>
+        <translation>Brak odpowiedzi od dostawcy</translation>
+    </message>
+    <message>
+        <source>Unexpected answer</source>
+        <translation>Nieoczekiwana odpowiedź</translation>
+    </message>
+    <message>
+        <source>A key goes only over HTTPS, to this computer or to a Tailscale peer</source>
+        <translation>Klucz jest wysyłany tylko przez HTTPS, do tego komputera lub do węzła Tailscale</translation>
+    </message>
+    <message>
+        <source>Enter a key</source>
+        <translation>Wpisz klucz</translation>
+    </message>
+    <message>
+        <source>No system keychain is available</source>
+        <translation>Brak dostępnego systemowego magazynu kluczy</translation>
+    </message>
+    <message>
+        <source>Access to the keychain was refused</source>
+        <translation>Magazyn kluczy odmówił dostępu</translation>
+    </message>
+    <message>
+        <source>Can’t save the provider list</source>
+        <translation>Nie można zapisać listy dostawców</translation>
+    </message>
+    <message>
+        <source>Fill in the name and a valid address</source>
+        <translation>Wpisz nazwę i poprawny adres</translation>
+    </message>
+    <message>
+        <source>Can’t download the AI component</source>
+        <translation>Nie można pobrać komponentu AI</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: bad signature</source>
+        <translation>Nie udało się sprawdzić: zły podpis</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component is damaged</source>
+        <translation>Pobrany komponent AI jest uszkodzony</translation>
+    </message>
+    <message>
+        <source>Can’t save the AI component</source>
+        <translation>Nie można zapisać komponentu AI</translation>
+    </message>
+    <message>
+        <source>Test failed</source>
+        <translation>Test nie powiódł się</translation>
+    </message>
+    <message>
+        <source>Up to date · checked just now</source>
+        <translation>Aktualny · sprawdzono przed chwilą</translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n minute(s) ago</source>
+        <translation>
+            <numerusform>Aktualny · sprawdzono %n minutę temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n minuty temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n minut temu</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Up to date · checked %n hour(s) ago</source>
+        <translation>
+            <numerusform>Aktualny · sprawdzono %n godzinę temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n godziny temu</numerusform>
+            <numerusform>Aktualny · sprawdzono %n godzin temu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Up to date · checked %1</source>
+        <translation>Aktualny · sprawdzono %1</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Downloading %1 · %2 of %3 MB</source>
+        <translation>Pobieranie %1 · %2 z %3 MB</translation>
+    </message>
+    <message>
+        <source>Couldn’t check: no connection</source>
+        <translation>Nie udało się sprawdzić: brak połączenia</translation>
+    </message>
+    <message>
+        <source>%1 is ready · starts once AI has been idle for 2 minutes</source>
+        <translation>%1 jest gotowy · uruchomi się, gdy AI będzie bezczynne przez 2 minuty</translation>
+    </message>
+    <message>
+        <source>%1 is available · %2 MB</source>
+        <translation>Dostępna jest wersja %1 · %2 MB</translation>
+    </message>
+    <message>
+        <source>Newest this HikariSub runs</source>
+        <translation>Najnowszy, jaki uruchamia ten HikariSub</translation>
+    </message>
+    <message>
+        <source>Up to date</source>
+        <translation>Aktualny</translation>
+    </message>
+    <message>
+        <source>Last checked %1. HikariSub tries again in an hour.</source>
+        <translation>Ostatnio sprawdzono %1. HikariSub spróbuje ponownie za godzinę.</translation>
+    </message>
+    <message>
+        <source>HikariSub tries again in an hour.</source>
+        <translation>HikariSub spróbuje ponownie za godzinę.</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps %1 and installs nothing from that list.</source>
+        <translation>HikariSub zostaje przy %1 i nie instaluje niczego z tej listy.</translation>
+    </message>
+    <message>
+        <source>Update HikariSub to get newer AI features.</source>
+        <translation>Zaktualizuj HikariSub, aby dostać nowsze funkcje AI.</translation>
+    </message>
+    <message>
+        <source>Claude’s installer</source>
+        <translation>instalatora Claude</translation>
+    </message>
+    <message>
+        <source>Codex’s installer</source>
+        <translation>instalatora Codex</translation>
+    </message>
+    <message>
+        <source>Running %1. New sessions use the new version.</source>
+        <translation>Trwa %1. Nowe sesje użyją nowej wersji.</translation>
+    </message>
+    <message>
+        <source>Still %1 after %2. Run it in a terminal to see why.</source>
+        <translation>Nadal %1 po %2. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t finish. Run it in a terminal to see why.</source>
+        <translation>%1 się nie powiodło. Uruchom to w terminalu, aby zobaczyć dlaczego.</translation>
+    </message>
+    <message>
+        <source>A %1 session is running in the agent panel. Update now waits until it ends.</source>
+        <translation>W panelu agenta trwa sesja %1. Aktualizacja poczeka, aż się skończy.</translation>
+    </message>
+    <message>
+        <source>Installed with %1.</source>
+        <translation>Zainstalowano przy użyciu: %1.</translation>
+    </message>
+    <message>
+        <source>Installed with %1, so HikariSub won’t update it. Run this in a terminal:</source>
+        <translation>Zainstalowano przy użyciu: %1, więc HikariSub go nie zaktualizuje. Uruchom to w terminalu:</translation>
+    </message>
+    <message>
+        <source>Installed with %1; update it as you installed it.</source>
+        <translation>Zainstalowano przy użyciu: %1; zaktualizuj go tak, jak go zainstalowano.</translation>
+    </message>
+    <message>
+        <source>Installed in an unknown way; update it as you installed it.</source>
+        <translation>Zainstalowano w nieznany sposób; zaktualizuj go tak, jak go zainstalowano.</translation>
+    </message>
+    <message>
+        <source>%1 has a fault that breaks HikariSub’s agent.</source>
+        <translation>Wersja %1 ma błąd, który psuje agenta HikariSub.</translation>
+    </message>
+    <message>
+        <source>%1 is older than the oldest HikariSub supports (%2).</source>
+        <translation>Wersja %1 jest starsza od najstarszej obsługiwanej przez HikariSub (%2).</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out · installed with %3</source>
+        <translation>%1 · dostępna jest %2 · zainstalowano przy użyciu: %3</translation>
+    </message>
+    <message>
+        <source>%1 · %2 is out.</source>
+        <translation>%1 · dostępna jest %2.</translation>
+    </message>
+    <message>
+        <source>%1 · installed with %2</source>
+        <translation>%1 · zainstalowano przy użyciu: %2</translation>
+    </message>
+    <message>
+        <source>%1 · installed in an unknown way</source>
+        <translation>%1 · zainstalowano w nieznany sposób</translation>
+    </message>
+    <message>
+        <source>Updating…</source>
+        <translation>Aktualizowanie…</translation>
+    </message>
+    <message>
+        <source>Update didn’t take</source>
+        <translation>Aktualizacja się nie udała</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <translation>Dostępna aktualizacja</translation>
+    </message>
+    <message>
+        <source>Unsupported version</source>
+        <translation>Nieobsługiwana wersja</translation>
+    </message>
+    <message>
+        <source>Known broken version</source>
+        <translation>Wersja ze znanym błędem</translation>
+    </message>
+    <message>
+        <source>Update now</source>
+        <translation>Zaktualizuj teraz</translation>
+    </message>
+    <message>
+        <source>Edit “%1”</source>
+        <translation>Edytuj “%1”</translation>
+    </message>
+    <message>
+        <source>Add a custom endpoint</source>
+        <translation>Dodaj własny punkt końcowy</translation>
+    </message>
+    <message>
+        <source>Add %1</source>
+        <translation>Dodaj %1</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nazwa</translation>
+    </message>
+    <message>
+        <source>Base URL</source>
+        <translation>Bazowy URL</translation>
+    </message>
+    <message>
+        <source>Gemini API key</source>
+        <translation>Klucz API Gemini</translation>
+    </message>
+    <message>
+        <source>OpenRouter key</source>
+        <translation>Klucz OpenRouter</translation>
+    </message>
+    <message>
+        <source>API key (optional)</source>
+        <translation>Klucz API (opcjonalnie)</translation>
+    </message>
+    <message>
+        <source>API key</source>
+        <translation>Klucz API</translation>
+    </message>
+    <message>
+        <source>Sign in with OpenRouter…</source>
+        <translation>Zaloguj się przez OpenRouter…</translation>
+    </message>
+    <message>
+        <source>Signed in (OpenRouter)</source>
+        <translation>Zalogowano (OpenRouter)</translation>
+    </message>
+    <message>
+        <source>Sign out</source>
+        <translation>Wyloguj się</translation>
+    </message>
+    <message>
+        <source>or paste a key</source>
+        <translation>lub wklej klucz</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. Type a new key to replace it</source>
+        <translation>Zapisany w magazynie kluczy. Wpisz nowy klucz, aby go zastąpić</translation>
+    </message>
+    <message>
+        <source>Hide key</source>
+        <translation>Ukryj klucz</translation>
+    </message>
+    <message>
+        <source>Show key</source>
+        <translation>Pokaż klucz</translation>
+    </message>
+    <message>
+        <source>Get a key in Google AI Studio</source>
+        <translation>Uzyskaj klucz w Google AI Studio</translation>
+    </message>
+    <message>
+        <source>A key from Google AI Studio. Vertex AI and Google Cloud sign-in aren’t supported.</source>
+        <translation>Klucz z Google AI Studio. Vertex AI i logowanie przez Google Cloud nie są obsługiwane.</translation>
+    </message>
+    <message>
+        <source>Sign-in opens openrouter.ai in your browser and makes a key for HikariSub. It goes to the keychain, like a pasted key.</source>
+        <translation>Logowanie otwiera openrouter.ai w przeglądarce i tworzy klucz dla HikariSub. Trafia on do magazynu kluczy, tak jak wklejony klucz.</translation>
+    </message>
+    <message>
+        <source>Sign out deletes the key from this computer. It stays in %1 until you delete it there.</source>
+        <translation>Wylogowanie usuwa klucz z tego komputera. Pozostaje on w %1, dopóki go tam nie usuniesz.</translation>
+    </message>
+    <message>
+        <source>your OpenRouter keys</source>
+        <translation>Twoich kluczach OpenRouter</translation>
+    </message>
+    <message>
+        <source>Waiting for openrouter.ai in your browser</source>
+        <translation>Czekanie na openrouter.ai w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Open the page again</source>
+        <translation>Otwórz stronę ponownie</translation>
+    </message>
+    <message>
+        <source>A local server such as Ollama or LM Studio needs no key. A key is sent only over HTTPS, to this computer or to a Tailscale peer.</source>
+        <translation>Lokalny serwer, taki jak Ollama lub LM Studio, nie potrzebuje klucza. Klucz jest wysyłany tylko przez HTTPS, do tego komputera lub do węzła Tailscale.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once: %1 MB.</source>
+        <translation>Pierwszy dostawca jednorazowo pobiera komponent AI: %1 MB.</translation>
+    </message>
+    <message>
+        <source>Your first provider downloads the AI component once.</source>
+        <translation>Pierwszy dostawca jednorazowo pobiera komponent AI.</translation>
+    </message>
+    <message>
+        <source>Test connection and Add download it. It runs only when you use an AI feature, and never while AI is turned off.</source>
+        <translation>Pobierają go przyciski Testuj połączenie i Dodaj. Działa tylko wtedy, gdy używasz funkcji AI, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>%1 of %2 MB</source>
+        <translation>%1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>Tests when the download finishes</source>
+        <translation>Test po zakończeniu pobierania</translation>
+    </message>
+    <message>
+        <source>Testing…</source>
+        <translation>Testowanie…</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>Zapisywanie…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Connected · %n model(s)</source>
+        <translation>
+            <numerusform>Połączono · %n model</numerusform>
+            <numerusform>Połączono · %n modele</numerusform>
+            <numerusform>Połączono · %n modeli</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Test connection</source>
+        <translation>Testuj połączenie</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Dodaj</translation>
+    </message>
+    <message>
+        <source>AI features</source>
+        <translation>Funkcje AI</translation>
+    </message>
+    <message>
+        <source>Turn off all AI features</source>
+        <translation>Wyłącz wszystkie funkcje AI</translation>
+    </message>
+    <message>
+        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>Nic związanego z AI nie jest wyświetlane, pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
+    </message>
+    <message>
+        <source>Kept while AI is off</source>
+        <translation>Zachowane, gdy AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>Your providers, and their keys in the keychain</source>
+        <translation>Twoi dostawcy i ich klucze w magazynie kluczy</translation>
+    </message>
+    <message>
+        <source>Your agent threads</source>
+        <translation>Twoje wątki agenta</translation>
+    </message>
+    <message>
+        <source>Downloaded AI component</source>
+        <translation>Pobrany komponent AI</translation>
+    </message>
+    <message>
+        <source>Hidden while AI is off</source>
+        <translation>Ukryte, gdy AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>The agent panel, inline AI actions and AI rows in every menu</source>
+        <translation>Panel agenta, akcje AI w tekście i pozycje AI we wszystkich menu</translation>
+    </message>
+    <message>
+        <source>AI commands in command search, their shortcuts and toolbar buttons</source>
+        <translation>Polecenia AI w wyszukiwarce poleceń, ich skróty i przyciski paska narzędzi</translation>
+    </message>
+    <message>
+        <source>AI in Getting started and What’s new</source>
+        <translation>AI w Pierwszych krokach i w Co nowego</translation>
+    </message>
+    <message>
+        <source>MCP server, which stops listening</source>
+        <translation>Serwer MCP, który przestaje nasłuchiwać</translation>
+    </message>
+    <message>
+        <source>Press OK or Apply to turn AI back on.</source>
+        <translation>Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
+    </message>
+    <message>
+        <source>Providers</source>
+        <translation>Dostawcy</translation>
+    </message>
+    <message>
+        <source>No providers yet. AI sends nothing until you add one.</source>
+        <translation>Nie ma jeszcze dostawców. AI nic nie wysyła, dopóki nie dodasz dostawcy.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Not tested · %n model(s)</source>
+        <translation>
+            <numerusform>Nie testowano · %n model</numerusform>
+            <numerusform>Nie testowano · %n modele</numerusform>
+            <numerusform>Nie testowano · %n modeli</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the key with Edit</source>
+        <translation>Zastąp klucz przyciskiem Edytuj</translation>
+    </message>
+    <message>
+        <source>Sign in again with Edit</source>
+        <translation>Zaloguj się ponownie przyciskiem Edytuj</translation>
+    </message>
+    <message>
+        <source>Key in keychain</source>
+        <translation>Klucz w magazynie kluczy</translation>
+    </message>
+    <message>
+        <source>No key</source>
+        <translation>Brak klucza</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Edytuj</translation>
+    </message>
+    <message>
+        <source>Add provider</source>
+        <translation>Dodaj dostawcę</translation>
+    </message>
+    <message>
+        <source>Changes to providers and keys apply at once.</source>
+        <translation>Zmiany dostawców i kluczy są stosowane od razu.</translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation>Modele</translation>
+    </message>
+    <message>
+        <source>Refresh models</source>
+        <translation>Odśwież modele</translation>
+    </message>
+    <message>
+        <source>Same as chat</source>
+        <translation>Jak czat</translation>
+    </message>
+    <message>
+        <source>Add a provider first</source>
+        <translation>Najpierw dodaj dostawcę</translation>
+    </message>
+    <message>
+        <source>A role without its own model uses the chat model. Vision lists only models that read images.</source>
+        <translation>Rola bez własnego modelu używa modelu czatu. Obraz wymienia tylko modele, które czytają obrazy.</translation>
+    </message>
+    <message>
+        <source>External agents</source>
+        <translation>Agenci zewnętrzni</translation>
+    </message>
+    <message>
+        <source>Not found on PATH.</source>
+        <translation>Nie znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Found on PATH.</source>
+        <translation>Znaleziono w PATH.</translation>
+    </message>
+    <message>
+        <source>Not signed in</source>
+        <translation>Nie zalogowano</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT…</source>
+        <translation>Zaloguj się przez ChatGPT…</translation>
+    </message>
+    <message>
+        <source>Import from ~/.codex (read-only)</source>
+        <translation>Importuj z ~/.codex (tylko odczyt)</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in</source>
+        <translation>Importuj logowanie ChatGPT</translation>
+    </message>
+    <message>
+        <source>Import the ChatGPT sign-in from ~/.codex? HikariSub and Codex in your terminal will then share one sign-in, and when one of them refreshes it, the other has to sign in again.</source>
+        <translation>Zaimportować logowanie ChatGPT z ~/.codex? HikariSub i Codex w terminalu będą wtedy dzielić jedno logowanie, a gdy jedno z nich je odświeży, drugie będzie musiało zalogować się ponownie.</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Importuj</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps its own ChatGPT sign-in for Codex, apart from the one in ~/.codex, so neither signs the other out.</source>
+        <translation>HikariSub ma własne logowanie ChatGPT dla Codex, oddzielne od tego w ~/.codex, więc żadne nie wylogowuje drugiego.</translation>
+    </message>
+    <message>
+        <source>Signed in as %1</source>
+        <translation>Zalogowano jako %1</translation>
+    </message>
+    <message>
+        <source>Codex runs with this sign-in. Signing out here leaves Codex in your terminal signed in.</source>
+        <translation>Codex działa z tym logowaniem. Wylogowanie tutaj pozostawia Codex w terminalu zalogowany.</translation>
+    </message>
+    <message>
+        <source>Sign-in expired</source>
+        <translation>Logowanie wygasło</translation>
+    </message>
+    <message>
+        <source>Sign in again…</source>
+        <translation>Zaloguj się ponownie…</translation>
+    </message>
+    <message>
+        <source>ChatGPT ended HikariSub’s session, for example after a password change or a sign-out on all devices. Sign in again to keep using Codex.</source>
+        <translation>ChatGPT zakończył sesję HikariSub, na przykład po zmianie hasła lub wylogowaniu na wszystkich urządzeniach. Zaloguj się ponownie, aby dalej używać Codex.</translation>
+    </message>
+    <message>
+        <source>Sign in with ChatGPT</source>
+        <translation>Zaloguj się przez ChatGPT</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com, sign in to ChatGPT and enter this code.</source>
+        <translation>Otwórz auth.openai.com, zaloguj się do ChatGPT i wpisz ten kod.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Open auth.openai.com</source>
+        <translation>Otwórz auth.openai.com</translation>
+    </message>
+    <message>
+        <source>auth.openai.com is open in your browser. Sign in there; HikariSub finishes when the page says you can close it.</source>
+        <translation>auth.openai.com jest otwarta w przeglądarce. Zaloguj się tam; HikariSub skończy, gdy strona poinformuje, że można ją zamknąć.</translation>
+    </message>
+    <message>
+        <source>Waiting for the code · it expires in %1</source>
+        <translation>Czekanie na kod · wygaśnie za %1</translation>
+    </message>
+    <message>
+        <source>Waiting for the browser</source>
+        <translation>Czekanie na przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Can’t use a code? Sign in through the browser</source>
+        <translation>Nie możesz użyć kodu? Zaloguj się przez przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Sign in through the browser</source>
+        <translation>Zaloguj się przez przeglądarkę</translation>
+    </message>
+    <message>
+        <source>Get a new code</source>
+        <translation>Pobierz nowy kod</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>MCP</source>
+        <translation>MCP</translation>
+    </message>
+    <message>
+        <source>Let agents outside HikariSub edit through MCP</source>
+        <translation>Pozwól agentom spoza HikariSub edytować przez MCP</translation>
+    </message>
+    <message>
+        <source>Claude Code, Codex and other agents read the open documents. Their edits wait in the review until you keep or undo them.</source>
+        <translation>Claude Code, Codex i inni agenci czytają otwarte dokumenty. Ich zmiany czekają w przeglądzie, aż je zachowasz lub cofniesz.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once: %1 MB.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo: %1 MB.</translation>
+    </message>
+    <message>
+        <source>MCP needs the AI component, downloaded once.</source>
+        <translation>MCP potrzebuje komponentu AI, pobieranego jednorazowo.</translation>
+    </message>
+    <message>
+        <source>It runs only while an agent uses HikariSub, and never while AI is turned off.</source>
+        <translation>Działa tylko wtedy, gdy agent korzysta z HikariSub, i nigdy, gdy AI jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation>Pobierz</translation>
+    </message>
+    <message>
+        <source>It needs the AI component</source>
+        <translation>Potrzebuje komponentu AI</translation>
+    </message>
+    <message>
+        <source>MCP stays off. %1.</source>
+        <translation>MCP pozostaje wyłączone. %1.</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1</translation>
+    </message>
+    <message>
+        <source>Also listen on http://127.0.0.1:%1</source>
+        <translation>Nasłuchuj także na http://127.0.0.1:%1</translation>
+    </message>
+    <message>
+        <source>For agents that connect over HTTP. Only this computer can reach it, and only with the token.</source>
+        <translation>Dla agentów łączących się przez HTTP. Dostęp ma tylko ten komputer i tylko z tokenem.</translation>
+    </message>
+    <message>
+        <source>Copy setup</source>
+        <translation>Kopiuj konfigurację</translation>
+    </message>
+    <message>
+        <source>Reset token</source>
+        <translation>Zresetuj token</translation>
+    </message>
+    <message>
+        <source>New token saved.</source>
+        <translation>Zapisano nowy token.</translation>
+    </message>
+    <message>
+        <source>Copied. Run it in a terminal.</source>
+        <translation>Skopiowano. Uruchom to w terminalu.</translation>
+    </message>
+    <message>
+        <source>Copied. Paste it into the agent’s settings.</source>
+        <translation>Skopiowano. Wklej to do ustawień agenta.</translation>
+    </message>
+    <message>
+        <source>Claude Code command</source>
+        <translation>Polecenie Claude Code</translation>
+    </message>
+    <message>
+        <source>Codex config.toml</source>
+        <translation>Codex config.toml</translation>
+    </message>
+    <message>
+        <source>JSON with the address and token</source>
+        <translation>JSON z adresem i tokenem</translation>
+    </message>
+    <message>
+        <source>Holds your token; keep it private.</source>
+        <translation>Zawiera twój token; nie udostępniaj go.</translation>
+    </message>
+    <message>
+        <source>Reset token makes a new token. Agents set up with the old one stop working until you copy the setup again.</source>
+        <translation>Zresetuj token tworzy nowy token. Agenci skonfigurowani ze starym przestaną działać, dopóki nie skopiujesz konfiguracji ponownie.</translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+    </message>
+    <message>
+        <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
+        <translation>Konfiguracja JSON jest dla agentów łączących się przez HTTP, więc wymaga opcji „Nasłuchuj także na http://127.0.0.1”.</translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agent</translation>
+    </message>
+    <message>
+        <source>Mode for new threads</source>
+        <translation>Tryb nowych wątków</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>Ręczny</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatyczny</translation>
+    </message>
+    <message>
+        <source>Full access</source>
+        <translation>Pełny dostęp</translation>
+    </message>
+    <message>
+        <source>Cost cap per thread</source>
+        <translation>Limit kosztu na wątek</translation>
+    </message>
+    <message>
+        <source>Cost cap per day</source>
+        <translation>Limit kosztu na dzień</translation>
+    </message>
+    <message>
+        <source>No cap</source>
+        <translation>Bez limitu</translation>
+    </message>
+    <message>
+        <source>At a cap the turn stops after its current change. The agent never raises a cap; only you can.</source>
+        <translation>Po osiągnięciu limitu tura zatrzymuje się po bieżącej zmianie. Agent nigdy nie podnosi limitu; może to zrobić tylko użytkownik.</translation>
+    </message>
+    <message>
+        <source>Show the cost meter</source>
+        <translation>Pokazuj licznik kosztu</translation>
+    </message>
+    <message>
+        <source>AI components</source>
+        <translation>Komponenty AI</translation>
+    </message>
+    <message>
+        <source>What’s new</source>
+        <translation>Co nowego</translation>
+    </message>
+    <message>
+        <source>AI component %1 stopped working, so HikariSub went back to %2 and won’t install %1 again.</source>
+        <translation>Komponent AI %1 przestał działać, więc HikariSub wrócił do %2 i nie zainstaluje %1 ponownie.</translation>
+    </message>
+    <message>
+        <source>A crash report was sent.</source>
+        <translation>Wysłano raport o awarii.</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>AI component</source>
+        <translation>Komponent AI</translation>
+    </message>
+    <message>
+        <source>Runs on</source>
+        <translation>Działa na</translation>
+    </message>
+    <message>
+        <source>Provider libraries</source>
+        <translation>Biblioteki dostawców</translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation>Stan</translation>
+    </message>
+    <message>
+        <source>Check now</source>
+        <translation>Sprawdź teraz</translation>
+    </message>
+    <message>
+        <source>Update AI components automatically</source>
+        <translation>Aktualizuj komponenty AI automatycznie</translation>
+    </message>
+    <message>
+        <source>Your administrator turned automatic updates off on this computer.</source>
+        <translation>Administrator wyłączył automatyczne aktualizacje na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>HikariSub checks every hour while AI is on. A new version downloads in the background and starts once AI has been idle for 2 minutes. If it doesn’t start, HikariSub goes back to the one before.</source>
+        <translation>Gdy AI jest włączone, HikariSub sprawdza co godzinę. Nowa wersja pobiera się w tle i uruchamia, gdy AI jest bezczynne przez 2 minuty. Jeśli się nie uruchomi, HikariSub wraca do poprzedniej.</translation>
+    </message>
+    <message>
+        <source>HikariSub still checks every hour, and downloads only when you press Update now.</source>
+        <translation>HikariSub nadal sprawdza co godzinę, a pobiera dopiero po naciśnięciu Zaktualizuj teraz.</translation>
+    </message>
+    <message>
+        <source>Use prompt caching</source>
+        <translation>Używaj buforowania promptów</translation>
+    </message>
+    <message>
+        <source>The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.</source>
+        <translation>Dostawca przechowuje początek rozmowy przez kilka minut, więc kolejna tura kosztuje mniej. Na tym komputerze nic nie jest zapisywane.</translation>
+    </message>
+    <message>
+        <source>What is sent to providers</source>
+        <translation>Co jest wysyłane do dostawców</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The AI component isn’t sandboxed on this system.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
+        <translation type="vanished">Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
+    </message>
+    <message>
+        <source>Web search</source>
+        <translation>Wyszukiwanie w sieci</translation>
+    </message>
+    <message>
+        <source>Let AI search the web</source>
+        <translation>Pozwól AI wyszukiwać w sieci</translation>
+    </message>
+    <message>
+        <source>The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.</source>
+        <translation>Agent może wyszukiwać nazwy, terminy, teksty piosenek i odniesienia, a potem podaje, gdzie je znalazł. Dostawca lub Twoja usługa wyszukiwania otrzymuje każde zapytanie agenta i strony, które otwiera.</translation>
+    </message>
+    <message>
+        <source>Google Search, and reads pages</source>
+        <translation>Wyszukiwarka Google, czyta strony</translation>
+    </message>
+    <message>
+        <source>Its own search, and reads pages</source>
+        <translation>Własne wyszukiwanie, czyta strony</translation>
+    </message>
+    <message>
+        <source>Needs a search service</source>
+        <translation>Wymaga usługi wyszukiwania</translation>
+    </message>
+    <message>
+        <source>Gemini answers that searched show Google’s search suggestions, as Google’s terms require.</source>
+        <translation>Odpowiedzi Gemini, które korzystały z wyszukiwania, pokazują sugestie wyszukiwania Google, zgodnie z warunkami Google.</translation>
+    </message>
+    <message>
+        <source>Search service</source>
+        <translation>Usługa wyszukiwania</translation>
+    </message>
+    <message>
+        <source>Brave Search (search only)</source>
+        <translation>Brave Search (tylko wyszukiwanie)</translation>
+    </message>
+    <message>
+        <source>Brave Search only searches: providers without their own search can’t read a page with it.</source>
+        <translation>Brave Search tylko wyszukuje: dostawcy bez własnego wyszukiwania nie mogą przez nią czytać stron.</translation>
+    </message>
+    <message>
+        <source>For providers without their own search. Anthropic, Google Gemini, OpenAI and OpenRouter search without one.</source>
+        <translation>Dla dostawców bez własnego wyszukiwania. Anthropic, Google Gemini, OpenAI i OpenRouter wyszukują bez niej.</translation>
+    </message>
+    <message>
+        <source>%1 key</source>
+        <translation>Klucz %1</translation>
+    </message>
+    <message>
+        <source>Replace key…</source>
+        <translation>Zastąp klucz…</translation>
+    </message>
+    <message>
+        <source>Add anyway</source>
+        <translation>Dodaj mimo to</translation>
+    </message>
+    <message>
+        <source>Remove key</source>
+        <translation>Usuń klucz</translation>
+    </message>
+    <message>
+        <source>Get a %1 key</source>
+        <translation>Uzyskaj klucz %1</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>Połączono</translation>
+    </message>
+    <message>
+        <source>Searches used up (%1)</source>
+        <translation>Wyczerpano wyszukiwania (%1)</translation>
+    </message>
+    <message>
+        <source>Add a provider to test the key</source>
+        <translation>Dodaj dostawcę, aby przetestować klucz</translation>
+    </message>
+    <message>
+        <source>Can’t reach %1</source>
+        <translation>Nie można połączyć się z %1</translation>
+    </message>
+    <message>
+        <source>Search service error (%1)</source>
+        <translation>Błąd usługi wyszukiwania (%1)</translation>
+    </message>
+    <message>
+        <source>Not tested</source>
+        <translation>Nie testowano</translation>
+    </message>
+    <message>
+        <source>Saved in the keychain. HikariSub sends only the searches the agent writes, never your files. Test connection runs one search, which counts against your %1 plan.</source>
+        <translation>Zapisany w magazynie kluczy. HikariSub wysyła tylko zapytania napisane przez agenta, nigdy Twoich plików. Test połączenia wykonuje jedno wyszukiwanie, które wlicza się do Twojego planu %1.</translation>
+    </message>
+    <message>
+        <source>%1 refused the key. Paste a new one from your %1 dashboard.</source>
+        <translation>%1 odrzucił klucz. Wklej nowy z panelu %1.</translation>
+    </message>
+    <message>
+        <source>Your %1 plan has no searches left. Until it resets, providers without their own search answer without searching and say so.</source>
+        <translation>Twój plan %1 nie ma już wyszukiwań. Do jego odnowienia dostawcy bez własnego wyszukiwania odpowiadają bez wyszukiwania i o tym informują.</translation>
+    </message>
+    <message>
+        <source>The key is in the keychain. Providers charge for their own searches on top of tokens. %1 bills searches on your %1 plan.</source>
+        <translation>Klucz jest w magazynie kluczy. Dostawcy pobierają opłaty za własne wyszukiwania oprócz tokenów. %1 rozlicza wyszukiwania w Twoim planie %1.</translation>
+    </message>
+    <message>
+        <source>Remove the %1 key?</source>
+        <translation>Usunąć klucz %1?</translation>
+    </message>
+    <message>
+        <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
+        <translation>Zostanie usunięty z magazynie kluczy. Dostawcy bez własnego wyszukiwania przestaną wyszukiwać, dopóki nie dodasz klucza.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców i do %1. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
+    </message>
+    <message>
+        <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
+        <translation>Żądania trafiają tylko do dodanych dostawców i do %1. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -9422,6 +12887,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ta wtyczka wymaga Hikari API %1, a ten HikariSub ma API %2. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
     </message>
     <message>
+        <source>Only Full trust plugins can ship QML panels.</source>
+        <translation>Tylko wtyczki z pełnym zaufaniem mogą zawierać panele QML.</translation>
+    </message>
+    <message>
         <source>hikari-plugin.json fails the plugin schema at %1: %2</source>
         <translation>hikari-plugin.json nie spełnia schematu wtyczki w miejscu %1: %2</translation>
     </message>
@@ -9442,12 +12911,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pakiet narusza zasady dotyczące multimediów: %1 %2.</translation>
     </message>
     <message>
+        <source>The package lacks its panel file, %1.</source>
+        <translation>W pakiecie brakuje pliku panelu, %1.</translation>
+    </message>
+    <message>
+        <source>%1 imports %2, which plugin panels can’t use.</source>
+        <translation>%1 importuje %2, czego panele wtyczek nie mogą używać.</translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>Pakiet ma podpis, ale jego manifest nie podaje klucza publicKey, którym można go sprawdzić.</translation>
     </message>
     <message>
         <source>plugins.json in the user folder can’t be read: %1</source>
         <translation>Nie można odczytać pliku plugins.json w folderze użytkownika: %1</translation>
+    </message>
+    <message>
+        <source>The download isn’t the plugin the marketplace lists: %1.</source>
+        <translation>Pobrany plik nie jest wtyczką z katalogu wtyczek: %1.</translation>
     </message>
     <message>
         <source>The package is signed by a key its manifest doesn’t name.</source>
@@ -9470,6 +12951,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pełne zaufanie: może uruchamiać kod natywny poza ograniczeniami HikariSub.</translation>
     </message>
     <message>
+        <source>Shows its own panels inside HikariSub</source>
+        <translation>Wyświetla własne panele w HikariSub</translation>
+    </message>
+    <message>
         <source>Read and edit every open subtitle file: %1</source>
         <translation>Odczytywać i edytować każdy otwarty plik napisów: %1</translation>
     </message>
@@ -9486,6 +12971,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Prosić Cię o folder do odczytu, %1: %2</translation>
     </message>
     <message>
+        <source>The marketplace revoked this version. Install another one to turn it on.</source>
+        <translation>Katalog wtyczek wycofał tę wersję. Zainstaluj inną, aby ją włączyć.</translation>
+    </message>
+    <message>
+        <source>Command: %1</source>
+        <translation>Polecenie: %1</translation>
+    </message>
+    <message>
+        <source>Panel: %1</source>
+        <translation>Panel: %1</translation>
+    </message>
+    <message>
         <source>HikariSub couldn’t finish: %1</source>
         <translation>HikariSub nie mógł dokończyć operacji: %1</translation>
     </message>
@@ -9498,12 +12995,36 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>HikariSub nie może odczytać pliku %1.</translation>
     </message>
     <message>
+        <source>The plugin changed while its update downloaded.</source>
+        <translation>Wtyczka zmieniła się podczas pobierania aktualizacji.</translation>
+    </message>
+    <message>
+        <source>This package is “%1”, not an update of “%2”.</source>
+        <translation>Ten pakiet to „%1”, a nie aktualizacja „%2”.</translation>
+    </message>
+    <message>
         <source>Choose a plugin package first.</source>
         <translation>Najpierw wybierz pakiet wtyczki.</translation>
     </message>
     <message>
         <source>Plugins</source>
         <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Turned off</source>
+        <translation>Wyłączona</translation>
+    </message>
+    <message>
+        <source>Didn’t start</source>
+        <translation>Nie uruchomiła się</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>Zatrzymana</translation>
+    </message>
+    <message>
+        <source>From the marketplace</source>
+        <translation>Z katalogu wtyczek</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9532,6 +13053,18 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Install plugin</source>
         <translation>Zainstaluj wtyczkę</translation>
+    </message>
+    <message>
+        <source>“%1” can’t be installed while plugin updates are off.</source>
+        <translation>Nie można zainstalować „%1”, gdy aktualizacje wtyczek są wyłączone.</translation>
+    </message>
+    <message>
+        <source>The link came from the marketplace website. HikariSub looks the plugin up in its own signed list, so it needs to check the marketplace first.</source>
+        <translation>Link pochodzi ze strony katalogu wtyczek. HikariSub szuka wtyczki na własnej, podpisanej liście, więc najpierw musi sprawdzić katalog wtyczek.</translation>
+    </message>
+    <message>
+        <source>Turn on plugin updates</source>
+        <translation>Włącz aktualizacje wtyczek</translation>
     </message>
     <message>
         <source>Update plugin</source>
@@ -9570,12 +13103,28 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wtyczka nie prosi o uprawnienia wykraczające poza aktywny plik napisów.</translation>
     </message>
     <message>
+        <source>Install it only if you trust %1. It gets full access to your computer.</source>
+        <translation>Zainstaluj ją tylko, jeśli ufasz: %1. Dostanie pełny dostęp do komputera.</translation>
+    </message>
+    <message>
+        <source>Signed by %1 and checked against the marketplace.</source>
+        <translation>Podpisane przez: %1 i sprawdzone w katalogu wtyczek.</translation>
+    </message>
+    <message>
         <source>Trust and install</source>
         <translation>Zaufaj i zainstaluj</translation>
     </message>
     <message>
+        <source>Install with full access</source>
+        <translation>Zainstaluj z pełnym dostępem</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Every plugin can read and edit the document you’re working on, as one undo step.</source>
+        <translation>Każda wtyczka może czytać i zmieniać dokument, nad którym pracujesz, jako jeden krok cofania.</translation>
     </message>
     <message>
         <source>Uninstall, keep its data</source>
@@ -9606,8 +13155,40 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Nie odinstalowano wtyczki</translation>
     </message>
     <message>
+        <source>Installed %1</source>
+        <translation>Zainstalowane %1</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowane</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>Katalog wtyczek</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Sprawdź aktualizacje</translation>
+    </message>
+    <message>
+        <source>Plugin updates</source>
+        <translation>Aktualizacje wtyczek</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>Filtr</translation>
+    </message>
+    <message>
+        <source>Filter plugins</source>
+        <translation>Filtruj wtyczki</translation>
+    </message>
+    <message>
         <source>No plugins installed. Install one from a .hikariplugin file.</source>
         <translation>Brak zainstalowanych wtyczek. Zainstaluj wtyczkę z pliku .hikariplugin.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the filter.</source>
+        <translation>Żadna wtyczka nie pasuje do filtru.</translation>
     </message>
     <message>
         <source>Installed plugins</source>
@@ -9615,7 +13196,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>Włączona</translation>
+        <translation type="vanished">Włączona</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -9630,8 +13211,240 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pełne zaufanie</translation>
     </message>
     <message>
+        <source>Revoked</source>
+        <translation>Wycofana</translation>
+    </message>
+    <message>
+        <source>%1 waits for you</source>
+        <translation>%1 czeka na Ciebie</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>Nowe</translation>
+    </message>
+    <message>
+        <source>allowed now</source>
+        <translation>dozwolone teraz</translation>
+    </message>
+    <message>
+        <source>It asks for more than %1 does</source>
+        <translation>Prosi o więcej niż %1</translation>
+    </message>
+    <message>
+        <source>Changes in %1</source>
+        <translation>Zmiany w wersji %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>Szukaj wtyczek</translation>
+    </message>
+    <message>
+        <source>All categories</source>
+        <translation>Wszystkie kategorie</translation>
+    </message>
+    <message>
+        <source>Category</source>
+        <translation>Kategoria</translation>
+    </message>
+    <message>
+        <source>Loading the marketplace…</source>
+        <translation>Wczytywanie katalogu wtyczek…</translation>
+    </message>
+    <message>
+        <source>The marketplace lists no plugins yet.</source>
+        <translation>Katalog wtyczek nie zawiera jeszcze żadnych wtyczek.</translation>
+    </message>
+    <message>
+        <source>No plugin matches the search.</source>
+        <translation>Żadna wtyczka nie pasuje do wyszukiwania.</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Marketplace plugins</source>
+        <translation>Wtyczki z katalogu</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>Aktualizacja</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation>Pobieranie…</translation>
+    </message>
+    <message>
+        <source>Update to %1</source>
+        <translation>Zaktualizuj do %1</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>It needs HikariSub %1 or later. Update HikariSub to install it.</source>
+        <translation>Wymaga HikariSub %1 lub nowszego. Zaktualizuj HikariSub, aby ją zainstalować.</translation>
+    </message>
+    <message>
+        <source>Nothing beyond the basics: no network, no folders, no other documents.</source>
+        <translation>Nic ponad podstawy: bez sieci, folderów i innych dokumentów.</translation>
+    </message>
+    <message>
+        <source>What’s new in %1</source>
+        <translation>Nowości w %1</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation>Wymaga</translation>
+    </message>
+    <message>
+        <source>HikariSub %1 or later</source>
+        <translation>HikariSub %1 lub nowszy</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation>Licencja</translation>
+    </message>
+    <message>
+        <source>Updated</source>
+        <translation>Zaktualizowano</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>Źródło</translation>
+    </message>
+    <message>
+        <source>“%1” is in the marketplace, signed with the same key. Move it there to get updates.</source>
+        <translation>„%1” jest w katalogu wtyczek, podpisana tym samym kluczem. Przenieś ją tam, aby dostawać aktualizacje.</translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation>Nie teraz</translation>
+    </message>
+    <message>
+        <source>Move to the marketplace</source>
+        <translation>Przenieś do katalogu wtyczek</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1, so HikariSub turned it off: %2</source>
+        <translation>Katalog wtyczek wycofał wersję %1, więc HikariSub ją wyłączył: %2</translation>
+    </message>
+    <message>
+        <source>Install %1</source>
+        <translation>Zainstaluj %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for more than %2 does, so it waits for you.</source>
+        <translation>%1 prosi o więcej niż %2, więc czeka na Ciebie.</translation>
+    </message>
+    <message>
+        <source>Review…</source>
+        <translation>Przejrzyj…</translation>
+    </message>
+    <message>
+        <source>Roll back to %1</source>
+        <translation>Przywróć wersję %1</translation>
+    </message>
+    <message>
+        <source>Plugin not rolled back</source>
+        <translation>Nie przywrócono wtyczki</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączona</translation>
+    </message>
+    <message>
+        <source>Plugin not changed</source>
+        <translation>Nie zmieniono wtyczki</translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation>Instaluj aktualizacje automatycznie</translation>
+    </message>
+    <message>
+        <source>It didn’t start.</source>
+        <translation>Nie uruchomiła się.</translation>
+    </message>
+    <message>
+        <source>It stopped.</source>
+        <translation>Zatrzymała się.</translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation>Uruchom ponownie</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>Uprawnienia</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps it to these permissions, but it isn’t sandboxed on this system.</source>
+        <translation>HikariSub ogranicza ją do tych uprawnień, ale w tym systemie nie działa w piaskownicy.</translation>
+    </message>
+    <message>
+        <source>Remembered folders</source>
+        <translation>Zapamiętane foldery</translation>
+    </message>
+    <message>
+        <source>%1: %2</source>
+        <translation>%1: %2</translation>
+    </message>
+    <message>
+        <source>Forget</source>
+        <translation>Zapomnij</translation>
+    </message>
+    <message>
+        <source>%1 asks again the next time it needs this folder</source>
+        <translation>%1 zapyta ponownie, gdy następnym razem będzie potrzebować tego folderu</translation>
+    </message>
+    <message>
+        <source>What it adds</source>
+        <translation>Co dodaje</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Ustawienia</translation>
+    </message>
+    <message>
+        <source>Update from file…</source>
+        <translation>Aktualizuj z pliku…</translation>
+    </message>
+    <message>
+        <source>Open data folder</source>
+        <translation>Otwórz folder danych</translation>
+    </message>
+    <message>
+        <source>Uninstall…</source>
+        <translation>Odinstaluj…</translation>
+    </message>
+    <message>
+        <source>Setting not kept</source>
+        <translation>Nie zachowano ustawienia</translation>
+    </message>
+    <message>
         <source>Install from file…</source>
         <translation>Zainstaluj z pliku…</translation>
+    </message>
+    <message>
+        <source>Check for plugin updates</source>
+        <translation>Sprawdzaj aktualizacje wtyczek</translation>
+    </message>
+    <message>
+        <source>At start and once a day. HikariSub downloads the whole list and never sends which plugins you have.</source>
+        <translation>Przy uruchomieniu i raz dziennie. HikariSub pobiera całą listę i nigdy nie wysyła, jakie masz wtyczki.</translation>
+    </message>
+    <message>
+        <source>Only for marketplace plugins, once they finish what they’re doing. An update that asks for more waits for you.</source>
+        <translation>Tylko dla wtyczek z katalogu, gdy skończą to, co robią. Aktualizacja, która prosi o więcej, czeka na Ciebie.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -9648,6 +13461,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
+    </message>
+    <message numerus="yes">
+        <source>It ran for more than %n second(s).</source>
+        <translation>
+            <numerusform>Działała dłużej niż %n sekundę.</numerusform>
+            <numerusform>Działała dłużej niż %n sekundy.</numerusform>
+            <numerusform>Działała dłużej niż %n sekund.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It stopped unexpectedly.</source>
+        <translation>Nieoczekiwanie się zatrzymała.</translation>
+    </message>
+    <message>
+        <source>It was force stopped.</source>
+        <translation>Wymuszono jej zatrzymanie.</translation>
     </message>
     <message>
         <source>Can’t start: %1</source>
@@ -9684,6 +13513,518 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>The plugin isn’t running.</source>
         <translation>Wtyczka nie działa.</translation>
+    </message>
+    <message>
+        <source>%1, from %2</source>
+        <translation>%1, z %2</translation>
+    </message>
+    <message>
+        <source>About %1…</source>
+        <translation>O wtyczce %1…</translation>
+    </message>
+    <message>
+        <source>%1 rolled back to %2</source>
+        <translation>Przywrócono %1 do wersji %2</translation>
+    </message>
+    <message>
+        <source>Automatic updates skip the version you left.</source>
+        <translation>Automatyczne aktualizacje pominą wersję, z której zrezygnowano.</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <source>%1 turned off</source>
+        <translation>Wyłączono: %1</translation>
+    </message>
+    <message>
+        <source>The marketplace revoked version %1: %2.</source>
+        <translation>Katalog wtyczek wycofał wersję %1: %2.</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while %1’s panel was open.</source>
+        <translation>HikariSub zamknął się, gdy panel wtyczki %1 był otwarty.</translation>
+    </message>
+    <message>
+        <source>The panel couldn’t load.</source>
+        <translation>Nie udało się wczytać panelu.</translation>
+    </message>
+    <message>
+        <source>Its panels stay closed until you choose Load again.</source>
+        <translation>Jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Load again</source>
+        <translation>Wczytaj ponownie</translation>
+    </message>
+    <message>
+        <source>%1 isn’t installed.</source>
+        <translation>%1 nie jest zainstalowana.</translation>
+    </message>
+    <message>
+        <source>Its plugin</source>
+        <translation>Wtyczka panelu</translation>
+    </message>
+    <message>
+        <source>%1 is turned off.</source>
+        <translation>%1 jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>%1 didn’t start.</source>
+        <translation>%1 nie uruchomiła się.</translation>
+    </message>
+    <message>
+        <source>%1 stopped.</source>
+        <translation>%1 zatrzymała się.</translation>
+    </message>
+    <message>
+        <source>The layout keeps this place for its panel “%1”.</source>
+        <translation>Układ zachowuje to miejsce dla jej panelu „%1”.</translation>
+    </message>
+    <message>
+        <source>Open Plugins…</source>
+        <translation>Otwórz wtyczki…</translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation>Włącz</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>The marketplace’s list isn’t signed by the marketplace key, so HikariSub ignored it.</source>
+        <translation>Lista katalogu wtyczek nie jest podpisana kluczem katalogu, więc HikariSub ją pominął.</translation>
+    </message>
+    <message>
+        <source>The marketplace’s signature belongs to another file, so HikariSub ignored the list.</source>
+        <translation>Podpis katalogu wtyczek dotyczy innego pliku, więc HikariSub pominął listę.</translation>
+    </message>
+    <message>
+        <source>The marketplace sent an older list than one HikariSub has already seen, so HikariSub ignored it.</source>
+        <translation>Katalog wtyczek przysłał starszą listę niż ta, którą HikariSub już widział, więc HikariSub ją pominął.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read the marketplace’s list: %1</source>
+        <translation>Nie można odczytać listy katalogu wtyczek: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub couldn’t reach the marketplace: %1</source>
+        <translation>HikariSub nie mógł połączyć się z katalogiem wtyczek: %1</translation>
+    </message>
+    <message>
+        <source>“%1” isn’t in the marketplace for this HikariSub.</source>
+        <translation>„%1” nie ma w katalogu wtyczek dla tej wersji HikariSub.</translation>
+    </message>
+    <message>
+        <source>The marketplace lists a download outside its own site, so HikariSub won’t fetch it.</source>
+        <translation>Katalog wtyczek wskazuje plik spoza własnej witryny, więc HikariSub go nie pobierze.</translation>
+    </message>
+    <message>
+        <source>Couldn’t download the plugin: %1</source>
+        <translation>Nie można pobrać wtyczki: %1</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read and write: %2</source>
+        <translation>%1 prosi o folder do odczytu i zapisu: %2</translation>
+    </message>
+    <message>
+        <source>%1 asks for a folder to read: %2</source>
+        <translation>%1 prosi o folder do odczytu: %2</translation>
+    </message>
+    <message>
+        <source>Remember this folder for %1</source>
+        <translation>Zapamiętaj ten folder dla %1</translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation>Wybierz folder…</translation>
+    </message>
+    <message>
+        <source>%1: save a file</source>
+        <translation>%1: zapisz plik</translation>
+    </message>
+    <message>
+        <source>%1: choose a file</source>
+        <translation>%1: wybierz plik</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>HikariSub closed while its panel was open, so its panels stay closed until you choose Load again.</source>
+        <translation>HikariSub zamknął się, gdy jej panel był otwarty, więc jej panele pozostaną zamknięte, dopóki nie wybierzesz opcji Wczytaj ponownie.</translation>
+    </message>
+    <message>
+        <source>Its root isn’t an Item.</source>
+        <translation>Jego element główny nie jest typu Item.</translation>
+    </message>
+    <message>
+        <source>Its panel “%1” couldn’t load: %2</source>
+        <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Project</name>
+    <message>
+        <source>Project settings</source>
+        <translation>Ustawienia projektu</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply.</source>
+        <translation>Nie można odczytać pliku %1, więc jego ustawienia nie obowiązują.</translation>
+    </message>
+    <message>
+        <source>%1 could not be read, so its settings don’t apply. It is kept as %2.</source>
+        <translation>Nie można odczytać pliku %1, więc jego ustawienia nie obowiązują. Zachowano go jako %2.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set %1, so the project file’s value is ignored.</source>
+        <translation>Projekt nie może ustawiać opcji %1, więc wartość z pliku projektu jest pomijana.</translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation>Otwórz folder</translation>
+    </message>
+    <message>
+        <source>%1 is not a folder.</source>
+        <translation>%1 nie jest folderem.</translation>
+    </message>
+    <message>
+        <source>This tab now uses the project %1.</source>
+        <translation>Ta zakładka używa teraz projektu %1.</translation>
+    </message>
+    <message>
+        <source>This file is in the project %1.</source>
+        <translation>Ten plik należy do projektu %1.</translation>
+    </message>
+    <message>
+        <source>Open project</source>
+        <translation>Otwórz projekt</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QcNotes</name>
+    <message>
+        <source>%1 %2: %3</source>
+        <translation>%1 %2: %3</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>Notatki QC</translation>
+    </message>
+    <message>
+        <source>No more notes</source>
+        <translation>Nie ma więcej notatek</translation>
+    </message>
+    <message>
+        <source>Import notes file…</source>
+        <translation>Importuj plik notatek…</translation>
+    </message>
+    <message>
+        <source>Import notes from the clipboard</source>
+        <translation>Importuj notatki ze schowka</translation>
+    </message>
+    <message>
+        <source>Export notes…</source>
+        <translation>Eksportuj notatki…</translation>
+    </message>
+    <message>
+        <source>Mark all as not done</source>
+        <translation>Oznacz wszystkie jako niegotowe</translation>
+    </message>
+    <message>
+        <source>Remove all notes…</source>
+        <translation>Usuń wszystkie notatki…</translation>
+    </message>
+    <message>
+        <source>Add QC note…</source>
+        <translation>Dodaj notatkę QC…</translation>
+    </message>
+    <message>
+        <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>%1 nie zawiera notatek. Notatka to linijka zaczynająca się od czasu, np. 3:24 lub 0:03:24.</translation>
+    </message>
+    <message>
+        <source>The clipboard has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
+        <translation>Schowek nie zawiera notatek. Notatka to linijka zaczynająca się od czasu, np. 3:24 lub 0:03:24.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Imported %n note(s).</source>
+        <translation>
+            <numerusform>Zaimportowano %n notatkę.</numerusform>
+            <numerusform>Zaimportowano %n notatki.</numerusform>
+            <numerusform>Zaimportowano %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n were already in the file.</source>
+        <translation>
+            <numerusform>%n była już w pliku.</numerusform>
+            <numerusform>%n były już w pliku.</numerusform>
+            <numerusform>%n było już w pliku.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s) have no line within 15 seconds of their time.</source>
+        <translation>
+            <numerusform>%n notatka nie ma linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+            <numerusform>%n notatki nie mają linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+            <numerusform>%n notatek nie ma linijki w promieniu 15 sekund od swojego czasu.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The clipboard</source>
+        <translation>Schowek</translation>
+    </message>
+    <message>
+        <source>Import QC notes</source>
+        <translation>Importuj notatki QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 has %n note(s)</source>
+        <translation>
+            <numerusform>%1 zawiera %n notatkę</numerusform>
+            <numerusform>%1 zawiera %n notatki</numerusform>
+            <numerusform>%1 zawiera %n notatek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>in %n section(s).</source>
+        <translation>
+            <numerusform>w %n sekcji.</numerusform>
+            <numerusform>w %n sekcjach.</numerusform>
+            <numerusform>w %n sekcjach.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This file already has %n note(s).</source>
+        <translation>
+            <numerusform>Ten plik ma już %n notatkę.</numerusform>
+            <numerusform>Ten plik ma już %n notatki.</numerusform>
+            <numerusform>Ten plik ma już %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Adding skips %n note(s) that are already here.</source>
+        <translation>
+            <numerusform>Dodawanie pominie %n notatkę, która już tu jest.</numerusform>
+            <numerusform>Dodawanie pominie %n notatki, które już tu są.</numerusform>
+            <numerusform>Dodawanie pominie %n notatek, które już tu są.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n note(s)</source>
+        <translation>
+            <numerusform>Dodaj %n notatkę</numerusform>
+            <numerusform>Dodaj %n notatki</numerusform>
+            <numerusform>Dodaj %n notatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Replace the notes in this file</source>
+        <translation>Zastąp notatki w tym pliku</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>%1 could not be read: %2</source>
+        <translation>Nie można odczytać %1: %2</translation>
+    </message>
+    <message>
+        <source>Remove all notes</source>
+        <translation>Usuń wszystkie notatki</translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove all %n QC note(s) from this file?</source>
+        <translation>
+            <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
+            <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
+            <numerusform>Usunąć wszystkie %n notatek QC z tego pliku?</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Undo brings them back.</source>
+        <translation>Cofnięcie je przywróci.</translation>
+    </message>
+    <message>
+        <source>Remove all</source>
+        <translation>Usuń wszystkie</translation>
+    </message>
+    <message>
+        <source>Import notes file</source>
+        <translation>Importuj plik notatek</translation>
+    </message>
+    <message>
+        <source>QC notes (*.txt)</source>
+        <translation>Notatki QC (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Export QC notes</source>
+        <translation>Eksportuj notatki QC</translation>
+    </message>
+    <message numerus="yes">
+        <source>Exported %n note(s).</source>
+        <translation>
+            <numerusform>Wyeksportowano %n notatkę.</numerusform>
+            <numerusform>Wyeksportowano %n notatki.</numerusform>
+            <numerusform>Wyeksportowano %n notatek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The notes could not be written.</source>
+        <translation>Nie można zapisać notatek.</translation>
+    </message>
+    <message>
+        <source>In this file</source>
+        <translation>W tym pliku</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n note(s)</source>
+        <translation>
+            <numerusform>%n notatka</numerusform>
+            <numerusform>%n notatki</numerusform>
+            <numerusform>%n notatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add note</source>
+        <translation>Dodaj notatkę</translation>
+    </message>
+    <message>
+        <source>Include done notes</source>
+        <translation>Uwzględnij gotowe notatki</translation>
+    </message>
+    <message>
+        <source>Only the chosen section (%1)</source>
+        <translation>Tylko wybrana sekcja (%1)</translation>
+    </message>
+    <message>
+        <source>Only the chosen section</source>
+        <translation>Tylko wybrana sekcja</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n note(s)…</source>
+        <translation>
+            <numerusform>Eksportuj %n notatkę…</numerusform>
+            <numerusform>Eksportuj %n notatki…</numerusform>
+            <numerusform>Eksportuj %n notatek…</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Wszystkie</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 z %2</translation>
+    </message>
+    <message>
+        <source>line %1</source>
+        <translation>linijka %1</translation>
+    </message>
+    <message>
+        <source>no line</source>
+        <translation>brak linijki</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>gotowe</translation>
+    </message>
+    <message>
+        <source>not done</source>
+        <translation>niegotowe</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <source>No line</source>
+        <translation>Brak linijki</translation>
+    </message>
+    <message>
+        <source>Drop a notes file here</source>
+        <translation>Upuść tutaj plik notatek</translation>
+    </message>
+    <message>
+        <source>Open a subtitle file to keep QC notes in it.</source>
+        <translation>Otwórz plik napisów, aby przechowywać w nim notatki QC.</translation>
+    </message>
+    <message>
+        <source>Only ASS and SSA files can keep QC notes. Save this file as ASS to add notes.</source>
+        <translation>Notatki QC można przechowywać tylko w plikach ASS i SSA. Zapisz ten plik jako ASS, aby dodać notatki.</translation>
+    </message>
+    <message>
+        <source>Paste notes</source>
+        <translation>Wklej notatki</translation>
+    </message>
+    <message>
+        <source>Notes start with a time: 3:24 - …
+[Section] lines group them.</source>
+        <translation>Notatki zaczynają się od czasu: 3:24 - …
+Linijki [Sekcja] je grupują.</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>Poprzednia</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Następna</translation>
+    </message>
+    <message>
+        <source>Hide done</source>
+        <translation>Ukryj gotowe</translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation>Czas</translation>
+    </message>
+    <message>
+        <source>Video time</source>
+        <translation>Czas wideo</translation>
+    </message>
+    <message>
+        <source>Line start</source>
+        <translation>Początek linijki</translation>
+    </message>
+    <message>
+        <source>Section</source>
+        <translation>Sekcja</translation>
+    </message>
+    <message>
+        <source>Note</source>
+        <translation>Notatka</translation>
+    </message>
+    <message>
+        <source>What needs fixing</source>
+        <translation>Co trzeba poprawić</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter saves · Esc cancels</source>
+        <translation>Ctrl+Enter zapisuje · Esc anuluje</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
     </message>
 </context>
 <context>
@@ -9737,8 +14078,24 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>Kopiuj</translation>
+    </message>
+    <message>
+        <source>Also in</source>
+        <translation>Również w</translation>
+    </message>
+    <message>
+        <source>No other occurrences</source>
+        <translation>Brak innych wystąpień</translation>
+    </message>
+    <message>
         <source>The reference is protected (read-only).</source>
         <translation>Dokument referencyjny jest chroniony (tylko do odczytu).</translation>
+    </message>
+    <message>
+        <source>%1, line %2</source>
+        <translation>%1, linijka %2</translation>
     </message>
 </context>
 <context>
@@ -10098,6 +14455,249 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>“Always send crash reports” is on. This is what was sent.</source>
         <translation>„Zawsze wysyłaj raporty o awariach” jest włączone. Oto, co zostało wysłane.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Review</name>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished">Przegląd</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished">Linijka</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished">Linijka %1</translation>
+    </message>
+    <message>
+        <source>Deleted line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script Info %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">Nowy</translation>
+    </message>
+    <message>
+        <source>Removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re&amp;view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n AI change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore checkpoint</source>
+        <translation>Przywróć punkt kontrolny</translation>
+    </message>
+    <message>
+        <source>Every AI change from this turn on is undone, kept ones too, in every tab it touched, as one history step per tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Also undo my edits to %n line(s) I changed after the AI</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Your other edits stay. Undo brings the AI’s changes back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished">Przywróć</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Keep AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">Cofnij</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation type="unfinished">Zachowaj</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished">%1 z %2</translation>
+    </message>
+    <message>
+        <source>The AI added this line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed this line after the AI did. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s) to review</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>You changed %n line(s) after this change. Undo puts the whole change back as it was before the AI, which drops your edits.</source>
+        <translation>
+            <numerusform>Po tej zmianie edytowano %n linijkę. Cofnięcie przywróci całą zmianę do stanu sprzed AI i usunie Twoje poprawki.</numerusform>
+            <numerusform>Po tej zmianie edytowano %n linijki. Cofnięcie przywróci całą zmianę do stanu sprzed AI i usunie Twoje poprawki.</numerusform>
+            <numerusform>Po tej zmianie edytowano %n linijek. Cofnięcie przywróci całą zmianę do stanu sprzed AI i usunie Twoje poprawki.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All kept or undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>you edited it since</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You changed it after this change. Undo puts it back as it was before the AI, which drops your edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited some of these lines after the AI did. Undo all leaves them as they are unless you undo them anyway.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave my edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the AI makes to this tab show here until you keep or undo them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n change(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Go to tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the Review panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10984,6 +15584,10 @@ ponieważ została zmieniona.</translation>
         <translation>klatki kluczowe</translation>
     </message>
     <message>
+        <source>timecodes</source>
+        <translation>kody czasowe</translation>
+    </message>
+    <message>
         <source>%1, this tab’s subtitles, was not found.</source>
         <translation>Nie znaleziono pliku napisów tej zakładki: %1.</translation>
     </message>
@@ -10998,6 +15602,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>%1, this tab’s keyframes, was not found.</source>
         <translation>Nie znaleziono pliku klatek kluczowych tej zakładki: %1.</translation>
+    </message>
+    <message>
+        <source>%1, this tab’s timecodes file, was not found.</source>
+        <translation>Nie znaleziono pliku kodów czasowych tej zakładki: %1.</translation>
     </message>
     <message>
         <source>%1 was not found.</source>
@@ -11018,6 +15626,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
         <translation>Plik klatek kluczowych (*.txt *.pass *.stats *.log)</translation>
+    </message>
+    <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>Plik kodów czasowych (*.txt)</translation>
     </message>
     <message>
         <source>Restore</source>
@@ -11174,6 +15786,18 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>“closed” is not true or false.</source>
         <translation>“closed” nie ma wartości true ani false.</translation>
+    </message>
+    <message>
+        <source>“windows” is not a list.</source>
+        <translation>“windows” nie jest listą.</translation>
+    </message>
+    <message>
+        <source>Window %1 is not an object.</source>
+        <translation>Okno %1 nie jest obiektem.</translation>
+    </message>
+    <message>
+        <source>Window %1: “%2” has the wrong type.</source>
+        <translation>Okno %1: “%2” ma nieprawidłowy typ.</translation>
     </message>
     <message>
         <source>Tab %1 is not an object.</source>
@@ -11903,6 +16527,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Frames per second</source>
         <translation>Klatki na sekundę</translation>
+    </message>
+    <message>
+        <source>Frames per second, average of the timecodes file %1</source>
+        <translation>Klatki na sekundę, średnia z pliku kodów czasowych %1</translation>
     </message>
     <message>
         <source>Video resolution</source>
@@ -12670,8 +17298,12 @@ Usunięte style:
         <translation>Zastosuj do zaznaczonych linijek: ustawia ich styl (Enter lub dwukrotne kliknięcie stylu)</translation>
     </message>
     <message>
-        <source>Edit…</source>
-        <translation>Edytuj…</translation>
+        <source>New style…</source>
+        <translation>Nowy styl…</translation>
+    </message>
+    <message>
+        <source>Edit style…</source>
+        <translation>Edytuj styl…</translation>
     </message>
     <message>
         <source>Select lines with this style</source>
@@ -12680,10 +17312,6 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
-    </message>
-    <message>
-        <source>Open in Style manager</source>
-        <translation>Otwórz w menedżerze stylów</translation>
     </message>
 </context>
 <context>
@@ -12713,6 +17341,26 @@ Usunięte style:
         <translation>Otwórz nową zakładkę</translation>
     </message>
     <message>
+        <source>Subtitles</source>
+        <translation>Napisy</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation>Wideo</translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation>Klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>New tab</source>
+        <translation>Nowa zakładka</translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
@@ -12721,24 +17369,36 @@ Usunięte style:
         <translation>Zapisz wszystko</translation>
     </message>
     <message>
+        <source>Show in folder</source>
+        <translation>Pokaż w folderze</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>Kopiuj ścieżkę</translation>
+    </message>
+    <message>
+        <source>Switch to</source>
+        <translation>Przełącz na</translation>
+    </message>
+    <message>
+        <source>Move tab to new window</source>
+        <translation>Przenieś zakładkę do nowego okna</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Close other tabs</source>
+        <translation>Zamknij pozostałe zakładki</translation>
+    </message>
+    <message>
+        <source>Close tabs to the right</source>
+        <translation>Zamknij zakładki po prawej</translation>
+    </message>
+    <message>
         <source>Close all tabs</source>
         <translation>Zamknij wszystkie zakładki</translation>
-    </message>
-    <message>
-        <source>Show subtitles in folder</source>
-        <translation>Pokaż napisy w folderze</translation>
-    </message>
-    <message>
-        <source>Show video in folder</source>
-        <translation>Pokaż wideo w folderze</translation>
-    </message>
-    <message>
-        <source>Show audio in folder</source>
-        <translation>Pokaż audio w folderze</translation>
-    </message>
-    <message>
-        <source>Show keyframes in folder</source>
-        <translation>Pokaż klatki kluczowe w folderze</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
@@ -12811,6 +17471,10 @@ Usunięte style:
     <message>
         <source>Video only</source>
         <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Move tab to window</source>
+        <translation>Przenieś zakładkę do okna</translation>
     </message>
 </context>
 <context>
@@ -14467,6 +19131,461 @@ Usunięte style:
     </message>
 </context>
 <context>
+    <name>HikariSub.Tracking</name>
+    <message>
+        <source>Line %1</source>
+        <translation>Linijka %1</translation>
+    </message>
+    <message>
+        <source>Lines %1–%2</source>
+        <translation>Linijki %1–%2</translation>
+    </message>
+    <message>
+        <source>Paste the Power-Pin data exported from After Effects or Blender. Apply reads the four CC Power Pin corners.</source>
+        <translation>Wklej dane Power-Pin wyeksportowane z After Effects lub Blendera. Zastosuj odczytuje cztery narożniki CC Power Pin.</translation>
+    </message>
+    <message>
+        <source>This isn’t Power-Pin data: no CC Power Pin corners were found.</source>
+        <translation>To nie są dane Power-Pin: nie znaleziono narożników CC Power Pin.</translation>
+    </message>
+    <message>
+        <source>Select the lines to track.</source>
+        <translation>Zaznacz linijki do śledzenia.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames.</source>
+        <translation>
+            <numerusform>Dane mają %n klatkę, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+            <numerusform>Dane mają %n klatki, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+            <numerusform>Dane mają %n klatek, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line is shown at frame %1.</source>
+        <translation>Żadna zaznaczona linijka nie jest widoczna w klatce %1.</translation>
+    </message>
+    <message>
+        <source>Lines overlap, but line %1 isn’t shown at frame %2. Pick a frame every line shows, or apply them one at a time.</source>
+        <translation>Linijki nakładają się, ale linijka %1 nie jest widoczna w klatce %2. Wybierz klatkę, w której widać każdą linijkę, albo zastosuj je po jednej.</translation>
+    </message>
+    <message>
+        <source>Tracked at %1 × %2, but the video is %3 × %4. The corners are scaled to the video.</source>
+        <translation>Śledzono w rozdzielczości %1 × %2, ale wideo ma %3 × %4. Narożniki zostaną przeskalowane do wideo.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) at %1 fps, tracked at %2 × %3. Covers the selection’s frames %4–%5.</source>
+        <translation>
+            <numerusform>%n klatka przy %1 fps, śledzona w %2 × %3. Obejmuje klatki zaznaczenia %4–%5.</numerusform>
+            <numerusform>%n klatki przy %1 fps, śledzone w %2 × %3. Obejmują klatki zaznaczenia %4–%5.</numerusform>
+            <numerusform>%n klatek przy %1 fps, śledzonych w %2 × %3. Obejmują klatki zaznaczenia %4–%5.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Covers the selection’s frames %1–%2.</source>
+        <translation>
+            <numerusform>%n klatka. Obejmuje klatki zaznaczenia %1–%2.</numerusform>
+            <numerusform>%n klatki. Obejmują klatki zaznaczenia %1–%2.</numerusform>
+            <numerusform>%n klatek. Obejmują klatki zaznaczenia %1–%2.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
+        <translation>Nie można śledzić jednej z linijek: nie da się zmierzyć jej tekstu albo płaszczyzna ją składa.</translation>
+    </message>
+    <message>
+        <source>Perspective tracking</source>
+        <translation>Śledzenie perspektywy</translation>
+    </message>
+    <message>
+        <source>Power-Pin data</source>
+        <translation>Dane Power-Pin</translation>
+    </message>
+    <message>
+        <source>Relative to frame</source>
+        <translation>Względem klatki</translation>
+    </message>
+    <message>
+        <source>of %1 · video frame %2</source>
+        <translation>z %1 · klatka wideo %2</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>Środek obrotu</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>Środek</translation>
+    </message>
+    <message>
+        <source>No %1</source>
+        <translation>Bez %1</translation>
+    </message>
+    <message>
+        <source>Keep</source>
+        <translation>Zachowaj</translation>
+    </message>
+    <message>
+        <source>Fit flat lines to the plane first</source>
+        <translation>Najpierw dopasuj płaskie linijki do płaszczyzny</translation>
+    </message>
+    <message>
+        <source>Move clips with the plane</source>
+        <translation>Przesuwaj wycinki razem z płaszczyzną</translation>
+    </message>
+    <message>
+        <source>Scale outline and shadow</source>
+        <translation>Skaluj obwódkę i cień</translation>
+    </message>
+    <message>
+        <source>The plane is saved with each line, for the Perspective tool and Derive Perspective Track.</source>
+        <translation>Płaszczyzna jest zapisywana w każdej linijce, dla narzędzia Perspektywa i skryptu Derive Perspective Track.</translation>
+    </message>
+    <message>
+        <source>%1 · frames %2–%3</source>
+        <translation>%1 · klatki %2–%3</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>Pozycja</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Skala</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Obrót</translation>
+    </message>
+    <message>
+        <source>Select two or more lines, one a frame.</source>
+        <translation>Zaznacz co najmniej dwie linijki, po jednej na klatkę.</translation>
+    </message>
+    <message>
+        <source>Line %1 isn’t the next frame of the sign: each line must cover one frame and follow on from the one before, with the same text and layer.</source>
+        <translation>Linijka %1 nie jest następną klatką napisu: każda linijka musi obejmować jedną klatkę i następować bezpośrednio po poprzedniej, z tym samym tekstem i warstwą.</translation>
+    </message>
+    <message>
+        <source>Line %1 is animated (\t, \move, \fad or karaoke). Extend lines that hold still on each frame.</source>
+        <translation>Linijka %1 jest animowana (\t, \move, \fad lub karaoke). Przedłużaj linijki, które w każdej klatce stoją w miejscu.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos.</source>
+        <translation>Linijka %1 nie ma \pos.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The video has fewer than %n frame(s) before line %1.</source>
+        <translation>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatkę.</numerusform>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatki.</numerusform>
+            <numerusform>Przed linijką %1 wideo ma mniej niż %n klatek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The lines can’t be extended.</source>
+        <translation>Nie można przedłużyć linijek.</translation>
+    </message>
+    <message>
+        <source>Paste the After Effects keyframe data exported from Mocha or Blender. Apply reads its Position, Scale and Rotation.</source>
+        <translation>Wklej dane klatek kluczowych After Effects wyeksportowane z programu Mocha lub z Blendera. Zastosuj odczytuje z nich pozycję, skalę i obrót.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data: no After Effects keyframe data with Position, Scale and Rotation was found.</source>
+        <translation>To nie są dane ruchu: nie znaleziono danych klatek kluczowych After Effects z pozycją, skalą i obrotem.</translation>
+    </message>
+    <message>
+        <source>The data starts at frame %1 and runs past the selection’s last frame. Pick an earlier start.</source>
+        <translation>Dane zaczynają się od klatki %1 i wykraczają poza ostatnią klatkę zaznaczenia. Wybierz wcześniejszy początek.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s) of data for %1 frames: %2 extrapolated before, %3 after.</source>
+        <translation>
+            <numerusform>%n klatka danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+            <numerusform>%n klatki danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+            <numerusform>%n klatek danych, klatek do pokrycia: %1; ekstrapolowane: %2 przed, %3 po.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the start; check frames %2–%3.</source>
+        <translation>%1: słabe dopasowanie na początku; sprawdź klatki %2–%3.</translation>
+    </message>
+    <message>
+        <source>%1 fits poorly at the end; check frames %2–%3.</source>
+        <translation>%1: słabe dopasowanie na końcu; sprawdź klatki %2–%3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The data has %n frame(s), but the selected lines cover %1 (%2–%3). Select lines that span the tracked frames, or extrapolate.</source>
+        <translation>
+            <numerusform>Dane mają %n klatkę, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+            <numerusform>Dane mają %n klatki, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+            <numerusform>Dane mają %n klatek, ale zaznaczone linijki obejmują %1 (%2–%3). Zaznacz linijki obejmujące śledzone klatki albo użyj ekstrapolacji.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Paste the data the clips follow.</source>
+        <translation>Wklej dane, za którymi mają podążać wycinki.</translation>
+    </message>
+    <message>
+        <source>This isn’t motion data.</source>
+        <translation>To nie są dane ruchu.</translation>
+    </message>
+    <message numerus="yes">
+        <source>The clip data has %n frame(s); the motion data has %1.</source>
+        <translation>
+            <numerusform>Dane wycinków mają %n klatkę, a dane ruchu: %1.</numerusform>
+            <numerusform>Dane wycinków mają %n klatki, a dane ruchu: %1.</numerusform>
+            <numerusform>Dane wycinków mają %n klatek, a dane ruchu: %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frame(s). Moves the clips from frame %1.</source>
+        <translation>
+            <numerusform>%n klatka. Przesuwa wycinki od klatki %1.</numerusform>
+            <numerusform>%n klatki. Przesuwa wycinki od klatki %1.</numerusform>
+            <numerusform>%n klatek. Przesuwa wycinki od klatki %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The data doesn’t cover the selected lines’ frames.</source>
+        <translation>Dane nie obejmują klatek zaznaczonych linijek.</translation>
+    </message>
+    <message>
+        <source>No selected line has motion data to revert.</source>
+        <translation>Żadna zaznaczona linijka nie ma danych ruchu do wycofania.</translation>
+    </message>
+    <message>
+        <source>Open a video first: motion data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane ruchu są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Select two or more lines of one sign, frame by frame.</source>
+        <translation>Zaznacz co najmniej dwie linijki jednego napisu, klatka po klatce.</translation>
+    </message>
+    <message>
+        <source>Line %1 doesn’t follow on from the line before with the same text and layer.</source>
+        <translation>Linijka %1 nie następuje bezpośrednio po poprzedniej linijce z tym samym tekstem i warstwą.</translation>
+    </message>
+    <message>
+        <source>Line %1 has no \pos or \move.</source>
+        <translation>Linijka %1 nie ma \pos ani \move.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of motion data</source>
+        <translation>
+            <numerusform>Skopiowano %n klatkę danych ruchu</numerusform>
+            <numerusform>Skopiowano %n klatki danych ruchu</numerusform>
+            <numerusform>Skopiowano %n klatek danych ruchu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open a video first: tracking data is per frame.</source>
+        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+    </message>
+    <message>
+        <source>Select the lines to copy.</source>
+        <translation>Zaznacz linijki do skopiowania.</translation>
+    </message>
+    <message>
+        <source>Line %1 overlaps another selected line. Copy one sign at a time.</source>
+        <translation>Linijka %1 nakłada się na inną zaznaczoną linijkę. Kopiuj po jednym napisie.</translation>
+    </message>
+    <message>
+        <source>Line %1 has \move, which a Power-Pin track can’t hold.</source>
+        <translation>Linijka %1 ma \move, którego ścieżka Power-Pin nie może przechować.</translation>
+    </message>
+    <message>
+        <source>Line %1’s text can’t be measured.</source>
+        <translation>Nie można zmierzyć tekstu linijki %1.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Copied %n frame(s) of Power-Pin data</source>
+        <translation>
+            <numerusform>Skopiowano %n klatkę danych Power-Pin</numerusform>
+            <numerusform>Skopiowano %n klatki danych Power-Pin</numerusform>
+            <numerusform>Skopiowano %n klatek danych Power-Pin</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Extrapolated \move on %n line(s)</source>
+        <translation>
+            <numerusform>Ekstrapolowano \move w %n linijce</numerusform>
+            <numerusform>Ekstrapolowano \move w %n linijkach</numerusform>
+            <numerusform>Ekstrapolowano \move w %n linijkach</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No selected line has a \move with start and end times.</source>
+        <translation>Żadna zaznaczona linijka nie ma \move z czasem początkowym i końcowym.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Fits position, scale and rotation over the %n selected line(s) (degree %1, error %2 px).</source>
+        <translation>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonej linijki (stopień %1, błąd %2 px).</numerusform>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonych linijek (stopień %1, błąd %2 px).</numerusform>
+            <numerusform>Dopasowuje pozycję, skalę i obrót do %n zaznaczonych linijek (stopień %1, błąd %2 px).</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 fits poorly (error %2); check the new frames.</source>
+        <translation>%1: słabe dopasowanie (błąd %2); sprawdź nowe klatki.</translation>
+    </message>
+    <message>
+        <source>The file is too large to be motion data.</source>
+        <translation>Plik jest za duży, by mógł zawierać dane ruchu.</translation>
+    </message>
+    <message>
+        <source>Could not read the file: %1</source>
+        <translation>Nie można odczytać pliku: %1</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>Wklej</translation>
+    </message>
+    <message>
+        <source>Open file…</source>
+        <translation>Otwórz plik…</translation>
+    </message>
+    <message>
+        <source>Open tracking data</source>
+        <translation>Otwórz dane śledzenia</translation>
+    </message>
+    <message>
+        <source>Tracking data (*.txt)</source>
+        <translation>Dane śledzenia (*.txt)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Apply motion data</source>
+        <translation>Zastosuj dane ruchu</translation>
+    </message>
+    <message>
+        <source>Motion data</source>
+        <translation>Dane ruchu</translation>
+    </message>
+    <message>
+        <source>Clip data</source>
+        <translation>Dane wycinków</translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation>Podążanie</translation>
+    </message>
+    <message>
+        <source>Absolute</source>
+        <translation>Bezwzględna</translation>
+    </message>
+    <message>
+        <source>Position x</source>
+        <translation>Pozycja x</translation>
+    </message>
+    <message>
+        <source>Position y</source>
+        <translation>Pozycja y</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Blur factor, percent</source>
+        <translation>Współczynnik rozmycia, w procentach</translation>
+    </message>
+    <message>
+        <source>Clips</source>
+        <translation>Wycinki</translation>
+    </message>
+    <message>
+        <source>Rect clips</source>
+        <translation>Wycinki prostokątne</translation>
+    </message>
+    <message>
+        <source>Vector clips</source>
+        <translation>Wycinki wektorowe</translation>
+    </message>
+    <message>
+        <source>Rect to vector</source>
+        <translation>Prostokątne na wektorowe</translation>
+    </message>
+    <message>
+        <source>Clips only</source>
+        <translation>Tylko wycinki</translation>
+    </message>
+    <message>
+        <source>Track clips with other data</source>
+        <translation>Śledź wycinki innymi danymi</translation>
+    </message>
+    <message>
+        <source>Bake transforms and fades</source>
+        <translation>Utrwal przekształcenia i zanikania</translation>
+    </message>
+    <message>
+        <source>One line with %1 and %2</source>
+        <translation>Jedna linijka z %1 i %2</translation>
+    </message>
+    <message>
+        <source>Extrapolate past the data</source>
+        <translation>Ekstrapoluj poza dane</translation>
+    </message>
+    <message>
+        <source>Data starts at frame</source>
+        <translation>Dane zaczynają się od klatki</translation>
+    </message>
+    <message>
+        <source>Extend tracked lines</source>
+        <translation>Przedłuż śledzone linijki</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Dodaj</translation>
+    </message>
+    <message>
+        <source>Frames to add</source>
+        <translation>Klatki do dodania</translation>
+    </message>
+    <message>
+        <source>frames</source>
+        <translation>klatek</translation>
+    </message>
+    <message>
+        <source>before the first line</source>
+        <translation>przed pierwszą linijką</translation>
+    </message>
+    <message>
+        <source>after the last line</source>
+        <translation>po ostatniej linijce</translation>
+    </message>
+    <message>
+        <source>Where to add them</source>
+        <translation>Gdzie je dodać</translation>
+    </message>
+    <message>
+        <source>Move the origin (%1)</source>
+        <translation>Przesuń środek obrotu (%1)</translation>
+    </message>
+    <message>
+        <source>Extend</source>
+        <translation>Przedłuż</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Translation</name>
     <message>
         <source>Translation</source>
@@ -14944,6 +20063,14 @@ Usunięte style:
         <translation>Wybierz plik klatek kluczowych</translation>
     </message>
     <message>
+        <source>Timecodes file (*.txt)</source>
+        <translation>Plik kodów czasowych (*.txt)</translation>
+    </message>
+    <message>
+        <source>Save timecodes file</source>
+        <translation>Zapisz plik kodów czasowych</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
     </message>
@@ -15033,6 +20160,14 @@ Usunięte style:
         <translation>Kopiuj z napisami</translation>
     </message>
     <message>
+        <source>Save subtitles only as PNG…</source>
+        <translation>Zapisz same napisy jako PNG…</translation>
+    </message>
+    <message>
+        <source>Copy subtitles only</source>
+        <translation>Kopiuj same napisy</translation>
+    </message>
+    <message>
         <source>Audio track</source>
         <translation>Ścieżka dźwiękowa</translation>
     </message>
@@ -15085,8 +20220,12 @@ Usunięte style:
         <translation>Filtry</translation>
     </message>
     <message>
-        <source>Seek on</source>
-        <translation>Przewijaj przy</translation>
+        <source>Move video to the selected line</source>
+        <translation>Przesuń wideo do zaznaczonej linijki</translation>
+    </message>
+    <message>
+        <source>After moving, play</source>
+        <translation>Po przesunięciu odtwórz</translation>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
@@ -15111,10 +20250,6 @@ Usunięte style:
     <message>
         <source>Editing</source>
         <translation>Edycja</translation>
-    </message>
-    <message>
-        <source>Then play</source>
-        <translation>Potem odtwórz</translation>
     </message>
     <message>
         <source>Nothing</source>
@@ -15285,6 +20420,71 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Klatka %1 z %2 · %3</translation>
     </message>
     <message>
+        <source>None</source>
+        <translation>Brak</translation>
+    </message>
+    <message>
+        <source>PC range</source>
+        <extracomment>Video details: a colour matrix and its range, &quot;BT.709, TV range&quot;</extracomment>
+        <translation>zakres PC</translation>
+    </message>
+    <message>
+        <source>TV range</source>
+        <translation>zakres TV</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation>%1, %2</translation>
+    </message>
+    <message>
+        <source>Dummy video</source>
+        <translation>Atrapa wideo</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>Zmienna</translation>
+    </message>
+    <message>
+        <source>%1 fps (%2/%3)</source>
+        <translation>%1 kl./s (%2/%3)</translation>
+    </message>
+    <message>
+        <source>%1 fps</source>
+        <translation>%1 kl./s</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n frames (%1)</source>
+        <translation>
+            <numerusform>%n klatka (%1)</numerusform>
+            <numerusform>%n klatki (%1)</numerusform>
+            <numerusform>%n klatek (%1)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Nieznana</translation>
+    </message>
+    <message>
+        <source>RGB, %1-bit</source>
+        <translation>RGB, %1 bit</translation>
+    </message>
+    <message>
+        <source>Greyscale, %1-bit</source>
+        <translation>Skala szarości, %1 bit</translation>
+    </message>
+    <message>
+        <source>YUV, %1-bit</source>
+        <translation>YUV, %1 bit</translation>
+    </message>
+    <message>
+        <source>YUV %1, %2-bit</source>
+        <translation>YUV %1, %2 bit</translation>
+    </message>
+    <message>
+        <source>%1 (not tagged; guessed from the size)</source>
+        <translation>%1 (brak oznaczenia; ustalona na podstawie rozmiaru)</translation>
+    </message>
+    <message>
         <source>Aspect ratio: %1</source>
         <translation>Proporcje obrazu: %1</translation>
     </message>
@@ -15318,6 +20518,198 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Align to video</source>
+        <translation>Dopasuj do wideo</translation>
+    </message>
+    <message>
+        <source>Open a video first.</source>
+        <translation>Najpierw otwórz wideo.</translation>
+    </message>
+    <message>
+        <source>Select a line to align first.</source>
+        <translation>Najpierw zaznacz linijkę do dopasowania.</translation>
+    </message>
+    <message>
+        <source>A frame of the video could not be read.</source>
+        <translation>Nie udało się odczytać klatki wideo.</translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation>Napisy są tylko do odczytu.</translation>
+    </message>
+    <message>
+        <source>Click a point that keeps its colour while the line should show. The line is timed to every frame around this one where it does.</source>
+        <translation>Kliknij punkt, który zachowuje kolor, dopóki linijka ma być widoczna. Linijka obejmie wszystkie klatki wokół tej, w których tak jest.</translation>
+    </message>
+    <message>
+        <source>Video frame</source>
+        <translation>Klatka wideo</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter aligns</source>
+        <translation>Strzałki przesuwają punkt; Enter dopasowuje</translation>
+    </message>
+    <message>
+        <source>Point X</source>
+        <translation>Punkt X</translation>
+    </message>
+    <message>
+        <source>Point Y</source>
+        <translation>Punkt Y</translation>
+    </message>
+    <message>
+        <source>Colour %1</source>
+        <translation>Kolor %1</translation>
+    </message>
+    <message>
+        <source>Tolerance</source>
+        <translation>Tolerancja</translation>
+    </message>
+    <message>
+        <source>How far a colour may drift and still count as the same, from 0 to 255</source>
+        <translation>Jak bardzo kolor może się zmienić i nadal liczyć się jako ten sam, od 0 do 255</translation>
+    </message>
+    <message numerus="yes">
+        <source>Searching… %n frames checked</source>
+        <translation>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatkę</numerusform>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatki</numerusform>
+            <numerusform>Wyszukiwanie… sprawdzono %n klatek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Align</source>
+        <translation>Dopasuj</translation>
+    </message>
+    <message>
+        <source>Open timecodes file</source>
+        <translation>Otwórz plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Unknown timecodes format</source>
+        <translation>Nieznany format kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Malformed timecodes line</source>
+        <translation>Nieprawidłowy wiersz kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Must have at least two timecodes to do anything useful</source>
+        <translation>Potrzebne są co najmniej dwa kody czasowe</translation>
+    </message>
+    <message>
+        <source>Timecode file exceeds the 10000000 entry limit</source>
+        <translation>Plik kodów czasowych przekracza limit 10000000 wpisów</translation>
+    </message>
+    <message>
+        <source>Timecodes are out of order</source>
+        <translation>Kody czasowe nie są uporządkowane</translation>
+    </message>
+    <message>
+        <source>Timecodes are all identical</source>
+        <translation>Wszystkie kody czasowe są identyczne</translation>
+    </message>
+    <message>
+        <source>Cannot specify frame rate for negative frames</source>
+        <translation>Nie można podać liczby klatek na sekundę dla ujemnych klatek</translation>
+    </message>
+    <message>
+        <source>End frame must be greater than or equal to start frame</source>
+        <translation>Klatka końcowa musi być większa od początkowej lub jej równa</translation>
+    </message>
+    <message>
+        <source>V1 timecode range exceeds the 10000000 frame limit</source>
+        <translation>Zakres kodów czasowych v1 przekracza limit 10000000 klatek</translation>
+    </message>
+    <message>
+        <source>FPS must be greater than zero</source>
+        <translation>FPS musi być większe od zera</translation>
+    </message>
+    <message>
+        <source>FPS must not be greater than 1000</source>
+        <translation>FPS nie może być większe niż 1000</translation>
+    </message>
+    <message>
+        <source>Override ranges must not overlap</source>
+        <translation>Zakresy nadpisań nie mogą się nakładać</translation>
+    </message>
+    <message>
+        <source>Timecode exceeds the supported timestamp range</source>
+        <translation>Kod czasowy wykracza poza obsługiwany zakres czasu</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Wiersz %1: %2</translation>
+    </message>
+    <message>
+        <source>Failed to parse timecodes file: %1</source>
+        <translation>Nie udało się odczytać pliku kodów czasowych: %1</translation>
+    </message>
+    <message>
+        <source>Could not open the timecodes file %1</source>
+        <translation>Nie można otworzyć pliku kodów czasowych %1</translation>
+    </message>
+    <message>
+        <source>The timecodes file ends before the video does (frame %1 of %2). Later frames continue at its average frame rate.</source>
+        <translation>Plik kodów czasowych kończy się przed końcem wideo (klatka %1 z %2). Dalsze klatki mają jego średnią liczbę klatek na sekundę.</translation>
+    </message>
+    <message>
+        <source>There are no frame times to save</source>
+        <translation>Brak czasów klatek do zapisania</translation>
+    </message>
+    <message>
+        <source>Could not save the timecodes file %1</source>
+        <translation>Nie można zapisać pliku kodów czasowych %1</translation>
+    </message>
+    <message>
+        <source>Timecodes file not found: %1</source>
+        <translation type="vanished">Nie znaleziono pliku kodów czasowych: %1</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Plik</translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation>Rozdzielczość</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Video stream frame rate</source>
+        <translation>Liczba klatek na sekundę strumienia wideo</translation>
+    </message>
+    <message>
+        <source>Frame times from</source>
+        <translation>Czasy klatek z pliku</translation>
+    </message>
+    <message>
+        <source>Length</source>
+        <translation>Długość</translation>
+    </message>
+    <message>
+        <source>Colour space</source>
+        <translation>Przestrzeń barw</translation>
+    </message>
+    <message>
+        <source>Colour matrix</source>
+        <translation>Macierz kolorów</translation>
+    </message>
+    <message>
+        <source>Used for the subtitles</source>
+        <translation>Używana dla napisów</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
     </message>
 </context>
 <context>
@@ -15377,6 +20769,18 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>To</source>
         <translation>Do</translation>
+    </message>
+    <message>
+        <source>Stops</source>
+        <translation>Punkty</translation>
+    </message>
+    <message>
+        <source>Blend</source>
+        <translation>Mieszanie</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>Kroki</translation>
     </message>
     <message>
         <source>In</source>
@@ -16173,6 +21577,202 @@ zwiększając lub zmniejszając wartość.</translation>
         <translation>Położenie tekstu działa tak samo jak w stylach</translation>
     </message>
     <message>
+        <source>Rectangle strips</source>
+        <translation>Pasy prostokątne</translation>
+    </message>
+    <message>
+        <source>Rotated strips</source>
+        <translation>Pasy obrócone</translation>
+    </message>
+    <message>
+        <source>Skewed strips</source>
+        <translation>Pasy pochylone</translation>
+    </message>
+    <message>
+        <source>Strips along the clip</source>
+        <translation>Pasy wzdłuż wycinka</translation>
+    </message>
+    <message>
+        <source>Wedge strips</source>
+        <translation>Pasy klinowe</translation>
+    </message>
+    <message>
+        <source>By character</source>
+        <translation>Według znaków</translation>
+    </message>
+    <message>
+        <source>By line</source>
+        <translation>Według linii</translation>
+    </message>
+    <message>
+        <source>Mask shape</source>
+        <translation>Kształt maski</translation>
+    </message>
+    <message>
+        <source>Where the gradient takes its values from</source>
+        <translation>Skąd pochodzą wartości gradientu</translation>
+    </message>
+    <message>
+        <source>Tags the gradient changes</source>
+        <translation>Tagi zmieniane przez gradient</translation>
+    </message>
+    <message>
+        <source>Remove the tag from the gradient</source>
+        <translation>Usuń tag z gradientu</translation>
+    </message>
+    <message>
+        <source>How colours mix</source>
+        <translation>Sposób mieszania kolorów</translation>
+    </message>
+    <message>
+        <source>How far along the text each character is</source>
+        <translation>Położenie każdego znaku w tekście</translation>
+    </message>
+    <message>
+        <source>Merge equal strips</source>
+        <translation>Scal jednakowe pasy</translation>
+    </message>
+    <message>
+        <source>Apply gradient (Enter)</source>
+        <translation>Zastosuj gradient (Enter)</translation>
+    </message>
+    <message>
+        <source>Wedge</source>
+        <translation>Klin</translation>
+    </message>
+    <message>
+        <source>Box</source>
+        <translation>Prostokąt</translation>
+    </message>
+    <message>
+        <source>Ring</source>
+        <translation>Pierścień</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>Gwiazda</translation>
+    </message>
+    <message>
+        <source>Vignette</source>
+        <translation>Winieta</translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation>Wartości</translation>
+    </message>
+    <message>
+        <source>Picked lines</source>
+        <translation>Wybrane linie</translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation>RGB</translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation>HSL</translation>
+    </message>
+    <message>
+        <source>By width</source>
+        <translation>Według szerokości</translation>
+    </message>
+    <message>
+        <source>By count</source>
+        <translation>Według liczby</translation>
+    </message>
+    <message>
+        <source>In the gradient</source>
+        <translation>W gradiencie</translation>
+    </message>
+    <message>
+        <source>Colour and alpha</source>
+        <translation>Kolor i alfa</translation>
+    </message>
+    <message>
+        <source>Border, shadow and blur</source>
+        <translation>Obramowanie, cień i rozmycie</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>Odstęp</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>Grubość</translation>
+    </message>
+    <message>
+        <source>Spikes</source>
+        <translation>Promienie</translation>
+    </message>
+    <message>
+        <source>Centre</source>
+        <translation>Środek</translation>
+    </message>
+    <message>
+        <source>Hole</source>
+        <translation>Otwór</translation>
+    </message>
+    <message>
+        <source>Accel</source>
+        <translation>Przysp.</translation>
+    </message>
+    <message>
+        <source>Strip</source>
+        <translation>Pas</translation>
+    </message>
+    <message>
+        <source>Overlap</source>
+        <translation>Nakładanie</translation>
+    </message>
+    <message>
+        <source>Skew</source>
+        <translation>Pochylenie</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Choose a tag for the gradient</source>
+        <translation>Wybierz tag dla gradientu</translation>
+    </message>
+    <message>
+        <source>Pick two or more lines as stops</source>
+        <translation>Wybierz co najmniej dwie linie jako punkty</translation>
+    </message>
+    <message>
+        <source>The picked lines must have the same text and tag blocks</source>
+        <translation>Wybrane linie muszą mieć ten sam tekst i bloki tagów</translation>
+    </message>
+    <message>
+        <source>No tag differs between the picked lines</source>
+        <translation>Żaden tag nie różni się między wybranymi liniami</translation>
+    </message>
+    <message>
+        <source>Drag from where the gradient starts to where it ends</source>
+        <translation>Przeciągnij od początku do końca gradientu</translation>
+    </message>
+    <message>
+        <source>The line has no text or clip to cover</source>
+        <translation>Linia nie ma tekstu ani wycinka do pokrycia</translation>
+    </message>
+    <message>
+        <source>Strips along the clip need a clip on the line</source>
+        <translation>Pasy wzdłuż wycinka wymagają wycinka w linii</translation>
+    </message>
+    <message>
+        <source>Gradients do not work on an inverse clip</source>
+        <translation>Gradienty nie działają z odwróconym wycinkiem</translation>
+    </message>
+    <message>
+        <source>No characters on the line</source>
+        <translation>Linia nie ma znaków</translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>Edytuj</translation>
     </message>
@@ -16414,14 +22014,6 @@ nie działają na komentarzach</translation>
         <translation>Przesuń zakładkę w prawo</translation>
     </message>
     <message>
-        <source>Undock</source>
-        <translation>Odłącz</translation>
-    </message>
-    <message>
-        <source>Close reference</source>
-        <translation>Zamknij dokument referencyjny</translation>
-    </message>
-    <message>
         <source>Move panel</source>
         <translation>Przenieś panel</translation>
     </message>
@@ -16436,6 +22028,26 @@ nie działają na komentarzach</translation>
     <message>
         <source>Panel</source>
         <translation>Panel</translation>
+    </message>
+    <message>
+        <source>Dock floating panels to lock the layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock it to move panels. Resizing still works.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Tab with</source>
@@ -16626,8 +22238,16 @@ nie działają na komentarzach</translation>
         <translation>Układ: %1</translation>
     </message>
     <message>
+        <source>Layout: %1, locked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Layout of this tab</source>
         <translation>Układ tej zakładki</translation>
+    </message>
+    <message>
+        <source>Layout of this tab, locked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save layout as…</source>

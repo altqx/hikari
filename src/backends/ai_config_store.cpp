@@ -49,6 +49,7 @@ app::Config JsonConfigStore::load()
         p.wire = *wire;
         p.baseUrl = o.value(QStringLiteral("baseUrl")).toString().toStdString();
         p.needsKey = o.value(QStringLiteral("needsKey")).toBool(true);
+        p.signedIn = o.value(QStringLiteral("signedIn")).toBool(false);
         p.defaults = capabilitiesFrom(o.value(QStringLiteral("defaults")).toObject());
         for (const QJsonValue &mv : o.value(QStringLiteral("models")).toArray()) {
             const QJsonObject m = mv.toObject();
@@ -63,6 +64,10 @@ app::Config JsonConfigStore::load()
                                          .output = price.value(QStringLiteral("output")).toDouble()};
                 if (price.contains(QStringLiteral("cachedInput")))
                     model.price->cachedInput = price.value(QStringLiteral("cachedInput")).toDouble();
+                if (price.contains(QStringLiteral("cacheWrite")))
+                    model.price->cacheWrite = price.value(QStringLiteral("cacheWrite")).toDouble();
+                if (price.contains(QStringLiteral("cacheWriteHour")))
+                    model.price->cacheWriteHour = price.value(QStringLiteral("cacheWriteHour")).toDouble();
             }
             if (m.contains(QStringLiteral("contextTokens")))
                 model.contextTokens = m.value(QStringLiteral("contextTokens")).toInteger();
@@ -98,6 +103,10 @@ bool JsonConfigStore::save(const app::Config &config)
                 QJsonObject price{{QStringLiteral("input"), m.price->input}, {QStringLiteral("output"), m.price->output}};
                 if (m.price->cachedInput)
                     price.insert(QStringLiteral("cachedInput"), *m.price->cachedInput);
+                if (m.price->cacheWrite)
+                    price.insert(QStringLiteral("cacheWrite"), *m.price->cacheWrite);
+                if (m.price->cacheWriteHour)
+                    price.insert(QStringLiteral("cacheWriteHour"), *m.price->cacheWriteHour);
                 model.insert(QStringLiteral("price"), price);
             }
             if (m.contextTokens)
@@ -114,6 +123,7 @@ bool JsonConfigStore::save(const app::Config &config)
             {QStringLiteral("wire"), QString::fromUtf8(app::wireId(p.wire))},
             {QStringLiteral("baseUrl"), QString::fromStdString(p.baseUrl)},
             {QStringLiteral("needsKey"), p.needsKey},
+            {QStringLiteral("signedIn"), p.signedIn},
             {QStringLiteral("defaults"), capabilitiesJson(p.defaults)},
             {QStringLiteral("models"), models},
             {QStringLiteral("capabilityOverrides"), overrides},

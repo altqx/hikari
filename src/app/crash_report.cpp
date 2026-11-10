@@ -242,10 +242,19 @@ QString Report::recordText() const
 
 QString Report::systemText() const
 {
-    return QStringLiteral("System\n  HikariSub %1 (%2) · %3\n  %4 · %5 · Qt %6 · %7 screen(s) at %8 · layout %9")
-        .arg(system.version, system.channel, system.package, system.osName, system.arch, system.qtVersion)
-        .arg(system.screens)
-        .arg(system.scale, system.layout);
+    QString text = QStringLiteral("System\n  HikariSub %1 (%2) · %3\n  %4 · %5 · Qt %6 · %7 screen(s) at %8 · layout %9")
+                       .arg(system.version, system.channel, system.package, system.osName, system.arch, system.qtVersion)
+                       .arg(system.screens)
+                       .arg(system.scale, system.layout);
+    QStringList ai;
+    for (const auto &[key, name] : {std::pair{"ai_component_version", "AI component"}, std::pair{"ai_runtime_version", "Bun"},
+                                    std::pair{"ai_anthropic_version", "Anthropic"}, std::pair{"ai_openai_version", "OpenAI"},
+                                    std::pair{"ai_google_version", "Google Gen AI"}})
+        if (const QString version = system.ai.value(QLatin1String(key)).toString(); !version.isEmpty())
+            ai << QLatin1String(name) + QLatin1Char(' ') + version;
+    if (!ai.isEmpty())
+        text += QStringLiteral("\n  ") + ai.join(QStringLiteral(" · "));
+    return text;
 }
 
 QString Report::settingsText() const
@@ -357,6 +366,8 @@ QJsonObject Report::reportProperties(const QString &note) const
                     {QStringLiteral("qt_version"), system.qtVersion},
                     {QStringLiteral("settings"), settingsJson},
                     {QStringLiteral("log"), log.join(u'\n')}};
+    for (auto it = system.ai.begin(); it != system.ai.end(); ++it)
+        out.insert(it.key(), it.value());
     if (const QString n = note.trimmed().left(kNoteChars); !n.isEmpty())
         out.insert(QStringLiteral("note"), n);
     return out;

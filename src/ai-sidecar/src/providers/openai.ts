@@ -1,20 +1,23 @@
-import OpenAI, { APIError } from "openai";
+import type OpenAI from "openai";
 
+import { cacheControl, markLast, marksCache, prefixTexts, sortedTools, usage } from "./cache";
 import { catalogueModels } from "./catalogue";
 import { type Client, type ClientOptions, messageInside } from "./client";
 import { type Collector, schemaObject } from "./collector";
-import { kNoKey } from "./egress";
+import { kKeyPlaceholder } from "./relay";
 import { ProviderError, streamError, wrapsProviderError } from "./errors";
-import type { Message, Part, Request, StopReason } from "./types";
+import { sdk as loadSdk } from "./sdks";
+import { nativeSearch } from "./search";
+import type { Message, Part, ProviderConfig, Request, StopReason } from "./types";
 
 type Json = Record<string, unknown>;
 
 const dataUrl = (part: Extract<Part, { type: "image" }>) => `data:${part.mediaType};base64,${part.base64}`;
 
-function sdk({ config, key, fetch }: ClientOptions): OpenAI {
+function sdk({ config, fetch }: ClientOptions): OpenAI {
     const openRouter = config.preset === "openrouter";
-    return new OpenAI({
-        apiKey: key || kNoKey,
+    return new (loadSdk("openai").default)({
+        apiKey: kKeyPlaceholder,
         baseURL: config.baseUrl,
         fetch,
         maxRetries: 0,
@@ -29,10 +32,28 @@ async function models(client: OpenAI, signal: AbortSignal) {
     return catalogueModels(Array.isArray(body?.data) ? body.data : []);
 }
 
-function chatMessages(request: Request): Json[] {
+/** OpenRouter caches these vendors' models only where the request marks the prefix. */
+function takesCacheMarks(config: ProviderConfig, model: string): boolean {
+    return config.preset === "openrouter" && (model.startsWith("anthropic/") || model.startsWith("google/"));
+}
+
+const detail = (value: unknown, key: string) => Number((value as Json | undefined)?.[key] ?? 0);
+
+function addAnnotations(out: Collector, annotations: unknown): void {
+    for (const a of (Array.isArray(annotations) ? annotations : []) as Json[]) {
+        const c = (a.type === "url_citation" ? a.url_citation : undefined) as Json | undefined;
+        if (c)
+            out.addCitation(String(c.url ?? ""), String(c.title ?? ""), typeof c.content === "string" ? c.content : undefined);
+    }
+}
+
+function chatMessages(request: Request, markCache: boolean): Json[] {
     const out: Json[] = [];
-    if (request.system)
-        out.push({ role: "system", content: request.system });
+    const prefix: Json[] = prefixTexts(request).map((text) => ({ type: "text", text }));
+    if (markCache)
+        markLast(prefix, cacheControl(request.cacheLifetime));
+    for (const block of prefix)
+        out.push({ role: "system", content: block.cache_control ? [block] : block.text });
     for (const message of request.messages) {
         if (message.author === "assistant") {
             const text = message.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join("");
@@ -55,6 +76,11 @@ function chatMessages(request: Request): Json[] {
         if (content.length)
             out.push({ role: "user", content });
     }
+    if (markCache) {
+        const lastUser = out.findLast((m) => m.role === "user");
+        if (lastUser)
+            markLast(lastUser.content as Json[], cacheControl(request.cacheLifetime));
+    }
     return out;
 }
 
@@ -69,38 +95,45 @@ function chatClient(options: ClientOptions): Client {
         async complete(request, out, signal) {
             const body: Json = {
                 model: request.model,
-                messages: chatMessages(request),
+                messages: chatMessages(request, marksCache(request) && takesCacheMarks(options.config, request.model)),
                 stream: true,
                 stream_options: { include_usage: true },
             };
-            if (options.config.preset === "openrouter")
+            if (options.config.preset === "openrouter") {
                 body.usage = { include: true };
+                if (request.cacheKey)
+                    body.prompt_cache_key = request.cacheKey;
+            }
             if (request.maxOutputTokens !== undefined)
                 body.max_tokens = request.maxOutputTokens;
-            if (request.tools?.length)
-                body.tools = request.tools.map((t) => ({
-                    type: "function",
-                    function: { name: t.name, description: t.description, parameters: schemaObject(t.parametersJson) },
-                }));
+            const tools: Json[] = sortedTools(request).map((t) => ({
+                type: "function",
+                function: { name: t.name, description: t.description, parameters: schemaObject(t.parametersJson) },
+            }));
+            if (nativeSearch(options.config, request))
+                tools.push({ type: "openrouter:web_search" }, { type: "openrouter:web_fetch" });
+            if (tools.length)
+                body.tools = tools;
             let stop: StopReason | undefined;
             try {
                 const stream = await client.chat.completions.create(body as never, { signal });
                 for await (const chunk of stream as unknown as AsyncIterable<Json>) {
-                    const usage = chunk.usage as Json | null | undefined;
-                    if (usage) {
-                        out.usage = {
-                            inputTokens: Number(usage.prompt_tokens ?? 0),
-                            outputTokens: Number(usage.completion_tokens ?? 0),
-                            cachedInputTokens: Number((usage.prompt_tokens_details as Json | undefined)?.cached_tokens ?? 0),
-                        };
-                        if (typeof usage.cost === "number")
-                            out.usage.reportedCost = usage.cost;
+                    const u = chunk.usage as Json | null | undefined;
+                    if (u) {
+                        out.usage = usage(Number(u.prompt_tokens ?? 0), Number(u.completion_tokens ?? 0), {
+                            cachedInputTokens: detail(u.prompt_tokens_details, "cached_tokens"),
+                            cacheWriteTokens: detail(u.prompt_tokens_details, "cache_write_tokens"),
+                        });
+                        if (typeof u.cost === "number")
+                            out.usage.reportedCost = u.cost;
                     }
                     const choice = ((chunk.choices as Json[] | undefined) ?? [])[0];
                     if (!choice)
                         continue;
                     const delta = (choice.delta ?? {}) as Json;
                     out.addText(typeof delta.content === "string" ? delta.content : undefined);
+                    addAnnotations(out, delta.annotations);
+                    addAnnotations(out, (choice.message as Json | undefined)?.annotations);
                     for (const call of (delta.tool_calls as Json[] | undefined) ?? []) {
                         const index = Number(call.index ?? 0);
                         const fn = (call.function ?? {}) as Json;
@@ -113,7 +146,7 @@ function chatClient(options: ClientOptions): Client {
                         stop = reason;
                 }
             } catch (error) {
-                if (error instanceof APIError && error.status === undefined && !wrapsProviderError(error))
+                if (error instanceof loadSdk("openai").APIError && error.status === undefined && !wrapsProviderError(error))
                     throw streamError(error.error);
                 throw error;
             }
@@ -124,8 +157,10 @@ function chatClient(options: ClientOptions): Client {
     };
 }
 
-function responsesInput(messages: Message[]): Json[] {
+function responsesInput(messages: Message[], context: string | undefined): Json[] {
     const input: Json[] = [];
+    if (context)
+        input.push({ role: "developer", content: [{ type: "input_text", text: context }] });
     for (const message of messages) {
         if (message.author === "assistant") {
             for (const p of message.parts) {
@@ -157,16 +192,23 @@ function responsesClient(options: ClientOptions): Client {
     return {
         models: (signal) => models(client, signal),
         async complete(request, out, signal) {
-            const body: Json = { model: request.model, input: responsesInput(request.messages), stream: true, store: false };
+            const body: Json = {
+                model: request.model, input: responsesInput(request.messages, request.context), stream: true, store: false,
+            };
             if (request.system)
                 body.instructions = request.system;
+            if (options.config.preset === "openai" && request.cacheKey)
+                body.prompt_cache_key = request.cacheKey;
             if (request.maxOutputTokens !== undefined)
                 body.max_output_tokens = request.maxOutputTokens;
-            if (request.tools?.length)
-                body.tools = request.tools.map((t) => ({
-                    type: "function", name: t.name, description: t.description,
-                    parameters: schemaObject(t.parametersJson), strict: false,
-                }));
+            const tools: Json[] = sortedTools(request).map((t) => ({
+                type: "function", name: t.name, description: t.description,
+                parameters: schemaObject(t.parametersJson), strict: false,
+            }));
+            if (nativeSearch(options.config, request))
+                tools.push({ type: "web_search" });
+            if (tools.length)
+                body.tools = tools;
             let hasCalls = false;
             try {
                 const stream = await client.responses.create(body as never, { signal });
@@ -175,6 +217,12 @@ function responsesClient(options: ClientOptions): Client {
                     case "response.output_text.delta":
                         out.addText(String(event.delta ?? ""));
                         break;
+                    case "response.output_text.annotation.added": {
+                        const a = (event.annotation ?? {}) as Json;
+                        if (a.type === "url_citation")
+                            out.addCitation(String(a.url ?? ""), String(a.title ?? ""));
+                        break;
+                    }
                     case "response.output_item.added": {
                         const item = (event.item ?? {}) as Json;
                         if (item.type === "function_call") {
@@ -190,11 +238,10 @@ function responsesClient(options: ClientOptions): Client {
                     case "response.incomplete": {
                         const response = (event.response ?? {}) as Json;
                         const u = (response.usage ?? {}) as Json;
-                        out.usage = {
-                            inputTokens: Number(u.input_tokens ?? 0),
-                            outputTokens: Number(u.output_tokens ?? 0),
-                            cachedInputTokens: Number((u.input_tokens_details as Json | undefined)?.cached_tokens ?? 0),
-                        };
+                        out.usage = usage(Number(u.input_tokens ?? 0), Number(u.output_tokens ?? 0), {
+                            cachedInputTokens: detail(u.input_tokens_details, "cached_tokens"),
+                            cacheWriteTokens: detail(u.input_tokens_details, "cache_write_tokens"),
+                        });
                         const incomplete = (response.incomplete_details as Json | undefined)?.reason;
                         if (incomplete === "max_output_tokens")
                             return "maxTokens";
@@ -209,7 +256,7 @@ function responsesClient(options: ClientOptions): Client {
                     }
                 }
             } catch (error) {
-                if (error instanceof APIError && error.status === undefined && !wrapsProviderError(error)) {
+                if (error instanceof loadSdk("openai").APIError && error.status === undefined && !wrapsProviderError(error)) {
                     const e = (error.error ?? {}) as Json;
                     const code = String(e.code ?? "");
                     const limited = code.includes("rate_limit") || code.includes("usage_limit");

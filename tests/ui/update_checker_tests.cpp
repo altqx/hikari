@@ -1,5 +1,7 @@
 #include "hikari/app/update_checker.h"
+#include "hikari/application/update_signature.h"
 #include "desktop_guard.h"
+#include "minisign_signer.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -17,6 +19,7 @@ using hikari::app::UpdateChecker;
 using hikari::app::UpdateEnvironment;
 using hikari::app::UpdateFeed;
 using hikari::application::PackageKind;
+using hikari::test::MinisignSigner;
 
 namespace {
 
@@ -44,12 +47,13 @@ void write(const QString &path, const QByteArray &bytes)
 class UpdateCheckerTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
+    MinisignSigner signer, stranger;
 
     UpdateFeed feed(const QByteArray &json, const QString &name = QStringLiteral("feed"))
     {
         const QString base = dir.filePath(name);
         write(base + QStringLiteral("/releases.json"), json);
-        return UpdateFeed::local(QUrl::fromLocalFile(base + QLatin1Char('/')));
+        return UpdateFeed::local(QUrl::fromLocalFile(base + QLatin1Char('/')), {signer.publicKey()});
     }
     static const QByteArray kFeed;
 
@@ -57,8 +61,9 @@ class UpdateCheckerTest : public QObject {
         QJsonObject release;
         QByteArray deb, appImage;
     };
+    enum class Signed { Yes, No, ForAnotherRelease, ByAnotherKey };
     Published publish(const QString &feedDir, const QString &version, const QJsonValue &offerTo = QJsonArray{QStringLiteral("qt")},
-                      bool withManifest = true, const QString &minGlibc = QStringLiteral("2.34"))
+                      bool withManifest = true, const QString &minGlibc = QStringLiteral("2.34"), Signed signedHow = Signed::Yes)
     {
         Published p;
         p.deb = "deb package " + version.toUtf8();
@@ -83,6 +88,14 @@ class UpdateCheckerTest : public QObject {
             const QByteArray bytes = QJsonDocument(manifest).toJson();
             write(root + QStringLiteral("hikarisub-update.json"), bytes);
             assets.append(QJsonObject{{"name", "hikarisub-update.json"}, {"size", qint64(bytes.size())}, {"digest", ""}});
+            if (signedHow != Signed::No) {
+                const std::string tag = signedHow == Signed::ForAnotherRelease ? "v9.9.9" : "v" + version.toStdString();
+                const MinisignSigner &by = signedHow == Signed::ByAnotherKey ? stranger : signer;
+                const QByteArray signature = QByteArray::fromStdString(by.sign(
+                    bytes.toStdString(), hikari::application::releaseTrustedComment(tag, "hikarisub-update.json")));
+                write(root + QStringLiteral("hikarisub-update.json.minisig"), signature);
+                assets.append(QJsonObject{{"name", "hikarisub-update.json.minisig"}, {"size", qint64(signature.size())}, {"digest", ""}});
+            }
         }
         p.release = QJsonObject{{"tag_name", "v" + version}, {"name", "HikariSub " + version}, {"draft", false},
                                 {"prerelease", version.contains(QLatin1Char('-'))}, {"body", "Notes " + version},
@@ -257,14 +270,53 @@ private slots:
         QVERIFY(QFileInfo::exists(cache + QStringLiteral("/pending-deb.json")));
     }
 
-    void releasesWithoutManifestUseTheirDigests()
+    void releasesWithoutManifestAreOnlyNamed()
     {
         linuxKindsOnly();
         const QString name = QStringLiteral("fallback");
         const auto plain = publish(name, QStringLiteral("0.2.0"), {}, false);
         const UpdateFeed f = feed(QJsonDocument(QJsonArray{plain.release}).toJson(), name);
-        UpdateChecker checker({}, f, QStringLiteral("0.1.0"), environment(PackageKind::Deb, dir.filePath(QStringLiteral("cache-fallback"))));
-        QCOMPARE(checkedOffer(checker).value(QStringLiteral("offer")).toString(), QStringLiteral("install"));
+        const QString cache = dir.filePath(QStringLiteral("cache-fallback"));
+        UpdateChecker checker({}, f, QStringLiteral("0.1.0"), environment(PackageKind::Deb, cache));
+        const auto offer = checkedOffer(checker);
+        QCOMPARE(offer.value(QStringLiteral("tag")).toString(), QStringLiteral("v0.2.0"));
+        QCOMPARE(offer.value(QStringLiteral("offer")).toString(), QStringLiteral("notify"));
+        QCOMPARE(offer.value(QStringLiteral("url")).toString(), f.pageBase + QStringLiteral("v0.2.0"));
+        checker.downloadOffer();
+        QCOMPARE(checker.installer().state(), QStringLiteral("idle"));
+        QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/deb")));
+    }
+
+    void releasesWithABadOrMissingSignatureAreSkipped()
+    {
+        linuxKindsOnly();
+        const QString name = QStringLiteral("signatures");
+        const auto replayed = publish(name, QStringLiteral("0.5.0"), QJsonArray{QStringLiteral("qt")}, true,
+                                      QStringLiteral("2.34"), Signed::ForAnotherRelease);
+        const auto stranger = publish(name, QStringLiteral("0.4.0"), QJsonArray{QStringLiteral("qt")}, true,
+                                      QStringLiteral("2.34"), Signed::ByAnotherKey);
+        const auto unsignedRelease = publish(name, QStringLiteral("0.3.0"), QJsonArray{QStringLiteral("qt")}, true,
+                                             QStringLiteral("2.34"), Signed::No);
+        const auto tampered = publish(name, QStringLiteral("0.2.5"));
+        write(dir.filePath(name) + QStringLiteral("/download/v0.2.5/hikarisub-update.json"),
+              QJsonDocument(QJsonObject{{"schema", 1}, {"version", "0.2.5"}, {"codebase", "qt"},
+                                        {"offer_to", QJsonArray{QStringLiteral("qt")}}, {"packages", QJsonObject{}}})
+                  .toJson());
+        const auto good = publish(name, QStringLiteral("0.2.0"));
+        const UpdateFeed f = feed(QJsonDocument(QJsonArray{replayed.release, stranger.release, unsignedRelease.release,
+                                                           tampered.release, good.release})
+                                      .toJson(),
+                                  name);
+        UpdateChecker checker({}, f, QStringLiteral("0.1.0"), environment(PackageKind::Deb, dir.filePath(QStringLiteral("cache-signatures"))));
+        const auto offer = checkedOffer(checker);
+        QCOMPARE(offer.value(QStringLiteral("tag")).toString(), QStringLiteral("v0.2.0"));
+        QCOMPARE(offer.value(QStringLiteral("offer")).toString(), QStringLiteral("install"));
+        UpdateChecker untrusting({}, UpdateFeed::local(f.releases.adjusted(QUrl::RemoveFilename), {}), QStringLiteral("0.1.0"),
+                                 environment(PackageKind::Deb, dir.filePath(QStringLiteral("cache-untrusting"))));
+        QSignalSpy none(&untrusting, &UpdateChecker::finished);
+        untrusting.checkNow();
+        QVERIFY(none.wait(5000));
+        QCOMPARE(none.at(0).at(0).toString(), QStringLiteral("current"));
     }
 
     void theOfferFollowsThePackageKind()

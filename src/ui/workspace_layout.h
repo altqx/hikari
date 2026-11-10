@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <cstdint>
@@ -22,6 +23,7 @@ struct WorkspaceArrangement {
     QString preset = QStringLiteral("Editing");
     QByteArray payload;
     QString layout;
+    bool locked = false;
 
     QByteArray serialise() const;
     static std::optional<WorkspaceArrangement> parse(const QByteArray &bytes, QString *problem = nullptr);
@@ -51,22 +53,31 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QStringList presets READ presets CONSTANT)
     Q_PROPERTY(QString layout READ layout NOTIFY changed)
     Q_PROPERTY(QString layoutLabel READ layoutLabel NOTIFY changed)
+    Q_PROPERTY(bool locked READ locked NOTIFY changed)
     Q_PROPERTY(QVariantList savedLayouts READ savedLayouts NOTIFY savedLayoutsChanged)
     // QWindow::isActive is also true for the parent of an active floating panel.
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
     // Qt Quick Controls menus are Popup.Item, so the focus window stays the shell's while one is open.
     Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
     Q_PROPERTY(bool modalOpen READ modalOpen NOTIFY modalOpenChanged)
+    Q_PROPERTY(bool nodeEffects READ nodeEffects NOTIFY changed)
 public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 11 Postprocessor)
-    static constexpr int kPanelRegistry = 11;
+    // MUST KILL: kPanelRegistry is a version int bumped per added panel (2 Timing ... 12 QcNotes, 13 Review, 14 Agent, 15-17 node effects)
+    static constexpr int kPanelRegistry = 17;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
     static const QStringList &panelIds();
+    static constexpr int kMaxPluginPanels = 64;
+    // plugin:<plugin id>/<panel id>, a plugin's panel outside panelIds().
+    Q_INVOKABLE static QString pluginPanelId(const QString &plugin, const QString &panel);
+    Q_INVOKABLE static bool isPluginPanel(const QString &name);
+    // {title, pluginName} for a plugin panel, as a layout keeps it for the panel's placeholder.
+    Q_INVOKABLE static QVariantMap pluginPanelInfo(const QString &dock);
+    Q_INVOKABLE static void rememberPluginPanel(const QString &dock, const QString &title, const QString &pluginName);
 
     explicit WorkspaceLayoutController(QString layoutFile = {}, QString savedLayoutsFile = {}, QObject *parent = nullptr);
 
@@ -78,6 +89,8 @@ public:
     Q_INVOKABLE bool restoreSaved();
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool saveForQuit();
+    // The file keeps `active`, another window's arrangement (ADR 0025); this window keeps its own.
+    bool saveForQuit(const WorkspaceArrangement &active);
     Q_INVOKABLE bool resetLayout();
     Q_INVOKABLE bool applyPreset(const QString &name);
     Q_INVOKABLE static QString presetLabel(const QString &name);
@@ -99,6 +112,12 @@ public:
     Q_INVOKABLE QSize panelSize(QObject *dock) const;
     Q_INVOKABLE bool resizePanel(QObject *dock, int width, int height);
     Q_INVOKABLE int keepFloatingPanelsOnScreen();
+    // False while a panel floats: a locked arrangement has none.
+    Q_INVOKABLE bool setLocked(bool locked);
+    // Node effects have their own layout: entering keeps the tab's arrangement and shows the mode's, leaving swaps back.
+    Q_INVOKABLE bool enterNodeEffects();
+    Q_INVOKABLE bool leaveNodeEffects();
+    bool nodeEffects() const { return m_beforeNodeEffects.has_value(); }
 
     void showTab(std::uint64_t tab, TabStart start = TabStart::Copy);
     void addTab(std::uint64_t tab, TabStart start = TabStart::Copy);
@@ -116,6 +135,7 @@ public:
     static const QStringList &presets();
     QString layout() const;
     QString layoutLabel() const;
+    bool locked() const { return m_locked; }
     QVariantList savedLayouts() const;
     QString savedLayoutsFile() const { return m_savedFile; }
     QObject *focusWindow() const;
@@ -124,9 +144,9 @@ public:
     bool hasBackup() const;
 
     static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"),
-                               const QString &layout = {});
+                               const QString &layout = {}, bool locked = false);
     static std::optional<QByteArray> payloadOf(const QByteArray &file, QString *problem, QString *preset = nullptr,
-                                               QString *layout = nullptr);
+                                               QString *layout = nullptr, bool *locked = nullptr);
 
 signals:
     void changed();
@@ -140,6 +160,8 @@ signals:
     void presetModeChosen(const QString &mode);
     void presetModeLeft(const QString &mode);
     void presetApplied(const QString &name);
+    // Before a restore, the plugin panels its layout names, so that each has a dock to restore into.
+    void pluginDocksNeeded(const QStringList &docks);
 
 private:
     void checkModal();
@@ -150,6 +172,7 @@ private:
     QByteArray serialiseWindow() const;
     bool restoreWindow(const QByteArray &payload, int options) const;
     bool restoreSavedFile();
+    bool write(const WorkspaceArrangement &arrangement);
     bool buildPreset(const QString &name, bool inPlace);
     bool showArrangement(const WorkspaceArrangement &arrangement);
     WorkspaceArrangement shownArrangement() const;
@@ -157,6 +180,10 @@ private:
     void keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title);
     void giveTab(std::uint64_t tab, WorkspaceArrangement arrangement);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
+    QString nodeEffectsFile() const;
+    QByteArray tabPayload() const;
+    void buildNodeEffects();
+    void dropNodeEffects();
 
     struct SavedLayout {
         QString name;
@@ -208,6 +235,8 @@ private:
     QString m_chosenMode;
     QString m_preset = QStringLiteral("Editing");
     QString m_layout;
+    bool m_locked = false;
+    void takeLock(bool locked);
     bool m_restoring = false;
     bool m_loaded = false;
     bool m_quitting = false;
@@ -215,6 +244,7 @@ private:
     bool m_menuHasFocus = false;
     bool m_modalOpen = false;
     QTimer m_screenCheck;
+    std::optional<QByteArray> m_beforeNodeEffects;
 };
 
 }

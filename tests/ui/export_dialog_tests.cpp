@@ -1,5 +1,7 @@
 #include "hikari/app/application.h"
 #include "hikari/application/edit_session.h"
+#include "hikari/core/export.h"
+#include "hikari/core/srv3.h"
 
 #include "docking.h"
 #include "line_editor_controller.h"
@@ -29,6 +31,19 @@ constexpr char kSubtitles[] =
     "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,note\n"
     "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\clip(0,0,10,10)}second\n"
     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\fad(100,100)\\frz10}third\n";
+
+constexpr char kYouTube[] =
+    "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"
+    "[V4+ Styles]\n"
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+    "MarginR, MarginV, Encoding\n"
+    "Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00101010,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n"
+    "Style: Sign,Arial,48,&H00FFFFFF,&H000000FF,&H00101010,&H00000000,0,0,0,0,100,100,0,0,1,2,0,8,10,10,10,1\n"
+    "Style: YTGlow,Arial,48,&H00FFFFFF,&H000000FF,&H00101010,&H00000000,0,0,0,0,100,100,0,0,1,0,2,2,10,10,10,1\n\n"
+    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k50}ka{\\k50}ra\n"
+    "Dialogue: 0,0:00:02.00,0:00:03.00,YTGlow,,0,0,0,,glow\n";
 
 QString written(const QString &path, const char *text)
 {
@@ -82,9 +97,9 @@ class ExportDialogTest : public QObject {
         const QString base = QFileInfo(path).completeBaseName();
         return QTest::qWaitFor([&] { return application->exportSetup().value(QStringLiteral("name")).toString() == base; });
     }
-    QString open(const char *name)
+    QString open(const char *name, const char *text = kSubtitles)
     {
-        const QString path = written(dir.filePath(QLatin1String(name)), kSubtitles);
+        const QString path = written(dir.filePath(QLatin1String(name)), text);
         return application->openFile(path) && targets(path) ? path : QString();
     }
     void openDialog()
@@ -98,7 +113,7 @@ class ExportDialogTest : public QObject {
     }
     void choose(const char *format, const QString &path)
     {
-        const QStringList ids{"srt", "vtt", "sbv", "txt", "mdvd", "mpl2", "tmp"};
+        const QStringList ids{"srt", "vtt", "sbv", "txt", "mdvd", "mpl2", "tmp", "ttml", "dfxp", "srv3"};
         part("exportFormat")->setProperty("currentIndex", ids.indexOf(QLatin1String(format)));
         part("exportDestination")->setProperty("text", path);
     }
@@ -271,6 +286,187 @@ private slots:
         QVERIFY(!part("exportRun")->property("enabled").toBool());
         choose("srt", dir.filePath(QStringLiteral("fps.srt")));
         QVERIFY(part("exportRun")->property("enabled").toBool());
+    }
+
+    void ttmlTakesALanguageFramesAndTheNetflixStyle()
+    {
+        QVERIFY(!open("timed.ass").isEmpty());
+        openDialog();
+        const QString out = dir.filePath(QStringLiteral("timed.ttml"));
+        choose("ttml", out);
+        QVERIFY(part("exportTtmlNetflix")->isVisible());
+        QVERIFY(part("exportTtmlFrames")->isVisible());
+        QVERIFY(part("exportLanguage")->isVisible());
+        QVERIFY(!part("exportFps")->isVisible());
+        QVERIFY(!part("exportMerge")->isVisible());
+
+        part("exportLanguage")->setProperty("text", QStringLiteral("pt BR"));
+        run();
+        QTRY_VERIFY(part("exportProblem")->isVisible());
+        QCOMPARE(part("exportProblem")->property("text").toString(),
+                 QStringLiteral("Enter a language code such as en or pt-BR, or leave it empty."));
+        QVERIFY(!QFile::exists(out));
+
+        part("exportLanguage")->setProperty("text", QStringLiteral("pt-BR"));
+        part<QObject>("exportTtmlFrames")->setProperty("checked", true);
+        QTRY_VERIFY(part("exportFps")->isVisible());
+        part("exportFps")->setProperty("text", QStringLiteral("25"));
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        const QByteArray ttml = contents(out);
+        QVERIFY(ttml.contains("xml:lang=\"pt-BR\" ttp:profile=\"http://www.w3.org/ns/ttml/profile/imsc1/text\" "
+                              "ttp:frameRate=\"25\">"));
+        QVERIFY(ttml.contains("<p begin=\"25f\" end=\"50f\" region=\"bottom\" style=\"Default\" "
+                              "tts:textAlign=\"center\"><span tts:fontStyle=\"italic\">first</span></p>"));
+        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+
+        openDialog();
+        QCOMPARE(dialog()->property("format").toString(), QStringLiteral("ttml"));
+        QCOMPARE(part("exportLanguage")->property("text").toString(), QStringLiteral("pt-BR"));
+        QVERIFY(part<QObject>("exportTtmlFrames")->property("checked").toBool());
+        QCOMPARE(part("exportFps")->property("text").toString(), QStringLiteral("25"));
+
+        part<QObject>("exportTtmlNetflix")->setProperty("checked", true);
+        part<QObject>("exportTtmlFrames")->setProperty("checked", false);
+        QTRY_VERIFY(!part("exportTtmlFrames")->isVisible());
+        QVERIFY(part("exportFps")->isVisible());
+        const QString dfxp = dir.filePath(QStringLiteral("timed.dfxp"));
+        choose("dfxp", dfxp);
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        const QByteArray netflix = contents(dfxp);
+        QVERIFY(!netflix.contains("ttp:profile"));
+        QVERIFY(netflix.contains("ttp:frameRate=\"25\">"));
+        QVERIFY(!netflix.contains("tts:color"));
+        const QVariantList notes = dialog()->property("report").toMap().value(QStringLiteral("notes")).toList();
+        QCOMPARE(notes.size(), 2);
+        QCOMPARE(notes[0].toMap().value(QStringLiteral("losses")).toString(), QStringLiteral("Clip removed"));
+    }
+
+    void srv3IsYtSubConvertersConversionWithItsDropsReported()
+    {
+        const QString source = open("youtube.ass");
+        QVERIFY(!source.isEmpty());
+        const auto revision = session()->revision();
+        openDialog();
+        const QString out = dir.filePath(QStringLiteral("youtube.ytt"));
+        choose("srv3", out);
+        QVERIFY(part("exportSrv3Hint")->isVisible());
+        QVERIFY(!part("exportMerge")->isVisible());
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        const auto expected = core::exportDocument(session()->document(), core::ExportFormat::Srv3, {}).bytes;
+        QCOMPARE(contents(out), QByteArray(reinterpret_cast<const char *>(expected.data()), qsizetype(expected.size())));
+        QVERIFY(contents(out).startsWith("\xEF\xBB\xBF<?xml version=\"1.0\" encoding=\"utf-8\"?><timedtext format=\"3\">"));
+        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Exported 3 lines to “youtube.ytt”."));
+        const QVariantList notes = dialog()->property("report").toMap().value(QStringLiteral("notes")).toList();
+        QCOMPARE(notes.size(), 2);
+        QCOMPARE(notes[0].toMap().value(QStringLiteral("losses")).toString(), QStringLiteral("Clip removed"));
+        QCOMPARE(notes[1].toMap().value(QStringLiteral("losses")).toString(), QStringLiteral("Rotation or shearing removed"));
+        QCOMPARE(session()->revision(), revision);
+        QCOMPARE(contents(source), QByteArray(kSubtitles));
+    }
+
+    QQuickItem *srv3Row(int index) const
+    {
+        return findVisual(dialog()->property("contentItem").value<QQuickItem *>(), QStringLiteral("exportSrv3Row%1").arg(index));
+    }
+    QQuickItem *inRow(int index, const QString &name) const
+    {
+        QQuickItem *row = srv3Row(index);
+        return row ? findVisual(row, name) : nullptr;
+    }
+    QString srv3Key() const
+    {
+        const auto value = session()->document().scriptInfo(u8"Hikari srv3 1");
+        return value ? QString::fromUtf8(reinterpret_cast<const char *>(value->data()), qsizetype(value->size())) : QString();
+    }
+
+    void srv3StyleOptionsAreSavedOnExportAsOneUndoStep()
+    {
+        QVERIFY(!open("options.ass", kYouTube).isEmpty());
+        openDialog();
+        choose("srv3", dir.filePath(QStringLiteral("options.ytt")));
+        QTRY_VERIFY(part("exportSrv3Styles")->isVisible());
+        QVERIFY(srv3Row(0)->isVisible());
+        QVERIFY(!srv3Row(1)->isVisible());
+        QVERIFY(srv3Row(2)->isVisible());
+        QVERIFY(part("exportSrv3All")->isVisible());
+        part<QObject>("exportSrv3All")->setProperty("checked", true);
+        QTRY_VERIFY(srv3Row(1)->isVisible());
+        QVERIFY(!inRow(1, QStringLiteral("exportSrv3Shadow1"))->isEnabled());
+        QVERIFY(inRow(2, QStringLiteral("exportSrv3Shadow1"))->property("checked").toBool());
+        QVERIFY(inRow(0, QStringLiteral("exportSrv3Shadow4"))->property("checked").toBool());
+        QVERIFY(!inRow(0, QStringLiteral("exportSrv3Colour_text"))->isEnabled());
+        QVERIFY(!inRow(0, QStringLiteral("exportSrv3Reset"))->isEnabled());
+
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Shadow2")), "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Shadow2")), "toggled"));
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Karaoke")), "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Karaoke")), "toggled"));
+        QTRY_VERIFY(inRow(0, QStringLiteral("exportSrv3Colour_text"))->isEnabled());
+        QVERIFY(inRow(0, QStringLiteral("exportSrv3Reset"))->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Colour_text")), "click"));
+        auto *popover = dialog()->findChild<QObject *>(QStringLiteral("exportSrv3ColourPopover"));
+        QTRY_VERIFY(popover && popover->property("opened").toBool());
+        QVERIFY(!popover->property("hasAlpha").toBool());
+        QVERIFY(popover->property("canClear").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setHex", Q_ARG(QVariant, QStringLiteral("#FFE45C"))));
+        QVERIFY(QMetaObject::invokeMethod(popover, "accept"));
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Colour_outline")), "click"));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "clear"));
+        QTRY_VERIFY(!popover->property("opened").toBool());
+
+        const auto revision = session()->revision();
+        const auto steps = session()->historySize();
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QCOMPARE(srv3Key(), QStringLiteral("Default,soft+hard,karaoke,#FFE45C,,"));
+        QCOMPARE(session()->historySize(), steps + 1);
+        QVERIFY(session()->revision() != revision);
+        QCOMPARE(part("exportSrv3Saved")->property("text").toString(), QStringLiteral("Style options for 1 style saved in the subtitle file."));
+        const auto expected = core::exportDocument(session()->document(), core::ExportFormat::Srv3, {}).bytes;
+        QCOMPARE(contents(dir.filePath(QStringLiteral("options.ytt"))),
+                 QByteArray(reinterpret_cast<const char *>(expected.data()), qsizetype(expected.size())));
+        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+
+        openDialog();
+        QTRY_VERIFY(inRow(0, QStringLiteral("exportSrv3Shadow2"))->property("checked").toBool());
+        QVERIFY(inRow(0, QStringLiteral("exportSrv3Reset"))->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Reset")), "click"));
+        QTRY_VERIFY(!inRow(0, QStringLiteral("exportSrv3Shadow2"))->property("checked").toBool());
+        part("exportDestination")->setProperty("text", dir.filePath(QStringLiteral("reset.ytt")));
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QCOMPARE(srv3Key(), QString());
+        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+
+        QVERIFY(session()->undo());
+        QCOMPARE(srv3Key(), QStringLiteral("Default,soft+hard,karaoke,#FFE45C,,"));
+    }
+
+    void srv3OptionsAreDroppedOnCancel()
+    {
+        QVERIFY(!open("cancel.ass", kYouTube).isEmpty());
+        const auto steps = session()->historySize();
+        openDialog();
+        choose("srv3", dir.filePath(QStringLiteral("cancel.ytt")));
+        QTRY_VERIFY(inRow(0, QStringLiteral("exportSrv3Karaoke")));
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Karaoke")), "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(inRow(0, QStringLiteral("exportSrv3Karaoke")), "toggled"));
+        QVERIFY(QMetaObject::invokeMethod(dialog(), "close"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+        QCOMPARE(session()->historySize(), steps);
+        QCOMPARE(srv3Key(), QString());
+        openDialog();
+        choose("srv3", dir.filePath(QStringLiteral("cancel.ytt")));
+        QTRY_VERIFY(inRow(0, QStringLiteral("exportSrv3Karaoke")));
+        QVERIFY(!inRow(0, QStringLiteral("exportSrv3Karaoke"))->property("checked").toBool());
     }
 
     void aRelativePathIsRefused()

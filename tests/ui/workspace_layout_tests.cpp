@@ -23,6 +23,16 @@
 
 using namespace hikari;
 
+namespace {
+
+QByteArray readAll(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+}
+
 class WorkspaceLayoutTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -100,6 +110,51 @@ private slots:
         QVERIFY(problem.contains(QStringLiteral("Spy")));
         QVERIFY(!ui::WorkspaceLayoutController::payloadOf(QByteArray(ui::WorkspaceLayoutController::kMaximumBytes + 1, ' '),
                                                           &problem));
+    }
+
+    void pluginPanelsPassValidationAndKeepTheirTitles()
+    {
+        using Layout = ui::WorkspaceLayoutController;
+        const QString board = Layout::pluginPanelId(QStringLiteral("com.example.line-tools"), QStringLiteral("timing-check"));
+        QCOMPARE(board, QStringLiteral("plugin:com.example.line-tools/timing-check"));
+        QVERIFY(Layout::isPluginPanel(board));
+        for (const char *name : {"Grid", "plugin:", "plugin:com.example", "plugin:/board", "plugin:com.example/",
+                                 "plugin:Com.Example/board", "plugin:com.example/a.b", "plugin:com.example/a/b"})
+            QVERIFY2(!Layout::isPluginPanel(QLatin1String(name)), name);
+
+        Layout::rememberPluginPanel(board, QStringLiteral("Timing check"), QStringLiteral("Line tools"));
+        const QByteArray payload = QStringLiteral(R"({"serializationVersion":3,"mainWindows":[{"uniqueName":"Classic"}],
+            "allDockWidgets":[{"uniqueName":"Grid"},{"uniqueName":"%1"}],"closedDockWidgets":["%1"]})").arg(board).toUtf8();
+        const QJsonObject written = QJsonDocument::fromJson(Layout::envelope(payload)).object();
+        QCOMPARE(written.value(QStringLiteral("pluginPanels")).toObject().value(board).toObject().value(QStringLiteral("title")),
+                 QJsonValue(QStringLiteral("Timing check")));
+        QString problem;
+        QVERIFY2(Layout::payloadOf(Layout::envelope(payload), &problem), qPrintable(problem));
+
+        const QString gone = Layout::pluginPanelId(QStringLiteral("com.example.gone"), QStringLiteral("notes"));
+        QJsonObject read = QJsonDocument::fromJson(Layout::envelope(R"({"mainWindows":[{"uniqueName":"Classic"}]})")).object();
+        read.insert(QStringLiteral("payload"), QJsonDocument::fromJson(QStringLiteral(
+            R"({"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[{"uniqueName":"%1"}]})").arg(gone).toUtf8()).object());
+        read.insert(QStringLiteral("pluginPanels"),
+                    QJsonObject{{gone, QJsonObject{{QStringLiteral("title"), QStringLiteral("Waveform notes")},
+                                                   {QStringLiteral("pluginName"), QStringLiteral("Karaoke helper")}}}});
+        QVERIFY2(Layout::payloadOf(QJsonDocument(read).toJson(), &problem), qPrintable(problem));
+        QCOMPARE(Layout::pluginPanelInfo(gone).value(QStringLiteral("pluginName")).toString(), QStringLiteral("Karaoke helper"));
+
+        QJsonArray many;
+        for (int i = 0; i <= Layout::kMaxPluginPanels; ++i)
+            many.append(QJsonObject{{QStringLiteral("uniqueName"), Layout::pluginPanelId(QStringLiteral("com.example.many"),
+                                                                                          QStringLiteral("p%1").arg(i))}});
+        read.insert(QStringLiteral("payload"), QJsonObject{{QStringLiteral("mainWindows"), QJsonArray{QJsonObject{
+                                                               {QStringLiteral("uniqueName"), QStringLiteral("Classic")}}}},
+                                                           {QStringLiteral("allDockWidgets"), many}});
+        QVERIFY(!Layout::payloadOf(QJsonDocument(read).toJson(), &problem));
+        QVERIFY2(problem.contains(QStringLiteral("more windows or panels")), qPrintable(problem));
+
+        read.insert(QStringLiteral("payload"), QJsonDocument::fromJson(
+            R"({"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[{"uniqueName":"plugin:Bad/x"}]})").object());
+        QVERIFY(!Layout::payloadOf(QJsonDocument(read).toJson(), &problem));
+        QVERIFY2(problem.contains(QStringLiteral("plugin:Bad/x")), qPrintable(problem));
     }
 
     void anArrangementHasOneMainWindowInAnyShellWindow()
@@ -373,6 +428,112 @@ private slots:
         QVERIFY(again.open(QIODevice::ReadOnly));
         QVERIFY(ui::WorkspaceLayoutController::payloadOf(again.readAll(), nullptr));
         QVERIFY(QFile::exists(layoutFile() + QStringLiteral(".unrestored")));
+    }
+
+    void aLockedLayoutComesBackLockedNextSession()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(layouts.locked());
+        QVERIFY(ui::layoutLocked());
+        stop();
+        QVERIFY(QJsonDocument::fromJson(readAll(layoutFile())).object().value(QStringLiteral("locked")).toBool());
+
+        start();
+        QVERIFY(application->workspaceLayout().locked());
+        QVERIFY(ui::layoutLocked());
+        QVERIFY(application->workspaceLayout().setLocked(false));
+        stop();
+        QVERIFY(!QJsonDocument::fromJson(readAll(layoutFile())).object().contains(QStringLiteral("locked")));
+    }
+
+    void theLockTravelsWithTheArrangement()
+    {
+        const ui::WorkspaceArrangement locked{QStringLiteral("Timing"), {}, QStringLiteral("Mine"), true};
+        QCOMPARE(ui::WorkspaceArrangement::parse(locked.serialise()), locked);
+        const ui::WorkspaceArrangement open{QStringLiteral("Timing"), {}, QStringLiteral("Mine"), false};
+        QCOMPARE(ui::WorkspaceArrangement::parse(open.serialise()), open);
+        QVERIFY(!open.serialise().contains("locked"));
+
+        start();
+        auto &layouts = application->workspaceLayout();
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Locked one")));
+        QVERIFY(layouts.setLocked(false));
+        QVERIFY(layouts.applyPreset(QStringLiteral("Timing")));
+        QVERIFY(!layouts.locked());
+        QVERIFY(layouts.applySavedLayout(QStringLiteral("Locked one")));
+        QVERIFY(layouts.locked());
+        QVERIFY(ui::layoutLocked());
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
+
+    void aFloatingPanelBlocksTheLock()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QObject *window = engine->rootObjects().first();
+        QVERIFY(dock("editorDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
+        QTRY_COMPARE(window->property("lockReason").toString(), QStringLiteral("Dock floating panels to lock the layout"));
+        QVERIFY(!layouts.setLocked(true));
+        QVERIFY(!layouts.locked());
+        auto *lockRow = window->findChild<QObject *>(QStringLiteral("viewLayoutLock"));
+        QVERIFY(lockRow);
+        QVERIFY(!lockRow->property("enabled").toBool());
+        QCOMPARE(lockRow->property("reason").toString(), QStringLiteral("Dock floating panels to lock the layout"));
+
+        QVERIFY(dock("editorDock")->setProperty("isFloating", false));
+        QTRY_VERIFY(lockRow->property("enabled").toBool());
+        QVERIFY(window->property("lockReason").toString().isEmpty());
+        QVERIFY(!dock("editorDock")->property("isFloating").toBool());
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(lockRow->property("checked").toBool());
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
+
+    void whileLockedTheRowsThatMovePanelsAreGreyed()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QObject *window = engine->rootObjects().first();
+        auto row = [&](const char *name) {
+            auto *item = window->findChild<QObject *>(QLatin1String(name));
+            return item && item->property("enabled").toBool();
+        };
+        const char *held[] = {"viewLayoutPresetTiming", "viewLayoutReset", "panelShowGrid", "panelCloseGrid",
+                              "panelFloatGrid", "movePanel", "switcherPresetTiming", "switcherReset"};
+        for (const char *name : held)
+            QVERIFY2(row(name), name);
+        QVERIFY(layouts.setLocked(true));
+        for (const char *name : held)
+            QVERIFY2(!row(name), name);
+        QVERIFY(row("viewLayoutSaveAs"));
+        QVERIFY(row("viewLayoutLock"));
+        QVERIFY(row("hideTagsMenuItem"));
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Timing"))));
+        QCOMPARE(layouts.preset(), QStringLiteral("Editing"));
+        QVERIFY(layouts.setLocked(false));
+        stop();
+    }
+
+    void aCommandStillShowsItsPanelWhileLocked()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        QObject *window = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(dock("searchDock"), "close"));
+        QTRY_VERIFY(!dock("searchDock")->property("isOpen").toBool());
+        QVERIFY(layouts.setLocked(true));
+        QVERIFY(QMetaObject::invokeMethod(window, "openFind", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(dock("searchDock")->property("isOpen").toBool());
+        QVERIFY(!dock("searchDock")->property("isFloating").toBool());
+        QVERIFY(layouts.locked());
+        QVERIFY(layouts.setLocked(false));
+        stop();
     }
 };
 

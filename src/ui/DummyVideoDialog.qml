@@ -87,7 +87,7 @@ DialogWindow {
                 SpinBox {
                     id: widthBox
                     objectName: "dummyWidth"
-                    from: 300; to: 8000; editable: true
+                    from: 300; to: 100000; editable: true
                     Accessible.name: qsTr("Width")
                     onValueChanged: dialog.syncPreset()
                 }
@@ -95,7 +95,7 @@ DialogWindow {
                 SpinBox {
                     id: heightBox
                     objectName: "dummyHeight"
-                    from: 200; to: 4500; editable: true
+                    from: 200; to: 100000; editable: true
                     Accessible.name: qsTr("Height")
                     onValueChanged: dialog.syncPreset()
                 }
@@ -158,7 +158,7 @@ DialogWindow {
                 objectName: "dummyFps"
                 editable: true
                 Layout.preferredWidth: 112
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
+                validator: RegularExpressionValidator { regularExpression: /[0-9./]*/ }
                 Accessible.name: qsTr("Frames per second")
                 Accessible.description: dialog.fpsValid ? "" : fpsProblem.text
             }

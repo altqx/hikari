@@ -12,6 +12,7 @@ Rectangle {
     required property MainWindowFrame frame
     required property TitleBarMenus menus
     required property LayoutSwitcher switcher
+    property Item tools: null
     readonly property Window window: frame.window
     readonly property bool custom: frame.custom
     readonly property bool active: window !== null && window.active
@@ -35,6 +36,8 @@ Rectangle {
         menus.parent = lead
         more.parent = lead
         switcher.parent = lead
+        if (tools)
+            tools.parent = lead
         frame.titleBar = bar
         frame.moveArea = moveArea
         frame.maximizeButton = maximizeButton
@@ -45,6 +48,15 @@ Rectangle {
     Binding { target: bar.menus; property: "keyboardTarget"; value: bar.keyboardTarget }
     Binding { target: bar.menus; property: "windowActive"; value: bar.active || !bar.custom }
     Binding { target: bar.switcher; property: "keyboardCurrent"; value: bar.keyboardTarget === bar.switcher }
+    Rectangle {
+        parent: bar.tools ?? bar
+        visible: bar.tools !== null && bar.keyboardTarget === bar.tools
+        anchors.fill: parent
+        color: "transparent"
+        border.width: 1
+        border.color: Theme.focus
+        radius: 1
+    }
 
     readonly property bool mirrored: LayoutMirroring.enabled
     function leadingOf(x: real, w: real): real { return mirrored ? width - x - w : x }
@@ -62,7 +74,7 @@ Rectangle {
             widths.push(item ? item.implicitWidth : 0)
             total += widths[i]
         }
-        const room = buttonsStart - leadStart - 8 - switcher.implicitWidth - switcherGap
+        const room = buttonsStart - leadStart - 8 - switcher.implicitWidth - switcherGap - (tools ? tools.implicitWidth : 0)
         if (total <= room)
             return n
         let used = more.implicitWidth
@@ -99,6 +111,8 @@ Rectangle {
             stops.push(more)
         if (switcher.visible && switcher.enabled)
             stops.push(switcher)
+        if (tools && tools.visible && tools.enabled)
+            stops.push(tools)
         return stops
     }
     function enterKeyboard() {
@@ -131,6 +145,8 @@ Rectangle {
             switcher.openMenu()
         else if (stop === more)
             more.openMenu()
+        else if (stop === tools)
+            tools.click()
         else if (stop)
             stop.triggered()
     }
@@ -279,8 +295,10 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         Image {
             anchors.centerIn: parent
-            source: "qrc:/hikari/ui/app-icon.png"
-            sourceSize: Qt.size(16, 16)
+            source: "qrc:/hikari/ui/app-icon.svg"
+            sourceSize: Qt.size(32, 32)
+            fillMode: Image.PreserveAspectFit
+            mipmap: true
             width: 16
             height: 16
             opacity: bar.active ? 1 : 0.55

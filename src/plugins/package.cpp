@@ -1,40 +1,21 @@
 #include "hikari/plugins/package.h"
 
 #include "media.h"
+#include "names.h"
+
+#include "hikari/plugins/qml_imports.h"
 
 #include <algorithm>
-#include <array>
 #include <set>
 
 namespace hikari::plugins {
 
 namespace {
 
-char lower(char c)
-{
-    return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
-}
-
-std::string lowered(std::string_view s)
-{
-    std::string out(s);
-    std::transform(out.begin(), out.end(), out.begin(), lower);
-    return out;
-}
-
 bool allowedChar(char c)
 {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == ' ' || c == '_' ||
            c == '.' || c == '-' || c == '+';
-}
-
-bool reservedOnWindows(std::string_view part)
-{
-    static constexpr std::array kDevices{"con", "prn", "aux", "nul"};
-    const std::string stem = lowered(part.substr(0, part.find('.')));
-    if (std::find(kDevices.begin(), kDevices.end(), stem) != kDevices.end())
-        return true;
-    return stem.size() == 4 && (stem.starts_with("com") || stem.starts_with("lpt")) && stem[3] >= '1' && stem[3] <= '9';
 }
 
 bool goodPart(std::string_view part)
@@ -56,6 +37,21 @@ bool goodPath(std::string_view path)
             return true;
         path.remove_prefix(slash + 1);
     }
+}
+
+std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    if (!manifest.hasQmlPanels())
+        return std::nullopt;
+    for (const Panel &panel : manifest.panels)
+        if (!panel.qml.empty() && std::ranges::none_of(files, [&](const PackageFile &f) { return f.path == panel.qml; }))
+            return PackageProblem{Kind::MissingPanel, panel.qml, {}, {}};
+    for (const PackageFile &file : files)
+        if (isQmlSource(file.path))
+            if (auto refused = qmlImportProblem(file.path, {reinterpret_cast<const char *>(file.data.data()), file.data.size()}))
+                return PackageProblem{Kind::QmlImport, file.path, {}, std::move(*refused)};
+    return std::nullopt;
 }
 
 }
@@ -94,6 +90,8 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     if (std::none_of(files.begin(), files.end(), [&](const PackageFile &f) { return f.path == manifest->main; }))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
     if (auto problem = mediaProblem(*manifest, files))
+        return std::unexpected(std::move(*problem));
+    if (auto problem = qmlProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
 }

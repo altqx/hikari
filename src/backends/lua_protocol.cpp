@@ -415,6 +415,169 @@ std::vector<std::byte> encodeHostReply(const HostServiceReply &reply)
     return w.take();
 }
 
+bool isLuaNodeType(application::PortType type)
+{
+    using enum application::PortType;
+    return type == Number || type == Text || type == Colour || type == Alpha || type == Time || type == Point ||
+           type == Tags || type == Bool;
+}
+
+namespace {
+
+using application::NodeValue;
+using application::PortSpec;
+using application::PortType;
+
+template <class T> T valueAs(const NodeValue &v)
+{
+    const T *x = std::get_if<T>(&v);
+    return x ? *x : T{};
+}
+
+void writeValue(Writer &w, PortType type, const NodeValue &v)
+{
+    switch (type) {
+    case PortType::Text:
+        w.str(valueAs<std::string>(v));
+        break;
+    case PortType::Tags:
+        w.str(valueAs<application::NodeTags>(v).text);
+        break;
+    case PortType::Bool:
+        w.u8(valueAs<bool>(v) ? 1 : 0);
+        break;
+    case PortType::Colour: {
+        const auto c = valueAs<application::NodeColour>(v);
+        w.i32(c.r).i32(c.g).i32(c.b);
+        break;
+    }
+    case PortType::Point: {
+        const auto p = valueAs<application::NodePoint>(v);
+        w.f64(p.x).f64(p.y);
+        break;
+    }
+    default:
+        w.f64(valueAs<double>(v));
+    }
+}
+
+NodeValue readValue(Reader &r, PortType type)
+{
+    switch (type) {
+    case PortType::Text:
+        return r.str();
+    case PortType::Tags:
+        return application::NodeTags{r.str()};
+    case PortType::Bool:
+        return r.u8() != 0;
+    case PortType::Colour: {
+        application::NodeColour c;
+        c.r = r.i32();
+        c.g = r.i32();
+        c.b = r.i32();
+        return c;
+    }
+    case PortType::Point: {
+        application::NodePoint p;
+        p.x = r.f64();
+        p.y = r.f64();
+        return p;
+    }
+    default:
+        return r.f64();
+    }
+}
+
+void writePorts(Writer &w, const std::vector<PortSpec> &ports)
+{
+    w.i32(static_cast<std::int32_t>(ports.size()));
+    for (const PortSpec &p : ports)
+        w.str(p.name).i32(static_cast<std::int32_t>(p.type));
+}
+
+bool readPorts(Reader &r, std::size_t payloadSize, std::vector<PortSpec> &out)
+{
+    const auto n = count(r, payloadSize);
+    if (!n)
+        return false;
+    for (std::size_t i = 0; i < *n && r.ok(); ++i) {
+        PortSpec p;
+        p.name = r.str();
+        p.type = static_cast<PortType>(r.i32());
+        if (!isLuaNodeType(p.type))
+            return false;
+        out.push_back(std::move(p));
+    }
+    return r.ok();
+}
+
+void writeRows(Writer &w, const NodeRows &rows, const std::vector<PortSpec> &ports)
+{
+    w.i32(static_cast<std::int32_t>(rows.size()));
+    for (const auto &row : rows)
+        for (std::size_t k = 0; k < ports.size(); ++k)
+            writeValue(w, ports[k].type, k < row.size() ? row[k] : NodeValue{});
+}
+
+std::optional<NodeRows> readRows(Reader &r, std::size_t payloadSize, const std::vector<PortSpec> &ports)
+{
+    const auto n = count(r, payloadSize);
+    if (!n)
+        return std::nullopt;
+    NodeRows rows;
+    for (std::size_t i = 0; i < *n && r.ok(); ++i) {
+        std::vector<NodeValue> row;
+        for (const PortSpec &p : ports)
+            row.push_back(readValue(r, p.type));
+        rows.push_back(std::move(row));
+    }
+    if (!r.ok())
+        return std::nullopt;
+    return rows;
+}
+
+}
+
+std::vector<std::byte> encodeNodeCall(const application::LuaNodePort::Call &call)
+{
+    Writer w;
+    w.str(call.node).str(call.code);
+    writePorts(w, call.inputs);
+    writePorts(w, call.outputs);
+    writeRows(w, call.rows, call.inputs);
+    return w.take();
+}
+
+std::optional<application::LuaNodePort::Call> decodeNodeCall(Reader &in, std::size_t payloadSize)
+{
+    application::LuaNodePort::Call call;
+    call.node = in.str();
+    call.code = in.str();
+    if (!readPorts(in, payloadSize, call.inputs) || !readPorts(in, payloadSize, call.outputs))
+        return std::nullopt;
+    auto rows = readRows(in, payloadSize, call.inputs);
+    if (!rows || !in.atEnd())
+        return std::nullopt;
+    call.rows = std::move(*rows);
+    return call;
+}
+
+std::vector<std::byte> encodeNodeRows(const NodeRows &rows, const std::vector<PortSpec> &outputs)
+{
+    Writer w;
+    writeRows(w, rows, outputs);
+    return w.take();
+}
+
+std::optional<NodeRows> decodeNodeRows(const std::vector<std::byte> &payload, const std::vector<PortSpec> &outputs)
+{
+    Reader r(payload);
+    auto rows = readRows(r, payload.size(), outputs);
+    if (!rows || !r.atEnd())
+        return std::nullopt;
+    return rows;
+}
+
 std::optional<HostServiceReply> decodeHostReply(const std::vector<std::byte> &payload)
 {
     Reader r(payload);

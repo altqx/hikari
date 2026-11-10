@@ -23,7 +23,7 @@ namespace hikari::application {
 
 namespace {
 
-constexpr std::int64_t kDenominator = 1'000'000'000;
+constexpr std::int64_t kDenominator = kTimecodesDenominator;
 constexpr std::int64_t kMax = std::numeric_limits<std::int64_t>::max();
 
 }
@@ -32,17 +32,32 @@ std::optional<AegisubFrameTimes> AegisubFrameTimes::fromFrameStarts(std::vector<
 {
     if (startsMs.size() < 2 || !std::ranges::is_sorted(startsMs) || startsMs.back() <= startsMs.front())
         return std::nullopt;
-    return AegisubFrameTimes(std::move(startsMs));
+    const std::int64_t first = startsMs.front();
+    for (auto &start : startsMs)
+        start -= first;
+    const auto frames = static_cast<std::int64_t>(startsMs.size()) - 1;
+    const auto back = startsMs.back();
+    return AegisubFrameTimes(std::move(startsMs), frames * kDenominator * 1000 / back, frames * kDenominator * 1000);
 }
 
-AegisubFrameTimes::AegisubFrameTimes(std::vector<std::int64_t> startsMs) : m_starts(std::move(startsMs))
+AegisubFrameTimes AegisubFrameTimes::fromTimecodes(const Timecodes &timecodes)
 {
-    const std::int64_t first = m_starts.front();
-    for (auto &start : m_starts)
-        start -= first;
-    const auto frames = static_cast<std::int64_t>(m_starts.size()) - 1;
-    m_numerator = frames * kDenominator * 1000 / m_starts.back();
-    m_last = frames * kDenominator * 1000;
+    return AegisubFrameTimes(timecodes.startsMs, timecodes.numerator, timecodes.last);
+}
+
+AegisubFrameTimes::AegisubFrameTimes(std::vector<std::int64_t> startsMs, std::int64_t numerator, std::int64_t last)
+    : m_starts(std::move(startsMs)), m_numerator(numerator), m_last(last)
+{
+}
+
+double AegisubFrameTimes::fps() const
+{
+    return static_cast<double>(m_numerator) / static_cast<double>(kDenominator);
+}
+
+Timecodes AegisubFrameTimes::timecodes() const
+{
+    return Timecodes{TimecodesFormat::V2, m_starts, m_numerator, m_last};
 }
 
 std::int64_t AegisubFrameTimes::frameAt(std::int64_t ms) const
@@ -55,7 +70,7 @@ std::int64_t AegisubFrameTimes::frameAt(std::int64_t ms) const
     return std::ranges::upper_bound(m_starts, ms) - m_starts.begin() - 1;
 }
 
-std::int64_t AegisubFrameTimes::timeAt(std::int64_t frame) const
+std::int64_t AegisubFrameTimes::startOf(std::int64_t frame) const
 {
     if (frame < 0)
         return frame * kDenominator * 1000 / m_numerator;
@@ -75,7 +90,7 @@ std::int64_t AegisubFrameTimes::msFromFrame(std::int64_t frame) const
 {
     const std::int64_t reach = (kMax - m_last - m_numerator) / (1000 * kDenominator) - 1;
     frame = std::clamp(frame, -reach, static_cast<std::int64_t>(m_starts.size()) + reach - 1);
-    const std::int64_t prev = timeAt(frame - 1), cur = timeAt(frame);
+    const std::int64_t prev = startOf(frame - 1), cur = startOf(frame);
     return prev + (cur - prev + 1) / 2;
 }
 

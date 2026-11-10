@@ -3,15 +3,23 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QFileInfo>
+#include <QProcess>
+#include <QRegularExpression>
 #include <QSignalSpy>
+#include <QTcpServer>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <fstream>
 
 using hikari::backends::PluginProcess;
+using hikari::backends::pluginProfile;
 namespace plugin = hikari::backends::plugin;
+namespace sandbox = hikari::backends::sandbox;
 
 namespace {
 
@@ -176,6 +184,23 @@ TEST_F(PluginProcessTest, EventsWaitBehindACommandAndTheNewestOfANameWins)
     EXPECT_EQ(m_notices, std::vector<std::string>{"seen 3"});
 }
 
+TEST_F(PluginProcessTest, DeliveredEventsMergeOnlyUnderTheSameKey)
+{
+    m_slowReplyMs = 300;
+    auto p = process(plugin("keys", "hikari.events.on('document.changed', function(e) hikari.notify(e.n) end) "
+                                    "hikari.commands.register('wait', function() hikari.call('api.version') end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("wait"));
+    ASSERT_TRUE(waitFor([&] { return p->busy() && p->state() == PluginProcess::State::Ready; }));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click a"})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click b"})", {}));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "move 1"})", "move"));
+    ASSERT_TRUE(p->deliver("document.changed", R"({"n": "move 2"})", "move"));
+    ASSERT_TRUE(waitFor([&] { return m_notices.size() == 3; }));
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    EXPECT_EQ(m_notices, (std::vector<std::string>{"click a", "click b", "move 2"}));
+}
+
 TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
 {
     auto p = process(plugin("broken", "this is not lua"));
@@ -187,6 +212,21 @@ TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
     EXPECT_FALSE(p->run("greet"));
 }
 
+TEST_F(PluginProcessTest, StartTriesAgainAfterAFailedLoad)
+{
+    const std::string root = plugin("fixed", "this is not lua");
+    auto p = process(root);
+    QSignalSpy failed(p.get(), &PluginProcess::loadFailed);
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
+    plugin("fixed", "hikari.notify('back')");
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    EXPECT_EQ(p->state(), PluginProcess::State::Ready);
+    EXPECT_EQ(m_notices, std::vector<std::string>{"back"});
+}
+
 TEST_F(PluginProcessTest, AnErrorInACommandIsReportedAndThePluginKeepsRunning)
 {
     auto p = process(plugin("err", "hikari.commands.register('greet', function() error('nope') end)"));
@@ -195,4 +235,81 @@ TEST_F(PluginProcessTest, AnErrorInACommandIsReportedAndThePluginKeepsRunning)
     ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
     EXPECT_TRUE(failed.at(0).at(1).toString().contains(QStringLiteral("main.lua:1: nope")));
     EXPECT_EQ(p->state(), PluginProcess::State::Ready);
+}
+
+TEST_F(PluginProcessTest, ThePluginProfileReachesOnlyTheHelperAndThePackage)
+{
+    const QString helper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+    const std::string id(120, 'a');
+    const sandbox::Profile profile = pluginProfile(helper, QStringLiteral("/plugins/x"), id);
+    EXPECT_LE(profile.name.size(), 64);
+    EXPECT_TRUE(QRegularExpression(QStringLiteral("^HikariSub\\.Plugin\\.[0-9a-f]{32}$")).match(profile.name).hasMatch())
+        << profile.name.toStdString();
+    EXPECT_EQ(profile.name, pluginProfile(helper, QStringLiteral("/elsewhere"), id).name);
+    EXPECT_NE(profile.name, pluginProfile(helper, QStringLiteral("/plugins/x"), "com.example.other").name);
+    EXPECT_EQ(profile.readExecute, QStringList{QFileInfo(helper).absolutePath()});
+    EXPECT_EQ(profile.read, QStringList{QStringLiteral("/plugins/x")});
+    EXPECT_TRUE(profile.readWrite.isEmpty());
+    EXPECT_EQ(profile.network, sandbox::Network::None);
+}
+
+TEST_F(PluginProcessTest, AConfinedHelperLoadsAndRunsItsPlugin)
+{
+    const std::string root = plugin("confined", "hikari.commands.register('greet', function() "
+                                                "hikari.notify(require('words').hello) end)");
+    QDir().mkpath(QString::fromStdString(root + "/lua"));
+    std::ofstream(root + "/lua/words.lua", std::ios::binary) << "return {hello = 'hi'}";
+    auto p = process(root);
+    p->setSandbox(pluginProfile(QStringLiteral(HIKARI_PLUGIN_HELPER), QString::fromStdString(root), "com.example.test"));
+    EXPECT_TRUE(p->sandboxed());
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; })) << p->diagnostics().toStdString();
+    EXPECT_EQ(m_notices, std::vector<std::string>{"hi"});
+#ifdef Q_OS_LINUX
+    const sandbox::Coverage coverage = sandbox::systemCoverage(sandbox::Network::None);
+    if (!coverage.complete())
+        GTEST_SKIP() << coverage.missing.toStdString();
+    QFile status(QStringLiteral("/proc/%1/status").arg(p->processId()));
+    ASSERT_TRUE(status.open(QIODevice::ReadOnly));
+    const QString text = QString::fromLatin1(status.readAll());
+    EXPECT_TRUE(text.contains(QRegularExpression(QStringLiteral("NoNewPrivs:\\s+1")))) << text.toStdString();
+    EXPECT_TRUE(text.contains(QRegularExpression(QStringLiteral("Seccomp:\\s+2")))) << text.toStdString();
+#endif
+}
+
+TEST_F(PluginProcessTest, ThePluginProfileRefusesWhatItLeavesOut)
+{
+    const std::string root = plugin("package", "return");
+    const QString package = QString::fromStdString(root);
+    const QString outside = m_dir.filePath(QStringLiteral("data.txt"));
+    QFile secret(outside);
+    ASSERT_TRUE(secret.open(QIODevice::WriteOnly));
+    secret.write("x");
+    secret.close();
+    QTcpServer server;
+    ASSERT_TRUE(server.listen(QHostAddress::LocalHost));
+    sandbox::Launcher launcher(pluginProfile(QStringLiteral(HIKARI_SANDBOX_PROBE), package, "com.example.test"));
+    if (!launcher.coverage().complete())
+        GTEST_SKIP() << launcher.coverage().missing.toStdString();
+    const QString main = package + QStringLiteral("/main.lua");
+    const QString fresh = package + QStringLiteral("/new.lua");
+    QProcess probe;
+    probe.setProgram(QStringLiteral(HIKARI_SANDBOX_PROBE));
+    probe.setArguments({QStringLiteral("read"), main, QStringLiteral("read"), outside, QStringLiteral("write"), fresh,
+                        QStringLiteral("tcp"), QStringLiteral("127.0.0.1"), QString::number(server.serverPort())});
+    launcher.prepare(probe);
+    probe.start();
+    ASSERT_TRUE(probe.waitForFinished(20'000)) << probe.errorString().toStdString();
+    const QStringList lines =
+        QString::fromLocal8Bit(probe.readAllStandardOutput()).remove(QLatin1Char('\r')).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    const std::string report = lines.join(QLatin1Char('\n')).toStdString();
+    const auto denied = [&](const QString &action) {
+        return std::ranges::any_of(lines, [&](const QString &line) { return line.startsWith(action + QStringLiteral(": denied ")); });
+    };
+    ASSERT_EQ(lines.size(), 4) << report;
+    EXPECT_TRUE(lines.contains(QStringLiteral("read ") + main + QStringLiteral(": ok"))) << report;
+    EXPECT_TRUE(denied(QStringLiteral("read ") + outside)) << report;
+    EXPECT_TRUE(denied(QStringLiteral("write ") + fresh)) << report;
+    EXPECT_TRUE(denied(QStringLiteral("tcp"))) << report;
 }

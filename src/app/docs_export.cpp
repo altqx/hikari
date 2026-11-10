@@ -6,6 +6,7 @@
 #include "hikari/app/application.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/local_only_network.h"
+#include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/guide_links.h"
 #include "hikari/application/hotkeys.h"
@@ -325,7 +326,8 @@ QJsonObject meta()
             {QStringLiteral("site"), qs(application::kSiteUrl)},
             {QStringLiteral("api"), api::kApiVersion},
             {QStringLiteral("files"), QJsonArray{QStringLiteral("commands.json"), QStringLiteral("settings.json"),
-                                                 QStringLiteral("guide-links.json"), QStringLiteral("api.json")}}};
+                                                 QStringLiteral("guide-links.json"), QStringLiteral("api.json"),
+                                                 QStringLiteral("api.md")}}};
 }
 
 }
@@ -359,6 +361,8 @@ bool exportDocs(const QString &dir, QString *error)
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
     attachFontCatalogPreview(engine, application.fontCatalogs());
+    attachAlignToVideoStill(engine, application.alignToVideo());
+    attachMarketplaceImages(engine, *application.pluginMarketplace());
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())
@@ -377,6 +381,7 @@ bool exportDocs(const QString &dir, QString *error)
            write(dir, QStringLiteral("settings.json"), settings(application, settingsDialog), error) &&
            write(dir, QStringLiteral("guide-links.json"), guideLinks(), error) &&
            write(dir, QStringLiteral("api.json"), QByteArray::fromStdString(api::apiReference().dump(2) + "\n"), error) &&
+           write(dir, QStringLiteral("api.md"), QByteArray::fromStdString(api::referenceMarkdown(api::apiReference())), error) &&
            write(dir, QStringLiteral("meta.json"), meta(), error);
 }
 

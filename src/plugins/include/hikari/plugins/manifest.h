@@ -35,6 +35,15 @@ struct Contribution {
     std::string title;
 };
 
+enum class PanelArea { Left, Right, Bottom };
+
+struct Panel {
+    std::string id;
+    std::string title;
+    PanelArea area = PanelArea::Right;
+    std::string qml; // a package path: a QML panel; empty: a declarative one
+};
+
 struct Setting {
     std::string id;
     std::string title;
@@ -63,15 +72,17 @@ struct Manifest {
     std::optional<minisign::PublicKey> publicKey;
     Permissions permissions;
     std::vector<Contribution> commands;
-    std::vector<Contribution> panels;
+    std::vector<Panel> panels;
     std::vector<Setting> settings;
+
+    bool hasQmlPanels() const;
 };
 
 // The published JSON Schema, docs/schemas/hikari-plugin.schema.json.
 std::string_view manifestSchema();
 
 struct ManifestProblem {
-    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi };
+    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust };
     Kind kind = Kind::Schema;
     std::string at;     // a JSON pointer into the manifest
     std::string detail; // English, technical: the parser's or validator's words
@@ -79,6 +90,8 @@ struct ManifestProblem {
 };
 
 std::expected<Manifest, ManifestProblem> parseManifest(std::string_view text, std::int64_t apiVersion);
+// A manifest's permissions object; parts of the wrong shape are left out.
+Permissions readPermissions(const api::Json &permissions);
 
 // Why `value` doesn't fit the setting's type, options or bounds (English), or nothing when it does.
 std::optional<std::string> settingRefusal(const Setting &setting, const api::Json &value);
@@ -87,5 +100,17 @@ api::Json settingValues(const Manifest &manifest, const api::Json &stored);
 
 // Semantic-version order; build metadata is ignored. Both must be valid versions.
 int compareVersions(std::string_view a, std::string_view b);
+
+// What `next` asks for that `current` doesn't: the unrestricted tier, every document, network
+// hosts, or folders (new ones, or ones that become writable).
+struct PermissionIncrease {
+    bool unrestricted = false;
+    bool allDocuments = false;
+    std::vector<std::string> networkHosts;
+    std::vector<std::string> files; // file request ids
+
+    bool any() const { return unrestricted || allDocuments || !networkHosts.empty() || !files.empty(); }
+};
+PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);
 
 }

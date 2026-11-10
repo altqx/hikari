@@ -8,7 +8,7 @@ The current version is **1**.
 
 An operation has a dotted name (`lines.list`), a **read** or **write** mark, a one-line summary, and a JSON Schema for its parameters and its result. A read changes no state at all; a write changes Document content, the selection, a panel, a setting, a file, or runs a command. The mark maps onto MCP's `readOnlyHint` and the AI approval policy.
 
-Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern` (ECMAScript, matched anywhere in the string), `minItems`, `maxItems`, `oneOf`, `anyOf` and `$ref` into the shared `$defs` (`Line`, `Style`, `DocumentId`, `LineId`, `Revision`, `SettingValue`, …). Every operation refuses unknown parameters. `integer` takes only whole JSON numbers written without a fraction or exponent.
+Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `additionalProperties`, `patternProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern` (ECMAScript, matched anywhere in the string), `minItems`, `maxItems`, `oneOf`, `anyOf` and `$ref` into the shared `$defs` (`Line`, `Style`, `DocumentId`, `LineId`, `Revision`, `SettingValue`, …). Every operation refuses unknown parameters. `integer` takes only whole JSON numbers written without a fraction or exponent.
 
 | Operation | Mark | What it gives |
 | --- | --- | --- |
@@ -26,17 +26,23 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `settings.list`, `settings.get` | read | Settings with type, scope, default and value. |
 | `video.info` | read | Whether a video is open; its size, aspect ratio, the frame shown and the keyframes. |
 | `video.frame_at_time`, `video.time_of_frame` | read | Converts between milliseconds and frame numbers. |
-| `video.frame` | read | One frame as BGRA in base64, with or without subtitles, optionally cropped, scaled to fit `maxEdge`. |
+| `video.frame` | read | One frame as BGRA in base64, with every Line, one Line (`line`) or none drawn on it, optionally cropped, scaled to fit `maxEdge` and `maxPixels`; `crop` gives the part of the frame shown. |
+| `video.ink_bounds` | read | The [ink bounds](#drawing-apart-from-the-video) of one Line, or of every Line, on a frame. |
+| `video.colours` | read | The colours at up to 256 points of a frame as `&HBBGGRR&`, each the mean of a square of `radius` pixels, without subtitles unless asked. |
+| `video.keyframes` | read | The keyframes from one time to another, each with its start time; 500 at most, with the `total`. |
 | `audio.info` | read | Whether audio is open and loaded; duration, sample rate, channels. |
 | `audio.peaks` | read | The lowest and highest sample in each of `buckets` slices of a time range. |
 | `files.list`, `files.read` | read | The files granted to the caller, and their content as UTF-8 or base64 (16 MiB at most). |
 | `nodes.catalogue` | read | The node-effect editor's node types, with ports and parameters. |
+| `nodes.validate` | read | Checks a node-effect graph; each problem names its node and port or field. |
 | `document.apply` | write | One change set to one Document, as one undo step. |
 | `selection.set` | write | The selected Lines and the active Line; the Grid follows. |
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
 | `files.write` | write | Replaces a file granted for writing. |
+
+Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
 
 Lines are addressed by their stable Line id, never by row ([document model](document-model.md)). Times are milliseconds. In Translation mode `text` is the original text and `translation` the translated text.
 
@@ -48,11 +54,15 @@ One write runs at a time; another write meanwhile gets `busy`.
 
 ## Files
 
-A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. The plugin and AI cards decide when the user grants files; HA1 provides the table and the operations.
+A caller reaches only files the user granted it: `Api::grantFile(caller, path, writable)` gives a handle such as `f1`, and `files.list` shows the handles with a display name, never the path. A file granted for reading refuses `files.write` with `not_granted`. Plugins get handles from pickers, drops and their folders ([Files](plugins.md#files)); the AI cards decide their own grants.
+
+## Drawing apart from the video
+
+`video.frame` with `line` and `video.ink_bounds` draw a Document in a render context of their own, through the host's `RenderHost`, so the video's subtitles are never prepared again. The context is prepared the way the video prepares its subtitles, with the same renderer, script and fonts, and is parsed again only when the script or fonts change. With `line`, every other Line is left out of the script. Without `frame`, both use the frame shown, or the Line's first frame when the Line isn't on it. The ink bounds are the smallest rectangle holding every pixel drawn, and null when nothing is. A host without the port answers `unavailable`.
 
 ## Node catalogue
 
-`api::nodeCatalogue()` holds the node types of the node-effect editor (NE1): an id, a category, a summary, input and output ports, and a parameter schema. It is empty until NE1 registers its nodes; `nodes.catalogue` and the reference list them.
+`api::nodeCatalogue()` holds the node types of the node-effect editor: an id, a category, a summary, input and output ports, and a parameter schema. It starts with the engine's nodes ([node effects](node-effects.md)), and `nodes.catalogue` and the reference list them. `nodes.validate` checks a graph in the [graph format](node-effects.md#the-graph-format) and returns `{valid, problems}`.
 
 ## Events
 
@@ -62,7 +72,7 @@ A caller subscribes to events by name and hears them only while subscribed.
 | --- | --- |
 | `document.changed` | A Document's revision moved: an edit, an undo, a write. |
 | `selection.changed` | The selection or active Line of a Document changed. |
-| `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target only. |
+| `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target and the caller's attached Documents only. |
 | `panel.changed` | A panel opened, closed or floated. |
 | `command.ran` | A command ran, from the API, a menu, a toolbar or a key. |
 
@@ -72,7 +82,7 @@ The application notices changes after each refresh of its views and each selecti
 
 `Api::call(caller, operation, params, reply)` validates the parameters, then runs the operation on the GUI thread. The reply comes exactly once, either before `call` returns or later for operations that wait on a backend.
 
-A **caller** names itself for undo steps and holds its grants. Without the `documents.all` grant a caller sees only the editing target: an omitted `document` means the editing target, and naming any other gives `not_granted`.
+A **caller** names itself for undo steps and holds its grants. Without the `documents.all` grant a caller sees only the editing target and its `attached` Documents, which the user attached with `@` in an AI thread. An omitted `document` means the editing target, and naming any other Document gives `not_granted`. Events about other Documents don't reach that caller.
 
 An error is `{code, message, data}`. The message is English text for developers and models, not translated.
 
@@ -97,7 +107,7 @@ The version is a running number. Every release that grows the API bumps it, and 
 
 ## Reference
 
-`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. The plugin reference (PL9) and the site build from it.
+`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. It also writes `api.md`, the same reference as Markdown for authors, which [docs/api-reference.md](api-reference.md) holds; `ApiReferenceMarkdown.TheCheckedInReferenceIsCurrent` in `hikari_api_tests` fails when that file differs, and rerunning it with `HIKARI_API_WRITE_MARKDOWN_REFERENCE=docs/api-reference.md` rewrites it. The release attaches both in `hikarisub-docs-<version>.zip`, and the site builds its API reference from them. The AI sidecar keeps a copy as `src/ai-sidecar/src/tools/api.json`, from which its tool schemas and types are built; see [AI tools](ai-tools.md).
 
 ## Tests
 

@@ -270,10 +270,10 @@ QStringList StyleManagerController::documentStyles() const
     return out;
 }
 
-QVariantList StyleManagerController::panelRows() const
+QVariantList StyleManagerController::panelRows(int shellWindow) const
 {
     QVariantList out;
-    auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    auto *session = m_hooks.windowTarget ? m_hooks.windowTarget(shellWindow) : nullptr;
     const auto styles = session ? application::documentStyles(*session) : std::nullopt;
     if (!styles)
         return out;
@@ -301,6 +301,12 @@ QVariantList StyleManagerController::panelRows() const
 bool StyleManagerController::available() const
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    return session && application::documentStyles(*session).has_value();
+}
+
+bool StyleManagerController::availableIn(int shellWindow) const
+{
+    auto *session = m_hooks.windowTarget ? m_hooks.windowTarget(shellWindow) : nullptr;
     return session && application::documentStyles(*session).has_value();
 }
 
@@ -443,9 +449,10 @@ StyleList *StyleManagerController::list(bool store, std::optional<StyleList> &do
 
 bool StyleManagerController::applyDocument(application::EditSession &session, const StyleList &styles,
                                            const std::vector<std::optional<std::size_t>> &origin,
-                                           std::optional<std::pair<std::u8string, std::u8string>> rename)
+                                           std::optional<std::pair<std::u8string, std::u8string>> rename,
+                                           std::optional<std::pair<std::u8string, std::u8string>> copy)
 {
-    const bool ok = application::setDocumentStyles(session, styles, origin, std::move(rename)).has_value();
+    const bool ok = application::setDocumentStyles(session, styles, origin, std::move(rename), std::move(copy)).has_value();
     if (m_hooks.refresh)
         m_hooks.refresh();
     emit changed();
@@ -492,8 +499,11 @@ QVariantMap StyleManagerController::beginCopy(bool store, int row)
     if (!styles || row < 0 || static_cast<std::size_t>(row) >= styles->size())
         return {};
     auto copy = (*styles)[static_cast<std::size_t>(row)];
+    const std::u8string source = copy.name;
     copy.name = u8(QCoreApplication::translate("HikariSub.Styles", "Copy of %1").arg(qs(copy.name)));
     pin(Edit{store, std::nullopt, copy});
+    if (!store)
+        m_edit->copyOf = source;
     return valuesOf(copy);
 }
 
@@ -535,6 +545,8 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     }
     const bool store = m_edit->store;
     const bool renames = renameLines && m_edit->row && edit.oldName != edit.style.name;
+    const bool copies = !m_edit->row && !m_edit->copyOf.empty();
+    const std::u8string copyOf = m_edit->copyOf;
     // MUST KILL: must be set before the lists are told, as a listener may end the edit.
     m_edit->row = *row;
     m_edit->opened = edit.style;
@@ -551,7 +563,10 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
         std::optional<std::pair<std::u8string, std::u8string>> rename;
         if (renames)
             rename = std::pair(edit.oldName, edit.style.name);
-        applyDocument(*session, *styles, origin, rename);
+        std::optional<std::pair<std::u8string, std::u8string>> copy;
+        if (copies)
+            copy = std::pair(copyOf, edit.style.name);
+        applyDocument(*session, *styles, origin, rename, copy);
     }
     return {};
 }

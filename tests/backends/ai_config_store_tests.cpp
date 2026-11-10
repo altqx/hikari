@@ -40,7 +40,8 @@ TEST(AiConfigStore, TheConfigFileKeepsEverythingButTheKey)
 
     app::Provider p = app::presetProvider(app::Preset::Custom, "mock", "Mock");
     p.baseUrl = "https://llm.example/v1";
-    p.models = {{.id = "m1", .name = "M1", .capabilities = app::Capabilities{.tools = true}, .price = app::Price{.input = 1, .output = 2, .cachedInput = 0.5}, .contextTokens = 8000}};
+    p.signedIn = true;
+    p.models = {{.id = "m1", .name = "M1", .capabilities = app::Capabilities{.tools = true}, .price = app::Price{.input = 1, .output = 2, .cachedInput = 0.5, .cacheWrite = 1.25, .cacheWriteHour = 2}, .contextTokens = 8000}};
     p.capabilityOverrides["m2"] = {.tools = false, .vision = true, .video = true};
     std::optional<std::optional<app::SaveError>> saved;
     providers.add(p, kKey, [&](std::optional<app::SaveError> e) { saved = e; });

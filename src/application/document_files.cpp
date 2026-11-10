@@ -1,6 +1,7 @@
 #include "hikari/application/document_files.h"
 
 #include "hikari/core/ass_load.h"
+#include "hikari/core/srv3.h"
 #include "hikari/core/subtitle_load.h"
 
 #include <algorithm>
@@ -55,6 +56,14 @@ std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKe
         if (!imported)
             return std::unexpected(StageFailure{OpenError::MalformedLyrics, imported.error()});
         StagedOpen staged{destination, std::move(*imported), std::nullopt, 0, 0};
+        staged.imported = true;
+        return staged;
+    }
+    if (core::isSrv3Extension(extension)) {
+        const auto ass = core::assFromSrv3(*bytes);
+        if (!ass)
+            return std::unexpected(StageFailure{OpenError::MalformedSrv3, std::nullopt, ass.error()});
+        StagedOpen staged{destination, core::loadAss(*ass), std::nullopt, 0, 0};
         staged.imported = true;
         return staged;
     }
@@ -201,6 +210,7 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     core::Document saved = withActiveLine(std::move(snapshot->document), activeLine);
     if (layout)
         saved.setHikariProperty(kLayoutKey, *layout);
+    applyProjectGarbage(document, destination, saved);
     return SavePlan{document,
                     entry->generation,
                     snapshot->revision,
@@ -217,6 +227,19 @@ std::optional<std::u8string> DocumentFiles::layoutToSave(DocumentId document, co
     if (!m_layoutSource || saved.format() != core::SubtitleFormat::Ass)
         return std::nullopt;
     return m_layoutSource(document);
+}
+
+void DocumentFiles::applyProjectGarbage(DocumentId document, const DestinationKey &destination,
+                                        core::Document &saved) const
+{
+    if (!m_projectGarbageSource || saved.format() != core::SubtitleFormat::Ass)
+        return;
+    for (const auto &edit : m_projectGarbageSource(document, destination)) {
+        if (edit.value)
+            saved.setProjectGarbage(edit.key, *edit.value);
+        else
+            saved.removeProjectGarbage(edit.key);
+    }
 }
 
 std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, bool overwriteExternalChange)

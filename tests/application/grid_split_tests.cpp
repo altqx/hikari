@@ -28,6 +28,20 @@ LegacyTimebase timebase()
     return LegacyTimebase(std::move(t), 25.0);
 }
 
+constexpr std::string_view kTextScript =
+    "[Script Info]\n"
+    "PlayResX: 640\n"
+    "PlayResY: 480\n"
+    "\n"
+    "[V4+ Styles]\n"
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+    "MarginR, MarginV, Encoding\n"
+    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+    "\n"
+    "[Events]\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+
 std::int64_t ms(core::DocumentTime t)
 {
     return t.microseconds() / 1000;
@@ -74,7 +88,7 @@ TEST(SplitLines, IntoFramesWithTheMoveAsAPositionPerFrame)
                              "Dialogue: 0,0:00:00.05,0:00:00.17,Default,,0,0,0,,{\\move(0,0,100,100)\\bord2}x\n")};
     const auto a = session.document().lines()[0]->id;
     session.setSelection(Selection{a, {a}, a, {}});
-    ASSERT_TRUE(splitIntoFrames(session, timebase()));
+    ASSERT_TRUE(splitIntoFrames(session, timebase(), FrameAnimations::Keep));
     const auto lines = session.document().lines();
     ASSERT_EQ(lines.size(), 3u);
     EXPECT_EQ(lines[0]->id, a);
@@ -87,7 +101,43 @@ TEST(SplitLines, IntoFramesWithTheMoveAsAPositionPerFrame)
     EXPECT_EQ(lines[2]->text, u8"{\\pos(91.667,91.667)\\bord2}x");
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(session.document().lines().size(), 1u);
-    EXPECT_FALSE(splitIntoFrames(session, LegacyTimebase({}, 25.0)));
+    EXPECT_FALSE(splitIntoFrames(session, LegacyTimebase({}, 25.0), FrameAnimations::Bake));
+}
+
+TEST(SplitLines, KeepingAnimationsLeavesEveryTagButTheMove)
+{
+    const std::u8string text = u8"{\\move(0,0,100,100)\\fad(60,0)\\t(\\fscx200)}x";
+    EditSession session{load(std::string(kTextScript) +
+                             "Dialogue: 0,0:00:00.05,0:00:00.17,Default,,0,0,0,,{\\move(0,0,100,100)\\fad(60,0)"
+                             "\\t(\\fscx200)}x\n")};
+    const auto a = session.document().lines()[0]->id;
+    session.setSelection(Selection{a, {a}, a, {}});
+    ASSERT_TRUE(splitIntoFrames(session, timebase(), FrameAnimations::Keep));
+    const auto lines = session.document().lines();
+    ASSERT_EQ(lines.size(), 3u);
+    for (std::size_t i = 0; i < 3; ++i)
+        EXPECT_EQ(lines[i]->text, legacy::moveToPos(text, 50, 170, 80 + 40 * static_cast<int>(i))) << i;
+    EXPECT_EQ(lines[0]->text, u8"{\\pos(25,25)\\fad(60,0)\\t(\\fscx200)}x");
+}
+
+TEST(SplitLines, BakingGivesEachFrameItsAnimatedTags)
+{
+    EditSession session{load(std::string(kTextScript) +
+                             "Dialogue: 0,0:00:00.05,0:00:00.17,Default,,0,0,0,,{\\move(0,0,100,100)\\fad(60,0)"
+                             "\\t(\\fscx200)}x\n")};
+    const auto a = session.document().lines()[0]->id;
+    session.setSelection(Selection{a, {a}, a, {}});
+    ASSERT_TRUE(splitIntoFrames(session, timebase(), FrameAnimations::Bake));
+    const auto lines = session.document().lines();
+    ASSERT_EQ(lines.size(), 3u);
+    EXPECT_EQ(lines[0]->text, u8"{\\alpha&H80&\\pos(25,25)\\fscx125}x");
+    EXPECT_EQ(lines[1]->text, u8"{\\pos(58.333,58.333)\\fscx158.333}x");
+    EXPECT_EQ(lines[2]->text, u8"{\\pos(91.667,91.667)\\fscx191.667}x");
+    EXPECT_EQ(ms(lines[2]->end.value), 180);
+    EXPECT_EQ(session.history().back().name, "Splitting lines");
+    ASSERT_TRUE(session.undo());
+    ASSERT_EQ(session.document().lines().size(), 1u);
+    EXPECT_EQ(session.document().lines()[0]->text, u8"{\\move(0,0,100,100)\\fad(60,0)\\t(\\fscx200)}x");
 }
 
 TEST(SplitLines, MoveTimesAreRelativeToTheLine)
@@ -101,20 +151,6 @@ TEST(SplitLines, MoveTimesAreRelativeToTheLine)
 }
 
 namespace {
-
-constexpr std::string_view kTextScript =
-    "[Script Info]\n"
-    "PlayResX: 640\n"
-    "PlayResY: 480\n"
-    "\n"
-    "[V4+ Styles]\n"
-    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
-    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
-    "MarginR, MarginV, Encoding\n"
-    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
-    "\n"
-    "[Events]\n"
-    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
 
 struct FakeMeasure : TextMeasurePort {
     std::vector<std::string> measured;
@@ -229,6 +265,24 @@ TEST(SplitLines, LegacyPieces)
     EXPECT_EQ(legacy::splitByWrap(u"a\\Nb{\\N}c"), (std::vector<std::u16string>{u"a", u"b{\\N}c"}));
     EXPECT_EQ(legacy::splitByWord(u"{\\i1}ab, cd", fakeWords),
               (std::vector<std::u16string>{u"{\\i1}ab,", u" ", u"cd"}));
+}
+
+TEST(SplitLines, CharactersAreWholeGraphemeClusters)
+{
+    EXPECT_EQ(legacy::splitByChar(u"กินน้ำ"), (std::vector<std::u16string>{u"กิ", u"น", u"น้ำ"}));
+    EXPECT_EQ(legacy::splitByChar(u"e\u0301x\U0001F600\U0001F468\u200D\U0001F469\u200D\U0001F467"),
+              (std::vector<std::u16string>{u"e\u0301", u"x", u"\U0001F600", u"\U0001F468\u200D\U0001F469\u200D\U0001F467"}));
+    EXPECT_EQ(legacy::splitByChar(u"ก{\\b1}ิน"), (std::vector<std::u16string>{u"ก{\\b1}ิ", u"น"}));
+    EXPECT_EQ(legacy::splitByChar(u"a\\N\u0301"), (std::vector<std::u16string>{u"a", u"\\N", u"\u0301"}));
+    EXPECT_EQ(legacy::splitByChar(u"กิ น", false), (std::vector<std::u16string>{u"กิ", u"น"}));
+    EXPECT_EQ(splitTexts("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,กิน\n", SplitText::Characters),
+              (std::vector<std::u8string>{u8"{\\pos(305,470)\\an2}กิ", u8"{\\pos(350,470)\\an2}น"}));
+}
+
+TEST(SplitLines, CharactersWithoutMarksSplitAsBefore)
+{
+    EXPECT_EQ(legacy::splitByChar(u"漢字 a\\h{\\i1}b\\nc"),
+              (std::vector<std::u16string>{u"漢", u"字", u" ", u"a", u"\\", u"h", u"{\\i1}b", u"\\N", u"c"}));
 }
 
 TEST(SplitLines, BothPiecesKeepTheLinesExtradata)

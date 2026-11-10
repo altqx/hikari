@@ -35,6 +35,8 @@ public:
     ~LuaScriptHost() override;
 
     void setDialogHandler(DialogHandler handler) { m_dialogHandler = std::move(handler); }
+    // Where compiled MoonScript is kept between loads; empty: compiled every load. Takes effect at the next load.
+    void setCompileCache(QString dir) { m_compileCache = std::move(dir); }
     // Each request carries the script's path and the asking run (0: the top level while
     // loading); answered at most once, late answers dropped. No handler: Unavailable.
     using ServiceReply = std::function<void(application::HostServiceReply)>;
@@ -100,7 +102,7 @@ private:
     void endRun(RunOutcome outcome, const QString &message);
     void handleHostService(std::uint64_t request, const helper::Event &event);
 
-    QString m_helperPath, m_scriptPath, m_sharedInclude;
+    QString m_helperPath, m_scriptPath, m_sharedInclude, m_compileCache;
     int m_traceLevel;
     std::unique_ptr<helper::HelperHost> m_host;
     State m_state = State::Idle;

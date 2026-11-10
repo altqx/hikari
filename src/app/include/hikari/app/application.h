@@ -12,17 +12,24 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
+#include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/user_folder.h"
+#include "hikari/app/project_windows.h"
 #include "hikari/core/ass_attachments.h"
+#include "hikari/core/conversion.h"
 #include "hikari/core/grammar.h"
+#include "hikari/application/aegisub_frame_times.h"
+#include "hikari/application/timecodes_file.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/audio_devices.h"
 #include "hikari/application/document_files.h"
@@ -37,6 +44,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/application/video_timing.h"
+#include "hikari/application/visual_perspective.h"
 #include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
@@ -44,6 +52,7 @@
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/harper_client.h"
 #include "hikari/backends/legacy_spelling.h"
+#include "hikari/backends/lua_node_helper.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
@@ -52,6 +61,7 @@
 #endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "node_effects_controller.h"
 #include "template_editor_controller.h"
 #include "log_controller.h"
 #include "colour_picker_controller.h"
@@ -65,6 +75,11 @@
 #include "video_fullscreen_controller.h"
 #include "settings_store.h"
 #include "hikari/app/ai_features.h"
+#include "hikari/app/ai_mcp.h"
+#include "hikari/app/ai_settings.h"
+#include "hikari/app/agent_controller.h"
+#include "hikari/app/review_controller.h"
+#include "hikari/app/window_settings.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 #include "audio_controller.h"
@@ -78,6 +93,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QObject>
+#include <QPointF>
 #include <QPointer>
 #include <QQuickWindow>
 #include <QUrl>
@@ -86,6 +102,8 @@
 
 #include <functional>
 #include <deque>
+#include <expected>
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <set>
@@ -101,6 +119,8 @@ signals:
     // A changed program font closed the Select dialog.
     void selectLinesDestroyed();
     void quitApprovedChanged();
+    void lastUsedWindowChanged();
+    void tabDraggingChanged();
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
@@ -108,10 +128,19 @@ signals:
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
     void resolutionMismatch(const QVariantMap &sizes);
+    // kind: missingMatrix, matrixMismatch, missingLayoutRes, layoutResMismatch, untaggedMatrix or hdr.
+    void videoPropertyQuestion(const QVariantMap &question);
     void recentChanged();
+    void projectsChanged();
+    void recentProjectsChanged();
+    void projectOffered(int shellWindow, const QString &root, const QString &name);
+    void tabJoinedProject(int shellWindow);
     // description: the group the command would break (0: it would make a new
     // malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
+    // An opened file has Aegisub folds that Convert Aegisub folds to line groups would convert.
+    void aegisubFoldsFound(qulonglong document, int folds);
+    void foldsConverted(int converted, int skipped);
     void spellingChanged();
     // The dictionary changed; a running check starts over with it.
     void spellCheckerRestarted();
@@ -122,7 +151,7 @@ signals:
     void audioOutputChanged();
     // kind: "styles" (some chosen styles missing), "noStyles" or "confirmFiles"
     // (replace in files); each waits for answerFindQuestion(id, ...).
-    void findQuestion(int id, const QString &kind, const QVariantMap &question);
+    void findQuestion(int id, const QString &kind, const QVariantMap &question, int shellWindow);
     void findResultsChanged();
     // Also after its questions; settings: the tab as it is now, with the recent lists.
     void findFinished(const QVariantMap &settings);
@@ -147,9 +176,13 @@ public:
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;
+        // Where compiled MoonScript is kept between loads. Empty: compiled at every load.
+        QString compileCacheDir;
         bool autoload = false;
         // The first start marks Getting started due.
         bool gettingStarted = false;
+        // Aegisub 3.5's questions and warnings about the YCbCr Matrix and LayoutRes when a video opens.
+        bool askVideoProperties = false;
         // Empty: in memory only.
         QString settingsFile;
         // Most preferred first; on the first start a leading Polish one picks Polish for
@@ -206,6 +239,10 @@ public:
         UserFolder::SeedReport userFolderSeed;
         // Empty: no plugins can be installed.
         PluginManager::Folders plugins;
+        // Empty: no marketplace.
+        MarketplaceFeed marketplace;
+        // Null: the marketplace's own; tests serve it from a fake.
+        QNetworkAccessManager *marketplaceNetwork = nullptr;
         // Empty: beside the settings file.
         QString presetsDir;
         // The default has no key: nothing is queued or sent.
@@ -247,7 +284,8 @@ public:
     Q_INVOKABLE QVariantMap openDropped(const QList<QUrl> &urls);
     // Opens in new tabs without review. Returns {kind: "video", path} when a video waits
     // for openSingleVideo, else as openDropped. Call only while forwardedOpenWaits() is false.
-    QVariantMap openForwarded(const QStringList &files);
+    // request: as openFolder's. Folders open first; the files then go to the window that took them.
+    QVariantMap openForwarded(const QStringList &files, int request = 0);
     // True while a review or a startup session question is open.
     bool forwardedOpenWaits() const;
     bool quitting() const { return m_quitApproved || m_closeThen == QLatin1String("quit"); }
@@ -274,6 +312,23 @@ public:
     Q_INVOKABLE void removeRecent(const QString &path);
     Q_INVOKABLE void removeMissingRecent();
     std::vector<std::string> recentEntries() const { return m_recent.entries(); }
+    // ADR 0030. request: 0 the default, 1 -n, 2 -r. {ok, window}: the window that shows the Project.
+    Q_INVOKABLE QVariantMap openFolder(const QString &path, int shellWindow, int request = 0);
+    Q_INVOKABLE QString projectName(int shellWindow) const { return m_projects->name(shellWindow); }
+    Q_INVOKABLE QString projectRoot(int shellWindow) const { return m_projects->root(shellWindow); }
+    Q_INVOKABLE QVariantList homeRecentProjects() const { return m_projects->recentRows(); }
+    Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
+    Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
+    // Close project: the rows to review before the window's tabs close; finishClose then closes
+    // them, keeps them as the Project's last tabs and leaves the window on Home without a Project.
+    Q_INVOKABLE QVariantList reviewCloseProject(int shellWindow);
+    // {count, names} of the window's Project's last tabs; count 0 while any tab is open there.
+    Q_INVOKABLE QVariantMap projectLastTabs(int shellWindow) const;
+    Q_INVOKABLE bool reopenProjectTabs(int shellWindow);
+    // The toast for a tab moved into `shellWindow`; "" when that window has no Project.
+    Q_INVOKABLE QString projectMoveText(int shellWindow) const;
+    QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
+    ProjectWindows &projects() { return *m_projects; }
     // "modified" when the target's file is newer than when last read or written;
     // "removed" once when it is gone (the Document becomes unsaved).
     Q_INVOKABLE QString externalChange();
@@ -300,7 +355,8 @@ public:
     // "dialog" when Save must ask for a file, "readonly" for a read-only file, "" to
     // save in place.
     Q_INVOKABLE QString saveRoute() const;
-    // {folder, file, filter, extension}.
+    // {folder, file, filter, filters, formats, extension}: formats[i] is "ass" for the
+    // filter that converts to ASS, else "".
     Q_INVOKABLE QVariantMap saveDialogValues() const;
     // Adds the format's extension when missing. "readonly" asks again; "" when the
     // save started.
@@ -311,13 +367,18 @@ public:
     // editing target).
     Q_INVOKABLE QString saveRouteFor(qulonglong id) const;
     Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
-    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file);
+    // format "ass" converts a Document of another format to ASS before it is saved.
+    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file, const QString &format = {});
+    // {} when saving as file in format keeps the Document's format; else {convert: true} with
+    // changes (what converting to ASS does, to confirm first) or problem.
+    Q_INVOKABLE QVariantMap assConversionPreview(qulonglong id, const QUrl &file, const QString &format) const;
     Q_INVOKABLE bool saveDocument(qulonglong id);
     Q_INVOKABLE bool turnOffTranslationMode();
     // translationHint: why the mode is unavailable (a PlainText Document); else empty.
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
+    Q_PROPERTY(QString timecodesFile READ timecodesFile NOTIFY timecodesChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
@@ -398,31 +459,56 @@ public:
     // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
     // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
     // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
-    Q_INVOKABLE QVariantMap shiftPreview(const QString &tool);
+    Q_INVOKABLE QVariantMap shiftPreview(const QString &tool, int shellWindow);
     Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.
     Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
     // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
-    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix, resolutionWidth,
-    // resolutionHeight}.
-    Q_INVOKABLE QVariantMap conversionOptions() const;
-    Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
-    // "ass", "srt", "mdvd", "mpl2", "tmp"; none in translation mode.
-    Q_INVOKABLE QStringList conversionTargets() const;
-    Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {ok, problem, fpsInvalid, losses, kinds ("warning" removed, else "info")};
-    // acceptConversion applies it unless the Document or the options changed since.
-    Q_INVOKABLE QVariantMap previewConversion(const QString &target);
-    Q_INVOKABLE bool acceptConversion();
     // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
     // video size is the subtitles'); empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
-    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
-    // option: 0 only the resolution, 1 resample, 2 resample with stretch.
+    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
+                              bool adjustRotations = true);
+    // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
+    // lines, fitFlat}; empty without an exact video timebase or selected lines.
+    Q_INVOKABLE QVariantMap perspectiveTrackingValues() const;
+    // {state: "idle" | "ok" | "warning" | "error", text, canApply}.
+    Q_INVOKABLE QVariantMap checkPerspectiveTracking(const QString &data, int relativeFrame) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyPerspectiveTracking(const QString &data, int relativeFrame, int orgMode, bool fitFlat,
+                                                 bool moveClips, bool scaleBorders);
+    // {data (the clipboard's motion data), frames, firstFrame, relativeFrame, lines}; empty without frame
+    // times or selected lines.
+    Q_INVOKABLE QVariantMap motionDataValues() const;
+    // {state, text, canApply, clipState, clipText, dataFrames}. dataStart > 0 extrapolates data shorter than the
+    // selection, starting at that frame of it.
+    Q_INVOKABLE QVariantMap checkMotionData(const QString &data, const QString &clipData, int relativeFrame,
+                                            int dataStart) const;
+    // The dialog's values by name; empty when done, else why not.
+    Q_INVOKABLE QString applyMotionData(const QString &data, const QString &clipData, const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString revertMotionData();
+    // {ok, text}: the toast's text, or why nothing was copied.
+    Q_INVOKABLE QVariantMap copyMotionData();
+    Q_INVOKABLE QVariantMap copyPowerPinTrack();
+    Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {lines, firstFrame, frames}; empty without frame times or selected lines.
+    Q_INVOKABLE QVariantMap extendTrackingValues() const;
+    // {state, text, canApply}.
+    Q_INVOKABLE QVariantMap checkExtendTracking(int frames, bool after) const;
+    // Empty when done, else why not.
+    Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
+    // {text} or {error}.
+    Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
+    // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
+    Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
+    // The question's setting then does what `choice` did: 0 leaves things as they are.
+    Q_INVOKABLE void stopAskingVideoProperty(const QString &kind, int choice);
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
@@ -464,7 +550,7 @@ public:
     // restarted}: found false: no errors; available false: no dictionary; line: the
     // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
     // the word was shown, so the walk started again from it.
-    Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options);
+    Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options, int shellWindow);
     Q_INVOKABLE QVariantMap spellCheckerActivated(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplace(const QString &replacement, const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplaceAll(const QString &misspell, const QString &replacement,
@@ -472,7 +558,7 @@ public:
     Q_INVOKABLE QVariantMap spellCheckerIgnore(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerIgnoreAll(const QString &word, const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerAddWord(const QString &word, const QVariantMap &options);
-    Q_INVOKABLE void closeSpellChecker();
+    Q_INVOKABLE void closeSpellChecker(int shellWindow);
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
     Q_PROPERTY(bool grammarOn READ grammarOn NOTIFY grammarChanged)
@@ -499,14 +585,14 @@ public:
     // count), found, line, groupName, message, before, text, after, suggestions,
     // replacement, word, problem}; found false with done: no findings.
     // grammarWalkIgnoreRule's also has ignoredGroup. Only dialogue Lines are checked.
-    Q_INVOKABLE QVariantMap startGrammarWalk();
-    Q_INVOKABLE QVariantMap grammarWalkState();
+    Q_INVOKABLE QVariantMap startGrammarWalk(int shellWindow);
+    Q_INVOKABLE QVariantMap grammarWalkState(int shellWindow);
     Q_INVOKABLE QVariantMap cancelGrammarWalk();
     Q_INVOKABLE QVariantMap grammarWalkReplace(const QString &replacement);
     Q_INVOKABLE QVariantMap grammarWalkIgnore();
     Q_INVOKABLE QVariantMap grammarWalkIgnoreRule();
     Q_INVOKABLE QVariantMap grammarWalkAddWord();
-    Q_INVOKABLE void closeGrammarWalk();
+    Q_INVOKABLE void closeGrammarWalk(int shellWindow);
     // {rows, unlisted}: a row for each of the first core::kListedProblems ({document,
     // line (ids), number (the Grid's 1-based row), check, detail}), unlisted the rest.
     Q_INVOKABLE QVariantMap checkKaraoke() const;
@@ -532,9 +618,9 @@ public:
     // and Replace all work in the values' scope. findFinished ends it. Ignored while
     // findBusy.
     Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
-    // {total, current} in the editing target; current is 0 when the last match is not
-    // one of them.
-    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings);
+    // {total, current} in the shell window's current tab; current is 0 when the last match
+    // is not one of them.
+    Q_INVOKABLE QVariantMap findCount(const QVariantMap &settings, int shellWindow);
     // Empty unless the values hold an invalid regular expression.
     Q_INVOKABLE QString findPatternError(const QVariantMap &settings) const;
     Q_INVOKABLE void findNext();
@@ -543,12 +629,12 @@ public:
     Q_INVOKABLE void answerFindQuestion(int id, const QString &answer);
     bool findBusy() const;
     // The text selected in the Line editor, or find as it is.
-    Q_INVOKABLE QString findReplaceActivated(const QString &find);
+    Q_INVOKABLE QString findReplaceActivated(const QString &find, int shellWindow);
     Q_INVOKABLE void resetFindReplace();
     // Rows {header, text, line, before, match, after, checked, visible}.
-    Q_INVOKABLE QVariantList findResults() const;
-    Q_INVOKABLE bool findResultsShown() const;
-    Q_INVOKABLE bool canReplaceFindResults() const;
+    Q_INVOKABLE QVariantList findResults(int shellWindow) const;
+    Q_INVOKABLE bool findResultsShown(int shellWindow) const;
+    Q_INVOKABLE bool canReplaceFindResults(int shellWindow) const;
     Q_INVOKABLE void checkFindResults(bool check);
     Q_INVOKABLE void toggleFindResult(int row);
     Q_INVOKABLE void toggleFindGroup(int row);
@@ -571,6 +657,8 @@ public:
     Q_INVOKABLE bool addLinesToGroup(qulonglong description);
     Q_INVOKABLE bool copyGroup(qulonglong description);
     Q_INVOKABLE QString groupTitle(qulonglong description) const;
+    Q_INVOKABLE bool canConvertFolds() const;
+    Q_INVOKABLE bool convertFoldsToGroups();
     // key: "start", "end", "style", "actor", "effect" or "layer"; text keys use
     // the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
@@ -641,6 +729,15 @@ public:
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
+    // Empty: loaded; else the message.
+    Q_INVOKABLE QString openTimecodesFile(const QString &path);
+    // Empty: saved; else the message.
+    Q_INVOKABLE QString saveTimecodesFile(const QString &path);
+    Q_INVOKABLE void closeTimecodes();
+    Q_INVOKABLE QVariantList recentTimecodes();
+    Q_INVOKABLE QUrl timecodesDialogFolder() const;
+    // The current tab's loaded timecodes file; empty when none.
+    QString timecodesFile() const;
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
     // The error to log, else empty.
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
@@ -670,9 +767,10 @@ public:
     Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
-    ui::ShellController &shell() { return *m_shell; }
-    ui::LineEditorController &editor() { return *m_editor; }
-    ui::TemplateEditorController &templateEditor() { return *m_templateEditor; }
+    ui::ShellController &shell() const { return *activeViews().shell; }
+    ui::LineEditorController &editor() const { return *activeViews().editor; }
+    ui::TemplateEditorController &templateEditor() const { return *activeViews().templateEditor; }
+    ui::NodeEffectsController &nodeEffects() const { return *activeViews().nodeEffects; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
@@ -689,6 +787,8 @@ public:
     Q_INVOKABLE bool showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y);
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
+    // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
+    application::LuaNodePort &luaNodes();
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     SettingsImportController &settingsImport() { return *m_settingsImport; }
     HotkeysController &hotkeys() { return *m_hotkeys; }
@@ -699,7 +799,9 @@ public:
     CrashReports &crashReports() { return *m_crashReports; }
     WhatsNew &whatsNew() { return *m_whatsNew; }
     StyleManagerController &styleManager() { return *m_styleManager; }
-    KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; }
+    KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
+    AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -722,23 +824,47 @@ public:
     ui::WorkspaceLayoutController &workspaceLayout() { return *m_workspaceLayout; }
     ui::ShiftTimesController &shiftTimesSettings() { return *m_shiftTimes; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
-    ui::VisualToolsController &visualTools() { return *m_visualTools; }
-    ui::VideoViewController &videoView() { return *m_videoView; }
-    ui::StatusBarController &statusBar() { return *m_statusBar; }
+    ui::VisualToolsController &visualTools() const { return *activeViews().visualTools; }
+    ui::VideoViewController &videoView() const { return *activeViews().videoView; }
+    ui::StatusBarController &statusBar() const { return *activeViews().statusBar; }
     ui::VideoFullscreenController &videoFullscreen() { return *m_videoFullscreen; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     Q_PROPERTY(hikari::app::ApiHost *apiHost READ apiHost CONSTANT)
+    // The window the API and forwarded launches act on: the one last used, never a hidden first window.
+    Q_PROPERTY(int lastUsedWindow READ lastUsedWindow NOTIFY lastUsedWindowChanged)
+    // A tab is being dragged and dropped between windows, as on Wayland.
+    Q_PROPERTY(bool tabDragging MEMBER m_tabDragging NOTIFY tabDraggingChanged)
     ApiHost *apiHost() const { return m_apiHost.get(); }
     AiFeatures *ai() const { return m_ai.get(); }
+    AiSettings *aiSettings() const { return m_aiSettings.get(); }
+    ReviewController *review() const { return m_review.get(); }
+    AgentController *agent() const { return m_agent.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
+    Q_PROPERTY(hikari::app::PluginMarketplace *pluginMarketplace READ pluginMarketplace CONSTANT)
+    PluginMarketplace *pluginMarketplace() const { return m_pluginMarketplace.get(); }
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
     PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
     QVariantMap qmlProperties(int shellWindow = 0);
     // A further shell window on the engine of the first (ADR 0025); MW2 gives it the user-facing moves.
     QQuickWindow *openShellWindow(QQmlEngine &engine);
+    // Each shell window reports itself once loaded, so the Session can keep its geometry.
+    Q_INVOKABLE void shellWindowLoaded(QQuickWindow *window);
+    // The layout file keeps the active window's arrangement (ADR 0025).
+    Q_INVOKABLE bool saveLayoutForQuit();
     Q_INVOKABLE void shellWindowClosed(int shellWindow);
+    // Rows as reviewClose's for the window's own tabs; finishClose() approves its close (ADR 0025).
+    Q_INVOKABLE QVariantList reviewCloseWindow(int shellWindow);
+    Q_INVOKABLE bool closeApproved(int shellWindow) const { return m_quitApproved || m_closeApproved == shellWindow; }
+    // Another shell window is open: closing this one closes only it, else it quits.
+    Q_INVOKABLE bool otherShellWindowOpen(int shellWindow) const;
+    // The first window closes for the user but stays the app-wide host (ADR 0025): its tabs close,
+    // it and its floating panels hide, and it leaves the Session until a Session opens it again.
+    Q_INVOKABLE void hideFirstWindow();
+    bool firstWindowHidden() const { return m_firstWindowHidden; }
+    int lastUsedWindow() const { return m_workspace.activeWindow(); }
+    QQuickWindow *lastUsedShellWindow() const { return shellQuickWindow(lastUsedWindow()); }
     // The window's current tab becomes the editing target.
     Q_INVOKABLE void activateShellWindow(int shellWindow);
     // tabs, currentTab and home of one shell window; the properties are the active window's.
@@ -772,6 +898,8 @@ public:
     Q_INVOKABLE void selectTab(int index);
     // Rows as reviewClose's; with none, finishClose() closes the tab.
     Q_INVOKABLE QVariantList reviewCloseTab(int index);
+    // The tabs other than index, or only those to its right; index stays and is shown if the shown tab closes.
+    Q_INVOKABLE QVariantList reviewCloseTabs(int index, bool toTheRight);
     // Empty file: the last session. Returns {ok, problem, rows}, rows as reviewClose's
     // for every open Document; ok without rows: finishClose() replaces the tabs. UNC
     // hosts not all in allowedHosts: {ok: false, network: [hosts]}.
@@ -814,6 +942,17 @@ public:
     // The two tabs trade places; endTabDrag writes the session once a drag swapped tabs.
     Q_INVOKABLE bool dragTab(int from, int to);
     Q_INVOKABLE void endTabDrag();
+    // The tab moves to the shell window at `index` of its tabs (-1: last) with its undo history, selection, scroll,
+    // media and arrangement; nothing is saved, reloaded or reviewed. A window left without tabs closes.
+    Q_INVOKABLE bool moveTab(qulonglong document, int shellWindow, int index);
+    // As moveTab, into a new window the size of the one it left: under `global` when `place`, else where
+    // the window manager puts it.
+    Q_INVOKABLE bool moveTabToNewWindow(qulonglong document, QPointF global, bool place);
+    // A tab dragged off its bar and released at `global`: over a shell window's tab bar it moves there,
+    // elsewhere over a shell window it stays, outside every window it gets a new window.
+    Q_INVOKABLE void dropTab(qulonglong document, QPointF global);
+    // [{window, title}]: the other open shell windows, named by their current tab.
+    Q_INVOKABLE QVariantList otherWindows(int shellWindow) const;
     // 0: none.
     Q_INVOKABLE qulonglong tabDocument(int index) const;
     // Rows as reviewClose's for every tab; with none, finishClose() closes them all.
@@ -858,7 +997,7 @@ public:
     Q_INVOKABLE void selectAllReferenceLines();
     Q_INVOKABLE bool copyReferenceLines();
     Q_INVOKABLE void refuseReferenceChange();
-    // Every occurrence of the editing Line in each other Document: [{text, checked}].
+    // Every occurrence of the reference's active Line in each other Document: [{text, checked}].
     Q_INVOKABLE QVariantList referenceOccurrences();
     Q_INVOKABLE bool chooseReferenceOccurrence(int index);
     // The reference row paired with the editing Grid's shown row, or -1.
@@ -878,6 +1017,7 @@ signals:
     void documentWriteFailed(qulonglong document);
     // A later start handed files over, about to open.
     void filesForwarded();
+    void timecodesChanged();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
@@ -898,6 +1038,9 @@ private:
     void protectReference();
     void refreshViews();
     void refreshVideo();
+    bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
+                          bool adjustRotations);
+    application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
@@ -942,9 +1085,6 @@ private:
     std::unique_ptr<application::WriteCoordinator> m_writes;
     std::unique_ptr<application::DocumentFiles> m_files;
     application::Workspace m_workspace;
-    std::unique_ptr<ui::ShellController> m_shell;
-    std::unique_ptr<ui::LineEditorController> m_editor;
-    std::optional<application::DocumentId> m_editorDocument;
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
     std::unique_ptr<application::DummyVideoSource> m_videoSource;
     backends::SubtitleRendererSelection m_renderer;
@@ -959,13 +1099,59 @@ private:
     std::unique_ptr<ui::SettingsStore> m_settings;
     std::unique_ptr<SettingsImportStore> m_importStore;
     std::unique_ptr<SettingsImportController> m_settingsImport;
+    class FindHost;
+    friend class FindHost;
+    struct GrammarWalk;
+    struct WindowViews {
+        WindowViews();
+        WindowViews(const WindowViews &) = delete;
+        WindowViews &operator=(const WindowViews &) = delete;
+        ~WindowViews();
+        std::unique_ptr<ui::ShellController> shell;
+        std::unique_ptr<ui::LineEditorController> editor;
+        std::unique_ptr<ui::VisualToolsController> visualTools;
+        std::unique_ptr<ui::VideoViewController> videoView;
+        std::unique_ptr<ui::StatusBarController> statusBar;
+        std::unique_ptr<ui::TemplateEditorController> templateEditor;
+        std::unique_ptr<ui::NodeEffectsController> nodeEffects;
+        std::unique_ptr<KanjiTimerController> kanjiTimer;
+        std::unique_ptr<FindHost> findHost;
+        std::unique_ptr<application::FindReplace> find;
+        std::optional<application::DocumentId> findDocument;
+        std::unique_ptr<application::SpellCheckWalk> spellWalk;
+        std::optional<application::DocumentId> spellWalkDocument;
+        std::unique_ptr<GrammarWalk> grammarWalk;
+        std::unique_ptr<WindowSettings> settings;
+        std::optional<application::DocumentId> editorDocument;
+        std::uint64_t shownRevision = 0;
+    };
+    WindowViews m_mainViews;
+    WindowViews &views(int shellWindow);
+    const WindowViews &views(int shellWindow) const;
+    WindowViews &activeViews() { return views(m_workspace.activeWindow()); }
+    const WindowViews &activeViews() const { return views(m_workspace.activeWindow()); }
+    std::vector<WindowViews *> allViews();
+    void makeViews(WindowViews &views, int shellWindow);
+    void makeTemplateEditor(WindowViews &views, int shellWindow);
+    void makeNodeEffects(WindowViews &views, int shellWindow);
+    void makeKanjiTimer(WindowViews &views, int shellWindow);
+    void commitTemplates();
+    bool kanjiPending(application::DocumentId document);
+    bool applyKanji(application::DocumentId document, application::EditSession &session);
+    void refreshWindowViews(int shellWindow);
+    void refreshInactiveViews(int shellWindow, int left);
+    int m_viewsWindow = 0;
+    application::EditSession *windowSession(int shellWindow) const;
+    // MUST KILL: hidden until MW3 #631 gives each window its own picture
+    bool pictureShowsWindow(int shellWindow) const;
     void settingChanged(const QString &id);
     QStringList m_dictionaryDirs;
     bool m_resettingSettings = false;
     bool m_selectLinesOpened = false;
     application::OptionsLists m_optionsLists;
     std::unique_ptr<AutomationShell> m_automation;
-    std::unique_ptr<ui::TemplateEditorController> m_templateEditor;
+    QString m_luaHelper;
+    std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     bool m_videoShowsTemplate = false;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
@@ -973,7 +1159,12 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
+    std::unique_ptr<AiMcp> m_aiMcp;
+    std::unique_ptr<AiSettings> m_aiSettings;
+    std::unique_ptr<ReviewController> m_review;
+    std::unique_ptr<AgentController> m_agent;
     std::unique_ptr<PluginManager> m_pluginManager;
+    std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
@@ -988,7 +1179,9 @@ private:
     std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
-    std::unique_ptr<KanjiTimerController> m_kanjiTimer;
+    std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    QString m_readingDictionary;
+    std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;
@@ -1011,40 +1204,48 @@ private:
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     struct ShellWindow {
+        std::unique_ptr<WindowViews> views;
         std::unique_ptr<ui::WorkspaceLayoutController> layout;
         QPointer<QQuickWindow> window;
+        bool closing = false;
     };
     std::map<int, ShellWindow> m_shellWindows;
     int m_nextShellWindow = 1;
+    QPointer<QQuickWindow> m_firstWindow;
+    // MUST KILL: ~Application saves the Session again after the QQuickWindows are gone
+    std::map<int, application::SessionWindow> m_windowPlaces;
+    QQuickWindow *shellQuickWindow(int shellWindow) const;
+    std::vector<int> sessionWindows() const;
+    application::SessionWindow sessionWindow(int shellWindow);
+    void placeShellWindow(QQuickWindow &window, const application::SessionWindow &saved);
     bool eventFilter(QObject *watched, QEvent *event) override;
     static std::optional<int> shellWindowOf(const QWindow *window);
-    // MUST KILL: closes a window's tabs without the close review until MW5 #629.
     void closeShellWindowDocuments(int shellWindow);
+    void forgetShellWindow(int shellWindow);
+    std::optional<int> otherUsableWindow(int besides) const;
+    void leaveShellWindow(int shellWindow);
+    void showFirstWindow();
+    void noteLastUsedWindow();
     ui::WorkspaceLayoutController &layoutOf(int shellWindow);
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
-    struct ConversionPlan {
-        std::uint64_t document = 0;
-        std::uint64_t revision = 0;
-        QVariantMap options;
-        float frameMs = 0.f;
-        core::Document converted;
-    };
-    std::unique_ptr<ConversionPlan> m_conversionPlan;
-    std::set<std::uint64_t> m_formatChanged;
+    std::optional<core::ConversionOptions> assConversionOptions() const;
+    std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
+    bool convertToAss(application::DocumentId document);
     QString m_resolutionCheckedVideo;
+    bool m_askVideoProperties = false;
     void checkResolution();
+    void checkVideoMatrix();
+    void checkLayoutResolution();
     QStringList m_selectRecent;
     void destroyDialogs();
     void resetAllSettings();
-    class FindHost;
-    friend class FindHost;
-    std::unique_ptr<FindHost> m_findHost;
-    std::unique_ptr<application::FindReplace> m_find;
     bool m_findOpened = false;
-    void createFindReplace();
+    void createFindReplace(WindowViews &views, int shellWindow);
+    void setFindRecent(WindowViews &views);
+    application::FindReplace &finder() const { return *activeViews().find; }
     QString m_replaceBackup;
     std::function<int(int, const QString &)> m_findQuestionHandler;
     int m_findQuestionId = 0;
@@ -1052,8 +1253,8 @@ private:
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
-    void saveFindRecent(const application::FindReplaceSettings &window);
-    void findFinished();
+    void saveFindRecent(int shellWindow, const application::FindReplaceSettings &window);
+    void findFinished(int shellWindow);
     QString m_pendingKeyframes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     application::SubtitleComparison m_comparison;
@@ -1075,8 +1276,6 @@ private:
     std::optional<application::DocumentId> comparedPartner() const;
     application::GridSelection referenceGridSelection() const;
     void applyReferenceSelection(application::Selection next);
-    std::unique_ptr<ui::VisualToolsController> m_visualTools;
-    std::unique_ptr<ui::VideoViewController> m_videoView;
     std::unique_ptr<ui::VideoFullscreenController> m_videoFullscreen;
     struct OriginalColumnsEntry {
         std::uint64_t generation = 0;
@@ -1100,7 +1299,6 @@ private:
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> m_videoFonts;
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
-    std::unique_ptr<ui::StatusBarController> m_statusBar;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_playbackFailuresLogged = 0;
@@ -1119,7 +1317,7 @@ private:
     std::optional<std::uint64_t> m_videoRevision;
     bool m_videoShowsDraft = false;
     std::vector<std::byte> m_videoScript;
-    QString m_editorTimebaseVideo;
+    std::optional<std::pair<std::string, std::uint64_t>> m_editorTimebaseFor;
     std::optional<core::LineId> m_videoLine;
     struct LineChangeOrigin {
         bool gridClick = false;
@@ -1149,9 +1347,26 @@ private:
     std::vector<Closing> m_closing;
     int m_quitReviews = 0;
     bool m_quitApproved = false;
+    std::optional<int> m_closingWindow;
+    std::optional<int> m_closeApproved;
+    bool m_firstWindowHidden = false;
+    QList<QPointer<QWindow>> m_hiddenFloating;
+    int m_lastUsedWindow = 0;
     std::optional<application::StagedOpen> m_pendingOpen;
     QString m_pendingOpenPath;
     application::RecentFiles m_recent;
+    std::unique_ptr<ProjectWindows> m_projects;
+    application::Session sessionOf(std::optional<int> shellWindow);
+    void keepProjectTabs(int shellWindow);
+    void closeProject(int shellWindow);
+    std::optional<int> m_projectClosing;
+    bool windowEmpty(int shellWindow) const;
+    std::optional<int> openWindowBeside(int shellWindow);
+    void offerProjectFor(application::DocumentId document, const QString &path);
+    bool projectTrusted(const QString &root) const;
+    void applyWindowProject(int shellWindow);
+    application::Settings &windowSettings(int shellWindow);
+    const application::Settings &windowSettings(int shellWindow) const;
     QString m_settingsFile;
     QString m_userFolder;
     void reportUserFolder(const UserFolder::MoveReport &moved, const UserFolder::SeedReport &seeded);
@@ -1162,16 +1377,29 @@ private:
     std::set<std::uint64_t> m_removedNoticed;
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
-    application::SpellChecker *spellChecker();
+    application::SpellChecker *spellChecker() { return spellChecker(m_workspace.activeWindow()); }
+    application::SpellChecker *spellChecker(int shellWindow);
+    application::SpellChecker *startedSpellChecker(int shellWindow);
+    application::SpellChecker *anySpellChecker() const;
+    void userWordsChanged(const application::SpellChecker *by);
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
-    QVariantMap spellCheckState(bool changed, const QString &problem = {});
+    std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
+    QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
-    void showSpellCheckWord();
-    std::unique_ptr<application::SpellChecker> m_spellChecker;
-    // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
-    bool m_spellingStarted = false;
+    void showSpellCheckWord(int shellWindow);
+    struct SpellSlot {
+        std::unique_ptr<application::SpellChecker> checker;
+        // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
+        bool started = false;
+    };
+    // By dictionary language; windows on one language share a checker.
+    std::map<QString, SpellSlot> m_spellCheckers;
+    std::vector<std::filesystem::path> m_spellingFolders;
+    SpellSlot *spellSlot(const QString &language);
+    // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
+    bool editorSpellingOn() const;
     application::SpellingText m_spellingText;
     application::SpellingBackendLoader m_spellingLoader;
     std::unique_ptr<application::SpellChecker> m_sampleChecker;
@@ -1183,8 +1411,6 @@ private:
     bool m_spellingOn = true;
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;
-    std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
-    std::optional<application::DocumentId> m_spellWalkDocument;
     struct GrammarCheck {
         std::u16string raw;
         core::grammar::CheckedText text;
@@ -1198,6 +1424,7 @@ private:
             bool handled = false;
         };
         application::DocumentId document;
+        int window = 0;
         bool translation = false;
         std::vector<core::LineId> lines;
         std::map<std::size_t, GrammarCheck> checks;
@@ -1218,7 +1445,7 @@ private:
     backends::HarperClient *grammarClient();
     QJsonObject grammarSettings() const;
     void applyGrammarSettings();
-    void grammarWalkSettingsChanged(const QJsonObject &before, const QJsonObject &after);
+    void grammarWalkSettingsChanged(GrammarWalk &walk, const QJsonObject &before, const QJsonObject &after);
     void scheduleGrammar();
     void checkEditorGrammar();
     void grammarChecked(quint64 ticket, const QList<backends::GrammarFinding> &findings);
@@ -1229,11 +1456,15 @@ private:
     std::optional<std::pair<int, int>> fieldSpan(int role, const core::grammar::CheckedText &text, int start,
                                                   int end) const;
     const backends::GrammarFinding *editorGrammarFinding(int role, int position) const;
-    void pumpGrammarWalk();
-    const core::LineRecord *grammarWalkLine(const application::EditSession &session, std::size_t index);
-    void nextGrammarFinding();
-    void showGrammarFinding();
-    bool grammarWalkStale();
+    GrammarWalk *grammarWalkOf(int shellWindow);
+    std::vector<GrammarWalk *> grammarWalks();
+    void pumpGrammarWalk(int shellWindow);
+    static const core::LineRecord *grammarWalkLine(GrammarWalk &walk, const application::EditSession &session,
+                                                   std::size_t index);
+    static void nextGrammarFinding(GrammarWalk &walk);
+    void showGrammarFinding(int shellWindow);
+    bool grammarWalkStale(int shellWindow);
+    void stopGrammarWalk(GrammarWalk &walk);
     QVariantMap grammarWalkProblem(const QString &problem);
     QString m_harperProgram;
     QString m_grammarDir;
@@ -1249,7 +1480,6 @@ private:
     bool m_grammarApplyPending = false;
     QString m_grammarWords;
     QStringList m_grammarOwnWords;
-    std::unique_ptr<GrammarWalk> m_grammarWalk;
     std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
     std::unique_ptr<ui::AudioController> m_audio;
     QList<QMetaObject::Connection> m_audioConnections;
@@ -1260,6 +1490,7 @@ private:
     std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine;
     std::optional<application::LegacyTimebase> m_audioTimebase;
     std::string m_audioTimebasePath;
+    std::uint64_t m_audioTimebaseSerial = 0;
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir;
@@ -1288,6 +1519,12 @@ private:
     bool keyframesWithoutVideo(const QString &path, QString &problem);
     application::RecentFiles m_recentVideo;
     application::RecentFiles m_recentKeyframes;
+    application::RecentFiles m_recentTimecodes;
+    void rememberRecentTimecodes(const QString &path);
+    std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
+    void showTabTimecodes(std::optional<application::DocumentId> document);
+    QString tabTimecodes(std::optional<application::DocumentId> document) const;
+    bool m_enteringTabMedia = false;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
     std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
     QString m_recentVideoSeen;
@@ -1304,6 +1541,10 @@ private:
         int position = 0;
         QString audio;
         QString keyframes;
+        QString timecodes;
+        std::optional<application::AegisubFrameTimes> frameTimes;
+        bool timecodesDropped = false;
+        bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
     };
@@ -1320,16 +1561,25 @@ private:
         std::optional<std::size_t> activeTab;
         std::vector<std::optional<application::StagedOpen>> staged;
         std::vector<std::pair<QDateTime, qint64>> stamps;
+        std::vector<application::SessionWindow> windows;
+        std::optional<int> intoWindow;
     };
+    PendingSession stageSession(application::Session session);
     std::map<std::uint64_t, TabMedia> m_tabMedia;
+    void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);
+    void warnShortTimecodes(TabMedia &media);
+    std::vector<application::ProjectGarbageEdit> timecodesGarbage(application::DocumentId document,
+                                                                   const application::DestinationKey &destination) const;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
-    std::optional<application::DocumentId> m_closingTab;
+    std::vector<application::DocumentId> m_closingTabs;
+    std::optional<application::DocumentId> m_tabAfterClose;
     std::optional<application::DocumentId> m_closeTarget;
     QString m_keepTabAudio;
     std::optional<std::pair<QString, int>> m_pendingTabSeek;
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
+    bool m_tabDragging = false;
     bool m_startedWithPaths = false;
     std::optional<application::Session> m_startSession;
     bool m_lastSessionWritable = true;
@@ -1352,7 +1602,11 @@ private:
     void trackTabMedia();
     int targetVideoPosition() const;
     std::map<int, application::DocumentId> m_layoutDocuments;
-    void showTabArrangement();
+    void showTabArrangement(int shellWindow);
+    bool movableTab(application::DocumentId document) const;
+    bool usableShellWindow(int shellWindow) const;
+    void carryTabArrangement(application::DocumentId document, int from, int to);
+    void closeEmptiedWindow(int shellWindow);
     void registerTabArrangements();
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
                                ui::WorkspaceLayoutController::TabStart start);

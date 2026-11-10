@@ -164,6 +164,42 @@ bool Workspace::swapTabs(std::size_t a, std::size_t b)
     return true;
 }
 
+bool Workspace::moveTab(DocumentId id, int window, std::size_t index)
+{
+    const auto it = std::ranges::find(m_documents, id, &Entry::id);
+    if (it == m_documents.end() || (m_reference == id && !m_referenceIsTab))
+        return false;
+    const int from = it->window;
+    const auto before = tabs(from);
+    const auto position = static_cast<std::size_t>(std::ranges::find(before, id) - before.begin());
+    Entry entry = std::move(*it);
+    m_documents.erase(it);
+    if (from != window) {
+        const auto after = tabs(from);
+        const auto next = after.empty() ? std::nullopt : std::optional(after[std::min(position, after.size() - 1)]);
+        if (from == m_activeWindow && m_target == id) {
+            m_target = next;
+            if (m_target && m_target == m_reference)
+                m_reference.reset();
+        } else if (const auto current = m_inactiveCurrent.find(from);
+                   current != m_inactiveCurrent.end() && current->second == id) {
+            if (next)
+                current->second = *next;
+            else
+                m_inactiveCurrent.erase(current);
+        }
+    }
+    entry.window = window;
+    const auto there = tabs(window);
+    auto at = m_documents.end();
+    if (index < there.size())
+        at = std::ranges::find(m_documents, there[index], &Entry::id);
+    else if (!there.empty())
+        at = std::next(std::ranges::find(m_documents, there.back(), &Entry::id));
+    m_documents.insert(at, std::move(entry));
+    return setEditingTarget(id);
+}
+
 const Workspace::Entry *Workspace::find(DocumentId id) const
 {
     const auto it = std::ranges::find(m_documents, id, &Entry::id);

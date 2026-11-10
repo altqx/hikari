@@ -1,5 +1,9 @@
 #include "hikari/application/grid_split.h"
 
+#include "hikari/application/frame_bake.h"
+#include "hikari/application/resample.h"
+
+#include "hikari/core/graphemes.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
 
@@ -25,6 +29,14 @@ int zeroIt(int ms)
 int msOf(core::DocumentTime t)
 {
     return static_cast<int>(t.microseconds() / kUsPerMs);
+}
+
+const core::StyleValues *styleFor(const std::vector<core::StyleValues> &styles, std::u8string_view name)
+{
+    for (const std::u8string_view wanted : {name, std::u8string_view(u8"Default")})
+        if (const auto found = std::ranges::find(styles, wanted, &core::StyleValues::name); found != styles.end())
+            return &*found;
+    return styles.empty() ? nullptr : &styles.front();
 }
 
 std::vector<const core::LineRecord *> shownSelected(const EditSession &s, const LineVisible &visible)
@@ -151,8 +163,29 @@ std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const
     return {};
 }
 
+std::vector<core::LineRecord> lineFrames(const core::LineRecord &line, const LegacyTimebase &timebase,
+                                         const std::vector<core::StyleValues> &styles, Resolution resolution)
+{
+    const int startMs = msOf(line.start.value), endMs = msOf(line.end.value);
+    const auto *style = styleFor(styles, line.style);
+    std::vector<core::LineRecord> out;
+    for (int j = timebase.frameAt(startMs), end = timebase.frameAt(endMs); j < end; ++j) {
+        core::LineRecord part = line;
+        if (style)
+            part.text = bakeAnimations(line.text, *style, styles,
+                                       BakeFrame{double(timebase.msAt(j) - startMs), double(endMs - startMs),
+                                                 resolution.width, resolution.height});
+        else
+            part.text = legacy::moveToPos(line.text, startMs, endMs, timebase.msAt(j));
+        part.start.value = core::DocumentTime(std::int64_t{zeroIt(timebase.startTimeFor(j))} * kUsPerMs);
+        part.end.value = core::DocumentTime(std::int64_t{zeroIt(timebase.endTimeFor(j))} * kUsPerMs);
+        out.push_back(std::move(part));
+    }
+    return out;
+}
+
 std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const LegacyTimebase &timebase,
-                                                    const LineVisible &visible)
+                                                    FrameAnimations animations, const LineVisible &visible)
 {
     if (!timebase.exact())
         return std::unexpected(CommandRefusal::Invalid);
@@ -164,17 +197,11 @@ std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const 
         std::vector<core::LineRecord> frames; // the first replaces the Line
     };
     std::vector<Plan> plans;
+    const auto styles = animations == FrameAnimations::Bake ? core::decodeStyles(session.document())
+                                                            : std::vector<core::StyleValues>{};
+    const auto resolution = scriptResolution(session.document());
     for (const auto *l : selected) {
-        const int startMs = msOf(l->start.value), endMs = msOf(l->end.value);
-        const int frameStart = timebase.frameAt(startMs), frameEnd = timebase.frameAt(endMs);
-        Plan plan{l->id, {}};
-        for (int j = frameStart; j < frameEnd; ++j) {
-            core::LineRecord part = *l;
-            part.text = legacy::moveToPos(l->text, startMs, endMs, timebase.msAt(j));
-            part.start.value = core::DocumentTime(std::int64_t{zeroIt(timebase.startTimeFor(j))} * kUsPerMs);
-            part.end.value = core::DocumentTime(std::int64_t{zeroIt(timebase.endTimeFor(j))} * kUsPerMs);
-            plan.frames.push_back(std::move(part));
-        }
+        Plan plan{l->id, lineFrames(*l, timebase, styles, resolution)};
         if (!plan.frames.empty())
             plans.push_back(std::move(plan));
     }
@@ -213,9 +240,39 @@ namespace legacy {
 using u16 = std::u16string;
 using u16v = std::u16string_view;
 
+struct VisibleText {
+    u16 text;
+    std::vector<std::size_t> at;
+};
+
+constexpr char16_t kClusterBreak = u'\u2028';
+
+VisibleText visibleText(u16v txt)
+{
+    VisibleText visible;
+    bool inBrackets = false;
+    for (std::size_t i = 0; i < txt.size(); ++i) {
+        const char16_t ch = txt[i];
+        if (!inBrackets && ch == u'\\' && i + 1 < txt.size() && (txt[i + 1] == u'N' || txt[i + 1] == u'n')) {
+            visible.text += kClusterBreak;
+            visible.at.push_back(i++);
+        } else if (ch == u'{') {
+            inBrackets = true;
+        } else if (ch == u'}') {
+            inBrackets = false;
+        } else if (!inBrackets) {
+            visible.text += ch;
+            visible.at.push_back(i);
+        }
+    }
+    return visible;
+}
+
 std::vector<u16> splitByChar(u16v txt, bool addSpaces)
 {
     std::vector<u16> out;
+    const VisibleText visible = visibleText(txt);
+    std::size_t shown = 0;
     const std::size_t len = txt.size();
     bool inBrackets = false;
     u16 charWithTags;
@@ -246,6 +303,11 @@ std::vector<u16> splitByChar(u16v txt, bool addSpaces)
                 ++i;
                 continue;
             }
+            while (visible.at[shown] != i)
+                ++shown;
+            const std::size_t last = visible.at[core::graphemeEnd(visible.text, shown) - 1];
+            charWithTags += txt.substr(i + 1, last - i);
+            i = last;
             out.push_back(charWithTags);
             charWithTags.clear();
         }

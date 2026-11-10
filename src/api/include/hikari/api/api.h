@@ -43,8 +43,12 @@ std::unexpected<Error> fail(std::string_view code, std::string message, Json dat
 struct Caller {
     std::string id;
     std::string label; // names the caller's undo steps
-    // Without it only the editing target is visible.
+    // Without it only the editing target and the attached Documents are visible.
     bool allDocuments = false;
+    // The Documents the user attached with @, besides the editing target.
+    std::vector<application::DocumentId> attached;
+    // Its document.apply changes go to the review (AI callers).
+    bool reviewed = false;
 };
 
 // A file the user let one caller use; the caller sees the handle and name, never the path.
@@ -134,6 +138,8 @@ public:
     // The handle files.* use for `path`; granting a path again updates `writable`.
     std::string grantFile(const std::string &callerId, const std::string &path, bool writable);
     void revokeFiles(const std::string &callerId);
+    // The path behind a caller's handle, if the caller holds it.
+    std::optional<std::string> grantedPath(const std::string &callerId, std::string_view handle) const;
 
 private:
     struct Subscription {
@@ -144,7 +150,8 @@ private:
     };
     // `document`: only callers that see it hear the event. `narrowed`: what
     // callers without documents.all hear instead.
-    void publish(const Event &event, std::optional<application::DocumentId> document, const Event *narrowed = nullptr);
+    void publish(const Event &event, std::optional<application::DocumentId> document,
+                 const std::function<Event(const Caller &)> &narrowed = {});
 
     Host m_host;
     bool m_writing = false;

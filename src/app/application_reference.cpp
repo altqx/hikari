@@ -152,13 +152,13 @@ void Application::showReferenceRow(std::size_t row)
         return;
     const auto line = lines[row]->id;
     referenceSession->setSelection(application::Selection{line, {line}, line, {}});
-    m_shell->setReferenceSelection(referenceSession->selection());
-    m_shell->showReferenceLine(line);
+    shell().setReferenceSelection(referenceSession->selection());
+    shell().showReferenceLine(line);
 }
 
 void Application::publishReferenceNavigation()
 {
-    m_shell->setReferenceNavigation(m_referenceLinked, m_linkedMatch);
+    shell().setReferenceNavigation(m_referenceLinked, m_linkedMatch);
 }
 
 bool Application::stepReferenceMatch(int delta)
@@ -193,7 +193,7 @@ application::GridSelection Application::referenceGridSelection() const
     if (auto *session = reference ? m_files->session(*reference) : nullptr)
         for (const auto *line : session->document().lines())
             document.push_back(line->id);
-    application::GridSelection rules(std::move(document), m_shell->referenceDisplayedLines());
+    application::GridSelection rules(std::move(document), shell().referenceDisplayedLines());
     rules.setChangeActiveOnSelection(m_settings->boolean("grid.changeActiveOnSelection"));
     return rules;
 }
@@ -205,7 +205,7 @@ void Application::applyReferenceSelection(application::Selection next)
     if (!session)
         return;
     session->setSelection(std::move(next));
-    m_shell->setReferenceSelection(session->selection());
+    shell().setReferenceSelection(session->selection());
 }
 
 void Application::selectReferenceLine(qulonglong id)
@@ -267,36 +267,37 @@ bool Application::copyReferenceLines()
 
 void Application::refuseReferenceChange()
 {
-    m_shell->setStatusText(QCoreApplication::translate("HikariSub.Reference", "The reference is protected (read-only)."));
+    shell().setStatusText(QCoreApplication::translate("HikariSub.Reference", "The reference is protected (read-only)."));
 }
 
 QVariantList Application::referenceOccurrences()
 {
     m_occurrenceMenu.clear();
     QVariantList rows;
-    const auto target = m_workspace.editingTarget();
-    auto *session = target ? m_files->session(*target) : nullptr;
+    const auto reference = m_workspace.reference();
+    auto *session = reference ? m_files->session(*reference) : nullptr;
     const auto active = session ? session->selection().active : std::nullopt;
     const auto row = active ? rowOf(session->document(), *active) : std::nullopt;
     if (!row)
         return rows;
-    const core::LineRecord &editing = *session->document().lines()[*row];
-    const auto reference = m_workspace.reference();
+    const core::LineRecord &clicked = *session->document().lines()[*row];
+    const auto target = m_workspace.editingTarget();
     for (const auto id : m_workspace.documents()) {
-        if (id == *target)
+        if (id == *reference)
             continue;
         const auto *other = m_files->session(id);
         if (!other)
             continue;
         const std::string *title = m_workspace.title(id);
         const auto lines = other->document().lines();
-        for (const auto &occurrence : application::seekOccurrences(other->document(), editing)) {
-            const bool checked = reference == id && other->selection().active && occurrence.row < lines.size() &&
+        for (const auto &occurrence : application::seekOccurrences(other->document(), clicked)) {
+            if (occurrence.length == 0)
+                continue;
+            const bool checked = target == id && other->selection().active && occurrence.row < lines.size() &&
                                  lines[occurrence.row]->id == *other->selection().active;
-            rows << QVariantMap{{QStringLiteral("text"), QStringLiteral("%1 (%2 %3)")
+            rows << QVariantMap{{QStringLiteral("text"), QCoreApplication::translate("HikariSub.Reference", "%1, line %2")
                                                              .arg(title ? QString::fromStdString(*title) : QString())
-                                                             .arg(occurrence.row)
-                                                             .arg(occurrence.length)},
+                                                             .arg(occurrence.row + 1)},
                                 {QStringLiteral("checked"), checked}};
             m_occurrenceMenu.emplace_back(id, occurrence);
         }
@@ -309,8 +310,16 @@ bool Application::chooseReferenceOccurrence(int index)
     if (index < 0 || index >= static_cast<int>(m_occurrenceMenu.size()))
         return false;
     const auto [id, occurrence] = m_occurrenceMenu[static_cast<std::size_t>(index)];
-    if (!m_files->session(id) || m_workspace.editingTarget() == id)
+    const auto *session = m_files->session(id);
+    if (!session)
         return false;
+    if (m_workspace.editingTarget() == id) {
+        const auto lines = session->document().lines();
+        if (occurrence.row >= lines.size())
+            return false;
+        selectLine(lines[occurrence.row]->id.value);
+        return true;
+    }
     if (m_workspace.reference() != id && !m_workspace.setTabReference(id))
         return false;
     refreshViews();
@@ -327,7 +336,7 @@ int Application::comparedReferenceRow(int row) const
     const auto target = m_workspace.editingTarget();
     if (!m_referenceLinked || !reference || partner != reference || row < 0)
         return -1;
-    const auto shown = m_shell->displayedLines();
+    const auto shown = shell().displayedLines();
     auto *session = m_files->session(*target);
     if (static_cast<std::size_t>(row) >= shown.size() || !session)
         return -1;

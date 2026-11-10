@@ -17,10 +17,12 @@ constexpr const char *kMoveTags = "translation.autoMoveTagsFromOriginal";
 
 void Application::setUpTranslationControls()
 {
-    m_editor->setVisualToolActive([this] { return m_visualTools && m_visualTools->activeFamily() != 0; });
     const auto apply = [this] {
-        m_editor->setMoveTags(m_settings->boolean(kMoveTags));
-        m_shell->setRunMarks(m_settings->boolean(kMoveTags));
+        for (auto *views : allViews()) {
+            const bool moveTags = views->settings->settings().boolean(kMoveTags);
+            views->editor->setMoveTags(moveTags);
+            views->shell->setRunMarks(moveTags);
+        }
         m_files->setSaveOptions(core::AssSaveOptions{.hideOriginalOnVideo = m_settings->boolean(kHideOriginal)});
     };
     apply();
@@ -86,7 +88,7 @@ bool Application::turnOnTranslationMode()
     if (!application::turnOnTranslationModeStep(*session))
         return false;
     originalColumns(*target).turnedOn(session->document(), m_settings->boolean(kShowOriginal));
-    m_editor->reloadFromSession();
+    editor().reloadFromSession();
     refreshViews();
     return true;
 }

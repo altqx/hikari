@@ -1,5 +1,8 @@
 #include "hikari/app/api_host.h"
 
+#include "hikari/backends/subtitle_renderer_selection.h"
+
+#include <QCoreApplication>
 #include <QFile>
 #include <QJSValueIterator>
 #include <QSaveFile>
@@ -16,9 +19,12 @@ QString qs(std::string_view s)
 }
 
 ApiHost::ApiHost(Wiring wiring, QObject *parent)
-    : QObject(parent), m_wiring(std::move(wiring)), m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this})
+    : QObject(parent), m_wiring(std::move(wiring)),
+      m_api(api::Host{this, this, this, m_wiring.settings, m_wiring.media, this, &m_review, this})
 {
 }
+
+ApiHost::~ApiHost() = default;
 
 application::EditSession *ApiHost::session(application::DocumentId document) const
 {
@@ -45,9 +51,9 @@ bool ApiHost::select(application::DocumentId document, const application::Select
     return true;
 }
 
-void ApiHost::committed(application::DocumentId)
+void ApiHost::committed(application::DocumentId document)
 {
-    m_wiring.refresh();
+    m_wiring.refresh(document);
     observe();
 }
 
@@ -165,6 +171,27 @@ bool ApiHost::write(const std::string &path, std::string_view bytes)
     QSaveFile file(QString::fromStdString(path));
     return file.open(QIODevice::WriteOnly) && file.write(bytes.data(), qint64(bytes.size())) == qint64(bytes.size()) &&
            file.commit();
+}
+
+std::optional<application::OverlayFrame> ApiHost::render(application::DocumentId id, const core::Document &document,
+                                                         std::int64_t frame, int width, int height)
+{
+    const application::VideoSession *video = m_wiring.video ? m_wiring.video() : nullptr;
+    if (!video || !m_wiring.encode || video->state() != application::VideoSession::State::Ready || frame < 0 ||
+        frame >= video->frameCount())
+        return std::nullopt;
+    const auto start = video->frameStart(int(frame));
+    if (!start)
+        return std::nullopt;
+    if (!m_renderer) {
+        m_renderer = std::make_unique<backends::SubtitleRendererSelection>();
+        m_renderer->setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
+    }
+    if (m_renderer->select(m_wiring.renderer ? m_wiring.renderer() : std::string()) || !m_overlay)
+        m_overlay = std::make_unique<application::DocumentOverlay>(*m_renderer, m_wiring.encode);
+    auto overlay = m_overlay->render(document, m_wiring.fonts ? m_wiring.fonts(id) : std::vector<application::FontLease>{},
+                                     *start, width, height);
+    return overlay ? std::optional(std::move(*overlay)) : std::nullopt;
 }
 
 }

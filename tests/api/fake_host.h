@@ -68,7 +68,7 @@ public:
     {
         return videoOpen ? std::optional(frame * 40) : std::nullopt;
     }
-    std::optional<std::vector<std::int64_t>> frameStartsMs() const override { return std::nullopt; }
+    std::optional<application::AegisubFrameTimes> frameTimes() const override { return std::nullopt; }
     std::optional<VideoSize> videoSize() const override
     {
         return videoOpen ? std::optional(VideoSize{64, 36, 16, 9}) : std::nullopt;
@@ -109,6 +109,34 @@ public:
     application::DisplayAudio audio{2000, 2000};
 };
 
+// Draws each Line shown at the frame's start (frame * 40 ms) as an opaque white 3x2 box at (4 * id, 2).
+class FakeRender final : public RenderHost {
+public:
+    std::optional<application::OverlayFrame> render(application::DocumentId, const core::Document &document,
+                                                    std::int64_t frame, int width, int height) override
+    {
+        drawnLines.clear();
+        if (failing)
+            return std::nullopt;
+        application::OverlayFrame out{width, height, width * 4};
+        std::vector<std::uint8_t> pixels(static_cast<std::size_t>(width) * height * 4);
+        const std::int64_t us = frame * 40'000;
+        for (const core::LineRecord *line : document.lines()) {
+            drawnLines.push_back(line->id.value);
+            if (line->comment || line->start.value.microseconds() > us || line->end.value.microseconds() <= us)
+                continue;
+            for (int y = 2; y < 4; ++y)
+                for (int x = int(line->id.value) * 4; x < int(line->id.value) * 4 + 3 && x < width; ++x)
+                    std::fill_n(pixels.begin() + (static_cast<std::size_t>(y) * width + x) * 4, 4, std::uint8_t(255));
+            out.empty = false;
+        }
+        out.pixels = std::move(pixels);
+        return out;
+    }
+    std::vector<std::uint64_t> drawnLines;
+    bool failing = false;
+};
+
 class FakeFiles final : public FileHost {
 public:
     std::optional<std::string> read(const std::string &path, std::size_t atMost) const override
@@ -144,6 +172,8 @@ public:
                        PanelState{"Video", "Video", false, false, false}};
     }
 
+    explicit FakeHost(RenderHost *drawing) : FakeHost() { render = drawing; }
+
     application::DocumentId open(std::string title, std::string_view ass, std::optional<std::string> path)
     {
         const auto id = workspace_.add(std::move(title));
@@ -153,7 +183,7 @@ public:
         return id;
     }
 
-    Host host() { return Host{this, this, this, &settings, &media, &files}; }
+    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
@@ -250,6 +280,9 @@ public:
     application::Settings settings{storage};
     FakeMedia media;
     FakeFiles files;
+    FakeRender fakeRender;
+    RenderHost *render = &fakeRender;
+    application::AiReview review;
 };
 
 }

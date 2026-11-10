@@ -187,6 +187,107 @@ bool Document::setHikariProperty(std::u8string_view key, std::u8string value)
     return true;
 }
 
+namespace {
+
+bool isProjectGarbage(const Section &section)
+{
+    constexpr std::u8string_view header = u8"[aegisub project garbage]";
+    return section.kind == SectionKind::Unknown && section.header.size() == header.size() &&
+           std::ranges::equal(section.header, header, [](char8_t a, char8_t b) {
+               return (a >= u8'A' && a <= u8'Z' ? static_cast<char8_t>(a - u8'A' + u8'a') : a) == b;
+           });
+}
+
+// A "Key: Value" line of the section, as Aegisub 3.5.1 reads [Aegisub Project Garbage].
+std::optional<PropertyRecord> garbageProperty(const SourceText &source, const Record &record)
+{
+    if (const auto *p = std::get_if<PropertyRecord>(&record))
+        return *p;
+    const auto *opaque = std::get_if<OpaqueRecord>(&record);
+    if (!opaque)
+        return std::nullopt;
+    const auto *bytes = reinterpret_cast<const char8_t *>(source.bytes.data()) + opaque->span.offset;
+    const detail::u8sv line(bytes, opaque->span.length);
+    const auto colon = line.find(u8':');
+    if (colon == detail::u8sv::npos || line.empty() || line.front() == u8';')
+        return std::nullopt;
+    return PropertyRecord{std::u8string(detail::trim(line.substr(0, colon))), std::u8string(detail::trim(line.substr(colon + 1))),
+                          opaque->span};
+}
+
+}
+
+std::optional<std::u8string> Document::projectGarbage(std::u8string_view key) const
+{
+    const auto data = embeddedData(m_sections);
+    std::optional<std::u8string> value;
+    for (std::size_t i = 0; i < m_sections.size(); ++i)
+        if (!data[i] && isProjectGarbage(m_sections[i]))
+            for (const auto &record : m_sections[i].records)
+                if (const auto p = garbageProperty(m_source, record); p && p->key == key)
+                    value = p->value;
+    return value;
+}
+
+bool Document::setProjectGarbage(std::u8string_view key, std::u8string value)
+{
+    if (m_format != SubtitleFormat::Ass)
+        return false;
+    const auto data = embeddedData(m_sections);
+    Section *garbage = nullptr;
+    Record *last = nullptr;
+    for (std::size_t i = 0; i < m_sections.size(); ++i) {
+        if (data[i] || !isProjectGarbage(m_sections[i]))
+            continue;
+        garbage = &m_sections[i];
+        for (auto &record : garbage->records)
+            if (const auto p = garbageProperty(m_source, record); p && p->key == key)
+                last = &record;
+    }
+    if (last) {
+        auto property = *garbageProperty(m_source, *last);
+        if (property.value != value) {
+            property.value = std::move(value);
+            property.edited = true;
+            *last = std::move(property);
+        }
+        return true;
+    }
+    if (!garbage) {
+        std::size_t at = 0;
+        for (std::size_t i = 0; i < m_sections.size(); ++i)
+            if (m_sections[i].kind == SectionKind::ScriptInfo)
+                at = i + 1;
+        garbage = &*m_sections.insert(m_sections.begin() + static_cast<std::ptrdiff_t>(at),
+                                      Section{SectionKind::Unknown, u8"[Aegisub Project Garbage]", std::nullopt, {}});
+    }
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < garbage->records.size(); ++i)
+        if (garbageProperty(m_source, garbage->records[i]))
+            at = i + 1;
+    PropertyRecord added{std::u8string(key), std::move(value), SourceSpan{endOfRecord(*garbage, at), 0, 0}, true, true};
+    garbage->records.insert(garbage->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
+    return true;
+}
+
+bool Document::removeProjectGarbage(std::u8string_view key)
+{
+    const auto data = embeddedData(m_sections);
+    bool removed = false;
+    for (std::size_t i = m_sections.size(); i-- > 0;) {
+        auto &section = m_sections[i];
+        if (data[i] || !isProjectGarbage(section))
+            continue;
+        removed |= std::erase_if(section.records, [&](const Record &r) {
+                       const auto p = garbageProperty(m_source, r);
+                       return p && p->key == key;
+                   }) > 0;
+        if (!section.headerSpan && section.records.empty())
+            m_sections.erase(m_sections.begin() + static_cast<std::ptrdiff_t>(i));
+    }
+    return removed;
+}
+
 bool Document::appendStyle(std::vector<std::u8string> fields)
 {
     Section *styles = nullptr;
@@ -367,7 +468,8 @@ bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &chan
                 const std::uint64_t version = line->changeVersion;
                 change(*line);
                 line->edited = true;
-                line->changeVersion = mark == ChangeMark::Changed ? newChangeVersion() : version;
+                if (mark != ChangeMark::Restored)
+                    line->changeVersion = mark == ChangeMark::Changed ? newChangeVersion() : version;
                 return true;
             }
     return false;

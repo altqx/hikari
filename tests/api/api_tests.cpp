@@ -47,7 +47,7 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
                              "info.list", "selection.get", "commands.list", "panels.list", "settings.list",
                              "settings.get", "api.version", "video.info", "video.frame_at_time",
                              "video.time_of_frame", "video.frame", "audio.info", "audio.peaks", "files.list",
-                             "files.read", "nodes.catalogue"}) {
+                             "files.read", "nodes.catalogue", "nodes.validate"}) {
         const Operation *op = Api::registry().find(name);
         ASSERT_TRUE(op) << name;
         EXPECT_EQ(op->access, Access::Read) << name;
@@ -209,6 +209,25 @@ TEST_F(ApiScripts, OneWriteIsOneUndoStep)
     EXPECT_FALSE(session->canUndo());
 }
 
+TEST_F(ApiScripts, AReviewedCallersWriteWaitsInTheReviewAndAPluginsDoesNot)
+{
+    auto *session = host.target();
+    const hikari::application::DocumentId target = *host.workspace().editingTarget();
+    Caller reviewed = aiCaller();
+    reviewed.reviewed = true;
+    ASSERT_TRUE(client.call(reviewed, "document.apply",
+                            applyAt(session->revision(), R"([{"op": "set_line", "line": 1, "fields": {"text": "one"}}])")));
+    const auto changes = host.review.changes(target);
+    ASSERT_EQ(changes.size(), 1u);
+    EXPECT_EQ(changes[0]->caller, "Test AI");
+    EXPECT_EQ(changes[0]->name, "Batch");
+    EXPECT_EQ(host.review.pendingLines(target, session->document()), 1u);
+
+    ASSERT_TRUE(client.call(pluginCaller(), "document.apply",
+                            applyAt(session->revision(), R"([{"op": "set_line", "line": 2, "fields": {"text": "two"}}])")));
+    EXPECT_EQ(host.review.changes(target).size(), 1u);
+}
+
 TEST_F(ApiScripts, AStaleRevisionChangesNothing)
 {
     auto *session = host.target();
@@ -321,6 +340,31 @@ TEST_F(ApiScripts, AListenerMayUnsubscribeWhileHearing)
     api.commandRan("GLOBAL_SAVE_SUBS", true);
     api.commandRan("GLOBAL_SAVE_SUBS", true);
     EXPECT_EQ(heard, 1);
+}
+
+TEST_F(ApiScripts, AttachedDocumentsAreVisibleBesidesTheEditingTarget)
+{
+    Caller attaching = pluginCaller();
+    attaching.attached = {hikari::application::DocumentId{2}};
+    const Result before = client.call(pluginCaller(), "lines.list", params(R"({"document": 2})"));
+    ASSERT_FALSE(before);
+    EXPECT_EQ(before.error().code, errors::kNotGranted);
+    const Result lines = client.call(attaching, "lines.list", params(R"({"document": 2, "fields": ["text"]})"));
+    ASSERT_TRUE(lines) << lines.error().message;
+    EXPECT_EQ(lines->find("lines")->asArray()[0].find("text")->asString(), "other");
+    const Result listed = client.call(attaching, "documents.list", Json());
+    ASSERT_TRUE(listed);
+    EXPECT_EQ(listed->find("documents")->asArray().size(), 2u);
+
+    std::vector<std::string> heard;
+    const auto s = api.subscribe(attaching, {"document.changed", "documents.changed"},
+                                 [&](const Event &e) { heard.push_back(e.name + " " + e.data.dump()); });
+    api.documentChanged(hikari::application::DocumentId{2});
+    api.documentsChanged();
+    ASSERT_EQ(heard.size(), 2u);
+    EXPECT_TRUE(heard[0].starts_with(R"(document.changed {"document":2,)")) << heard[0];
+    EXPECT_EQ(heard[1], R"(documents.changed {"documents":[1,2],"editingTarget":1})");
+    api.unsubscribe(s);
 }
 
 TEST_F(ApiScripts, DocumentsChangedIsNarrowedWithoutTheGrant)

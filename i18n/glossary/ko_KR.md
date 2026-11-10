@@ -42,6 +42,7 @@ that name so the two read alike. The English terms are those of `CONTEXT.md`.
 | Document tab | 문서 탭 | |
 | Untitled | 새 자막 | Legacy (the Untitled Document) |
 | Session | 세션 | Legacy "Last session" stays 마지막 작업 |
+| Project (a folder opened with Open folder…) | 프로젝트 | "Close project" 프로젝트 닫기 |
 | Workspace | 작업 공간 | |
 | Panel | 패널 | |
 | Grid (subtitle grid) | 자막 목록 | |

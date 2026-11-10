@@ -70,6 +70,9 @@ struct DraftChange {
     bool restoresProvenance = false;
 };
 
+// The fields a user edits are equal; ids, spans and change marks aside.
+bool sameLineFields(const core::LineRecord &a, const core::LineRecord &b);
+
 // A command declares the Lines it touches and mutates a working copy. Returning
 // false rejects it; the working copy is then discarded.
 struct Command {
@@ -166,6 +169,7 @@ public:
         std::string name;
         std::optional<core::LineId> active;
         std::size_t activeRow = 0; // 1-based row of that Line in the step's Document, 0 for none
+        ContentId content;
     };
     std::vector<HistoryStep> history() const;
     // The Document a kept history step holds (0 <= step < historySize()).
