@@ -5,7 +5,8 @@
 //
 // Requests start with an i32 Command:
 //   Load: str script path, str shared include directory, i32 trace level (aegisub.debug.out
-//         levels above it are dropped). Terminal Ok carries the ScriptInfo; Failed carries the
+//         levels above it are dropped), str compile cache directory (version 10; empty: none, so
+//         MoonScript compiles every load). Terminal Ok carries the ScriptInfo; Failed carries the
 //         error text. A helper loads one script once.
 //   Run:  i32 macro index, then a MacroSnapshot. Progress events and Service calls while it runs;
 //         Terminal Ok carries the MacroResult, Failed the error text, or Cancelled.
@@ -35,7 +36,7 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 9;
+inline constexpr std::uint32_t kProtocolVersion = 10;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4, RunNodes = 5 };

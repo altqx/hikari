@@ -135,7 +135,6 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.alwaysSendCrashReports", Check, Updates},
     {"privacy.discordPresence", Check, Updates},
     {"privacy.discordFileName", Check, Updates},
-    {"privacy.starPrompt", Check, Updates},
     {"video.zoomModel", IndexChoice, Video, 0, 0, 2},
     {"video.scrollAction", IndexChoice, Video, 0, 0, 5},
     {"video.ctrlScrollAction", IndexChoice, Video, 0, 0, 5},
@@ -143,6 +142,7 @@ constexpr OptionsBinding kBindings[] = {
     {"editor.softLineBreak", Check, LineEditor},
     {"grid.splitFramesBakeAnimations", Check, Grid},
     {"ai.off", Check, Ai},
+    {"ai.autoUpdate", Check, Ai},
     {"ai.promptCaching", Check, Ai},
     {"video.handleSize", Number, Video, 50, 400},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
@@ -155,6 +155,13 @@ constexpr OptionsBinding kBindings[] = {
     {"plugins.network", Check, Updates},
     {"ai.webSearch", Check, Ai},
     {"ai.searchService", Text, Ai},
+    {"ai.mcp.server", Check, Ai},
+    {"ai.mcp.http", Check, Ai},
+    {"audio.karaokeThaiClusters", Check, Audio},
+    {"ai.agent.mode", Text, Ai},
+    {"ai.agent.threadCapCents", Number, Ai, 0, 100000},
+    {"ai.agent.dailyCapCents", Number, Ai, 0, 1000000},
+    {"ai.agent.costMeter", Check, Ai},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

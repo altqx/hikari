@@ -13,11 +13,11 @@ DialogWindow {
     dialogId: "perspectiveTracking"
     modal: true
     defaultButton: applyButton
-    initialFocus: dataText
+    initialFocus: dataField.area
     property var initial: ({})
     property var document: 0
     property string failure: ""
-    readonly property var status: visible ? app.checkPerspectiveTracking(dataText.text, relativeFrame.value) : ({})
+    readonly property var status: visible ? app.checkPerspectiveTracking(dataField.text, relativeFrame.value) : ({})
     Connections {
         target: dialog.app
         function onTabsChanged() {
@@ -31,7 +31,7 @@ DialogWindow {
         if (v.frames === undefined)
             return
         initial = v
-        dataText.text = v.data
+        dataField.text = v.data
         relativeFrame.value = v.relativeFrame
         origin.currentIndex = 2
         fitFlat.checked = v.fitFlat
@@ -44,7 +44,7 @@ DialogWindow {
     function apply() {
         if (!status.canApply || app.editingDocument() !== document)
             return
-        failure = app.applyPerspectiveTracking(dataText.text, relativeFrame.value, origin.currentIndex, fitFlat.checked,
+        failure = app.applyPerspectiveTracking(dataField.text, relativeFrame.value, origin.currentIndex, fitFlat.checked,
                                                moveClips.checked, scaleBorders.checked)
         if (failure.length === 0)
             close()
@@ -59,61 +59,19 @@ DialogWindow {
 
     RowLayout {
         spacing: 24
-        ColumnLayout {
-            spacing: 6
+        TrackingDataField {
+            id: dataField
+            app: dialog.app
+            host: dialog
+            title: qsTr("Power-Pin data")
+            dataObjectName: "perspectiveTrackingData"
+            statusObjectName: "perspectiveTrackingStatus"
+            pasteObjectName: "perspectiveTrackingPaste"
+            openObjectName: "perspectiveTrackingOpen"
+            statusKind: dialog.failure.length > 0 ? "error" : dialog.status.state ?? "idle"
+            statusText: dialog.failure.length > 0 ? dialog.failure : dialog.status.text ?? ""
             Layout.alignment: Qt.AlignTop
-            Label {
-                text: qsTr("Power-Pin data")
-                font: dialog.fontAt(12, Font.DemiBold)
-            }
-            Item {
-                implicitWidth: 400
-                implicitHeight: 236
-                ScrollView {
-                    anchors.fill: parent
-                    TextArea {
-                        id: dataText
-                        objectName: "perspectiveTrackingData"
-                        textFormat: TextEdit.PlainText
-                        selectByMouse: true
-                        font.family: "monospace"
-                        Accessible.name: qsTr("Power-Pin data")
-                        Accessible.description: dialog.status.text ?? ""
-                        background: Rectangle {
-                            color: Theme.field
-                            border.width: 1
-                            border.color: parent.activeFocus ? Theme.focus : Theme.line
-                        }
-                        onTextChanged: dialog.failure = ""
-                    }
-                }
-            }
-            RowLayout {
-                spacing: 6
-                Layout.preferredWidth: 400
-                Layout.minimumHeight: 34
-                readonly property string kind: dialog.failure.length > 0 ? "error" : dialog.status.state ?? "idle"
-                readonly property color tint: kind === "error" ? Theme.danger : kind === "warning" ? Theme.warning
-                                              : kind === "idle" ? Theme.muted : Theme.text
-                Icon {
-                    iconRole: ({ ok: "run-applied", warning: "notice-warning", error: "notice-error" })[parent.kind] || "notice-info"
-                    size: 14
-                    color: parent.tint
-                    accentColor: parent.kind === "ok" ? Theme.accent : parent.tint
-                    Layout.alignment: Qt.AlignTop
-                    Layout.topMargin: 1
-                }
-                Label {
-                    objectName: "perspectiveTrackingStatus"
-                    text: dialog.failure.length > 0 ? dialog.failure : dialog.status.text ?? ""
-                    color: parent.tint
-                    wrapMode: Text.Wrap
-                    font: dialog.fontAt(12)
-                    Layout.fillWidth: true
-                    Accessible.role: Accessible.StaticText
-                    Accessible.name: text
-                }
-            }
+            onTextChanged: dialog.failure = ""
         }
         ColumnLayout {
             spacing: 10

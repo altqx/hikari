@@ -163,6 +163,7 @@ signals:
     void documentEdited();
     void otherDocumentEdited(std::pair<std::uint64_t, std::uint64_t> document);
     void videoChanged();
+    void documentTrusted();
 
 private:
     struct Pending {

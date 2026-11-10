@@ -53,16 +53,6 @@ Json providersJson(const app::Config &config, std::optional<app::SearchService> 
     return params;
 }
 
-app::Usage usageOf(const Json &usage)
-{
-    return {.inputTokens = intAt(usage, "inputTokens"),
-            .outputTokens = intAt(usage, "outputTokens"),
-            .cachedInputTokens = intAt(usage, "cachedInputTokens"),
-            .cacheWriteTokens = intAt(usage, "cacheWriteTokens"),
-            .cacheWriteHourTokens = intAt(usage, "cacheWriteHourTokens"),
-            .reportedCost = numberAt(usage, "reportedCost")};
-}
-
 std::optional<int> offsetAt(const Json &citation, std::string_view key)
 {
     const std::optional<double> value = numberAt(citation, key);
@@ -140,6 +130,16 @@ std::vector<app::Model> modelsOf(const Json &result)
     return models;
 }
 
+}
+
+app::Usage usageOf(const Json &usage)
+{
+    return {.inputTokens = intAt(usage, "inputTokens"),
+            .outputTokens = intAt(usage, "outputTokens"),
+            .cachedInputTokens = intAt(usage, "cachedInputTokens"),
+            .cacheWriteTokens = intAt(usage, "cacheWriteTokens"),
+            .cacheWriteHourTokens = intAt(usage, "cacheWriteHourTokens"),
+            .reportedCost = numberAt(usage, "reportedCost")};
 }
 
 app::Error requestError(const SidecarFailure &failure)

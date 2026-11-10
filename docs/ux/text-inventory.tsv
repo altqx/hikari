@@ -680,6 +680,7 @@ Menus	Hotkeys	Add italic		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Add lead-in		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Add lead-out		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Add line wrap		src/application/hotkeys.cpp src/ui/command_names.cpp
+Menus	Hotkeys	Alt+F4 is kept for closing the window.		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Apply changes		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	Hotkeys	Apply the changes and go to the next line		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	ASS file properties	term:Script-properties	src/application/hotkeys.cpp src/ui/Main.qml src/ui/ScriptPropertiesDialog.qml …
@@ -911,7 +912,6 @@ Menus	Hotkeys	Video		src/app/analytics.cpp src/app/application.cpp src/applicati
 Menus	Hotkeys	Volume down		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Volume up		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	You cannot use shortcuts for copying, cutting, and pasting.		src/application/hotkeys.cpp src/ui/command_names.cpp
-Menus	Hotkeys	You cannot use the program exit shortcut.		src/application/hotkeys.cpp src/ui/command_names.cpp
 Menus	Hotkeys	Zoom video		src/application/hotkeys.cpp src/ui/Main.qml src/ui/command_names.cpp
 Menus	Karaoke	Backspace		src/application/hotkeys.cpp src/ui/KanjiTimerDialog.qml
 Menus	Karaoke	Close		Automation/automation/Autoload/l0.DependencyControl.Toolbox.moon src/ui/AllTagsEditionDialog.qml src/ui/AutomationProgress.qml …

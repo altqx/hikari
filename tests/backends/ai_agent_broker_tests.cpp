@@ -219,6 +219,8 @@ TEST_F(AgentBrokerTest, QtPicksTheProgramAndOnlyListedVariablesComeFromTheSideca
     const std::uint64_t process = start("fake", Json::array({"--x"}),
                                         Json::object({{"CLAUDE_CODE_ENTRYPOINT", "sdk-ts"}, {"HIKARI_TEST_SECRET", "s"}}));
     EXPECT_FALSE(*call(kAgentStart, Json::object({{"process", process}, {"agent", "fake"}})));
+    EXPECT_EQ(broker.running("fake"), 1u);
+    EXPECT_EQ(broker.running("claude"), 0u);
     send(process, R"({"hello":1})");
     ASSERT_TRUE(waitFor([&] { return lines(process).size() == 2; }));
     EXPECT_EQ(lines(process)[0], Json::object({{"started", Json::object({{"args", Json::array({"app-server", "--x"})},
@@ -229,6 +231,7 @@ TEST_F(AgentBrokerTest, QtPicksTheProgramAndOnlyListedVariablesComeFromTheSideca
     ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));
     EXPECT_EQ(*exitCode(process), 0);
     EXPECT_EQ(broker.running(), 0u);
+    EXPECT_EQ(broker.running("fake"), 0u);
 }
 
 TEST_F(AgentBrokerTest, RefusedArgumentsStartNothing)

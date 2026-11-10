@@ -1,5 +1,6 @@
 #include "hikari/application/audio_spectrum.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/extents_cache.h"
 
 #include <gtest/gtest.h>
 
@@ -169,8 +170,10 @@ struct FakeMedia : MacroMediaPort {
     {
         return video ? std::optional(std::vector<std::int64_t>{0, 24}) : std::nullopt;
     }
+    int frames = 0;
     void frame(std::int64_t, bool, std::function<void(std::optional<Frame>)> reply) override
     {
+        ++frames;
         pendingFrame = std::move(reply);
     }
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
@@ -267,6 +270,115 @@ TEST_F(RouterTest, FramesAnswerWhenDecoded)
     ASSERT_EQ(replies.size(), 1u);
     EXPECT_EQ(replies[0].integers, (std::vector<std::int64_t>{1, 1}));
     EXPECT_EQ(replies[0].pixels.size(), 4u);
+}
+
+TEST_F(RouterTest, FrameTimesCrossAsTheTableTheyAnswerFrom)
+{
+    FakeMedia media;
+    router.setMedia(&media);
+    router.handle(request(HostService::FrameTimes), collect());
+    ASSERT_EQ(replies.size(), 1u);
+    const auto &v = replies[0].integers;
+    ASSERT_GE(v.size(), 3u);
+    Timecodes timecodes;
+    timecodes.numerator = v[0];
+    timecodes.last = v[1];
+    timecodes.startsMs.assign(v.begin() + 2, v.end());
+    const auto sent = AegisubFrameTimes::fromTimecodes(timecodes);
+    const auto held = *media.frameTimes();
+    for (std::int64_t ms = -500; ms <= 6000; ms += 13)
+        EXPECT_EQ(sent.frameFromMs(ms), held.frameFromMs(ms)) << ms;
+    for (std::int64_t frame = -5; frame <= 150; ++frame)
+        EXPECT_EQ(sent.msFromFrame(frame), held.msFromFrame(frame)) << frame;
+    media.video = false;
+    router.handle(request(HostService::FrameTimes), collect());
+    EXPECT_EQ(replies.back().status, HostServiceReply::Status::Unavailable);
+}
+
+struct CountingMeasure : TextMeasurePort {
+    std::vector<std::string> measured;
+    std::optional<TextExtents> measure(const std::vector<std::string> &, const std::string &text) override
+    {
+        measured.push_back(text);
+        if (text == "missing")
+            return std::nullopt;
+        return TextExtents{static_cast<double>(text.size()), 2, 3, 4};
+    }
+};
+
+TEST_F(RouterTest, TextExtentsManyAnswersEachTextAsTextExtentsDoes)
+{
+    CountingMeasure measure;
+    router.setTextMeasure(&measure);
+    router.handle(request(HostService::TextExtentsMany, {}, {"ab", "missing", "abcd"}), collect());
+    ASSERT_EQ(replies.size(), 1u);
+    EXPECT_EQ(replies[0].integers, (std::vector<std::int64_t>{1, 0, 1}));
+    EXPECT_EQ(replies[0].numbers, (std::vector<double>{2, 2, 3, 4, 0, 0, 0, 0, 4, 2, 3, 4}));
+    EXPECT_EQ(measure.measured, (std::vector<std::string>{"ab", "missing", "abcd"}));
+}
+
+TEST(ExtentsCache, MeasuresEachStyleAndTextOnceAndBatchesTheMisses)
+{
+    struct Batches : CountingMeasure {
+        std::vector<std::vector<std::string>> batches;
+        std::vector<std::optional<TextExtents>> measureMany(const std::vector<std::string> &style,
+                                                            const std::vector<std::string> &texts) override
+        {
+            batches.push_back(texts);
+            return TextMeasurePort::measureMany(style, texts);
+        }
+    } inner;
+    karaoke_layout::ExtentsCache cache(inner);
+    const std::vector<std::string> plain{"Default", "Arial", "20"}, big{"Default", "Arial", "40"};
+    const auto first = cache.measure(plain, "ab");
+    EXPECT_TRUE(first.measuredNow);
+    EXPECT_EQ(first.extents->width, 2);
+    EXPECT_FALSE(cache.measure(plain, "ab").measuredNow);
+    EXPECT_TRUE(cache.measure(plain, "missing").measuredNow);
+    EXPECT_FALSE(cache.measure(plain, "missing").measuredNow) << "a failure is kept for the run";
+    const auto many = cache.measureMany(plain, {"ab", "abc", "missing", "abc", "abcd"});
+    ASSERT_EQ(many.size(), 5u);
+    EXPECT_FALSE(many[0].measuredNow);
+    EXPECT_TRUE(many[1].measuredNow);
+    EXPECT_EQ(many[1].extents->width, 3);
+    EXPECT_FALSE(many[2].extents);
+    EXPECT_FALSE(many[3].measuredNow) << "the second of one text in a batch was measured by the first";
+    EXPECT_EQ(many[4].extents->width, 4);
+    EXPECT_EQ(inner.batches, (std::vector<std::vector<std::string>>{{"abc", "abcd"}}));
+    EXPECT_TRUE(cache.measure(big, "ab").measuredNow) << "another Style is another text";
+    EXPECT_EQ(inner.measured, (std::vector<std::string>{"ab", "missing", "abc", "abcd", "ab"}));
+    EXPECT_EQ(cache.measured(), 5u);
+}
+
+TEST_F(RouterTest, AFrameIsDecodedOnceForItsPixelsSizeAndCopy)
+{
+    FakeMedia media;
+    router.setMedia(&media);
+    router.handle(request(HostService::FrameSize, {3, 1}), collect());
+    ASSERT_TRUE(media.pendingFrame);
+    (*media.pendingFrame)(MacroMediaPort::Frame{2, 1, {std::byte{1}, std::byte{2}, std::byte{3}, std::byte{4},
+                                                       std::byte{5}, std::byte{6}, std::byte{7}, std::byte{8}}});
+    router.handle(request(HostService::FramePixel, {3, 1, 1, 0}), collect());
+    router.handle(request(HostService::FramePixel, {3, 1, 2, 0}), collect());
+    router.handle(request(HostService::Frame, {3, 1}), collect());
+    ASSERT_EQ(replies.size(), 4u);
+    EXPECT_EQ(media.frames, 1);
+    EXPECT_EQ(replies[0].integers, (std::vector<std::int64_t>{2, 1}));
+    EXPECT_TRUE(replies[0].pixels.empty());
+    EXPECT_EQ(replies[1].integers, (std::vector<std::int64_t>{5, 6, 7}));
+    EXPECT_EQ(replies[2].status, HostServiceReply::Status::Unavailable);
+    EXPECT_EQ(replies[3].pixels.size(), 8u);
+
+    router.handle(request(HostService::FramePixel, {3, 0, 0, 0}), collect());
+    EXPECT_EQ(media.frames, 2) << "the frame without subtitles is another frame";
+    auto later = request(HostService::FramePixel, {3, 1, 0, 0});
+    later.run = 8;
+    router.handle(later, collect());
+    EXPECT_EQ(media.frames, 3) << "another run decodes afresh";
+    (*media.pendingFrame)(MacroMediaPort::Frame{1, 1, {std::byte{9}, std::byte{9}, std::byte{9}, std::byte{9}}});
+    router.withdraw();
+    router.handle(later, collect());
+    EXPECT_EQ(media.frames, 4) << "a run's end forgets its frames";
 }
 
 TEST_F(RouterTest, OnePickerAtATimeAndAWithdrawnAnswerIsDropped)

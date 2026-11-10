@@ -4,6 +4,8 @@
 
 #include <QCollator>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 #include <QLoggingCategory>
 
 #include <algorithm>
@@ -108,6 +110,56 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
         const auto it = m_plugins.find(plugin);
         return it == m_plugins.end() ? api::Json() : m_files->grantDropped(it->second->files, file);
     });
+    wireQmlPanels();
+}
+
+void PluginRuntime::wireQmlPanels()
+{
+    m_ui->setQmlHooks({
+        [this](const std::string &plugin, const std::string &operation, const api::Json &params,
+               std::function<void(api::Result)> done) {
+            const auto it = m_plugins.find(plugin);
+            if (it == m_plugins.end() || !m_wiring.api) {
+                done(api::fail(api::errors::kUnavailable, "the Hikari API isn't available here"));
+                return;
+            }
+            m_wiring.api->call(it->second->caller, operation, params, std::move(done));
+        },
+        [this](const std::string &plugin, const std::string &setting, const api::Json &value) {
+            return setSetting(plugin, setting, value);
+        },
+        [this](const std::string &plugin) {
+            const auto it = m_plugins.find(plugin);
+            if (it == m_plugins.end() || !m_installer)
+                return api::Json::object();
+            api::Json stored = api::Json::object();
+            if (const auto registry = m_installer->registry(); registry && registry->contains(plugin))
+                stored = registry->at(plugin).settings;
+            return plugins::settingValues(it->second->manifest, stored);
+        },
+        [this] { return m_wiring.language ? m_wiring.language() : QString(); },
+        [this](const QString &pluginName, const QString &text, bool error) {
+            if (m_wiring.log)
+                m_wiring.log->log(text, error ? ui::LogController::Error : ui::LogController::Warning, pluginName);
+        },
+    });
+    if (!m_wiring.folders.registry.isEmpty())
+        m_ui->keepLoadedPanelsIn(QFileInfo(m_wiring.folders.registry).dir().filePath(QStringLiteral("plugin-panels.json")));
+}
+
+std::optional<std::string> PluginRuntime::setSetting(const std::string &plugin, const std::string &setting,
+                                                     const api::Json &value)
+{
+    if (m_wiring.setSetting) {
+        const QString refused = m_wiring.setSetting(qs(plugin), qs(setting), qs(value.dump()));
+        return refused.isEmpty() ? std::nullopt : std::optional(refused.toStdString());
+    }
+    if (!m_installer)
+        return "HikariSub can’t keep settings here";
+    if (const auto kept = m_installer->setSetting(plugin, setting, value); !kept)
+        return kept.error();
+    settingChanged(qs(plugin), qs(setting), qs(value.dump()));
+    return std::nullopt;
 }
 
 PluginRuntime::~PluginRuntime()
@@ -136,7 +188,8 @@ void PluginRuntime::sync()
                 }
                 const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
                 installed.push_back({id, manifest->name, entry.enabled, manifest->panels,
-                                     QUrl::fromLocalFile(QString::fromStdU16String(root.u16string()))});
+                                     QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
+                                     manifest->tier == plugins::Tier::Unrestricted, manifest->version});
                 if (entry.enabled)
                     wanted.emplace(id, std::move(*manifest));
             }
@@ -155,10 +208,10 @@ void PluginRuntime::sync()
         process->forceStop();
         it = m_plugins.erase(it);
     }
-    m_ui->setPlugins(std::move(installed));
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    m_ui->setPlugins(std::move(installed));
     relist();
 }
 
@@ -284,6 +337,8 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
             return;
         }
         const auto kept = m_installer->setSetting(plugin.id, request.name, *value);
+        if (kept)
+            m_ui->settingsChanged(plugin.id);
         reply(kept ? std::string() : kept.error());
         return;
     }
@@ -464,6 +519,7 @@ void PluginRuntime::settingChanged(const QString &pluginId, const QString &setti
     const auto value = api::Json::parse(json.toStdString());
     if (it == m_plugins.end() || !value)
         return;
+    m_ui->settingsChanged(it->first);
     const api::Json data = api::Json::object({{"id", setting.toStdString()}, {"value", *value}});
     it->second->process->deliver("settings:changed", data.dump(), "settings:changed#" + setting.toStdString());
 }

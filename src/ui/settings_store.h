@@ -28,6 +28,7 @@ public:
     const QString &file() const { return m_file; }
     application::Settings &settings() { return *m_settings; }
     const application::Settings &settings() const { return *m_settings; }
+    application::SettingsStorage &storage() { return *m_storage; }
 
     Q_INVOKABLE QVariant value(const QString &id) const;
     Q_INVOKABLE bool isSet(const QString &id) const;

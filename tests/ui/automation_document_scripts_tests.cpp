@@ -113,7 +113,7 @@ class AutomationDocumentScriptsTests : public QObject {
 
     void trustTheTestFolder()
     {
-        app->settingsStore()->set("automation.trustedFolders", QStringList{QDir::toNativeSeparators(dir.path())});
+        app->settingsStore()->set("trust.folders", QStringList{QDir::toNativeSeparators(dir.path())});
     }
 
 private slots:
@@ -705,7 +705,7 @@ private slots:
         QVERIFY(settled());
         QCOMPARE(automation.scripts().size(), std::size_t(1));
         QVERIFY(automation.documentScriptsToLoad().isEmpty());
-        QCOMPARE(app->settingsStore()->list("automation.trustedFolders"),
+        QCOMPARE(app->settingsStore()->list("trust.folders"),
                  QStringList{QDir::toNativeSeparators(dir.path())});
 
         automation.unload(script.toStdString());
@@ -758,7 +758,7 @@ private slots:
         const QString folder = unc.left(unc.lastIndexOf(QLatin1Char('\\')));
         QCOMPARE(asked.first().at(2).toStringList(), QStringList{folder});
         automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("always"));
-        QVERIFY(app->settingsStore()->list("automation.trustedFolders").contains(folder));
+        QVERIFY(app->settingsStore()->list("trust.folders").contains(folder));
         QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{unc.toStdString()});
         QVERIFY(settled());
 #endif
@@ -829,7 +829,7 @@ private slots:
             QCOMPARE(asked.size(), 1);
             app->automation().answerTrust(asked.first().at(0).toInt(), QStringLiteral("always"));
             QCOMPARE(app->automation().documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
-            QCOMPARE(app->settingsStore()->list("automation.trustedFolders"), (QStringList{mine, folder}));
+            QCOMPARE(app->settingsStore()->list("trust.folders"), (QStringList{mine, folder}));
             QVERIFY(settled());
         }
         const auto reopen = [&] {
@@ -846,9 +846,9 @@ private slots:
             QCOMPARE(app->automation().documentScripts().scripts(), std::vector<std::string>{script.toStdString()});
             QVERIFY(settled());
         }
-        app->applySettings({{QStringLiteral("automation.trustedFolders"),
+        app->applySettings({{QStringLiteral("trust.folders"),
                              QStringList{mine, QDir::toNativeSeparators(QDir::tempPath())}}});
-        QCOMPARE(app->settingsStore()->list("automation.trustedFolders"), QStringList{mine});
+        QCOMPARE(app->settingsStore()->list("trust.folders"), QStringList{mine});
         QVERIFY(reopen());
         QSignalSpy asked(&app->automation(), &app::AutomationShell::trustRequested);
         app->automation().menuOpened();

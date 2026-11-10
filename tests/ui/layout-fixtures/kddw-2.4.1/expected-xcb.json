@@ -14,7 +14,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -89,7 +93,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {
@@ -194,7 +202,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -271,7 +283,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -338,7 +354,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -403,7 +423,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -467,7 +491,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -544,7 +572,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {
@@ -649,7 +681,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -715,7 +751,11 @@
             "Spellchecker",
             "Postprocessor",
             "QcNotes",
-            "Review"
+            "Review",
+            "Agent",
+            "NodeGraph",
+            "NodeInspector",
+            "NodeSources"
         ],
         "floatingWindows": [
             {
@@ -790,7 +830,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
             ],
@@ -852,7 +896,11 @@
                 "Spellchecker",
                 "Postprocessor",
                 "QcNotes",
-                "Review"
+                "Review",
+                "Agent",
+                "NodeGraph",
+                "NodeInspector",
+                "NodeSources"
             ],
             "floatingWindows": [
                 {

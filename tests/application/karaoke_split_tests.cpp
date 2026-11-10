@@ -42,13 +42,13 @@ const Hyphenation &english()
 }
 
 struct Rules {
-    bool everyN = false, doubleApart = false, hyphenate = true;
+    bool everyN = false, doubleApart = false, hyphenate = true, thai = false;
 };
 
 std::string syllables(std::string_view text, Rules rules = {})
 {
     const std::u16string t = u(text);
-    const KaraokeSplitRules split{rules.everyN, rules.doubleApart, rules.hyphenate ? &english() : nullptr};
+    const KaraokeSplitRules split{rules.everyN, rules.doubleApart, rules.hyphenate ? &english() : nullptr, rules.thai};
     const auto starts = karaokeAutoSplit(t, split, KaraokeCharClass::ascii());
     std::string out;
     for (std::size_t i = 0; i < starts.size(); i++) {
@@ -192,6 +192,62 @@ TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
     const std::u16string aegean = u"ka\U00010100 ra";
     EXPECT_EQ(karaokeAutoSplit(aegean, {}, classes), (std::vector<std::size_t>{0, 5}));
     EXPECT_EQ(karaokeWeight(aegean, classes), 4);
+}
+
+TEST(KaraokeAutoSplit, ThaiByCharacterCluster)
+{
+    const Rules thai{.thai = true};
+    EXPECT_EQ(syllables("กิน", thai), "กิ|น");
+    EXPECT_EQ(syllables("น้ำ", thai), "น้ำ");
+    EXPECT_EQ(syllables("กินน้ำ", thai), "กิ|น|น้ำ");
+    EXPECT_EQ(syllables("ดูที่นี่", thai), "ดู|ที่|นี่");
+    EXPECT_EQ(syllables("สวัสดีครับ", thai), "ส|วั|ส|ดี|ค|รั|บ");
+    EXPECT_EQ(syllables("ขึ้นคำ", thai), "ขึ้|น|คำ");
+    EXPECT_EQ(syllables("เร็วๆ", thai), "เ|ร็|ว|ๆ");
+    EXPECT_EQ(syllables("กิน ข้าว", thai), "กิ|น |ข้|า|ว");
+    EXPECT_EQ(syllables("{\\b1}กิ{\\b0}น", thai), "{\\b1}กิ|{\\b0}น");
+}
+
+TEST(KaraokeAutoSplit, ThaiInMixedLines)
+{
+    const Rules thai{.thai = true};
+    EXPECT_EQ(syllables("กินน้ำ love story", thai), "กิ|น|น้ำ |love |sto|ry");
+    EXPECT_EQ(syllables("kimi กิน", thai), "ki|mi |กิ|น");
+    EXPECT_EQ(syllables("กินok", thai), "กิ|น|ok");
+    EXPECT_EQ(syllables("君กิน", thai), "君|กิ|น");
+    EXPECT_EQ(syllables("กิน๑๒", thai), "กิ|น๑๒");
+    EXPECT_EQ(syllables("กิน, น้ำ", thai), "กิ|น, |น้ำ");
+}
+
+TEST(KaraokeAutoSplit, ThaiWordsStayWholeWithTheOptionOff)
+{
+    EXPECT_EQ(syllables("กินข้าว น้ำ"), "กินข้าว |น้ำ");
+    EXPECT_EQ(syllables("กินok"), "กินok");
+    EXPECT_EQ(syllables("kimi กินน้ำ"), "ki|mi |กินน้ำ");
+}
+
+TEST(KaraokeAutoSplit, TheThaiOptionLeavesOtherTextAsItWas)
+{
+    for (const char *line : {"karaoke", "kyou wa", "zen'in", "konnichiwa", "somatta",
+                             "\xE3\x81\xBB\xE3\x82\x93\xE3\x81\xA8\xE3\x81\x86", "\xE6\x9D\xB1\xE4\xBA\xAC love story",
+                             "kimi wo love shiteru", "dakishimete beautiful", "sakura, sakura", "kimi \"ai\"",
+                             "ka\\Nra", "{\\b1}ka{\\b0}ra", "I don'{\\i1}t know", "kara{ke", "2kara", "ka$ra",
+                             "e\xCC\x81te caf\xC3\xA9", "\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4 \xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD",
+                             "\xD9\x85\xD8\xB1\xD8\xAD\xD8\xA8\xD8\xA7 \xE0\xA4\xA8\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87"}) {
+        EXPECT_EQ(syllables(line, {.thai = true}), syllables(line)) << line;
+        EXPECT_EQ(syllables(line, {.everyN = true, .doubleApart = true, .thai = true}),
+                  syllables(line, {.everyN = true, .doubleApart = true})) << line;
+    }
+}
+
+TEST(KaraokeTimeByCharacter, ThaiClustersShareTheLineEqually)
+{
+    AudioKaraoke k;
+    k.split({u("กินน้ำ"), 0, 900}, true, {.thaiClusters = true});
+    EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"กิ", "น", "น้ำ"}));
+    EXPECT_EQ(k.times(), (std::vector<int>{300, 600, 900}));
+    k.split({u("กินน้ำ"), 0, 900}, true, {});
+    EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"กินน้ำ"}));
 }
 
 TEST(KaraokeAutoSplit, ALongerLineSplitsAtSpaces)

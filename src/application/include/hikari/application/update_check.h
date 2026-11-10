@@ -2,6 +2,8 @@
 
 // Pure: the network, files and processes are the app layer's.
 
+#include "hikari/application/project.h"
+
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -279,6 +281,7 @@ struct StartupArguments {
     // --export-docs <dir> (or =<dir>); "" when the folder is missing.
     std::optional<std::string> exportDocs;
     bool mcp = false; // --mcp: relay stdio to the running HikariSub's MCP server
+    WindowRequest window = WindowRequest::Default; // the last of -n/--new-window and -r/--reuse-window
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);

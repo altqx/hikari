@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <array>
 #include <map>
 #include <optional>
 #include <vector>
@@ -44,6 +45,18 @@ struct SidecarRelease {
     std::map<QString, QString> packages;
 };
 
+/// What the signed manifest says about a user's agent CLI: the oldest version HikariSub supports, and versions known
+/// to break it. Empty when the manifest says nothing.
+struct AgentCompat {
+    QString minimum;
+    QStringList broken;
+
+    bool operator==(const AgentCompat &) const = default;
+};
+
+/// The agent CLIs the manifest may name.
+inline constexpr std::array<const char *, 2> kAgentClis{"claude", "codex"};
+
 struct Channel {
     /// The newest release's version; the signature's trusted comment names its tag.
     QString version;
@@ -52,6 +65,7 @@ struct Channel {
     /// Newest first.
     std::vector<SidecarRelease> releases;
     QStringList blocked;
+    std::map<QString, AgentCompat> agents;
 
     const ChannelAsset *runtimeAsset(const QString &runtime, const QString &platform) const;
 };

@@ -7,6 +7,8 @@ ShellMenu {
     objectName: "documentTabMenu"
     required property var app
     property int tabIndex: -1
+    property int shellWindow: 0
+    property real document: 0
     property int firstVisible: 0
     property var menuState: ({ tabs: [], save: false, folders: [] })
     readonly property bool onTab: tabIndex >= 0
@@ -30,6 +32,8 @@ ShellMenu {
         folderItems.model = state.folders.length > 1 ? state.folders : []
         pathItems.model = state.folders.length > 1 ? state.folders : []
         comparisonMenu.prepare(index)
+        document = index >= 0 ? app.tabDocument(index) : app.editingDocument()
+        moveToWindowMenu.prepare(document)
         tabMenu.popup(item, x, y)
     }
     function kindName(kind) {
@@ -154,6 +158,20 @@ ShellMenu {
             onObjectAdded: (index, object) => switchMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => switchMenu.removeItem(object)
         }
+    }
+    MenuSeparator {}
+    ShellMenuItem {
+        objectName: "tabMenuMoveToNewWindow"
+        iconRole: "tab-to-new-window"
+        text: qsTr("Move tab to new window")
+        command: "GLOBAL_MOVE_TAB_TO_NEW_WINDOW"
+        enabled: tabMenu.document > 0
+        onTriggered: tabMenu.app.moveTabToNewWindow(tabMenu.document, Qt.point(0, 0), false)
+    }
+    MoveTabMenu {
+        id: moveToWindowMenu
+        app: tabMenu.app
+        shellWindow: tabMenu.shellWindow
     }
     MenuSeparator {}
     TabRow {

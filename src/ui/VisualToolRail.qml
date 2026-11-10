@@ -54,7 +54,7 @@ Frame {
                 contentItem: Icon {
                     objectName: "visualToolIcon" + familyButton.family
                     // MUST KILL: iconRole list repeats application::visual::Family order, and icon_tests parses this one line
-                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][familyButton.family] ?? ""
+                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient"][familyButton.family] ?? ""
                 }
                 ToolTip.visible: hovered || visualFocus
                 ToolTip.text: rail.tipOf(family)
@@ -96,7 +96,7 @@ Frame {
                 readonly property int family: modelData
                 objectName: "visualToolsMore" + family
                 // MUST KILL: iconRole list repeats application::visual::Family order, and icon_tests parses this one line
-                iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
+                iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient"][family] ?? ""
                 text: rail.tools.families[family]?.name ?? ""
                 help: rail.tipOf(family)
                 enabled: rail.tools.railEnabled
