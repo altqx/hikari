@@ -25,7 +25,7 @@ using namespace hikari;
 namespace {
 
 const QStringList kFiles{QStringLiteral("meta.json"), QStringLiteral("commands.json"), QStringLiteral("settings.json"),
-                         QStringLiteral("guide-links.json"), QStringLiteral("api.json")};
+                         QStringLiteral("guide-links.json"), QStringLiteral("api.json"), QStringLiteral("api.md")};
 
 QByteArray read(const QString &path)
 {
@@ -75,7 +75,8 @@ private slots:
             QVERIFY2(!a.isEmpty(), qPrintable(name));
             const QByteArray b = read(second.filePath(name));
             QVERIFY2(a == b, difference(name, a, b).constData());
-            QVERIFY2(QJsonDocument::fromJson(a).isObject(), qPrintable(name));
+            if (name.endsWith(QLatin1String(".json")))
+                QVERIFY2(QJsonDocument::fromJson(a).isObject(), qPrintable(name));
         }
     }
 
@@ -89,7 +90,7 @@ private slots:
         QVERIFY(QRegularExpression(QStringLiteral("^[0-9a-f]{40}$"))
                     .match(meta.value(QStringLiteral("commit")).toString())
                     .hasMatch());
-        QCOMPARE(meta.value(QStringLiteral("files")).toArray().size(), 4);
+        QCOMPARE(meta.value(QStringLiteral("files")).toArray().size(), 5);
         QCOMPARE(meta.value(QStringLiteral("api")).toInt(), api::kApiVersion);
     }
 
@@ -101,6 +102,12 @@ private slots:
                  qsizetype(api::Api::registry().operations().size()));
         QCOMPARE(read(first.filePath(QStringLiteral("api.json"))),
                  QByteArray::fromStdString(api::apiReference().dump(2) + "\n"));
+    }
+
+    void apiMdIsTheMarkdownReference()
+    {
+        QCOMPARE(read(first.filePath(QStringLiteral("api.md"))),
+                 QByteArray::fromStdString(api::referenceMarkdown(api::apiReference())));
     }
 
     void everyCommandIsThere()
