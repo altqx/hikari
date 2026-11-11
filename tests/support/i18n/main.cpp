@@ -1,4 +1,5 @@
 // Usage: hikari_i18n_lint --contexts <contexts.tsv> --extracted <located.ts> --sources <dir>
+//        hikari_i18n_lint --extracted <located.ts> --catalogs <a.ts;b.ts…>
 
 #include "hikari/i18n/contexts.h"
 
@@ -41,6 +42,35 @@ std::expected<TsCatalog, QString> readKeys(const QString &path)
     return keys;
 }
 
+int checkCatalogs(const QString &extractedPath, const QStringList &catalogPaths)
+{
+    auto extracted = readKeys(extractedPath);
+    if (!extracted)
+        return fail(extracted.error());
+    const QDir tsDir = QFileInfo(extractedPath).absoluteDir();
+    qsizetype missingCount = 0;
+    for (const QString &path : catalogPaths) {
+        auto catalog = readKeys(path);
+        if (!catalog)
+            return fail(catalog.error());
+        const auto missing = missingFromCatalog(*extracted, *catalog);
+        for (const auto &[context, m] : missing) {
+            const QString where = m->locations.isEmpty()
+                ? QString()
+                : QStringLiteral(" (%1:%2)").arg(QDir::cleanPath(tsDir.absoluteFilePath(m->locations.first().first)))
+                      .arg(m->locations.first().second);
+            std::fprintf(stderr, "%s: %s \"%s\"%s\n", qPrintable(QFileInfo(path).fileName()), qPrintable(context),
+                         qPrintable(m->source), qPrintable(where));
+        }
+        missingCount += missing.size();
+    }
+    if (missingCount > 0)
+        return fail(QStringLiteral("%1 source string(s) missing from the catalogs: run hikari_lupdate and translate them")
+                        .arg(missingCount));
+    std::printf("every source string is in the %lld catalogs\n", static_cast<long long>(catalogPaths.size()));
+    return 0;
+}
+
 }
 
 int main(int argc, char **argv)
@@ -50,12 +80,16 @@ int main(int argc, char **argv)
     QMap<QString, QString> options;
     for (qsizetype i = 0; i < args.size(); i += 2) {
         if (!args[i].startsWith(QStringLiteral("--")) || i + 1 >= args.size())
-            return fail(QStringLiteral("usage: hikari_i18n_lint --contexts <contexts.tsv> --extracted <located.ts> --sources <dir>"));
+            return fail(QStringLiteral("usage: hikari_i18n_lint --contexts <contexts.tsv> --extracted <located.ts> --sources <dir>\n"
+                                       "       hikari_i18n_lint --extracted <located.ts> --catalogs <a.ts;b.ts…>"));
         if (options.contains(args[i].mid(2)))
             return fail(QStringLiteral("%1 given twice").arg(args[i]));
         options.insert(args[i].mid(2), args[i + 1]);
     }
     const auto option = [&](const QString &name) { return options.value(name); };
+    if (options.contains(QStringLiteral("catalogs")))
+        return checkCatalogs(option(QStringLiteral("extracted")),
+                             option(QStringLiteral("catalogs")).split(u';', Qt::SkipEmptyParts));
     auto registryBytes = readFile(option(QStringLiteral("contexts")));
     if (!registryBytes)
         return fail(registryBytes.error());
