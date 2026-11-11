@@ -78,7 +78,7 @@ target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp 
 set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE video_fullscreen.cpp)
-target_sources(hikari_application PRIVATE video_timing.cpp)
+target_sources(hikari_application PRIVATE video_timing.cpp line_retime.h timing_helpers.cpp)
 target_sources(hikari_application PRIVATE center_times.cpp)
 target_sources(hikari_application PRIVATE align_to_video.cpp)
 target_sources(hikari_application PRIVATE qc_notes.cpp)

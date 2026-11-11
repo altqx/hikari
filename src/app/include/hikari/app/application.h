@@ -768,6 +768,21 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
+    Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // The amounts are audio.leadInValue / audio.leadOutValue.
+    Q_INVOKABLE bool changeLead(bool end, bool add);
+    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool extendNeighbour(bool next);
+    // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
+    // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
+    // endReason, startFrames, endFrames, linked, linkedEndBefore, leadIn, leadOut, keyframes, windowStart,
+    // windowEnd}; ok false with "problem".
+    Q_INVOKABLE QVariantMap timingSuggestion(int shellWindow);
+    // Applies the suggestion (startMs/endMs override it when >= 0) in one step, then makes
+    // the next uncommented Line active.
+    Q_INVOKABLE bool acceptTimingSuggestion(int shellWindow, int startMs = -1, int endMs = -1);
+    Q_INVOKABLE bool skipTimingSuggestion(int shellWindow);
     Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 

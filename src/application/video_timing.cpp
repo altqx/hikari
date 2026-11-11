@@ -1,5 +1,7 @@
 #include "hikari/application/video_timing.h"
 
+#include "line_retime.h"
+
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -10,19 +12,11 @@
 
 namespace hikari::application {
 
+namespace retiming {
+
 namespace {
 
 constexpr std::int64_t kUsPerMs = 1000;
-
-int msOf(core::DocumentTime t)
-{
-    return static_cast<int>(t.microseconds() / kUsPerMs);
-}
-
-int zeroIt(int ms)
-{
-    return (ms / 10) * 10;
-}
 
 // The Document's own MicroDVD rate; nullopt for other formats, 0 without one.
 std::optional<double> microDvdFps(const core::Document &d)
@@ -43,17 +37,19 @@ void newTime(core::TimeField &field, std::optional<std::int64_t> &frame, int ms,
         frame = static_cast<std::int64_t>(std::ceil(static_cast<float>(clamped) * (static_cast<float>(*fps) / 1000.f)));
 }
 
-bool isShown(const ShownLine &shown, core::LineId id)
-{
-    return !shown || shown(id);
 }
 
-struct Retime {
-    std::optional<int> startMs, endMs;
-};
+int msOf(core::DocumentTime t)
+{
+    return static_cast<int>(t.microseconds() / kUsPerMs);
+}
 
-// No change records nothing and still succeeds.
-std::expected<void, CommandRefusal> retime(EditSession &session, const char *name,
+int zeroIt(int ms)
+{
+    return (ms / 10) * 10;
+}
+
+std::expected<bool, CommandRefusal> retime(EditSession &session, const char *name,
                                            const std::map<core::LineId, Retime> &times)
 {
     std::set<core::LineId> touches;
@@ -79,11 +75,30 @@ std::expected<void, CommandRefusal> retime(EditSession &session, const char *nam
                                              return changed;
                                          }});
     if (unchanged)
-        return {};
+        return false;
     if (!ran)
         return std::unexpected(ran.error());
     session.setSelection(selection);
-    return {};
+    return true;
+}
+
+}
+
+namespace {
+
+using retiming::msOf;
+using retiming::Retime;
+using retiming::zeroIt;
+
+std::expected<void, CommandRefusal> retime(EditSession &session, const char *name,
+                                           const std::map<core::LineId, Retime> &times)
+{
+    return retiming::retime(session, name, times).transform([](bool) {});
+}
+
+bool isShown(const ShownLine &shown, core::LineId id)
+{
+    return !shown || shown(id);
 }
 
 }

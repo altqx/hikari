@@ -1288,6 +1288,10 @@ icon("lead-in-remove", "Remove lead-in", [], [TIMING],
      stroke("M13.5 1.5h-2v8h2") + accent(stroke("M2.5 5.5h6.5M7 3.5l2 2-2 2"), MINUS_BADGE))
 icon("lead-out-remove", "Remove lead-out", [], [TIMING],
      stroke("M2.5 1.5h2v8h-2") + accent(stroke("M13.5 5.5H7M9 3.5l-2 2 2 2"), MINUS_BADGE))
+icon("extend-previous-to-start", "Extend previous line to this start", [], [TIMING],
+     stroke("M5.5 4.5h-3a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h3") + rect(10.5, 4.5, 4, 7, 1) + accent(stroke("M5.5 4.5h4v7h-4")))
+icon("extend-next-to-end", "Extend next line to this end", [], [TIMING],
+     rect(1.5, 4.5, 4, 7, 1) + stroke("M10.5 4.5h3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-3") + accent(stroke("M10.5 4.5h-4v7h4")))
 icon("timing-assistant", "Assistant", [], ["timing-postprocessor"],
      stroke("M6 9.5C4.75 8.75 4 7.5 4 6a4 4 0 0 1 8 0c0 1.5-.75 2.75-2 3.5V11H6z") + stroke("M6.5 13.5h3")
      + accent(stroke("M2.5 3.5h-1v9h1M13.5 3.5h1v9h-1")))
@@ -1423,8 +1427,6 @@ for card, roles in {
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
     "AU18 #852": ["layers", "layers-repeat"],
-    "AU19 #853": ["snap-start-to-previous-keyframe", "snap-start-to-next-keyframe", "snap-end-to-previous-keyframe",
-                  "snap-end-to-next-keyframe", "lead-in-remove", "lead-out-remove", "timing-assistant"],
     "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
                   "case-upper", "case-lower", "case-title", "case-sentence", "fullwidth", "halfwidth", "dialogue-swap"],
     "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",

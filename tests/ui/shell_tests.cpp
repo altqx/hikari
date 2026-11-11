@@ -13712,6 +13712,95 @@ private slots:
         application->editor().discard();
     }
 
+    void timingAssistantSkipsAcceptsAndChangesFromTheKeyboard()
+    {
+        const QString path = writeFile(dir, "au19-assistant.ass",
+                                       "Dialogue: 0,0:00:00.48,0:00:00.70,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.90,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:01.20,0:00:01.30,Default,,0,0,0,,note\n"
+                                       "Dialogue: 0,0:00:01.60,0:00:01.70,Default,,0,0,0,,c\n");
+        const QString kf = dir.filePath(QStringLiteral("au19-kf.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 25\n0\n10\n20\n45\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restore = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        setShift("postprocessor", 1 | 2 | 4 | 8);
+        setShift("leadIn", 80);
+        setShift("leadOut", 200);
+        setShift("thresholdStart", 300);
+        setShift("keyframeBeforeStart", 50);
+        setShift("keyframeAfterStart", 0);
+        setShift("keyframeBeforeEnd", 100);
+        setShift("keyframeAfterEnd", 300);
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty());
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().keyframes() == (std::vector<int>{0, 10, 20, 45}), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        closeMismatchQuestion();
+        const auto line = [&](int i) { return session->document().lines()[static_cast<std::size_t>(i)]; };
+        const auto timebase = application->video().session().legacyTimebase();
+        const auto frames = [&](int i) {
+            return std::pair(timebase.frameAt(static_cast<int>(line(i)->start.value.microseconds() / 1000)),
+                             timebase.frameAt(static_cast<int>(line(i)->end.value.microseconds() / 1000)));
+        };
+        using Frames = std::pair<int, int>;
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QCOMPARE(session->selection().active, line(0)->id);
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_TIMING_ASSISTANT"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(item("timingAssistant") && item("timingAssistant")->isVisible());
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 1 of 3"));
+        const auto steps = session->historySize();
+
+        press(Qt::Key_S, Qt::AltModifier);
+        QTRY_COMPARE(session->selection().active, line(1)->id);
+        QCOMPARE(session->historySize(), steps);
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 2 of 3"));
+        const auto suggestion = item<QObject>("timingAssistant")->property("suggestion").toMap();
+        QCOMPARE(suggestion.value(QStringLiteral("startReason")).toString(), QStringLiteral("linked"));
+        QCOMPARE(suggestion.value(QStringLiteral("endReason")).toString(), QStringLiteral("leadOut"));
+        QCOMPARE(item("assistantStartWhy")->property("text").toString(),
+                 QStringLiteral("Lead-in of 80 ms, linked to the previous line."));
+        QVERIFY(item("assistantLinkWhy")->isVisible());
+
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, line(3)->id);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Timing assistant"));
+        QCOMPARE(frames(1), (Frames{21, 35}));
+        QCOMPARE(line(0)->end.value, line(1)->start.value);
+        QCOMPARE(frames(2), (Frames{30, 33}));
+
+        QTRY_COMPARE(item("assistantPosition")->property("text").toString(), QStringLiteral("Line 3 of 3"));
+        press(Qt::Key_C, Qt::AltModifier);
+        QTRY_VERIFY(item("assistantStartEdit")->isVisible());
+        item("assistantStartEdit")->setProperty("text", QStringLiteral("0:00:01.52"));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(frames(3).first, 38);
+        QCOMPARE(session->historySize(), steps + 2);
+        QTRY_VERIFY(item("assistantEmpty")->isVisible());
+        QCOMPARE(item("assistantEmpty")->property("text").toString(), QStringLiteral("No more lines. Accepted 2, skipped 1."));
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"))));
+        QTRY_COMPARE(frames(0).first, 10);
+        QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
+        auto *menu = item<QObject>("snapStartToNextKeyframeItem");
+        QVERIFY(menu && menu->property("enabled").toBool());
+    }
+
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
     {
         QVERIFY(application->openFile(episode));
@@ -21316,7 +21405,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 313);
+        QCOMPARE(hotkeyRows().size(), 329);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

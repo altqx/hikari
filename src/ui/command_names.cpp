@@ -322,6 +322,22 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open folder…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close project"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Node effects"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap start to the previous keyframe"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap start to the next keyframe"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap end to the previous keyframe"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap end to the next keyframe"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Add lead-in to the selected lines"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Remove lead-in from the selected lines"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Add lead-out to the selected lines"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Remove lead-out from the selected lines"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move start one frame earlier"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move start one frame later"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move end one frame earlier"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move end one frame later"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extend the previous line to this start"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extend the next line to this end"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Timing assistant"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Accept the timing assistant’s suggestion"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
