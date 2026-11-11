@@ -753,7 +753,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
         m_userFolder.isEmpty() ? std::filesystem::path()
                                : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String()),
-        m_aiScripts.get()});
+        m_aiScripts.get(), [this] { return activeProject(); }});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -803,6 +803,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
+    pluginWiring.project = [this] { return activeProject(); };
     pluginWiring.sandbox = true;
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);

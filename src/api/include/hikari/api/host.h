@@ -122,6 +122,20 @@ public:
     virtual LuaStart run(const LuaScript &script, std::function<void(LuaRun)> done) = 0;
 };
 
+struct ProjectState {
+    std::string name;
+    std::string root;
+    bool trusted = false;
+};
+
+// The Project of the window the user works in (ADR 0030).
+class ProjectHost {
+public:
+    virtual ~ProjectHost() = default;
+    // nullopt: that window has no Project.
+    virtual std::optional<ProjectState> project() const = 0;
+};
+
 // A missing port makes its operations answer unavailable.
 struct Host {
     DocumentHost *documents = nullptr;
@@ -134,6 +148,7 @@ struct Host {
     RenderHost *render = nullptr;
     SkillHost *skills = nullptr;
     AutomationHost *automation = nullptr;
+    ProjectHost *project = nullptr;
 };
 
 }
