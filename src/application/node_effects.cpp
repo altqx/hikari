@@ -1736,6 +1736,10 @@ private:
             return NodeDrawing{n.text, static_cast<int>(n.number)};
         case Kind::ForEach:
             return refuse(i, "gives a unit's place among the units, which has no templater variable");
+        case Kind::ClipGradient:
+        case Kind::Array:
+        case Kind::Particles:
+            return refuse(i, unitsRefusal(n.kind));
         case Kind::Retime:
             return refuse(i, "gives times only to an Emit's start and end");
         case Kind::Join:
@@ -1919,6 +1923,22 @@ private:
         return NodeTags{out + tags->text + ")"};
     }
 
+    static std::string unitsRefusal(Kind kind)
+    {
+        switch (kind) {
+        case Kind::ClipGradient:
+            return "cuts units into gradient strips, which a template can't write";
+        case Kind::Array:
+            return "copies units on a grid, circle or path, which a template can't write";
+        case Kind::Particles:
+            return "places units at random, which the templater can't repeat";
+        case Kind::Repeat:
+            return "repeats inside another repeat, which a template can't";
+        default:
+            return "gives units the templater can't go through";
+        }
+    }
+
     struct Units {
         int forEach = kUnwired;
         std::string unit;
@@ -1944,7 +1964,7 @@ private:
                 return refuse(u.loop, "has no units");
         }
         if (node(at).kind != Kind::ForEach)
-            return refuse(at, "gives units the templater can't go through");
+            return refuse(at, unitsRefusal(node(at).kind));
         u.forEach = at;
         u.unit = node(at).mode;
         u.skipBlank = node(at).flag;

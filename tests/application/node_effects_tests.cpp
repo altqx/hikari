@@ -929,6 +929,23 @@ TEST(NodeEffectExport, NodesWithoutATemplateFormBlockTheExportByName)
               std::vector<std::string>{"time"});
 }
 
+TEST(NodeEffectExport, StripsCopiesAndParticlesBlockTheExport)
+{
+    for (const std::string type : {"units.clip_gradient", "units.array", "units.particles"}) {
+        SCOPED_TRACE(type);
+        const auto lines = exportTemplateLines(graphOf(R"({"format": 1, "nodes": [
+            {"id": "syl", "type": "units.for_each"},
+            {"id": "many", "type": ")" + type + R"("},
+            {"id": "emit", "type": "output.emit"}],
+          "wires": [{"from": "syl.units", "to": "many.units"}, {"from": "many.units", "to": "emit.units"}]})"),
+                                               u8"g");
+        ASSERT_FALSE(lines.has_value());
+        ASSERT_EQ(lines.error().size(), 1u);
+        EXPECT_EQ(lines.error().front().node, "many");
+        EXPECT_NE(lines.error().front().message.find("which"), std::string::npos);
+    }
+}
+
 TEST(NodeEffectExport, ExportAddsTheTemplateLinesAfterTheGraphInOneStep)
 {
     EditSession session(presetDocument(kPresets[1]));

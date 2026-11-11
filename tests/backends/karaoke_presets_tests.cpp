@@ -304,10 +304,10 @@ TEST_F(KaraokePresets, ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplate
         for (const auto &l : *lines)
             exported.lines.push_back({l.layer, l.effect, l.text});
         exported.lines.resize(std::max(exported.lines.size(), templatePreset.lines.size()));
-        const std::string out = templated(fixtureWith(exported), pristineScript());
         const std::vector<std::string> golden = generatedLines(textOf(readBytes(goldenOf(file))));
         EXPECT_FALSE(golden.empty());
-        EXPECT_EQ(generatedLines(out), golden);
+        EXPECT_EQ(generatedLines(templated(fixtureWith(exported), pristineScript())), golden);
+        EXPECT_EQ(generatedLines(templated(fixtureWith(exported), bundledScript())), golden) << "the built-in templater";
     }
 }
 
