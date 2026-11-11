@@ -94,6 +94,16 @@ Nothing here adds a command or a hotkey.
 
 Legacy and Aegisub load every script a file's `Automation Scripts` names when the Automation menu opens. HikariSub asks first. The Automation menu, Run the last loaded script, Load script and the panel's "This file names scripts" offer all go through one question that lists the scripts' full paths: **Load** (for this file, this session), **Don't load** (remembered for this file for the session; Escape too) or **Always trust scripts in this folder** (Load, and the folders join Settings › General › Trusted folders, where they can be removed). The panel's offer keeps the declined scripts and asks again. Scripts in the shipped Autoload and Include and in the user's autoload folders never ask. Load script still loads the file picked.
 
+### Project scripts (PJ8 [#776](https://github.com/altqx/hikari/issues/776), 2026-11-12)
+
+A [Project](adr/0030-open-a-folder-as-a-project.md) adds a third autoload tier: `.hikari/automation/autoload/` and `.hikari/automation/include/`. The owner settled how it works across windows in Q364–Q367.
+
+- **Order and hiding.** Autoload scripts load shipped, then user, then Project. A script of the same file name (compared without case on Windows) hides an earlier tier's.
+- **Per window.** Every open trusted Project's autoload scripts load. Each window's Automation menu and Automation panel list its own Project's scripts beside the user's. A Project script hides your script of the same name only in its own window.
+- **Include.** A script inside a trusted Project's folder (its autoload scripts and the per-file scripts in its subtree) searches the Project's `include/` first, then the user's, then the shipped one. Other scripts never see a Project's `include/`. DependencyControl and the scripts it installs stay in the user folder.
+- **Trust.** Project scripts load only in a trusted Project. In an untrusted one, the Automation panel lists them under **This project** with a lock and **Trust this folder to use them**. A trusted Project trusts its own subtree, so scripts its files name stop asking.
+- **`~` paths.** A script under `.hikari/automation/` that a file names is written to `Automation Scripts` as `~` plus the path from the subtitle file's folder, for example `~../.hikari/automation/fx.lua`, so Aegisub finds it too. When a file is read, a relative path after `~` resolves against the subtitle file's folder.
+
 Each dialogue line's `line.extra` is the Line's extradata ([document model](document-model.md), FA3 [#560](https://github.com/altqx/hikari/issues/560)) as Aegisub 3.5 gives it: a table of string keys and values, a later entry winning over an earlier one with the same key. A script writes it as Aegisub reads it. Only string keys count, a number value becomes its string, any other value becomes `<not a string>`, and a value that is neither a table nor nil fails the run with Aegisub's "dialogue extradata must be a table". A changed table replaces the Line's values in the macro's one undo step, and the save writes them; an unchanged one keeps the Line's entries as they were, repeated keys included. `line.raw` carries no `{=id}` block.
 
 ### Aegisub 3.5.1 and fork API (FA4, 2026-11-02)
