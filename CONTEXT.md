@@ -155,6 +155,10 @@ _Avoid_: Command, which names a menu, toolbar or shortcut action.
 A function a model can call: an Operation offered under a model-safe name, or a search the AI sidecar answers itself. The core tools are always offered; the others are in groups that `search_tools` finds.
 _Avoid_: Operation as a synonym; tool target, which names a tool's Document.
 
+**Skill**:
+A folder of instructions for one kind of work, with a `SKILL.md` whose name and description Hikari AI always sees and whose body it reads when the work matches ([AI skills](docs/ai-skills.md)). Built in, or the user's own from the User folder; it grants no permission.
+_Avoid_: Plugin or macro, which run code; prompt or preset.
+
 **Attached Document**:
 A Document the user named with `@` in an AI thread. The AI's tools see it as well as the editing target.
 

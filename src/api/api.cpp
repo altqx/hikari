@@ -80,6 +80,7 @@ const Registry &Api::registry()
         detail::addWriteOperations(r);
         detail::addMediaOperations(r);
         detail::addFileOperations(r);
+        detail::addSkillOperations(r);
         detail::addNodeOperations(r);
         detail::addEvents(r);
         return r;
