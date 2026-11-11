@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <optional>
@@ -191,7 +192,31 @@ TEST_F(HarperClientTest, ChecksInFlightTogetherEachGetTheirFindings)
     EXPECT_EQ(c.client.starts(), 1);
 }
 
-// harper-ls 3.0.0 deadlocked when two of its texts were opened together.
+TEST_F(HarperClientTest, ThirtyTextsAreOpenTogetherAndEachGetsItsFindings)
+{
+    Checker c;
+    std::vector<std::pair<quint64, QString>> sent;
+    for (int i = 0; i < 30; ++i) {
+        const QString text = i % 2 ? QStringLiteral("I has a apple, and this is is line %1.").arg(i)
+                                   : QStringLiteral("This line %1 is fine.").arg(i);
+        sent.emplace_back(c.client.check(text), text);
+    }
+    int mostOpen = 0;
+    ASSERT_TRUE(waitFor([&] {
+        mostOpen = std::max(mostOpen, c.client.openTexts());
+        return c.results.size() == sent.size() || !c.failures.isEmpty();
+    })) << c.results.size() << " of " << sent.size();
+    EXPECT_TRUE(c.failures.isEmpty()) << c.failures.join(u'\n').toStdString();
+    EXPECT_EQ(mostOpen, 30);
+    for (const auto &[ticket, text] : sent) {
+        ASSERT_TRUE(c.results.contains(ticket));
+        EXPECT_EQ(Checker::find(c.results[ticket], text, QStringLiteral("a")) != nullptr,
+                  text.startsWith(QLatin1String("I has")))
+            << ticket;
+    }
+    EXPECT_EQ(c.client.openTexts(), 0);
+}
+
 TEST_F(HarperClientTest, ChecksSentWhileOthersRunAllEnd)
 {
     Checker c;
@@ -224,7 +249,7 @@ TEST_F(HarperClientTest, ChecksCancelledTogetherLetTheNextEnd)
         std::erase(waiting, ticket);
         if (++ended >= 20)
             return;
-        QTimer::singleShot(ended % 4 * 5, [&] {
+        QTimer::singleShot(ended % 4 * 5, &c.client, [&] {
             for (const quint64 t : std::exchange(waiting, {})) {
                 cancelled.insert(t);
                 c.client.cancel(t);

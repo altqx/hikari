@@ -55,8 +55,8 @@ The pieces in C++:
 - `$/cancel_request {requestId}` cancels a request, which still gets exactly one response, with code -32800.
 - `_hikari/api.call {operation, params}` runs `Api::call` under the sidecar's `Caller`. An HA1 error comes back as code -32000, with HA1's code in `data.code`.
 - `_hikari/tools.list` and `_hikari/tools.call` list and run Hikari's AI tools, which the sidecar builds from HA1's operations ([AI tools](ai-tools.md)).
-- `_hikari/http.request {stream, target, method, url, headers, body}` is every request the sidecar sends out. Qt answers with `_hikari/http.response` and `_hikari/http.data` notifications, then `{}`.
-- `_hikari/agent.start {process, agent, args, env}`, `.write`, `.closeInput` and `.kill` run an agent CLI through Qt, which sends `_hikari/agent.output` and `_hikari/agent.exit` back.
+- `_hikari/http.request {stream, target, method, url, headers, body}` is every request the sidecar sends out. Qt answers with `_hikari/http.response` and `_hikari/http.data` notifications, then `{}`. A target is a provider, the chosen search service, or `npm`, the read-only registry the [Claude Agent SDK](ai-external-agents.md) is fetched from.
+- `_hikari/agent.start {process, agent, args, env}`, `.write`, `.closeInput` and `.kill` run an agent CLI through Qt, which sends `_hikari/agent.output` and `_hikari/agent.exit` back. A `session/new` with `agent` runs the thread on that agent ([External agents](ai-external-agents.md)).
 - `_hikari/mcp.message` and `_hikari/mcp.closed` relay HikariSub's MCP server: Qt listens, the sidecar speaks MCP, and an `_hikari/api.call` marked `mcp` runs as that connection's caller ([MCP server](ai-mcp.md)).
 - The limits are `HelperHost`'s: 64 outstanding requests, 16 MiB outstanding and 64 MiB per message.
 

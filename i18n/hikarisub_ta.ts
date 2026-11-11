@@ -383,6 +383,10 @@
         <source>Show the log</source>
         <translation>பதிவைக் காட்டு</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -7922,6 +7926,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Thai support for automation scripts</source>
         <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
+    </message>
+    <message>
+        <source>No licence stated</source>
+        <translation>உரிமம் குறிப்பிடப்படவில்லை</translation>
     </message>
     <message>
         <source>Translation</source>

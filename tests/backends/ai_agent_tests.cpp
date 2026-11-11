@@ -305,10 +305,11 @@ protected:
         host.reset();
     }
 
-    std::unique_ptr<AgentThreads> makeThreads()
+    std::unique_ptr<AgentThreads> makeThreads(bool withoutProvider = false)
     {
         AgentThreads::Wiring w;
-        w.requests = [this] { return requests.get(); };
+        w.requests = [this, withoutProvider] { return withoutProvider ? nullptr : requests.get(); };
+        w.agentHost = [this] { return sidecar(); };
         w.config = [this] { return &providers->config(); };
         w.api = &api;
         w.defaults = [this] { return defaults; };
@@ -432,6 +433,27 @@ TEST_F(AgentThreadsTest, ATurnStreamsTheAnswerKeepsTheHistoryAndTitlesTheThread)
     EXPECT_EQ(at(opened[0], "sessionId"), id);
     EXPECT_EQ(*opened[0].find("model"), Json::object({{"providerId", "or"}, {"model", "m"}}));
     EXPECT_EQ(fake.review.turns().back().caller, "ai:" + id);
+}
+
+TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvider)
+{
+    threads = makeThreads(true);
+
+    const std::string id = threads->create();
+    threads->setModel(id, {"agent:claude", ""});
+    ASSERT_TRUE(threads->modelOf(thread(id)));
+    EXPECT_EQ(threads->modelOf(thread(id))->providerId, "agent:claude");
+    threads->send(id, "Fix the typo");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(notice(id), "");
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(at(opened[0], "agent"), "claude");
+    EXPECT_EQ(*opened[0].find("model"), Json::object({{"providerId", "agent:claude"}, {"model", ""}}));
+
+    const std::string plain = threads->create();
+    threads->send(plain, "Hello");
+    EXPECT_EQ(notice(plain), "noSidecar");
 }
 
 TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)

@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ErrorCode, kProtocolVersion, Method } from "../src/protocol";
 import { kRoot } from "../tools/bundle";
 import { RelayPlayer } from "./providers/harness";
 import { MockProvider, waitFor } from "./providers/mock";
+import { removeTempDir } from "./temp_dir";
 
 const dir = mkdtempSync(join(tmpdir(), "hikari-ai-bundle-"));
 const exe = process.platform === "win32" ? ".exe" : "";
@@ -21,7 +22,7 @@ beforeAll(() => {
 }, 120_000);
 afterAll(() => {
     mock.stop();
-    rmSync(dir, { recursive: true, force: true });
+    removeTempDir(dir);
 });
 
 test("the bundle holds no provider SDK and loads each from its own file on first use", async () => {
