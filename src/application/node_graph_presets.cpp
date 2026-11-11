@@ -430,6 +430,55 @@ constexpr std::string_view kEcho = R"({"format": 1, "nodes": [
     {"from": "syl.units", "to": "text.units"}, {"from": "lineTime.start", "to": "text.start"},
     {"from": "lineTime.end", "to": "text.end"}, {"from": "light.tags", "to": "text.tags"}]})";
 
+constexpr std::string_view kGradientStrips = R"({"format": 1, "nodes": [
+    {"id": "line", "type": "units.for_each", "fields": {"unit": "line"}},
+    {"id": "strip", "type": "units.clip_gradient", "fields": {"strips": 8, "colours": ["#FF7AC6", "#5AB4FF"], "padding": 4}},
+    {"id": "info", "type": "units.info"},
+    {"id": "colour", "type": "tags.tag", "fields": {"tag": "1c"}},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 5}},
+    {"id": "centre", "type": "values.point"},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "line.units", "to": "strip.units"}, {"from": "strip.clip", "to": "colour.before"},
+    {"from": "strip.colour", "to": "colour.colour"}, {"from": "colour.tags", "to": "an.before"},
+    {"from": "info.center", "to": "centre.x"}, {"from": "info.middle", "to": "centre.y"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "centre.point", "to": "pos.point"},
+    {"from": "strip.units", "to": "emit.units"}, {"from": "pos.tags", "to": "emit.tags"}]})";
+
+constexpr std::string_view kRingOfCopies = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "ring", "type": "units.array", "fields": {"shape": "circle", "count": 8, "radius": 30}},
+    {"id": "time", "type": "time.retime", "fields": {"mode": "syl", "end_offset": 300}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "turn", "type": "tags.tag", "fields": {"tag": "frz"}},
+    {"id": "fade", "type": "tags.fade", "fields": {"fade_in": 100, "fade_out": 200}},
+    {"id": "emit", "type": "output.emit", "fields": {"layer": 1}}],
+  "wires": [
+    {"from": "syl.units", "to": "ring.units"}, {"from": "ring.position", "to": "pos.point"},
+    {"from": "pos.tags", "to": "turn.before"}, {"from": "ring.angle", "to": "turn.value"},
+    {"from": "turn.tags", "to": "fade.before"}, {"from": "ring.units", "to": "emit.units"},
+    {"from": "time.start", "to": "emit.start"}, {"from": "time.end", "to": "emit.end"},
+    {"from": "fade.tags", "to": "emit.tags"}]})";
+
+constexpr std::string_view kParticleBurst = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "spark", "type": "units.particles", "fields": {"count": 12, "area": "ellipse", "width": 120, "height": 60}},
+    {"id": "info", "type": "units.info"},
+    {"id": "time", "type": "time.retime", "fields": {"mode": "syl", "end_offset": 400}},
+    {"id": "move", "type": "tags.move"},
+    {"id": "faint", "type": "math.calculate", "fields": {"op": "multiply", "b": 160}},
+    {"id": "alpha", "type": "tags.tag", "fields": {"tag": "alpha"}},
+    {"id": "fade", "type": "tags.fade", "fields": {"fade_out": 300}},
+    {"id": "emit", "type": "output.emit", "fields": {"layer": 1}}],
+  "wires": [
+    {"from": "syl.units", "to": "spark.units"}, {"from": "info.position", "to": "move.from"},
+    {"from": "spark.position", "to": "move.to"}, {"from": "move.tags", "to": "alpha.before"},
+    {"from": "spark.random", "to": "faint.a"}, {"from": "faint.result", "to": "alpha.alpha"},
+    {"from": "alpha.tags", "to": "fade.before"}, {"from": "spark.units", "to": "emit.units"},
+    {"from": "time.start", "to": "emit.start"}, {"from": "time.end", "to": "emit.end"},
+    {"from": "fade.tags", "to": "emit.tags"}]})";
+
 constexpr NodeGraphPreset kPresets[] = {
     {"01-classic-fill.ass", kClassicFill},
     {"02-staggered-fade.ass", kStaggeredFade},
@@ -441,6 +490,9 @@ constexpr NodeGraphPreset kPresets[] = {
     {"08-echo.ass", kEcho},
     {"09-falling-letters.ass", kFallingLetters},
     {"10-palette.ass", kPalette},
+    {{}, kGradientStrips, "gradient-strips"},
+    {{}, kRingOfCopies, "ring-of-copies"},
+    {{}, kParticleBurst, "particle-burst"},
 };
 
 }
