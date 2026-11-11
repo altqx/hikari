@@ -153,12 +153,14 @@ struct Level {
             }
             const NodeSpec *spec = nodeSpec(node.type);
             if (!spec) {
-                add(id, {}, "has the unknown type \"" + node.type + "\"");
+                add(id, {}, pluginNodeProblem(node.type).value_or("has the unknown type \"" + node.type + "\""));
                 continue;
             }
             bool fieldsOk = true;
             for (const Json::Member &m : node.fields.asObject()) {
                 const FieldSpec *f = fieldSpec(*spec, m.key);
+                if (!f && pluginOfNodeType(node.type))
+                    continue;
                 if (!f) {
                     add(id, m.key, "is not a field of " + spec->id);
                     fieldsOk = false;

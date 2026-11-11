@@ -3,6 +3,7 @@
 #include "hikari/api/schema.h"
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <set>
 
@@ -64,6 +65,60 @@ std::vector<Panel> panels(const Json *list)
                            text(item, "qml")});
         }
     return out;
+}
+
+std::vector<NodePort> nodePorts(const Json *list)
+{
+    std::vector<NodePort> out;
+    if (list && list->isArray())
+        for (const Json &port : list->asArray()) {
+            const Json *fallback = port.find("default");
+            out.push_back({text(port, "name"), text(port, "type"), fallback ? *fallback : Json()});
+        }
+    return out;
+}
+
+std::vector<NodeContribution> nodes(const Json *list)
+{
+    std::vector<NodeContribution> out;
+    if (list && list->isArray())
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "summary"), text(item, "file"),
+                           nodePorts(item.find("inputs")), nodePorts(item.find("outputs"))});
+    return out;
+}
+
+bool fitsPort(const Json &value, std::string_view type)
+{
+    if (type == "Number" || type == "Time" || type == "Alpha")
+        return value.isNumber();
+    if (type == "Bool")
+        return value.isBool();
+    if (type == "Point")
+        return value.isArray() && value.asArray().size() == 2 && value.asArray()[0].isNumber() &&
+               value.asArray()[1].isNumber();
+    if (type == "Colour") {
+        if (!value.isString() || value.asString().size() != 7 || value.asString()[0] != '#')
+            return false;
+        return std::ranges::all_of(value.asString().substr(1), [](unsigned char c) { return std::isxdigit(c); });
+    }
+    return value.isString();
+}
+
+std::optional<ManifestProblem> badNode(const NodeContribution &node, std::size_t index)
+{
+    const std::string at = "/contributes/nodes/" + std::to_string(index);
+    std::set<std::string> names;
+    for (const auto &[list, key] : {std::pair{&node.inputs, "inputs"}, std::pair{&node.outputs, "outputs"}})
+        for (std::size_t i = 0; i < list->size(); ++i) {
+            const NodePort &port = (*list)[i];
+            const std::string here = at + "/" + key + "/" + std::to_string(i);
+            if (!names.insert(port.name).second)
+                return ManifestProblem{Kind::DuplicateId, here + "/name", port.name, 0};
+            if (!port.fallback.isNull() && !fitsPort(port.fallback, port.type))
+                return ManifestProblem{Kind::BadDefault, here + "/default", "not a " + port.type, 0};
+        }
+    return std::nullopt;
 }
 
 // Where a manifest that isn't Full trust names a QML panel, before the schema's own refusal.
@@ -196,11 +251,12 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s});
+        m.nodes = nodes(contributes->find("nodes"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
-                         repeated(m.settings, "/contributes/settings")})
+                         repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
@@ -209,6 +265,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                                                    "\xE2\x80\x9C" + id + "\xE2\x80\x9D names the plugin's own folder", 0});
     for (std::size_t i = 0; i < m.settings.size(); ++i)
         if (auto problem = badDefault(m.settings[i], i))
+            return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.nodes.size(); ++i)
+        if (auto problem = badNode(m.nodes[i], i))
             return std::unexpected(*problem);
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});

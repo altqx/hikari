@@ -5750,18 +5750,6 @@ Failed to copy %2 fonts.</source>
         <translation>번역문에 넣을 글자</translation>
     </message>
     <message>
-        <source>Start tag block</source>
-        <translation>시작 태그 블록</translation>
-    </message>
-    <message>
-        <source>Clip (\clip or \iclip)</source>
-        <translation>클립 (\clip 또는 \iclip)</translation>
-    </message>
-    <message>
-        <source>These tags:</source>
-        <translation>다음 태그:</translation>
-    </message>
-    <message>
         <source>changed</source>
         <translation>변경됨</translation>
     </message>
@@ -5884,14 +5872,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>선택한 줄 %1개에서 복사할 열</translation>
-    </message>
-    <message>
-        <source>Tags</source>
-        <translation>태그</translation>
-    </message>
-    <message>
-        <source>Paste puts each tag into the start block, replacing the same tag.</source>
-        <translation>붙여넣기는 각 태그를 시작 블록에 넣고 같은 태그를 대체합니다.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7422,136 +7402,52 @@ Failed to copy %2 fonts.</source>
         <translation>여러 줄에 걸쳐 보간…</translation>
     </message>
     <message>
-        <source>Change alignment to bottom left (\an1), keep position</source>
-        <translation>정렬을 왼쪽 아래(\an1)으로 변경, 위치 유지</translation>
+        <source>Insert balanced break</source>
+        <translation>균형 잡힌 줄바꿈 삽입</translation>
     </message>
     <message>
-        <source>Change alignment to bottom centre (\an2), keep position</source>
-        <translation>정렬을 가운데 아래(\an2)으로 변경, 위치 유지</translation>
+        <source>Move break left</source>
+        <translation>줄바꿈을 왼쪽으로 이동</translation>
     </message>
     <message>
-        <source>Change alignment to bottom right (\an3), keep position</source>
-        <translation>정렬을 오른쪽 아래(\an3)으로 변경, 위치 유지</translation>
+        <source>Move break right</source>
+        <translation>줄바꿈을 오른쪽으로 이동</translation>
     </message>
     <message>
-        <source>Change alignment to middle left (\an4), keep position</source>
-        <translation>정렬을 왼쪽 가운데(\an4)으로 변경, 위치 유지</translation>
+        <source>Remove breaks</source>
+        <translation>줄바꿈 제거</translation>
     </message>
     <message>
-        <source>Change alignment to middle centre (\an5), keep position</source>
-        <translation>정렬을 정가운데(\an5)으로 변경, 위치 유지</translation>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>\N에서만 줄바꿈 (\q2)</translation>
     </message>
     <message>
-        <source>Change alignment to middle right (\an6), keep position</source>
-        <translation>정렬을 오른쪽 가운데(\an6)으로 변경, 위치 유지</translation>
+        <source>Change case to lowercase</source>
+        <translation>소문자로 바꾸기</translation>
     </message>
     <message>
-        <source>Change alignment to top left (\an7), keep position</source>
-        <translation>정렬을 왼쪽 위(\an7)으로 변경, 위치 유지</translation>
+        <source>Change case to UPPERCASE</source>
+        <translation>대문자로 바꾸기</translation>
     </message>
     <message>
-        <source>Change alignment to top centre (\an8), keep position</source>
-        <translation>정렬을 가운데 위(\an8)으로 변경, 위치 유지</translation>
+        <source>Change case to Title Case</source>
+        <translation>단어 첫 글자를 대문자로 바꾸기</translation>
     </message>
     <message>
-        <source>Change alignment to top right (\an9), keep position</source>
-        <translation>정렬을 오른쪽 위(\an9)으로 변경, 위치 유지</translation>
+        <source>Change case to Sentence case</source>
+        <translation>문장 첫 글자를 대문자로 바꾸기</translation>
     </message>
     <message>
-        <source>Align left edges</source>
-        <translation>왼쪽 가장자리 맞추기</translation>
+        <source>Change text to full-width</source>
+        <translation>전각 문자로 바꾸기</translation>
     </message>
     <message>
-        <source>Align centres</source>
-        <translation>가로 가운데 맞추기</translation>
+        <source>Change text to half-width</source>
+        <translation>반각 문자로 바꾸기</translation>
     </message>
     <message>
-        <source>Align right edges</source>
-        <translation>오른쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>위쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>세로 가운데 맞추기</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>아래쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>가로로 균등 분배</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>세로로 균등 분배</translation>
-    </message>
-    <message>
-        <source>Position to margins</source>
-        <translation>위치를 여백으로</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>여백을 위치로</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the start aligned</source>
-        <translation>팬텀: 시작 부분 맞춤 유지</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the end aligned</source>
-        <translation>팬텀: 끝부분 맞춤 유지</translation>
-    </message>
-    <message>
-        <source>Cycle \blur</source>
-        <translation>\blur 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \blur back</source>
-        <translation>\blur 거꾸로 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \bord</source>
-        <translation>\bord 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \bord back</source>
-        <translation>\bord 거꾸로 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \shad</source>
-        <translation>\shad 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \shad back</source>
-        <translation>\shad 거꾸로 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha</source>
-        <translation>\alpha 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha back</source>
-        <translation>\alpha 거꾸로 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \an</source>
-        <translation>\an 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \an back</source>
-        <translation>\an 거꾸로 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp</source>
-        <translation>\fsp 순환</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp back</source>
-        <translation>\fsp 거꾸로 순환</translation>
+        <source>Swap dialogue alternatives</source>
+        <translation>대사 대안 맞바꾸기</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -7615,6 +7511,70 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9223,6 +9183,10 @@ Failed to copy %2 fonts.</source>
         <translation>정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
+        <source>No line changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>자막 파일 열기</translation>
     </message>
@@ -9369,6 +9333,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>조건식으로 줄을 선택합니다</translation>
+    </message>
+    <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in</source>
+        <translation type="unfinished">도입부 추가</translation>
+    </message>
+    <message>
+        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out</source>
+        <translation type="unfinished">종결부 추가</translation>
+    </message>
+    <message>
+        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends the line before the active line where the active line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps through the lines one at a time with a suggested start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Builds glow, border and shadow layers under the selected lines</source>
@@ -10589,7 +10685,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tags</source>
-        <translation>태그</translation>
+        <translation type="unfinished">태그</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11660,7 +11756,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation>태그</translation>
+        <translation type="unfinished">태그</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -14134,18 +14230,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>요청은 추가한 공급자와 %1에만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
     </message>
-    <message>
-        <source>Cycle values</source>
-        <translation>순환 값</translation>
-    </message>
-    <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
-        <translation>각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
-    </message>
-    <message>
-        <source>Values for %1, in order</source>
-        <translation>%1 값, 순서대로</translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -14768,6 +14852,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>플러그인을 시작할 수 없습니다: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>플러그인의 노드를 실행할 수 없습니다: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>플러그인이 시작되지 않았습니다.</translation>
     </message>
@@ -14955,117 +15043,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
-    <name>HikariSub.Position</name>
-    <message>
-        <source>Position to margins</source>
-        <translation>위치를 여백으로</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>여백을 위치로</translation>
-    </message>
-    <message>
-        <source>Top left (%1)</source>
-        <translation>왼쪽 위 (%1)</translation>
-    </message>
-    <message>
-        <source>Top centre (%1)</source>
-        <translation>가운데 위 (%1)</translation>
-    </message>
-    <message>
-        <source>Top right (%1)</source>
-        <translation>오른쪽 위 (%1)</translation>
-    </message>
-    <message>
-        <source>Middle left (%1)</source>
-        <translation>왼쪽 가운데 (%1)</translation>
-    </message>
-    <message>
-        <source>Middle centre (%1)</source>
-        <translation>정가운데 (%1)</translation>
-    </message>
-    <message>
-        <source>Middle right (%1)</source>
-        <translation>오른쪽 가운데 (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom left (%1)</source>
-        <translation>왼쪽 아래 (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom centre (%1)</source>
-        <translation>가운데 아래 (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom right (%1)</source>
-        <translation>오른쪽 아래 (%1)</translation>
-    </message>
-    <message>
-        <source>Change alignment, keep position</source>
-        <translation>위치 유지하며 정렬 변경</translation>
-    </message>
-    <message>
-        <source>Align and distribute</source>
-        <translation>맞춤 및 분배</translation>
-    </message>
-    <message>
-        <source>Relative to</source>
-        <translation>기준</translation>
-    </message>
-    <message>
-        <source>The active line</source>
-        <translation>활성 줄</translation>
-    </message>
-    <message>
-        <source>The video frame</source>
-        <translation>비디오 프레임</translation>
-    </message>
-    <message>
-        <source>Align left edges</source>
-        <translation>왼쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align centres</source>
-        <translation>가로 가운데 맞추기</translation>
-    </message>
-    <message>
-        <source>Align right edges</source>
-        <translation>오른쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>위쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>세로 가운데 맞추기</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>아래쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>가로로 균등 분배</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>세로로 균등 분배</translation>
-    </message>
-    <message>
-        <source>Phantom</source>
-        <translation>팬텀</translation>
-    </message>
-    <message>
-        <source>Keep the start aligned</source>
-        <translation>시작 부분 맞춤 유지</translation>
-    </message>
-    <message>
-        <source>Keep the end aligned</source>
-        <translation>끝부분 맞춤 유지</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Project</name>
     <message>
         <source>Project settings</source>
@@ -15082,6 +15059,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A Project can’t set %1, so the project file’s value is ignored.</source>
         <translation>프로젝트는 %1(을)를 설정할 수 없어 프로젝트 파일의 값을 무시합니다.</translation>
+    </message>
+    <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>프로젝트 글꼴 폴더 %1을(를) 열 수 없습니다.</translation>
     </message>
     <message>
         <source>Open folder</source>
@@ -20178,6 +20159,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>대사 대안 맞바꾸기</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>줄바꿈</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>균형 잡힌 줄바꿈 삽입</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>줄바꿈을 왼쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>줄바꿈을 오른쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>줄바꿈 제거</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>%1에서만 줄바꿈 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>대소문자 바꾸기</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>소문자</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>대문자</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>단어 첫 글자 대문자</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>문장 첫 글자 대문자</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>전각</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>반각</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TextMenu</name>
     <message>
         <source>Undo</source>
@@ -20503,6 +20543,10 @@ Styles deleted:
         <translation>%1ms</translation>
     </message>
     <message>
+        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The rules need a video.</source>
         <translation>규칙을 쓰려면 영상이 필요합니다.</translation>
     </message>
@@ -20577,6 +20621,14 @@ Styles deleted:
     <message>
         <source>Open keyframes…</source>
         <translation>키 프레임 열기…</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -20693,6 +20745,114 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>열린 영상이 없어 시간을 프레임 안에서 가운데 맞추지 않았습니다</translation>
+    </message>
+    <message>
+        <source>Already on a keyframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms, linked to the previous line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-out of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule applies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it ended %1 ms before this start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it overlapped this line by %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more lines. Accepted %1, skipped %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a line to time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished">현재</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished">제안됨</translation>
+    </message>
+    <message>
+        <source>Why</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">변경</translation>
+    </message>
+    <message>
+        <source>Change the suggested times (Alt+C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">건너뛰기</translation>
+    </message>
+    <message>
+        <source>Skip this line (Alt+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -5801,18 +5801,6 @@ Failed to copy %2 fonts.</source>
         <translation>மொழிபெயர்ப்பில் உரை</translation>
     </message>
     <message>
-        <source>Start tag block</source>
-        <translation>தொடக்க குறிச்சொல் தொகுதி</translation>
-    </message>
-    <message>
-        <source>Clip (\clip or \iclip)</source>
-        <translation>கிளிப் (\clip அல்லது \iclip)</translation>
-    </message>
-    <message>
-        <source>These tags:</source>
-        <translation>இந்தக் குறிச்சொற்கள்:</translation>
-    </message>
-    <message>
         <source>changed</source>
         <translation>மாற்றப்பட்டது</translation>
     </message>
@@ -5939,14 +5927,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>தேர்ந்தெடுத்த %1 வரிகளிலிருந்து நகலெடுக்க வேண்டிய நெடுவரிசைகள்</translation>
-    </message>
-    <message>
-        <source>Tags</source>
-        <translation>குறிச்சொற்கள்</translation>
-    </message>
-    <message>
-        <source>Paste puts each tag into the start block, replacing the same tag.</source>
-        <translation>ஒட்டுதல் ஒவ்வொரு குறிச்சொல்லையும் தொடக்கத் தொகுதியில் இடும், அதே குறிச்சொல்லை மாற்றும்.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7478,136 +7458,52 @@ Failed to copy %2 fonts.</source>
         <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
     </message>
     <message>
-        <source>Change alignment to bottom left (\an1), keep position</source>
-        <translation>சீரமைப்பை கீழ் இடது (\an1) ஆக மாற்று, நிலையை வை</translation>
+        <source>Insert balanced break</source>
+        <translation>சமநிலை வரி முறிவைச் செருகு</translation>
     </message>
     <message>
-        <source>Change alignment to bottom centre (\an2), keep position</source>
-        <translation>சீரமைப்பை கீழ் நடு (\an2) ஆக மாற்று, நிலையை வை</translation>
+        <source>Move break left</source>
+        <translation>முறிவை இடப்புறம் நகர்த்து</translation>
     </message>
     <message>
-        <source>Change alignment to bottom right (\an3), keep position</source>
-        <translation>சீரமைப்பை கீழ் வலது (\an3) ஆக மாற்று, நிலையை வை</translation>
+        <source>Move break right</source>
+        <translation>முறிவை வலப்புறம் நகர்த்து</translation>
     </message>
     <message>
-        <source>Change alignment to middle left (\an4), keep position</source>
-        <translation>சீரமைப்பை நடு இடது (\an4) ஆக மாற்று, நிலையை வை</translation>
+        <source>Remove breaks</source>
+        <translation>வரி முறிவுகளை நீக்கு</translation>
     </message>
     <message>
-        <source>Change alignment to middle centre (\an5), keep position</source>
-        <translation>சீரமைப்பை நடு மையம் (\an5) ஆக மாற்று, நிலையை வை</translation>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>\N இல் மட்டும் மடி (\q2)</translation>
     </message>
     <message>
-        <source>Change alignment to middle right (\an6), keep position</source>
-        <translation>சீரமைப்பை நடு வலது (\an6) ஆக மாற்று, நிலையை வை</translation>
+        <source>Change case to lowercase</source>
+        <translation>சிற்றெழுத்துக்கு மாற்று</translation>
     </message>
     <message>
-        <source>Change alignment to top left (\an7), keep position</source>
-        <translation>சீரமைப்பை மேல் இடது (\an7) ஆக மாற்று, நிலையை வை</translation>
+        <source>Change case to UPPERCASE</source>
+        <translation>பேரெழுத்துக்கு மாற்று</translation>
     </message>
     <message>
-        <source>Change alignment to top centre (\an8), keep position</source>
-        <translation>சீரமைப்பை மேல் நடு (\an8) ஆக மாற்று, நிலையை வை</translation>
+        <source>Change case to Title Case</source>
+        <translation>தலைப்பு வடிவத்துக்கு மாற்று</translation>
     </message>
     <message>
-        <source>Change alignment to top right (\an9), keep position</source>
-        <translation>சீரமைப்பை மேல் வலது (\an9) ஆக மாற்று, நிலையை வை</translation>
+        <source>Change case to Sentence case</source>
+        <translation>வாக்கிய வடிவத்துக்கு மாற்று</translation>
     </message>
     <message>
-        <source>Align left edges</source>
-        <translation>இடது விளிம்புகளை சீரமை</translation>
+        <source>Change text to full-width</source>
+        <translation>உரையை முழு அகலத்துக்கு மாற்று</translation>
     </message>
     <message>
-        <source>Align centres</source>
-        <translation>மையங்களை சீரமை</translation>
+        <source>Change text to half-width</source>
+        <translation>உரையை அரை அகலத்துக்கு மாற்று</translation>
     </message>
     <message>
-        <source>Align right edges</source>
-        <translation>வலது விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>மேல் விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>செங்குத்து மையங்களை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>கீழ் விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>கிடைமட்டமாகப் பரப்பு</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>செங்குத்தாகப் பரப்பு</translation>
-    </message>
-    <message>
-        <source>Position to margins</source>
-        <translation>நிலையை ஓரங்களாக மாற்று</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>ஓரங்களை நிலையாக மாற்று</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the start aligned</source>
-        <translation>மறைநகல்: தொடக்கத்தை சீராக வை</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the end aligned</source>
-        <translation>மறைநகல்: முடிவை சீராக வை</translation>
-    </message>
-    <message>
-        <source>Cycle \blur</source>
-        <translation>\blur சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \blur back</source>
-        <translation>\blur பின்னோக்கிச் சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \bord</source>
-        <translation>\bord சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \bord back</source>
-        <translation>\bord பின்னோக்கிச் சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \shad</source>
-        <translation>\shad சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \shad back</source>
-        <translation>\shad பின்னோக்கிச் சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha</source>
-        <translation>\alpha சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha back</source>
-        <translation>\alpha பின்னோக்கிச் சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \an</source>
-        <translation>\an சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \an back</source>
-        <translation>\an பின்னோக்கிச் சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp</source>
-        <translation>\fsp சுழற்சி</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp back</source>
-        <translation>\fsp பின்னோக்கிச் சுழற்சி</translation>
+        <source>Swap dialogue alternatives</source>
+        <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -7671,6 +7567,70 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9310,6 +9270,10 @@ Failed to copy %2 fonts.</source>
         <translation>குறிச்சொற்கள் இல்லாத உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
+        <source>No line changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>வசனக் கோப்பைத் திற</translation>
     </message>
@@ -9456,6 +9420,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in</source>
+        <translation type="unfinished">லீட்-இன் சேர்</translation>
+    </message>
+    <message>
+        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out</source>
+        <translation type="unfinished">லீட்-அவுட் சேர்</translation>
+    </message>
+    <message>
+        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends the line before the active line where the active line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps through the lines one at a time with a suggested start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Builds glow, border and shadow layers under the selected lines</source>
@@ -10684,7 +10780,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tags</source>
-        <translation>குறிச்சொற்கள்</translation>
+        <translation type="unfinished">குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11761,7 +11857,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation>குறிச்சொற்கள்</translation>
+        <translation type="unfinished">குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -14243,18 +14339,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். இந்தக் கணினியில் AI கூறு தனிமைப்படுத்தப்படவில்லை.</translation>
     </message>
-    <message>
-        <source>Cycle values</source>
-        <translation>சுழற்சி மதிப்புகள்</translation>
-    </message>
-    <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
-        <translation>ஒவ்வொரு சுழற்சி கட்டளையும் தேர்ந்த வரிகளின் தொடக்கத் தொகுதியில் உள்ள குறிச்சொல்லை அடுத்த மதிப்புக்கு மாற்றும். பின்னோக்கிய சுழற்சி மறுதிசையில் மாற்றும்.</translation>
-    </message>
-    <message>
-        <source>Values for %1, in order</source>
-        <translation>%1 க்கான மதிப்புகள், வரிசையாக</translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -14878,6 +14962,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செருகுநிரலைத் தொடங்க முடியாது: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>செருகுநிரலின் கணுக்களை இயக்க முடியாது: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>செருகுநிரல் தொடங்கவில்லை.</translation>
     </message>
@@ -15066,117 +15154,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
-    <name>HikariSub.Position</name>
-    <message>
-        <source>Position to margins</source>
-        <translation>நிலையை ஓரங்களாக மாற்று</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>ஓரங்களை நிலையாக மாற்று</translation>
-    </message>
-    <message>
-        <source>Top left (%1)</source>
-        <translation>மேல் இடது (%1)</translation>
-    </message>
-    <message>
-        <source>Top centre (%1)</source>
-        <translation>மேல் நடு (%1)</translation>
-    </message>
-    <message>
-        <source>Top right (%1)</source>
-        <translation>மேல் வலது (%1)</translation>
-    </message>
-    <message>
-        <source>Middle left (%1)</source>
-        <translation>நடு இடது (%1)</translation>
-    </message>
-    <message>
-        <source>Middle centre (%1)</source>
-        <translation>நடு மையம் (%1)</translation>
-    </message>
-    <message>
-        <source>Middle right (%1)</source>
-        <translation>நடு வலது (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom left (%1)</source>
-        <translation>கீழ் இடது (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom centre (%1)</source>
-        <translation>கீழ் நடு (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom right (%1)</source>
-        <translation>கீழ் வலது (%1)</translation>
-    </message>
-    <message>
-        <source>Change alignment, keep position</source>
-        <translation>நிலையை வைத்து சீரமைப்பை மாற்று</translation>
-    </message>
-    <message>
-        <source>Align and distribute</source>
-        <translation>சீரமைத்துப் பரப்பு</translation>
-    </message>
-    <message>
-        <source>Relative to</source>
-        <translation>எதைப் பொறுத்து</translation>
-    </message>
-    <message>
-        <source>The active line</source>
-        <translation>செயலில் உள்ள வரி</translation>
-    </message>
-    <message>
-        <source>The video frame</source>
-        <translation>காணொளிச் சட்டகம்</translation>
-    </message>
-    <message>
-        <source>Align left edges</source>
-        <translation>இடது விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align centres</source>
-        <translation>மையங்களை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align right edges</source>
-        <translation>வலது விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>மேல் விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>செங்குத்து மையங்களை சீரமை</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>கீழ் விளிம்புகளை சீரமை</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>கிடைமட்டமாகப் பரப்பு</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>செங்குத்தாகப் பரப்பு</translation>
-    </message>
-    <message>
-        <source>Phantom</source>
-        <translation>மறைநகல்</translation>
-    </message>
-    <message>
-        <source>Keep the start aligned</source>
-        <translation>தொடக்கத்தை சீராக வை</translation>
-    </message>
-    <message>
-        <source>Keep the end aligned</source>
-        <translation>முடிவை சீராக வை</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Project</name>
     <message>
         <source>Project settings</source>
@@ -15193,6 +15170,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A Project can’t set %1, so the project file’s value is ignored.</source>
         <translation>ஒரு திட்டப்பணி %1 ஐ அமைக்க முடியாது, எனவே திட்டப்பணிக் கோப்பின் மதிப்பு புறக்கணிக்கப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>திட்டப்பணி எழுத்துருக் கோப்புறை %1 ஐத் திறக்க முடியவில்லை.</translation>
     </message>
     <message>
         <source>Open folder</source>
@@ -20347,6 +20328,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>உரையாடல் மாற்றுகளை இடமாற்று</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>வரி முறிவுகள்</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>சமநிலை வரி முறிவைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>முறிவை இடப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>முறிவை வலப்புறம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>வரி முறிவுகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>%1 இல் மட்டும் மடி (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>எழுத்து வடிவை மாற்று</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>சிற்றெழுத்து</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>பேரெழுத்து</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>தலைப்பு வடிவம்</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>வாக்கிய வடிவம்</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>முழு அகலம்</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>அரை அகலம்</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TextMenu</name>
     <message>
         <source>Undo</source>
@@ -20682,6 +20722,10 @@ Styles deleted:
         <translation>%1 ms</translation>
     </message>
     <message>
+        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The rules need a video.</source>
         <translation>விதிகளுக்கு வீடியோ தேவை.</translation>
     </message>
@@ -20756,6 +20800,14 @@ Styles deleted:
     <message>
         <source>Open keyframes…</source>
         <translation>கீஃப்ரேம்களைத் திற…</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -20872,6 +20924,116 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>நேரங்கள் சட்டகங்களுக்குள் மையப்படுத்தப்படவில்லை: வீடியோ எதுவும் திறக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Already on a keyframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms, linked to the previous line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-out of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule applies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it ended %1 ms before this start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it overlapped this line by %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more lines. Accepted %1, skipped %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a line to time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished">இப்போது</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished">பரிந்துரைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Why</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">முடிந்தது</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">மாற்றம்</translation>
+    </message>
+    <message>
+        <source>Change the suggested times (Alt+C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">தவிர்</translation>
+    </message>
+    <message>
+        <source>Skip this line (Alt+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

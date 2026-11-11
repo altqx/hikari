@@ -5750,18 +5750,6 @@ Failed to copy %2 fonts.</source>
         <translation>ข้อความลงในคำแปล</translation>
     </message>
     <message>
-        <source>Start tag block</source>
-        <translation>บล็อกแท็กเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Clip (\clip or \iclip)</source>
-        <translation>คลิป (\clip หรือ \iclip)</translation>
-    </message>
-    <message>
-        <source>These tags:</source>
-        <translation>แท็กเหล่านี้:</translation>
-    </message>
-    <message>
         <source>changed</source>
         <translation>เปลี่ยนแล้ว</translation>
     </message>
@@ -5884,14 +5872,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>คอลัมน์ที่จะคัดลอกจากบรรทัดที่เลือก %1 บรรทัด</translation>
-    </message>
-    <message>
-        <source>Tags</source>
-        <translation>แท็ก</translation>
-    </message>
-    <message>
-        <source>Paste puts each tag into the start block, replacing the same tag.</source>
-        <translation>การวางจะใส่แต่ละแท็กลงในบล็อกเริ่มต้น แทนที่แท็กเดียวกัน</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7422,136 +7402,52 @@ Failed to copy %2 fonts.</source>
         <translation>ประมาณค่าระหว่างบรรทัด…</translation>
     </message>
     <message>
-        <source>Change alignment to bottom left (\an1), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นล่างซ้าย (\an1) โดยคงตำแหน่ง</translation>
+        <source>Insert balanced break</source>
+        <translation>แทรกการขึ้นบรรทัดแบบสมดุล</translation>
     </message>
     <message>
-        <source>Change alignment to bottom centre (\an2), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นล่างกลาง (\an2) โดยคงตำแหน่ง</translation>
+        <source>Move break left</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางซ้าย</translation>
     </message>
     <message>
-        <source>Change alignment to bottom right (\an3), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นล่างขวา (\an3) โดยคงตำแหน่ง</translation>
+        <source>Move break right</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางขวา</translation>
     </message>
     <message>
-        <source>Change alignment to middle left (\an4), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นกลางซ้าย (\an4) โดยคงตำแหน่ง</translation>
+        <source>Remove breaks</source>
+        <translation>ลบการขึ้นบรรทัด</translation>
     </message>
     <message>
-        <source>Change alignment to middle centre (\an5), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นกึ่งกลาง (\an5) โดยคงตำแหน่ง</translation>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>ตัดบรรทัดเฉพาะที่ \N (\q2)</translation>
     </message>
     <message>
-        <source>Change alignment to middle right (\an6), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นกลางขวา (\an6) โดยคงตำแหน่ง</translation>
+        <source>Change case to lowercase</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์เล็ก</translation>
     </message>
     <message>
-        <source>Change alignment to top left (\an7), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นบนซ้าย (\an7) โดยคงตำแหน่ง</translation>
+        <source>Change case to UPPERCASE</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์ใหญ่</translation>
     </message>
     <message>
-        <source>Change alignment to top centre (\an8), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นบนกลาง (\an8) โดยคงตำแหน่ง</translation>
+        <source>Change case to Title Case</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์ใหญ่ขึ้นต้นทุกคำ</translation>
     </message>
     <message>
-        <source>Change alignment to top right (\an9), keep position</source>
-        <translation>เปลี่ยนการจัดแนวเป็นบนขวา (\an9) โดยคงตำแหน่ง</translation>
+        <source>Change case to Sentence case</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์ใหญ่ขึ้นต้นประโยค</translation>
     </message>
     <message>
-        <source>Align left edges</source>
-        <translation>จัดขอบซ้าย</translation>
+        <source>Change text to full-width</source>
+        <translation>เปลี่ยนข้อความเป็นแบบเต็มความกว้าง</translation>
     </message>
     <message>
-        <source>Align centres</source>
-        <translation>จัดกึ่งกลางแนวนอน</translation>
+        <source>Change text to half-width</source>
+        <translation>เปลี่ยนข้อความเป็นแบบครึ่งความกว้าง</translation>
     </message>
     <message>
-        <source>Align right edges</source>
-        <translation>จัดขอบขวา</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>จัดขอบบน</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>จัดกึ่งกลางแนวตั้ง</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>จัดขอบล่าง</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>กระจายแนวนอน</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>กระจายแนวตั้ง</translation>
-    </message>
-    <message>
-        <source>Position to margins</source>
-        <translation>ตำแหน่งเป็นระยะขอบ</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>ระยะขอบเป็นตำแหน่ง</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the start aligned</source>
-        <translation>แฟนทอม: คงการจัดแนวส่วนต้น</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the end aligned</source>
-        <translation>แฟนทอม: คงการจัดแนวส่วนท้าย</translation>
-    </message>
-    <message>
-        <source>Cycle \blur</source>
-        <translation>วนรอบ \blur</translation>
-    </message>
-    <message>
-        <source>Cycle \blur back</source>
-        <translation>วนรอบ \blur ย้อนกลับ</translation>
-    </message>
-    <message>
-        <source>Cycle \bord</source>
-        <translation>วนรอบ \bord</translation>
-    </message>
-    <message>
-        <source>Cycle \bord back</source>
-        <translation>วนรอบ \bord ย้อนกลับ</translation>
-    </message>
-    <message>
-        <source>Cycle \shad</source>
-        <translation>วนรอบ \shad</translation>
-    </message>
-    <message>
-        <source>Cycle \shad back</source>
-        <translation>วนรอบ \shad ย้อนกลับ</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha</source>
-        <translation>วนรอบ \alpha</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha back</source>
-        <translation>วนรอบ \alpha ย้อนกลับ</translation>
-    </message>
-    <message>
-        <source>Cycle \an</source>
-        <translation>วนรอบ \an</translation>
-    </message>
-    <message>
-        <source>Cycle \an back</source>
-        <translation>วนรอบ \an ย้อนกลับ</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp</source>
-        <translation>วนรอบ \fsp</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp back</source>
-        <translation>วนรอบ \fsp ย้อนกลับ</translation>
+        <source>Swap dialogue alternatives</source>
+        <translation>สลับบทพูดทางเลือก</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -7615,6 +7511,70 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9223,6 +9183,10 @@ Failed to copy %2 fonts.</source>
         <translation>จัดเรียงตามข้อความที่ไม่มีแท็ก</translation>
     </message>
     <message>
+        <source>No line changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
@@ -9369,6 +9333,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
+    </message>
+    <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in</source>
+        <translation type="unfinished">เพิ่มช่วงนำ</translation>
+    </message>
+    <message>
+        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out</source>
+        <translation type="unfinished">เพิ่มช่วงต่อท้าย</translation>
+    </message>
+    <message>
+        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends the line before the active line where the active line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps through the lines one at a time with a suggested start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Builds glow, border and shadow layers under the selected lines</source>
@@ -10589,7 +10685,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tags</source>
-        <translation>แท็ก</translation>
+        <translation type="unfinished">แท็ก</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11660,7 +11756,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation>แท็ก</translation>
+        <translation type="unfinished">แท็ก</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -14134,18 +14230,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น ระบบนี้ไม่ได้รันคอมโพเนนต์ AI ในแซนด์บ็อกซ์</translation>
     </message>
-    <message>
-        <source>Cycle values</source>
-        <translation>ค่าวนรอบ</translation>
-    </message>
-    <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
-        <translation>คำสั่งวนรอบแต่ละคำสั่งจะเลื่อนแท็กในบล็อกเริ่มต้นของบรรทัดที่เลือกไปยังค่าถัดไป วนรอบย้อนกลับจะเลื่อนไปอีกทาง</translation>
-    </message>
-    <message>
-        <source>Values for %1, in order</source>
-        <translation>ค่าของ %1 ตามลำดับ</translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -14768,6 +14852,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เริ่มปลั๊กอินไม่ได้: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>โหนดของปลั๊กอินนี้ทำงานไม่ได้: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>ปลั๊กอินไม่ได้เริ่มทำงาน</translation>
     </message>
@@ -14955,117 +15043,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
-    <name>HikariSub.Position</name>
-    <message>
-        <source>Position to margins</source>
-        <translation>ตำแหน่งเป็นระยะขอบ</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>ระยะขอบเป็นตำแหน่ง</translation>
-    </message>
-    <message>
-        <source>Top left (%1)</source>
-        <translation>บนซ้าย (%1)</translation>
-    </message>
-    <message>
-        <source>Top centre (%1)</source>
-        <translation>บนกลาง (%1)</translation>
-    </message>
-    <message>
-        <source>Top right (%1)</source>
-        <translation>บนขวา (%1)</translation>
-    </message>
-    <message>
-        <source>Middle left (%1)</source>
-        <translation>กลางซ้าย (%1)</translation>
-    </message>
-    <message>
-        <source>Middle centre (%1)</source>
-        <translation>กึ่งกลาง (%1)</translation>
-    </message>
-    <message>
-        <source>Middle right (%1)</source>
-        <translation>กลางขวา (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom left (%1)</source>
-        <translation>ล่างซ้าย (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom centre (%1)</source>
-        <translation>ล่างกลาง (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom right (%1)</source>
-        <translation>ล่างขวา (%1)</translation>
-    </message>
-    <message>
-        <source>Change alignment, keep position</source>
-        <translation>เปลี่ยนการจัดแนวโดยคงตำแหน่ง</translation>
-    </message>
-    <message>
-        <source>Align and distribute</source>
-        <translation>จัดแนวและกระจาย</translation>
-    </message>
-    <message>
-        <source>Relative to</source>
-        <translation>อ้างอิงกับ</translation>
-    </message>
-    <message>
-        <source>The active line</source>
-        <translation>บรรทัดที่ใช้งาน</translation>
-    </message>
-    <message>
-        <source>The video frame</source>
-        <translation>เฟรมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Align left edges</source>
-        <translation>จัดขอบซ้าย</translation>
-    </message>
-    <message>
-        <source>Align centres</source>
-        <translation>จัดกึ่งกลางแนวนอน</translation>
-    </message>
-    <message>
-        <source>Align right edges</source>
-        <translation>จัดขอบขวา</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>จัดขอบบน</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>จัดกึ่งกลางแนวตั้ง</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>จัดขอบล่าง</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>กระจายแนวนอน</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>กระจายแนวตั้ง</translation>
-    </message>
-    <message>
-        <source>Phantom</source>
-        <translation>แฟนทอม</translation>
-    </message>
-    <message>
-        <source>Keep the start aligned</source>
-        <translation>คงการจัดแนวส่วนต้น</translation>
-    </message>
-    <message>
-        <source>Keep the end aligned</source>
-        <translation>คงการจัดแนวส่วนท้าย</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Project</name>
     <message>
         <source>Project settings</source>
@@ -15082,6 +15059,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A Project can’t set %1, so the project file’s value is ignored.</source>
         <translation>โปรเจกต์ตั้งค่า %1 ไม่ได้ จึงไม่ใช้ค่าในไฟล์โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>เปิดโฟลเดอร์แบบอักษรของโปรเจกต์ %1 ไม่ได้</translation>
     </message>
     <message>
         <source>Open folder</source>
@@ -20178,6 +20159,65 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>สลับบทพูดทางเลือก</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>การขึ้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>แทรกการขึ้นบรรทัดแบบสมดุล</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางซ้าย</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางขวา</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>ลบการขึ้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>ตัดบรรทัดเฉพาะที่ %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>เปลี่ยนตัวพิมพ์</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>ตัวพิมพ์เล็ก</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>ตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>ขึ้นต้นทุกคำด้วยตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>ขึ้นต้นประโยคด้วยตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>เต็มความกว้าง</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>ครึ่งความกว้าง</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TextMenu</name>
     <message>
         <source>Undo</source>
@@ -20503,6 +20543,10 @@ Styles deleted:
         <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
+        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The rules need a video.</source>
         <translation>กฎต้องมีวิดีโอ</translation>
     </message>
@@ -20577,6 +20621,14 @@ Styles deleted:
     <message>
         <source>Open keyframes…</source>
         <translation>เปิดคีย์เฟรม…</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -20693,6 +20745,114 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>ไม่ได้จัดเวลาให้อยู่กลางเฟรม: ไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Already on a keyframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms, linked to the previous line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-out of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule applies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it ended %1 ms before this start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it overlapped this line by %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more lines. Accepted %1, skipped %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a line to time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished">ปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished">แนะนำ</translation>
+    </message>
+    <message>
+        <source>Why</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Change the suggested times (Alt+C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">ข้าม</translation>
+    </message>
+    <message>
+        <source>Skip this line (Alt+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -1095,7 +1095,7 @@ icon("qc-notes", "QC notes", [], [VIEW, SUBS, "qc-notes"],
 icon("qc-done-reset", "Mark all as not done", [], ["qc-notes"], stroke("M1.5 7.5l3 3 6-7") + RELOAD_BADGE)
 icon("node-library", "From the library", [], ["node-editor"],
      stroke(BOOK) + accent(dot(7, 4.5, 1.25), dot(10, 8, 1.25), stroke("M7.75 5.5l1.5 1.5")))
-icon("compact", "Compact conversation", [], ["agent-panel"],
+icon("compact", "Compact conversation", [], ["agent-panel", "grid-menu"],
      stroke("M2.5 1.5h11M2.5 13.5h11M4.5 7.5h7")
      + accent(stroke("M8 3v2.5M6.5 4L8 5.5 9.5 4M8 12V9.5M6.5 11L8 9.5 9.5 11")))
 icon("review-panel", "Review panel", [], [VIEW, EDIT, "review-panel"],
@@ -1288,6 +1288,10 @@ icon("lead-in-remove", "Remove lead-in", [], [TIMING],
      stroke("M13.5 1.5h-2v8h2") + accent(stroke("M2.5 5.5h6.5M7 3.5l2 2-2 2"), MINUS_BADGE))
 icon("lead-out-remove", "Remove lead-out", [], [TIMING],
      stroke("M2.5 1.5h2v8h-2") + accent(stroke("M13.5 5.5H7M9 3.5l-2 2 2 2"), MINUS_BADGE))
+icon("extend-previous-to-start", "Extend previous line to this start", [], [TIMING],
+     stroke("M5.5 4.5h-3a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h3") + rect(10.5, 4.5, 4, 7, 1) + accent(stroke("M5.5 4.5h4v7h-4")))
+icon("extend-next-to-end", "Extend next line to this end", [], [TIMING],
+     rect(1.5, 4.5, 4, 7, 1) + stroke("M10.5 4.5h3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-3") + accent(stroke("M10.5 4.5h-4v7h4")))
 icon("timing-assistant", "Assistant", [], ["timing-postprocessor"],
      stroke("M6 9.5C4.75 8.75 4 7.5 4 6a4 4 0 0 1 8 0c0 1.5-.75 2.75-2 3.5V11H6z") + stroke("M6.5 13.5h3")
      + accent(stroke("M2.5 3.5h-1v9h1M13.5 3.5h1v9h-1")))
@@ -1408,7 +1412,6 @@ for card, roles in {
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
-    "AI21 #725": ["compact"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
@@ -1420,10 +1423,6 @@ for card, roles in {
     "AU11 #846": ["track-colour", "find-fade"],
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
-    "AU19 #853": ["snap-start-to-previous-keyframe", "snap-start-to-next-keyframe", "snap-end-to-previous-keyframe",
-                  "snap-end-to-next-keyframe", "lead-in-remove", "lead-out-remove", "timing-assistant"],
-    "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
-                  "case-upper", "case-lower", "case-title", "case-sentence", "fullwidth", "halfwidth", "dialogue-swap"],
     "TH5 #833": ["builtin-script"],
 }.items():
     for role in roles:

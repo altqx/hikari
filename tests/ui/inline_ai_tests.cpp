@@ -131,7 +131,9 @@ private slots:
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
         provider.models = {{.id = "inline-upper", .name = "Upper", .price = ai::Price{.input = 0.5, .output = 0}}};
         config.providers.push_back(provider);
-        config.roles[ai::Role::Chat] = {"or", "inline-upper"};
+        const bool cliOnly = QTest::currentTestFunction() == QByteArrayLiteral("anAgentCliAloneLeavesTheActionsOff");
+        if (!cliOnly)
+            config.roles[ai::Role::Chat] = {"or", "inline-upper"};
 
         const QString flags = at(QStringLiteral("local-bundle"));
         QFile bundle(flags);
@@ -153,7 +155,7 @@ private slots:
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
-        ports.agentOnPath = [](const QString &) { return false; };
+        ports.agentOnPath = [cliOnly](const QString &agent) { return cliOnly && agent == QStringLiteral("claude"); };
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -207,6 +209,27 @@ private slots:
         QVERIFY(!shell(QStringLiteral("editorStrip.aiShown")).toBool());
         QVERIFY(!shell(QStringLiteral("aiActionsAction.enabled")).toBool());
         QVERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.shown")).toBool());
+    }
+
+    void anAgentCliAloneLeavesTheActionsOff()
+    {
+        QVERIFY(application->agent()->ready());
+        QVERIFY(inlineAi().on());
+        const QVariantMap ready = inlineAi().ready();
+        QVERIFY(!ready.value(QStringLiteral("chat")).toBool());
+        QVERIFY(!ready.value(QStringLiteral("translator")).toBool());
+        QVERIFY(!ready.value(QStringLiteral("reviewer")).toBool());
+        QVERIFY(!ready.value(QStringLiteral("any")).toBool());
+
+        QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("inlineAiRewrite")));
+        for (const char *name : {"inlineAiRewrite", "inlineAiShorten", "inlineAiSpelling", "inlineAiTranslate",
+                                 "inlineAiTranslateTo", "inlineAiRepeat"})
+            QVERIFY2(!item(QString::fromLatin1(name))->isEnabled(), name);
+        QCOMPARE(item(QStringLiteral("inlineAiSettings"))->property("text").toString(),
+                 QStringLiteral("Add a model in Settings › AI…"));
+        shell(QStringLiteral("gridAiHotkeyMenu.close()"));
+        QVERIFY(!shell(QStringLiteral("repeatAiActionAction.enabled")).toBool());
     }
 
     void autoRewriteWritesOneReviewTurnAndOneHistoryStep()

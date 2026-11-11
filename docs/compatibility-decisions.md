@@ -114,6 +114,18 @@ The Gradient visual tool does natively what the gradient scripts do (records in 
 - **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
 - **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
 
+## AU20-text-commands
+
+Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).
+
+- **T1, balanced break.** The break goes where the two rendered halves are closest in width, measured with the Line's style and tags. The break points are ICU's, so Thai and CJK break between words and never inside a grapheme cluster. A point right after `. , ? ! : ;` wins when it is within 10% of the Line's width of the best one. Line Breaker's English word lists aren't ported.
+- **T2, removing a break.** A `\N` becomes one space, or nothing where the script needs no space (CJK, Thai).
+- **T3, `\q2`.** "Wrap only at \N" sets or clears `\q2` in the start block of the selected Lines. Autowrapper's file-wide pass and its Effect notes aren't ported.
+- **T4, Sentence case.** Other letters are lowered only when the whole Line is in capitals. ua.ChangeCase's lists of months, weekdays, languages and honorifics aren't ported.
+- **T5, Full-width.** The output is the demo's byte for byte (`tests/fixtures/au20/fullwidth-golden.tsv`, made by running the demo), except that `\N`, `\n`, `\h` and drawings stay as they are. The demo turns `\N` into `＼Ｎ`, so the break is lost, and it converts drawing commands.
+- **T6, Half-width.** `｛`, `｝` and `＼` stay full-width, so the result never gains a tag or an escape.
+- **T7, Dialog Swapper.** It works on the selection with the `*` delimiter. The script's style-name filter and its delimiter setting aren't ported. A Line whose Effect is `***` still has its comment state toggled.
+
 ## AU8-motion-data
 
 Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch.DerivePerspTrack, petzku.ExtrapolateMove and phos.ExtrapolateTracking do. On the 35-case corpus it matches Aegisub-Motion's output where that output is stable (`docs/research/motion-data-parity.md`). The bundled scripts still ship unchanged. The departures below were accepted by the owner on 2026-11-09 (Q201–Q206). [AU8 #842](https://github.com/altqx/hikari/issues/842).
@@ -253,3 +265,16 @@ Q161's seventh defect, text before the first `\k` shifting the character-to-syll
 ## 892-script-info-on-save
 
 Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
+
+## AU19-timing-helpers
+
+Subtitles › Timing helpers and the Timing postprocessor's Assistant tab do natively what Timing Assistant (phos), Bidirectional Snapping (phos), Snapper (petzku), ShiftCut and Join/Split/Snap (unanimated) and JoinPrevious (The0x539) do. None of them is bundled. The behaviour table is in [AU19 #853](https://github.com/altqx/hikari/issues/853#issuecomment-6790132429). The departures below were accepted at the owner's gate on 2026-11-11 (Q322–Q328).
+
+- **L1, join text.** Merge with previous/next line (F4/F5) joins with `\N` and keeps every tag. Join/Split/Snap's tag pruning, `\N`-to-space and `...`/hyphen merging aren't copied; its same-text join is Join › Keep first.
+- **L2, split.** Split › At video time splits at the video frame. There is no split at `\N` with estimated times and no keyframe snap after a split.
+- **L3, neighbours.** Extend previous line to this start and Extend next line to this end skip commented Lines, and do nothing at the first or last Line. JoinPrevious writes to the row above, even a header.
+- **L4, snaps.** Four explicit commands replace Bidirectional Snapping's press-again-to-flip. A time already on a keyframe moves to the one before or after; Snapper leaves it. Each Line keeps its own times; Snapper copies the audio selection into every selected Line. No keyframe that way leaves the Line unchanged; the scripts throw.
+- **L5, leads.** The amounts are Settings › Audio's lead-in and lead-out, in ms. Adding never overlaps the neighbouring uncommented Line, and removing keeps at least one frame (ShiftCut allows zero). There is no style filter and no skip-on-keyframe option.
+- **L6, frame shifts.** One frame per press. ShiftCut's "by frames per lines" isn't copied; whole-Line shifts stay in Shift times.
+- **L7, linking and snapping in batch.** These stay the Timing postprocessor's close-gaps and snap rules, with windows in ms rather than frames and no CPS or 450 ms guard.
+- **L8, assistant.** The thresholds are the postprocessor's rules and presets; a rule that is off isn't used. There is no CPS special case for a keyframe 850 ms or more away. A start already on a keyframe doesn't stop the end being timed. Leads are rounded to frame starts, and nothing is inserted after the last Line.

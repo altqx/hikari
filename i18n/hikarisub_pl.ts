@@ -5852,18 +5852,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tekst do tłumaczenia</translation>
     </message>
     <message>
-        <source>Start tag block</source>
-        <translation>Początkowy blok tagów</translation>
-    </message>
-    <message>
-        <source>Clip (\clip or \iclip)</source>
-        <translation>Przycięcie (\clip lub \iclip)</translation>
-    </message>
-    <message>
-        <source>These tags:</source>
-        <translation>Te tagi:</translation>
-    </message>
-    <message>
         <source>changed</source>
         <translation>zmieniona</translation>
     </message>
@@ -5994,14 +5982,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Columns to copy from the %1 selected lines</source>
         <translation>Kolumny do skopiowania z zaznaczonych linijek (%1)</translation>
-    </message>
-    <message>
-        <source>Tags</source>
-        <translation>Tagi</translation>
-    </message>
-    <message>
-        <source>Paste puts each tag into the start block, replacing the same tag.</source>
-        <translation>Wklejanie umieszcza każdy tag w bloku początkowym, zastępując ten sam tag.</translation>
     </message>
     <message>
         <source>Select all</source>
@@ -7534,136 +7514,52 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Interpoluj między wierszami…</translation>
     </message>
     <message>
-        <source>Change alignment to bottom left (\an1), keep position</source>
-        <translation>Zmień wyrównanie: na dole po lewej (\an1), zachowaj pozycję</translation>
+        <source>Insert balanced break</source>
+        <translation>Wstaw zrównoważony podział wiersza</translation>
     </message>
     <message>
-        <source>Change alignment to bottom centre (\an2), keep position</source>
-        <translation>Zmień wyrównanie: na dole pośrodku (\an2), zachowaj pozycję</translation>
+        <source>Move break left</source>
+        <translation>Przesuń podział w lewo</translation>
     </message>
     <message>
-        <source>Change alignment to bottom right (\an3), keep position</source>
-        <translation>Zmień wyrównanie: na dole po prawej (\an3), zachowaj pozycję</translation>
+        <source>Move break right</source>
+        <translation>Przesuń podział w prawo</translation>
     </message>
     <message>
-        <source>Change alignment to middle left (\an4), keep position</source>
-        <translation>Zmień wyrównanie: pośrodku po lewej (\an4), zachowaj pozycję</translation>
+        <source>Remove breaks</source>
+        <translation>Usuń podziały wierszy</translation>
     </message>
     <message>
-        <source>Change alignment to middle centre (\an5), keep position</source>
-        <translation>Zmień wyrównanie: na środku (\an5), zachowaj pozycję</translation>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>Zawijaj tylko przy \N (\q2)</translation>
     </message>
     <message>
-        <source>Change alignment to middle right (\an6), keep position</source>
-        <translation>Zmień wyrównanie: pośrodku po prawej (\an6), zachowaj pozycję</translation>
+        <source>Change case to lowercase</source>
+        <translation>Zmień na małe litery</translation>
     </message>
     <message>
-        <source>Change alignment to top left (\an7), keep position</source>
-        <translation>Zmień wyrównanie: u góry po lewej (\an7), zachowaj pozycję</translation>
+        <source>Change case to UPPERCASE</source>
+        <translation>Zmień na wielkie litery</translation>
     </message>
     <message>
-        <source>Change alignment to top centre (\an8), keep position</source>
-        <translation>Zmień wyrównanie: u góry pośrodku (\an8), zachowaj pozycję</translation>
+        <source>Change case to Title Case</source>
+        <translation>Zmień na wielkie pierwsze litery wyrazów</translation>
     </message>
     <message>
-        <source>Change alignment to top right (\an9), keep position</source>
-        <translation>Zmień wyrównanie: u góry po prawej (\an9), zachowaj pozycję</translation>
+        <source>Change case to Sentence case</source>
+        <translation>Zmień na wielką literę na początku zdania</translation>
     </message>
     <message>
-        <source>Align left edges</source>
-        <translation>Wyrównaj lewe krawędzie</translation>
+        <source>Change text to full-width</source>
+        <translation>Zmień tekst na pełną szerokość</translation>
     </message>
     <message>
-        <source>Align centres</source>
-        <translation>Wyrównaj środki</translation>
+        <source>Change text to half-width</source>
+        <translation>Zmień tekst na połowę szerokości</translation>
     </message>
     <message>
-        <source>Align right edges</source>
-        <translation>Wyrównaj prawe krawędzie</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>Wyrównaj górne krawędzie</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>Wyrównaj środki w pionie</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>Wyrównaj dolne krawędzie</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>Rozłóż poziomo</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>Rozłóż pionowo</translation>
-    </message>
-    <message>
-        <source>Position to margins</source>
-        <translation>Pozycja na marginesy</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>Marginesy na pozycję</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the start aligned</source>
-        <translation>Fantom: zachowaj wyrównanie początku</translation>
-    </message>
-    <message>
-        <source>Phantom: keep the end aligned</source>
-        <translation>Fantom: zachowaj wyrównanie końca</translation>
-    </message>
-    <message>
-        <source>Cycle \blur</source>
-        <translation>Cykl \blur</translation>
-    </message>
-    <message>
-        <source>Cycle \blur back</source>
-        <translation>Cykl \blur wstecz</translation>
-    </message>
-    <message>
-        <source>Cycle \bord</source>
-        <translation>Cykl \bord</translation>
-    </message>
-    <message>
-        <source>Cycle \bord back</source>
-        <translation>Cykl \bord wstecz</translation>
-    </message>
-    <message>
-        <source>Cycle \shad</source>
-        <translation>Cykl \shad</translation>
-    </message>
-    <message>
-        <source>Cycle \shad back</source>
-        <translation>Cykl \shad wstecz</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha</source>
-        <translation>Cykl \alpha</translation>
-    </message>
-    <message>
-        <source>Cycle \alpha back</source>
-        <translation>Cykl \alpha wstecz</translation>
-    </message>
-    <message>
-        <source>Cycle \an</source>
-        <translation>Cykl \an</translation>
-    </message>
-    <message>
-        <source>Cycle \an back</source>
-        <translation>Cykl \an wstecz</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp</source>
-        <translation>Cykl \fsp</translation>
-    </message>
-    <message>
-        <source>Cycle \fsp back</source>
-        <translation>Cykl \fsp wstecz</translation>
+        <source>Swap dialogue alternatives</source>
+        <translation>Zamień warianty dialogu</translation>
     </message>
     <message>
         <source>Move tab to new window</source>
@@ -7727,6 +7623,70 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Node effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9397,6 +9357,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sortuj według tekstu bez tagów</translation>
     </message>
     <message>
+        <source>No line changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>Otwórz plik napisów</translation>
     </message>
@@ -9543,6 +9507,138 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Selects lines by expressions</source>
         <translation>Zaznacza linijki według wyrażeń</translation>
+    </message>
+    <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in</source>
+        <translation type="unfinished">Dodaj wstęp</translation>
+    </message>
+    <message>
+        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out</source>
+        <translation type="unfinished">Dodaj zakończenie</translation>
+    </message>
+    <message>
+        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends the line before the active line where the active line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps through the lines one at a time with a suggested start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Builds glow, border and shadow layers under the selected lines</source>
@@ -10779,7 +10875,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Tags</source>
-        <translation>Tagi</translation>
+        <translation type="unfinished">Tagi</translation>
     </message>
     <message>
         <source>Drawing</source>
@@ -11862,7 +11958,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Tags</source>
-        <translation>Tagi</translation>
+        <translation type="unfinished">Tagi</translation>
     </message>
     <message>
         <source>Colours</source>
@@ -14352,18 +14448,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Requests go only to the providers you add and to %1. The AI component isn’t sandboxed on this system.</source>
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
     </message>
-    <message>
-        <source>Cycle values</source>
-        <translation>Wartości cykliczne</translation>
-    </message>
-    <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
-        <translation>Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
-    </message>
-    <message>
-        <source>Values for %1, in order</source>
-        <translation>Wartości dla %1, po kolei</translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -14988,6 +15072,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można uruchomić wtyczki: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>Węzły wtyczki nie mogą działać: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>Wtyczka się nie uruchomiła.</translation>
     </message>
@@ -15177,117 +15265,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
 </context>
 <context>
-    <name>HikariSub.Position</name>
-    <message>
-        <source>Position to margins</source>
-        <translation>Pozycja na marginesy</translation>
-    </message>
-    <message>
-        <source>Margins to position</source>
-        <translation>Marginesy na pozycję</translation>
-    </message>
-    <message>
-        <source>Top left (%1)</source>
-        <translation>U góry po lewej (%1)</translation>
-    </message>
-    <message>
-        <source>Top centre (%1)</source>
-        <translation>U góry pośrodku (%1)</translation>
-    </message>
-    <message>
-        <source>Top right (%1)</source>
-        <translation>U góry po prawej (%1)</translation>
-    </message>
-    <message>
-        <source>Middle left (%1)</source>
-        <translation>Pośrodku po lewej (%1)</translation>
-    </message>
-    <message>
-        <source>Middle centre (%1)</source>
-        <translation>Na środku (%1)</translation>
-    </message>
-    <message>
-        <source>Middle right (%1)</source>
-        <translation>Pośrodku po prawej (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom left (%1)</source>
-        <translation>Na dole po lewej (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom centre (%1)</source>
-        <translation>Na dole pośrodku (%1)</translation>
-    </message>
-    <message>
-        <source>Bottom right (%1)</source>
-        <translation>Na dole po prawej (%1)</translation>
-    </message>
-    <message>
-        <source>Change alignment, keep position</source>
-        <translation>Zmień wyrównanie, zachowaj pozycję</translation>
-    </message>
-    <message>
-        <source>Align and distribute</source>
-        <translation>Wyrównaj i rozłóż</translation>
-    </message>
-    <message>
-        <source>Relative to</source>
-        <translation>Względem</translation>
-    </message>
-    <message>
-        <source>The active line</source>
-        <translation>Aktywnego wiersza</translation>
-    </message>
-    <message>
-        <source>The video frame</source>
-        <translation>Klatki wideo</translation>
-    </message>
-    <message>
-        <source>Align left edges</source>
-        <translation>Wyrównaj lewe krawędzie</translation>
-    </message>
-    <message>
-        <source>Align centres</source>
-        <translation>Wyrównaj środki</translation>
-    </message>
-    <message>
-        <source>Align right edges</source>
-        <translation>Wyrównaj prawe krawędzie</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation>Wyrównaj górne krawędzie</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation>Wyrównaj środki w pionie</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation>Wyrównaj dolne krawędzie</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation>Rozłóż poziomo</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation>Rozłóż pionowo</translation>
-    </message>
-    <message>
-        <source>Phantom</source>
-        <translation>Fantom</translation>
-    </message>
-    <message>
-        <source>Keep the start aligned</source>
-        <translation>Zachowaj wyrównanie początku</translation>
-    </message>
-    <message>
-        <source>Keep the end aligned</source>
-        <translation>Zachowaj wyrównanie końca</translation>
-    </message>
-</context>
-<context>
     <name>HikariSub.Project</name>
     <message>
         <source>Project settings</source>
@@ -15304,6 +15281,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A Project can’t set %1, so the project file’s value is ignored.</source>
         <translation>Projekt nie może ustawiać opcji %1, więc wartość z pliku projektu jest pomijana.</translation>
+    </message>
+    <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>Nie można otworzyć folderu czcionek projektu %1.</translation>
     </message>
     <message>
         <source>Open folder</source>
@@ -20516,6 +20497,65 @@ Usunięte style:
     </message>
 </context>
 <context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>Podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>Wstaw zrównoważony podział wiersza</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>Przesuń podział w lewo</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>Przesuń podział w prawo</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>Usuń podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>Zawijaj tylko przy %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>Zmień wielkość liter</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>małe litery</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>WIELKIE LITERY</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>Wielkie Pierwsze Litery</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>Jak w zdaniu</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>Pełna szerokość</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>Połowa szerokości</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TextMenu</name>
     <message>
         <source>Undo</source>
@@ -20861,6 +20901,10 @@ Usunięte style:
         <translation>%1 ms</translation>
     </message>
     <message>
+        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The rules need a video.</source>
         <translation>Reguły wymagają wideo.</translation>
     </message>
@@ -20935,6 +20979,14 @@ Usunięte style:
     <message>
         <source>Open keyframes…</source>
         <translation>Otwórz klatki kluczowe…</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -21051,6 +21103,118 @@ Usunięte style:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>Czasy nie zostały wyśrodkowane w klatkach: nie otwarto wideo</translation>
+    </message>
+    <message>
+        <source>Already on a keyframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms, linked to the previous line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-out of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule applies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it ended %1 ms before this start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it overlapped this line by %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more lines. Accepted %1, skipped %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a line to time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished">Obecnie</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished">Sugestia</translation>
+    </message>
+    <message>
+        <source>Why</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Gotowe</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">Zmiana</translation>
+    </message>
+    <message>
+        <source>Change the suggested times (Alt+C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">Pomiń</translation>
+    </message>
+    <message>
+        <source>Skip this line (Alt+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

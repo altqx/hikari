@@ -216,6 +216,8 @@ hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_test
 target_compile_definitions(hikari_application_video_timing_tests PRIVATE
     HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/video-timing-cases.txt"
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
+hikari_add_gtest(hikari_application_timing_helpers_tests SOURCES timing_helpers_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
@@ -266,6 +268,10 @@ hikari_add_gtest(hikari_application_interpolate_tests SOURCES interpolate_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_karaoke_layout_tests SOURCES karaoke_layout_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_commands_tests SOURCES text_commands_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_text_commands_tests PRIVATE
+    HIKARI_AU20_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/au20")
 hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_templates_tests.cpp
     LIBRARIES hikari_application LABELS application)
 

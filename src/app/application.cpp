@@ -4,6 +4,7 @@
 
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
+#include "hikari/backends/icu_text.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/lyrics_text.h"
 #include "hikari/backends/mecab_readings.h"
@@ -21,6 +22,7 @@
 #include "hikari/application/fold_groups.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
+#include "hikari/application/text_commands.h"
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
@@ -977,6 +979,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     {
         FontCollectorController::Hooks hooks;
+        hooks.projectFontFolder = [this] { return projectFontFolder(m_workspace.activeWindow()); };
         hooks.tabs = [this] {
             std::vector<FontCollectorController::Tab> out;
             for (const auto id : m_workspace.allTabs()) {
@@ -1068,22 +1071,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.log = [this](const QString &text) {
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogues"), text);
         };
-        hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
+        hooks.documentFonts = [this] {
+            auto fonts = attachedFontLeases(m_workspace.editingTarget());
+            for (auto &font : projectFonts(m_workspace.editingTarget()))
+                fonts.push_back(std::move(font));
+            return fonts;
+        };
         const auto report = listFileReport(*m_log);
         hooks.fileConverted = report.converted;
         hooks.fileProblem = report.problem;
         hooks.fileReplaced = report.replaced;
-        hooks.fontsChanged = [this] {
-            application::reloadSubtitleFonts();
-            if (!m_fontCatalogs)
-                return;
-            setVideoFonts(activeMedia().videoDocument);
-            if (activeMedia().videoDocument) {
-                activeMedia().videoRevision.reset();
-                activeMedia().videoScript.clear();
-                refreshVideo();
-            }
-        };
+        hooks.fontsChanged = [this] { subtitleFontsChanged(); };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
         setVideoFonts(std::nullopt);
@@ -2512,9 +2510,31 @@ std::vector<application::FontLease> Application::attachedFontLeases(std::optiona
     return entry.leases;
 }
 
+void Application::subtitleFontsChanged()
+{
+    application::reloadSubtitleFonts();
+    if (!m_fontCatalogs)
+        return;
+    setVideoFonts(activeMedia().videoDocument);
+    if (activeMedia().videoDocument) {
+        activeMedia().videoRevision.reset();
+        activeMedia().videoScript.clear();
+        refreshVideo();
+    }
+}
+
+std::vector<application::FontLease> Application::projectFonts(std::optional<application::DocumentId> document) const
+{
+    const int window = (document ? m_workspace.window(*document) : std::nullopt).value_or(m_workspace.activeWindow());
+    const auto found = m_projectFonts.find(window);
+    return found == m_projectFonts.end() ? std::vector<application::FontLease>() : found->second.fonts;
+}
+
 std::vector<application::FontLease> Application::subtitleFonts(std::optional<application::DocumentId> document)
 {
     auto fonts = attachedFontLeases(document);
+    for (auto &font : projectFonts(document))
+        fonts.push_back(std::move(font));
     if (m_fontCatalogs)
         for (auto &font : m_fontCatalogs->externalFontLeases())
             fonts.push_back(std::move(font));
@@ -6339,6 +6359,36 @@ bool Application::deleteText()
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+bool Application::textCommand(const QString &command)
+{
+    using application::text_commands::Command;
+    static const std::map<QString, Command> commands{
+        {"balancedBreak", Command::InsertBalancedBreak}, {"breakLeft", Command::MoveBreakLeft},
+        {"breakRight", Command::MoveBreakRight},         {"removeBreaks", Command::RemoveBreaks},
+        {"wrapAtBreaksOnly", Command::ToggleWrapStyle2}, {"lowercase", Command::Lowercase},
+        {"uppercase", Command::Uppercase},               {"titleCase", Command::TitleCase},
+        {"sentenceCase", Command::SentenceCase},         {"fullWidth", Command::FullWidth},
+        {"halfWidth", Command::HalfWidth},               {"swapAlternatives", Command::SwapAlternatives},
+    };
+    auto *session = targetSession();
+    const auto found = commands.find(command);
+    if (!session || found == commands.end())
+        return false;
+    static const auto services = backends::icuTextServices();
+    ui::QtTextMeasurePort measure;
+    const bool done = application::text_commands::run(*session, found->second, services, measure, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::selectionWrapsAtBreaksOnly() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    return session && application::text_commands::selectionWrapsAtBreaksOnly(*session, shownLines());
 }
 
 bool Application::joinLines(const QString &kind)

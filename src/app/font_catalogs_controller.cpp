@@ -633,6 +633,17 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     emit sampleChanged();
 }
 
+std::optional<std::vector<application::FontLease>> FontCatalogsController::folderFontLeases(const QString &folder)
+{
+    auto load = application::loadExternalFonts(u16(QDir::toNativeSeparators(QDir(folder).path() + QLatin1Char('/'))), kLower);
+    if (!load.opened)
+        return std::nullopt;
+    std::vector<application::FontLease> out;
+    for (auto &f : load.fonts)
+        out.push_back({std::move(f.name), std::move(f.bytes)});
+    return out;
+}
+
 std::vector<application::FontLease> FontCatalogsController::externalFontLeases() const
 {
     std::vector<application::FontLease> out;

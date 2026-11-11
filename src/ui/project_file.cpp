@@ -81,6 +81,22 @@ bool ProjectFile::hasTable(std::string_view name) const
     return false;
 }
 
+std::vector<QString> ProjectFile::fontFolders() const
+{
+    const QDir root(m_root);
+    for (const File file : {Local, Shared}) {
+        const auto *list = m_tables[file]["fonts"].as_array();
+        if (!list)
+            continue;
+        std::vector<QString> out;
+        for (const auto &node : *list)
+            if (const auto *folder = node.as_string(); folder && !folder->get().empty())
+                out.push_back(QDir::cleanPath(root.absoluteFilePath(QString::fromStdString(folder->get()))));
+        return out;
+    }
+    return {};
+}
+
 std::optional<SettingValue> ProjectFile::read(const SettingDefinition &setting) const
 {
     const auto file = source(setting);
