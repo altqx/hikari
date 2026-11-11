@@ -15,6 +15,15 @@ bool hasLine(const core::Document &document, core::LineId id)
     return std::ranges::any_of(lines, [&](const core::LineRecord *l) { return l->id == id; });
 }
 
+bool hasLines(const core::Document &document, const std::set<core::LineId> &ids)
+{
+    std::set<core::LineId> found;
+    for (const auto *line : document.lines())
+        if (ids.contains(line->id))
+            found.insert(line->id);
+    return found.size() == ids.size();
+}
+
 const core::LineRecord *findLine(const core::Document &document, core::LineId id)
 {
     for (const auto *line : document.lines())
@@ -429,9 +438,8 @@ std::expected<void, CommandRefusal> EditSession::run(const Command &command)
     }
     if (command.expectedRevision != m_revision)
         return std::unexpected(CommandRefusal::StaleRevision);
-    for (const auto &id : command.touches)
-        if (!hasLine(document(), id))
-            return std::unexpected(CommandRefusal::UnknownLine);
+    if (!hasLines(document(), command.touches))
+        return std::unexpected(CommandRefusal::UnknownLine);
     core::Document working = document();
     if (!command.apply || !command.apply(working))
         return std::unexpected(CommandRefusal::Invalid);
