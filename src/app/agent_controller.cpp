@@ -204,6 +204,7 @@ void AgentController::apply()
             return title ? *title : std::string();
         };
         w.safeFolders = [this] { return safeFolders(); };
+        w.project = [this] { return m_wiring.project ? m_wiring.project().toStdString() : std::string(); };
         w.now = m_wiring.now;
         m_threads = std::make_unique<AgentThreads>(std::move(w), m_store.get());
         connect(m_threads.get(), &AgentThreads::threadsChanged, this, [this] {

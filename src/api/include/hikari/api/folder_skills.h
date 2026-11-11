@@ -10,22 +10,46 @@ namespace hikari::api {
 bool isSkillName(std::string_view name);
 
 // The skills under one folder: each subfolder named as a skill, holding a SKILL.md. Hidden entries and symlinks are
-// skipped, so a skill reaches no file outside its folder.
-class FolderSkills final : public SkillHost {
+// skipped, so a skill reaches no file outside its folder. Folders are walked in name order, and SKILL.md is always
+// among the files kept.
+class FolderSkills {
 public:
     static constexpr std::size_t kMaxSkills = 100;
     static constexpr std::size_t kMaxFiles = 100;
     static constexpr int kMaxDepth = 4;
 
-    explicit FolderSkills(std::filesystem::path root) : m_root(std::move(root)) {}
+    explicit FolderSkills(std::filesystem::path root, SkillOrigin origin = SkillOrigin::Mine)
+        : m_root(std::move(root)), m_origin(origin)
+    {
+    }
 
-    std::vector<SkillFolder> skills() const override;
-    std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const override;
+    std::vector<SkillFolder> skills() const;
+    bool has(std::string_view skill) const;
+    std::optional<std::string> read(std::string_view skill, std::string_view file, std::size_t atMost) const;
 
 private:
     std::optional<SkillFolder> folder(const std::filesystem::path &dir) const;
 
     std::filesystem::path m_root;
+    SkillOrigin m_origin;
+};
+
+// The user's skills, with a caller's Project skills (`<project>/.hikari/skills`) over them: a Project skill hides
+// the user's of the same name. A `.hikari` or `skills` folder that is a symlink gives no Project skills.
+class SkillTiers final : public SkillHost {
+public:
+    explicit SkillTiers(std::filesystem::path userRoot) : m_mine(std::move(userRoot)) {}
+
+    static std::filesystem::path projectFolder(const std::filesystem::path &project);
+
+    std::vector<SkillFolder> skills(const std::filesystem::path &project) const override;
+    std::optional<std::string> read(const std::filesystem::path &project, std::string_view skill, std::string_view file,
+                                    std::size_t atMost) const override;
+
+private:
+    std::optional<FolderSkills> projectSkills(const std::filesystem::path &project) const;
+
+    FolderSkills m_mine;
 };
 
 }

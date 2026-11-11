@@ -184,7 +184,7 @@ public:
         return id;
     }
 
-    FolderSkills skills{std::filesystem::path()};
+    SkillTiers skills{std::filesystem::path()};
     Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills}; }
 
     const application::Workspace &workspace() const override { return workspace_; }

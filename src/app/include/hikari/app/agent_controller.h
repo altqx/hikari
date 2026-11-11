@@ -93,6 +93,8 @@ public:
         application::DocumentFiles &files;
         QString userFolder;
         std::function<std::int64_t()> now; // ms since the epoch; the clock when null
+        // The active window's Project folder; empty without one.
+        std::function<QString()> project;
     };
 
     static constexpr const char *kModeSetting = "ai.agent.mode";

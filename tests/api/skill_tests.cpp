@@ -36,7 +36,7 @@ public:
     const fs::path path;
 };
 
-std::vector<std::string> names(const SkillHost &host)
+std::vector<std::string> names(const FolderSkills &host)
 {
     std::vector<std::string> out;
     for (const SkillFolder &skill : host.skills())
@@ -49,7 +49,7 @@ std::vector<std::string> names(const SkillHost &host)
 TEST(Skills, Script)
 {
     FakeHost fake;
-    FolderSkills skills(kSkills);
+    SkillTiers skills(kSkills);
     Host host = fake.host();
     host.skills = &skills;
     Api api(host);
@@ -112,6 +112,21 @@ TEST(Skills, FilesStopAtTheDepthAndCountLimits)
     EXPECT_EQ(found[1].files.size(), FolderSkills::kMaxFiles);
 }
 
+TEST(Skills, TheFileCapKeepsSkillMdAndTheFirstFilesByName)
+{
+    TempFolder root;
+    for (int i = 0; i < 120; ++i)
+        put(root.path / "many" / "A" / ("f" + std::to_string(1000 + i)));
+    put(root.path / "many" / "SKILL.md");
+    const std::vector<SkillFolder> found = FolderSkills(root.path).skills();
+    ASSERT_EQ(found.size(), 1u);
+    std::vector<std::string> expected;
+    for (int i = 0; i < 99; ++i)
+        expected.push_back("A/f" + std::to_string(1000 + i));
+    expected.push_back("SKILL.md");
+    EXPECT_EQ(found[0].files, expected);
+}
+
 TEST(Skills, ReadsOnlyListedFilesAndStopsAtTheLimit)
 {
     TempFolder root;
@@ -153,7 +168,7 @@ TEST(Skills, AFileOver256KiBIsRefused)
     TempFolder root;
     put(root.path / "big" / "SKILL.md", std::string(256 * 1024 + 1, 'a'));
     FakeHost fake;
-    FolderSkills skills(root.path);
+    SkillTiers skills(root.path);
     Host host = fake.host();
     host.skills = &skills;
     Api api(host);
@@ -161,4 +176,78 @@ TEST(Skills, AFileOver256KiBIsRefused)
     const Result result = client.call(aiCaller(), "skills.read", *Json::parse(R"({"skill": "big", "file": "SKILL.md"})"));
     ASSERT_FALSE(result);
     EXPECT_EQ(*result.error().data.find("reason"), Json("too_large"));
+}
+
+namespace {
+
+std::vector<std::pair<std::string, SkillOrigin>> tiers(const SkillTiers &skills, const fs::path &project)
+{
+    std::vector<std::pair<std::string, SkillOrigin>> out;
+    for (const SkillFolder &skill : skills.skills(project))
+        out.emplace_back(skill.name, skill.origin);
+    return out;
+}
+
+}
+
+TEST(Skills, AProjectSkillHidesTheUsersOfTheSameName)
+{
+    TempFolder root;
+    const fs::path mine = root.path / "mine";
+    const fs::path project = root.path / "show";
+    put(mine / "shared" / "SKILL.md", "mine");
+    put(mine / "only-mine" / "SKILL.md");
+    put(mine / "broken-there" / "SKILL.md", "mine");
+    put(project / ".hikari" / "skills" / "shared" / "SKILL.md", "project");
+    put(project / ".hikari" / "skills" / "honorifics" / "SKILL.md");
+    put(project / ".hikari" / "skills" / "broken-there" / "README.md");
+    const SkillTiers skills(mine);
+    using enum SkillOrigin;
+    EXPECT_EQ(tiers(skills, project), (std::vector<std::pair<std::string, SkillOrigin>>{
+                                          {"broken-there", Mine}, {"honorifics", Project}, {"only-mine", Mine}, {"shared", Project}}));
+    EXPECT_EQ(skills.read(project, "shared", "SKILL.md", 100), "project");
+    EXPECT_EQ(skills.read(project, "broken-there", "SKILL.md", 100), "mine");
+    EXPECT_EQ(skills.read({}, "shared", "SKILL.md", 100), "mine");
+    EXPECT_FALSE(skills.read({}, "honorifics", "SKILL.md", 100));
+    EXPECT_EQ(tiers(skills, {}), (std::vector<std::pair<std::string, SkillOrigin>>{
+                                     {"broken-there", Mine}, {"only-mine", Mine}, {"shared", Mine}}));
+}
+
+#ifndef _WIN32
+TEST(Skills, ASymlinkedProjectSkillsFolderGivesNoProjectSkills)
+{
+    TempFolder root;
+    put(root.path / "elsewhere" / "skills" / "leak" / "SKILL.md");
+    fs::create_directories(root.path / "a");
+    fs::create_directory_symlink(root.path / "elsewhere", root.path / "a" / ".hikari");
+    fs::create_directories(root.path / "b" / ".hikari");
+    fs::create_directory_symlink(root.path / "elsewhere" / "skills", root.path / "b" / ".hikari" / "skills");
+    const SkillTiers skills(root.path / "mine");
+    EXPECT_TRUE(skills.skills(root.path / "a").empty());
+    EXPECT_TRUE(skills.skills(root.path / "b").empty());
+    EXPECT_FALSE(skills.read(root.path / "a", "leak", "SKILL.md", 100));
+}
+#endif
+
+TEST(Skills, TheListMarksEachSkillsOriginForTheCallersProject)
+{
+    TempFolder root;
+    put(root.path / "mine" / "notes" / "SKILL.md");
+    put(root.path / "show" / ".hikari" / "skills" / "honorifics" / "SKILL.md", "ours");
+    FakeHost fake;
+    SkillTiers skills(root.path / "mine");
+    Host host = fake.host();
+    host.skills = &skills;
+    Api api(host);
+    ScriptClient client(api);
+    Caller caller = aiCaller();
+    caller.project = (root.path / "show").string();
+    const Result listed = client.call(caller, "skills.list", Json::object());
+    ASSERT_TRUE(listed);
+    EXPECT_EQ(*listed, *Json::parse(R"({"skills": [{"skill": "honorifics", "origin": "project", "files": ["SKILL.md"]},
+                                                  {"skill": "notes", "origin": "yours", "files": ["SKILL.md"]}]})"));
+    const Result read = client.call(caller, "skills.read", *Json::parse(R"({"skill": "honorifics", "file": "SKILL.md"})"));
+    ASSERT_TRUE(read);
+    EXPECT_EQ(*read->find("data"), Json("ours"));
+    EXPECT_EQ(names(FolderSkills(root.path / "mine")), std::vector<std::string>{"notes"});
 }

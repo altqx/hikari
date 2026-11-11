@@ -772,7 +772,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         },
         [this] { refreshViews(); }});
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
-        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {}});
+        *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
+        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
     m_inlineAi = std::make_unique<InlineAiController>(InlineAiController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, *m_agent,
         [this](application::DocumentId document, core::LineId line) {

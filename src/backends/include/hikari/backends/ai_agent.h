@@ -102,6 +102,8 @@ struct AgentThread {
     std::set<std::string> allowed;
     /// The globe; the thread searches only while Settings › AI lets AI search the web too.
     bool webSearch = true;
+    /// The Project folder of the window it was started in, UTF-8; its skills join the user's. Empty: none.
+    std::string project;
 
     api::Json toJson() const;
     static std::optional<AgentThread> fromJson(const api::Json &json);
@@ -147,6 +149,8 @@ public:
         std::function<std::optional<application::DocumentId>()> editingTarget;
         std::function<std::string(application::DocumentId)> documentTitle;
         std::function<std::vector<std::string>()> safeFolders;
+        /// The active window's Project folder, UTF-8, which a new thread keeps; empty without one.
+        std::function<std::string()> project;
         std::function<std::int64_t()> now; // ms since the epoch
         std::function<QDate()> today;
     };
