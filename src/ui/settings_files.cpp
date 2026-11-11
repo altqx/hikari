@@ -50,6 +50,7 @@ bool rememberedByTheApp(std::string_view id)
         "selectLines.recentSelections", "colourPicker.recentColours", "automation.dialogAnswers",
         "automation.lastScript",  "styles.lastCatalog",      "privacy.usageDataId",      "updater.skippedVersion",
         "qcNotes.lastSection",    "tracking.motionOptions",  "tracking.extendOptions", "lyrics.importOptions",
+        "typesetting.layerOptions",
         "tags.removeOptions"};
     return id.starts_with("recent.") || ids.contains(id);
 }
