@@ -10,3 +10,16 @@ Each file copies the structure of real files: tag order, time formats, namespace
 | `apple.ttml` | Apple Music lyrics TTML (`itunes:timing="Word"`), as in the AMLL TTML DB `am-lyrics` sources | XML declaration; indented markup; seconds-only times; `ttm:title`; an agent with a `ttm:name`; a comment |
 | `line-only.ttml` | Apple Music lyrics TTML (`itunes:timing="Line"`) | Clock times `hh:mm:ss.fff`; offset times with `dur`; `<br/>`; an entity |
 | `malformed.lrc` | `enhanced.lrc` | Line 3: a word stamp earlier than the one before it |
+
+## AU23 fixtures
+
+Written by hand with made-up lyrics; no vendor file or real song is copied.
+
+| File | What it covers |
+|---|---|
+| `decoded.krc` | KRC as a decoder writes it: CRLF, ID tags, `[offset:100]`, a base64 `[language:]`, word-timed Lines, a plain Line, a word with braces and `\N` |
+| `decoded.qrc` | QRC inside its XML: entities in `LyricContent`, a quoted word, an empty Line, a zero-length space word |
+| `bare.qrc` | QRC without the XML |
+| `encrypted.krc`, `encrypted.qrc` | the `krc1` and QRC headers followed by random bytes |
+| `gb18030.lrc`, `utf16le.lrc`, `utf16be.lrc` | the same Simplified Chinese LRC in GB18030 and in UTF-16 with a BOM |
+| `big5.lrc` | Traditional Chinese LRC in Big5 |
