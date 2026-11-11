@@ -224,8 +224,8 @@
         <translation>Ustawienia › AI…</translation>
     </message>
     <message>
-        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
-        <translation>Zmiany w napisach trafiają do przeglądu, gdzie je zachowujesz albo cofasz. Inne zmiany pytają.</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>Zatwierdzasz każdą zmianę w napisach, zanim zostanie wprowadzona, i każdą inną zmianę. Odczyt nigdy nie pyta.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -450,6 +450,90 @@
     <message>
         <source>Claude Code</source>
         <translation>Claude Code</translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>Propozycja: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>nieaktualna</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>Usunięta</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>Przeniesiona</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>Wstawiona</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>Zmienia: %1</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>Napisy zmieniły się po tym, jak agent je odczytał.</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>Kliknij wiersz, aby zaznaczyć jego linijkę. Zastosowanie dodaje do przeglądu jeden krok, który można cofnąć.</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>Poproś ponownie</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>Odrzuć i powiedz agentowi…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>Odesłano do agenta: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>Odrzucono: %1 · nic się nie zmieniło</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>Nie zastosowano: %1 · nic się nie zmieniło</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>Propozycja: %1, %n linijka</numerusform>
+            <numerusform>Propozycja: %1, %n linijki</numerusform>
+            <numerusform>Propozycja: %1, %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>Pokaż %n linijkę</numerusform>
+            <numerusform>Pokaż wszystkie %n linijki</numerusform>
+            <numerusform>Pokaż wszystkie %n linijek</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1718,6 +1802,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Cannot start editor.</source>
         <translation>Nie można uruchomić edytora.</translation>
+    </message>
+    <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>Nie wczytano: makra %1 należą do wbudowanego Karaoke Templater, który uruchamia je zamiast tego skryptu.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>Wbudowany</translation>
     </message>
     <message>
         <source>The macro was cancelled; nothing was changed.</source>
@@ -10352,6 +10444,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient strips</source>
+        <translation>Paski gradientu</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>Każda linijka pocięta na osiem pasków, w kolorach od różowego do niebieskiego.</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>Pierścień kopii</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>Osiem kopii każdej sylaby na okręgu wokół niej, każda obrócona według swojego miejsca, gdy sylaba jest śpiewana.</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>Wybuch cząsteczek</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>Dwanaście kopii każdej sylaby wylatuje w losowe miejsca wokół niej i znika.</translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10543,6 +10659,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10640,6 +10780,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18308,8 +18508,8 @@ Usunięte style:
         <translation>Podgląd na wideo</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>Templater karaoke działa na otwartym pliku napisów, gdy jego skrypt (kara-templater.lua) jest wczytany.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>Templater karaoke działa na otwartym pliku napisów, gdy wbudowany Karaoke Templater jest wczytany.</translation>
     </message>
     <message>
         <source>Templates</source>

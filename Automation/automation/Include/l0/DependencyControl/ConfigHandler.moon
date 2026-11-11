@@ -35,6 +35,7 @@ msgs = {
   readFile: {
     failedLock: "Failed to lock config file for reading: %s"
     fileNotFound: "Couldn't find config file '%s'."
+    emptyFile: "Config file '%s' is empty."
     jsonDecodeError: "JSON parse error: %s"
     configCorrupted: [[An error occurred while parsing the JSON config file.
 A backup of the corrupted configuration has been written to '%s'.
@@ -65,6 +66,8 @@ Reload your automation scripts to generate a new configuration file.]]
     failedLock: "Failed to lock config file for writing: %s"
     failedSerialize: "Failed to serialize configuration to JSON: %s"
     failedHandle: "Failed to acquire a handle for writing the config file: %s"
+    failedWrite: "Failed to write the config file '%s': %s"
+    failedReplace: "Failed to replace the config file '%s' with its new copy: %s"
   }
 }
 
@@ -174,6 +177,12 @@ class ConfigHandler
     data = handle\read "*a"
     handle\close!
 
+    -- HikariSub (#880): dkjson raises on blank input instead of returning an error
+    unless data and data\find "%S"
+      @lock\release! if useLock
+      @logger\debug msgs.readFile.emptyFile, @filePath
+      return false, msgs.readFile.emptyFile\format @filePath
+
     -- dkjson.decode returns nil + an error message (it doesn't raise) when the file can't be parsed
     res, _, decodeErr = dkjson.decode data
     unless res
@@ -215,16 +224,31 @@ class ConfigHandler
       if lockState != Lock.LockState.Held
         return nil, msgs.writeFile.failedLock\format msg
 
-    handle, msg = io.open(@filePath, "w")
+    -- HikariSub (#880): a writer killed mid-write must leave the old file, not an empty one
+    tempPath = @filePath .. ".writing"
+    handle, msg = io.open tempPath, "w"
     unless handle
       @lock\release! unless haveLock
       return nil, msgs.writeFile.failedHandle\format msg
 
     @logger\trace msgs.writeFile.writing, @filePath
     handle\setvbuf "full", 10e6
-    handle\write res
-    handle\flush!
-    handle\close!
+    written, msg = handle\write res
+    if written
+      written, msg = handle\flush!
+    closed, closeMsg = handle\close!
+    unless written and closed
+      os.remove tempPath
+      @lock\release! unless haveLock
+      return nil, msgs.writeFile.failedWrite\format @filePath, msg or closeMsg
+
+    -- rename doesn't replace an existing file on Windows
+    unless os.rename tempPath, @filePath
+      moved, msg = fileOps.move tempPath, @filePath, true
+      unless moved
+        os.remove tempPath
+        @lock\release! unless haveLock
+        return nil, msgs.writeFile.failedReplace\format @filePath, msg
 
     @lock\release! unless haveLock
     return true

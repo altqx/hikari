@@ -9872,7 +9872,15 @@ private slots:
         const auto settled = [](QQuickWindow *window) {
             QVERIFY(QTest::qWaitForWindowExposed(window));
             QTRY_VERIFY(window->contentItem()->width() > 0);
-            QVERIFY(QTest::qWaitForWindowActive(window));
+            const QQuickItem *scope = window->findChild<QQuickItem *>(QStringLiteral("dialogScope"));
+            QVERIFY(scope);
+            const auto takesKeys = [&] {
+                const QQuickItem *focused = window->activeFocusItem();
+                return QGuiApplication::focusWindow() == window && focused && (focused == scope || scope->isAncestorOf(focused));
+            };
+            QTRY_VERIFY2(takesKeys(), qPrintable(QStringLiteral("focus window %1, focus item %2")
+                                                     .arg(QGuiApplication::focusWindow() ? QGuiApplication::focusWindow()->objectName() : QStringLiteral("none"),
+                                                          window->activeFocusItem() ? window->activeFocusItem()->objectName() : QStringLiteral("none"))));
         };
         auto *root = engine->rootObjects().first();
         auto &updates = application->updates();
@@ -26159,6 +26167,12 @@ private slots:
         auto &viewController = application->videoView();
         QCOMPARE(tools.activeFamily(), 0);
         QQuickWindow *shown = window;
+        const auto pointerMovesTo = [&](QQuickWindow *next) {
+            // Offscreen sends no Leave to the window the pointer left; its stale hover later sends the overlay one.
+            QEvent leave(QEvent::Leave);
+            QCoreApplication::sendEvent(shown, &leave);
+            shown = next;
+        };
         QQuickItem *overlay = item("visualOverlay");
         QVERIFY(overlay);
         const auto cursorAtScene = [&](QPoint at) {
@@ -26345,7 +26359,7 @@ private slots:
         QTRY_VERIFY(fsWindow->isExposed());
         QVERIFY(fs.pinned());
         QTRY_COMPARE(overlay->window(), fsWindow);
-        shown = fsWindow;
+        pointerMovesTo(fsWindow);
         QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
         QTRY_VERIFY2(tools.videoRect().top() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
         crosshairOnlyOverThePicture("fullscreen, zoomed");
@@ -26366,7 +26380,7 @@ private slots:
             return;
         QVERIFY(fs.leave());
         QTRY_COMPARE(overlay->window(), window);
-        shown = window;
+        pointerMovesTo(window);
         viewController.setAspectFromSlider(525000);
         QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
         fs.setBarMode(0);

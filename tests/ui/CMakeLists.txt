@@ -216,7 +216,6 @@ hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.
 target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
-    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus"
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_template_editor_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui" "${PROJECT_SOURCE_DIR}/tests/support")
@@ -234,12 +233,10 @@ endforeach()
 hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
     LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_template_editor_shell_tests PRIVATE
-    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
 add_dependencies(hikari_ui_template_editor_shell_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_karaoke_report_tests SOURCES karaoke_report_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_karaoke_report_tests PRIVATE
-    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
 add_dependencies(hikari_ui_karaoke_report_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_automation_resolution_tests SOURCES automation_resolution_tests.cpp
@@ -285,9 +282,13 @@ target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest
-    PARTS windows sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
+    PARTS windows media=eachWindowShowsItsOwnVideoAndKeepsItWhileAnotherIsActive
+          sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
           moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt)
 target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_shell_windows_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_shell_windows_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE

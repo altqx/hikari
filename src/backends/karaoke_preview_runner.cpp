@@ -4,7 +4,7 @@ namespace hikari::backends {
 
 namespace {
 
-// kara-templater.lua's second macro, "Apply karaoke template to selected lines"; the macro
+// The built-in Karaoke Templater's second macro, "Apply karaoke template to selected lines"; the macro
 // names are translated, their order is not.
 constexpr int kSelectedLinesMacro = 1;
 

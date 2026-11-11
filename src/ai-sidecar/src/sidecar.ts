@@ -14,6 +14,7 @@ import { checked, InvalidParams, ProviderService, type ServiceOptions } from "./
 import type { SearchService, UpdateParams } from "./providers/types";
 import { Peer, RpcError } from "./rpc";
 import type { OperationName, Operations } from "./tools/api.gen";
+import { Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
 import { WebSearch, whileOn } from "./tools/web";
@@ -139,7 +140,8 @@ export class Sidecar {
                 mcp: new McpServer(() => new HikariApi(peer, undefined, id), info, () => this.catalogue),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
-            }) });
+            }) },
+            (id) => new Skills(new HikariApi(peer, undefined, id)));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         this.handle(Method.sessionNew, (params) => this.sessions.open(checkedNew(params)));
         this.handle(Method.sessionPrompt, (params) =>

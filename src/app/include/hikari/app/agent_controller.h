@@ -143,7 +143,9 @@ public:
     /// A value from `models`.
     Q_INVOKABLE void setModel(const QString &value);
     /// "allowOnce", "allowInThread" or "deny".
+    /// `answer`: allowOnce, allowInThread, deny; for a proposal apply, decline or askAgain.
     Q_INVOKABLE void answer(qulonglong ask, const QString &answer, const QString &message);
+    Q_INVOKABLE void selectLine(qulonglong document, qulonglong line);
     Q_INVOKABLE void attach(qulonglong document);
     Q_INVOKABLE void detach(qulonglong document);
     Q_INVOKABLE void setFullAccessWarned();

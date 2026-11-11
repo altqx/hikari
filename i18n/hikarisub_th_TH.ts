@@ -224,8 +224,8 @@
         <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
-        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
-        <translation>การแก้ไขคำบรรยายจะเข้าไปในการตรวจทาน ซึ่งคุณเลือกคงไว้หรือเลิกทำได้ การเปลี่ยนแปลงอื่นจะถาม</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>คุณอนุมัติการแก้ไขคำบรรยายแต่ละครั้งก่อนที่จะเกิดขึ้น และการเปลี่ยนแปลงอื่นทุกครั้ง การอ่านไม่ถามเลย</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -448,6 +448,84 @@
     <message>
         <source>Claude Code</source>
         <translation>Claude Code</translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>ข้อเสนอ: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>ล้าสมัย</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>ลบแล้ว</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>ย้ายแล้ว</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>แทรกแล้ว</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>เปลี่ยน %1</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>คำบรรยายเปลี่ยนไปหลังจากที่เอเจนต์อ่านแล้ว</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>คลิกแถวเพื่อเลือกบรรทัดนั้น การนำไปใช้จะเพิ่มขั้นตอนที่เลิกทำได้หนึ่งขั้นในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>ขอใหม่อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>ปฏิเสธ</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>ส่งกลับให้เอเจนต์แล้ว: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>ปฏิเสธแล้ว: %1 · ไม่มีอะไรเปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>ไม่ได้นำไปใช้: %1 · ไม่มีอะไรเปลี่ยน</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>ข้อเสนอ: %1, %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>แสดงทั้งหมด %n บรรทัด</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1702,6 +1780,14 @@ Output device: %2</source>
     <message>
         <source>Cannot start editor.</source>
         <translation>ไม่สามารถเรียกใช้ตัวแก้ไขได้</translation>
+    </message>
+    <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ไม่ได้โหลด: แมโคร %1 ของสคริปต์นี้เป็นของ Karaoke Templater ในตัว ซึ่งจะทำงานแทน</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>ในตัว</translation>
     </message>
     <message>
         <source>The macro was cancelled; nothing was changed.</source>
@@ -10178,6 +10264,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Gradient strips</source>
+        <translation>แถบไล่สี</translation>
+    </message>
+    <message>
+        <source>Each line cut into eight strips, coloured from pink to blue.</source>
+        <translation>ตัดแต่ละบรรทัดเป็นแปดแถบ ไล่สีจากชมพูไปฟ้า</translation>
+    </message>
+    <message>
+        <source>Ring of copies</source>
+        <translation>วงสำเนา</translation>
+    </message>
+    <message>
+        <source>Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.</source>
+        <translation>สำเนาแปดชิ้นของแต่ละพยางค์บนวงกลมรอบตัวมัน แต่ละชิ้นหมุนตามตำแหน่งของตน ขณะที่พยางค์นั้นถูกร้อง</translation>
+    </message>
+    <message>
+        <source>Particle burst</source>
+        <translation>อนุภาคระเบิด</translation>
+    </message>
+    <message>
+        <source>Twelve copies of each syllable fly out to random places around it and fade.</source>
+        <translation>สำเนาสิบสองชิ้นของแต่ละพยางค์พุ่งออกไปยังตำแหน่งสุ่มรอบตัวมันแล้วจางหายไป</translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10369,6 +10479,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Clip gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per strip of its box, side by side across or stacked down: the strip’s \clip rectangle (whole pixels, the edges shared) and its colour along the gradient.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Array</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \frz takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Particles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and line give the same particles on every run and platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10466,6 +10600,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>One step, in ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many strips.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Strips side by side from left to right, or stacked from top to bottom.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The gradient’s stops, as #RRGGBB, at least one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added to the box on every side, in pixels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the copies go.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: copies in a row.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: rows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid: from one copy to the next, as [across, down].</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle and path: how many copies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: its radius.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Circle: the first copy’s angle, in degrees counter-clockwise from the right.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How many particles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area they spread over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s width.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The area’s height.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18020,8 +18214,8 @@ Styles deleted:
         <translation>แสดงตัวอย่างบนวิดีโอ</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลดสคริปต์ของมัน (kara-templater.lua) แล้ว</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลด Karaoke Templater ในตัวแล้ว</translation>
     </message>
     <message>
         <source>Templates</source>

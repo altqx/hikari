@@ -32,7 +32,8 @@ std::string_view agentModeId(AgentMode mode);
 std::optional<AgentMode> agentModeFromId(std::string_view id);
 
 /// What Qt does with an agent's call before HA1 runs it.
-enum class Decision { Run, Judge, Ask, AlwaysAsk };
+/// Propose: Manual subtitle edits wait as a proposal the user applies or declines.
+enum class Decision { Run, Judge, Ask, AlwaysAsk, Propose };
 
 /// What makes a call ask in every mode: #410's always-ask categories, and AI settings (ADR 0024). docs/ai-agent.md
 /// maps each to its operations, commands and settings.
@@ -150,16 +151,19 @@ public:
         std::function<QDate()> today;
     };
 
-    enum class Answer { AllowOnce, AllowInThread, Deny };
+    /// A proposal takes AllowOnce (Apply), Deny (Decline) or AskAgain, once the document changed under it.
+    enum class Answer { AllowOnce, AllowInThread, Deny, AskAgain };
 
     /// An open permission question.
     struct Ask {
         std::uint64_t id = 0;
         std::string thread;
-        Decision kind = Decision::Ask; // Ask, Judge (the judge escalated) or AlwaysAsk
+        Decision kind = Decision::Ask; // Ask, Judge (the judge escalated), AlwaysAsk or Propose
         std::string operation;
         api::Json params;
         std::string reason;
+        std::optional<application::DocumentId> document; // a proposal's
+        bool stale = false;                               // a proposal whose document changed
     };
 
     AgentThreads(Wiring wiring, ThreadStore *store, QObject *parent = nullptr);
@@ -217,6 +221,11 @@ private:
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,
                  std::string reason, AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    void openProposal(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                      std::function<void(std::function<void()>)> onWithdraw);
+    void wait(AgentThread &thread, Ask ask, api::Json item, AiSidecarHost::Admit admit,
+              std::function<void(std::function<void()>)> onWithdraw);
+    void documentChanged(application::DocumentId document, std::int64_t revision);
     void admitCall(AgentThread &thread, const std::string &operation, const api::Json &params, bool judged,
                    AiSidecarHost::Admit admit);
     api::Caller callerOf(const AgentThread &thread) const;
@@ -240,6 +249,7 @@ private:
     std::map<std::uint64_t, AiSidecarHost::Admit> m_waiting;
     std::map<std::string, std::string> m_queued;
     std::uint64_t m_nextAsk = 1;
+    std::uint64_t m_documentEvents = 0;
     QPointer<AiSidecarHost> m_host;
     std::set<std::string> m_live; // sessions the running sidecar holds
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);

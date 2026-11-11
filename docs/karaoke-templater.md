@@ -1,6 +1,6 @@
 # Karaoke templater
 
-KE1 ([#283](https://github.com/altqx/hikari/issues/283)) improves the bundled karaoke templater, `Automation/automation/Autoload/kara-templater.lua`. Kara Effector (`Automation/automation/Include/effector-auto4.lua`, reached as `ke4` from templates) ships unchanged under its own licence.
+KE1 ([#283](https://github.com/altqx/hikari/issues/283)) improves the karaoke templater. Since TH5b ([#833](https://github.com/altqx/hikari/issues/833)) it is built in: the Lua helper runs the template language natively, and Lua runs only the templates' `code` Lines and `!expressions!`. The Script Manager lists it as Karaoke Templater, built-in. Kara Effector (`Automation/automation/Include/effector-auto4.lua`, reached as `ke4` from templates) ships unchanged under its own licence.
 
 ## The behaviour matched
 
@@ -14,9 +14,9 @@ The lock is a corpus, `tests/backends/karaoke-corpus/`:
 - template errors, including TT#141's 3.2-era template;
 - a template after the first 50 Lines.
 
-`karaoke_templater_tests` applies the templates to each Document with the bundled script and saves it. The saved bytes must equal the committed golden. The unchanged 3.2.2 script (`kara-templater-aegisub-3.2.2.lua` in the corpus) must give the same golden in the same host. The corpus README lists the sources.
+`karaoke_templater_tests` applies the templates to each Document with the built-in templater and saves it. The saved bytes must equal the committed golden. The unchanged 3.2.2 script (`kara-templater-aegisub-3.2.2.lua` in the corpus) and the Lua script HikariSub bundled before TH5b (`kara-templater-hikari.lua`, the oracle) must give the same golden in the same host. The corpus README lists the sources.
 
-## What KE1 adds
+## What HikariSub changes
 
 Each change is a named departure in the [compatibility decisions](compatibility-decisions.md).
 
@@ -28,8 +28,14 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the Log. |
 | KE1-render-cost-overlay | "Render cost" in the Video menu and the video's context menu (GLOBAL_VIDEO_RENDER_COST) draws over the video what the shown frame's subtitles cost to draw. |
 | TH1-template-char-graphemes | `template char` gives each grapheme cluster its own Line, so `กิน` gives `กิ` and `น` and `น้ำ` stays whole; a combining accent, an emoji ZWJ sequence and a flag are one char. 2.1.7 splits by code point. `graphemes = false` in a `code once` Line splits as 2.1.7 does. Thai support by Jibrill. |
+| TH5b-builtin-templater | The templater is built in rather than a script in Autoload. It can be reloaded but not edited or unloaded. Its macros and their shortcuts keep their names. |
+| TH5b-line-template-order | Named line templates run after the unnamed ones, in the order their names first appear. |
+| TH5b-no-leaked-globals | Evaluating an `!expression!` no longer sets the globals `f` and `err`. |
+| TH5b-no-trace-lines | The level 5 trace lines are gone. |
+| TH5b-unmeasured-text | Text the host cannot measure is a problem and counts as 0 wide; 3.2.2 stopped the run. |
+| TH5b-native-layout | Karaoke Lines are laid out from the Styles as they were when the run started; `code` Lines that change Style tables no longer move later syllables. |
 
-The generated Lines are byte for byte 3.2.2's in every case, apart from `char` templates over clusters (TH1, locked by `departures/thai.ass`) and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
+The generated Lines are byte for byte 3.2.2's in every case, apart from `char` templates over clusters (TH1, locked by `departures/thai.ass`), the order of several named line templates (`departures/named-line-templates.ass`) and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
 
 ### Regenerating the selected Lines
 
