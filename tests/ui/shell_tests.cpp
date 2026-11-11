@@ -9945,6 +9945,10 @@ private slots:
                               QStringLiteral("BSD 3-Clause")}));
         QCOMPARE(sourceRows.value(3).toStringList(), (QStringList{QStringLiteral("arch1t3cht's Aegisub scripts"),
                                                                   QStringLiteral("arch1t3cht"), QStringLiteral("MIT")}));
+        QCOMPARE(sourceRows.value(4).toStringList(), (QStringList{QStringLiteral("karaOK"), QStringLiteral("logarithm"),
+                                                                  QStringLiteral("BSD 3-Clause")}));
+        QCOMPARE(sourceRows.value(5).toStringList().mid(0, 2),
+                 (QStringList{QStringLiteral("ln.kara, from karaOK"), QStringLiteral("logarithm and petzku")}));
         QVERIFY(names.contains(QStringLiteral("SoundTouch")));
         QVERIFY(names.contains(QStringLiteral("Harper")));
         QVERIFY(names.contains(QStringLiteral("YTSubConverter")));
@@ -9975,7 +9979,7 @@ private slots:
         QVERIFY(list->property("contentHeight").toReal() > list->height());
         QQuickItem *sources = dialogItem("creditsDialog", "creditsSources");
         QVERIFY(sources);
-        QCOMPARE(sources->childItems().size(), 5);
+        QCOMPARE(sources->childItems().size(), 7);
         QVERIFY(sources->childItems().first()->height() > 0);
         QVERIFY(sources->parentItem()->height() >= sources->y() + sources->height());
         QVERIFY(QMetaObject::invokeMethod(about, "open"));

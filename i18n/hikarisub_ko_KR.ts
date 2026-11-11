@@ -11247,6 +11247,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 copy</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>karaOK templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uses karaOK template syntax. Runs in HikariSub; in Aegisub it needs the karaOK templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aegisub 3.2.2 templates</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -20248,6 +20260,18 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>템플릿 실행기가 완료되기 전에 중단되었습니다.</translation>
+    </message>
+    <message>
+        <source>The template language this file sets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The template language this file’s templates use. Choose one to set it in the file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template language</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

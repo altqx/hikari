@@ -156,12 +156,17 @@ struct TemplateLine {
     friend bool operator==(const TemplateLine &, const TemplateLine &) = default;
 };
 
-// The graph `name` as `template` Lines that give its Lines through the stock 2.1.7 karaoke
-// templater, in the engine's order; or each node that has no template form, and why.
-std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
-                                                                                           std::u8string_view name);
+// The template language an export writes: karaOK's, or Karaoke Templater 2.1.7's (Aegisub 3.2.2).
+enum class TemplateFormat { KaraOK, Stock };
 
-// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines".
-std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine);
+// The graph `name` as `template` Lines that give its Lines through the karaoke templater in `format`'s
+// mode, in the engine's order; or each node that has no template form, and why.
+std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>>
+exportTemplateLines(const NodeGraph &graph, std::u8string_view name, TemplateFormat format = TemplateFormat::Stock);
+
+// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines". A karaOK
+// export also sets the Document's mode line to karaOK.
+std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine,
+                                                                        TemplateFormat format = TemplateFormat::Stock);
 
 }

@@ -75,6 +75,7 @@ QString upstreamKaraOK()
 
 constexpr char kApply[] = "Apply karaoke template";
 constexpr char kUpstreamKaraOKApply[] = "Apply karaoke template (modded with furigana)";
+constexpr char kUpstreamKaraOKWithoutFurigana[] = "Apply karaoke template (modded)";
 
 QString oracleScript()
 {
@@ -333,6 +334,124 @@ TEST_F(KaraokeTemplater, KaraOKDeparturesDifferFromUpstreamKaraOK)
         EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
         EXPECT_NE(templated(document, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
     }
+}
+
+TEST_F(KaraokeTemplater, FuriganaStylesFalseAddsNoFuriganaStylesAsUpstreamsFuriganaOffMacro)
+{
+    const auto bytes = editedCorpus(
+        QStringLiteral("karaok/classes.ass"),
+        {{"Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,",
+          "Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,furigana_styles = false\n"
+          "Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,"}});
+    const std::string builtin = templatedBytes(bytes, builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    EXPECT_EQ(builtin.find("-furigana"), std::string::npos);
+    EXPECT_EQ(builtin, templatedBytes(bytes, upstreamKaraOK(), kUpstreamKaraOKWithoutFurigana));
+    EXPECT_NE(templatedBytes(bytes, upstreamKaraOK(), kUpstreamKaraOKApply), builtin);
+}
+
+TEST_F(KaraokeTemplater, FuriganaStylesFalseKeepsTheProblemLinesSelected)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(
+            editedCorpus(QStringLiteral("errors.ass"),
+                         {{"Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,function (broken",
+                           "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,furigana_styles = false\n"
+                           "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,function (broken"}}))
+            .document);
+    std::vector<hikari::core::LineId> ids;
+    for (const auto *l : session.document().lines())
+        ids.push_back(l->id);
+    ASSERT_TRUE(apply(session, builtinScript(), kApply));
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>(ids.begin() + 1, ids.begin() + 10)));
+    EXPECT_EQ(session.selection().active, ids[1]);
+    EXPECT_EQ(saved(session).find("-furigana,"), std::string::npos);
+}
+
+TEST_F(KaraokeTemplater, KaraOKAdditionsRunInStockModeWhere322OnlyWarned)
+{
+    const QString document = corpusDir() + QStringLiteral("/departures/stock-additions.ass");
+    const std::string builtin = templated(document, builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    const QString builtinLog = run.log.join(QString());
+    writeGoldenIfAsked(document, builtin);
+    EXPECT_EQ(builtin, textOf(readBytes(goldenOf(document))));
+    EXPECT_FALSE(builtinLog.contains(QStringLiteral("Unknown modifier"))) << builtinLog.toStdString();
+    EXPECT_FALSE(builtinLog.contains(QStringLiteral("Runtime error"))) << builtinLog.toStdString();
+    EXPECT_NE(builtin.find("Other,,0,0,0,fx,{\\1c&H0000FF&}"), std::string::npos);
+    EXPECT_EQ(builtin.find("Default,,0,0,0,fx,{\\1c&H0000FF&}"), std::string::npos);
+    EXPECT_NE(builtin.find(",fx,number/1/2/"), std::string::npos);
+
+    EXPECT_NE(templated(document, pristineScript()), builtin);
+    const QString stockLog = run.log.join(QString());
+    for (const char *warning :
+         {"Unknown modifier in template: style", "Unknown modifier in template: lsyl", "Unknown modifier in template: lword",
+          "Unknown modifier in template: lchar", "Unknown modifier in template: word",
+          "Unknown modifier in template: furichar", "Unknown modifier in code template: word",
+          "Unknown modifier in code template: char", "Unknown modifier in code template: furichar",
+          "Runtime error in template code", "Runtime error in template expression"})
+        EXPECT_TRUE(stockLog.contains(QLatin1String(warning))) << warning;
+}
+
+TEST_F(KaraokeTemplater, KaraOKCountVariablesStayTextInStockMode)
+{
+    const std::string document = R"([Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+Karaoke Templater: Aegisub 3.2.2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template syl,$len/$ci/$slen/$i
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template line,$llen
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\k50}ka{\k50}ra
+)";
+    const std::string builtin = templatedBytes(bytesOf(document), builtinScript());
+    ASSERT_FALSE(builtin.empty());
+    EXPECT_NE(builtin.find(",fx,$len/$ci/$slen/1"), std::string::npos) << builtin;
+    EXPECT_NE(builtin.find(",fx,$llen"), std::string::npos) << builtin;
+    const QString log = run.log.join(QString());
+    for (const char *name : {"len", "ci", "slen", "llen"})
+        EXPECT_TRUE(log.contains(QStringLiteral("Unknown variable name: %1\n").arg(QLatin1String(name)))) << name;
+}
+
+TEST_F(KaraokeTemplater, SelectingEveryLineOfAKaraOKDocumentGivesTheWholeRun)
+{
+    for (const QString &dir : {karaOKDir(), karaOKDir() + QStringLiteral("/departures")})
+        for (const QString &name : corpus(dir)) {
+            SCOPED_TRACE(name.toStdString());
+            hikari::application::EditSession session(
+                hikari::core::loadAss(readBytes(dir + QLatin1Char('/') + name)).document);
+            std::vector<hikari::core::LineId> all;
+            for (const auto *l : session.document().lines())
+                all.push_back(l->id);
+            select(session, all);
+            ASSERT_TRUE(apply(session, builtinScript(), kSelected));
+            EXPECT_EQ(saved(session), textOf(readBytes(goldenOf(dir + QLatin1Char('/') + name))));
+        }
+}
+
+TEST_F(KaraokeTemplater, RegenerateSelectedInAKaraOKDocumentReplacesOnlyItsOutput)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(karaOKDir() + QStringLiteral("/classes.ass"))).document);
+    ASSERT_TRUE(apply(session, builtinScript(), kApply));
+    const auto *source = lineWithText(session.document(), u8"{\\k30}ki{\\k0}ra{\\k20}ri", u8"karaoke");
+    ASSERT_NE(source, nullptr);
+    const auto sourceId = source->id;
+    ASSERT_TRUE(editText(session, sourceId, u8"{\\k30}KI{\\k0}ra{\\k20}ri"));
+    const std::size_t steps = session.historySize();
+    select(session, {sourceId});
+    ASSERT_TRUE(apply(session, builtinScript(), kSelected));
+    EXPECT_EQ(saved(session), templatedBytes(editedCorpus(QStringLiteral("karaok/classes.ass"),
+                                                          {{",,{\\k30}ki{\\k0}ra", ",,{\\k30}KI{\\k0}ra"}}),
+                                             builtinScript()));
+    EXPECT_EQ(session.historySize(), steps + 1);
 }
 
 TEST_F(KaraokeTemplater, KaraOKOnlySyntaxChoosesKaraOKModeWithoutTheModeLine)

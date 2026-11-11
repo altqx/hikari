@@ -260,6 +260,25 @@ In karaOK mode, `char`, `lchar`, `$ci`, `$slen`, `$llen` and `$len` count graphe
 
 Q161's seventh defect, text before the first `\k` shifting the character-to-syllable map, can't happen in HikariSub: that text belongs to syllable 1 for upstream and the built-in alike (corpus `karaok/leading-text.ass`), so it is not a departure.
 
+## TH5d1-stock-additions
+
+In 3.2.2 mode, karaOK's additions that don't clash with 3.2.2's syntax still work. Each one replaces a 3.2.2 warning or error:
+
+- `style X` on a template runs it only on Lines whose Style name contains X as plain text. 3.2.2 logged "Unknown modifier in template: style" and ran the template on every Line of its Style.
+- The `lsyl`, `lword`, `lchar`, `word` and `furichar` template classes run as they do in karaOK mode. 3.2.2 logged "Unknown modifier in template: lsyl" (and so on) and made the template a `syl` template.
+- `code word`, `code char` and `code furichar` run once per word, character and furigana character. 3.2.2 logged "Unknown modifier in code template: word" (and so on) and ran the Line once, before the first karaoke Line.
+- The template environment has `k_retime`, `table`, `pairs`, `ipairs`, `tonumber`, `tostring` and `type`. In 3.2.2 a call to one of them failed with "Runtime error in template code" or "Runtime error in template expression".
+
+The one exception is karaOK's `$ci`, `$slen`, `$llen` and `$len`: in 3.2.2 mode they stay as text and log "Unknown variable name", as in 3.2.2 (owner decision Q346). `subs` and the kept `line.text` stay karaOK-only too (TH5c-karaok-mode). Without a mode line, every addition here except `style` and the environment names picks karaOK mode (TH5c-karaok-mode), so these apply as listed to a file whose mode line says `Aegisub 3.2.2`. Corpus: `tests/backends/karaoke-corpus/departures/stock-additions.ass`. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q159 and Q346.
+
+## TH5d1-furigana-styles-false
+
+A `code once` Line that sets `furigana_styles = false` adds no "-furigana" Styles to the file: the built-in drops the ones it made for the run, and the output equals upstream's. Upstream karaOK has a second macro, "Apply karaoke template (modded)", that does the same; the built-in has no extra macro. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decision Q163.
+
+## TH5d1-node-effects-mode
+
+Node effects follow the Document's template mode. In a karaOK-mode Document, node-effect places round to 0.1 px as karaOK's `$` variables do, and a syllable with no duration isn't blank, so For each's "skip blank" keeps it as karaOK's `noblank` does. In 3.2.2 mode both stay as before. "Export as template lines" writes karaOK templates (`line`, `lsyl`, `char`, `code char`) or 3.2.2 templates (`pre-line`, `line`, `syl char`, `code syl`). It remembers the last choice, karaOK by default, and a karaOK export sets the Document's mode line to karaOK. [TH5d1 #833](https://github.com/altqx/hikari/issues/833), owner decisions Q154, Q155 and Q162.
+
 ## 892-script-info-on-save
 
 Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
