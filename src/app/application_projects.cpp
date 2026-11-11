@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/app/font_catalogs_controller.h"
+#include "hikari/app/style_manager_controller.h"
 #include "hikari/application/project.h"
 #include "log_controller.h"
 #include "project_file.h"
@@ -81,6 +82,8 @@ void Application::applyWindowProject(int shellWindow)
                           {}, shellWindow);
     }
     loadProjectFonts(shellWindow);
+    if (m_styleManager)
+        m_styleManager->projectChanged();
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);

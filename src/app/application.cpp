@@ -926,6 +926,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         hooks.lastCatalog = [this] { return m_settings->text("styles.lastCatalog"); };
         hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
+        hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {

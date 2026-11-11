@@ -810,7 +810,8 @@ std::optional<SettingValue> SettingsFiles::read(const SettingDefinition &setting
         const QJsonValue node = jsonNode(m_state, setting.id);
         if (node.isUndefined())
             return std::nullopt;
-        if ((setting.id == "workspace.dialogGeometry" || setting.id == "workspace.pickerFolders") && node.isObject()) {
+        if ((setting.id == "workspace.dialogGeometry" || setting.id == "workspace.pickerFolders" ||
+                     setting.id == "workspace.saveTiers") && node.isObject()) {
             StringList rows;
             const QJsonObject object = node.toObject();
             for (auto it = object.begin(); it != object.end(); ++it) {
@@ -891,7 +892,8 @@ void SettingsFiles::put(const SettingDefinition &setting, const SettingValue &v)
         break;
     case State: {
         QJsonValue node = toJson(v);
-        if (list && (setting.id == "workspace.dialogGeometry" || setting.id == "workspace.pickerFolders")) {
+        if (list && (setting.id == "workspace.dialogGeometry" || setting.id == "workspace.pickerFolders" ||
+                     setting.id == "workspace.saveTiers")) {
             if (const auto rows = keyedRows(*list)) {
                 QJsonObject object;
                 for (const auto &row : *rows) {
