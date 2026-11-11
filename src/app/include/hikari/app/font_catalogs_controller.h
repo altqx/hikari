@@ -161,6 +161,8 @@ public:
                                   const QString &text = QString());
 
     std::vector<application::FontLease> externalFontLeases() const;
+    // Every font file in `folder`; nullopt when the folder can't be opened.
+    static std::optional<std::vector<application::FontLease>> folderFontLeases(const QString &folder);
     const application::FontEnvironment &environment() const { return m_families->environment(); }
 
     void setFontService(std::unique_ptr<application::FontServicePort> service);

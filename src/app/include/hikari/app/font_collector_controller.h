@@ -56,6 +56,8 @@ public:
         std::function<void(int tab, const QString &style)> goToStyle;
         // Null: the platform's file manager.
         std::function<void(const QString &path)> reveal;
+        // The window's first Project font folder, the folder the collector starts in; empty for none.
+        std::function<QString()> projectFontFolder;
     };
 
     FontCollectorController(ui::SettingsStore &settings, Hooks hooks, QObject *parent = nullptr);

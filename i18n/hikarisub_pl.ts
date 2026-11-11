@@ -15031,6 +15031,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Projekt nie może ustawiać opcji %1, więc wartość z pliku projektu jest pomijana.</translation>
     </message>
     <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>Nie można otworzyć folderu czcionek projektu %1.</translation>
+    </message>
+    <message>
         <source>Open folder</source>
         <translation>Otwórz folder</translation>
     </message>
