@@ -200,17 +200,6 @@ Json *itemWith(AgentThread &thread, std::string_view key, const Json &value)
     return nullptr;
 }
 
-std::optional<app::Price> priceOf(const app::Config *config, const app::ModelRef &ref)
-{
-    const app::Provider *provider = config ? config->provider(ref.providerId) : nullptr;
-    if (!provider)
-        return std::nullopt;
-    for (const app::Model &m : provider->models)
-        if (m.id == ref.modelId)
-            return m.price;
-    return std::nullopt;
-}
-
 Json modelJson(const app::ModelRef &ref)
 {
     return Json::object({{"providerId", ref.providerId}, {"model", ref.modelId}});
@@ -324,6 +313,17 @@ Json judgeRequest(const std::string &operation, const Json &params, const std::v
                                           {{"author", "user"},
                                            {"parts", Json::array({Json::object({{"type", "text"}, {"text", text}})})}})})},
                          {"maxOutputTokens", 200}});
+}
+
+std::optional<app::Price> priceOf(const app::Config *config, const app::ModelRef &ref)
+{
+    const app::Provider *provider = config ? config->provider(ref.providerId) : nullptr;
+    if (!provider)
+        return std::nullopt;
+    for (const app::Model &m : provider->models)
+        if (m.id == ref.modelId)
+            return m.price;
+    return std::nullopt;
 }
 
 Verdict judgeVerdict(std::string_view answer)

@@ -10,6 +10,8 @@ ScrollView {
     objectName: "settingsPageAi"
     required property var dialog
     readonly property var ai: dialog.ai
+    readonly property var inlineAi: dialog.inlineAi
+    property int editingAction: -2
     readonly property bool stagedOff: dialog.values["ai.off"] === true
     readonly property bool live: !stagedOff && !!ai && ai.on
     readonly property var providerList: ai ? ai.providers : []
@@ -1741,6 +1743,195 @@ ScrollView {
             }
             Note { text: qsTr("At a cap the turn stops after its current change. The agent never raises a cap; only you can.") }
             AiCheck { setting: "ai.agent.costMeter"; text: qsTr("Show the cost meter") }
+        }
+
+        SettingsSection {
+            id: inlineSection
+            objectName: "aiInline"
+            visible: page.live && !!page.inlineAi
+            title: qsTr("Inline actions")
+            readonly property var actions: page.inlineAi ? page.inlineAi.actions : []
+            readonly property var roles: [{id: "chat", name: qsTr("Chat")}, {id: "translator", name: qsTr("Translator")},
+                                          {id: "reviewer", name: qsTr("Reviewer")}]
+            function save(list) { page.inlineAi.setActions(list) }
+            function moved(index, by) {
+                const list = actions.slice()
+                const [row] = list.splice(index, 1)
+                list.splice(index + by, 0, row)
+                save(list)
+            }
+            function edit(index) {
+                const row = index >= 0 ? actions[index] : {name: "", instruction: "", role: "chat", ask: false}
+                actionName.text = row.name
+                actionInstruction.text = row.instruction
+                actionRole.currentIndex = Math.max(0, roles.findIndex(r => r.id === row.role))
+                actionAsk.checked = !!row.ask
+                page.editingAction = index
+                actionName.forceActiveFocus()
+            }
+            function commit() {
+                const row = {name: actionName.text.trim(), instruction: actionInstruction.text.trim(),
+                             role: roles[actionRole.currentIndex].id, ask: actionAsk.checked}
+                const list = actions.slice()
+                if (page.editingAction >= 0)
+                    list[page.editingAction] = row
+                else
+                    list.push(row)
+                save(list)
+                page.editingAction = -2
+            }
+            Note {
+                text: qsTr("Your actions appear under AI in the Grid’s and the Line editor’s menus. They follow the mode for new threads and change only the text.")
+                Layout.leftMargin: 0
+                Layout.topMargin: 0
+            }
+            Repeater {
+                model: inlineSection.actions
+                delegate: RowLayout {
+                    id: actionRow
+                    required property var modelData
+                    required property int index
+                    objectName: "aiInlineAction" + index
+                    Layout.fillWidth: true
+                    spacing: 6
+                    Label {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        textFormat: Text.PlainText
+                        text: actionRow.modelData.name
+                        ToolTip.text: actionRow.modelData.instruction
+                        ToolTip.visible: actionHover.hovered && actionRow.modelData.instruction !== ""
+                        HoverHandler { id: actionHover }
+                    }
+                    Label {
+                        color: Theme.muted
+                        text: (inlineSection.roles.find(r => r.id === actionRow.modelData.role) ?? inlineSection.roles[0]).name
+                              + (actionRow.modelData.ask ? " · " + qsTr("Asks each time") : "")
+                    }
+                    IconToolButton {
+                        iconRole: "move-up"
+                        text: qsTr("Move up")
+                        enabled: actionRow.index > 0
+                        onClicked: inlineSection.moved(actionRow.index, -1)
+                    }
+                    IconToolButton {
+                        iconRole: "move-down"
+                        text: qsTr("Move down")
+                        enabled: actionRow.index < inlineSection.actions.length - 1
+                        onClicked: inlineSection.moved(actionRow.index, 1)
+                    }
+                    IconToolButton {
+                        iconRole: "edit"
+                        text: qsTr("Edit")
+                        onClicked: inlineSection.edit(actionRow.index)
+                    }
+                    IconToolButton {
+                        iconRole: "remove"
+                        text: qsTr("Delete")
+                        onClicked: {
+                            const list = inlineSection.actions.slice()
+                            list.splice(actionRow.index, 1)
+                            inlineSection.save(list)
+                        }
+                    }
+                }
+            }
+            IconTextButton {
+                objectName: "aiInlineAdd"
+                visible: page.editingAction === -2
+                iconRole: "add"
+                text: qsTr("Add an action")
+                onClicked: inlineSection.edit(-1)
+            }
+            ColumnLayout {
+                objectName: "aiInlineEditor"
+                visible: page.editingAction !== -2
+                Layout.fillWidth: true
+                spacing: 6
+                SettingsRow {
+                    text: qsTr("Name")
+                    TextField {
+                        id: actionName
+                        objectName: "aiInlineName"
+                        Accessible.name: qsTr("Name")
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 420
+                    }
+                }
+                SettingsRow {
+                    text: qsTr("Instruction")
+                    TextArea {
+                        id: actionInstruction
+                        objectName: "aiInlineInstruction"
+                        wrapMode: TextEdit.Wrap
+                        placeholderText: qsTr("For example: make it sound like a pirate")
+                        Accessible.name: qsTr("Instruction")
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 420
+                        Layout.preferredHeight: 60
+                    }
+                }
+                SettingsRow {
+                    text: qsTr("Model")
+                    ComboBox {
+                        id: actionRole
+                        objectName: "aiInlineRole"
+                        model: inlineSection.roles.map(r => r.name)
+                        Accessible.name: qsTr("Model")
+                        Layout.preferredWidth: 200
+                    }
+                }
+                CheckBox {
+                    id: actionAsk
+                    objectName: "aiInlineAsk"
+                    text: qsTr("Ask each time, starting from this instruction")
+                }
+                RowLayout {
+                    spacing: 8
+                    Button {
+                        text: qsTr("Cancel")
+                        onClicked: page.editingAction = -2
+                    }
+                    PrimaryButton {
+                        objectName: "aiInlineSave"
+                        text: qsTr("Save action")
+                        enabled: actionName.text.trim() !== "" && (actionAsk.checked || actionInstruction.text.trim() !== "")
+                        onClicked: inlineSection.commit()
+                    }
+                }
+            }
+            SettingsRow {
+                text: qsTr("Translate to")
+                TextField {
+                    id: translateTo
+                    objectName: "setting_ai.inline.translateTo"
+                    Accessible.name: qsTr("Translate to")
+                    Layout.preferredWidth: 200
+                    function refresh() { text = page.dialog.values["ai.inline.translateTo"] ?? "" }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { translateTo.refresh() } }
+                    onTextEdited: page.dialog.put("ai.inline.translateTo", text)
+                }
+            }
+            SettingsRow {
+                text: qsTr("Lines of context")
+                SpinBox {
+                    id: contextLines
+                    objectName: "setting_ai.inline.contextLines"
+                    from: 0
+                    to: 5
+                    Accessible.name: qsTr("Lines of context")
+                    function refresh() { value = page.dialog.values["ai.inline.contextLines"] ?? 2 }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { contextLines.refresh() } }
+                    onValueModified: page.dialog.put("ai.inline.contextLines", value)
+                }
+                Label {
+                    color: Theme.muted
+                    text: qsTr("before and after each line")
+                }
+            }
+            Note { text: qsTr("Actions save at once. Translate to and Lines of context save with OK or Apply.") }
         }
 
         SettingsSection {

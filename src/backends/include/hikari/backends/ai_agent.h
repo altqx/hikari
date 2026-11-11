@@ -69,6 +69,10 @@ struct Verdict {
 /// Anything but a clear approval escalates.
 Verdict judgeVerdict(std::string_view answer);
 
+/// The model's price from its provider's catalogue; nullopt when the catalogue has none.
+std::optional<application::ai::Price> priceOf(const application::ai::Config *config,
+                                              const application::ai::ModelRef &ref);
+
 /// A model whose provider is "agent:<name>" runs the thread on that external agent ("claude").
 inline constexpr std::string_view kAgentProviderPrefix = "agent:";
 std::optional<std::string> externalAgentOf(const application::ai::ModelRef &model);

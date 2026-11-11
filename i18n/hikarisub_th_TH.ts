@@ -5876,6 +5876,14 @@ Failed to copy %2 fonts.</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
+        <source>AI actions…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat last AI action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
         <translation>ปุ่มลัดนี้ใช้กับ “%1” อยู่แล้ว ต้องการทำอย่างไร</translation>
     </message>
@@ -7218,6 +7226,303 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.InlineAi</name>
+    <message>
+        <source>Rewrite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix spelling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation type="unfinished">แปล</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n Line(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>AI actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation type="unfinished">AI</translation>
+    </message>
+    <message>
+        <source>Rewrite…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Shorten to %1 CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rewrites each Line over %1 characters per second so it reads at that speed or less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix spelling and grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit actions…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a model in Settings › AI…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation type="unfinished">แชต</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation type="unfinished">ผู้แปล</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation type="unfinished">ผู้ตรวจทาน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">ปิด</translation>
+    </message>
+    <message>
+        <source>How to rewrite, for example: less formal, fewer words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished">ภาษา</translation>
+    </message>
+    <message>
+        <source>No model for this role</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s) · about %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) aren&apos;t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This sends %n request(s) to %1 with the %2 model, %3.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The model has no price, so the cost is unknown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 left of today&apos;s %2 cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The run stops if it reaches the daily cap. Stop also works at any time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Results wait for you to apply them: Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes go into the review: Full access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes go into the review: Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Rewriting %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shortening %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Fixing spelling in %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Translating %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1: %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No model for this action. Add one in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped at today&apos;s cost cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer dropped a tag: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer was empty: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>The request failed for line %1: %2</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Came back the same: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>You edited line %1 first, so it was left as it is.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) weren&apos;t sent.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 of %2 done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">หยุด</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">ความคืบหน้า</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation type="unfinished">เปิดการตั้งค่า › AI</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n result(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation type="unfinished">ด้วยตนเอง</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">ละทิ้ง</translation>
+    </message>
+    <message>
+        <source>Apply line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 ticked · click a row to select it in the Grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12578,6 +12883,58 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Show the cost meter</source>
         <translation>แสดงมาตรวัดค่าใช้จ่าย</translation>
+    </message>
+    <message>
+        <source>Inline actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your actions appear under AI in the Grid’s and the Line editor’s menus. They follow the mode for new threads and change only the text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asks each time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For example: make it sound like a pirate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask each time, starting from this instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines of context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>before and after each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actions save at once. Translate to and Lines of context save with OK or Apply.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>AI components</source>

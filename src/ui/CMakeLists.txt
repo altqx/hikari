@@ -65,7 +65,7 @@ qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.q
 set_source_files_properties(FontWindows.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_target_qml_sources(hikari_ui QML_FILES FilterChip.qml FontResolutionNote.qml FontWindows.qml)
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
-qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AlignmentChoice.qml TimeField.qml
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)

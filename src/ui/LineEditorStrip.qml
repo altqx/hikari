@@ -15,10 +15,14 @@ RowLayout {
     required property Item original
     required property Item translated
     required property bool translationTools
+    property bool aiShown: false
+    signal aiActionsRequested(Item anchor)
+    readonly property alias aiButton: aiActions
     spacing: 2
 
+    readonly property real aiWidth: aiShown ? aiActions.implicitWidth + spacing : 0
     readonly property real minimumWidth: tagGroup.implicitWidth + 2 * spacing + more.implicitWidth + gap
-                                         + counters.implicitWidth
+                                         + counters.implicitWidth + aiWidth
     readonly property int gap: 8
     readonly property var foldable: [lookGroup, translationGroup, alignGroup, customGroup]
     function groupWidth(g) {
@@ -34,7 +38,7 @@ RowLayout {
     }
     readonly property int shownGroups: {
         const widths = foldable.map(g => g.active ? groupWidth(g) + spacing : 0)
-        let room = width - tagGroup.implicitWidth - gap - counters.implicitWidth
+        let room = width - tagGroup.implicitWidth - gap - counters.implicitWidth - aiWidth
         if (widths.reduce((a, b) => a + b, 0) <= room)
             return foldable.length
         room -= more.implicitWidth + spacing
@@ -354,6 +358,15 @@ RowLayout {
     LineCounters {
         id: counters
         editor: strip.editor
+    }
+    IconToolButton {
+        id: aiActions
+        objectName: "tagStripAi"
+        iconRole: "ai-assistant"
+        text: qsTranslate("HikariSub.InlineAi", "AI actions")
+        focusPolicy: Qt.NoFocus
+        visible: strip.aiShown
+        onClicked: strip.aiActionsRequested(aiActions)
     }
 
     ShellMenu {
