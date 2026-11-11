@@ -15057,6 +15057,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>프로젝트는 %1(을)를 설정할 수 없어 프로젝트 파일의 값을 무시합니다.</translation>
     </message>
     <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>프로젝트 글꼴 폴더 %1을(를) 열 수 없습니다.</translation>
+    </message>
+    <message>
         <source>Open folder</source>
         <translation>폴더 열기</translation>
     </message>

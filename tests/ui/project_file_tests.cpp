@@ -121,6 +121,24 @@ private slots:
         QVERIFY(!project.read(setting("translation.autoMoveTagsFromOriginal")));
     }
 
+    void fontFoldersAreRelativeToTheProjectFolder()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\nfonts = [\"fonts\", \"../common/fonts\", \"\"]\n");
+        const ProjectFile project(root.path());
+        QVERIFY(project.problems().empty());
+        QVERIFY(project.refused().empty());
+        const QDir folder(root.path());
+        QCOMPARE(project.fontFolders(), (std::vector<QString>{QDir::cleanPath(folder.filePath(QStringLiteral("fonts"))),
+                                                              QDir::cleanPath(folder.filePath(QStringLiteral("../common/fonts")))}));
+
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")), "version = 1\nfonts = [\"mine\"]\n");
+        QCOMPARE(ProjectFile(root.path()).fontFolders(),
+                 std::vector<QString>{QDir::cleanPath(folder.filePath(QStringLiteral("mine")))});
+        QVERIFY(ProjectFile(QTemporaryDir().path()).fontFolders().empty());
+    }
+
     void settingsOffTheAllowlistAreRefusedAndKept()
     {
         QTemporaryDir root;

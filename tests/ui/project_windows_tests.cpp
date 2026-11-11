@@ -1,4 +1,6 @@
 #include "hikari/app/application.h"
+#include "hikari/app/font_catalogs_controller.h"
+#include "hikari/app/font_collector_controller.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/app/session_json.h"
@@ -672,6 +674,34 @@ private slots:
         const int other = openProjectWindow(plugged);
         QVERIFY(other > 0);
         QVERIFY(application->projectNeedsTrust(other));
+    }
+
+    void projectFontFoldersJoinTheWindowsFonts()
+    {
+        start();
+        const QString show = folder("fonted", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\nfonts = [\"fonts\", \"../missing-fonts\"]\n");
+        QDir().mkpath(show + QStringLiteral("/fonts"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/HikariAttachedTest.ttf"),
+                            show + QStringLiteral("/fonts/HikariAttachedTest.ttf")));
+        auto &catalogs = application->fontCatalogs();
+        QSignalSpy answers(&catalogs, &app::FontCatalogsController::resolutionReady);
+        const auto resolved = [&] {
+            catalogs.resolveFamily(QStringLiteral("HikariAttachedTest"), false, false, true, QStringLiteral("Abc"));
+            return catalogs.waitResolved() && !answers.isEmpty() ? answers.takeLast().at(1).toMap() : QVariantMap();
+        };
+        QVERIFY(resolved().value(QStringLiteral("kind")).toString() != QLatin1String("requested"));
+
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        const QVariantMap result = resolved();
+        QCOMPARE(result.value(QStringLiteral("kind")).toString(), QStringLiteral("requested"));
+        QVERIFY2(result.value(QStringLiteral("file")).toString().endsWith(QStringLiteral("HikariAttachedTest.ttf")),
+                 qPrintable(result.value(QStringLiteral("file")).toString()));
+
+        auto &collector = application->fontCollector();
+        collector.open();
+        QCOMPARE(collector.directory(), QDir::toNativeSeparators(canonical(show) + QStringLiteral("/fonts")));
     }
 
     void recentProjectsDropMissingFolders()

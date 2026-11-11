@@ -19,7 +19,7 @@ import { RpcError } from "../rpc";
 import { kReadSkillTool, Skills } from "../skills/skills";
 import type { Tool } from "../tools/catalogue";
 import { type ImageBudget, kDefaultImageBudget } from "../tools/images";
-import type { CallToolResult, ToolSet } from "../tools/toolset";
+import type { CallToolResult, HikariCalls, ToolSet } from "../tools/toolset";
 
 /** One model request with its stream updates; ProviderService.complete in the sidecar. */
 export type Complete = (params: CompleteParams, signal: AbortSignal, emit: (stream: number, update: Update) => void)
@@ -291,6 +291,17 @@ export interface Session {
     steer(params: SessionSteerParams): Promise<SessionSteerResult>;
     cancel(): void;
     close?(): void;
+    /** False once the user stopped the turn, or when none runs: an agent's late calls then change nothing. */
+    takesToolCalls?(): boolean;
+}
+
+/** An agent's tools channel, which refuses every call while `session` takes none. */
+export function whileTurnRuns(calls: HikariCalls, session: () => Pick<Session, "takesToolCalls"> | undefined): HikariCalls {
+    return {
+        call: (operation, params) => session()?.takesToolCalls?.() === false
+            ? Promise.reject(new RpcError(ErrorCode.requestCancelled, "The user stopped this turn"))
+            : calls.call(operation, params),
+    };
 }
 
 export type ExternalAgent = (id: string, params: SessionNewParams, send: (update: SessionUpdate) => void) => Session;
@@ -351,6 +362,10 @@ export class AgentSessions {
 
     has(sessionId: string): boolean {
         return this.sessions.has(sessionId);
+    }
+
+    get(sessionId: string): Session | undefined {
+        return this.sessions.get(sessionId);
     }
 
     private session(id: string): Session {

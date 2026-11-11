@@ -549,6 +549,29 @@ TEST(FontPickerFacesInstalled, AnInstalledFontIsListedUntilItIsRemoved)
     EXPECT_FALSE(lists(pickerFamilies(service), u"HikariProbeRefresh"));
 }
 
+TEST(FontCollection, AFolderFontWinsOverAnInstalledFontOfTheSameFamily)
+{
+    const auto script = document({"A,HikariProbeCollision,0,0"}, {"A,Same family"});
+    InstalledFont installed(HIKARI_FONT_FIXTURES, "collision-a.ttf", "HikariProbeCollision");
+    installed.install();
+    LibassFontService service;
+    service.refresh();
+    FontEnvironment env;
+    env.generation = 1;
+    const auto system = service.collect(script, env);
+    ASSERT_TRUE(system);
+    ASSERT_EQ(system->fonts.size(), 1u);
+    EXPECT_EQ(system->fonts[0].sha256, sha256Of(fixture("collision-a.ttf")));
+
+    env.generation = 2;
+    env.externalFonts = {{fixture("collision-b.ttf"), load(fixture("collision-b.ttf"))}};
+    const auto folder = service.collect(script, env);
+    ASSERT_TRUE(folder);
+    EXPECT_TRUE(folder->complete());
+    ASSERT_EQ(folder->fonts.size(), 1u);
+    EXPECT_EQ(folder->fonts[0].sha256, sha256Of(fixture("collision-b.ttf")));
+}
+
 #ifndef _WIN32
 
 TEST(FontCollectionFontconfig, ProviderFallbackIsReportedAndDoesNotReplay)

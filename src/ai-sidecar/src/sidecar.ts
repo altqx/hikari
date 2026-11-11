@@ -1,4 +1,4 @@
-import { AgentSessions } from "./agent/session";
+import { AgentSessions, whileTurnRuns } from "./agent/session";
 import { ClaudeSession } from "./agents/claude";
 import { CodexSession } from "./agents/codex";
 import { AgentRelay } from "./agents/relay";
@@ -210,7 +210,8 @@ export class Sidecar {
             throw new RpcError(ErrorCode.invalidParams, `No session is named "${session}"`);
         let channel = this.channels.get(connection);
         if (!channel) {
-            channel = new McpServer(() => new HikariApi(this.peer, undefined, session), info, () => this.catalogue);
+            channel = new McpServer(() => whileTurnRuns(new HikariApi(this.peer, undefined, session),
+                () => this.sessions.get(session)), info, () => this.catalogue);
             this.channels.set(connection, channel);
         }
         return channel;

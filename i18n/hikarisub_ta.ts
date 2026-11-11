@@ -15168,6 +15168,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒரு திட்டப்பணி %1 ஐ அமைக்க முடியாது, எனவே திட்டப்பணிக் கோப்பின் மதிப்பு புறக்கணிக்கப்படுகிறது.</translation>
     </message>
     <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>திட்டப்பணி எழுத்துருக் கோப்புறை %1 ஐத் திறக்க முடியவில்லை.</translation>
+    </message>
+    <message>
         <source>Open folder</source>
         <translation>கோப்புறையைத் திற</translation>
     </message>

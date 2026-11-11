@@ -15057,6 +15057,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>โปรเจกต์ตั้งค่า %1 ไม่ได้ จึงไม่ใช้ค่าในไฟล์โปรเจกต์</translation>
     </message>
     <message>
+        <source>The project font folder %1 can’t be opened.</source>
+        <translation>เปิดโฟลเดอร์แบบอักษรของโปรเจกต์ %1 ไม่ได้</translation>
+    </message>
+    <message>
         <source>Open folder</source>
         <translation>เปิดโฟลเดอร์</translation>
     </message>
