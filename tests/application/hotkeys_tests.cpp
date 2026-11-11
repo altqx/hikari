@@ -359,7 +359,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
-    EXPECT_EQ(rowNamed(list, "Global Show / hide render cost").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Render cost").accel, "");
     EXPECT_EQ(rowNamed(list, "Video Full screen bar: when the pointer moves / always / never").accel, "Tab");
     EXPECT_EQ(rowNamed(list, "Audio Tap to time").accel, "Y");
     EXPECT_EQ(rowNamed(list, "Audio Go to selection start").accel, "");
@@ -393,7 +393,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Agent panel").accel, "");
     EXPECT_EQ(rowNamed(list, "Global New agent thread").accel, "");
     EXPECT_EQ(rowNamed(list, "Subtitles Hide line wraps").key.id, 4513);
-    EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Commit alt");
+    EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Apply changes alt");
     EXPECT_EQ(rowNamed(list, "Global Exit").accel, "");
     EXPECT_EQ(list.selection(), 0);
     EXPECT_FALSE(list.modified());
@@ -426,7 +426,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList cut(copy);
     cut.build(fewer);
     EXPECT_EQ(cut.rowCount(), 314u);
-    EXPECT_EQ(cut.find("Audio Commit alt"), -1);
+    EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);

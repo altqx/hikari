@@ -2,9 +2,51 @@ import type { CacheLifetime, Request, ToolDefinition, Usage } from "./types";
 
 type Json = Record<string, unknown>;
 
-/** Tools by name, so the same set is the same bytes every turn. */
+function namesIn(searchResult: string): string[] {
+    try {
+        const parsed: unknown = JSON.parse(searchResult);
+        const tools = (parsed as { tools?: unknown } | null)?.tools;
+        return Array.isArray(tools)
+            ? tools.map((t) => (t as { name?: unknown } | null)?.name).filter((n): n is string => typeof n === "string")
+            : [];
+    } catch {
+        return [];
+    }
+}
+
+/** For each search_tools call in the history, the tools its result named. */
+export function searchResults(request: Request): Map<string, string[]> {
+    const searches = new Set<string>();
+    const found = new Map<string, string[]>();
+    for (const message of request.messages)
+        for (const part of message.parts)
+            if (part.type === "toolCall" && part.name === "search_tools")
+                searches.add(part.id);
+            else if (part.type === "toolResult" && !part.isError && searches.has(part.callId))
+                found.set(part.callId, namesIn(part.content));
+    return found;
+}
+
+/** The request's tools that search_tools found, in the order it found them. */
+export function foundTools(request: Request): ToolDefinition[] {
+    const order = [...new Set([...searchResults(request).values()].flat())];
+    return (request.tools ?? []).filter((t) => order.includes(t.name))
+        .sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+}
+
+/**
+ * The tools sent from the start, by name, so the same set is the same bytes every turn. Those search_tools found
+ * aren't among them: they follow, in `foundTools`.
+ */
+export function prefixTools(request: Request): ToolDefinition[] {
+    const found = new Set(foundTools(request).map((t) => t.name));
+    return (request.tools ?? []).filter((t) => !found.has(t.name))
+        .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
+/** The prefix tools, then the found ones, so finding a tool leaves the prefix as it was. */
 export function sortedTools(request: Request): ToolDefinition[] {
-    return [...(request.tools ?? [])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    return [...prefixTools(request), ...foundTools(request)];
 }
 
 /** The system prompt and the pinned context, the text half of the stable prefix. */

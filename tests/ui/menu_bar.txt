@@ -119,7 +119,7 @@ Video > Previous frame [GLOBAL_PREVIOUS_FRAME]
 Video > Next frame [GLOBAL_NEXT_FRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
 Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
-Video > Play / Pause [GLOBAL_PLAY_PAUSE]
+Video > Play or pause [GLOBAL_PLAY_PAUSE]
 Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
 Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
 Video > -

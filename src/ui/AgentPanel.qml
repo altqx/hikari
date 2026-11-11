@@ -25,6 +25,12 @@ FocusScope {
                          : Number(n).toLocaleString(Qt.locale(), "f", 0)
     }
     function money(v) { return "$" + Number(v).toLocaleString(Qt.locale(), "f", 2) }
+    function serviceName(id) {
+        return id === "brave" ? "Brave Search" : id === "tavily" ? "Tavily" : id === "exa" ? "Exa"
+             : id === "firecrawl" ? "Firecrawl" : id
+    }
+    readonly property bool webSearchOn: !hasThread || thread.webSearch === true
+    readonly property bool webSearchReady: hasThread ? thread.webSearchReady === true : true
     function modeName(m) {
         return m === "manual" ? qsTr("Manual") : m === "full" ? qsTr("Full access") : qsTr("Auto")
     }
@@ -312,7 +318,7 @@ FocusScope {
                 width: ListView.view.width - 16
                 sourceComponent: kind === "user" ? userItem : kind === "text" ? textItem : kind === "tool" ? toolItem
                                : kind === "change" ? changeItem : kind === "plan" ? planItem : kind === "ask" ? askItem
-                               : kind === "notice" ? noticeItem : null
+                               : kind === "notice" ? noticeItem : kind === "search" ? searchItem : null
                 readonly property bool last: index === timeline.count - 1
             }
         }
@@ -475,6 +481,28 @@ FocusScope {
                         enabled: attachMenu.count > 0
                         onClicked: attachMenu.popup(this, 0, -attachMenu.implicitHeight)
                     }
+                    IconToolButton {
+                        objectName: "agentWebSearch"
+                        visible: panel.agent.webSearchShown
+                        iconRole: "web-search"
+                        text: qsTr("Search the web")
+                        checkable: panel.webSearchReady
+                        checked: panel.webSearchReady && panel.webSearchOn
+                        opacity: panel.webSearchReady ? 1 : 0.45
+                        tip: !panel.webSearchReady
+                             ? qsTr("This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.")
+                             : (panel.webSearchOn ? qsTr("Search the web: on for this thread") : qsTr("Search the web: off for this thread"))
+                               + (panel.hasThread && panel.thread.webSearchCacheMiss
+                                  ? "\n" + qsTr("Changing it mid-thread costs one cache miss on Anthropic.") : "")
+                        onClicked: {
+                            if (!panel.webSearchReady)
+                                return
+                            const on = !panel.webSearchOn
+                            if (!panel.hasThread)
+                                panel.agent.newThread()
+                            panel.agent.setWebSearch(on)
+                        }
+                    }
                     Button {
                         id: modelButton
                         objectName: "agentModelButton"
@@ -602,7 +630,7 @@ FocusScope {
         objectName: "agentModeMenu"
         width: 300
         Repeater {
-            model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("You approve every change. Reading never asks.")},
+            model: [{id: "manual", name: qsTr("Manual"), detail: qsTr("Subtitle edits go into the review, where you keep or undo them. Other changes ask.")},
                     {id: "auto", name: qsTr("Auto"), detail: qsTr("The judge model approves each action, or asks you. It sees the action and your messages, never your files.")},
                     {id: "full", name: qsTr("Full access"), detail: qsTr("Nothing asks except the always-ask list. Edits apply at once and stay undoable.")}]
             delegate: ShellMenuItem {
@@ -723,14 +751,199 @@ FocusScope {
 
     Component {
         id: textItem
-        TextEdit {
+        ColumnLayout {
+            id: answer
             readonly property var row: parent
-            readOnly: true
-            selectByMouse: true
-            wrapMode: TextEdit.Wrap
-            color: Theme.text
-            selectionColor: Theme.select
-            text: (row ? row.item.text : "") + (row && row.last && panel.running ? " ▍" : "")
+            readonly property var item: row ? row.item : ({})
+            readonly property var citations: item.citations ?? []
+            readonly property bool cited: citations.some(c => c.end !== undefined)
+            property bool allSources: false
+            spacing: 6
+            TextEdit {
+                objectName: "agentAnswer"
+                Layout.fillWidth: true
+                readOnly: true
+                selectByMouse: true
+                wrapMode: TextEdit.Wrap
+                color: Theme.text
+                selectionColor: Theme.select
+                textFormat: answer.cited ? TextEdit.RichText : TextEdit.PlainText
+                text: answer.cited ? panel.agent.citedText(answer.item, Theme.select, Theme.text)
+                                   : (answer.item.text ?? "") + (answer.row && answer.row.last && panel.running ? " ▍" : "")
+                onLinkHovered: link => {
+                    if (link.startsWith("cite:"))
+                        citationHover.show(answer.citations.find(c => "cite:" + c.index === link), this)
+                    else
+                        citationHover.close()
+                }
+                onLinkActivated: link => {
+                    const c = answer.citations.find(c => "cite:" + c.index === link)
+                    if (c)
+                        panel.agent.openLink(c.url)
+                }
+                HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.IBeamCursor }
+            }
+            SearchSuggestions {
+                id: suggestionsStrip
+                readonly property var view: (answer.item.searchSuggestions ?? "").length > 0
+                                            ? panel.agent.suggestions(answer.item.searchSuggestions) : ({})
+                visible: (view.chips ?? []).length > 0
+                Layout.fillWidth: true
+                chips: view.chips ?? []
+                lightLogo: view.lightLogo ?? ""
+                darkLogo: view.darkLogo ?? ""
+                onChipActivated: url => panel.agent.openLink(url)
+            }
+            ColumnLayout {
+                objectName: "agentSources"
+                visible: answer.citations.length > 0
+                Layout.fillWidth: true
+                spacing: 2
+                CardTitle { iconRole: "citations"; text: qsTr("Sources"); iconColor: Theme.muted }
+                Repeater {
+                    model: answer.allSources ? answer.citations : answer.citations.slice(0, 5)
+                    delegate: RowLayout {
+                        id: source
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Label { text: source.modelData.index; color: Theme.muted; Layout.preferredWidth: 14 }
+                        LinkButton {
+                            objectName: "agentSource_" + source.modelData.index
+                            iconRole: "open-link"
+                            text: source.modelData.title
+                            Layout.maximumWidth: answer.width * 0.65
+                            onClicked: panel.agent.openLink(source.modelData.url)
+                            onHoveredChanged: hovered ? citationHover.show(source.modelData, this) : citationHover.close()
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            color: Theme.muted
+                            text: panel.agent.siteOf(source.modelData.url)
+                        }
+                    }
+                }
+                LinkButton {
+                    objectName: "agentMoreSources"
+                    visible: !answer.allSources && answer.citations.length > 5
+                    iconRole: "chevron-down"
+                    text: qsTr("Show %n more", "", answer.citations.length - 5)
+                    onClicked: answer.allSources = true
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: citationHover
+        objectName: "agentCitationHover"
+        property var citation: ({})
+        function show(c, over) {
+            if (!c)
+                return
+            citation = c
+            parent = over
+            x = 0
+            y = over.height + 2
+            open()
+        }
+        width: 300
+        padding: 8
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle { color: Theme.raised; border.color: Theme.line; radius: 4 }
+        contentItem: ColumnLayout {
+            spacing: 4
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                font.bold: true
+                text: citationHover.citation.title ?? ""
+            }
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                color: Theme.muted
+                text: panel.agent.siteOf(citationHover.citation.url ?? "")
+            }
+            Label {
+                visible: (citationHover.citation.quote ?? "").length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                maximumLineCount: 6
+                elide: Text.ElideRight
+                font.italic: true
+                text: "“" + (citationHover.citation.quote ?? "") + "”"
+            }
+            LinkButton {
+                objectName: "agentCitationOpen"
+                iconRole: "open-link"
+                text: qsTr("Open in browser")
+                onClicked: {
+                    panel.agent.openLink(citationHover.citation.url)
+                    citationHover.close()
+                }
+            }
+        }
+    }
+
+    component SearchRow: ColumnLayout {
+        id: searchRow
+        property string iconRole
+        property string text
+        property var urls: []
+        property bool open: false
+        Layout.fillWidth: true
+        spacing: 2
+        ItemDelegate {
+            Layout.fillWidth: true
+            padding: 2
+            enabled: searchRow.urls.length > 0
+            onClicked: searchRow.open = !searchRow.open
+            contentItem: RowLayout {
+                spacing: 6
+                Icon { size: 14; iconRole: searchRow.iconRole }
+                Label { Layout.fillWidth: true; elide: Text.ElideRight; color: Theme.muted; text: searchRow.text }
+                Icon {
+                    size: 12
+                    visible: searchRow.urls.length > 0
+                    iconRole: searchRow.open ? "chevron-down" : "chevron-right"
+                }
+            }
+        }
+        Repeater {
+            model: searchRow.open ? searchRow.urls : []
+            delegate: LinkButton {
+                required property string modelData
+                Layout.leftMargin: 20
+                Layout.maximumWidth: searchRow.width - 20
+                iconRole: "open-link"
+                text: modelData
+                onClicked: panel.agent.openLink(modelData)
+            }
+        }
+    }
+
+    Component {
+        id: searchItem
+        ColumnLayout {
+            id: searched
+            readonly property var item: parent ? parent.item : ({})
+            spacing: 2
+            Repeater {
+                model: searched.item.searches ?? []
+                delegate: SearchRow {
+                    required property var modelData
+                    readonly property bool pageRead: modelData.kind === "read"
+                    objectName: "agentSearchRow"
+                    iconRole: pageRead ? "web-page-read" : "web-search"
+                    text: modelData.kind === "read"
+                          ? qsTr("Read %1").arg(panel.agent.siteOf(modelData.url ?? ""))
+                          : (searched.item.by === "google" ? qsTr("Searched with Google") : qsTr("Searched the web"))
+                            + (modelData.query ? " · " + modelData.query : "")
+                    urls: modelData.urls ?? (modelData.url ? [modelData.url] : [])
+                }
+            }
         }
     }
 
@@ -741,9 +954,22 @@ FocusScope {
             readonly property var item: parent ? parent.item : ({})
             readonly property bool failed: item.status === "failed"
             readonly property bool busy: item.status === "running"
+            readonly property bool web: (item.tool === "web_search" || item.tool === "web_fetch") && !failed
+            readonly property bool pageRead: item.tool === "web_fetch"
             property bool open: false
             spacing: 2
+            SearchRow {
+                objectName: "agentSearchRow"
+                visible: tool.web
+                iconRole: tool.busy ? "run-busy" : tool.pageRead ? "web-page-read" : "web-search"
+                text: tool.item.tool === "web_fetch"
+                      ? qsTr("Read %1").arg(panel.agent.siteOf((tool.item.input ?? {}).url ?? ""))
+                      : qsTr("Searched with %1").arg(panel.serviceName(tool.item.service ?? ""))
+                        + ((tool.item.input ?? {}).query ? " · " + tool.item.input.query : "")
+                urls: tool.item.urls ?? []
+            }
             ItemDelegate {
+                visible: !tool.web
                 Layout.fillWidth: true
                 padding: 2
                 onClicked: tool.open = !tool.open
@@ -764,11 +990,11 @@ FocusScope {
                 }
             }
             Mono {
-                visible: tool.open
+                visible: tool.open && !tool.web
                 text: JSON.stringify(tool.item.input ?? {})
             }
             Mono {
-                visible: tool.open && (tool.item.output ?? "").length > 0
+                visible: tool.open && !tool.web && (tool.item.output ?? "").length > 0
                 text: tool.item.output ?? ""
             }
         }
@@ -902,7 +1128,8 @@ FocusScope {
             readonly property string kind: item.notice ?? ""
             readonly property bool quiet: kind === "stopped" || kind === "maxTokens" || kind === "refusal" || kind === "maxRequests"
             objectName: "agentNotice_" + kind
-            edge: quiet ? Theme.line : kind === "cap" || kind === "dailyCap" ? Theme.warning : Theme.danger
+            readonly property bool searchFailed: kind === "searchUsedUp" || kind === "searchKey"
+            edge: quiet ? Theme.line : kind === "cap" || kind === "dailyCap" || searchFailed ? Theme.warning : Theme.danger
             CardTitle {
                 iconRole: notice.quiet ? "notice-info" : notice.edge === Theme.warning ? "notice-warning" : "notice-error"
                 text: notice.kind === "cap" ? qsTr("This thread reached its %1 cap").arg(panel.money(panel.thread.cap ?? 0))
@@ -914,6 +1141,8 @@ FocusScope {
                       : notice.kind === "refusal" ? qsTr("The model declined to answer.")
                       : notice.kind === "maxRequests" ? qsTr("The turn stopped after its most model requests.")
                       : notice.kind === "noModel" ? qsTr("Choose a chat model in Settings › AI")
+                      : notice.kind === "searchUsedUp" ? qsTr("%1 has no searches left").arg(panel.serviceName(notice.item.service ?? ""))
+                      : notice.kind === "searchKey" ? qsTr("%1 refused HikariSub’s key").arg(panel.serviceName(notice.item.service ?? ""))
                       : qsTr("AI component isn’t ready")
             }
             Label {
@@ -926,10 +1155,11 @@ FocusScope {
                       : notice.kind === "lost" ? qsTr("The turn was interrupted and won’t rerun by itself. Changes it made stay in the review.")
                       : notice.kind === "failed" ? (notice.item.detail ?? "")
                       : notice.kind === "noSidecar" ? qsTr("HikariSub is still getting the AI component, or it couldn’t start.")
+                      : notice.searchFailed ? qsTr("The search service answered %1. The answer goes on without searching the web.").arg(notice.item.status ?? 0)
                       : ""
             }
             RowLayout {
-                visible: notice.last && !panel.running && !notice.quiet
+                visible: notice.searchFailed || (notice.last && !panel.running && !notice.quiet)
                 spacing: 6
                 Button {
                     objectName: "agentRaiseCap"
@@ -954,7 +1184,7 @@ FocusScope {
                     onClicked: panel.logRequested()
                 }
                 Button {
-                    visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar"
+                    visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar" || notice.searchFailed
                     text: qsTr("Open Settings › AI")
                     onClicked: panel.settingsRequested()
                 }

@@ -183,7 +183,7 @@ private slots:
     {
         BracketingTranslator hotkeys("HikariSub.Hotkeys");
         QCoreApplication::installTranslator(&hotkeys);
-        QCOMPARE(hikari::ui::hotkeyCommandName("Play / Pause"), QStringLiteral("[Play / Pause]"));
+        QCOMPARE(hikari::ui::hotkeyCommandName("Play or pause"), QStringLiteral("[Play or pause]"));
         QCOMPARE(hikari::ui::hotkeyWindowName(hikari::application::VideoHotkey), QStringLiteral("[Video]"));
         QCOMPARE(hikari::ui::visualToolName("Position pointer"), QStringLiteral("Position pointer"));
         QCoreApplication::removeTranslator(&hotkeys);
@@ -192,7 +192,7 @@ private slots:
         QCoreApplication::installTranslator(&tools);
         QCOMPARE(hikari::ui::visualToolName("Position pointer"), QStringLiteral("[Position pointer]"));
         QCOMPARE(hikari::ui::visualToolText(u"Show grid"), QStringLiteral("[Show grid]"));
-        QCOMPARE(hikari::ui::hotkeyCommandName("Play / Pause"), QStringLiteral("Play / Pause"));
+        QCOMPARE(hikari::ui::hotkeyCommandName("Play or pause"), QStringLiteral("Play or pause"));
         QCoreApplication::removeTranslator(&tools);
     }
 };

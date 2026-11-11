@@ -69,6 +69,10 @@ struct Verdict {
 /// Anything but a clear approval escalates.
 Verdict judgeVerdict(std::string_view answer);
 
+/// A model whose provider is "agent:<name>" runs the thread on that external agent ("claude").
+inline constexpr std::string_view kAgentProviderPrefix = "agent:";
+std::optional<std::string> externalAgentOf(const application::ai::ModelRef &model);
+
 /// One conversation in the agent panel. Qt owns it and saves it in the user folder.
 struct AgentThread {
     std::string id;
@@ -91,6 +95,8 @@ struct AgentThread {
     /// The soft cap in US dollars; 0 means none.
     double cap = 0;
     std::set<std::string> allowed;
+    /// The globe; the thread searches only while Settings › AI lets AI search the web too.
+    bool webSearch = true;
 
     api::Json toJson() const;
     static std::optional<AgentThread> fromJson(const api::Json &json);
@@ -126,6 +132,8 @@ public:
     struct Wiring {
         /// Null with AI off.
         std::function<AiRequests *()> requests;
+        /// The sidecar for a thread on an external agent, which needs no provider.
+        std::function<AiSidecarHost *()> agentHost;
         std::function<const application::ai::Config *()> config;
         api::Api *api = nullptr;
         std::function<Defaults()> defaults;
@@ -161,6 +169,8 @@ public:
     void remove(const std::string &id);
     void setMode(const std::string &id, AgentMode mode);
     void setModel(const std::string &id, application::ai::ModelRef model);
+    void setWebSearch(const std::string &id, bool on);
+    bool searches(const AgentThread &thread) const;
     /// Tabs the user attached with @, besides the editing target.
     void setAttached(const std::string &id, std::vector<application::DocumentId> documents);
     /// The model a thread's next turn runs on: its own, else the chat model.
@@ -192,7 +202,7 @@ signals:
 
 private:
     struct Run;
-    AiSidecarHost *host();
+    AiSidecarHost *host(bool externalAgent = false);
     AgentThread *find(const std::string &id);
     void start(AgentThread &thread, std::string text, api::Json parts);
     void finished(const std::string &id, const SidecarResult &result);
@@ -207,6 +217,8 @@ private:
                    AiSidecarHost::Admit admit);
     api::Caller callerOf(const AgentThread &thread) const;
     void addUsage(AgentThread &thread, const api::Json &usage);
+    void addSources(AgentThread &thread, Run *run, const api::Json &update);
+    void searchFailed(AgentThread &thread, Run *run, const api::Json &update);
     void stopFor(AgentThread &thread, const std::string &notice);
     void closeAsks(const std::string &thread, const std::string &why);
     void push(AgentThread &thread, api::Json item);

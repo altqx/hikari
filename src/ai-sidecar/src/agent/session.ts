@@ -16,6 +16,7 @@ import {
 import { ProviderError } from "../providers/errors";
 import type { CompleteParams, Finished, Message, Part, StopReason, ToolCall, ToolDefinition, Update } from "../providers/types";
 import { RpcError } from "../rpc";
+import { kReadSkillTool, Skills } from "../skills/skills";
 import type { Tool } from "../tools/catalogue";
 import { type ImageBudget, kDefaultImageBudget } from "../tools/images";
 import type { CallToolResult, ToolSet } from "../tools/toolset";
@@ -29,7 +30,7 @@ export const kMaxTurnRequests = 64;
 /** Text deltas wait this long so a turn sends at most one chunk per frame. */
 export const kChunkMs = 16;
 
-const kPlanTool: Tool = {
+export const kPlanTool: Tool = {
     name: "update_plan",
     description: "Shows the user your plan as a checklist. Send every step each time, with at most one in_progress.",
     inputSchema: {
@@ -96,21 +97,27 @@ interface Turn {
 export class AgentSession {
     readonly history: Message[];
     private model: SessionModel;
+    private webSearch: boolean;
+    private readonly tools: ToolSet;
     private turn?: Turn;
     private pendingText = "";
     private flushTimer?: ReturnType<typeof setTimeout>;
+    private system?: string;
 
     constructor(
         readonly id: string,
         private readonly params: SessionNewParams,
-        private readonly tools: ToolSet,
+        tools: (webSearch: () => boolean) => ToolSet,
         private readonly complete: Complete,
         private readonly send: (update: SessionUpdate) => void,
         private readonly nextStream: () => number,
         private readonly imageBudget: (providerId: string) => ImageBudget,
+        private readonly skills: Skills = new Skills(),
     ) {
         this.history = [...(params.history ?? [])];
         this.model = params.model;
+        this.webSearch = params.webSearch === true;
+        this.tools = tools(() => this.webSearch);
     }
 
     get running(): boolean {
@@ -122,10 +129,13 @@ export class AgentSession {
             throw new RpcError(ErrorCode.busy, "A turn is already running in this session");
         if (params.model)
             this.model = params.model;
+        if (params.webSearch !== undefined)
+            this.webSearch = params.webSearch;
         this.tools.imageBudget = this.imageBudget(this.model.providerId);
         const turn: Turn = { controller: new AbortController(), steers: [] };
         this.turn = turn;
         try {
+            this.system ??= await this.instructions();
             this.keep({ author: "user", parts: params.prompt });
             return { stopReason: await this.run(turn, params.caching ?? this.params.caching) };
         } finally {
@@ -159,6 +169,7 @@ export class AgentSession {
                 throw error;
             }
             this.flush();
+            this.sources(finished);
             this.send({ sessionUpdate: "usage", usage: finished.usage });
             const parts: Part[] = finished.text ? [{ type: "text", text: finished.text }] : [];
             parts.push(...finished.toolCalls);
@@ -189,13 +200,31 @@ export class AgentSession {
                 status: "in_progress", rawInput: args ?? call.argumentsJson });
             const result = args === undefined
                 ? { content: [{ type: "text" as const, text: `${call.name}: the arguments aren't JSON.` }], isError: true }
-                : call.name === kPlanTool.name ? this.plan(args) : await this.tools.call(call.name, args);
+                : call.name === kPlanTool.name ? this.plan(args)
+                : call.name === kReadSkillTool.name ? await this.skills.read(args as Record<string, unknown>)
+                : await this.tools.call(call.name, args);
+            if (result.searchFailure)
+                this.send({ sessionUpdate: "search_failed", ...result.searchFailure });
             const text = resultText(result);
             this.send({ sessionUpdate: "tool_call_update", toolCallId: call.id, status: result.isError ? "failed" : "completed",
                 content: [{ type: "content", content: { type: "text", text } }] });
             results.push({ type: "toolResult", callId: call.id, content: text, ...(result.isError ? { isError: true } : {}) });
         }
         return results;
+    }
+
+    private async instructions(): Promise<string> {
+        const skills = await this.skills.instructions();
+        return [this.params.system, skills].filter(Boolean).join("\n\n");
+    }
+
+    private sources(finished: Finished): void {
+        const { citations, searchSuggestions, searches } = finished;
+        if (!citations?.length && !searchSuggestions && !searches?.length)
+            return;
+        this.send({ sessionUpdate: "sources", textLength: finished.text.length,
+            ...(citations?.length ? { citations } : {}), ...(searchSuggestions ? { searchSuggestions } : {}),
+            ...(searches?.length ? { searches } : {}) });
     }
 
     private plan(args: unknown): CallToolResult {
@@ -210,24 +239,25 @@ export class AgentSession {
     private kindOf(name: string): ToolCallKind {
         if (name === "document_apply")
             return "edit";
-        if (name === kPlanTool.name)
+        if (name === kPlanTool.name || name === kReadSkillTool.name)
             return "read";
         return this.tools.list(true).find((t) => t.name === name)?.annotations.readOnlyHint ? "read" : "other";
     }
 
     private request(caching: boolean | undefined): CompleteParams {
-        const tools = [...this.tools.list(), kPlanTool].map(definition);
+        const tools = [...this.tools.list(), kPlanTool, kReadSkillTool].map(definition);
         return {
             stream: this.nextStream(),
             providerId: this.model.providerId,
             request: {
                 model: this.model.model,
-                ...(this.params.system ? { system: this.params.system } : {}),
+                ...(this.system ? { system: this.system } : {}),
                 messages: this.history,
                 tools,
                 ...(this.params.cacheKey ? { cacheKey: this.params.cacheKey } : {}),
                 ...(caching === undefined ? {} : { caching }),
                 ...(this.params.maxOutputTokens ? { maxOutputTokens: this.params.maxOutputTokens } : {}),
+                ...(this.webSearch ? { webSearch: true } : {}),
             },
         };
     }
@@ -256,24 +286,43 @@ export class AgentSession {
     }
 }
 
+export interface Session {
+    prompt(params: SessionPromptParams): Promise<SessionPromptResult>;
+    steer(params: SessionSteerParams): Promise<SessionSteerResult>;
+    cancel(): void;
+    close?(): void;
+}
+
+export type ExternalAgent = (id: string, params: SessionNewParams, send: (update: SessionUpdate) => void) => Session;
+
 /** The sessions Qt opened, by id. */
 export class AgentSessions {
-    private readonly sessions = new Map<string, AgentSession>();
+    private readonly sessions = new Map<string, Session>();
     private stream = 1 << 30;
 
     constructor(
-        private readonly tools: (sessionId: string) => ToolSet,
+        private readonly tools: (sessionId: string, webSearch: () => boolean) => ToolSet,
         private readonly complete: Complete,
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
         private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
+        private readonly agents: Partial<Record<NonNullable<SessionNewParams["agent"]>, ExternalAgent>> = {},
+        private readonly skills: (sessionId: string) => Skills = () => new Skills(),
     ) {}
 
     open(params: SessionNewParams): { sessionId: string } {
-        this.sessions.get(params.sessionId)?.cancel();
+        this.end(params.sessionId);
         const id = params.sessionId;
-        this.sessions.set(id, new AgentSession(id, params, this.tools(id), this.complete,
-            (update) => this.notify(Method.sessionUpdate, { sessionId: id, update }), () => this.stream++,
-            this.imageBudget));
+        const send = (update: SessionUpdate) => this.notify(Method.sessionUpdate, { sessionId: id, update });
+        if (params.agent !== undefined) {
+            const agent = this.agents[params.agent];
+            if (!agent)
+                throw new RpcError(ErrorCode.invalidParams, `This sidecar can't run ${params.agent}`);
+            this.sessions.set(id, agent(id, params, send));
+            return { sessionId: id };
+        }
+        this.sessions.set(id, new AgentSession(id, params, (webSearch) => this.tools(id, webSearch), this.complete, send,
+            () => this.stream++,
+            this.imageBudget, this.skills(id)));
         return { sessionId: id };
     }
 
@@ -290,15 +339,21 @@ export class AgentSessions {
     }
 
     close(sessionId: string): void {
-        this.sessions.get(sessionId)?.cancel();
+        this.end(sessionId);
         this.sessions.delete(sessionId);
+    }
+
+    private end(sessionId: string): void {
+        const session = this.sessions.get(sessionId);
+        session?.cancel();
+        session?.close?.();
     }
 
     has(sessionId: string): boolean {
         return this.sessions.has(sessionId);
     }
 
-    private session(id: string): AgentSession {
+    private session(id: string): Session {
         const session = this.sessions.get(id);
         if (!session)
             throw new RpcError(ErrorCode.invalidParams, `No session is named "${id}"; open it with session/new`);

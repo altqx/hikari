@@ -27,6 +27,13 @@ foreach(_hikari_module IN ITEMS badmutex:BM/BadMutex precisetimer:PT/PreciseTime
         LIBRARY DESTINATION "Automation/automation/Include/${_hikari_dir}" COMPONENT hikari_app
         RUNTIME DESTINATION "Automation/automation/Include/${_hikari_dir}" COMPONENT hikari_app)
 endforeach()
+install(TARGETS hikari_ill_clipper2
+    LIBRARY DESTINATION Automation/automation/Include/clipper2/clipper2 COMPONENT hikari_app
+    RUNTIME DESTINATION Automation/automation/Include/clipper2/clipper2 COMPONENT hikari_app)
+install(FILES "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/clipper2/copyright" DESTINATION licenses/clipper2
+    RENAME LICENSE COMPONENT hikari_app)
+install(FILES "${PROJECT_SOURCE_DIR}/Thirdparty/ILL-clipper2/LICENSE" DESTINATION licenses/ill-clipper2
+    COMPONENT hikari_app)
 if(TARGET hikari_subinspector)
     install(TARGETS hikari_subinspector
         LIBRARY DESTINATION Automation/automation/Include/SubInspector/Inspector COMPONENT hikari_app)

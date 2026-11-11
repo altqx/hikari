@@ -1,4 +1,4 @@
-#include "node_layout.h"
+#include "hikari/application/karaoke_layout.h"
 
 #include "hikari/application/karaoke_syllables.h"
 #include "hikari/application/macro_transaction.h"
@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <variant>
 
-namespace hikari::application::node_layout {
+namespace hikari::application::karaoke_layout {
 
 namespace {
 
@@ -41,7 +41,7 @@ double number(const std::vector<std::string> &fields, int at)
     return v;
 }
 
-NodeColour colour(const std::vector<std::string> &fields, int at)
+StyleColour colour(const std::vector<std::string> &fields, int at)
 {
     std::string text = at < static_cast<int>(fields.size()) ? trimmed(fields[at]) : std::string();
     if (text.size() >= 2 && (text[0] == '&') && (text[1] == 'H' || text[1] == 'h'))
@@ -101,8 +101,17 @@ std::size_t firstCharBytes(const std::string &s)
     return std::min(n, s.size());
 }
 
-std::vector<std::string> graphemes(const std::string &s)
+std::vector<std::string> charsOf(const std::string &s, CharSplit split)
 {
+    if (split == CharSplit::CodePoints) {
+        std::vector<std::string> out;
+        for (std::size_t at = 0; at < s.size();) {
+            const std::size_t n = firstCharBytes(s.substr(at, 4));
+            out.push_back(s.substr(at, n));
+            at += n;
+        }
+        return out;
+    }
     const std::u16string text = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(s.data()), s.size()));
     std::vector<std::string> out;
     for (std::size_t at = 0; at < text.size();) {
@@ -291,10 +300,10 @@ std::string numberText(double v)
     return std::string(buffer, end);
 }
 
-Layout::Layout(const core::Document &document, TextMeasurePort &measure, std::optional<Resolution> video)
-    : m_measure(measure)
+Layout::Layout(const core::Document &document, ExtentsCache &extents, std::optional<Resolution> video)
+    : m_extents(extents)
 {
-    std::vector<const StyleInfo *> order;
+    std::vector<std::pair<std::u8string, std::vector<std::string>>> styles;
     for (const auto &section : document.sections()) {
         if (section.kind != core::SectionKind::Styles)
             continue;
@@ -303,9 +312,31 @@ Layout::Layout(const core::Document &document, TextMeasurePort &measure, std::op
                 std::vector<std::string> fields;
                 for (const auto &f : st->fields)
                     fields.push_back(narrow(f));
-                StyleInfo &info = m_styles[st->name] = styleOf(st->name, std::move(fields));
-                order.push_back(&info);
+                styles.emplace_back(st->name, std::move(fields));
             }
+    }
+    addStyles(styles, writtenScriptResolution(document), video);
+}
+
+Layout::Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroStyleLine> &styles,
+               ExtentsCache &extents, std::optional<Resolution> video)
+    : m_extents(extents)
+{
+    std::vector<std::pair<std::u8string, std::vector<std::string>>> named;
+    for (const MacroStyleLine &st : styles) {
+        const std::string name = st.fields.empty() ? std::string() : st.fields.front();
+        named.emplace_back(std::u8string(name.begin(), name.end()), st.fields);
+    }
+    addStyles(named, writtenScriptResolution(info), video);
+}
+
+void Layout::addStyles(const std::vector<std::pair<std::u8string, std::vector<std::string>>> &styles,
+                       Resolution written, std::optional<Resolution> video)
+{
+    std::vector<const StyleInfo *> order;
+    for (const auto &[name, fields] : styles) {
+        StyleInfo &info = m_styles[name] = styleOf(name, fields);
+        order.push_back(&info);
     }
     if (!order.empty())
         m_first = order.front();
@@ -318,7 +349,6 @@ Layout::Layout(const core::Document &document, TextMeasurePort &measure, std::op
         m_added_styles.emplace(name, furiganaOf(*base));
         ++m_added;
     }
-    const Resolution written = writtenScriptResolution(document);
     const Resolution res = lacksScriptResolution(written) ? legacyScriptResolution(written) : written;
     m_resX = res.width;
     m_resY = res.height;
@@ -348,27 +378,22 @@ std::optional<std::vector<std::u8string>> Layout::addedStyle(std::u8string_view 
 
 Layout::Extents Layout::measure(const StyleInfo &style, const std::string &text, std::vector<std::string> &problems)
 {
-    std::string key;
-    for (const std::string &f : style.fields)
-        key += f + ',';
-    const auto at = m_extents.find({key, text});
-    if (at != m_extents.end())
-        return at->second;
-    Extents out;
-    if (const auto e = m_measure.measure(style.fields, text))
-        out = {e->width, e->height};
-    else
+    const ExtentsCache::Result r = m_extents.measure(style.fields, text);
+    if (r.extents)
+        return {r.extents->width, r.extents->height};
+    if (r.measuredNow)
         problems.push_back("could not measure text in the Style \"" + narrow(style.name) + "\"");
-    m_extents.emplace(std::pair{key, text}, out);
-    return out;
+    return {};
 }
 
-Line Layout::line(const core::LineRecord &source, double li, bool chars, std::vector<std::string> &problems)
+Line Layout::line(const MacroDialogueLine &source, double li, const LineOptions &options,
+                  std::vector<std::string> &problems)
 {
     Line out;
-    out.source = &source;
-    out.macro = macroLineOf(source);
+    out.macro = source;
     out.li = li;
+    const std::u8string styleName(source.style.begin(), source.style.end());
+    const bool chars = options.chars;
     const MacroDialogueLine &d = out.macro;
     const auto kara = karaokeSyllables(d.text, d.startMs, d.endMs);
 
@@ -441,16 +466,16 @@ Line Layout::line(const core::LineRecord &source, double li, bool chars, std::ve
     syls.push_back(std::move(work));
     out.syln = static_cast<int>(syls.size()) - 1;
 
-    const StyleInfo *styleref = style(source.style);
+    const StyleInfo *styleref = style(styleName);
     if (!styleref) {
-        problems.push_back("has the Style \"" + narrow(source.style) + "\", which the Document lacks");
+        problems.push_back("has the Style \"" + source.style + "\", which the Document lacks");
         styleref = m_first;
     }
     static const StyleInfo kNoStyle = styleOf(u8"Default", {});
     if (!styleref)
         styleref = &kNoStyle;
     out.style = styleref;
-    const StyleInfo *furiStyle = style(source.style + u8"-furigana");
+    const StyleInfo *furiStyle = style(styleName + u8"-furigana");
 
     const Extents whole = measure(*styleref, lineStripped, problems);
     double width = whole.width * m_factor;
@@ -532,7 +557,7 @@ Line Layout::line(const core::LineRecord &source, double li, bool chars, std::ve
     l.height = rounded(height);
     l.x = rounded(x);
     l.y = rounded(y);
-    l.style = source.style;
+    l.style = styleName;
 
     const auto place = [&](Unit &u, double sylLeft, double sylCenter, double sylRight, double sylWidth,
                            double sylHeight, bool isFuri) {
@@ -567,9 +592,14 @@ Line Layout::line(const core::LineRecord &source, double li, bool chars, std::ve
         Unit u;
         u.text = s.stripped;
         u.raw = s.text;
+        u.spaceStripped = s.spaceStripped;
+        u.prespace = s.prespace;
+        u.postspace = s.postspace;
+        u.prespaceWidth = s.preWidth;
+        u.postspaceWidth = s.postWidth;
         timed(u, s.start, s.end, s.duration, s.kdur);
         u.i = s.i;
-        u.style = source.style;
+        u.style = styleName;
         place(u, s.left, s.center, s.right, s.width, s.height, false);
         u.blank = isBlank(u, s.duration);
         out.syls.push_back(std::move(u));
@@ -578,14 +608,15 @@ Line Layout::line(const core::LineRecord &source, double li, bool chars, std::ve
         for (std::size_t s = 0; s < syls.size(); ++s) {
             std::vector<Unit> list;
             double at = syls[s].left;
-            for (const std::string &c : graphemes(syls[s].stripped)) {
+            for (const std::string &c : charsOf(syls[s].stripped, options.split)) {
                 const double w = measure(*styleref, c, problems).width;
                 Unit u;
                 u.text = c;
                 u.raw = c;
+                u.spaceStripped = c;
                 timed(u, syls[s].start, syls[s].end, syls[s].duration, syls[s].kdur);
                 u.i = syls[s].i;
-                u.style = source.style;
+                u.style = styleName;
                 place(u, at, at + w / 2, at + w, w, syls[s].height, false);
                 u.blank = isBlank(u, syls[s].duration);
                 at += w;
@@ -610,7 +641,7 @@ Line Layout::line(const core::LineRecord &source, double li, bool chars, std::ve
                       std::to_string(d.layer) + '\x1f' + d.style + '\x1f' + d.actor + '\x1f' +
                       std::to_string(d.marginL) + ',' + std::to_string(d.marginR) + ',' + std::to_string(d.marginV) +
                       '\x1f' + d.effect + '\x1f' + numberText(li) + '\x1f' + numberText(m_resX) + 'x' +
-                      numberText(m_resY) + '\x1f' + numberText(m_factor) + (chars ? "c" : "") + '\x1f';
+                      numberText(m_resY) + '\x1f' + numberText(m_factor) + (chars ? (options.split == CharSplit::Graphemes ? "g" : "c") : "") + '\x1f';
     for (const StyleInfo *s : {styleref, furiStyle})
         if (s)
             for (const std::string &f : s->fields)

@@ -79,7 +79,7 @@ describe("AgentSession", () => {
         ]);
         expect(h.of("usage")).toEqual([{ sessionUpdate: "usage", usage: kUsage }]);
         const request = h.model.requests[0]!.request;
-        expect(request.system).toBe("Be brief.");
+        expect(request.system).toStartWith("Be brief.\n\n## Skills\n");
         expect(request.cacheKey).toBe("t1");
         expect(request.tools!.map((t) => t.name)).toContain("update_plan");
         expect(request.tools!.map((t) => t.name)).toContain("document_apply");
@@ -122,6 +122,18 @@ describe("AgentSession", () => {
             { content: "Fix", priority: "medium", status: "in_progress" },
         ] }]);
         expect(h.of("tool_call_update").map((u) => u.status)).toEqual(["completed", "failed"]);
+    });
+
+    test("read_skill reads a skill and keeps the system prompt for the whole thread", async () => {
+        const h = harness([{ calls: [["read_skill", { name: "translation" }]] }, { text: "ok" }, { text: "again" }]);
+        await h.prompt("Translate");
+        await h.prompt("More");
+        expect(h.ha1.calls).toEqual([]);
+        expect(h.of("tool_call").map((u) => [u.title, u.kind])).toEqual([["read_skill", "read"]]);
+        const result = h.model.requests[1]!.request.messages.at(-1)!.parts[0];
+        expect(result).toMatchObject({ type: "toolResult", content: expect.stringMatching(/^# Translation\n/) });
+        expect(h.model.requests[0]!.request.tools!.map((t) => t.name)).toContain("read_skill");
+        expect(new Set(h.model.requests.map((r) => r.request.system)).size).toBe(1);
     });
 
     test("a steer joins the turn after its next tool call", async () => {
@@ -231,5 +243,29 @@ describe("AgentSession", () => {
         expect(tools.imageBudget).toEqual(kImageBudgets.gemini);
         await sessions.prompt({ sessionId: "t1", prompt: [{ type: "text", text: "3" }], model: { providerId: "gone", model: "m" } });
         expect(tools.imageBudget).toEqual(kDefaultImageBudget);
+    });
+});
+
+describe("AgentSessions with external agents", () => {
+    test("a session naming an agent runs on it, and an agent the sidecar lacks is refused", async () => {
+        const opened: string[] = [];
+        const closed: string[] = [];
+        const sessions = new AgentSessions(() => new ToolSet({ call: () => Promise.resolve(undefined as never) }),
+            () => Promise.reject(new Error("no provider")), () => {}, undefined, {
+                claude: (id) => {
+                    opened.push(id);
+                    return { prompt: () => Promise.resolve({ stopReason: "end_turn" }), steer: () => Promise.resolve({ taken: false }),
+                        cancel: () => {}, close: () => closed.push(id) };
+                },
+            });
+        const model = { providerId: "", model: "" };
+        sessions.open({ sessionId: "a", agent: "claude", model });
+        expect(await sessions.prompt({ sessionId: "a", prompt: [{ type: "text", text: "hi" }] }))
+            .toEqual({ stopReason: "end_turn" });
+        sessions.close("a");
+        expect(opened).toEqual(["a"]);
+        expect(closed).toEqual(["a"]);
+        expect(() => sessions.open({ sessionId: "b", agent: "codex" as never, model }))
+            .toThrow(new RpcError(ErrorCode.invalidParams, "This sidecar can't run codex"));
     });
 });

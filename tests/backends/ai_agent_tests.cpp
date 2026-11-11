@@ -305,10 +305,11 @@ protected:
         host.reset();
     }
 
-    std::unique_ptr<AgentThreads> makeThreads()
+    std::unique_ptr<AgentThreads> makeThreads(bool withoutProvider = false)
     {
         AgentThreads::Wiring w;
-        w.requests = [this] { return requests.get(); };
+        w.requests = [this, withoutProvider] { return withoutProvider ? nullptr : requests.get(); };
+        w.agentHost = [this] { return sidecar(); };
         w.config = [this] { return &providers->config(); };
         w.api = &api;
         w.defaults = [this] { return defaults; };
@@ -432,6 +433,27 @@ TEST_F(AgentThreadsTest, ATurnStreamsTheAnswerKeepsTheHistoryAndTitlesTheThread)
     EXPECT_EQ(at(opened[0], "sessionId"), id);
     EXPECT_EQ(*opened[0].find("model"), Json::object({{"providerId", "or"}, {"model", "m"}}));
     EXPECT_EQ(fake.review.turns().back().caller, "ai:" + id);
+}
+
+TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvider)
+{
+    threads = makeThreads(true);
+
+    const std::string id = threads->create();
+    threads->setModel(id, {"agent:claude", ""});
+    ASSERT_TRUE(threads->modelOf(thread(id)));
+    EXPECT_EQ(threads->modelOf(thread(id))->providerId, "agent:claude");
+    threads->send(id, "Fix the typo");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(notice(id), "");
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(at(opened[0], "agent"), "claude");
+    EXPECT_EQ(*opened[0].find("model"), Json::object({{"providerId", "agent:claude"}, {"model", ""}}));
+
+    const std::string plain = threads->create();
+    threads->send(plain, "Hello");
+    EXPECT_EQ(notice(plain), "noSidecar");
 }
 
 TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)
@@ -559,6 +581,24 @@ TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)
     EXPECT_NE(fake.target()->document().lines()[0]->text, u8"Sneaky");
 }
 
+TEST_F(AgentThreadsTest, AThreadMayReadTheUsersSkillsAndACallWithoutOneMayNot)
+{
+    const std::string id = threads->create();
+    threads->send(id, "Hi");
+    ASSERT_TRUE(idle(id));
+    std::optional<SidecarResult> result;
+    Json list = call("skills.list");
+    list["session"] = id;
+    sidecar()->request("api", list, [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_TRUE(*result);
+    EXPECT_NE((*result)->dump().find("\"skills\":[]"), std::string::npos) << (*result)->dump();
+    result.reset();
+    sidecar()->request("api", call("skills.list"), [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    EXPECT_NE((*result)->dump().find(hikari::api::errors::kNotGranted), std::string::npos);
+}
+
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
 {
     const std::string id = withMode(AgentMode::Manual);
@@ -679,6 +719,105 @@ TEST_F(AgentThreadsTest, AReopenedThreadReplaysItsHistoryIntoANewSession)
     EXPECT_FALSE(threads->thread(id));
     threads = makeThreads();
     EXPECT_FALSE(threads->thread(id));
+}
+
+TEST_F(AgentThreadsTest, AThreadSearchesWhileSettingsAndItsGlobeBothSaySoAndKeepsItsGlobe)
+{
+    const auto searched = [&](std::string_view method) {
+        const auto sent = receivedAs(method);
+        const Json *on = sent.empty() ? nullptr : sent.back().find("webSearch");
+        return on && on->isBool() && on->asBool();
+    };
+    requests->setWebSearch(true, std::nullopt);
+    const std::string id = threads->create();
+    EXPECT_TRUE(thread(id).webSearch);
+    threads->send(id, "a");
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(searched("session/new"));
+    EXPECT_TRUE(searched("session/prompt"));
+    threads->setWebSearch(id, false);
+    threads->send(id, "b");
+    ASSERT_TRUE(idle(id));
+    EXPECT_FALSE(searched("session/prompt"));
+    threads = makeThreads();
+    EXPECT_FALSE(thread(id).webSearch);
+    threads->setWebSearch(id, true);
+    requests->setWebSearch(false, std::nullopt);
+    threads->send(id, "c");
+    ASSERT_TRUE(idle(id));
+    EXPECT_FALSE(searched("session/new"));
+    EXPECT_FALSE(searched("session/prompt"));
+}
+
+TEST_F(AgentThreadsTest, AnAnswersSourcesBecomeItsCitationsAndItsSearchesARowBeforeIt)
+{
+    const std::string answer = "Aimer\xF0\x9F\x98\x80 sings.";
+    const Json sources = Json::object(
+        {{"sessionUpdate", "sources"},
+         {"textLength", 14},
+         {"citations", Json::array({Json::object({{"index", 1}, {"url", "https://a.example/"}, {"title", "A"},
+                                                  {"quote", "Aimer sings it"}, {"start", 0}, {"end", 7}}),
+                                    Json::object({{"index", 2}, {"url", "https://b.example/"}, {"title", ""},
+                                                  {"start", 0}, {"end", 99}})})},
+         {"searchSuggestions", "<div>chips</div>"},
+         {"searches", Json::array({Json::object({{"kind", "search"}, {"query", "aimer"}})})}});
+    const Json usage = Json::object({{"sessionUpdate", "usage"},
+                                     {"usage", Json::object({{"inputTokens", 1}, {"outputTokens", 1}})}});
+    const std::string id = threads->create();
+    threads->send(id, Json::object({{"say", answer}, {"calls", Json::array()},
+                                    {"updates", Json::array({sources, usage})}}).dump());
+    ASSERT_TRUE(idle(id));
+    const auto &all = thread(id).items.asArray();
+    ASSERT_EQ(all.size(), 3u);
+    EXPECT_EQ(kindOf(all[0]), "user");
+    EXPECT_EQ(kindOf(all[1]), "search");
+    EXPECT_EQ(at(all[1], "by"), "provider");
+    EXPECT_EQ(*all[1].find("searches"), *sources.find("searches"));
+    const Json text = all[2];
+    EXPECT_EQ(at(text, "text"), answer);
+    EXPECT_EQ(at(text, "searchSuggestions"), "<div>chips</div>");
+    EXPECT_EQ(*text.find("citations"),
+              Json::array({Json::object({{"index", 1}, {"url", "https://a.example/"}, {"title", "A"},
+                                         {"quote", "Aimer sings it"}, {"start", 0}, {"end", 7}}),
+                           Json::object({{"index", 2}, {"url", "https://b.example/"}, {"title", "https://b.example/"}})}));
+    threads = makeThreads();
+    EXPECT_EQ(*thread(id).items.asArray()[2].find("citations"), *text.find("citations"));
+}
+
+TEST_F(AgentThreadsTest, SearchServiceRowsKeepTheirPagesAndTheFinishedTurnDropsTheResults)
+{
+    requests->setWebSearch(true, app::SearchService::Brave);
+    const std::string results = R"({"results":[{"url":"https://a.example/","title":"A","snippet":"secret text"}]})";
+    const Json failed = Json::object({{"sessionUpdate", "search_failed"}, {"service", "brave"}, {"reason", "usedUp"},
+                                      {"httpStatus", 402}});
+    const Json updates = Json::array(
+        {Json::object({{"sessionUpdate", "tool_call"}, {"toolCallId", "w1"}, {"title", "web_search"}, {"kind", "read"},
+                       {"status", "in_progress"}, {"rawInput", Json::object({{"query", "aimer"}})}}),
+         Json::object({{"sessionUpdate", "tool_call_update"}, {"toolCallId", "w1"}, {"status", "completed"},
+                       {"content", Json::array({Json::object({{"type", "content"},
+                                                              {"content", Json::object({{"type", "text"}, {"text", results}})}})})}}),
+         Json::object({{"sessionUpdate", "history"},
+                       {"message", Json::object({{"author", "user"},
+                                                 {"parts", Json::array({Json::object({{"type", "toolResult"}, {"callId", "w1"},
+                                                                                      {"content", results}})})}})}}),
+         failed, failed});
+    const std::string id = threads->create();
+    threads->send(id, Json::object({{"say", "I couldn't search."}, {"calls", Json::array()}, {"updates", updates}}).dump());
+    ASSERT_TRUE(idle(id));
+    const auto tools = items(id, "tool");
+    ASSERT_EQ(tools.size(), 1u);
+    EXPECT_EQ(at(tools[0], "service"), "brave");
+    EXPECT_EQ(*tools[0].find("urls"), Json::array({"https://a.example/"}));
+    EXPECT_FALSE(tools[0].find("output"));
+    const Json &result = thread(id).history.asArray().at(1).find("parts")->asArray().at(0);
+    EXPECT_EQ(at(result, "callId"), "w1");
+    EXPECT_EQ(at(result, "content"), "The search results aren't kept after the turn.");
+    const auto notices = items(id, "notice");
+    ASSERT_EQ(notices.size(), 1u);
+    EXPECT_EQ(at(notices[0], "notice"), "searchUsedUp");
+    EXPECT_EQ(at(notices[0], "service"), "brave");
+    EXPECT_EQ(*notices[0].find("status"), Json(std::int64_t{402}));
+    EXPECT_EQ(at(items(id, "text").back(), "text"), "I couldn't search.");
 }
 
 }

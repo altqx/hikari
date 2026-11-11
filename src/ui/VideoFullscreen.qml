@@ -331,7 +331,7 @@ Window {
                         text: fs.shell.video.playing ? qsTr("Pause") : qsTr("Play")
                         enabled: fs.shell.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
+                        tip: fs.shell.bitmapTip(qsTr("Play or pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!fs.shell.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) fs.shell.video.togglePlay()
                     }
                     IconButton {

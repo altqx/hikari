@@ -361,7 +361,7 @@ public:
     // Adds the format's extension when missing. "readonly" asks again; "" when the
     // save started.
     Q_INVOKABLE QString saveChosen(const QUrl &file);
-    // Saves in-place tabs now; returns the others, in tab order, as {id, route, title}.
+    // Saves in-place tabs now; returns the others, in tab order, as {id, route, title}. Route "scriptInfo": ask with scriptInfoQuestion first.
     Q_INVOKABLE QVariantList saveAll();
     // As saveRoute, saveDialogValues, saveChosen and Save for Document id (0: the
     // editing target).
@@ -656,6 +656,10 @@ public:
     void setFindProcessorCount(int count) { m_findProcessors = count; }
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
+    // With scriptProperties.askForChange on: the {key, from, to} the next save would write, for the dialog to ask about.
+    Q_INVOKABLE QVariantList scriptInfoQuestion(qulonglong id) const;
+    // The keys the next save of `id` writes while askForChange is on; none skips them.
+    Q_INVOKABLE void approveScriptInfo(qulonglong id, const QStringList &keys);
     Q_INVOKABLE bool shiftTranslation(int mode);
     Q_INVOKABLE bool makeGroups();
     // description: the id of the group's description Line.
@@ -780,8 +784,8 @@ public:
     ui::LineEditorController &editor() const { return *activeViews().editor; }
     ui::TemplateEditorController &templateEditor() const { return *activeViews().templateEditor; }
     ui::NodeEffectsController &nodeEffects() const { return *activeViews().nodeEffects; }
-    ui::VideoController &video() { return *m_video; }
-    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; }
+    ui::VideoController &video() { return *activeMedia().video; }
+    backends::QtGeneralPlayer &generalPlayer() { return *activeMedia().generalPlayer; }
     // The general player, or on Windows DirectShow when video.playbackPlayer is 1 (never
     // a fallback).
     application::GeneralPlayerPort &activePlayer() { return *m_activePlayer; }
@@ -794,7 +798,7 @@ public:
     Q_INVOKABLE QVariantList playerFilters() const;
     // Modal, owned by item's window, at (x, y) in item.
     Q_INVOKABLE bool showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y);
-    ui::AudioController &audio() { return *m_audio; }
+    ui::AudioController &audio() { return *activeMedia().audio; }
     AutomationShell &automation() { return *m_automation; }
     // Runs node effects' Lua nodes in their own sandboxed helper, started on first use.
     application::LuaNodePort &luaNodes();
@@ -824,7 +828,7 @@ public:
     Q_INVOKABLE void chooseAudioOutput(const QString &id, const QString &name);
     Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
     QString audioOutputName() const;
-    backends::AudioBoxPlayer &audioPlayer() { return *m_audioPlayer; }
+    backends::AudioBoxPlayer &audioPlayer() { return *activeMedia().audioPlayer; }
     ui::LogController &log() { return *m_log; }
     Localisation &localisation() { return *m_localisation; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
@@ -1096,11 +1100,27 @@ private:
     std::unique_ptr<application::WriteCoordinator> m_writes;
     std::unique_ptr<application::DocumentFiles> m_files;
     application::Workspace m_workspace;
-    std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
-    std::unique_ptr<application::DummyVideoSource> m_videoSource;
     backends::SubtitleRendererSelection m_renderer;
-    std::unique_ptr<ui::VideoController> m_video;
-    std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
+    struct WindowMedia {
+        std::unique_ptr<backends::FfmsIndexedSource> videoHelper;
+        std::unique_ptr<application::DummyVideoSource> videoSource;
+        std::unique_ptr<ui::VideoController> video;
+        std::unique_ptr<backends::QtGeneralPlayer> generalPlayer;
+        std::unique_ptr<backends::FfmsIndexedSource> audioHelper;
+        std::unique_ptr<ui::AudioController> audio;
+        std::unique_ptr<backends::AudioBoxPlayer> audioPlayer;
+        QList<QMetaObject::Connection> audioConnections;
+    };
+    std::unique_ptr<WindowMedia> m_mainMedia;
+    WindowMedia &activeMedia() const { return *m_mainMedia; }
+    void makeVideo(WindowMedia &media);
+    void makeAudio(WindowMedia &media);
+    void trackOffers(WindowMedia &media);
+    QString m_mediaHelper;
+    bool m_playbackAudio = false;
+    std::function<application::AudioOutputPort &()> m_sharedOutput;
+    void wireMedia(WindowMedia &media);
+    void releaseAudio(WindowMedia &media);
 #ifdef _WIN32
     std::unique_ptr<backends::DirectShowPlayer> m_directShow; // W1, made when chosen
 #endif
@@ -1147,6 +1167,9 @@ private:
     void makeNodeEffects(WindowViews &views, int shellWindow);
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
+    void applyScriptInfoOnSave(application::DocumentId document);
+    const application::Settings &documentSettings(application::DocumentId document) const;
+    std::map<std::uint64_t, std::vector<std::u8string>> m_scriptInfoApproved;
     bool kanjiPending(application::DocumentId document);
     bool applyKanji(application::DocumentId document, application::EditSession &session);
     void refreshWindowViews(int shellWindow);
@@ -1339,7 +1362,7 @@ private:
     bool m_holdVideoRefresh = false;
     QTimer *m_editRefresh = nullptr;
     std::optional<core::LineId> m_leftEditedLine;
-    void trackVideoFollow();
+    void trackVideoFollow(WindowMedia &media);
     void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
     void followEditOn(const application::FollowedLine &line);
     void followShownLine(bool rowChanged, LineChangeOrigin origin);
@@ -1492,9 +1515,6 @@ private:
     bool m_grammarApplyPending = false;
     QString m_grammarWords;
     QStringList m_grammarOwnWords;
-    std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
-    std::unique_ptr<ui::AudioController> m_audio;
-    QList<QMetaObject::Connection> m_audioConnections;
     application::RecentFiles m_recentAudio;
     QString m_audioFollowedVideo;
     std::string m_pendingIndexHandoff;
@@ -1508,7 +1528,6 @@ private:
     QString m_indexDir;
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
     std::string m_audioOutputHostApi;
-    std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
     std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
     std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
     void routeAudio(const application::OutputRoute &route, bool move);
@@ -1522,7 +1541,7 @@ private:
     std::optional<int> m_audioWantsFrame;
     void refreshAudio();
     void followVideoInAudio();
-    void trackVideoSources();
+    void trackVideoSources(WindowMedia &media);
     void logVideoFailure();
     void logPlaybackFailure();
     void rememberRecentVideo(const QString &path);
@@ -1611,7 +1630,7 @@ private:
     void forgetTab(application::DocumentId document);
     void selectRow(application::DocumentId document, int row);
     bool keepTabAudio(const QString &videoPath);
-    void trackTabMedia();
+    void trackTabMedia(WindowMedia &media);
     int targetVideoPosition() const;
     std::map<int, application::DocumentId> m_layoutDocuments;
     void showTabArrangement(int shellWindow);
