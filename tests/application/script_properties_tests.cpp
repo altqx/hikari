@@ -1,10 +1,12 @@
 #include "hikari/application/script_properties.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/srt.h"
 
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -113,4 +115,44 @@ TEST(ScriptProperties, LayoutResolutionRules)
     edits.layoutResY = true;
     ASSERT_TRUE(applyScriptProperties(b, p, edits, false));
     EXPECT_EQ(b.document().scriptInfo(u8"LayoutResY"), u8"720");
+}
+
+TEST(ScriptProperties, OnSaveListsEnabledFieldsThatDiffer)
+{
+    MemorySettingsStorage user;
+    LayeredSettingsStorage layered(user);
+    Settings settings(layered);
+    settings.set("scriptProperties.titleOn", true);
+    settings.set("scriptProperties.title", std::string("Show"));
+    settings.set("scriptProperties.translationOn", true);
+    settings.set("scriptProperties.translation", std::string("Mine"));
+    settings.set("scriptProperties.timing", std::string("Off, so not written"));
+    auto project = std::make_shared<MemorySettingsStorage>();
+    project->write(*findSetting("scriptProperties.translation"), std::string("Team"));
+    layered.setProject(project, false);
+
+    const auto changes = scriptInfoOnSave(load(kFull), settings);
+    ASSERT_EQ(changes.size(), 1u);
+    EXPECT_EQ(changes[0].key, u8"Original Translation");
+    EXPECT_EQ(changes[0].from, u8"");
+    EXPECT_EQ(changes[0].to, u8"Team");
+
+    constexpr std::string_view srt = "1\n00:00:01,000 --> 00:00:02,000\na\n";
+    std::vector<std::byte> bytes(srt.size());
+    std::memcpy(bytes.data(), srt.data(), srt.size());
+    EXPECT_TRUE(scriptInfoOnSave(core::loadSrt(bytes).document, settings).empty());
+}
+
+TEST(ScriptProperties, OnSaveChangesAreOneUndoStep)
+{
+    EditSession session{load(kFull)};
+    const auto steps = session.historySize();
+    ASSERT_TRUE(applyScriptInfo(session, {}));
+    EXPECT_EQ(session.historySize(), steps);
+    ASSERT_TRUE(applyScriptInfo(session, {{u8"Title", u8"Show", u8"Film"}, {u8"Original Timing", u8"", u8"Tim"}}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.document().scriptInfo(u8"Title"), u8"Film");
+    EXPECT_EQ(session.document().scriptInfo(u8"Original Timing"), u8"Tim");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(saved(session), std::string(kFull));
 }

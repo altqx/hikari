@@ -2590,11 +2590,11 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_PLAY_PAUSE"
-                help: qsTr("Plays / Pauses video")
+                help: qsTr("Plays or pauses the video")
                 iconRole: root.video.playing ? "media-pause" : "media-play"
                 action: Action {
                     id: playPauseAction
-                    text: qsTr("Play / Pause"); enabled: root.video.hasVideo
+                    text: qsTr("Play or pause"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
                 }
             }
@@ -4111,7 +4111,7 @@ ApplicationWindow {
                         text: root.video.playing ? qsTranslate("HikariSub.Video", "Pause") : qsTranslate("HikariSub.Video", "Play")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play or pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
                     IconToolButton {
@@ -4948,7 +4948,7 @@ ApplicationWindow {
                             iconRole: "commit"
                             symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"
                             tip: qsTranslate("HikariSub.Audio", "Apply changes")
-                            menuTip: qsTranslate("HikariSub.Audio", "Commit options")
+                            menuTip: qsTranslate("HikariSub.Audio", "Options for applying changes")
                             menu: audioCommitMenu
                             onRun: root.audio.commit()
                             Row {
@@ -4972,7 +4972,7 @@ ApplicationWindow {
                             ShellMenuItem {
                                 objectName: "audioCommitItem"
                                 iconRole: "commit"
-                                text: qsTranslate("HikariSub.Audio", "Commit")
+                                text: qsTranslate("HikariSub.Audio", "Apply changes")
                                 shortcutText: root.eitherKey(root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4))
                                 onTriggered: if (!root.hotkeyGesture("AUDIO_COMMIT", 4, true, true)) root.audio.commit()
                             }
@@ -4981,7 +4981,7 @@ ApplicationWindow {
                                 id: audioAutoCommit
                                 objectName: "audioAutoCommit"
                                 iconRole: "auto-commit"
-                                text: qsTranslate("HikariSub.Audio", "Auto-commit")
+                                text: qsTranslate("HikariSub.Audio", "Apply changes automatically")
                                 checkable: true
                                 checked: audioPanel.autoCommit
                                 onToggled: {
@@ -4993,7 +4993,7 @@ ApplicationWindow {
                                 id: audioNextCommit
                                 objectName: "audioNextCommit"
                                 iconRole: "next-after-commit"
-                                text: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
+                                text: qsTranslate("HikariSub.Audio", "Go to the next line after applying")
                                 checkable: true
                                 checked: audioPanel.nextLineOnCommit
                                 onToggled: {
@@ -5006,8 +5006,8 @@ ApplicationWindow {
                             objectName: "audioExtraAutoCommit"
                             visible: audioButtons.keeps("autoCommit")
                             iconRole: "auto-commit"
-                            text: qsTranslate("HikariSub.Audio", "Auto-commit")
-                            tip: qsTranslate("HikariSub.Audio", "Auto-commit")
+                            text: qsTranslate("HikariSub.Audio", "Apply changes automatically")
+                            tip: qsTranslate("HikariSub.Audio", "Apply changes automatically")
                             checkable: true
                             checked: audioPanel.autoCommit
                             onToggled: {
@@ -5019,8 +5019,8 @@ ApplicationWindow {
                             objectName: "audioExtraNextCommit"
                             visible: audioButtons.keeps("nextCommit")
                             iconRole: "next-after-commit"
-                            text: qsTranslate("HikariSub.Audio", "Next after commit")
-                            tip: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
+                            text: qsTranslate("HikariSub.Audio", "Go to the next line after applying")
+                            tip: qsTranslate("HikariSub.Audio", "Go to the next line after applying")
                             checkable: true
                             checked: audioPanel.nextLineOnCommit
                             onToggled: {
@@ -5236,7 +5236,7 @@ ApplicationWindow {
                                     visible: audioButtons.foldsOut("autoCommit")
                                     height: visible ? implicitHeight : 0
                                     iconRole: "auto-commit"
-                                    text: qsTranslate("HikariSub.Audio", "Auto-commit")
+                                    text: qsTranslate("HikariSub.Audio", "Apply changes automatically")
                                     checkable: true
                                     checked: audioPanel.autoCommit
                                     onToggled: {
@@ -5249,7 +5249,7 @@ ApplicationWindow {
                                     visible: audioButtons.foldsOut("nextCommit")
                                     height: visible ? implicitHeight : 0
                                     iconRole: "next-after-commit"
-                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
+                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after applying")
                                     checkable: true
                                     checked: audioPanel.nextLineOnCommit
                                     onToggled: {
@@ -5589,13 +5589,13 @@ ApplicationWindow {
                                     objectName: "audioCustomiseAutoCommit"
                                     control: "autoCommit"
                                     iconRole: "auto-commit"
-                                    text: qsTranslate("HikariSub.Audio", "Auto-commit")
+                                    text: qsTranslate("HikariSub.Audio", "Apply changes automatically")
                                 }
                                 ShownItem {
                                     objectName: "audioCustomiseNextCommit"
                                     control: "nextCommit"
                                     iconRole: "next-after-commit"
-                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
+                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after applying")
                                 }
                                 ShownItem {
                                     objectName: "audioCustomiseGoto"
@@ -7159,11 +7159,38 @@ ApplicationWindow {
             openSaveDialog(document)
         else if (route === "readonly")
             root.warnReadOnly(document, root.tabTitle(document))
-        else if (document === 0)
-            return root.editor.save()
         else
-            return root.app.saveDocument(document)
+            confirmScriptInfo([document], () => document === 0 ? root.editor.save() : root.app.saveDocument(document), () => {})
         return true
+    }
+    function confirmScriptInfo(ids, then, cancelled) {
+        if (ids.length === 0) {
+            then()
+            return
+        }
+        const document = ids[0]
+        const rest = () => root.confirmScriptInfo(ids.slice(1), then, cancelled)
+        const rows = root.app.scriptInfoQuestion(document)
+        if (rows.length === 0) {
+            rest()
+            return
+        }
+        scriptInfoOnSaveLoader.active = true
+        scriptInfoOnSaveLoader.item.ask(root.tabTitle(document), rows, null, (choice, keys) => {
+            if (choice === "cancel") {
+                cancelled()
+                return
+            }
+            root.app.approveScriptInfo(document, keys)
+            rest()
+        })
+    }
+    Loader {
+        id: scriptInfoOnSaveLoader
+        active: false
+        sourceComponent: ScriptInfoOnSaveDialog {
+            settings: root.app.settings
+        }
     }
     property var saveQueue: []
     function saveAllTabs(overDisk) {
@@ -7183,6 +7210,11 @@ ApplicationWindow {
         saveQueue = saveQueue.slice(1)
         if (next.route === "readonly")
             warnReadOnly(next.id, root.tabTitle(next.id))
+        else if (next.route === "scriptInfo")
+            confirmScriptInfo([next.id], () => {
+                root.app.saveDocument(next.id)
+                root.saveNext()
+            }, () => root.saveNext())
         else
             openSaveDialog(next.id)
     }
@@ -7247,10 +7279,11 @@ ApplicationWindow {
             const target = document
             const file = selectedFile
             const format = formats[selectedNameFilter.index] ?? ""
-            root.confirmAssConversion(target, file, format, null, () => root.saveChosenAs(target, file, format), () => {
+            const cancelled = () => {
                 matroskaSubtitles.saveDone()
                 root.saveNext()
-            })
+            }
+            root.confirmAssConversion(target, file, format, null, () => root.confirmScriptInfo([target], () => root.saveChosenAs(target, file, format), cancelled), cancelled)
         }
         onRejected: {
             matroskaSubtitles.saveDone()
@@ -7363,6 +7396,7 @@ ApplicationWindow {
             else
                 diskSaveQuestion.confirm(marked, then, cancelled)
         }
+        confirmScriptInfo: (ids, then, cancelled) => root.confirmScriptInfo(ids, then, cancelled)
     }
 
     AutomationDialog {

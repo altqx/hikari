@@ -153,4 +153,48 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
     return {};
 }
 
+std::vector<ScriptInfoChange> scriptInfoOnSave(const core::Document &d, const Settings &settings)
+{
+    struct Field {
+        const char8_t *key;
+        const char *value, *on;
+    };
+    static constexpr Field fields[]{
+        {u8"Title", "scriptProperties.title", "scriptProperties.titleOn"},
+        {u8"Original Script", "scriptProperties.script", "scriptProperties.scriptOn"},
+        {u8"Original Translation", "scriptProperties.translation", "scriptProperties.translationOn"},
+        {u8"Original Editing", "scriptProperties.editing", "scriptProperties.editingOn"},
+        {u8"Original Timing", "scriptProperties.timing", "scriptProperties.timingOn"},
+        {u8"Script Updated By", "scriptProperties.update", "scriptProperties.updateOn"},
+    };
+    std::vector<ScriptInfoChange> changes;
+    if (d.format() != core::SubtitleFormat::Ass)
+        return changes;
+    for (const auto &f : fields) {
+        if (!settings.boolean(f.on))
+            continue;
+        const std::string wanted = settings.text(f.value);
+        u8 to(wanted.begin(), wanted.end());
+        u8 from = d.scriptInfo(f.key).value_or(u8());
+        if (from != to)
+            changes.push_back({f.key, std::move(from), std::move(to)});
+    }
+    return changes;
+}
+
+std::expected<void, CommandRefusal> applyScriptInfo(EditSession &session, const std::vector<ScriptInfoChange> &changes)
+{
+    if (changes.empty())
+        return {};
+    const auto ran = session.run(Command{"Changing the subtitle header", session.revision(), {}, [&](core::Document &d) {
+                                             for (const auto &c : changes)
+                                                 if (!d.setScriptInfo(c.key, c.to))
+                                                     return false;
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    return {};
+}
+
 }
