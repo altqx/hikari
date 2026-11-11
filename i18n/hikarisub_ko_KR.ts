@@ -1798,6 +1798,14 @@ Output device: %2</source>
         <translation>매크로가 취소되어 스크립트 해상도만 설정되었습니다.</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” 매크로를 이 문서에서 실행할 수 없습니다. %2MB가 필요하지만 매크로는 최대 %3MB까지만 사용할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>더 작은 파일에서 매크로를 실행하십시오. 예를 들어 필요한 줄만 남긴 사본을 사용하십시오.</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>Lua 스크립트 “%1”의 유효성 검사 실패</translation>
     </message>

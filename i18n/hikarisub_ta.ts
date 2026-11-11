@@ -1809,6 +1809,14 @@ Output device: %2</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” இந்த ஆவணத்தில் இயங்க முடியாது: இதற்கு %2 MB தேவை, ஆனால் ஒரு குறுநிரல் அதிகபட்சம் %3 MB மட்டுமே பயன்படுத்த முடியும்.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>குறுநிரலைச் சிறிய கோப்பில் இயக்கவும், எடுத்துக்காட்டாக அதற்குத் தேவையான வரிகள் மட்டும் உள்ள ஒரு நகலில்.</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>சரிபார்ப்பு Lua ச்கிரிப்ட் “%1” தோல்வியடைந்தது</translation>
     </message>
