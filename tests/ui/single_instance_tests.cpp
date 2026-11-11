@@ -51,7 +51,8 @@ int child(int argc, char **argv)
     app::SingleInstance instance({qEnvironmentVariable(kServer), qEnvironmentVariable(kLock)});
     const app::SingleInstance::Request request{
         QCoreApplication::arguments().mid(1), qEnvironmentVariable("HIKARI_SINGLE_INSTANCE_TOKEN"),
-        static_cast<application::WindowRequest>(qEnvironmentVariableIntValue("HIKARI_SINGLE_INSTANCE_WINDOW"))};
+        static_cast<application::WindowRequest>(qEnvironmentVariableIntValue("HIKARI_SINGLE_INSTANCE_WINDOW")),
+        qEnvironmentVariableIntValue("HIKARI_SINGLE_INSTANCE_PICK_FOLDER") != 0};
     const Role role = instance.claim(request, true, 3000);
     if (mode == QLatin1String("send"))
         return code(role);
@@ -74,7 +75,7 @@ class SingleInstanceTests : public QObject {
     app::SingleInstance::Location location;
 
     QProcess *start(const char *mode, const QStringList &files = {}, const QString &token = {},
-                    application::WindowRequest window = application::WindowRequest::Default)
+                    application::WindowRequest window = application::WindowRequest::Default, bool pickFolder = false)
     {
         auto *process = new QProcess(this);
         QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -83,15 +84,16 @@ class SingleInstanceTests : public QObject {
         env.insert(QLatin1String(kLock), location.lock);
         env.insert(QStringLiteral("HIKARI_SINGLE_INSTANCE_TOKEN"), token);
         env.insert(QStringLiteral("HIKARI_SINGLE_INSTANCE_WINDOW"), QString::number(static_cast<int>(window)));
+        env.insert(QStringLiteral("HIKARI_SINGLE_INSTANCE_PICK_FOLDER"), pickFolder ? QStringLiteral("1") : QStringLiteral("0"));
         process->setProcessEnvironment(env);
         process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
         process->start(QCoreApplication::applicationFilePath(), files);
         return process;
     }
     int run(const QStringList &files = {}, const QString &token = {},
-            application::WindowRequest window = application::WindowRequest::Default)
+            application::WindowRequest window = application::WindowRequest::Default, bool pickFolder = false)
     {
-        QProcess *process = start("send", files, token, window);
+        QProcess *process = start("send", files, token, window, pickFolder);
         QElapsedTimer waited;
         waited.start();
         while (process->state() != QProcess::NotRunning && waited.elapsed() < 15000)
@@ -106,6 +108,17 @@ class SingleInstanceTests : public QObject {
         QDataStream out(&payload, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_6_0);
         out << quint32(1) << files << QString();
+        QByteArray frame("HIKARISUB-OPEN\1");
+        QDataStream length(&frame, QIODevice::Append);
+        length << quint32(payload.size());
+        return frame + payload;
+    }
+    static QByteArray optionsRequest(const QMap<QString, QString> &options)
+    {
+        QByteArray payload;
+        QDataStream out(&payload, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_6_0);
+        out << quint32(3) << QStringList() << QString() << options;
         QByteArray frame("HIKARISUB-OPEN\1");
         QDataStream length(&frame, QIODevice::Append);
         length << quint32(payload.size());
@@ -194,6 +207,21 @@ private slots:
         QCOMPARE(requested.at(0).at(0).value<app::SingleInstance::Request>().window, application::WindowRequest::New);
         QCOMPARE(requested.at(1).at(0).value<app::SingleInstance::Request>().window, application::WindowRequest::Reuse);
         QCOMPARE(requested.at(1).at(0).value<app::SingleInstance::Request>().files, folder);
+    }
+
+    void aFolderPickerRequestTravelsWithTheWindowFlag()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        QCOMPARE(run({}, {}, application::WindowRequest::New, true), code(Role::Forwarded));
+        QCOMPARE(run(), code(Role::Forwarded));
+        QTRY_COMPARE(requested.size(), 2);
+        const auto picker = requested.at(0).at(0).value<app::SingleInstance::Request>();
+        QVERIFY(picker.pickFolder);
+        QCOMPARE(picker.window, application::WindowRequest::New);
+        QVERIFY(picker.files.isEmpty());
+        QVERIFY(!requested.at(1).at(0).value<app::SingleInstance::Request>().pickFolder);
     }
 
     void aStartWithoutFilesHandsOverToo()
@@ -330,6 +358,43 @@ private slots:
         took.start();
         QCOMPARE(run({dir.filePath(QStringLiteral("j.ass"))}), code(Role::Alone));
         QVERIFY2(took.elapsed() < 6000, qPrintable(QString::number(took.elapsed())));
+    }
+
+    void optionsItDoesNotKnowAreIgnored()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        QLocalSocket sender;
+        sender.connectToServer(location.server);
+        QVERIFY(sender.waitForConnected(3000));
+        sender.write(optionsRequest({{QStringLiteral("pick-folder"), QStringLiteral("1")},
+                                     {QStringLiteral("window"), QStringLiteral("2")},
+                                     {QStringLiteral("from-a-later-version"), QStringLiteral("x")}}));
+        sender.flush();
+        QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
+        char ack = 0;
+        QVERIFY(sender.getChar(&ack) && ack == '\1');
+        sender.write(commit(10000));
+        sender.flush();
+        QTRY_COMPARE(requested.size(), 1);
+        const auto taken = requested.at(0).at(0).value<app::SingleInstance::Request>();
+        QVERIFY(taken.pickFolder);
+        QCOMPARE(taken.window, application::WindowRequest::Reuse);
+    }
+
+    void aMalformedOptionIsRefused()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        QLocalSocket sender;
+        sender.connectToServer(location.server);
+        QVERIFY(sender.waitForConnected(3000));
+        sender.write(optionsRequest({{QStringLiteral("pick-folder"), QStringLiteral("yes")}}));
+        sender.flush();
+        QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
+        QCOMPARE(requested.size(), 0);
     }
 
     void releaseDropsWhatItHasNotTaken()

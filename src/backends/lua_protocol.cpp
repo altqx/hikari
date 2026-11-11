@@ -1,6 +1,7 @@
 #include "hikari/backends/lua_protocol.h"
 
 #include "hikari/backends/helper_protocol.h"
+#include "hikari/core/ass_save.h"
 
 namespace hikari::backends::lua {
 
@@ -182,6 +183,18 @@ std::optional<DialogResult> decodeDialogResult(const std::vector<std::byte> &pay
 
 namespace {
 
+std::string rebuiltRaw(const application::MacroDialogueLine &d)
+{
+    const auto time = [](std::int64_t ms) {
+        const auto text = core::legacy::assTimeText(ms);
+        return std::string(text.begin(), text.end());
+    };
+    return (d.comment ? "Comment: " : "Dialogue: ") + std::to_string(d.layer) + ',' + time(d.startMs) + ',' +
+           time(d.endMs) + ',' + d.style + ',' + d.actor + ',' + std::to_string(d.marginL) + ',' +
+           std::to_string(d.marginR) + ',' + std::to_string(d.marginV) + ',' + d.effect + ',' +
+           (d.translation.empty() ? d.text : d.translation);
+}
+
 void writeLists(Writer &w, const std::vector<application::MacroInfoLine> &info,
                 const std::vector<application::MacroStyleLine> &styles,
                 const std::vector<application::MacroDialogueLine> &dialogues)
@@ -197,9 +210,13 @@ void writeLists(Writer &w, const std::vector<application::MacroInfoLine> &info,
     }
     w.i32(static_cast<std::int32_t>(dialogues.size()));
     for (const auto &d : dialogues) {
+        const bool rebuilt = d.raw == rebuiltRaw(d);
         w.i64(static_cast<std::int64_t>(d.id)).i64(static_cast<std::int64_t>(d.generatedFrom)).u8(d.comment).i32(d.layer).i64(d.startMs).i64(d.endMs).str(d.style)
             .str(d.actor).i32(d.marginL).i32(d.marginR).i32(d.marginV).str(d.effect).str(d.text).str(d.translation)
-            .str(d.raw).i32(static_cast<std::int32_t>(d.extra.size()));
+            .u8(rebuilt);
+        if (!rebuilt)
+            w.str(d.raw);
+        w.i32(static_cast<std::int32_t>(d.extra.size()));
         for (const auto &[key, value] : d.extra)
             w.str(key).str(value);
     }
@@ -248,7 +265,7 @@ bool readLists(Reader &r, std::size_t size, std::vector<application::MacroInfoLi
         d.effect = r.str();
         d.text = r.str();
         d.translation = r.str();
-        d.raw = r.str();
+        d.raw = r.u8() ? rebuiltRaw(d) : r.str();
         const auto ne = count(r, size);
         if (!ne)
             return false;

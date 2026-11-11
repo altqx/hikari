@@ -5,19 +5,22 @@
 
 namespace hikari::application {
 
-namespace {
-
-std::string fileNameOf(const std::string &path)
+bool isBuiltinScript(std::string_view path)
 {
+    return path == kBuiltinKaraokeTemplater;
+}
+
+std::string scriptFileName(const std::string &path)
+{
+    if (isBuiltinScript(path))
+        return "kara-templater.lua";
     const auto slash = path.find_last_of("/\\");
     return slash == std::string::npos ? path : path.substr(slash + 1);
 }
 
-}
-
 std::string MacroIdentity::legacyAlias() const
 {
-    return fileNameOf(scriptPath) + ":" + std::to_string(ordinal);
+    return scriptFileName(scriptPath) + ":" + std::to_string(ordinal);
 }
 
 void AutomationRegistry::setScript(Script script)
@@ -59,7 +62,7 @@ AliasResolution AutomationRegistry::resolve(const std::string &alias,
     const std::string file = alias.substr(0, colon);
     std::vector<const Script *> matches;
     for (const auto &s : m_scripts)
-        if (fileNameOf(s.path) == file) {
+        if (scriptFileName(s.path) == file) {
             matches.push_back(&s);
             result.candidates.push_back(s.path);
         }

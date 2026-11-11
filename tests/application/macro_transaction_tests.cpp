@@ -5,7 +5,12 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
 #include <cstring>
+#include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -457,4 +462,191 @@ TEST_F(MacroTest, GeneratedLinesAreMarkedInTheRunsUndoStep)
     EXPECT_EQ(reopened.lines()[1]->generatedFrom, reopened.lines()[0]->id);
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(save(session), loaded);
+}
+
+namespace {
+
+std::string bigScript(std::size_t count)
+{
+    std::string text(kScript.substr(0, kScript.find("Dialogue:")));
+    for (std::size_t i = 0; i < count; ++i)
+        text += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,line " + std::to_string(i) + "\n";
+    return text;
+}
+
+std::vector<std::uint64_t> ids(const core::Document &doc)
+{
+    std::vector<std::uint64_t> out;
+    for (const auto *l : doc.lines())
+        out.push_back(l->id.value);
+    return out;
+}
+
+MacroDialogueLine fresh(std::string text)
+{
+    MacroDialogueLine d;
+    d.style = "Default";
+    d.text = std::move(text);
+    return d;
+}
+
+struct BigMacroTest : ::testing::Test {
+    static constexpr std::size_t kLines = 20'000;
+    EditSession session{load(bigScript(kLines))};
+    MacroSnapshot s = *snapshotForMacro(session);
+    MacroResult r = unchanged(s);
+    std::string original = save(session);
+};
+
+}
+
+TEST_F(BigMacroTest, OneEditAppliesInLinearTime)
+{
+    r.dialogues[kLines / 2].text = "edited";
+    const auto start = std::chrono::steady_clock::now();
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Edit"));
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(100));
+    const auto after = texts(session);
+    EXPECT_EQ(after[kLines / 2], "edited");
+    EXPECT_EQ(after[kLines / 2 + 1], "line " + std::to_string(kLines / 2 + 1));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), original);
+}
+
+TEST_F(BigMacroTest, InsertsKeepTheLinesAroundThem)
+{
+    std::vector<MacroDialogueLine> staged;
+    for (const auto &d : s.dialogues) {
+        staged.push_back(d);
+        if (d.id % 2 == 0)
+            staged.push_back(fresh("after " + d.text));
+    }
+    r.dialogues = staged;
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Insert"));
+    const auto lines = session.document().lines();
+    ASSERT_EQ(lines.size(), staged.size());
+    std::set<std::uint64_t> added;
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        EXPECT_EQ(std::string(lines[i]->text.begin(), lines[i]->text.end()), staged[i].text);
+        if (staged[i].id)
+            EXPECT_EQ(lines[i]->id.value, staged[i].id);
+        else
+            EXPECT_TRUE(lines[i]->id.value > kLines && added.insert(lines[i]->id.value).second);
+    }
+    EXPECT_EQ(added.size(), kLines / 2);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), original);
+}
+
+TEST_F(BigMacroTest, DeletesKeepTheRestInOrder)
+{
+    std::erase_if(r.dialogues, [](const MacroDialogueLine &d) { return d.id % 3 == 0; });
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Delete"));
+    std::vector<std::uint64_t> expected;
+    for (const auto &d : r.dialogues)
+        expected.push_back(d.id);
+    EXPECT_EQ(ids(session.document()), expected);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), original);
+}
+
+TEST_F(BigMacroTest, AReversalKeepsEveryIdentity)
+{
+    std::ranges::reverse(r.dialogues);
+    const auto start = std::chrono::steady_clock::now();
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Reverse"));
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(1));
+    std::vector<std::uint64_t> expected;
+    for (const auto &d : r.dialogues)
+        expected.push_back(d.id);
+    EXPECT_EQ(ids(session.document()), expected);
+    EXPECT_EQ(texts(session).front(), "line " + std::to_string(kLines - 1));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), original);
+}
+
+namespace {
+
+constexpr std::string_view kSplitEvents =
+    "[Script Info]\n"
+    "ScriptType: v4.00+\n"
+    "\n"
+    "[Events]\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+    "; a note\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n"
+    "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,c\n"
+    "\n"
+    "[Events]\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n"
+    "; another\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e\n";
+
+void placeLineByLine(core::Document &doc, const MacroSnapshot &snapshot, const MacroResult &result)
+{
+    std::set<std::uint64_t> kept;
+    for (const auto &d : result.dialogues)
+        kept.insert(d.id);
+    for (const auto &d : snapshot.dialogues)
+        if (!kept.contains(d.id))
+            ASSERT_TRUE(doc.removeLine(core::LineId{d.id}));
+    std::optional<core::LineId> previous;
+    for (const auto &d : result.dialogues) {
+        core::LineId id{d.id};
+        if (d.id) {
+            const auto lines = doc.lines();
+            std::size_t at = 0, prevAt = 0;
+            for (std::size_t k = 0; k < lines.size(); ++k) {
+                if (lines[k]->id == id)
+                    at = k;
+                if (previous && lines[k]->id == *previous)
+                    prevAt = k;
+            }
+            const std::size_t target = previous ? prevAt + 1 : 0;
+            if (at != target)
+                ASSERT_TRUE(doc.moveLine(id, target < lines.size() ? std::optional(lines[target]->id) : std::nullopt));
+        } else {
+            const auto line = lineOfMacro(d);
+            const auto added = previous            ? doc.insertLineAfter(*previous, line)
+                               : doc.lines().empty() ? doc.appendLine(line)
+                                                     : doc.insertLineBefore(doc.lines().front()->id, line);
+            ASSERT_TRUE(added);
+            id = *added;
+        }
+        previous = id;
+    }
+}
+
+std::vector<std::pair<std::uint64_t, std::size_t>> placements(const core::Document &doc)
+{
+    std::vector<std::pair<std::uint64_t, std::size_t>> out;
+    for (const auto *l : doc.lines())
+        out.emplace_back(l->id.value, l->span.offset);
+    return out;
+}
+
+}
+
+TEST(MacroPlacement, MatchesTheOneByOnePlacementAcrossSectionsAndNotes)
+{
+    const std::vector<std::string> cases = {"edcba", "1ca2be", "12", "e1abcd", "ab12cde3", "bacde", "a", "", "dea1bc"};
+    for (const auto &c : cases) {
+        SCOPED_TRACE(c);
+        EditSession session{load(kSplitEvents)};
+        const auto s = *snapshotForMacro(session);
+        core::Document reference = session.document();
+        MacroResult r = unchanged(s);
+        r.dialogues.clear();
+        for (const char k : c)
+            r.dialogues.push_back(k >= 'a' ? s.dialogues[static_cast<std::size_t>(k - 'a')] : fresh(std::string(1, k)));
+        placeLineByLine(reference, s, r);
+        ASSERT_TRUE(applyMacroResult(session, s, r, "Place"));
+        EXPECT_EQ(save(session), [&] {
+            const auto bytes = core::encodeAss(reference);
+            return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+        }());
+        EXPECT_EQ(placements(session.document()), placements(reference));
+    }
 }

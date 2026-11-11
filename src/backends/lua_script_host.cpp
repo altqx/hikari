@@ -1,5 +1,6 @@
 #include "hikari/backends/lua_script_host.h"
 
+#include "hikari/backends/helper_protocol.h"
 #include "hikari/backends/lua_protocol.h"
 
 #include <QPointer>
@@ -74,7 +75,8 @@ void LuaScriptHost::startHelper()
     m_loadStartedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
                           std::chrono::steady_clock::now().time_since_epoch())
                           .count();
-    m_host = std::make_unique<HelperHost>(m_helperPath, QStringList{}, lua::kProtocolVersion);
+    m_host = std::make_unique<HelperHost>(m_helperPath, QStringList{}, lua::kProtocolVersion,
+                                          HelperHost::Limits{.maxOutstandingBytes = helper::kMaxPayload});
     HelperHost *host = m_host.get();
     connect(host, &HelperHost::ready, this, &LuaScriptHost::sendLoad);
     connect(host, &HelperHost::refused, this, [this](quint32 version) {
@@ -172,6 +174,7 @@ bool LuaScriptHost::validate(int macroIndex, const application::MacroSnapshot &s
 
 bool LuaScriptHost::send(lua::Command command, int macroIndex, const application::MacroSnapshot &snapshot)
 {
+    m_refusedSize.reset();
     if (m_state != State::Ready || macroIndex < 0 || static_cast<std::size_t>(macroIndex) >= m_info.macros.size())
         return false;
     m_lastResult.reset();
@@ -180,6 +183,10 @@ bool LuaScriptHost::send(lua::Command command, int macroIndex, const application
     const auto body = lua::encodeSnapshot(snapshot);
     auto payload = w.take();
     payload.insert(payload.end(), body.begin(), body.end());
+    if (payload.size() > helper::kMaxPayload) {
+        m_refusedSize = payload.size();
+        return false;
+    }
     // MUST KILL: the handler's request id is filled in only after request() returns.
     auto id = std::make_shared<std::uint64_t>(0);
     const auto sent = m_host->request(m_nextRun++, std::move(payload), [this, id](std::expected<Event, HostError> e) {

@@ -54,6 +54,9 @@ public:
     // Runs only the validation function: finished() gives Ok when it answers true
     // (lastResult() valid, with no lists), else NotValid; nothing is staged. False unless Ready.
     bool validate(int macroIndex, const application::MacroSnapshot &snapshot);
+    // When the last run() or validate() returned false because its request is over the helper's frame
+    // limit: the request's size in bytes.
+    std::optional<std::size_t> refusedSize() const { return m_refusedSize; }
     // What the last successful run staged and returned (set before finished()).
     const std::optional<application::MacroResult> &lastResult() const { return m_lastResult; }
     // The run ends Cancelled even if the script returns normally. Past the grace period
@@ -122,6 +125,7 @@ private:
     ServiceHandler m_serviceHandler;
     std::set<std::uint64_t> m_pendingServices;
     std::optional<application::MacroResult> m_lastResult;
+    std::optional<std::size_t> m_refusedSize;
 };
 
 }

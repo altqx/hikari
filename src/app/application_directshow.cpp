@@ -52,59 +52,82 @@ QString openMessage(const std::string &message)
 bool Application::directShowPlayback() const
 {
 #ifdef _WIN32
-    return m_directShow && m_activePlayer == m_directShow.get();
+    return m_directShow != nullptr;
 #else
     return false;
 #endif
 }
 
+bool Application::holdsDirectShow(const WindowMedia &media) const
+{
+    return directShowPlayback() && m_directShowMedia == &media;
+}
+
+void Application::giveDirectShow(WindowMedia &media)
+{
+#ifdef _WIN32
+    if (!m_directShow || m_directShowMedia == &media)
+        return;
+    if (m_directShowMedia)
+        useOwnPlayer(*m_directShowMedia);
+    m_directShowMedia = &media;
+    m_directShow->setColorSpace(media.video->session().matrix());
+    media.video->session().setGeneralPlayer(m_directShow.get());
+    views(media.window).videoView->setPlayer(m_directShow.get());
+    emit playbackPlayerChanged();
+#else
+    Q_UNUSED(media)
+#endif
+}
+
+void Application::useOwnPlayer(WindowMedia &media)
+{
+    media.video->session().setGeneralPlayer(media.generalPlayer.get());
+    views(media.window).videoView->setPlayer(media.generalPlayer.get());
+    if (m_directShowMedia == &media)
+        m_directShowMedia = nullptr;
+}
+
 void Application::choosePlayer()
 {
-    application::GeneralPlayerPort *player = activeMedia().generalPlayer.get();
 #ifdef _WIN32
-    if (m_settings->integer("video.playbackPlayer") == 1) {
-        if (!m_directShow) {
-            m_directShow = std::make_unique<backends::DirectShowPlayer>([this](std::function<void()> task) {
-                QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
-            });
-            m_directShow->setFrameSink([this](std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs) {
-                m_directShow->setYcbcrFrames(activeMedia().video->session().presenterConvertsYcbcr());
-                activeMedia().video->session().submitGeneralFrame(startUs, std::nullopt,
-                                                      [frame = std::move(frame)](application::FramePool &) { return frame; });
-            });
-            m_directShow->setOpenFailed([this](const std::string &message) {
-                m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open video"),
-                              QCoreApplication::translate("HikariSub.Video",
-                                                          "The file is not a valid video file or is corrupted,\n"
-                                                          "or codecs or a splitter may be missing")
-                                  .replace(QLatin1Char('\n'), QLatin1Char(' ')),
-                              openMessage(message));
-            });
-        }
-        m_directShow->setColorSpace(activeMedia().video->session().matrix());
-        player = m_directShow.get();
+    const bool wanted = m_settings->integer("video.playbackPlayer") == 1;
+    if (wanted && !m_directShow) {
+        m_directShow = std::make_unique<backends::DirectShowPlayer>([this](std::function<void()> task) {
+            QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
+        });
+        m_directShow->setFrameSink([this](std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs) {
+            if (!m_directShowMedia)
+                return;
+            auto &session = m_directShowMedia->video->session();
+            m_directShow->setYcbcrFrames(session.presenterConvertsYcbcr());
+            session.submitGeneralFrame(startUs, std::nullopt,
+                                       [frame = std::move(frame)](application::FramePool &) { return frame; });
+        });
+        m_directShow->setOpenFailed([this](const std::string &message) {
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open video"),
+                          QCoreApplication::translate("HikariSub.Video",
+                                                      "The file is not a valid video file or is corrupted,\n"
+                                                      "or codecs or a splitter may be missing")
+                              .replace(QLatin1Char('\n'), QLatin1Char(' ')),
+                          openMessage(message));
+        });
+        giveDirectShow(activeMedia());
+        activeMedia().video->session().preparePlayer();
+    } else if (!wanted && m_directShow) {
+        if (m_directShowMedia)
+            useOwnPlayer(*m_directShowMedia);
+        m_directShow.reset();
+        emit playbackPlayerChanged();
     }
 #endif
-    if (player == m_activePlayer)
-        return;
-    m_activePlayer = player;
-    activeMedia().video->session().setGeneralPlayer(player);
-    for (auto *views : allViews())
-        views->videoView->setPlayer(player);
-#ifdef _WIN32
-    if (player != m_directShow.get())
-        m_directShow.reset();
-    else
-        activeMedia().video->session().preparePlayer();
-#endif
-    emit playbackPlayerChanged();
 }
 
 QVariantList Application::playerFilters() const
 {
     QVariantList out;
 #ifdef _WIN32
-    if (directShowPlayback() && activeMedia().video->loaded() && activeMedia().video->session().playerHasVideo())
+    if (holdsDirectShow(activeMedia()) && activeMedia().video->loaded() && activeMedia().video->session().playerHasVideo())
         for (const auto &f : m_directShow->filters())
             out.push_back(QVariantMap{{QStringLiteral("name"), QString::fromStdString(f.name)},
                                       {QStringLiteral("enabled"), f.hasPropertyPages}});
@@ -115,7 +138,7 @@ QVariantList Application::playerFilters() const
 bool Application::showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y)
 {
 #ifdef _WIN32
-    if (!directShowPlayback())
+    if (!holdsDirectShow(activeMedia()))
         return false;
     std::uintptr_t owner = 0;
     QPointF at(x, y);

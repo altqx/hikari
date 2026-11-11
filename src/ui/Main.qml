@@ -1456,6 +1456,7 @@ ApplicationWindow {
             closeReview.review(result.rows)
     }
     function openInstallLink(id) { pluginManagerDialog.followLink(id) }
+    function showFolderPicker() { projectFolderDialog.show() }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }

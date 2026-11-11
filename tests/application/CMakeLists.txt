@@ -261,3 +261,5 @@ hikari_add_gtest(hikari_application_text_commands_tests SOURCES text_commands_te
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_text_commands_tests PRIVATE
     HIKARI_AU20_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/au20")
+hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_templates_tests.cpp
+    LIBRARIES hikari_application LABELS application)

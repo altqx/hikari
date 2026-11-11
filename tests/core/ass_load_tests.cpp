@@ -276,3 +276,49 @@ TEST(LegacyAtoi, BehavesLikeWxAtoi)
     EXPECT_EQ(legacy::atoi(u8"4294967297"), 1);
     EXPECT_EQ(legacy::atoi(u8"99999999999999999999"), -1);
 }
+
+TEST(ArrangeLines, RefusesALineListedTwiceOrLeftOutAndChangesNothing)
+{
+    auto doc = loadAss(bytesOf("[Events]\n"
+                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n"))
+                   .document;
+    const LineId a = doc.lines()[0]->id, b = doc.lines()[1]->id;
+    const auto order = [&] {
+        std::vector<LineId> out;
+        for (const auto *l : doc.lines())
+            out.push_back(l->id);
+        return out;
+    };
+    EXPECT_FALSE(doc.arrangeLines({b}));
+    EXPECT_FALSE(doc.arrangeLines({b, a, a}));
+    EXPECT_FALSE(doc.arrangeLines({b, LineId{99}, a}));
+    EXPECT_EQ(order(), (std::vector{a, b}));
+    EXPECT_TRUE(doc.arrangeLines({b, LineRecord{}, a}));
+    ASSERT_EQ(doc.lines().size(), 3u);
+    EXPECT_EQ(doc.lines()[0]->id, b);
+    EXPECT_TRUE(doc.lines()[1]->inserted);
+    EXPECT_EQ(doc.lines()[2]->id, a);
+}
+
+TEST(EditLines, MarksOnlyTheLinesItChanged)
+{
+    auto doc = loadAss(bytesOf("[Events]\n"
+                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n"))
+                   .document;
+    const auto versionOfA = doc.lines()[0]->changeVersion;
+    EXPECT_EQ(doc.editLines([](LineRecord &l) {
+        if (l.text != u8"b")
+            return false;
+        l.text = u8"B";
+        return true;
+    }),
+              1u);
+    EXPECT_FALSE(doc.lines()[0]->edited);
+    EXPECT_EQ(doc.lines()[0]->changeVersion, versionOfA);
+    EXPECT_TRUE(doc.lines()[1]->edited);
+    EXPECT_EQ(doc.lines()[1]->text, u8"B");
+}

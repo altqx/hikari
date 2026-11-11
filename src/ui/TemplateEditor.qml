@@ -148,7 +148,7 @@ Pane {
             Layout.margins: 12
             wrapMode: Text.Wrap
             color: Theme.muted
-            text: qsTr("The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.")
+            text: qsTr("The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.")
         }
 
         Flickable {
