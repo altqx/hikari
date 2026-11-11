@@ -5,6 +5,7 @@
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_signin.h"
 
 #include "docking.h"
 #include "line_table_model.h"
@@ -13,6 +14,7 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -30,11 +32,25 @@ using api::Json;
 
 namespace {
 
+/// Every key is "key", except that HIKARI_REAL_CODEX_SESSION, if set, holds HikariSub's Codex sign-in.
 class Keys final : public ai::KeyStore {
 public:
-    void read(const std::string &, std::function<void(ai::KeyResult)> done) override { done(ai::KeyResult("key")); }
-    void write(const std::string &, const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+    void read(const std::string &id, std::function<void(ai::KeyResult)> done) override
     {
+        QFile file(qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION"));
+        if (id == backends::ai::kCodexSecret && file.open(QIODevice::ReadOnly))
+            return done(ai::KeyResult(file.readAll().toStdString()));
+        done(ai::KeyResult("key"));
+    }
+    void write(const std::string &id, const std::string &key, std::function<void(std::optional<ai::KeyError>)> done) override
+    {
+        if (const QString path = qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION");
+            id == backends::ai::kCodexSecret && !path.isEmpty()) {
+            QSaveFile file(path);
+            if (!file.open(QIODevice::WriteOnly) || !file.setPermissions(QFile::ReadOwner | QFile::WriteOwner) ||
+                file.write(QByteArray::fromStdString(key)) < 0 || !file.commit())
+                return done(ai::KeyError::Other);
+        }
         done(std::nullopt);
     }
     void remove(const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
@@ -174,7 +190,7 @@ class AgentPanelTest : public QObject {
         }
     }
 
-    void realClaude(app::AiFeatures::Ports &ports)
+    void realAgents(app::AiFeatures::Ports &ports)
     {
         const QString runtime = qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME");
         const QString bundle = qEnvironmentVariable("HIKARI_REAL_AI_BUNDLE");
@@ -192,11 +208,16 @@ class AgentPanelTest : public QObject {
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
-        ports.agents = [this](backends::ai::AgentBroker &broker, application::ai::KeyStore &) {
+        ports.agents = [this](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
             broker.add("claude", backends::ai::claudeAgent(QStandardPaths::findExecutable(QStringLiteral("claude")),
                                                          QDir::homePath(), at(QStringLiteral("ai/agents/claude"))));
+            const QString home = at(QStringLiteral("ai/agents/codex/home"));
+            if (auto codex = backends::ai::codexAgent(QStandardPaths::findExecutable(QStringLiteral("codex")), home,
+                                                      at(QStringLiteral("ai/agents/codex/work")),
+                                                      std::make_shared<backends::ai::CodexLease>(keys, home)))
+                broker.add("codex", std::move(*codex));
         };
-        ports.agentOnPath = [](const QString &agent) { return agent == QStringLiteral("claude"); };
+        ports.agentOnPath = [](const QString &) { return true; };
     }
 
 private slots:
@@ -237,8 +258,8 @@ private slots:
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
             return found || (onlyClaude && agent == QStringLiteral("claude"));
         };
-        if (QTest::currentTestFunction() == QByteArrayLiteral("theInstalledClaudeEditsIntoTheReview"))
-            realClaude(ports);
+        if (test == "theInstalledClaudeEditsIntoTheReview" || test == "theInstalledCodexEditsIntoTheReview")
+            realAgents(ports);
 
         app::Application::Options options;
         options.settingsFile = at(QStringLiteral("settings.toml"));
@@ -305,6 +326,27 @@ private slots:
             file.write(agent().markdown(agent().current()).toUtf8());
         }
         shoot(QStringLiteral("agent-claude"));
+    }
+    void theInstalledCodexEditsIntoTheReview()
+    {
+        if (qEnvironmentVariable("HIKARI_REAL_AI_RUNTIME").isEmpty() || qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION").isEmpty())
+            QSKIP("Evidence only: set HIKARI_REAL_AI_RUNTIME, HIKARI_REAL_AI_BUNDLE and HIKARI_REAL_CODEX_SESSION");
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:codex\t"));
+        type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
+                            "\"Second\". Change nothing else, then say done."));
+        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("change")), 240'000);
+        QTRY_VERIFY_WITH_TIMEOUT(!agent().thread().value(QStringLiteral("running")).toBool(), 120'000);
+        QCOMPARE(session().document().lines()[1]->text, u8"Second");
+        QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
+        if (const QString out = qEnvironmentVariable("HIKARI_REAL_CODEX_OUT"); !out.isEmpty()) {
+            QFile file(out);
+            QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            file.write(agent().markdown(agent().current()).toUtf8());
+        }
+        shoot(QStringLiteral("agent-codex"));
     }
     void agentsAreNoModelsWhenTheyAreMissing()
     {

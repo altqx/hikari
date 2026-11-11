@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSaveFile>
 #include <QTcpServer>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
@@ -541,4 +542,27 @@ TEST_F(CodexLeaseTest, SigningOutWhileCodexRunsKeepsItSignedOut)
     lease.release();
     EXPECT_TRUE(keys.keys.empty());
     EXPECT_FALSE(QFileInfo::exists(auth()));
+}
+
+TEST_F(AiSignInTest, TheRealDeviceSignInKeepsItsSessionForTheCodexEvidence)
+{
+    const QString sessionFile = qEnvironmentVariable("HIKARI_REAL_CODEX_SESSION");
+    const QString codeFile = qEnvironmentVariable("HIKARI_REAL_CODEX_CODE");
+    if (sessionFile.isEmpty() || codeFile.isEmpty())
+        GTEST_SKIP() << "Evidence only: set HIKARI_REAL_CODEX_SESSION and HIKARI_REAL_CODEX_CODE to sign in for real";
+    const auto writePrivate = [](const QString &path, const QByteArray &text) {
+        QSaveFile file(path);
+        return file.open(QIODevice::WriteOnly) && file.setPermissions(QFile::ReadOwner | QFile::WriteOwner) &&
+               file.write(text) == text.size() && file.commit();
+    };
+    AiSignIn real(keys);
+    Outcome done;
+    real.start(SignInFlow::CodexDevice, [&](const SignInProgress &p) {
+        if (p.step == "code")
+            writePrivate(codeFile, QByteArray::fromStdString(p.userCode + "\n" + p.openUrl.toString().toStdString() + "\n"));
+    }, [&](std::expected<SignedIn, SignInFailure> r) { done = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return done.has_value(); }, int(AiSignIn::kCodeLifetimeMs)));
+    QFile::remove(codeFile);
+    ASSERT_TRUE(*done) << done->error().kind << " " << done->error().detail;
+    ASSERT_TRUE(writePrivate(sessionFile, QByteArray::fromStdString(keys.keys.at(kCodexSecret))));
 }

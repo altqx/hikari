@@ -111,8 +111,10 @@ class Lines {
 
 const kZero: Breakdown = { inputTokens: 0, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 0 };
 
-function input(parts: Part[]) {
-    return parts.flatMap((part) => {
+type UserInput = { type: "text"; text: string; text_elements: never[] } | { type: "image"; url: string };
+
+function input(parts: Part[]): UserInput[] {
+    return parts.flatMap((part): UserInput[] => {
         if (part.type === "text")
             return [{ type: "text" as const, text: part.text, text_elements: [] }];
         if (part.type === "image")
@@ -127,6 +129,7 @@ function usage(now: Breakdown, before: Breakdown): Usage {
         outputTokens: now.outputTokens - before.outputTokens,
         cachedInputTokens: now.cachedInputTokens - before.cachedInputTokens,
         cacheWriteTokens: now.cacheWriteInputTokens - before.cacheWriteInputTokens,
+        cacheWriteHourTokens: 0,
     };
 }
 

@@ -38,7 +38,7 @@ Codex runs as `codex app-server`, on the user's own `codex` and a ChatGPT sign-i
 - **Writes go to the review.** Codex would ask for approval of each MCP write, so Qt passes `default_tools_approval_mode="approve"` for Hikari's server. Hikari's review stays the gate.
 - **Read-only.** Qt's guard lets only a conversation's methods through. It makes every thread read-only with the approval policy `untrusted` and no `config` overrides, and declines every command, file change and permission request. The sidecar declines MCP elicitations.
 - **One app-server per thread.** The first turn starts the process and a thread. Later turns go to the same thread. `session/steer` uses `turn/steer`, and Stop sends `turn/interrupt`. If Codex exits, the next turn starts a new process and resumes the thread. The `usage` update after each turn carries that turn's tokens.
-- **Linux only for now.** Windows' AppContainer blocks loopback, so the channel there needs a named pipe.
+- **Linux only for now.** Windows' AppContainer blocks loopback, so Qt neither offers nor starts Codex there until it has a channel the container can reach ([#931](https://github.com/altqx/hikari/issues/931)).
 
 ## Tests
 

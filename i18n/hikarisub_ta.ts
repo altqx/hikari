@@ -387,6 +387,10 @@
         <source>Claude Code</source>
         <translation>Claude Code</translation>
     </message>
+    <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
