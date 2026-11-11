@@ -80,7 +80,11 @@ Video > Open timecodes loads a v1, v2 or v4 timecodes file into the editing tab 
 - A v2 or v4 file listing fewer frames than the video gets a warning once the video is ready, naming the frame where it ends. Later frames continue at its average rate.
 - Video › "Video details…" labels its frame rate as the video stream's and names the timecodes file under "Frame times from"; the length follows the file's times.
 - The status bar's frames-per-second field shows the file's average rate, and its tooltip names the file. Each window's tooltip names the file of the tab that window shows.
-- The video is shared, so its frame times, the file's or the video's own, are those of the active window's tab. Every window's editor uses them.
+- Each window has its own video, so a window's frame times, the file's or the video's own, are those of its current tab, and only its own editor uses them.
+
+## One window plays
+
+Every shell window has its own video, audio and full screen ([ADR 0025](adr/0025-multiple-windows.md), MW3 [#631](https://github.com/altqx/hikari/issues/631)): its current tab's video and audio open in that window, and each keeps its frame while another window is active. Only one window plays at a time. Play, Play line, the audio box's play commands and the editor's play-selection pause the video and stop the audio of every other window first, which keep their frames. On Windows the optional DirectShow adapter has one graph, which moves to the window that plays. Closing or hiding a window stops its media. Moving a tab to another window takes its video, audio and position with it.
 
 ## PortAudio, analysis and caches
 

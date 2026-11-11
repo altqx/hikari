@@ -36,23 +36,23 @@ bool missingLocalFile(const std::string &path)
 
 void Application::trackVideoSources(WindowMedia &media)
 {
-    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
-        const auto &video = activeMedia().video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, &media] {
+        const auto &video = media.video->session();
         if (video.state() != application::VideoSession::State::Ready) {
-            m_recentVideoSeen.clear();
+            media.recentVideoSeen.clear();
             return;
         }
         const QString path = QString::fromStdString(video.path());
-        if (path != m_recentVideoSeen) {
-            m_recentVideoSeen = path;
+        if (path != media.recentVideoSeen) {
+            media.recentVideoSeen = path;
             rememberRecentVideo(path);
         }
     });
-    connect(media.video.get(), &ui::VideoController::unloaded, this, [this] {
-        m_pendingTabSeek.reset();
-        m_tabSeekQueued = false;
-        if (const auto target = m_workspace.editingTarget())
-            if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end() && !it->second.video.isEmpty()) {
+    connect(media.video.get(), &ui::VideoController::unloaded, this, [this, &media] {
+        media.pendingTabSeek.reset();
+        media.tabSeekQueued = false;
+        if (const auto tab = m_workspace.currentTab(media.window))
+            if (const auto it = m_tabMedia.find(tab->value); it != m_tabMedia.end() && !it->second.video.isEmpty()) {
                 it->second.video.clear();
                 it->second.position = 0;
                 emit tabsChanged();
@@ -60,11 +60,11 @@ void Application::trackVideoSources(WindowMedia &media)
     });
 }
 
-void Application::logVideoFailure()
+void Application::logVideoFailure(WindowMedia &media)
 {
-    const auto &session = activeMedia().video->session();
+    const auto &session = media.video->session();
     const bool failed = session.state() == application::VideoSession::State::Failed;
-    if (failed && !m_videoFailureLogged) {
+    if (failed && !media.videoFailureLogged) {
         const auto &failure = session.openFailure();
         const QString text = failure ? QString::fromStdString(failure->message) : QString();
         using application::OpenStage;
@@ -81,18 +81,18 @@ void Application::logVideoFailure()
             if (failure && failure->stage == OpenStage::Indexer)
                 qDebug().noquote() << QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1")
                                           .arg(text);
-            notice(activeMedia().video->status());
+            notice(media.video->status());
         }
     }
-    m_videoFailureLogged = failed;
+    media.videoFailureLogged = failed;
 }
 
-void Application::logPlaybackFailure()
+void Application::logPlaybackFailure(WindowMedia &media)
 {
-    const auto &session = activeMedia().video->session();
-    if (session.playbackFailures() <= m_playbackFailuresLogged)
+    const auto &session = media.video->session();
+    if (session.playbackFailures() <= media.playbackFailuresLogged)
         return;
-    m_playbackFailuresLogged = session.playbackFailures();
+    media.playbackFailuresLogged = session.playbackFailures();
     const QString codec = QString::fromStdString(session.playerVideoCodec());
     QString text;
     if (codec.isEmpty())
@@ -181,7 +181,7 @@ bool Application::keyframesWithoutVideo(const QString &path, QString &problem)
 {
     if (!activeMedia().audio || !activeMedia().audio->hasAudio())
         return false;
-    m_pendingKeyframes.clear();
+    activeMedia().pendingKeyframes.clear();
     QFile f(path);
     QByteArray bytes;
     if (f.open(QIODevice::ReadOnly))

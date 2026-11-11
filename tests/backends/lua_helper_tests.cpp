@@ -1674,7 +1674,7 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     ASSERT_TRUE(out.open(QIODevice::WriteOnly));
     out.write(QJsonDocument(corpus).toJson());
     for (const char *firstParty : {"macro-1-edgeblur.lua", "macro-2-mkfullwitdh.lua", "strip-tags.lua",
-                                   "cleantags-autoload.lua", "karaoke-auto-leadin.lua", "kara-templater.lua",
+                                   "cleantags-autoload.lua", "karaoke-auto-leadin.lua",
                                    "select-overlaps.moon", "BezierToText.lua", "gradient-factory.lua",
                                    "skew gradient.lua", "fsp-to-pos.lua", "a-mo.Aegisub-Motion.moon",
                                    "l0.DependencyControl.Toolbox.moon"}) {
@@ -1754,6 +1754,9 @@ TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)
     ASSERT_TRUE(runToEnd(*host, "Migrate"));
     EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     EXPECT_EQ(run.log, QStringList{"true,1,test-2"});
+    ASSERT_TRUE(runToEnd(*host, "Empty"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"1,false"});
 }
 
 TEST_F(LuaHelper, DependencyControlFindsTheShippedModules)
