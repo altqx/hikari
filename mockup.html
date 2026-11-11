@@ -1,0 +1,118 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>AU11 Track colour and Find fade</title>
+<style>
+:root{--bg:#E5E9EC;--panel:#F9FAFB;--raised:#EDF0F3;--field:#FFFFFF;--text:#202832;--muted:#526170;--line:#AAB5BE;--accent:#1D5BA8;--onAccent:#FFFFFF;--select:#D6DFEB;--warn:#8A5A00}
+body.dark{--bg:#171B20;--panel:#20262D;--raised:#29313A;--field:#171D24;--text:#E8EDF2;--muted:#A5B1BD;--line:#414B57;--accent:#A6C8F2;--onAccent:#101D2C;--select:#303D4C;--warn:#E0A030}
+body.highContrastWhite{--bg:#FFFFFF;--panel:#FFFFFF;--raised:#EBEBEB;--field:#FFFFFF;--text:#000000;--muted:#1A1A1A;--line:#000000;--accent:#0037B3;--onAccent:#FFFFFF;--select:#C9DAF8;--warn:#6B4500}
+body.highContrastBlack{--bg:#000000;--panel:#080808;--raised:#151515;--field:#000000;--text:#FFFFFF;--muted:#EEEEEE;--line:#FFFFFF;--accent:#FFFF00;--onAccent:#000000;--select:#253F60;--warn:#FFD54A}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--bg);color:var(--text);font:13px/1.4 "Inter","Noto Sans",sans-serif;display:flex;gap:24px;align-items:flex-start;width:1300px}
+.dlg{width:614px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.title{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.title svg{width:16px;height:16px}
+.title svg #accent{stroke:var(--accent);color:var(--accent)}
+.body{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sub{color:var(--muted)}
+.still{position:relative;height:250px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#101418}
+.still .sky{position:absolute;inset:0;background:linear-gradient(180deg,#2B3A55 0%,#5A6F8F 55%,#3A3125 56%,#2A241C 100%)}
+.still .sign{position:absolute;left:300px;top:70px;width:170px;height:60px;background:#C8402E;border-radius:3px;transform:rotate(-4deg);color:#F4E9D0;font:700 22px/60px sans-serif;text-align:center;letter-spacing:1px}
+.still .sign.fade{background:#C8402E;opacity:.55}
+.mark{position:absolute;width:13px;height:13px;border-radius:50%;border:2px solid #FFFFFF;box-shadow:0 0 0 1px #000}
+.mark::after{content:"";position:absolute;left:2px;top:2px;width:5px;height:5px;border-radius:50%;background:#000}
+.path{position:absolute;inset:0}
+.row2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.field{background:var(--field);border:1px solid var(--line);border-radius:4px;padding:3px 8px;min-width:56px}
+.mono{font-family:"JetBrains Mono","DejaVu Sans Mono",monospace;font-size:12px}
+.cb{width:15px;height:15px;border:1.5px solid var(--line);border-radius:3px;display:inline-block;vertical-align:middle;background:var(--field);position:relative;flex:none}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--onAccent);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.check{display:inline-flex;gap:6px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg span{padding:3px 12px;background:var(--raised)}
+.seg span.on{background:var(--accent);color:var(--onAccent)}
+.sw{display:inline-block;width:14px;height:14px;border:1px solid var(--line);border-radius:2px;vertical-align:-3px}
+.strip{display:flex;height:22px;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.strip i{flex:1}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.label{font-weight:600}
+.result{background:var(--field);border:1px solid var(--line);border-radius:6px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chart{background:var(--field);border:1px solid var(--line);border-radius:6px}
+.chart svg{display:block;width:100%;height:120px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.btns{display:flex;gap:8px}
+.btn{padding:5px 14px;border:1px solid var(--line);border-radius:4px;background:var(--raised)}
+.btn.primary{background:var(--accent);color:var(--onAccent);border-color:var(--accent)}
+.hint{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
+</style></head>
+<body>
+<template id="track"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 13.5c2-1 3.5-2.5 5-5"/><circle cx="2.5" cy="13.5" r="1" fill="currentColor" stroke="none"/><circle cx="5.5" cy="11.25" r="1" fill="currentColor" stroke="none"/><circle cx="7.5" cy="8.5" r="1" fill="currentColor" stroke="none"/><g id="accent"><path d="M12 1.5c1.25 1.75 2.5 3 2.5 4.5a2.5 2.5 0 0 1-5 0c0-1.5 1.25-2.75 2.5-4.5z" fill="currentColor"/></g></svg></template>
+<template id="fade"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12.5h3l6-8h4"/><g id="accent"><path d="M4.5 14.5v-4M10.5 14.5v-12"/></g></svg></template>
+
+<div class="dlg">
+  <div class="title"><span class="ic" data-i="track"></span>Track colour</div>
+  <div class="body">
+    <div class="sub">3 selected Lines, 0:00:12.34 to 0:00:14.10, 44 frames. Frames are read without subtitles.</div>
+    <div class="still"><div class="sky"></div><div class="sign">OPEN</div>
+      <svg class="path" viewBox="0 0 584 250"><path d="M330 150 C 360 135, 380 120, 400 104" stroke="#FFD54A" stroke-width="2" stroke-dasharray="4 3" fill="none"/></svg>
+      <div class="mark" style="left:393px;top:97px"></div></div>
+    <div class="row2"><span>X</span><span class="field mono">400</span><span>Y</span><span class="field mono">104</span>
+      <span class="check"><span class="cb on"></span>Follow tracking data</span><span class="hint">After Effects data, 44 frames, from the clipboard</span></div>
+    <div class="row2"><span class="seg"><span class="on">Colour</span><span>Alpha</span></span>
+      <span class="check"><span class="cb on"></span><span class="mono">\1c</span></span>
+      <span class="check"><span class="cb"></span><span class="mono">\2c</span></span>
+      <span class="check"><span class="cb on"></span><span class="mono">\3c</span></span>
+      <span class="check"><span class="cb"></span><span class="mono">\4c</span></span>
+      <span class="check"><span class="cb on"></span>Skip repeated colours</span></div>
+    <div>
+      <div class="label">Colour on each frame</div>
+      <div class="strip" id="strip"></div>
+      <div class="axis"><span>frame 1</span><span>22</span><span>44</span></div>
+    </div>
+    <div>
+      <div class="label">Result</div>
+      <div class="result mono">{\1c&amp;H2E40C8&amp;\3c&amp;H2E40C8&amp;\t(42,42,\1c&amp;H2F42CA&amp;\3c&amp;H2F42CA&amp;)\t(83,83,\1c&amp;H3145CC&amp;\3c&amp;H3145CC&amp;)…}OPEN</div>
+    </div>
+  </div>
+  <div class="foot"><span class="hint">Read 44 of 44 frames · Enter applies, Esc cancels</span><div class="btns"><span class="btn">Cancel</span><span class="btn primary">Apply</span></div></div>
+</div>
+
+<div class="dlg">
+  <div class="title"><span class="ic" data-i="fade"></span>Find fade</div>
+  <div class="body">
+    <div class="sub">Line 22, 0:01:02.00 to 0:01:06.50, 108 frames. The point's colour on this frame is the fully shown colour.</div>
+    <div class="still"><div class="sky"></div><div class="sign">OPEN</div>
+      <div class="mark" style="left:378px;top:86px"></div></div>
+    <div class="grid">
+      <span>Point</span><span class="row2"><span>X</span><span class="field mono">385</span><span>Y</span><span class="field mono">93</span>
+        <span>Colour</span><span class="sw" style="background:#C8402E"></span><span class="mono">&amp;H2E40C8&amp;</span>
+        <span class="check"><span class="cb"></span>Follow tracking data</span></span>
+      <span>Find</span><span class="row2"><span class="check"><span class="cb on"></span>Fade in</span><span class="check"><span class="cb on"></span>Fade out</span>
+        <span>Tolerance</span><span class="field mono">5</span></span>
+    </div>
+    <div>
+      <div class="label">Distance from the colour on each frame</div>
+      <div class="chart"><svg viewBox="0 0 584 120" preserveAspectRatio="none">
+        <line x1="0" x2="584" y1="105" y2="105" stroke="var(--warn)" stroke-dasharray="5 4"/>
+        <polyline id="curve" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <line x1="55" x2="55" y1="6" y2="116" stroke="var(--text)"/>
+        <line x1="529" x2="529" y1="6" y2="116" stroke="var(--text)"/>
+        <text x="61" y="20" fill="var(--text)" font-size="12">fade in ends, frame 11</text>
+        <text x="523" y="20" fill="var(--text)" font-size="12" text-anchor="end">fade out starts, frame 98</text>
+        <text x="292" y="97" fill="var(--warn)" font-size="11" text-anchor="middle">tolerance</text>
+      </svg></div>
+      <div class="axis"><span>frame 1</span><span>54</span><span>108</span></div>
+    </div>
+    <div class="row2"><span class="label">Result</span><span class="result mono" style="flex:1">{\fad(396,459)}OPEN</span></div>
+  </div>
+  <div class="foot"><span class="hint">Read 108 of 108 frames · Enter applies, Esc cancels</span><div class="btns"><span class="btn">Cancel</span><span class="btn primary">Apply</span></div></div>
+</div>
+<script>
+const t=new URLSearchParams(location.search).get('theme');if(t)document.body.className=t;
+document.querySelectorAll('.ic').forEach(e=>e.replaceWith(document.getElementById(e.dataset.i).content.cloneNode(true)));
+const s=document.getElementById('strip');
+for(let i=0;i<44;i++){const k=i/43;const r=Math.round(200+40*Math.sin(k*3)),g=Math.round(64+60*k),b=Math.round(46+30*k);const e=document.createElement('i');e.style.background=`rgb(${r},${g},${b})`;s.appendChild(e)}
+const pts=[];for(let f=0;f<108;f++){let d;if(f<10)d=100*(1-f/10);else if(f>=97)d=100*((f-96)/11);else d=1.5+Math.sin(f)*0.8;const x=f/107*584;const y=110-d;pts.push(x.toFixed(1)+','+y.toFixed(1))}
+document.getElementById('curve').setAttribute('points',pts.join(' '));
+</script>
+</body></html>
