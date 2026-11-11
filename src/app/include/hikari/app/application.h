@@ -498,6 +498,12 @@ public:
     Q_INVOKABLE QVariantMap copyMotionData();
     Q_INVOKABLE QVariantMap copyPowerPinTrack();
     Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {changed, deleted, rows: [{row, before, after, deleted}], more}: what removeTags(options) does,
+    // the first 200 rows.
+    Q_INVOKABLE QVariantMap tagRemovalPreview(const QVariantMap &options) const;
+    // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
+    // "selected"/"file", and the Cleanup flags by their names.
+    Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
     // The selected run interpolated with the dialog's {accel, shortestRotation, cascade, excluded}: {count,
     // firstRow, lastRow, problem, startBlockOnly, changes [{id, tag, before, from, to, fromColour, toColour,
     // skip}], results [{row, text}]}. The video shows the result until clearInterpolationPreview().
@@ -513,6 +519,15 @@ public:
     Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
     // {text} or {error}.
     Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
+    // {state, text, canApply} for the dialog's options.
+    Q_INVOKABLE QVariantMap checkLayerBuilders(const QVariantMap &options) const;
+    // The video shows the selected Lines' stacks until cleared.
+    Q_INVOKABLE void setLayerPreview(const QVariantMap &options);
+    Q_INVOKABLE void clearLayerPreview();
+    // Empty when built, else why not.
+    Q_INVOKABLE QString applyLayerBuilders(const QVariantMap &options);
+    // With the options the dialog last built with; {ok, text}.
+    Q_INVOKABLE QVariantMap repeatLayerBuilders();
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -1041,6 +1056,8 @@ private:
     void storeRecent();
     // MUST KILL: returns whether the Document changed since the video last showed it.
     bool showVideoSubtitles();
+    std::optional<core::Document> layerPreviewDocument(const core::Document &doc,
+                                                       const std::set<core::LineId> &selection) const;
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
@@ -1225,6 +1242,7 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::optional<QVariantMap> m_layerPreview;
     std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.

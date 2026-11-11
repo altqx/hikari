@@ -1968,6 +1968,12 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
+        ui::AudioController *audio = activeMedia().audio.get();
+        if (!audio || !audio->box().isOpen())
+            return std::nullopt;
+        return audio->box().audio();
+    });
 }
 
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
@@ -2438,7 +2444,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (nodeEffects().videoPreview()) {
+    if (m_layerPreview) {
+        templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
+    } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
     } else if (templateEditor().videoPreview()) {
         const auto &video = activeMedia().video->session();

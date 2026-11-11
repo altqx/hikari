@@ -349,8 +349,10 @@ const std::vector<SettingDefinition> &definitions()
         {"qcNotes.lastSection", "", String, Profile, Mapped, false, std::string("General")},
         {"tracking.motionOptions", "", String, Profile, Mapped, false, std::string()},
         {"tracking.extendOptions", "", String, Profile, Mapped, false, std::string()},
+        {"typesetting.layerOptions", "", String, Profile, Mapped, false, std::string()},
         // JSON: {"gapOn", "gap", "lastLine"}, the Import lyrics end-time choices.
         {"lyrics.importOptions", "", String, Profile, Mapped, false, std::string()},
+        {"tags.removeOptions", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
         {"automation.runLogTimes", "", Bool, Profile, Mapped, false, false},
         {"automation.disabledAutoload", "", StringList, Profile, Mapped, false, std::vector<std::string>()},

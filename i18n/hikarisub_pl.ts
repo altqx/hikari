@@ -6234,6 +6234,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Anuluj</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>Warstwy rozmycia i poświaty…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>Zbuduj warstwy z ostatnimi wartościami</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+kliknięcie ustawia skrót</translation>
     </message>
@@ -7486,6 +7494,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ekstrapoluj \move na całą linijkę</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>Usuń tagi…</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>Interpoluj między wierszami…</translation>
     </message>
@@ -8078,6 +8090,285 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Accept all suggestions</source>
         <translation>Akceptuj wszystkie sugestie</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>Włącz poświatę, obwódkę lub cień.</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>Zaznacz linijki, pod którymi mają powstać warstwy.</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>Naraz można zbudować najwyżej %n warstwę poświaty.</numerusform>
+            <numerusform>Naraz można zbudować najwyżej %n warstwy poświaty.</numerusform>
+            <numerusform>Naraz można zbudować najwyżej %n warstw poświaty.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>Cień może mieć najwyżej %n krok. Ustaw mniej kroków.</numerusform>
+            <numerusform>Cień może mieć najwyżej %n kroki. Ustaw mniej kroków.</numerusform>
+            <numerusform>Cień może mieć najwyżej %n kroków. Ustaw mniej kroków.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>To zbuduje ponad %n linijkę. Zaznacz mniej linijek.</numerusform>
+            <numerusform>To zbuduje ponad %n linijki. Zaznacz mniej linijek.</numerusform>
+            <numerusform>To zbuduje ponad %n linijek. Zaznacz mniej linijek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>Dla zaznaczonych linijek nie ma czego budować.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>Buduje %n linijkę pod linijką %1.</numerusform>
+            <numerusform>Buduje %n linijki pod linijką %1.</numerusform>
+            <numerusform>Buduje %n linijek pod linijką %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>Przesuwa się z warstwy %1 na warstwę %2.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>Buduje %n linijkę pod zaznaczonymi linijkami.</numerusform>
+            <numerusform>Buduje %n linijki pod zaznaczonymi linijkami.</numerusform>
+            <numerusform>Buduje %n linijek pod zaznaczonymi linijkami.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>Każda przesuwa się w górę o liczbę linijek zbudowanych pod nią.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n linijka nie ma obwódki i pomija Obwódkę.</numerusform>
+            <numerusform>%n linijki nie mają obwódki i pomijają Obwódkę.</numerusform>
+            <numerusform>%n linijek nie ma obwódki i pomija Obwódkę.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n linijka ma cień poniżej 1 px i pomija Cień.</numerusform>
+            <numerusform>%n linijki mają cień poniżej 1 px i pomijają Cień.</numerusform>
+            <numerusform>%n linijek ma cień poniżej 1 px i pomija Cień.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>Linijka %1 (warstwa %2) jest wyświetlana razem z linijką %3 i była nad nią. Po zbudowaniu stos linijki %3 ją zakryje.</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>Tutaj nie można zbudować warstw.</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>Aby wybrać wartości, zbuduj raz warstwy w oknie „Warstwy rozmycia i poświaty…”.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>Zbudowano %n linijkę warstw</numerusform>
+            <numerusform>Zbudowano %n linijki warstw</numerusform>
+            <numerusform>Zbudowano %n linijek warstw</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>Warstwy rozmycia i poświaty</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>Linijka</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>Poświata</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>Rozmyte kopie pod każdą linijką</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>Kolor</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alfa</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>Rozmycie poświaty %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>Obwódka poświaty %1, dodawana do obwódki linijki</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>Kolor poświaty %1: kolor obwódki linijki</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>Kolor poświaty %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>Alfa poświaty %1, szesnastkowo</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>Usuń poświatę %1</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>Dodaj warstwę poświaty</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>Obwódka na osobnej warstwie, rozmywana niezależnie od wypełnienia</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>Pod obwódką</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>Kolor obwódki</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>Przezroczyste</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>Cienka obwódka w kolorze wypełnienia zamyka szczelinę pod rozmyciem</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>Rozmycie obwódki</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>Z linijki</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>Wypełnienie zachowuje rozmycie linijki.</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>Ukryj wypełnienie pod obwódką podczas zanikania</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>Przejście zanikania, ms</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>ms</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>Druga obwódka</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>Grubość drugiej obwódki</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>Kolor drugiej obwódki: kolor wypełnienia linijki</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>Kolor drugiej obwódki</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>Cień 3D z nałożonych kopii</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>Kroki</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatycznie</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>Automatycznie: jeden na każdy piksel przesunięcia cienia linijki</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>Najbliższa kopia: kolor cienia linijki</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>Kolor najbliższej kopii</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>Najdalsza kopia: kolor cienia linijki</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>Kolor najdalszej kopii</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>Alfa najbliższej kopii, szesnastkowo</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>Alfa najdalszej kopii, szesnastkowo</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>Rozmycie dla linijek bez rozmycia</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>Podgląd na wideo</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>Zbuduj warstwy</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>
@@ -8757,6 +9048,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Selects lines by expressions</source>
         <translation>Zaznacza linijki według wyrażeń</translation>
+    </message>
+    <message>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>Buduje warstwy poświaty, obwódki i cienia pod zaznaczonymi linijkami</translation>
+    </message>
+    <message>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>&amp;Warstwy rozmycia i poświaty…</translation>
+    </message>
+    <message>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>Ponownie buduje warstwy z wartościami, których ostatnio użyto w oknie „Warstwy rozmycia i poświaty”</translation>
+    </message>
+    <message>
+        <source>Build layers with the &amp;last values</source>
+        <translation>Zbuduj warstwy z &amp;ostatnimi wartościami</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -10424,6 +10731,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Dwanaście kopii każdej sylaby wylatuje w losowe miejsca wokół niej i znika.</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>Puls dźwięku</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>Każda sylaba rośnie wraz z głośnością dźwięku, gdy jest śpiewana. Wymaga otwartego dźwięku.</translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10683,6 +10998,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape</source>
         <translation type="unfinished">Kształt</translation>
     </message>
@@ -10796,6 +11119,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11001,6 +11332,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audio</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -18389,6 +18724,253 @@ Usunięte style:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %3 z %4</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>Zmieniono %n linijkę</numerusform>
+            <numerusform>Zmieniono %n linijki</numerusform>
+            <numerusform>Zmieniono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>Żadna linijka się nie zmienia.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>Usuń tagi…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>Usuń tagi</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>Kolor</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alfa</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>Obramowanie</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Czcionka</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Skala</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>Odstępy</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Obrót</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>Pochylenie</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>Pogrubienie, kursywa, podkreślenie, przekreślenie</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>Pozycja</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>Punkt odniesienia</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>Wyrównanie</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>Wycinek</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>Zanikanie</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>Przekształcenia</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Reset</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>Styl zawijania</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>Rysunek</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>Inne tagi</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>Każdy tag spoza listy</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>Usuń komentarze</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>Bloki bez tagów, np. {note}</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>Scal sąsiednie bloki tagów</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 staje się %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>Usuń nadpisane tagi</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>Tag, który zastępuje późniejszy tag w tym samym bloku, oraz powtórzenia %1, %2, %3 i %4</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Reguły Clean Tags</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>To samo co dołączony skrypt Clean Tags: scala bloki, przenosi tagi całej linijki na początek, usuwa puste bloki</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>Usuń linijki, które zostały puste</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>Zaznaczone linijki</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>Cały plik bez linijek-komentarzy</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>Bloki</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>Wszystkie bloki</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>Blok początkowy</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>Bloki w tekście</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Tagi</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Wyczyść</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>Zaznacz wszystkie</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>Porządkowanie</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>Podgląd</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>usunięta</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>Linijka usunięta</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>Żadna linijka się nie zmienia</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>Zmienia się %n linijka</numerusform>
+            <numerusform>Zmieniają się %n linijki</numerusform>
+            <numerusform>Zmienia się %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n usunięta</numerusform>
+            <numerusform>%n usunięte</numerusform>
+            <numerusform>%n usuniętych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>pokazano pierwszą %n</numerusform>
+            <numerusform>pokazano pierwsze %n</numerusform>
+            <numerusform>pokazano pierwszych %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>

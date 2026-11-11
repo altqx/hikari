@@ -645,6 +645,8 @@ Right-click a row or empty space, and now also the Menu key and Shift+F10 (ancho
   - Before, at video frame time (insert-before)
   - After, at video frame time (insert-after)
 - Duplicate 3 lines (duplicate; {Ctrl+D}; was “Duplicate lines”)
+- Blur and glow layers… (layers; AU18 #852)
+- Build layers with the last values (layers-repeat; AU18 #852)
 - Cut (edit-cut; {Ctrl+X})
 - Copy (edit-copy; {Ctrl+C})
 - Paste (edit-paste; {Ctrl+V})
@@ -805,6 +807,8 @@ Right-click in the Line editor or Original text, the Menu key or Shift+F10. Draw
 - ──
 - Select all (select-all; {Ctrl+A}; new)
 - ──
+- Blur and glow layers… (layers; AU18 #852)
+- ──
 - [x] Spellchecker
 
 Over a grammar mark:
@@ -823,6 +827,8 @@ Over a grammar mark:
 - Delete (clear; {Del})
 - ──
 - Select all (select-all; {Ctrl+A})
+- ──
+- Blur and glow layers… (layers)
 - ──
 - [x] Spellchecker
 

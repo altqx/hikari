@@ -6178,6 +6178,14 @@ Failed to copy %2 fonts.</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>மங்கல் மற்றும் ஒளிர்வு அடுக்குகள்…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>கடைசி மதிப்புகளுடன் அடுக்குகளை உருவாக்கு</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
     </message>
@@ -7430,6 +7438,10 @@ Failed to copy %2 fonts.</source>
         <translation>\move ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>குறிச்சொற்களை நீக்கு…</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
     </message>
@@ -8019,6 +8031,277 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Accept all suggestions</source>
         <translation>எல்லாப் பரிந்துரைகளையும் ஏற்றுக்கொள்</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>ஒளிர்வு, எல்லை அல்லது நிழலை இயக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>கீழே அடுக்குகளை உருவாக்க வேண்டிய வரிகளைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>ஒரே நேரத்தில் அதிகபட்சம் %n ஒளிர்வு அடுக்கை உருவாக்கலாம்.</numerusform>
+            <numerusform>ஒரே நேரத்தில் அதிகபட்சம் %n ஒளிர்வு அடுக்குகளை உருவாக்கலாம்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>ஒரு நிழலுக்கு அதிகபட்சம் %n படி. படிகளைக் குறைக்கவும்.</numerusform>
+            <numerusform>ஒரு நிழலுக்கு அதிகபட்சம் %n படிகள். படிகளைக் குறைக்கவும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>இது %n வரிக்கு மேல் உருவாக்கும். குறைவான வரிகளைத் தேர்ந்தெடுக்கவும்.</numerusform>
+            <numerusform>இது %n வரிகளுக்கு மேல் உருவாக்கும். குறைவான வரிகளைத் தேர்ந்தெடுக்கவும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>தேர்ந்தெடுத்த வரிகளுக்கு உருவாக்க எதுவும் இல்லை.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>வரி %1-இன் கீழ் %n வரியை உருவாக்குகிறது.</numerusform>
+            <numerusform>வரி %1-இன் கீழ் %n வரிகளை உருவாக்குகிறது.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>இது அடுக்கு %1-இலிருந்து அடுக்கு %2-க்கு மேலே நகரும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>தேர்ந்தெடுத்த வரிகளின் கீழ் %n வரியை உருவாக்குகிறது.</numerusform>
+            <numerusform>தேர்ந்தெடுத்த வரிகளின் கீழ் %n வரிகளை உருவாக்குகிறது.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>ஒவ்வொன்றும் அதன் கீழ் உருவாக்கிய வரிகளின் எண்ணிக்கை அளவு மேலே நகரும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n வரிக்கு எல்லை இல்லை, எல்லை தவிர்க்கப்படும்.</numerusform>
+            <numerusform>%n வரிகளுக்கு எல்லை இல்லை, எல்லை தவிர்க்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n வரியின் நிழல் 1 px-க்குக் குறைவு, நிழல் தவிர்க்கப்படும்.</numerusform>
+            <numerusform>%n வரிகளின் நிழல் 1 px-க்குக் குறைவு, நிழல் தவிர்க்கப்படும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>வரி %1 (அடுக்கு %2) வரி %3-உடன் காட்டப்பட்டு அதற்கு மேலே இருந்தது. உருவாக்கியதும், வரி %3-இன் அடுக்குத் தொகுப்பு அதை மூடும்.</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>அடுக்குகளை இங்கே உருவாக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>மதிப்புகளைத் தேர்வுசெய்ய, “மங்கல் மற்றும் ஒளிர்வு அடுக்குகள்…” இல் ஒருமுறை அடுக்குகளை உருவாக்கவும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>%n அடுக்கு வரி உருவாக்கப்பட்டது</numerusform>
+            <numerusform>%n அடுக்கு வரிகள் உருவாக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>மங்கல் மற்றும் ஒளிர்வு அடுக்குகள்</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>வரி</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>ஒளிர்வு</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>ஒவ்வொரு வரியின் கீழும் மங்கலான நகல்கள்</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>மங்கல்</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>எல்லை</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>ஒளிர்வு %1 மங்கல்</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>ஒளிர்வு %1 எல்லை, வரியின் எல்லையுடன் சேர்க்கப்படும்</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>ஒளிர்வு %1 வண்ணம்: வரியின் எல்லை வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>ஒளிர்வு %1 வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>ஒளிர்வு %1 ஆல்ஃபா, ஹெக்ஸ்</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>ஒளிர்வு %1-ஐ நீக்கு</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>ஒளிர்வு அடுக்கைச் சேர்</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>நிரப்பிலிருந்து தனியாக மங்கலாக்கப்பட்ட, தனி அடுக்கில் உள்ள எல்லை</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>எல்லையின் கீழ்</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>எல்லை வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>ஒளிபுகும்</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>நிரப்பு வண்ணத்தில் ஒரு மெல்லிய எல்லை மங்கலின் கீழுள்ள இடைவெளியை மூடுகிறது</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>எல்லை மங்கல்</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>வரியினுடையது</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>நிரப்பு வரியின் மங்கலை வைத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>மறைதலின்போது எல்லையின் கீழுள்ள நிரப்பை மறை</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>மறைதல் மாற்றம், ms</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>ms</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>இரண்டாம் எல்லை</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>இரண்டாம் எல்லை அகலம்</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>இரண்டாம் எல்லை வண்ணம்: வரியின் நிரப்பு வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>இரண்டாம் எல்லை வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>அடுக்கிய நகல்களால் ஆன 3D நிழல்</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>படிகள்</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>தானியங்கு</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>தானியங்கு: ஒவ்வொரு வரியின் நிழல் நகர்வின் ஒவ்வொரு பிக்சலுக்கும் ஒன்று</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>அருகிலுள்ள நகல்: வரியின் நிழல் வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>அருகிலுள்ள நகலின் வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>தொலைவான நகல்: வரியின் நிழல் வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>தொலைவான நகலின் வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>அருகிலுள்ள நகலின் ஆல்ஃபா, ஹெக்ஸ்</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>தொலைவான நகலின் ஆல்ஃபா, ஹெக்ஸ்</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>மங்கல் இல்லாத வரிக்கான மங்கல்</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>வீடியோவில் முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>அடுக்குகளை உருவாக்கு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>
@@ -8697,6 +8980,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>தேர்ந்தெடுத்த வரிகளின் கீழ் ஒளிர்வு, எல்லை, நிழல் அடுக்குகளை உருவாக்குகிறது</translation>
+    </message>
+    <message>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>மங்கல் மற்றும் ஒளிர்வு அடுக்குகள்… (&amp;b)</translation>
+    </message>
+    <message>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>“மங்கல் மற்றும் ஒளிர்வு அடுக்குகள்” கடைசியாகப் பயன்படுத்திய மதிப்புகளுடன் அடுக்குகளை மீண்டும் உருவாக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Build layers with the &amp;last values</source>
+        <translation>கடைசி மதிப்புகளுடன் அடுக்குகளை உருவாக்கு (&amp;l)</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -10350,6 +10649,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒவ்வொரு அசையின் பன்னிரண்டு நகல்கள் அதைச் சுற்றியுள்ள சீரற்ற இடங்களுக்குப் பறந்து மங்குகின்றன.</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>ஒலித் துடிப்பு</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>ஒவ்வொரு அசையும் பாடப்படும்போது ஒலியின் உரத்தலுக்கு ஏற்பப் பெரிதாகிறது. ஒலி திறந்திருக்க வேண்டும்.</translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10609,6 +10916,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape</source>
         <translation type="unfinished">வடிவம்</translation>
     </message>
@@ -10722,6 +11037,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10927,6 +11250,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">ஆடியோ</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -18258,6 +18585,249 @@ Styles deleted:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %4 இல் %3</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>%n வரி மாற்றப்பட்டது</numerusform>
+            <numerusform>%n வரிகள் மாற்றப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>எந்த வரியும் மாறவில்லை.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>குறிச்சொற்களை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>குறிச்சொற்களை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>நிறம்</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>எல்லை</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>மங்கல்</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>இடைவெளி</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>தடிமன், சாய்வெழுத்து, அடிக்கோடு, குறுக்குக்கோடு</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>தொடக்கப்புள்ளி</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>சீரமைப்பு</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>கிளிப்</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>மங்குதல்</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>உருமாற்றங்கள்</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>கரோக்கி</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>மடிப்பு பாணி</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>வரைபடம்</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>பிற குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>பட்டியலில் இல்லாத எந்தக் குறிச்சொல்லும்</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>கருத்துகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>{note} போன்ற குறிச்சொல் இல்லாத தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>அடுத்தடுத்த குறிச்சொல் தொகுதிகளை இணை</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 என்பது %2 ஆகும்</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>மேலெழுதப்பட்ட குறிச்சொற்களை நீக்கு</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>அதே தொகுதியில் பின்வரும் குறிச்சொல் மாற்றும் குறிச்சொல், மற்றும் %1, %2, %3, %4 இன் மறுநிகழ்வுகள்</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Clean Tags விதிகள்</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>உள்ளிணைந்த Clean Tags ஸ்கிரிப்ட் செய்வது: தொகுதிகளை இணைக்கிறது, முழு வரிக் குறிச்சொற்களைத் தொடக்கத்திற்கு நகர்த்துகிறது, வெற்றுத் தொகுதிகளை நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>வெறுமையான வரிகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>தேர்ந்தெடுத்த வரிகள்</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>முழுக் கோப்பு, கருத்து வரிகள் தவிர</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>அனைத்துத் தொகுதிகளும்</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>தொடக்கத் தொகுதி</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>உள்வரித் தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>அழி</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>அனைத்தையும் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>சுத்தம் செய்</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>வரி நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>எந்த வரியும் மாறவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n வரி மாறுகிறது</numerusform>
+            <numerusform>%n வரிகள் மாறுகின்றன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n நீக்கப்பட்டது</numerusform>
+            <numerusform>%n நீக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>முதல் %n காட்டப்படுகிறது</numerusform>
+            <numerusform>முதல் %n காட்டப்படுகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>
