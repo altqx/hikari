@@ -98,6 +98,8 @@ export interface SessionModel {
 /** Starts a session, or replaces one with the same id; `history` is the thread Qt saved. */
 export interface SessionNewParams {
     sessionId: string;
+    /** An external agent runs the thread instead of Hikari's loop; `model.model` is then the agent's model, if any. */
+    agent?: "claude";
     model: SessionModel;
     system?: string;
     history?: Message[];
@@ -197,7 +199,9 @@ export interface CancelRequestParams {
 }
 
 /** Where a relayed request goes; Qt knows its base URL and key. */
-export interface RelayTarget {
+export type RelayTarget = ProviderTarget | { kind: "npm" };
+
+export interface ProviderTarget {
     /** A provider by its id, or the chosen search service by its SearchService id. */
     kind: "provider" | "search";
     id: string;

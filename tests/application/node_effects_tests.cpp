@@ -153,6 +153,11 @@ const std::string_view kBounce = presetGraph("05-bounce.ass");
 const std::string_view kSparkles = presetGraph("07-sparkles.ass");
 const std::string_view kFallingLetters = presetGraph("09-falling-letters.ass");
 const std::string_view kPalette = presetGraph("10-palette.ass");
+const std::string_view kStaggeredFade = presetGraph("02-staggered-fade.ass");
+const std::string_view kColourSweep = presetGraph("03-colour-sweep.ass");
+const std::string_view kScalePop = presetGraph("04-scale-pop.ass");
+const std::string_view kGlow = presetGraph("06-glow.ass");
+const std::string_view kEcho = presetGraph("08-echo.ass");
 
 struct Preset {
     const char *golden;
@@ -167,6 +172,11 @@ const Preset kPresets[] = {
     {"07-sparkles.out.ass", "sparkles", kSparkles, 2},
     {"09-falling-letters.out.ass", "letters", kFallingLetters, 1},
     {"10-palette.out.ass", "palette", kPalette, 3},
+    {"02-staggered-fade.out.ass", "stagger", kStaggeredFade, 1},
+    {"03-colour-sweep.out.ass", "sweep", kColourSweep, 2},
+    {"04-scale-pop.out.ass", "pop", kScalePop, 1},
+    {"06-glow.out.ass", "glow", kGlow, 2},
+    {"08-echo.out.ass", "echo", kEcho, 2},
 };
 
 core::Document presetDocument(const Preset &p)

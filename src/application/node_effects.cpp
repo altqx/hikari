@@ -1,8 +1,8 @@
 #include "hikari/application/node_effects.h"
 
+#include "hikari/application/karaoke_layout.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
-#include "node_layout.h"
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -18,8 +18,8 @@
 namespace hikari::application {
 
 using json::Json;
-using node_layout::numberText;
-using node_layout::Unit;
+using karaoke_layout::numberText;
+using karaoke_layout::Unit;
 
 struct NodeEffectCache::Store {
     std::mutex mutex;
@@ -42,6 +42,11 @@ std::size_t NodeEffectCache::size() const
 }
 
 namespace {
+
+NodeColour nodeColour(karaoke_layout::StyleColour c)
+{
+    return {c.r, c.g, c.b};
+}
 
 enum class Kind {
     ForEach, Repeat, Frames, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
@@ -389,7 +394,7 @@ struct Generated {
 
 class Evaluator {
 public:
-    Evaluator(const Compiled &c, const node_layout::Line &line, std::u8string_view name, std::int64_t seed,
+    Evaluator(const Compiled &c, const karaoke_layout::Line &line, std::u8string_view name, std::int64_t seed,
               LuaNodePort *lua, std::atomic<bool> &luaStopped, Problems &problems, NodeValueTrace *trace)
         : m_c(c), m_line(line), m_name(name), m_seed(seed), m_lua(lua), m_luaStopped(luaStopped), m_problems(problems),
           m_trace(trace),
@@ -542,7 +547,7 @@ private:
     bool luaBatch(int node, const std::vector<Element> &elements, std::vector<Memo> &memos);
 
     const Compiled &m_c;
-    const node_layout::Line &m_line;
+    const karaoke_layout::Line &m_line;
     std::u8string_view m_name;
     std::int64_t m_seed;
     LuaNodePort *m_lua;
@@ -556,10 +561,10 @@ NodeValue Evaluator::info(std::string_view port, const Element &e) const
 {
     const Unit &u = unitOf(e);
     const Unit &l = m_line.line;
-    const node_layout::StyleInfo &s = *m_line.style;
+    const karaoke_layout::StyleInfo &s = *m_line.style;
     static const std::map<std::string_view, std::function<NodeValue(const Unit &, const Unit &,
-                                                                             const node_layout::StyleInfo &,
-                                                                             const node_layout::Line &)>>
+                                                                             const karaoke_layout::StyleInfo &,
+                                                                             const karaoke_layout::Line &)>>
         kFields{
             {"text", [](auto &u, auto &, auto &, auto &) { return NodeValue(u.text); }},
             {"i", [](auto &u, auto &, auto &, auto &) { return NodeValue(u.i); }},
@@ -601,10 +606,11 @@ NodeValue Evaluator::info(std::string_view port, const Element &e) const
             {"style_outline", [](auto &, auto &, auto &s, auto &) { return NodeValue(s.outline); }},
             {"style_shadow", [](auto &, auto &, auto &s, auto &) { return NodeValue(s.shadow); }},
             {"style_alignment", [](auto &, auto &, auto &s, auto &) { return NodeValue(double(s.align)); }},
-            {"style_primary", [](auto &, auto &, auto &s, auto &) { return NodeValue(s.primary); }},
-            {"style_secondary", [](auto &, auto &, auto &s, auto &) { return NodeValue(s.secondary); }},
-            {"style_outline_colour", [](auto &, auto &, auto &s, auto &) { return NodeValue(s.outlineColour); }},
-            {"style_back", [](auto &, auto &, auto &s, auto &) { return NodeValue(s.back); }},
+            {"style_primary", [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.primary)); }},
+            {"style_secondary", [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.secondary)); }},
+            {"style_outline_colour",
+             [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.outlineColour)); }},
+            {"style_back", [](auto &, auto &, auto &s, auto &) { return NodeValue(nodeColour(s.back)); }},
         };
     return kFields.at(port)(u, l, s, m_line);
 }
@@ -935,7 +941,7 @@ bool Evaluator::emit(int emitRank, std::vector<Generated> &out)
         }
         MacroDialogueLine d = m_line.macro;
         d.id = 0;
-        d.generatedFrom = m_line.source->id.value;
+        d.generatedFrom = m_line.macro.id;
         d.comment = false;
         d.layer = static_cast<int>(layer);
         d.startMs = static_cast<std::int64_t>(start);
@@ -961,7 +967,7 @@ struct LineResult {
     std::vector<NodeEffectProblem> problems;
 };
 
-std::string cacheKey(const Compiled &c, int emitRank, const node_layout::Line &line, std::u8string_view name)
+std::string cacheKey(const Compiled &c, int emitRank, const karaoke_layout::Line &line, std::u8string_view name)
 {
     return narrow(name) + '\x1e' + std::to_string(c.flat.seed) + '\x1e' + c.emitSignature[emitRank] + '\x1e' +
            line.signature;
@@ -999,7 +1005,8 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
     }
     run.ran = true;
 
-    node_layout::Layout layout(document, *options.measure, options.video);
+    karaoke_layout::ExtentsCache extents(*options.measure);
+    karaoke_layout::Layout layout(document, extents, options.video);
     std::size_t info = 0, styles = 0;
     for (const auto &section : document.sections())
         for (const auto &record : section.records) {
@@ -1009,7 +1016,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
                 ++styles;
         }
     double li = static_cast<double>(info + styles + layout.furiganaStylesAdded());
-    std::vector<node_layout::Line> lines;
+    std::vector<karaoke_layout::Line> lines;
     std::vector<std::vector<std::string>> layoutProblems;
     for (const core::LineRecord *l : document.lines()) {
         if (isGeneratedBy(*l, name))
@@ -1020,7 +1027,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         if (options.sources && !options.sources->contains(l->id))
             continue;
         std::vector<std::string> problems;
-        lines.push_back(layout.line(*l, li, compiled.chars, problems));
+        lines.push_back(layout.line(macroLineOf(*l), li, {.chars = compiled.chars}, problems));
         layoutProblems.push_back(std::move(problems));
         run.sources.push_back(l->id);
     }
@@ -1033,7 +1040,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
         if (luaStopped)
             return;
         LineResult &r = results[i];
-        Problems problems{r.problems, lines[i].source->id};
+        Problems problems{r.problems, core::LineId{lines[i].macro.id}};
         for (const std::string &p : layoutProblems[i])
             problems.add({}, p);
         Evaluator eval(compiled, lines[i], name, graph.seed, options.lua, luaStopped, problems,
@@ -1064,7 +1071,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
                 }
             }
             for (Generated &g : out)
-                g.line.generatedFrom = lines[i].source->id;
+                g.line.generatedFrom = core::LineId{lines[i].macro.id};
             counts[k] += out.size();
             nanos[k] += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0)
                             .count();
@@ -1098,7 +1105,7 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
             if (std::ranges::find(run.problems, p) == run.problems.end())
                 run.problems.push_back(std::move(p));
         if (!results[i].lines.empty())
-            run.applied.insert(lines[i].source->id);
+            run.applied.insert(core::LineId{lines[i].macro.id});
         for (Generated &g : results[i].lines) {
             if (layout.addedStyle(g.line.style) && missing.insert(g.line.style).second)
                 run.styles.push_back(*layout.addedStyle(g.line.style));

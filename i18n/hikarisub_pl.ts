@@ -383,6 +383,10 @@
         <source>Show the log</source>
         <translation>Pokaż dziennik</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -7978,6 +7982,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Thai support for automation scripts</source>
         <translation>Obsługa języka tajskiego w skryptach automatyzacji</translation>
+    </message>
+    <message>
+        <source>No licence stated</source>
+        <translation>Brak podanej licencji</translation>
     </message>
     <message>
         <source>Translation</source>

@@ -383,6 +383,10 @@
         <source>Show the log</source>
         <translation>로그 표시</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -7874,6 +7878,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Thai support for automation scripts</source>
         <translation>자동화 스크립트의 태국어 지원</translation>
+    </message>
+    <message>
+        <source>No licence stated</source>
+        <translation>라이선스가 명시되지 않음</translation>
     </message>
     <message>
         <source>Translation</source>

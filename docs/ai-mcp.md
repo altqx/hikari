@@ -100,7 +100,7 @@ Replies are `application/json`, never SSE. A notification gets 202. The sidecar 
 | `_hikari/mcp.closed` (notification) | `{connection}` | |
 | `_hikari/api.call` | `{operation, params, mcp?: {connection, client?}}` | as before; `mcp` makes it run as the connection's caller |
 
-A local socket connection is `local-<n>`; all HTTP requests share `http`. The same sidecar server is meant to serve AI15's per-session channel for Codex and ACP agents.
+A local socket connection is `local-<n>`; all HTTP requests share `http`. The same server also runs in process for each [Claude thread](ai-external-agents.md), and is meant to serve AI15's per-session channel for Codex and ACP agents.
 
 ## Tests
 

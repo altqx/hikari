@@ -383,6 +383,10 @@
         <source>Show the log</source>
         <translation>แสดงล็อก</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -7874,6 +7878,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Thai support for automation scripts</source>
         <translation>การรองรับภาษาไทยในสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>No licence stated</source>
+        <translation>ไม่ได้ระบุสัญญาอนุญาต</translation>
     </message>
     <message>
         <source>Translation</source>
