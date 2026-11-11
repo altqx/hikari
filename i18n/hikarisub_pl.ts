@@ -204,8 +204,8 @@
         <translation>Ustawienia › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>Zatwierdzasz każdą zmianę. Odczyt nigdy nie pyta.</translation>
+        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
+        <translation>Zmiany w napisach trafiają do przeglądu, gdzie je zachowujesz albo cofasz. Inne zmiany pytają.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
