@@ -575,10 +575,6 @@
         <translation>செயலில் உள்ள வரியில் லீட்-அவுட் சேர்க்கவும்</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>கமிட்</translation>
-    </message>
-    <message>
         <source>Apply changes</source>
         <translation>மாற்றங்களைப் பயன்படுத்துங்கள்</translation>
     </message>
@@ -660,15 +656,15 @@
         <translation>குறிக்குப் பின் இயக்கு</translation>
     </message>
     <message>
-        <source>Commit options</source>
-        <translation>கமிட் விருப்பங்கள்</translation>
+        <source>Options for applying changes</source>
+        <translation>மாற்றங்களைப் பயன்படுத்துவதற்கான விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>Auto-commit</source>
+        <source>Apply changes automatically</source>
         <translation>தானியங்கு கமிட்</translation>
     </message>
     <message>
-        <source>Next after commit</source>
+        <source>Go to the next line after applying</source>
         <translation>கமிட்டுக்குப் பின் அடுத்தது</translation>
     </message>
     <message>
@@ -826,10 +822,6 @@ Output device: %2</source>
     <message>
         <source>Play around button</source>
         <translation>சுற்றி இயக்கு பொத்தான்</translation>
-    </message>
-    <message>
-        <source>Go to the next line after commit</source>
-        <translation>கமிட்டுக்குப் பின் அடுத்த வரிக்குச் செல்</translation>
     </message>
     <message>
         <source>Speech spectrum</source>
@@ -2927,7 +2919,7 @@ Output device: %2</source>
         <translation>இடது கீழ்</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>மையம்-கீழ்</translation>
     </message>
     <message>
@@ -2939,7 +2931,7 @@ Output device: %2</source>
         <translation>இடது-மையம்</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>மையம்</translation>
     </message>
     <message>
@@ -2951,7 +2943,7 @@ Output device: %2</source>
         <translation>இடது-மேல்</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>மையம்-மேல்</translation>
     </message>
     <message>
@@ -6019,12 +6011,8 @@ Failed to copy %2 fonts.</source>
         <translation>%1 அதைப் பெறுகிறது</translation>
     </message>
     <message>
-        <source>Commit</source>
-        <translation>கமிட்</translation>
-    </message>
-    <message>
-        <source>Commit alt</source>
-        <translation>கமிட் (மாற்று வழி)</translation>
+        <source>Apply changes alt</source>
+        <translation>மாற்றங்களைப் பயன்படுத்து (மாற்று வழி)</translation>
     </message>
     <message>
         <source>Previous line</source>
@@ -6111,8 +6099,8 @@ Failed to copy %2 fonts.</source>
         <translation>நிழல் வண்ணம்</translation>
     </message>
     <message>
-        <source>Font selection</source>
-        <translation>எழுத்துரு தேர்வு</translation>
+        <source>Choose font…</source>
+        <translation>எழுத்துருவைத் தேர்ந்தெடு…</translation>
     </message>
     <message>
         <source>Strikethrough</source>
@@ -6431,8 +6419,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளின்படி வரிகளைப் பிரிக்கவும்</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS கோப்பு பண்புகள்</translation>
+        <source>Script properties</source>
+        <translation>ஸ்கிரிப்ட் பண்புகள்</translation>
     </message>
     <message>
         <source>Check for updates</source>
@@ -6503,8 +6491,8 @@ Failed to copy %2 fonts.</source>
         <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Open auto save</source>
-        <translation>தானியங்கு சேமிப்பைத் திற</translation>
+        <source>Open autosave…</source>
+        <translation>தானியங்கு சேமிப்பைத் திற…</translation>
     </message>
     <message>
         <source>Run the last loaded script</source>
@@ -6659,8 +6647,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைத் திற</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>இயக்கு / இடைநிறுத்து</translation>
+        <source>Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Play active line</source>
@@ -6835,8 +6823,8 @@ Failed to copy %2 fonts.</source>
         <translation>1 நிமிடம் பின்னோக்கி</translation>
     </message>
     <message>
-        <source>Show / hide progress bar</source>
-        <translation>முன்னேற்றப் பட்டியைக் காட்டவும் / மறைக்கவும்</translation>
+        <source>Progress bar</source>
+        <translation>முன்னேற்றப் பட்டி</translation>
     </message>
     <message>
         <source>Next chapter</source>
@@ -6891,8 +6879,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களை மறை</translation>
     </message>
     <message>
-        <source>Show / hide render cost</source>
-        <translation>ரெண்டர் செலவைக் காட்டு / மறை</translation>
+        <source>Render cost</source>
+        <translation>ரெண்டர் செலவு</translation>
     </message>
     <message>
         <source>Tap to time</source>
@@ -7871,8 +7859,8 @@ Failed to copy %2 fonts.</source>
         <translation>வரியின் இறுதி நேரத்திற்குச் செல்லுங்கள்</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>இயக்கு / இடைநிறுத்து</translation>
+        <source>Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -8654,8 +8642,8 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவை இறுதி நேரத்திற்கு நகர்த்துகிறது</translation>
     </message>
     <message>
-        <source>Plays / Pauses video</source>
-        <translation>வீடியோவை இயக்கவும் / இடைநிறுத்தவும்</translation>
+        <source>Plays or pauses the video</source>
+        <translation>வீடியோவை இயக்குகிறது அல்லது இடைநிறுத்துகிறது</translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -10429,7 +10417,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">மதிப்புகள்</translation>
     </message>
     <message>
         <source>Math</source>
@@ -19941,8 +19929,8 @@ Styles deleted:
         <translation>அடுத்த சட்டகம்</translation>
     </message>
     <message>
-        <source>Play / Pause</source>
-        <translation>இயக்கு / இடைநிறுத்து</translation>
+        <source>Play or pause</source>
+        <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
         <source>Video</source>
@@ -20945,7 +20933,7 @@ or codecs or a splitter may be missing</source>
         <translation>உரையில் குறிச்சொல் இடம்பெறும் இடம்</translation>
     </message>
     <message>
-        <source>How each line&apos;s number changes the value</source>
+        <source>How each line’s number changes the value</source>
         <translation>ஒவ்வொரு வரியின் எண்ணும் மதிப்பை மாற்றும் விதம்</translation>
     </message>
     <message>
@@ -21376,7 +21364,7 @@ or codecs or a splitter may be missing</source>
         <translation>பின்-கீழ்</translation>
     </message>
     <message>
-        <source>After-center</source>
+        <source>After-centre</source>
         <translation>பின்-மையம்</translation>
     </message>
     <message>
@@ -21392,7 +21380,7 @@ or codecs or a splitter may be missing</source>
         <translation>முன்-கீழ்</translation>
     </message>
     <message>
-        <source>Before-center</source>
+        <source>Before-centre</source>
         <translation>முன்-மையம்</translation>
     </message>
     <message>
@@ -21400,7 +21388,7 @@ or codecs or a splitter may be missing</source>
         <translation>முன்-மேல்</translation>
     </message>
     <message>
-        <source>Bottom-center</source>
+        <source>Bottom-centre</source>
         <translation>மையம்-கீழ்</translation>
     </message>
     <message>
@@ -21416,15 +21404,15 @@ or codecs or a splitter may be missing</source>
         <translation>கிளிப் செவ்வக மதிப்புகளைப் படிக்க முடியவில்லை.</translation>
     </message>
     <message>
-        <source>Center</source>
+        <source>Centre</source>
         <translation>மையம்</translation>
     </message>
     <message>
-        <source>Center-above</source>
+        <source>Centre-above</source>
         <translation>மையம்-மேலே</translation>
     </message>
     <message>
-        <source>Center-below</source>
+        <source>Centre-below</source>
         <translation>மையம்-கீழே</translation>
     </message>
     <message>
@@ -21460,8 +21448,8 @@ or codecs or a splitter may be missing</source>
         <translation>புள்ளியை நீக்கு</translation>
     </message>
     <message>
-        <source>A double &quot;m&quot; was blocked because of a VSFilter bug</source>
-        <translation>VSFilter பிழையால் இரட்டை &quot;m&quot; தடுக்கப்பட்டது</translation>
+        <source>A double “m” was blocked because of a VSFilter bug</source>
+        <translation>VSFilter பிழையால் இரட்டை “m” தடுக்கப்பட்டது</translation>
     </message>
     <message>
         <source>List of ASS drawings with an edit option.
@@ -21628,10 +21616,6 @@ increasing or decreasing the value.</source>
     <message>
         <source>Spikes</source>
         <translation>முனைகள்</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>மையம்</translation>
     </message>
     <message>
         <source>Hole</source>
@@ -21861,12 +21845,12 @@ in two or one axis.</source>
     </message>
     <message>
         <source>Show surrounding plane
-A rectangle of the text&apos;s plane: match it to one in the shot, then place the text inside it</source>
+A rectangle of the text’s plane: match it to one in the shot, then place the text inside it</source>
         <translation>சுற்றியுள்ள தளத்தைக் காட்டு
 உரையின் தளத்தின் ஒரு செவ்வகம்: காட்சியில் உள்ள ஒன்றுடன் அதைப் பொருத்தி, பின் உரையை அதனுள் வைக்கவும்</translation>
     </message>
     <message>
-        <source>Top-center</source>
+        <source>Top-centre</source>
         <translation>மையம்-மேல்</translation>
     </message>
     <message>
@@ -21878,7 +21862,7 @@ A rectangle of the text&apos;s plane: match it to one in the shot, then place th
         <translation>வலது மேல்</translation>
     </message>
     <message>
-        <source>Video must be set at least one frame after the line&apos;s start time</source>
+        <source>Video must be set at least one frame after the line’s start time</source>
         <translation>வீடியோ வரியின் தொடக்க நேரத்திலிருந்து குறைந்தது ஒரு சட்டகம் பின்னால் அமைக்கப்பட வேண்டும்</translation>
     </message>
     <message>

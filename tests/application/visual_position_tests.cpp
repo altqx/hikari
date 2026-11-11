@@ -9,6 +9,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <tuple>
 
 #include <QFile>
@@ -590,8 +591,11 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                     legacyHistory.push_back(h.toString().toStdString());
                 EXPECT_EQ(history, legacyHistory);
                 std::vector<std::u16string> legacyLog;
-                for (const auto &l : o[QStringLiteral("log")].toArray())
-                    legacyLog.push_back(u16(l));
+                for (const auto &l : o[QStringLiteral("log")].toArray()) {
+                    std::u16string withCurlyApostrophes = u16(l);
+                    std::ranges::replace(withCurlyApostrophes, u'\'', u'\u2019');
+                    legacyLog.push_back(withCurlyApostrophes);
+                }
                 EXPECT_EQ(host.logs, legacyLog);
                 EXPECT_EQ((PointF{host.v.coeffW(), host.v.coeffH()}), pair(o[QStringLiteral("coeff")]));
                 if (auto *p = dynamic_cast<PositionTool *>(tool.get())) {
