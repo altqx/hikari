@@ -299,7 +299,7 @@ QVariantMap Application::exportSetup() const
     options.insert(QStringLiteral("lines"), lines == QLatin1String("selected") || lines == QLatin1String("shown")
                                                 ? lines
                                                 : QStringLiteral("all"));
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const float frameMs =
         video.state() == application::VideoSession::State::Ready ? video.legacyTimebase().frameDuration() : 0.f;
     const double videoFps = frameMs > 0.f ? 1000.0 / frameMs : 0.0;

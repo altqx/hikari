@@ -144,7 +144,7 @@ public:
     void setLayoutSource(LayoutSource source) { m_layoutSource = std::move(source); }
     void setProjectGarbageSource(ProjectGarbageSource source) { m_projectGarbageSource = std::move(source); }
     // Called as prepareSave starts, so a panel's pending edit reaches its Document.
-    void setBeforeSave(std::function<void()> before) { m_beforeSave = std::move(before); }
+    void setBeforeSave(std::function<void(DocumentId)> before) { m_beforeSave = std::move(before); }
     // An ASS Document's arrangement from the layout source; nullopt for other
     // formats or without a source.
     std::optional<std::u8string> layoutToSave(DocumentId document, const core::Document &saved) const;
@@ -180,7 +180,7 @@ private:
     core::AssSaveOptions m_saveOptions;
     LayoutSource m_layoutSource;
     ProjectGarbageSource m_projectGarbageSource;
-    std::function<void()> m_beforeSave;
+    std::function<void(DocumentId)> m_beforeSave;
 };
 
 }

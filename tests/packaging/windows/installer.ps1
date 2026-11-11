@@ -285,7 +285,20 @@ switch ($env:ACTION) {
         $a = "/S /UPDATE /WAITPID=$($app.Id) $env:ARGS".Trim()
         Write-Output "run: `"$env:SETUP`" $a"
         $sw = [Diagnostics.Stopwatch]::StartNew()
-        $p = Start-Process -FilePath $env:SETUP -ArgumentList $a -PassThru
+        $exitFile = $null
+        if ([Security.Principal.WindowsIdentity]::GetCurrent().IsSystem) {
+            $exitFile = Join-Path $env:TEMP "hs-update-exit-$PID.txt"
+            Remove-Item -LiteralPath $exitFile -ErrorAction SilentlyContinue
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("`"$env:SETUP`" $a"))
+            $helper = Join-Path $PSScriptRoot 'start-on-desktop.ps1'
+            $made = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+                CommandLine = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$helper`" -EncodedCommandLine $encoded -ExitFile `"$exitFile`" -TimeoutSeconds 300"
+            }
+            if ($made.ReturnValue -ne 0) { Fail "Win32_Process.Create returned $($made.ReturnValue)"; break }
+            $p = Get-Process -Id $made.ProcessId
+        } else {
+            $p = Start-Process -FilePath $env:SETUP -ArgumentList $a -PassThru
+        }
         $null = $p.Handle
         Start-Sleep -Seconds 5
         Check (-not $p.HasExited) 'the installer waits while the app runs'
@@ -295,9 +308,11 @@ switch ($env:ACTION) {
             if (-not $app.WaitForExit(15000)) { $app.Kill() }
             Write-Output "app $($app.Id) exited after $([math]::Round($sw.Elapsed.TotalSeconds, 1)) s"
         }
-        if (-not $p.WaitForExit(300000)) { Fail 'installer still running after 5 minutes'; Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; break }
-        Write-Output "exit $($p.ExitCode) after $([math]::Round($sw.Elapsed.TotalSeconds, 1)) s"
-        Check ($p.ExitCode -eq $expect) "exit code $($p.ExitCode), expected $expect"
+        if (-not $p.WaitForExit(310000)) { Fail 'installer still running after 5 minutes'; Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; break }
+        $code = if ($exitFile) { (Get-Content -Raw -LiteralPath $exitFile -ErrorAction SilentlyContinue).Trim() } else { $p.ExitCode }
+        if ($exitFile) { Remove-Item -LiteralPath $exitFile -ErrorAction SilentlyContinue }
+        Write-Output "exit $code after $([math]::Round($sw.Elapsed.TotalSeconds, 1)) s"
+        Check ("$code" -eq "$expect") "exit code $code, expected $expect"
         if ($expect -eq 0) {
             Check ((Value $uninstallKey DisplayVersion) -eq $env:VERSION) "DisplayVersion $env:VERSION"
             Check (-not (Test-Path -LiteralPath $result)) 'no last-result.json'
@@ -319,6 +334,8 @@ switch ($env:ACTION) {
                 $owner = (Get-CimInstance Win32_Process -Filter "ProcessId = $($new.Id)" | Invoke-CimMethod -MethodName GetOwner)
                 Write-Output "     relaunched pid $($new.Id) as $($owner.Domain)\$($owner.User), elevated: $([HsRes]::IsElevated($new.Id))"
                 Check (-not [HsRes]::IsElevated($new.Id)) 'the relaunched app is not elevated'
+                $shell = Get-CimInstance Win32_Process -Filter "Name = 'explorer.exe'" | Select-Object -First 1 | Invoke-CimMethod -MethodName GetOwner
+                Check ($owner.User -eq $shell.User -and $owner.Domain -eq $shell.Domain) "the relaunched app runs as the desktop user $($shell.Domain)\$($shell.User)"
                 $null = $new.CloseMainWindow()
                 if (-not $new.WaitForExit(15000)) { $new.Kill() }
             }

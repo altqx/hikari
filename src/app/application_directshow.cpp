@@ -60,7 +60,7 @@ bool Application::directShowPlayback() const
 
 void Application::choosePlayer()
 {
-    application::GeneralPlayerPort *player = m_generalPlayer.get();
+    application::GeneralPlayerPort *player = activeMedia().generalPlayer.get();
 #ifdef _WIN32
     if (m_settings->integer("video.playbackPlayer") == 1) {
         if (!m_directShow) {
@@ -68,8 +68,8 @@ void Application::choosePlayer()
                 QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
             });
             m_directShow->setFrameSink([this](std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs) {
-                m_directShow->setYcbcrFrames(m_video->session().presenterConvertsYcbcr());
-                m_video->session().submitGeneralFrame(startUs, std::nullopt,
+                m_directShow->setYcbcrFrames(activeMedia().video->session().presenterConvertsYcbcr());
+                activeMedia().video->session().submitGeneralFrame(startUs, std::nullopt,
                                                       [frame = std::move(frame)](application::FramePool &) { return frame; });
             });
             m_directShow->setOpenFailed([this](const std::string &message) {
@@ -81,21 +81,21 @@ void Application::choosePlayer()
                               openMessage(message));
             });
         }
-        m_directShow->setColorSpace(m_video->session().matrix());
+        m_directShow->setColorSpace(activeMedia().video->session().matrix());
         player = m_directShow.get();
     }
 #endif
     if (player == m_activePlayer)
         return;
     m_activePlayer = player;
-    m_video->session().setGeneralPlayer(player);
+    activeMedia().video->session().setGeneralPlayer(player);
     for (auto *views : allViews())
         views->videoView->setPlayer(player);
 #ifdef _WIN32
     if (player != m_directShow.get())
         m_directShow.reset();
     else
-        m_video->session().preparePlayer();
+        activeMedia().video->session().preparePlayer();
 #endif
     emit playbackPlayerChanged();
 }
@@ -104,7 +104,7 @@ QVariantList Application::playerFilters() const
 {
     QVariantList out;
 #ifdef _WIN32
-    if (directShowPlayback() && m_video->loaded() && m_video->session().playerHasVideo())
+    if (directShowPlayback() && activeMedia().video->loaded() && activeMedia().video->session().playerHasVideo())
         for (const auto &f : m_directShow->filters())
             out.push_back(QVariantMap{{QStringLiteral("name"), QString::fromStdString(f.name)},
                                       {QStringLiteral("enabled"), f.hasPropertyPages}});

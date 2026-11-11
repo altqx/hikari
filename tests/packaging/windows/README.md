@@ -18,7 +18,10 @@ the Qt SDK of the main tree (`C:/Winix/work/hikari-qt/out/sdk`) is reused read-o
 3. **Silent checks.** `tests/packaging/windows/run-installer-tests.sh <dir> <legacy V> <V1> <V2> <V3>`
    runs every silent step (installs in both scopes, legacy to Qt, Qt to Qt, the running-app
    waits, `/UPDATE` with `/WAITPID` and `/RELAUNCH`, downgrade and scope refusals, uninstall).
-   `installer.ps1` holds the checks; each task takes its parameters from `--env`.
+   `installer.ps1` holds the checks; each task takes its parameters from `--env`. An elevated
+   job runs as SYSTEM in session 0, where the setup has no desktop to relaunch the app on, so the
+   all-users `/UPDATE` step starts the setup on the user's desktop, as UAC does
+   (`start-on-desktop.ps1`), and checks that the app comes back as that user, not elevated.
 4. **Interactive pages**, with `winix ui`: launch a setup with `ui launch --exe`, read it with
    `ui tree --pid`, press buttons by automation id (`1` Next/Install/Finish, `2` Cancel,
    `1200`/`1202` the scope radios, `1203` the Finish page's "Start HikariSub"). The UAC prompt

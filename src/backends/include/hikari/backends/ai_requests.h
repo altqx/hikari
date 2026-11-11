@@ -50,6 +50,7 @@ public:
     /// providers without their own search.
     void setWebSearch(bool on, std::optional<application::ai::SearchService> service);
     /// The service the sidecar searches with: nullopt while web search is off.
+    bool webSearch() const { return m_webSearch; }
     std::optional<application::ai::SearchService> searchService() const
     {
         return m_webSearch ? m_searchService : std::nullopt;

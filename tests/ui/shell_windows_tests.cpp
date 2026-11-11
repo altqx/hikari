@@ -23,6 +23,7 @@
 #include <QScreen>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QtMath>
 #include <QtQuickTest/quicktest.h>
 #include <QtTest>
 
@@ -76,6 +77,15 @@ class ShellWindowsTest : public QObject {
         return window->findChild<QQuickItem *>(QLatin1String(name));
     }
     static QObject *dock(QQuickWindow *window, const char *name) { return window->findChild<QObject *>(QLatin1String(name)); }
+    bool holdsItsLayoutMinimum(QQuickWindow *window) const
+    {
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        const QQuickItem *area = item(window, "dockingArea");
+        const QSize outside(window->width() - qCeil(area->width()), window->height() - qCeil(area->height()));
+        const QSize least = (docking->layoutMinimumSize(area->property("uniqueName").toString()) + outside)
+                                .boundedTo(window->screen()->availableGeometry().size());
+        return window->minimumSize() == least && window->width() >= least.width() && window->height() >= least.height();
+    }
     QVariantList rows(int window) const { return application->windowTabs(window); }
     bool modified(application::DocumentId id) const
     {
@@ -1147,12 +1157,14 @@ private slots:
         const QString firstPreset = before->preset();
         application->selectTab(1);
         QTRY_COMPARE(before->preset(), QStringLiteral("Timing"));
+        QTRY_VERIFY(holdsItsLayoutMinimum(first()));
         const auto cursor = session->historyCursor();
         const auto revision = session->revision();
         const int reviews = application->quitReviews();
         QSignalSpy written(application.get(), &app::Application::documentWritten);
         QSignalSpy shown(application.get(), &app::Application::tabShown);
 
+        const QSize dragged = first()->size();
         dragTab(first(), tabCentre(first(), 1), QPoint(1200, 120));
         QQuickWindow *opened = nullptr;
         QTRY_VERIFY((opened = newestShellWindow()) && opened != second);
@@ -1161,8 +1173,8 @@ private slots:
         QCOMPARE(titles(0), (QStringList{"first.ass*"}));
         QCOMPARE(titles(1), (QStringList{"second.ass*"}));
         QCOMPARE(application->workspace().activeWindow(), shellId(opened));
-        QCOMPARE(opened->width(), first()->width());
-        QVERIFY(opened->height() >= first()->height());
+        QCOMPARE(opened->width(), dragged.width());
+        QVERIFY(opened->height() >= dragged.height());
         QCOMPARE(session->historyCursor(), cursor);
         QCOMPARE(session->revision(), revision);
         QCOMPARE(session->selection(), selection);

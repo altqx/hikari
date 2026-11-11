@@ -82,6 +82,7 @@ TEST(AgentSpecs, ClaudeMayWriteOnlyItsOwnStateAndTheSidecarSetsOnlyItsMarkers)
               (QStringList{QStringLiteral("/h/.claude"), QStringLiteral("/h/.claude.json"), dir.filePath(QStringLiteral("work"))}));
     EXPECT_EQ(spec.profile.network, hikari::backends::sandbox::Network::Any);
     EXPECT_TRUE(QFileInfo(dir.filePath(QStringLiteral("work/tmp"))).isDir());
+    EXPECT_EQ(spec.environment.value(QStringLiteral("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")), QStringLiteral("1"));
     EXPECT_TRUE(spec.sidecarEnvironment.contains(QStringLiteral("CLAUDE_CODE_ENTRYPOINT")));
     EXPECT_FALSE(spec.sidecarEnvironment.contains(QStringLiteral("ANTHROPIC_BASE_URL")));
     EXPECT_FALSE(spec.refuse(QStringList{QStringLiteral("--dangerously-skip-permissions")}).isEmpty());

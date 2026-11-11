@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/settings.h"
 
 #include <expected>
 #include <string>
@@ -37,5 +38,15 @@ struct ScriptPropertiesEdits {
 // resolution. An absent Collisions or ScaledBorderAndShadow is added as "Normal"/"yes".
 std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, const ScriptProperties &edited,
                                                           const ScriptPropertiesEdits &edits, bool linkResolutions);
+
+struct ScriptInfoChange {
+    std::u8string key, from, to;
+};
+
+// The scriptProperties.* fields switched on in `settings` whose value differs from the Script Info; none outside ASS.
+std::vector<ScriptInfoChange> scriptInfoOnSave(const core::Document &document, const Settings &settings);
+
+// One undo step ("Changing the subtitle header"); none when `changes` is empty.
+std::expected<void, CommandRefusal> applyScriptInfo(EditSession &session, const std::vector<ScriptInfoChange> &changes);
 
 }
