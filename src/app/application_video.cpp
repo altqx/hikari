@@ -34,13 +34,10 @@ bool missingLocalFile(const std::string &path)
 
 }
 
-void Application::trackVideoSources()
+void Application::trackVideoSources(WindowMedia &media)
 {
-    m_recentVideo.set(m_settings->settings().list("recent.video"));
-    m_recentKeyframes.set(m_settings->settings().list("recent.keyframes"));
-    m_recentTimecodes.set(m_settings->settings().list("recent.timecodes"));
-    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        const auto &video = m_video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this] {
+        const auto &video = activeMedia().video->session();
         if (video.state() != application::VideoSession::State::Ready) {
             m_recentVideoSeen.clear();
             return;
@@ -51,7 +48,7 @@ void Application::trackVideoSources()
             rememberRecentVideo(path);
         }
     });
-    connect(m_video.get(), &ui::VideoController::unloaded, this, [this] {
+    connect(media.video.get(), &ui::VideoController::unloaded, this, [this] {
         m_pendingTabSeek.reset();
         m_tabSeekQueued = false;
         if (const auto target = m_workspace.editingTarget())
@@ -65,7 +62,7 @@ void Application::trackVideoSources()
 
 void Application::logVideoFailure()
 {
-    const auto &session = m_video->session();
+    const auto &session = activeMedia().video->session();
     const bool failed = session.state() == application::VideoSession::State::Failed;
     if (failed && !m_videoFailureLogged) {
         const auto &failure = session.openFailure();
@@ -84,7 +81,7 @@ void Application::logVideoFailure()
             if (failure && failure->stage == OpenStage::Indexer)
                 qDebug().noquote() << QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1")
                                           .arg(text);
-            notice(m_video->status());
+            notice(activeMedia().video->status());
         }
     }
     m_videoFailureLogged = failed;
@@ -92,7 +89,7 @@ void Application::logVideoFailure()
 
 void Application::logPlaybackFailure()
 {
-    const auto &session = m_video->session();
+    const auto &session = activeMedia().video->session();
     if (session.playbackFailures() <= m_playbackFailuresLogged)
         return;
     m_playbackFailuresLogged = session.playbackFailures();
@@ -170,7 +167,7 @@ QUrl Application::videoDialogFolder() const
 
 QUrl Application::keyframesDialogFolder() const
 {
-    QString from = QString::fromStdString(m_video->session().path());
+    QString from = QString::fromStdString(activeMedia().video->session().path());
     if (application::isDummyVideo(from.toStdString()))
         from.clear();
     if (from.isEmpty() && !m_recentKeyframes.entries().empty())
@@ -182,7 +179,7 @@ QUrl Application::keyframesDialogFolder() const
 
 bool Application::keyframesWithoutVideo(const QString &path, QString &problem)
 {
-    if (!m_audio || !m_audio->hasAudio())
+    if (!activeMedia().audio || !activeMedia().audio->hasAudio())
         return false;
     m_pendingKeyframes.clear();
     QFile f(path);
@@ -200,8 +197,8 @@ bool Application::keyframesWithoutVideo(const QString &path, QString &problem)
     snap.reserve(ms.size());
     for (const int keyMs : ms)
         snap.push_back(application::keyframeSnapWithoutVideo(keyMs));
-    m_audio->setKeyframeSnapTimes(std::move(snap));
-    m_audio->setKeyframes(std::move(ms));
+    activeMedia().audio->setKeyframeSnapTimes(std::move(snap));
+    activeMedia().audio->setKeyframes(std::move(ms));
     return true;
 }
 
@@ -238,7 +235,7 @@ QString Application::openDummyVideo(const QVariantMap &values)
         values.value(QStringLiteral("pattern")).toBool());
     if (!text)
         return QCoreApplication::translate("HikariSub.Video", "Invalid FPS value.");
-    m_video->openVideo(QString::fromStdString(*text));
+    activeMedia().video->openVideo(QString::fromStdString(*text));
     return {};
 }
 
@@ -248,12 +245,12 @@ bool Application::nextVideoFile(bool next)
     if (!step)
         return false;
     if (step->kind == application::NextFileStep::Kind::Open) {
-        m_video->openVideo(QString::fromStdString(step->path));
+        activeMedia().video->openVideo(QString::fromStdString(step->path));
         return true;
     }
-    auto &session = m_video->session();
+    auto &session = activeMedia().video->session();
     const bool done = session.restartToggled();
-    emit m_video->changed();
+    emit activeMedia().video->changed();
     return done;
 }
 
@@ -287,7 +284,7 @@ int Application::dummyVideoFrames(const QString &fps, int durationMs) const
 std::optional<application::NextFileStep> Application::nextVideoStep(application::NextFileWalker &walker,
                                                                      bool next) const
 {
-    QString path = QString::fromStdString(m_video->session().path());
+    QString path = QString::fromStdString(activeMedia().video->session().path());
     if (path.isEmpty()) {
         if (m_recentVideo.entries().empty())
             return std::nullopt;

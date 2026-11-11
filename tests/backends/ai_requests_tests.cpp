@@ -401,6 +401,27 @@ TEST_F(AiRequestsTest, CitationsAndSearchSuggestionsComeBackWithTheAnswer)
               Json::object({{"type", "providerState"}, {"wire", "gemini"}, {"json", "[]"}}));
 }
 
+TEST_F(AiRequestsTest, ACitationSpanLandsOnItsCharactersInThaiAndEmojiTextOrIsDropped)
+{
+    configure({{app::Role::Chat, "cites-spans"}});
+    app::Providers providers(configs, keys);
+    AiRequests requests(providers, [this] { return sidecar(); });
+    Stream run;
+    requests.complete(app::Role::Chat, chat(), run.sink());
+    ASSERT_TRUE(waitFor([&] { return run.done(); }));
+    const auto &finished = std::get<app::Finished>(run.events.back());
+    ASSERT_EQ(finished.citations.size(), 6u);
+    const QString text = QString::fromStdString(finished.text);
+    const auto cited = [&](std::size_t i) {
+        const auto &span = finished.citations[i].span;
+        return span ? text.mid(span->start, span->end - span->start) : QString();
+    };
+    EXPECT_EQ(cited(0), QStringLiteral("Aimer 🎤"));
+    EXPECT_EQ(cited(1), QStringLiteral("LiSA"));
+    for (std::size_t unplaced = 2; unplaced < 6; ++unplaced)
+        EXPECT_EQ(finished.citations[unplaced].span, std::nullopt) << unplaced;
+}
+
 TEST_F(AiRequestsTest, TestingASearchServiceReachesItOnlyWhileTheTestRunsWithTheTypedKey)
 {
     app::Providers providers(configs, keys);

@@ -14,6 +14,7 @@ Item {
     property var pickerFolder: picker => ""
     property var rememberPickerFolder: (picker, file) => {}
     property var confirmOverDisk: (ids, then, cancelled) => then()
+    property var confirmScriptInfo: (ids, then, cancelled) => then()
     property var confirmConversion: (id, file, format, from, then, cancelled) => then()
     property var rows: []
     property var choices: []
@@ -69,10 +70,12 @@ Item {
             resolve()
     }
     function resolve() {
-        confirmOverDisk(choices.filter(c => c.save).map(c => c.id), () => app.resolveClose(choices), () => {
+        const saving = choices.filter(c => c.save).map(c => c.id)
+        const cancelled = () => {
             if (!window || !window.visible)
                 cancel()
-        })
+        }
+        confirmOverDisk(saving, () => confirmScriptInfo(saving, () => app.resolveClose(choices), cancelled), cancelled)
     }
     function discardAll() {
         setAll(false)

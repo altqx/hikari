@@ -9,7 +9,7 @@ file(GLOB_RECURSE _hikari_ai_sources CONFIGURE_DEPENDS "${_hikari_ai_dir}/src/*.
     "${_hikari_ai_dir}/tools/*.ts" "${_hikari_ai_dir}/licenses/*")
 
 add_custom_command(OUTPUT "${_hikari_ai_installed}"
-    COMMAND "${HIKARI_BUN}" ci --ignore-scripts
+    COMMAND "${HIKARI_BUN}" ci --ignore-scripts --omit=optional
     COMMAND "${CMAKE_COMMAND}" -E touch "${_hikari_ai_installed}"
     WORKING_DIRECTORY "${_hikari_ai_dir}"
     DEPENDS "${_hikari_ai_dir}/package.json" "${_hikari_ai_dir}/bun.lock" "${_hikari_ai_dir}/bunfig.toml"
@@ -34,4 +34,7 @@ if(BUILD_TESTING)
     add_test(NAME hikari_ai_sidecar_bun_tests COMMAND "${HIKARI_BUN}" test WORKING_DIRECTORY "${_hikari_ai_dir}")
     set_tests_properties(hikari_ai_sidecar_bun_tests PROPERTIES LABELS ai-sidecar
         ENVIRONMENT "HIKARI_AI_SIDECAR_RUNTIME=${HIKARI_BUN}")
+    add_test(NAME hikari_ai_sidecar_types COMMAND "${HIKARI_BUN}" node_modules/typescript/bin/tsc --noEmit
+        WORKING_DIRECTORY "${_hikari_ai_dir}")
+    set_tests_properties(hikari_ai_sidecar_types PROPERTIES LABELS ai-sidecar)
 endif()

@@ -203,6 +203,17 @@ RelayTargets withSearchTargets(RelayTargets next, app::SearchKeys &keys,
     };
 }
 
+RelayTargets withRegistryTargets(RelayTargets next, QUrl registry)
+{
+    return [next = std::move(next), registry = std::move(registry)](const api::Json &target,
+                                                                    std::function<void(RelayTargetResult)> done) {
+        const api::Json *kind = target.find("kind");
+        if (!kind || *kind != api::Json("npm"))
+            return next(target, std::move(done));
+        done(RelayTarget{.base = registry, .key = {}, .readOnly = true});
+    };
+}
+
 bool keySafeOverPlainHttp(const QHostAddress &address, const QList<QHostAddress> &local)
 {
     const QHostAddress a = unmapped(address);
@@ -370,6 +381,10 @@ void HttpRelay::route(const std::shared_ptr<Exchange> &exchange)
     const bool web = url.scheme() == QLatin1String("https") || url.scheme() == QLatin1String("http");
     if (!web || !withinBase(url, base)) {
         exchange->fail(app::ErrorKind::Rejected, "invalid endpoint");
+        return finish(exchange->id);
+    }
+    if (exchange->destination.readOnly && exchange->method != "GET" && exchange->method != "HEAD") {
+        exchange->fail(app::ErrorKind::Rejected, "read-only target");
         return finish(exchange->id);
     }
     const QString host = url.host();

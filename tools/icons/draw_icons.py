@@ -1433,7 +1433,6 @@ for card, roles in {
     "AU22 #856": ["interpolate-lines"],
     "AU23 #857": ["import-lyrics"],
     "TH5 #833": ["builtin-script"],
-    "AI23b #800": ["web-search", "citations", "web-page-read"],
 }.items():
     for role in roles:
         PENDING[role] = card

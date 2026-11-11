@@ -14,15 +14,16 @@ target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/applic
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
 target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
-target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp node_layout.cpp node_graph_editing.cpp node_graph_presets.cpp
-    node_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
+target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp karaoke_layout.cpp node_graph_editing.cpp node_graph_presets.cpp
+    include/hikari/application/karaoke_layout.h node_effects.cpp include/hikari/application/node_catalogue.h
     include/hikari/application/node_graph.h include/hikari/application/node_graph_library.h
     include/hikari/application/node_effects.h include/hikari/application/node_graph_editing.h)
 # Generated Lines must be byte-identical on every platform.
-set_source_files_properties(node_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
+set_source_files_properties(karaoke_layout.cpp node_effects.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 target_sources(hikari_application PRIVATE guide_links.cpp include/hikari/application/guide_links.h)
 target_sources(hikari_application PRIVATE ai_providers.cpp include/hikari/application/ai_providers.h)
+target_sources(hikari_application PRIVATE search_suggestions.cpp include/hikari/application/search_suggestions.h)
 target_include_directories(hikari_application PUBLIC include)
 target_sources(hikari_application PRIVATE playback_pipeline.cpp yuv_bgra.cpp
     include/hikari/application/playback_pipeline.h include/hikari/application/yuv_bgra.h)

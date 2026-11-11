@@ -228,6 +228,40 @@ TEST_F(ApiScripts, AReviewedCallersWriteWaitsInTheReviewAndAPluginsDoesNot)
     EXPECT_EQ(host.review.changes(target).size(), 1u);
 }
 
+TEST_F(ApiScripts, AnAiCallerCannotReadPrivacyOrRecentSettingsAndAPluginCan)
+{
+    Caller ai = aiCaller();
+    ai.reviewed = true;
+    const auto ids = [&](const Caller &caller) {
+        std::vector<std::string> out;
+        const Result listed = client.call(caller, "settings.list", Json::object());
+        EXPECT_TRUE(listed) << listed.error().message;
+        for (const Json &entry : listed->find("settings")->asArray())
+            out.push_back(entry.find("setting")->asString());
+        return out;
+    };
+    const auto hidden = [](const std::string &id) { return id.starts_with("privacy.") || id.starts_with("recent."); };
+
+    const auto aiIds = ids(ai);
+    EXPECT_TRUE(std::none_of(aiIds.begin(), aiIds.end(), hidden));
+    EXPECT_NE(std::find(aiIds.begin(), aiIds.end(), "fontCollector.directory"), aiIds.end());
+    const auto pluginIds = ids(pluginCaller());
+    EXPECT_NE(std::find(pluginIds.begin(), pluginIds.end(), "privacy.usageDataId"), pluginIds.end());
+    EXPECT_NE(std::find(pluginIds.begin(), pluginIds.end(), "recent.subtitles"), pluginIds.end());
+    EXPECT_TRUE(client.call(ai, "settings.list", params(R"({"prefix": "recent."})"))->find("settings")->asArray().empty());
+
+    for (const char *id : {"privacy.usageDataId", "recent.subtitlesOpened"}) {
+        const Json get = Json::object({{"settings", Json::array({Json("grid.copyColumns"), Json(id)})}});
+        const Result refused = client.call(ai, "settings.get", get);
+        ASSERT_FALSE(refused) << id;
+        EXPECT_EQ(refused.error().code, errors::kRefused);
+        EXPECT_EQ(*refused.error().data.find("reason"), Json("private"));
+        EXPECT_NE(refused.error().message.find(id), std::string::npos);
+        EXPECT_TRUE(client.call(pluginCaller(), "settings.get", get)) << id;
+    }
+    EXPECT_TRUE(client.call(ai, "settings.get", params(R"({"settings": ["fontCollector.directory"]})")));
+}
+
 TEST_F(ApiScripts, AStaleRevisionChangesNothing)
 {
     auto *session = host.target();

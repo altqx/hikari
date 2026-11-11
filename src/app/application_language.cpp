@@ -49,8 +49,8 @@ void Application::languageSwitched()
         }
         m_untitledTitle = untitled;
     }
-    m_video->retranslate();
-    m_audio->retranslate();
+    activeMedia().video->retranslate();
+    activeMedia().audio->retranslate();
     for (auto *layout : layouts())
         layout->retranslate();
     for (auto *views : allViews()) {

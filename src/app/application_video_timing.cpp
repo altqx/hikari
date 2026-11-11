@@ -26,7 +26,7 @@ int msOf(core::DocumentTime t)
 
 application::VideoState Application::videoState() const
 {
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     if (video.state() != VideoSession::State::Ready)
         return application::VideoState::None;
     if (video.playing())
@@ -67,7 +67,7 @@ std::optional<application::FollowedLine> Application::followedLine(core::LineId 
 
 void Application::applyVideoFollow(const application::VideoFollow &follow)
 {
-    auto &video = m_video->session();
+    auto &video = activeMedia().video->session();
     if (follow.playThenPause)
         video.unstop();
     if (follow.pause)
@@ -85,11 +85,11 @@ void Application::applyVideoFollow(const application::VideoFollow &follow)
     }
     if (follow.playVideo)
         video.playLine(follow.playVideo->first, follow.playVideo->second);
-    if (follow.audioUpdate && m_audio)
-        m_audio->followLine(*follow.audioUpdate);
-    if (follow.playAudio && m_audio) {
+    if (follow.audioUpdate && activeMedia().audio)
+        activeMedia().audio->followLine(*follow.audioUpdate);
+    if (follow.playAudio && activeMedia().audio) {
         refreshAudio();
-        m_audio->playSelection();
+        activeMedia().audio->playSelection();
     }
 }
 
@@ -101,7 +101,7 @@ void Application::followShownLine(bool rowChanged, LineChangeOrigin origin)
     const auto seek = static_cast<application::SeekAfter>(m_settings->integer("video.moveToActiveLine"));
     const auto play = static_cast<application::PlayAfter>(m_settings->integer("video.playAfterSelection"));
     applyVideoFollow(application::followShownLine(seek, play, videoState(), rowChanged, origin.gridClick,
-                                                  origin.autoPlay, m_audio && m_audio->hasAudio(), *line));
+                                                  origin.autoPlay, activeMedia().audio && activeMedia().audio->hasAudio(), *line));
 }
 
 void Application::followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left)
@@ -143,17 +143,17 @@ void Application::followGridPress(std::optional<core::LineId> before, core::Line
     press.changeActive = m_settings->boolean("grid.changeActiveOnSelection");
     press.endColumn = endColumn;
     press.tmPlayer = session->document().format() == core::SubtitleFormat::TMPlayer;
-    press.audioBox = m_audio && m_audio->hasAudio();
+    press.audioBox = activeMedia().audio && activeMedia().audio->hasAudio();
     const auto seek = static_cast<application::SeekAfter>(m_settings->integer("video.moveToActiveLine"));
     const auto play = static_cast<application::PlayAfter>(m_settings->integer("video.playAfterSelection"));
     applyVideoFollow(application::followGridPress(seek, play, videoState(), press, *followed));
 }
 
-void Application::trackVideoFollow()
+void Application::trackVideoFollow(WindowMedia &media)
 {
     auto last = std::make_shared<VideoSession::State>(VideoSession::State::Closed);
-    connect(m_video.get(), &ui::VideoController::changed, this, [this, last] {
-        auto &video = m_video->session();
+    connect(media.video.get(), &ui::VideoController::changed, this, [this, last] {
+        auto &video = activeMedia().video->session();
         const auto state = std::exchange(*last, video.state());
         if (video.state() != VideoSession::State::Opening || state == VideoSession::State::Opening)
             return;
@@ -169,7 +169,7 @@ bool Application::setTimeFromVideo(bool end)
     auto *session = targetSession();
     if (!session || videoState() == application::VideoState::None)
         return false;
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const int ms = application::legacyInsertTimeFromVideo(
         video.legacyTimebase(), video.tellMs(), !end,
         m_settings->integer(end ? "grid.insertEndOffset" : "grid.insertStartOffset"));
@@ -182,10 +182,10 @@ bool Application::setTimeFromVideo(bool end)
 bool Application::joinPreviousToAudioSelection()
 {
     auto *session = targetSession();
-    if (!session || !m_audio || !m_audio->ready())
+    if (!session || !activeMedia().audio || !activeMedia().audio->ready())
         return false;
     const auto done =
-        application::joinPreviousToAudioSelection(*session, m_audio->selectionStart(), m_audio->selectionEnd());
+        application::joinPreviousToAudioSelection(*session, activeMedia().audio->selectionStart(), activeMedia().audio->selectionEnd());
     editor().reloadFromSession();
     refreshViews();
     return done.has_value();
@@ -196,7 +196,7 @@ bool Application::shiftFramesToVideo(bool byEnd, bool following)
     auto *session = targetSession();
     if (!session || videoState() == application::VideoState::None)
         return false;
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto timebase = video.legacyTimebase();
     const auto done = application::shiftFramesToVideo(
         *session, timebase, application::FrameShift{timebase.frameShownAt(video.tellMs()), byEnd, following});
@@ -210,7 +210,7 @@ bool Application::selectLineFromVideo()
     auto *session = targetSession();
     if (!session || videoState() == application::VideoState::None)
         return false;
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto id = application::lineAtVideoTime(session->document(), shownLines(), video.tellMs(), video.durationMs());
     if (!id)
         return false;
@@ -227,7 +227,7 @@ bool Application::selectLinesVisibleOnVideo()
     if (active)
         editorLine = session->draftLine() == active ? session->draftRecord() : committedLine(*session, *active);
     const application::ShownLine shown = m_gridFilter->ignoreInActions() ? application::ShownLine{} : shownLines();
-    const auto found = application::linesShownOnVideo(session->document(), shown, editorLine, m_video->session().tellMs());
+    const auto found = application::linesShownOnVideo(session->document(), shown, editorLine, activeMedia().video->session().tellMs());
     application::Selection next = session->selection();
     next.selected = std::set<core::LineId>(found.begin(), found.end());
     if (!found.empty())
@@ -238,12 +238,12 @@ bool Application::selectLinesVisibleOnVideo()
 bool Application::snapToKeyframe(bool start)
 {
     auto *session = targetSession();
-    if (!session || !m_audio || !m_audio->hasAudio() || !exactTimebase() || !session->selection().active)
+    if (!session || !activeMedia().audio || !activeMedia().audio->hasAudio() || !exactTimebase() || !session->selection().active)
         return false;
     const auto line = followedLine();
     if (!line)
         return false;
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto timebase = video.legacyTimebase();
     std::vector<int> keyframes, snapTimes;
     for (const int frame : video.keyframes()) {
@@ -306,8 +306,8 @@ bool Application::openEditorFromFullScreen()
 {
     if (!m_videoFullscreen->active())
         return false;
-    if (m_video->playing())
-        m_video->pause();
+    if (activeMedia().video->playing())
+        activeMedia().video->pause();
     if (!targetUntitled())
         selectLineFromVideo();
     return m_videoFullscreen->leave();
@@ -318,7 +318,7 @@ bool Application::centerTimesInFrames()
     auto *session = targetSession();
     if (!session || videoState() == application::VideoState::None)
         return false;
-    const auto done = application::centerTimesInFrames(*session, m_video->session().legacyTimebase());
+    const auto done = application::centerTimesInFrames(*session, activeMedia().video->session().legacyTimebase());
     editor().reloadFromSession();
     refreshViews();
     return done.has_value();

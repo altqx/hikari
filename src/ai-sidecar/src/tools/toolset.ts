@@ -1,4 +1,5 @@
 import { ErrorCode } from "../protocol";
+import type { SearchService } from "../providers/types";
 import { RpcError } from "../rpc";
 import type { CommandsListResult, OperationName, Operations, VideoFrameResult } from "./api.gen";
 import { kCatalogue, type Catalogue, type Entry, type Tool } from "./catalogue";
@@ -7,10 +8,18 @@ import { pngFromBgra } from "./png";
 
 export type Content = { type: "text"; text: string } | { type: "image"; data: string; mimeType: string };
 
-/** MCP's CallToolResult. */
+/** The user's search service couldn't search: its plan has none left, or it refused the key. */
+export interface SearchFailure {
+    service: SearchService;
+    reason: "usedUp" | "key";
+    httpStatus: number;
+}
+
+/** MCP's CallToolResult, plus why the search service failed. */
 export interface CallToolResult {
     content: Content[];
     isError?: boolean;
+    searchFailure?: SearchFailure;
 }
 
 /**
