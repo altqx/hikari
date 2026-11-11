@@ -150,6 +150,48 @@ TEST_F(Files, MalformedLyricsSayWhereAndChangeNothing)
     EXPECT_EQ(service.session(doc)->draftText(), u8"work");
 }
 
+TEST_F(Files, DecodedKrcAndQrcOpenAsUntitledImports)
+{
+    disk.files["/song.krc"] = bytesOf("[ti:x]\n[1000,1000]<0,500,0>Twin<500,500,0>kle\n");
+    disk.files["/song.qrc"] = bytesOf("[1000,1000]Twin(1000,500)kle(1500,500)\n");
+    for (const char *path : {"/song.krc", "/song.qrc"}) {
+        auto staged = service.stageOpen({path});
+        ASSERT_TRUE(staged) << path;
+        const auto doc = service.activate(std::move(*staged));
+        ASSERT_TRUE(doc);
+        EXPECT_EQ(service.session(*doc)->document().lines()[0]->text, u8"{\\k50}Twin{\\k50}kle") << path;
+    }
+}
+
+TEST_F(Files, EncryptedLyricsAreRefused)
+{
+    disk.files["/song.krc"] = bytesOf(std::string_view("krc1\x01\x02\x00\x80", 8));
+    const auto failed = service.stageOpen({"/song.krc"});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().reason, OpenError::MalformedLyrics);
+    EXPECT_EQ(failed.error().lyrics->kind, core::LyricsProblem::Kind::Encrypted);
+}
+
+TEST_F(Files, LyricsGoThroughTheDecoder)
+{
+    std::vector<std::byte> seen;
+    service.setLyricsDecoder([&seen](std::span<const std::byte> bytes) -> std::optional<std::vector<std::byte>> {
+        seen.assign(bytes.begin(), bytes.end());
+        if (bytes.size() == 1)
+            return std::nullopt;
+        return bytesOf("[00:01.00]decoded\n");
+    });
+    disk.files["/song.lrc"] = bytesOf("\xB8\xE8");
+    auto staged = service.stageOpen({"/song.lrc"});
+    ASSERT_TRUE(staged);
+    EXPECT_EQ(seen, bytesOf("\xB8\xE8"));
+    EXPECT_EQ(staged->load.document.lines()[0]->text, u8"decoded");
+    disk.files["/bad.lrc"] = bytesOf("\xFF");
+    const auto failed = service.stageOpen({"/bad.lrc"});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().lyrics->kind, core::LyricsProblem::Kind::NotUtf8);
+}
+
 TEST_F(Files, YouTubeTimedTextOpensAsAnUntitledImport)
 {
     disk.files["/clip.ytt"] = bytesOf(R"(<timedtext format="3"><body><p t="1000" d="2000">Hello <s t="500">there</s></p></body></timedtext>)");
