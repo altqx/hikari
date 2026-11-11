@@ -224,8 +224,8 @@
         <translation>அமைப்புகள் › AI…</translation>
     </message>
     <message>
-        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
-        <translation>வசன வரிகளின் திருத்தங்கள் மதிப்பாய்வுக்குச் செல்லும்; அங்கே அவற்றைத் தக்கவைக்கலாம் அல்லது செயல்தவிர்க்கலாம். பிற மாற்றங்கள் கேட்கும்.</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>ஒவ்வொரு வசனத் திருத்தமும் செய்யப்படும் முன் நீங்கள் ஒப்புதலளிக்கிறீர்கள், மற்ற ஒவ்வொரு மாற்றத்தையும் கூட. படித்தல் ஒருபோதும் கேட்காது.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -453,6 +453,87 @@
     <message>
         <source>Codex</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>முன்மொழிவு: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>காலாவதியானது</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>நகர்த்தப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>செருகப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>%1 ஐ மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>முகவர் படித்த பிறகு வசன வரிகள் மாறிவிட்டன.</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>ஒரு வரிசையைக் கிளிக் செய்தால் அதன் வரி தேர்ந்தெடுக்கப்படும். பயன்படுத்தினால் செயல்தவிர்க்கக்கூடிய ஒரு படி மதிப்பாய்வில் சேரும்.</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>மீண்டும் கேள்</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>நிராகரி</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>நிராகரித்து முகவரிடம் சொல்…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>முகவருக்குத் திருப்பி அனுப்பப்பட்டது: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>நிராகரிக்கப்பட்டது: %1 · எதுவும் மாறவில்லை</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>பயன்படுத்தப்படவில்லை: %1 · எதுவும் மாறவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>முன்மொழிவு: %1, %n வரி</numerusform>
+            <numerusform>முன்மொழிவு: %1, %n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>அனைத்து %n வரியையும் காட்டு</numerusform>
+            <numerusform>அனைத்து %n வரிகளையும் காட்டு</numerusform>
+        </translation>
     </message>
 </context>
 <context>

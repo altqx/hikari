@@ -224,8 +224,8 @@
         <translation>Ustawienia › AI…</translation>
     </message>
     <message>
-        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
-        <translation>Zmiany w napisach trafiają do przeglądu, gdzie je zachowujesz albo cofasz. Inne zmiany pytają.</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>Zatwierdzasz każdą zmianę w napisach, zanim zostanie wprowadzona, i każdą inną zmianę. Odczyt nigdy nie pyta.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -454,6 +454,90 @@
     <message>
         <source>Codex</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>Propozycja: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>nieaktualna</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>Usunięta</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>Przeniesiona</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>Wstawiona</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>Zmienia: %1</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>Napisy zmieniły się po tym, jak agent je odczytał.</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>Kliknij wiersz, aby zaznaczyć jego linijkę. Zastosowanie dodaje do przeglądu jeden krok, który można cofnąć.</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>Poproś ponownie</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>Odrzuć</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>Odrzuć i powiedz agentowi…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>Odesłano do agenta: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>Odrzucono: %1 · nic się nie zmieniło</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>Nie zastosowano: %1 · nic się nie zmieniło</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>Propozycja: %1, %n linijka</numerusform>
+            <numerusform>Propozycja: %1, %n linijki</numerusform>
+            <numerusform>Propozycja: %1, %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>Pokaż %n linijkę</numerusform>
+            <numerusform>Pokaż wszystkie %n linijki</numerusform>
+            <numerusform>Pokaż wszystkie %n linijek</numerusform>
+        </translation>
     </message>
 </context>
 <context>

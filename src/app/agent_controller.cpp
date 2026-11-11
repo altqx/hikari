@@ -582,8 +582,10 @@ void AgentController::answer(qulonglong ask, const QString &answer, const QStrin
     if (!m_threads)
         return;
     const AgentThreads::Answer a = answer == QLatin1String("allowInThread") ? AgentThreads::Answer::AllowInThread
-                                   : answer == QLatin1String("deny")        ? AgentThreads::Answer::Deny
-                                                                            : AgentThreads::Answer::AllowOnce;
+                                   : answer == QLatin1String("deny") || answer == QLatin1String("decline")
+                                       ? AgentThreads::Answer::Deny
+                                   : answer == QLatin1String("askAgain") ? AgentThreads::Answer::AskAgain
+                                                                         : AgentThreads::Answer::AllowOnce;
     m_threads->answer(ask, a, message.trimmed().toStdString());
 }
 
@@ -594,6 +596,13 @@ void AgentController::attach(qulonglong document)
     if (std::ranges::find(attached, d) == attached.end() && m_wiring.workspace.title(d))
         attached.push_back(d);
     emit threadChanged();
+}
+
+void AgentController::selectLine(qulonglong document, qulonglong line)
+{
+    const api::Json params = api::Json::object({{"document", static_cast<std::int64_t>(document)},
+                                                {"selected", api::Json::array({api::Json(static_cast<std::int64_t>(line))})}});
+    m_wiring.api.call(api::Caller{"agent-panel", "Agent panel", true}, "selection.set", params, [](const api::Result &) {});
 }
 
 void AgentController::detach(qulonglong document)
