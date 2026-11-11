@@ -70,6 +70,11 @@ void McpBridge::agentClosed()
 
 void runMcpBridge(const QString &endpointFile)
 {
+    runMcpBridge(readMcpEndpoint(endpointFile).value_or(McpEndpoint{}));
+}
+
+void runMcpBridge(const McpEndpoint &endpoint)
+{
 #ifdef _WIN32
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
@@ -78,7 +83,7 @@ void runMcpBridge(const QString &endpointFile)
         std::fflush(stdout);
     });
     QString error;
-    if (!bridge.open(readMcpEndpoint(endpointFile).value_or(McpEndpoint{}), &error)) {
+    if (!bridge.open(endpoint, &error)) {
         std::fprintf(stderr, "%s\n", qPrintable(error));
         std::_Exit(1);
     }

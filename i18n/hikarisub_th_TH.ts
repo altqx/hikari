@@ -450,6 +450,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>ข้อเสนอ: %1</translation>
     </message>
@@ -6146,6 +6150,14 @@ Failed to copy %2 fonts.</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>ชั้นเบลอและเรืองแสง…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>สร้างชั้นด้วยค่าล่าสุด</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
@@ -7894,6 +7906,269 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>เปิดเรืองแสง ขอบ หรือเงา</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>เลือกบรรทัดที่จะสร้างชั้นไว้ด้านล่าง</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>สร้างชั้นเรืองแสงได้ไม่เกิน %n ชั้นต่อครั้ง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>เงามีได้ไม่เกิน %n ขั้น ตั้งขั้นให้น้อยลง</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>จะสร้างเกิน %n บรรทัด เลือกบรรทัดให้น้อยลง</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>ไม่มีอะไรให้สร้างสำหรับบรรทัดที่เลือก</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>สร้าง %n บรรทัดใต้บรรทัด %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>บรรทัดนี้เลื่อนจากชั้น %1 ขึ้นไปชั้น %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>สร้าง %n บรรทัดใต้บรรทัดที่เลือก</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>แต่ละบรรทัดเลื่อนขึ้นตามจำนวนบรรทัดที่สร้างไว้ด้านล่าง</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n บรรทัดไม่มีขอบ จึงข้ามขอบ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n บรรทัดมีเงาน้อยกว่า 1 px จึงข้ามเงา</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>บรรทัด %1 (ชั้น %2) แสดงพร้อมบรรทัด %3 และอยู่เหนือบรรทัดนั้น เมื่อสร้างแล้ว ชั้นซ้อนของบรรทัด %3 จะบังบรรทัดนี้</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>สร้างชั้นที่นี่ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>สร้างชั้นหนึ่งครั้งจาก “ชั้นเบลอและเรืองแสง…” เพื่อเลือกค่า</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>สร้างบรรทัดชั้นแล้ว %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>ชั้นเบลอและเรืองแสง</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>เรืองแสง</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>สำเนาเบลอใต้แต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>เบลอ</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>ขอบ</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>สี</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>อัลฟา</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>เบลอเรืองแสง %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>ขอบเรืองแสง %1 บวกเพิ่มจากขอบของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>สีเรืองแสง %1: สีเส้นขอบของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>สีเรืองแสง %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>อัลฟาเรืองแสง %1, เลขฐานสิบหก</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>ลบเรืองแสง %1</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>เพิ่มชั้นเรืองแสง</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>ขอบอยู่บนชั้นของตัวเอง เบลอแยกจากพื้น</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>ใต้ขอบ</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>สีเส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>โปร่งใส</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>ขอบบางสีเดียวกับพื้นปิดช่องว่างใต้การเบลอ</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>เบลอขอบ</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>ของบรรทัด</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>พื้นยังคงเบลอของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>ซ่อนพื้นใต้ขอบระหว่างเฟด</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>ช่วงเปลี่ยนของการเฟด, มิลลิวินาที</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>มิลลิวินาที</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>ขอบที่สอง</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>ความหนาขอบที่สอง</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>สีขอบที่สอง: สีพื้นของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>สีขอบที่สอง</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>เงา</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>เงา 3D จากสำเนาที่ซ้อนกัน</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>ขั้น</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>อัตโนมัติ: หนึ่งขั้นต่อระยะเงา 1 พิกเซลของแต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>สำเนาใกล้สุด: สีเงาของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>สีของสำเนาใกล้สุด</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>สำเนาไกลสุด: สีเงาของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>สีของสำเนาไกลสุด</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>อัลฟาของสำเนาใกล้สุด, เลขฐานสิบหก</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>อัลฟาของสำเนาไกลสุด, เลขฐานสิบหก</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>เบลอสำหรับบรรทัดที่ไม่มีเบลอ</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>แสดงตัวอย่างบนวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>สร้างชั้น</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>%1 - HikariSub</source>
@@ -8568,6 +8843,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
+    </message>
+    <message>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>สร้างชั้นเรืองแสง ขอบ และเงาใต้บรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>ชั้น&amp;เบลอและเรืองแสง…</translation>
+    </message>
+    <message>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>สร้างชั้นอีกครั้งด้วยค่าที่ “ชั้นเบลอและเรืองแสง” ใช้ครั้งล่าสุด</translation>
+    </message>
+    <message>
+        <source>Build layers with the &amp;last values</source>
+        <translation>สร้างชั้นด้วยค่า&amp;ล่าสุด</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -10207,6 +10498,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>สำเนาสิบสองชิ้นของแต่ละพยางค์พุ่งออกไปยังตำแหน่งสุ่มรอบตัวมันแล้วจางหายไป</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>จังหวะเสียง</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>แต่ละพยางค์ขยายตามความดังของเสียงขณะที่ถูกร้อง ต้องเปิดเสียงไว้</translation>
+    </message>
+    <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10422,6 +10737,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10463,6 +10794,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10579,6 +10918,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10784,6 +11139,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">เสียง</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -14042,6 +14401,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>เปิดโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>ตั้งไว้ในโปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>ตั้งไว้ใน project.local.toml</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>ถูกแทนที่ในโปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>การบันทึกไฟล์จะเขียนช่องที่เปิดไว้ลงใน Script Info ของไฟล์</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>ถามก่อนเปลี่ยนเมื่อบันทึก</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>โปรเจกต์นี้มีสคริปต์หรือการตั้งค่าปลั๊กอินของตัวเอง เชื่อถือ “%1” เพื่อเรียกใช้</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>เชื่อถือโฟลเดอร์</translation>
     </message>
 </context>
 <context>

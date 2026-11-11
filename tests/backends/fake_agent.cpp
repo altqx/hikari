@@ -28,7 +28,7 @@ std::string env(const char *name)
 
 }
 
-// Reports its arguments and two variables, then echoes each line; a message whose params hold `emit` prints that
+// Reports its arguments and three variables, then echoes each line; a message whose params hold `emit` prints that
 // instead, and one whose params hold `exit` ends with that code.
 int main(int argc, char **argv)
 {
@@ -41,7 +41,8 @@ int main(int argc, char **argv)
         args.push(std::string(argv[i]));
     print(Json::object({{"started", Json::object({{"args", std::move(args)},
                                                   {"entry", env("CLAUDE_CODE_ENTRYPOINT")},
-                                                  {"secret", env("HIKARI_TEST_SECRET")}})}})
+                                                  {"secret", env("HIKARI_TEST_SECRET")},
+                                                  {"mcpToken", env("HIKARI_MCP_TOKEN")}})}})
               .dump());
     std::string line;
     while (std::getline(std::cin, line)) {

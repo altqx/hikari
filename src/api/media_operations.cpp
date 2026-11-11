@@ -13,8 +13,6 @@ namespace {
 
 using application::MacroMediaPort;
 
-constexpr std::int64_t kMaxRawSamples = 20'000'000;
-
 std::unexpected<Error> noVideo()
 {
     return fail(errors::kUnavailable, "No video is open.");
@@ -348,31 +346,14 @@ Result audioPeaks(const Context &context, const Json &params)
         return fail(errors::kInvalidParams, "Parameter /end: it must be after start.",
                     Json::object({{"pointer", Json("/end")}}));
     const int buckets = params.find("buckets") ? int(params.find("buckets")->asInt()) : 256;
-    const std::int64_t first = start * a.sampleRate() / 1000;
-    const std::int64_t count = std::max<std::int64_t>(1, (end - start) * a.sampleRate() / 1000);
-    const application::WaveformPeaks *table = a.peaks();
-    const bool fromTable = table && count / buckets >= table->blockSamples();
-    if (!fromTable && count > kMaxRawSamples)
+    const auto peaks = application::audioPeaks(a, start, end, buckets);
+    if (!peaks)
         return fail(errors::kRefused, "The audio is still loading; ask for a shorter range or wait.",
                     Json::object({{"reason", Json("loading")}}));
-    std::vector<std::int16_t> raw;
-    if (!fromTable) {
-        raw.resize(static_cast<std::size_t>(count));
-        a.read(first, count, raw.data());
-    }
     Json lows = Json::array(), highs = Json::array();
-    for (int i = 0; i < buckets; ++i) {
-        const std::int64_t from = count * i / buckets, to = std::max(from + 1, count * (i + 1) / buckets);
-        std::int16_t lo = 0, hi = 0;
-        if (fromTable) {
-            table->range(first + from, to - from, &lo, &hi);
-        } else {
-            const auto [mn, mx] = std::minmax_element(raw.begin() + from, raw.begin() + std::min(to, count));
-            lo = *mn;
-            hi = *mx;
-        }
-        lows.push(Json(lo));
-        highs.push(Json(hi));
+    for (std::size_t i = 0; i < peaks->min.size(); ++i) {
+        lows.push(Json(peaks->min[i]));
+        highs.push(Json(peaks->max[i]));
     }
     return Json::object({{"start", Json(start)},
                          {"end", Json(end)},

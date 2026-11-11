@@ -9480,6 +9480,99 @@ private slots:
         application->editor().discard();
     }
 
+    void blurAndGlowLayersPreviewsBuildsAndRepeats()
+    {
+        const QString path = dir.filePath(QStringLiteral("layers.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\pos(320,180)}Sign\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        application->settingsStore()->setValue(QStringLiteral("typesetting.layerOptions"), QString());
+        const auto source = session->document().lines()[0]->id;
+        session->setSelection(application::Selection{source, {source}, source, {}});
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        auto &video = application->video().session();
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasSubtitles(), 20000);
+
+        QCOMPARE(application->repeatLayerBuilders().value(QStringLiteral("ok")).toBool(), false);
+        auto *item = root->findChild<QObject *>(QStringLiteral("blurAndGlowLayersMenuItem"));
+        QVERIFY(item);
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("blurAndGlowLayersDialog"))) &&
+                    dialog->property("visible").toBool());
+        QVERIFY(!dialog->property("modal").toBool());
+        QQuickItem *status = dialogItem("blurAndGlowLayersDialog", "layersStatus");
+        QTRY_VERIFY2(status->property("text").toString().contains(QStringLiteral("under line 1. It moves up from layer 0 to layer 2.")),
+                     qPrintable(status->property("text").toString()));
+        const auto shown = video.subtitleUpdates();
+        QTRY_VERIFY(video.subtitleUpdates() > shown);
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+
+        dialogItem("blurAndGlowLayersDialog", "layersGlowOn")->setProperty("checked", false);
+        dialogItem("blurAndGlowLayersDialog", "layersBorderOn")->setProperty("checked", false);
+        QTRY_COMPARE(status->property("text").toString(), QStringLiteral("Turn on glow, border or shadow."));
+        QQuickItem *build = dialogItem("blurAndGlowLayersDialog", "layersBuild");
+        QVERIFY(!build->property("enabled").toBool());
+        const auto cleared = video.subtitleUpdates();
+        QTRY_VERIFY(video.subtitleUpdates() > cleared);
+        dialogItem("blurAndGlowLayersDialog", "layersBorderOn")->setProperty("checked", true);
+        QTRY_VERIFY(build->property("enabled").toBool());
+
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(build, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Blur and glow layers"));
+        QCOMPARE(session->document().lines().size(), std::size_t(2));
+        QCOMPARE(session->document().lines()[1]->id, source);
+        QCOMPARE(session->document().lines()[1]->layer.value, 1);
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{source});
+        QVERIFY(!application->settingsStore()->value(QStringLiteral("typesetting.layerOptions")).toString().isEmpty());
+
+        const auto nothing = application->repeatLayerBuilders();
+        QVERIFY(!nothing.value(QStringLiteral("ok")).toBool());
+        QVERIFY2(nothing.value(QStringLiteral("text")).toString().startsWith(QStringLiteral("Nothing to build")),
+                 qPrintable(nothing.value(QStringLiteral("text")).toString()));
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+        const auto repeated = application->repeatLayerBuilders();
+        QVERIFY2(repeated.value(QStringLiteral("ok")).toBool(), qPrintable(repeated.value(QStringLiteral("text")).toString()));
+        QCOMPARE(session->document().lines().size(), std::size_t(2));
+        QCOMPARE(session->document().lines()[1]->layer.value, 1);
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+
+        session->setSelection(application::Selection{source, {source}, source, {}});
+        const auto previewed = video.subtitleUpdates();
+        QVERIFY(QMetaObject::invokeMethod(item->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_VERIFY2(build->property("enabled").toBool(), qPrintable(status->property("text").toString()));
+        dialogItem("blurAndGlowLayersDialog", "layersGlowOn")->setProperty("checked", true);
+        QTRY_VERIFY2(status->property("text").toString().contains(QStringLiteral("Builds 2 ")),
+                     qPrintable(status->property("text").toString()));
+        QTRY_VERIFY(video.subtitleUpdates() > previewed);
+        const auto dropped = video.subtitleUpdates();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("blurAndGlowLayersDialog", "layersCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(video.subtitleUpdates() > dropped);
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+        QVERIFY(application->video().unloadVideo());
+        application->settingsStore()->setValue(QStringLiteral("typesetting.layerOptions"), QString());
+    }
+
     void removeTagsPreviewsThenAppliesInOneStep()
     {
         const QString path = dir.filePath(QStringLiteral("remove-tags.ass"));
@@ -21455,7 +21548,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 317);
+        QCOMPARE(hotkeyRows().size(), 319);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
