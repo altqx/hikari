@@ -1,5 +1,7 @@
 #include "hikari/app/plugin_runtime.h"
 
+#include "hikari/app/plugin_nodes.h"
+
 #include "log_controller.h"
 
 #include <QCollator>
@@ -9,6 +11,7 @@
 #include <QLoggingCategory>
 
 #include <algorithm>
+#include <iterator>
 
 namespace hikari::app {
 
@@ -176,6 +179,8 @@ void PluginRuntime::sync()
 {
     std::map<std::string, plugins::Manifest> wanted;
     std::vector<PluginUi::Plugin> installed;
+    std::vector<application::PluginNode> nodes;
+    std::map<std::string, std::string> unavailable;
     if (m_installer) {
         if (const auto registry = m_installer->registry())
             for (const auto &[id, entry] : *registry) {
@@ -190,6 +195,18 @@ void PluginRuntime::sync()
                 installed.push_back({id, manifest->name, entry.enabled, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
+                if (!manifest->nodes.empty()) {
+                    std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
+                    if (pluginNodesRun(entry, *manifest))
+                        own = pluginNodesOf(*manifest, root);
+                    if (own)
+                        std::ranges::move(*own, std::back_inserter(nodes));
+                    else
+                        unavailable.emplace(id, manifest->name);
+                    if (!own && !own.error().empty() && m_wiring.log)
+                        m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Its nodes can’t run: %1").arg(qs(own.error())),
+                                          ui::LogController::Error, qs(manifest->name));
+                }
                 if (entry.enabled)
                     wanted.emplace(id, std::move(*manifest));
             }
@@ -211,6 +228,7 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    application::setPluginNodes(std::move(nodes), std::move(unavailable));
     m_ui->setPlugins(std::move(installed));
     relist();
 }

@@ -235,7 +235,8 @@ std::expected<NodePorts, GraphProblem> nodePorts(const GraphNode &node)
 {
     const NodeSpec *spec = nodeSpec(node.type);
     if (!spec)
-        return std::unexpected(problem(node.id, {}, "has the unknown type \"" + node.type + "\""));
+        return std::unexpected(
+            problem(node.id, {}, pluginNodeProblem(node.type).value_or("has the unknown type \"" + node.type + "\"")));
     NodePorts ports{spec->inputs, spec->outputs};
     if (!spec->dynamicPorts)
         return ports;

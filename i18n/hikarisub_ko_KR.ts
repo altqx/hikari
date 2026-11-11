@@ -14134,6 +14134,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>플러그인을 시작할 수 없습니다: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>플러그인의 노드를 실행할 수 없습니다: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>플러그인이 시작되지 않았습니다.</translation>
     </message>

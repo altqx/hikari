@@ -446,6 +446,140 @@ TEST(NodeEffects, ALuaNodeRunsOnlyWithTheUsersTrustAndOncePerLine)
     EXPECT_EQ(run.lines[1].layer.value, 4);
 }
 
+namespace {
+
+class RecordingLua : public LuaNodePort {
+public:
+    std::expected<std::vector<std::vector<NodeValue>>, Failure> run(const Call &call) override
+    {
+        codes.push_back(call.code);
+        std::vector<std::vector<NodeValue>> out;
+        for (const auto &row : call.rows)
+            out.push_back({std::get<double>(row[0]) + std::get<double>(row[1])});
+        return out;
+    }
+    std::vector<std::string> codes;
+};
+
+PluginNode raiseNode(std::string code)
+{
+    PluginNode node;
+    node.plugin = "com.example.raise";
+    node.pluginName = "Raise";
+    node.title = "Raise";
+    node.code = std::move(code);
+    node.spec.id = pluginNodeType("com.example.raise", "by");
+    node.spec.category = "com.example.raise";
+    node.spec.inputs = {{"i", PortType::Number}, {"by", PortType::Number}};
+    node.spec.outputs = {{"out", PortType::Number}};
+    node.spec.fields = {{"by", FieldKind::Number, Json(10), "Its value while no wire reaches it.", {}, std::nullopt,
+                         std::nullopt}};
+    return node;
+}
+
+constexpr std::string_view kRaised = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "info", "type": "units.info"},
+    {"id": "raise", "type": "plugin:com.example.raise/by", "fields": {"code": "out = 0", "by": 2}},
+    {"id": "layer", "type": "output.emit"}],
+  "wires": [{"from": "info.i", "to": "raise.i"}, {"from": "syl.units", "to": "layer.units"},
+            {"from": "raise.out", "to": "layer.layer"}]})";
+
+struct PluginNodesFor {
+    explicit PluginNodesFor(std::vector<PluginNode> nodes, std::map<std::string, std::string> unavailable = {})
+    {
+        setPluginNodes(std::move(nodes), std::move(unavailable));
+    }
+    ~PluginNodesFor() { setPluginNodes({}, {}); }
+};
+
+std::vector<std::string> problemsOf(const NodeGraph &graph)
+{
+    std::vector<std::string> out;
+    for (const GraphProblem &p : validateGraph(graph))
+        out.push_back(p.node + ": " + p.message);
+    return out;
+}
+
+}
+
+TEST(NodePlugins, APluginNodeRunsThePluginsCodeWithoutTheDocumentsTrust)
+{
+    const PluginNodesFor nodes({raiseNode("out = i + by")});
+    const core::Document doc = fixtureWith(commentLine("graph raised", graphText(graphOf(kRaised))));
+    FakeMeasure measure;
+    RecordingLua lua;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    options.lua = &lua;
+    const NodeEffectRun run = runGraph(doc, u8"raised", options);
+    EXPECT_TRUE(run.ran);
+    ASSERT_FALSE(lua.codes.empty());
+    EXPECT_EQ(lua.codes.front(), "out = i + by") << "the Document's code field is ignored";
+    ASSERT_EQ(run.lines.size(), 17u);
+    EXPECT_EQ(run.lines[0].layer.value, 3);
+}
+
+TEST(NodePlugins, ATurnedOffMissingOrUntrustedPluginKeepsTheNodeAndWritesNothing)
+{
+    const NodeGraph graph = graphOf(kRaised);
+    {
+        const PluginNodesFor nodes({}, {{"com.example.raise", "Raise"}});
+        EXPECT_EQ(problemsOf(graph), std::vector<std::string>{
+                                         "raise: comes from the plugin \"Raise\", which is turned off or not trusted"});
+        const core::Document doc = fixtureWith(commentLine("graph raised", graphText(graph)));
+        FakeMeasure measure;
+        RecordingLua lua;
+        NodeEffectOptions options;
+        options.measure = &measure;
+        options.lua = &lua;
+        auto run = runDocumentGraph(doc, graphLineOf(doc, u8"raised"), options);
+        ASSERT_TRUE(run);
+        EXPECT_FALSE(run->ran);
+        EXPECT_TRUE(run->lines.empty());
+        EXPECT_TRUE(lua.codes.empty());
+        EXPECT_EQ(documentGraphs(doc).front().graph->nodes[2].type, "plugin:com.example.raise/by");
+    }
+    EXPECT_EQ(problemsOf(graph),
+              std::vector<std::string>{"raise: comes from the plugin \"com.example.raise\", which is not installed"});
+    const PluginNodesFor other({raiseNode("out = i")});
+    std::string renamed(kRaised);
+    renamed.replace(renamed.find("/by\""), 4, "/up\"");
+    EXPECT_EQ(problemsOf(graphOf(renamed)), std::vector<std::string>{"raise: is not a node of the plugin \"Raise\""});
+}
+
+TEST(NodePlugins, NewPluginCodeRunsAgainPastTheCache)
+{
+    const core::Document doc = fixtureWith(commentLine("graph raised", graphText(graphOf(kRaised))));
+    FakeMeasure measure;
+    RecordingLua lua;
+    NodeEffectCache cache;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    options.lua = &lua;
+    options.cache = &cache;
+    {
+        const PluginNodesFor nodes({raiseNode("out = i + by")});
+        runGraph(doc, u8"raised", options);
+        runGraph(doc, u8"raised", options);
+    }
+    const std::size_t once = lua.codes.size();
+    const PluginNodesFor nodes({raiseNode("out = i + by + 1")});
+    runGraph(doc, u8"raised", options);
+    EXPECT_GT(lua.codes.size(), once);
+    EXPECT_EQ(lua.codes.back(), "out = i + by + 1");
+}
+
+TEST(NodePlugins, APluginNodeBlocksTheExport)
+{
+    const PluginNodesFor nodes({raiseNode("out = i + by")});
+    const auto lines = exportTemplateLines(graphOf(kRaised), u8"g");
+    ASSERT_FALSE(lines.has_value());
+    EXPECT_NE(std::ranges::find(lines.error(),
+                                NodeEffectProblem{"raise", std::nullopt, "runs in HikariSub's Lua helper, not in the templater"}),
+              lines.error().end());
+}
+
 TEST(NodeEffects, ALuaHelperThatStopsEndsTheRunAndItWritesNothing)
 {
     class StoppingLua : public LuaNodePort {
