@@ -334,6 +334,33 @@ DialogWindow {
         visible: dialog.overrides.includes(overriddenId)
         text: qsTranslate("HikariSub.Project", "Overridden in this project")
     }
+    component CreditRow: ColumnLayout {
+        id: creditRow
+        required property var modelData
+        readonly property string setting: "scriptProperties." + modelData.id
+        spacing: 0
+        Layout.fillWidth: true
+        RowLayout {
+            Layout.fillWidth: true
+            SettingCheck {
+                setting: creditRow.setting + "On"
+                text: creditRow.modelData.name
+                Layout.fillWidth: false
+                Layout.preferredWidth: 160
+            }
+            SettingText {
+                setting: creditRow.setting
+                Accessible.name: creditRow.modelData.name
+                Layout.fillWidth: true
+            }
+        }
+        SettingNote {
+            objectName: "overridden_" + creditRow.setting
+            visible: dialog.overrides.includes(creditRow.setting) || dialog.overrides.includes(creditRow.setting + "On")
+            text: qsTranslate("HikariSub.Project", "Overridden in this project")
+            Layout.topMargin: 2
+        }
+    }
     component SettingNote: Label {
         color: Theme.muted
         wrapMode: Text.Wrap
@@ -1441,8 +1468,26 @@ DialogWindow {
                 SettingsPage {
                     objectName: "settingsPageSubtitleProperties"
                     SettingsSection {
-                        title: qsTr("Files")
+                        title: qsTranslate("HikariSub.ScriptProperties", "Credits")
                         ruled: false
+                        Label {
+                            text: qsTranslate("HikariSub.Project", "Saving a file writes the switched-on fields into its Script Info.")
+                            color: Theme.muted
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
+                        Repeater {
+                            model: projectPages.scriptFields
+                            CreditRow {}
+                        }
+                        SettingCheck {
+                            setting: "scriptProperties.askForChange"
+                            text: qsTranslate("HikariSub.Project", "Ask before changing them on save")
+                        }
+                        OverriddenNote { overriddenId: "scriptProperties.askForChange" }
+                    }
+                    SettingsSection {
+                        title: qsTr("Files")
                         SettingCheck { setting: "subtitles.layoutInFile"; text: qsTr("Save the panel layout in subtitle files") }
                     }
                 }

@@ -17709,7 +17709,19 @@ private slots:
               {"convert.resolutionHeight", nullptr},
               {"convert.assTagsToInsertInLine", nullptr}}},
             {"settingsPageSubtitleProperties",
-             {
+             {{"scriptProperties.titleOn", "Title"},
+              {"scriptProperties.title", nullptr},
+              {"scriptProperties.scriptOn", "Author"},
+              {"scriptProperties.script", nullptr},
+              {"scriptProperties.translationOn", "Translator"},
+              {"scriptProperties.translation", nullptr},
+              {"scriptProperties.editingOn", "Proofreading"},
+              {"scriptProperties.editing", nullptr},
+              {"scriptProperties.timingOn", "Timer"},
+              {"scriptProperties.timing", nullptr},
+              {"scriptProperties.updateOn", "Editing"},
+              {"scriptProperties.update", nullptr},
+              {"scriptProperties.askForChange", "Ask before changing them on save"},
               {"subtitles.layoutInFile", "Save the panel layout in subtitle files"}}},
             {"settingsPageAutomation",
              {{"automation.traceLevel", nullptr},
@@ -17766,7 +17778,7 @@ private slots:
         QVERIFY(bound.erase("updater.skippedVersion"));
         QVERIFY(dialogItem("settingsDialog", "settingsOfferAgain"));
         QCOMPARE(shown, bound);
-        QCOMPARE(notShown.size(), std::size_t{22});
+        QCOMPARE(notShown.size(), std::size_t{9});
         for (const auto &id : notShown)
             QVERIFY2(!dialogItem("settingsDialog", qPrintable(QStringLiteral("setting_") + QString::fromStdString(id))),
                      id.c_str());
@@ -17785,6 +17797,28 @@ private slots:
         bound.erase("video.subtitleProvider");
 #endif
         QCOMPARE(held, bound);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+    }
+
+    void settingsScriptPropertiesSetYourOwnCredits()
+    {
+        auto &settings = *application->settingsStore();
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("subtitleProperties");
+        auto *on = dialogItem("settingsDialog", "setting_scriptProperties.translationOn");
+        auto *field = dialogItem("settingsDialog", "setting_scriptProperties.translation");
+        QVERIFY(on && field);
+        QTRY_VERIFY(field->isVisible());
+        QVERIFY(!dialogItem("settingsDialog", "overridden_scriptProperties.translation")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(on, "click"));
+        field->forceActiveFocus();
+        typeText(qobject_cast<QWindow *>(dialog), QStringLiteral("Kei"));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("Kei"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QVERIFY(settings.boolean("scriptProperties.translationOn"));
+        QCOMPARE(settings.text("scriptProperties.translation"), QStringLiteral("Kei"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
 
