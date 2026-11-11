@@ -3607,6 +3607,8 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
+            MenuSeparator {}
+            ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
             MenuSeparator { visible: field.spelled; height: visible ? implicitHeight : 0 }
             ShellMenuItem {
                 iconRole: "spellchecker"
@@ -6220,6 +6222,7 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
@@ -8577,6 +8580,24 @@ ApplicationWindow {
         root.review.undo(0, -1, false)
     }
     Action {
+        id: removeTagsAction
+        text: qsTranslate("HikariSub.Tags", "Remove tags…")
+        enabled: root.shell.hasEditingTarget
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_TAGS")) root.openRemoveTags()
+    }
+    function openRemoveTags() {
+        removeTagsLoader.active = true
+        removeTagsLoader.item.openDialog()
+    }
+    Loader {
+        id: removeTagsLoader
+        active: false
+        sourceComponent: RemoveTagsDialog {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    Action {
         id: keepAiChangeAction
         text: qsTranslate("HikariSub.Review", "Keep AI change")
         enabled: root.review.on && root.review.current.count !== undefined
@@ -8667,6 +8688,7 @@ ApplicationWindow {
         GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,
         GLOBAL_EXTEND_TRACKED_LINES: extendTrackedLinesAction,
         GLOBAL_EXTRAPOLATE_MOVE: extrapolateMoveAction,
+        GLOBAL_REMOVE_TAGS: removeTagsAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,

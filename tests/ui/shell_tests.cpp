@@ -13,6 +13,7 @@
 #include "hikari/core/extradata.h"
 #include "hikari/application/kanji_timer.h"
 #include "hikari/core/tag_transfer.h"
+#include "hikari/core/tag_cleanup.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
@@ -9477,6 +9478,79 @@ private slots:
         QTRY_VERIFY(!apply->property("enabled").toBool());
         QVERIFY(action("extrapolateMoveMenuItem")->property("enabled").toBool());
         application->editor().discard();
+    }
+
+    void removeTagsPreviewsThenAppliesInOneStep()
+    {
+        const QString path = dir.filePath(QStringLiteral("remove-tags.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,"
+                    "0,2,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur2\\b1}A\n"
+                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\blur3}B\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\blur4}C\n");
+        }
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        const auto lines = session->document().lines();
+        application::Selection two;
+        two.active = lines[0]->id;
+        two.selected = {lines[0]->id, lines[1]->id};
+        session->setSelection(two);
+        const auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        auto *gridItem = root->findChild<QObject *>(QStringLiteral("gridRemoveTags"));
+        auto *editorItem = root->findChild<QObject *>(QStringLiteral("translationTextRemoveTags"));
+        QVERIFY(gridItem && editorItem);
+        QObject *removeTags = gridItem->property("action").value<QObject *>();
+        QCOMPARE(editorItem->property("action").value<QObject *>(), removeTags);
+        QCOMPARE(gridItem->property("iconRole").toString(), QStringLiteral("remove-tags"));
+
+        QVERIFY(QMetaObject::invokeMethod(removeTags, "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("removeTagsDialog"))) &&
+                    dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("familyRows").toList().size(), qsizetype(core::tagcleanup::kFamilyCount));
+        auto *preview = dialogItem("removeTagsDialog", "removeTagsPreview");
+        QCOMPARE(preview->property("count").toInt(), 0);
+        QVERIFY(!dialogItem("removeTagsDialog", "removeTagsApply")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsFamily4"), "click"));
+        QTRY_COMPARE(preview->property("count").toInt(), 2);
+        QCOMPARE(text(0), QStringLiteral("{\\blur2\\b1}A"));
+        dialogItem("removeTagsDialog", "removeTagsLines")->setProperty("currentIndex", 1);
+        QTRY_COMPARE(preview->property("count").toInt(), 3);
+        dialogItem("removeTagsDialog", "removeTagsLines")->setProperty("currentIndex", 0);
+        QTRY_COMPARE(preview->property("count").toInt(), 2);
+
+        const auto before = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsApply"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Remove tags"));
+        QCOMPARE(text(0), QStringLiteral("{\\b1}A"));
+        QCOMPARE(text(1), QStringLiteral("B"));
+        QCOMPARE(text(2), QStringLiteral("{\\blur4}C"));
+
+        QVERIFY(QMetaObject::invokeMethod(removeTags, "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("removeTagsDialog", "removeTagsFamily4")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsAll"), "click"));
+        QVERIFY(dialogItem("removeTagsDialog", "removeTagsFamily0")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsAll"), "click"));
+        QVERIFY(!dialogItem("removeTagsDialog", "removeTagsFamily4")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("removeTagsDialog", "removeTagsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void motionDataScreenshots()
@@ -21308,7 +21382,7 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 313);
+        QCOMPARE(hotkeyRows().size(), 314);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));

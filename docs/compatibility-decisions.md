@@ -132,6 +132,17 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
 - **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
 
+## AU4-remove-tags
+
+**Remove tags…** (Grid and Line editor menus) does natively what Clean Tags, Strip tags and phos.RemoveTags do, plus the Line cleanup actions of ua.ScriptCleanup and Masquerade's tag merge. "Clean Tags rules" gives byte for byte what the bundled `cleantags.lua` 1.301 gives (`hikari_core_cleantags_parity_tests` runs both on every fixture Line and 20,000 generated ones). The bundled Clean Tags and Strip tags scripts and the Clean Tags export filter still ship unchanged. The action list is in `docs/research/au4-cleanup-actions.md`. [AU4 #839](https://github.com/altqx/hikari/issues/839).
+
+- **D1, Merge adjacent tag blocks.** Masquerade's `tagmerge` within a Line, byte for byte. Masquerade's Merge Tags button, which merges several Lines with the same text, stays in the script.
+- **D2, Drop overridden tags.** In a block, a tag that a later one of the same name replaces goes (a relative `\fs+` keeps the size before it, and `\r` ends the run). Across the Line, a repeat of `\pos`/`\move`, `\org`, `\an`/`\a` or `\fad`/`\fade` goes, because renderers use the first. Script Cleanup's `duplikill` keeps the last `\an` instead, which changes where the Line renders; it also drops tags inside `\t` that a later tag outside replaces, and that is left alone here.
+- **D3, Remove comments.** Drops blocks with no tag, `{\N}` included, as Script Cleanup's "Remove comments from lines" does. It doesn't trim the spaces round them.
+- **D4, Strip tags.** Every family with Remove comments on removes what Strip tags removes, but an empty `{}` goes too.
+- **D5, Whole file.** Changes every Line but Comments, as Clean Tags does. Selected lines changes Comments too, as Strip tags and phos.RemoveTags do.
+- **D6, phos.RemoveTags.** Families replace its per-tag list, which lists only the tags the selection holds. Its "inline except last", "invert" and "from transforms only" choices stay in the script.
+
 ## TH2-unicode-graphemes
 
 `aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.

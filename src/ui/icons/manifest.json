@@ -4673,8 +4673,7 @@
    "surfaces": [
     "grid-menu",
     "line-editor"
-   ],
-   "pending": "AU4 #839"
+   ]
   },
   {
    "role": "shape-unite",
