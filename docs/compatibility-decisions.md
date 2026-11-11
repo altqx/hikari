@@ -213,7 +213,7 @@ A named line template keeps the unit class of its first Line. Upstream let each 
 
 ## TH5c-karaok-furichar-tags
 
-A `furichar` template's characters take no tags. Upstream compared each furigana character's place with the main text's tag places, which gave furigana characters tags from the Line. Corpus: `tests/backends/karaoke-corpus/karaok/departures/furichar-tags.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833); not one of Q161's seven: the coordinator's TH5c fix rules (2026-11-11), which say furigana characters take tags from their own text only.
+Each furigana character of a `furichar` template takes its own syllable's override tags, without `\k`. Upstream matched each furigana character's index inside its furigana part against the tags' places in the main text. So the first character of every furigana part took the Line's first tags, whichever syllable it belonged to, and the other characters took none. With `{\k40\1c&H0000FF&}漢|かん{\k30\b1}字|じ`, upstream gives `{\1c&H0000FF&}か`, `ん`, `{\1c&H0000FF&}じ`; HikariSub gives `{\1c&H0000FF&}か`, `{\1c&H0000FF&}ん`, `{\b1}じ`. It shows with `keeptags` and wherever an expression reads a furigana character's `text`. Corpus: `tests/backends/karaoke-corpus/karaok/departures/furichar-tags.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q343.
 
 ## TH5c-karaok-no-leaked-globals
 

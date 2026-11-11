@@ -1,5 +1,5 @@
 [Script Info]
-; TH5c-karaok-furichar-tags: furichar tags come from the furigana's own text
+; TH5c-karaok-furichar-tags: each furigana character takes its own syllable's tags, without \k
 Title: TH5c corpus karaOK furichar tags
 ScriptType: v4.00+
 WrapStyle: 0
@@ -17,6 +17,6 @@ Style: Kanji-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Comment: 0,0:00:00.00,0:00:05.00,Kanji,,0,0,0,template furichar keeptags,{\an5\pos($x,$y)}
 Comment: 0,0:00:01.00,0:00:04.00,Kanji,,0,0,0,karaoke,{\k40\1c&H0000FF&}漢|かん{\k30\b1}字|じ
-Dialogue: 0,0:00:01.00,0:00:04.00,Kanji-furigana,,0,0,0,fx,{\an5\pos(620,700)}か
-Dialogue: 0,0:00:01.00,0:00:04.00,Kanji-furigana,,0,0,0,fx,{\an5\pos(640,700)}ん
-Dialogue: 0,0:00:01.00,0:00:04.00,Kanji-furigana,,0,0,0,fx,{\an5\pos(660,700)}じ
+Dialogue: 0,0:00:01.00,0:00:04.00,Kanji-furigana,,0,0,0,fx,{\an5\pos(620,700)}{\1c&H0000FF&}か
+Dialogue: 0,0:00:01.00,0:00:04.00,Kanji-furigana,,0,0,0,fx,{\an5\pos(640,700)}{\1c&H0000FF&}ん
+Dialogue: 0,0:00:01.00,0:00:04.00,Kanji-furigana,,0,0,0,fx,{\an5\pos(660,700)}{\b1}じ

@@ -40,7 +40,7 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | TH5c-karaok-named-classes | A named line template keeps its first unit class. |
 | TH5c-karaok-k-retime | `k_retime` shifts this loop iteration's syllable only. |
 | TH5c-karaok-style-text | `style X` matches X as plain text, not as a Lua pattern. |
-| TH5c-karaok-furichar-tags | `furichar` characters take no tags from the main text. |
+| TH5c-karaok-furichar-tags | Each `furichar` character takes its own syllable's tags, without `\k`; upstream took tags by index. |
 | TH5c-karaok-no-leaked-globals | A karaOK run leaves no `textbuffer` or `w` global. |
 | TH5c-karaok-graphemes | karaOK's `char`, `lchar` and `$ci`/`$slen`/`$llen`/`$len` count grapheme clusters. Thai support by Jibrill. |
 

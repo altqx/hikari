@@ -1,5 +1,5 @@
 [Script Info]
-; TH5c-karaok-furichar-tags: furichar tags come from the furigana's own text
+; TH5c-karaok-furichar-tags: each furigana character takes its own syllable's tags, without \k
 Title: TH5c corpus karaOK furichar tags
 ScriptType: v4.00+
 WrapStyle: 0

@@ -924,11 +924,17 @@ KaraOKUnits Layout::karaOKUnits(const Line &line, CharSplit split, std::vector<s
     lf = 0;
     for (std::size_t fi = 0; fi < line.karaFuri.size(); ++fi) {
         const KaraFuri &f = line.karaFuri[fi];
+        std::string sylTags;
+        if (f.i >= 0 && static_cast<std::size_t>(f.i) < kara.size())
+            for (const auto &[block, at] : tagsOf(kara[f.i].text, split))
+                sylTags += withoutKaraokeTags(block);
         int fci = 0;
         for (const std::string &c : charsOf(f.text, split)) {
             ++fci;
             KaraUnit fc;
-            fc.stripped = fc.spaceStripped = fc.text = c;
+            fc.stripped = fc.spaceStripped = c;
+            fc.tags = sylTags;
+            fc.text = sylTags + c;
             fc.width = furiStyle ? width(*furiStyle, c) : 0;
             fc.left = lf;
             fc.center = lf + fc.width / 2;
