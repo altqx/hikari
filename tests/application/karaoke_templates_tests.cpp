@@ -175,3 +175,68 @@ TEST(KaraokeTemplates, ANamedTemplatesProblemNamesThePartItIsIn)
     EXPECT_EQ(run.reported[0].where, second);
     EXPECT_EQ(run.reported[0].at, (At{2, 7}));
 }
+
+TEST(KaraokeTemplates, TheModeLineChoosesTheModeAndOtherwiseKaraOKOnlyWordsDo)
+{
+    const std::vector<SubsEntry> stock = {comment("template char", "{\\an5}"), comment("template syl style Main", "a"),
+                                          comment("code syl", "tenv.wordy = 1")};
+    EXPECT_EQ(modeOf(std::nullopt, stock), Mode::Stock);
+    EXPECT_EQ(modeOf(" KARAOK ", stock), Mode::KaraOK);
+    EXPECT_EQ(modeOf("Aegisub 3.2.2", {comment("template lword", "a")}), Mode::Stock);
+    EXPECT_EQ(modeOf("something else", {comment("template lword", "a")}), Mode::KaraOK);
+    for (const SubsEntry &l : {comment("template lsyl", "a"), comment("template furichar", "a"),
+                               comment("template word", "a"), comment("code char", "x = 1"),
+                               comment("template syl", "!k_retime(\"syl\", 0, 0)!"), comment("code line", "y = tenv.syll"),
+                               comment("template syl", "{\\pos($ci,0)}"), comment("template syl", "$LLEN")})
+        EXPECT_EQ(modeOf(std::nullopt, {l}), Mode::KaraOK) << l.effect << " " << l.text;
+    EXPECT_EQ(modeOf(std::nullopt, {dialogue("template lsyl", "a")}), Mode::Stock);
+    EXPECT_EQ(modeOf(std::nullopt, {comment("template syl", "$cia")}), Mode::Stock);
+}
+
+TEST(KaraokeTemplates, KaraOKLineClassesWriteTheirPartsAndKeepTheirUnit)
+{
+    const Parsed p = parseTemplates({comment("template line j", "{\\pre}"), comment("template lword j", "{\\w}"),
+                                     comment("template lchar j", "{\\c}"), comment("template lsyl", "{\\s}")},
+                                    false, number, Mode::KaraOK);
+    ASSERT_EQ(p.templates.line.size(), 2u);
+    EXPECT_EQ(p.templates.line[0]->unit, Unit::Syl);
+    EXPECT_EQ(p.templates.line[1]->id, "j");
+    EXPECT_EQ(p.templates.line[1]->pre, "{\\pre}");
+    EXPECT_EQ(p.templates.line[1]->text, "{\\w}");
+    EXPECT_EQ(p.templates.line[1]->unit, Unit::Word);
+    ASSERT_EQ(p.problems.size(), 1u);
+    EXPECT_EQ(p.problems[0].message, "Unable to combine lchar class templates with the lword class this template has\n");
+    EXPECT_EQ(p.problems[0].where->number, 3);
+}
+
+TEST(KaraokeTemplates, KaraOKUnitClassesFillTheirListsAndSylCharIsACharTemplate)
+{
+    const Parsed p = parseTemplates({comment("template word", "w"), comment("template syl char", "c"),
+                                     comment("template furichar style Main", "f"), comment("template syl furi", "s"),
+                                     comment("code word char", "x = 1")},
+                                    false, number, Mode::KaraOK);
+    ASSERT_EQ(p.templates.word.size(), 2u);
+    ASSERT_EQ(p.templates.chr.size(), 2u);
+    EXPECT_EQ(p.templates.chr[0]->text, "c");
+    EXPECT_EQ(p.templates.chr[1], p.templates.word[1]);
+    ASSERT_EQ(p.templates.furichar.size(), 1u);
+    EXPECT_EQ(p.templates.furichar[0]->stylegroup, "Main");
+    ASSERT_EQ(p.templates.syl.size(), 1u);
+    EXPECT_EQ(p.templates.syl[0]->text, "s");
+    EXPECT_TRUE(p.templates.furi.empty());
+    ASSERT_EQ(p.problems.size(), 1u);
+    EXPECT_EQ(p.problems[0].message, "Unable to combine furi class templates with the syl class this template has\n");
+}
+
+TEST(KaraokeTemplates, StockModeKeepsCharAsAModifierAndLineAsTheText)
+{
+    const Parsed p = parseTemplates({comment("template syl char", "c"), comment("template line", "l"),
+                                     comment("template lword", "w")},
+                                    false, number);
+    ASSERT_EQ(p.templates.syl.size(), 1u);
+    EXPECT_TRUE(p.templates.syl[0]->perchar);
+    EXPECT_TRUE(p.templates.chr.empty());
+    ASSERT_EQ(p.templates.line.size(), 2u);
+    EXPECT_EQ(p.templates.line[0]->text, "l");
+    EXPECT_EQ(p.templates.line[1]->unit, Unit::Word);
+}

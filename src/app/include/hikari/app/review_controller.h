@@ -19,6 +19,9 @@ namespace hikari::app {
 
 // The Review panel, the line editor's review strip and the Grid's review
 // marks over the AI changes in AiReview (AI2 #430).
+/// The word diff as rich text: removed words struck in the danger colour, added ones on a success tint.
+QString diffHtml(const QString &before, const QString &after);
+
 class ReviewController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool on READ on NOTIFY changed FINAL)

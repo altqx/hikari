@@ -13,6 +13,7 @@ DialogWindow {
     property var updates: null
     property var crashReports: null
     property var ai: null
+    property var inlineAi: null
     property TagButtonsController tagButtons: null
     property var importer: null
     property string legacyNotFound: ""

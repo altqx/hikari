@@ -10,6 +10,8 @@ Item {
     objectName: "toastStack"
     property LogController log: null
     property SettingsStore settings: null
+    property int shellWindow: 0
+    property bool activeWindow: true
     property var openLog: id => { if (stack.log) stack.log.reveal(id || 0) }
     default property alias pinned: pinnedSlot.data
     property var entries: []
@@ -43,13 +45,19 @@ Item {
             return show(0, level, title, text, o.details, o.actions)
         pendingActions = o.actions || []
         lastShown = 0
-        log.notice(level, title || "", text || "", o.details || "")
+        log.notice(level, title || "", text || "", o.details || "", shellWindow)
         pendingActions = []
         return lastShown
     }
+    // Every window hears an app-wide signal; only the active one posts its notice.
+    function postForApp(severity, title, text, options) {
+        return activeWindow ? post(severity, title, text, options) : 0
+    }
     Connections {
         target: stack.log
-        function onNoticed(id, severity, title, text, details) {
+        function onNoticed(id, severity, title, text, details, window) {
+            if (window !== stack.shellWindow)
+                return
             stack.lastShown = stack.show(id, severity, title, text, details, stack.pendingActions)
         }
     }

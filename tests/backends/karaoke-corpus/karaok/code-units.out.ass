@@ -1,0 +1,71 @@
+[Script Info]
+; TH5c: code word/char/furichar, the unit tables and the template environment; compared against upstream karaOK f749c4fa64e7
+Title: TH5c corpus karaOK code word and char
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code once,words, chars = 0, 0
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code word,words = words + 1
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code char,chars = chars + 1
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template word,{\pos($x,$y)}!words!/!word.text!/!#word.chars!/!word.kara.n!/!word.wi or ""!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template char,{\pos($x,$y)}!chars!/!syll.text!/!char.wi!/!char.si!/!char.word.text!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl,!syll.i!/!syl.word.text!/!#syl.chars!/!line.length!/!orgline.words.n!/!orgline.chars.n!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line,!line.text:len()!/!type(subs)!/!table.concat({1,2},"-")!/!tonumber("5")!/!tostring(true)!/
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,code line,keys = 0 for _ in pairs({a=1, b=2}) do keys = keys + 1 end for _ in ipairs({1}) do keys = keys + 1 end
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template lword,!keys!
+Comment: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze
+Comment: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,karaoke,{\k20}one {\k30}two{\k25}three
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,52/userdata/1-2/5/true/haru no kaze
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,3haru 3no 3kaze
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(552,20)}1/haru /5/2//haru 
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(640,20)}2/no /3/2//no 
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(728,20)}3/kaze/4/3//kaze
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,1/haru /2/12/3/12/ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,2/haru /2/12/3/12/ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,3/no /1/12/3/12/ 
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,4/no /2/12/3/12/no
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,5/kaze/1/12/3/12/ 
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,6/kaze/2/12/3/12/ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,7/kaze/2/12/3/12/ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(519,20)}1/ha/1/1/haru /h
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(541,20)}2/ha/1/1/haru /a
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(563,20)}3/ru/1/2/haru /r
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(585,20)}4/ru/1/2/haru /u
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(629,20)}5/ /1/3/haru / 
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(629,20)}6/no/2/4/no /n
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(651,20)}7/no/2/4/no /o
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(695,20)}8/ /2/5/no / 
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(695,20)}9/ka/3/6/kaze/k
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(717,20)}10/ka/3/6/kaze/a
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(739,20)}11/ze/3/7/kaze/z
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx,{\pos(761,20)}12/ze/3/7/kaze/e
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,30/userdata/1-2/5/true/one twothree
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,3one 3twothree
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(541,20)}4/one /4/1//one 
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(684,20)}5/twothree/8/2//twothree
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,1/one /4/12/2/12/one 
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,2/twothree/3/12/2/12/two
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,3/twothree/5/12/2/12/three
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(519,20)}13/one /1/1/one /o
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(541,20)}14/one /1/1/one /n
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(563,20)}15/one /1/1/one /e
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(585,20)}16/one /1/1/one / 
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(607,20)}17/two/2/2/twothree/t
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(629,20)}18/two/2/2/twothree/w
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(651,20)}19/two/2/2/twothree/o
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(673,20)}20/three/2/3/twothree/t
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(695,20)}21/three/2/3/twothree/h
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(717,20)}22/three/2/3/twothree/r
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(739,20)}23/three/2/3/twothree/e
+Dialogue: 0,0:00:05.00,0:00:06.00,Romaji,,0,0,0,fx,{\pos(761,20)}24/three/2/3/twothree/e
