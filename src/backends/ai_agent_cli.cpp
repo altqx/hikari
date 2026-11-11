@@ -201,9 +201,14 @@ void agentVersion(const QString &path, std::function<void(QString)> done)
     process->start(path, {QStringLiteral("--version")});
 }
 
+QString findAgentCli(const QString &agent, const QStringList &dirs)
+{
+    return QStandardPaths::findExecutable(agent, dirs);
+}
+
 void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>)> done, const QStringList &dirs)
 {
-    const QString path = QStandardPaths::findExecutable(agent, dirs);
+    const QString path = findAgentCli(agent, dirs);
     if (path.isEmpty()) {
         done(std::nullopt);
         return;

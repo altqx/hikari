@@ -1,3 +1,4 @@
+#include "hikari/application/audio_display.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/generated_runs.h"
 #include "hikari/application/karaoke_syllables.h"
@@ -823,11 +824,109 @@ TEST(NodeEffectsParticles, TheirValuesAreReadOnlyInsideTheirUnits)
                                          {"scale", "a", "reads spark.random outside its units"}}));
 }
 
+namespace {
+
+constexpr int kAudioRate = 25600;
+
+DisplayAudio loudAudio(int fromMs, int toMs, bool finished = true)
+{
+    DisplayAudio audio(kAudioRate, std::int64_t(kAudioRate) * 15);
+    std::vector<std::int16_t> samples(std::size_t(kAudioRate) * 15, 0);
+    for (std::size_t i = std::size_t(fromMs) * kAudioRate / 1000; i < std::size_t(toMs) * kAudioRate / 1000; ++i)
+        samples[i] = 16384;
+    audio.appendFrames(samples.data(), std::int64_t(samples.size()), 1);
+    if (finished)
+        audio.finish();
+    return audio;
+}
+
+std::string peakGraph(std::string_view fields = "{}")
+{
+    return R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "peak", "type": "audio.peaks", "fields": )" +
+           std::string(fields) + R"(},
+    {"id": "blur", "type": "tags.tag", "fields": {"tag": "blur"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "emit.units"}, {"from": "peak.level", "to": "blur.value"},
+    {"from": "blur.tags", "to": "emit.tags"}]})";
+}
+
+std::vector<std::string> blursOfFirstLine(const std::vector<std::string> &lines)
+{
+    std::vector<std::string> out;
+    for (std::size_t k = 0; k < 7 && k < lines.size(); ++k)
+        out.push_back(between(lines[k], "\\blur", '\\'));
+    return out;
+}
+
+NodeEffectRun peakRun(const std::string &graph, NodeEffectOptions options)
+{
+    static FakeMeasure measure;
+    options.measure = &measure;
+    const core::Document doc = fixtureWith(commentLine("graph g", graphText(graphOf(graph))));
+    auto run = runDocumentGraph(doc, graphLineOf(doc, u8"g"), options);
+    EXPECT_TRUE(run);
+    return run ? std::move(*run) : NodeEffectRun{};
+}
+
+}
+
+TEST(NodeEffectsAudioPeaks, GivesTheLevelOverEachUnitsSpan)
+{
+    const DisplayAudio audio = loudAudio(1000, 1400);
+    NodeEffectOptions options;
+    options.audio = &audio;
+    const auto lines = runOn(peakGraph(), options);
+    ASSERT_EQ(lines.size(), 17u);
+    EXPECT_EQ(blursOfFirstLine(lines), (std::vector<std::string>{"0.5", "0", "0", "0", "0", "0", "0"}));
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(R"({"start": 1100, "end": 1200})"), options)),
+              (std::vector<std::string>(7, "0.5")));
+    const DisplayAudio loading = loudAudio(1000, 1400, false);
+    options.audio = &loading;
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)), blursOfFirstLine(lines));
+}
+
+TEST(NodeEffectsAudioPeaks, WithoutAudioTheGraphShowsAProblemAndItGivesZero)
+{
+    const NodeEffectRun none = peakRun(peakGraph(), {});
+    ASSERT_FALSE(none.problems.empty());
+    EXPECT_EQ(none.problems.front().node, "peak");
+    EXPECT_EQ(none.problems.front().message, "has no audio to read, so it gives 0");
+    ASSERT_EQ(none.lines.size(), 17u);
+    EXPECT_EQ(blursOfFirstLine(linesOf(none)), (std::vector<std::string>(7, "0")));
+    NodeEffectOptions opening;
+    opening.audio = nullptr;
+    const NodeEffectRun waiting = peakRun(peakGraph(), opening);
+    ASSERT_FALSE(waiting.problems.empty());
+    EXPECT_EQ(waiting.problems.front().message, "waits for the audio to open, so it gives 0");
+}
+
+TEST(NodeEffectsAudioPeaks, TheCacheKeepsLinesOnlyForTheSameAudio)
+{
+    const DisplayAudio early = loudAudio(1000, 1400), late = loudAudio(1400, 1750);
+    NodeEffectCache cache;
+    NodeEffectOptions options;
+    options.cache = &cache;
+    options.audio = &early;
+    const auto first = blursOfFirstLine(runOn(peakGraph(), options));
+    options.audio = &late;
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)),
+              (std::vector<std::string>{"0", "0.5", "0", "0", "0", "0", "0"}));
+    options.audio = &early;
+    EXPECT_EQ(blursOfFirstLine(runOn(peakGraph(), options)), first);
+}
+
 TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
 {
     const std::map<std::string_view, std::string_view> nodeOf = {{"gradient-strips", "units.clip_gradient"},
                                                                  {"ring-of-copies", "units.array"},
-                                                                 {"particle-burst", "units.particles"}};
+                                                                 {"particle-burst", "units.particles"},
+                                                                 {"audio-pulse", "audio.peaks"},
+                                                                 {"highlight-flashes", "units.highlights"},
+                                                                 {"paint-and-cloud", "units.inline_fx"}};
+    const DisplayAudio audio = loudAudio(1000, 1400);
     std::set<std::string_view> seen;
     for (const NodeGraphPreset &p : nodeGraphPresets()) {
         if (p.example.empty())
@@ -841,12 +940,160 @@ TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
         NodeEffectOptions one, many;
         one.threads = 1;
         many.threads = 8;
+        one.audio = many.audio = &audio;
         const auto lines = runOn(p.graph, one);
         EXPECT_FALSE(lines.empty()) << p.example;
         EXPECT_EQ(lines, runOn(p.graph, many)) << p.example;
         EXPECT_EQ(lines, runOn(p.graph, one)) << p.example;
     }
     EXPECT_EQ(seen.size(), nodeOf.size());
+}
+
+namespace {
+
+std::vector<std::string> runOnKaraoke(std::string_view graphJson, std::string_view karaoke)
+{
+    std::string fixture = readFile(HIKARI_KARAOKE_PRESET_FIXTURES "/fixture.ass");
+    fixture.erase(fixture.find("Dialogue: "));
+    fixture += commentLine("graph g", graphText(graphOf(graphJson)));
+    fixture += "Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,," + std::string(karaoke) + "\n";
+    return linesOf(runGraph(load(fixture), u8"g"));
+}
+
+std::string highlightsGraph(std::string_view unit, bool skipBlank)
+{
+    return R"({"format": 1, "nodes": [
+        {"id": "units", "type": "units.for_each", "fields": {"unit": ")" + std::string(unit) + R"("}},
+        {"id": "hl", "type": "units.highlights", "fields": {"skip_blank": )" + (skipBlank ? "true" : "false") + R"(}},
+        {"id": "info", "type": "units.info"},
+        {"id": "time", "type": "time.retime", "fields": {"mode": "syl"}},
+        {"id": "index", "type": "tags.tag", "fields": {"tag": "fsp"}},
+        {"id": "count", "type": "tags.tag", "fields": {"tag": "fs"}},
+        {"id": "k", "type": "tags.tag", "fields": {"tag": "k"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [
+        {"from": "units.units", "to": "hl.units"}, {"from": "hl.index", "to": "index.value"},
+        {"from": "index.tags", "to": "count.before"}, {"from": "hl.count", "to": "count.value"},
+        {"from": "count.tags", "to": "k.before"}, {"from": "info.kdur", "to": "k.value"},
+        {"from": "hl.units", "to": "emit.units"}, {"from": "k.tags", "to": "emit.tags"},
+        {"from": "time.start", "to": "emit.start"}, {"from": "time.end", "to": "emit.end"}]})";
+}
+
+std::string inlineFxGraph(std::string_view unit, std::string_view fx)
+{
+    return R"({"format": 1, "nodes": [
+        {"id": "units", "type": "units.for_each", "fields": {"unit": ")" + std::string(unit) + R"("}},
+        {"id": "fx", "type": "units.inline_fx", "fields": {"fx": ")" + std::string(fx) + R"("}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "units.units", "to": "fx.units"}, {"from": "fx.units", "to": "emit.units"}]})";
+}
+
+std::vector<std::string> textsOf(const std::vector<std::string> &lines)
+{
+    std::vector<std::string> out;
+    for (const std::string &line : lines)
+        out.push_back(line.substr(line.find(",fx g,") + 6));
+    return out;
+}
+
+}
+
+TEST(NodeEffectsHighlights, GiveEachSyllableOncePerHighlightWithItsTimes)
+{
+    constexpr std::string_view karaoke = R"({\k20}ha{\k30}#{\k0}#{\k10}na)";
+    EXPECT_EQ(runOnKaraoke(highlightsGraph("syl", true), karaoke),
+              (std::vector<std::string>{
+                  R"(Dialogue: 0,0:00:01.00,0:00:01.20,Romaji,,0,0,0,fx g,{\fsp1\fs3\k20}ha)",
+                  R"(Dialogue: 0,0:00:01.20,0:00:01.50,Romaji,,0,0,0,fx g,{\fsp2\fs3\k30}ha)",
+                  R"(Dialogue: 0,0:00:01.50,0:00:01.60,Romaji,,0,0,0,fx g,{\fsp1\fs1\k10}na)",
+              }));
+    const auto all = runOnKaraoke(highlightsGraph("syl", false), karaoke);
+    ASSERT_EQ(all.size(), 4u);
+    EXPECT_EQ(all[2], R"(Dialogue: 0,0:00:01.50,0:00:01.50,Romaji,,0,0,0,fx g,{\fsp3\fs3\k0}ha)");
+}
+
+TEST(NodeEffectsHighlights, GiveCharactersEachHighlightAndFuriganaAndLinesTheirOwn)
+{
+    EXPECT_EQ(textsOf(runOnKaraoke(highlightsGraph("char", true), R"({\k20}ab{\k30}#)")),
+              (std::vector<std::string>{R"({\fsp1\fs2\k20}a)", R"({\fsp2\fs2\k30}a)", R"({\fsp1\fs2\k20}b)",
+                                        R"({\fsp2\fs2\k30}b)"}));
+    const auto furi = runOnKaraoke(highlightsGraph("furi", true), R"({\k20}空|そ{\k30}#|ら)");
+    ASSERT_EQ(furi.size(), 2u);
+    EXPECT_NE(furi[0].find(R"(0:00:01.00,0:00:01.20,Romaji-furigana,,0,0,0,fx g,{\fsp1\fs1\k20}そ)"),
+              std::string::npos)
+        << furi[0];
+    EXPECT_NE(furi[1].find(R"(0:00:01.20,0:00:01.50,Romaji-furigana,,0,0,0,fx g,{\fsp1\fs1\k30}ら)"),
+              std::string::npos)
+        << furi[1];
+    const auto line = runOnKaraoke(highlightsGraph("line", true), R"({\k20}ha{\k30}#)");
+    ASSERT_EQ(line.size(), 1u);
+    EXPECT_NE(line[0].find(R"(0:00:01.00,0:00:04.00,Romaji,,0,0,0,fx g,{\fsp1\fs1\k300}ha)"), std::string::npos)
+        << line[0];
+}
+
+TEST(NodeEffectsInlineFx, KeepsTheUnitsWhoseInlineFxIsTheName)
+{
+    constexpr std::string_view karaoke = R"({\k10}a{\k10\-paint}b{\k10}c{\k10\-cloud}d{\k10}e)";
+    EXPECT_EQ(textsOf(runOnKaraoke(inlineFxGraph("syl", "paint"), karaoke)), (std::vector<std::string>{"b", "c"}));
+    EXPECT_EQ(textsOf(runOnKaraoke(inlineFxGraph("syl", "cloud"), karaoke)), (std::vector<std::string>{"d", "e"}));
+    EXPECT_EQ(textsOf(runOnKaraoke(inlineFxGraph("syl", ""), karaoke)), (std::vector<std::string>{"a"}));
+    EXPECT_TRUE(runOnKaraoke(inlineFxGraph("syl", "pain"), karaoke).empty());
+    EXPECT_EQ(textsOf(runOnKaraoke(inlineFxGraph("char", "paint"), R"({\k10}ab{\k10\-paint}cd)")),
+              (std::vector<std::string>{"c", "d"}));
+    EXPECT_EQ(textsOf(runOnKaraoke(inlineFxGraph("furi", "paint"), R"({\k10}空|そ{\k10\-paint}見|み)")),
+              (std::vector<std::string>{"み"}));
+    EXPECT_EQ(runOnKaraoke(inlineFxGraph("line", ""), karaoke).size(), 1u);
+    EXPECT_TRUE(runOnKaraoke(inlineFxGraph("line", "paint"), karaoke).empty());
+}
+
+std::string_view exampleGraph(std::string_view example)
+{
+    for (const NodeGraphPreset &p : nodeGraphPresets())
+        if (p.example == example)
+            return p.graph;
+    ADD_FAILURE() << "no example " << example;
+    return {};
+}
+
+TEST(NodeEffectExport, HighlightsBecomeMultiAndInlineFxBecomesFx)
+{
+    const auto flashes = exportTemplateLines(graphOf(exampleGraph("highlight-flashes")), u8"g");
+    ASSERT_TRUE(flashes.has_value());
+    EXPECT_EQ(*flashes, (std::vector<TemplateLine>{
+                            {0, u8"template syl noblank multi",
+                             u8"{\\an5\\pos($center,$middle)\\1a&HFF&\\t($start,$end,\\bord5\\3a&HFF&)}"}}));
+    const auto paint = exportTemplateLines(graphOf(exampleGraph("paint-and-cloud")), u8"g");
+    ASSERT_TRUE(paint.has_value()) << paint.error().front().node << " " << paint.error().front().message;
+    std::vector<std::u8string> effects;
+    for (const TemplateLine &l : *paint)
+        effects.push_back(l.effect);
+    EXPECT_EQ(effects, (std::vector<std::u8string>{u8"template syl noblank fx paint", u8"template syl noblank fx cloud",
+                                                   u8"code syl", u8"template syl noblank fxgroup g_rest"}));
+    EXPECT_EQ(paint->at(2).text, u8"fxgroup[\"g_rest\"] = (syl.inline_fx == \"\")");
+}
+
+TEST(NodeEffectExport, HighlightsAndInlineFxATemplateCantFollowBlockTheExport)
+{
+    const auto blockers = [](std::string_view unit, bool skipBlank, std::string_view between) {
+        const auto lines = exportTemplateLines(graphOf(R"({"format": 1, "nodes": [
+            {"id": "units", "type": "units.for_each", "fields": {"unit": ")" + std::string(unit) + R"("}},
+            {"id": "hl", "type": "units.highlights", "fields": {"skip_blank": )" + (skipBlank ? "true" : "false") + R"(}},
+            {"id": "x", "type": ")" + std::string(between) + R"("},
+            {"id": "emit", "type": "output.emit"}],
+          "wires": [{"from": "units.units", "to": "x.units"}, {"from": "x.units", "to": "hl.units"},
+                    {"from": "hl.units", "to": "emit.units"}]})"),
+                                               u8"g");
+        std::vector<std::string> out;
+        if (!lines)
+            for (const NodeEffectProblem &p : lines.error())
+                out.push_back(p.node);
+        return out;
+    };
+    EXPECT_EQ(blockers("syl", true, "units.inline_fx"), std::vector<std::string>{});
+    EXPECT_EQ(blockers("line", true, "units.inline_fx"), std::vector<std::string>{"hl"});
+    EXPECT_EQ(blockers("syl", false, "units.inline_fx"), std::vector<std::string>{"hl"});
+    EXPECT_EQ(blockers("syl", true, "units.repeat"), std::vector<std::string>{"x"});
+    EXPECT_EQ(blockers("syl", true, "units.highlights"), std::vector<std::string>{"x"});
 }
 
 TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
@@ -863,4 +1110,118 @@ TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
     ASSERT_EQ(plain.size(), 2u);
     EXPECT_EQ(plain[1].start, 1000);
     EXPECT_EQ(plain[1].duration, 3000);
+}
+
+namespace {
+
+std::vector<std::string> blockersOf(std::string_view json)
+{
+    std::vector<std::string> out;
+    const auto lines = exportTemplateLines(graphOf(json), u8"g");
+    EXPECT_FALSE(lines.has_value());
+    if (!lines)
+        for (const NodeEffectProblem &p : lines.error())
+            out.push_back(p.node);
+    return out;
+}
+
+}
+
+TEST(NodeEffectExport, ClassicFillBecomesOnePreLineAndLineTemplate)
+{
+    const auto lines = exportTemplateLines(graphOf(kClassicFill), u8"Classic fill");
+    ASSERT_TRUE(lines.has_value());
+    const std::vector<TemplateLine> expected{
+        {0, u8"template pre-line classic_fill_emit", u8"!retime(\"line\", (-300), 300)!{\\fad(300,300)\\k30}"},
+        {0, u8"template line classic_fill_emit", u8"{\\kf$kdur}"}};
+    EXPECT_EQ(*lines, expected);
+}
+
+TEST(NodeEffectExport, SparklesLoopsAndDrawsWithoutText)
+{
+    const auto lines = exportTemplateLines(graphOf(kSparkles), u8"s");
+    ASSERT_TRUE(lines.has_value());
+    ASSERT_EQ(lines->size(), 2u);
+    EXPECT_EQ((*lines)[1].layer, 1);
+    EXPECT_EQ((*lines)[1].effect, u8"template syl noblank notext loop 8");
+    EXPECT_TRUE((*lines)[1].text.ends_with(u8"\\p1}m 0 -5 l 5 0 0 5 -5 0"));
+}
+
+TEST(NodeEffectExport, NodesWithoutATemplateFormBlockTheExportByName)
+{
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "dice", "type": "math.random", "fields": {"max": 10}},
+        {"id": "blur", "type": "tags.tag", "fields": {"tag": "blur"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "dice.value", "to": "blur.value"}, {"from": "blur.tags", "to": "emit.tags"},
+                {"from": "syl.units", "to": "emit.units"}]})"),
+              std::vector<std::string>{"dice"});
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "syl", "type": "units.for_each"},
+        {"id": "info", "type": "units.info"},
+        {"id": "long", "type": "math.compare", "fields": {"op": "greater", "b": 300}},
+        {"id": "later", "type": "math.calculate", "fields": {"op": "add", "b": 100}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "info.duration", "to": "long.a"}, {"from": "long.result", "to": "emit.when"},
+                {"from": "info.start", "to": "later.a"}, {"from": "later.result", "to": "emit.start"},
+                {"from": "syl.units", "to": "emit.units"}]})"),
+              (std::vector<std::string>{"long", "emit"}));
+    EXPECT_EQ(blockersOf(R"({"format": 1, "nodes": [
+        {"id": "line", "type": "units.for_each", "fields": {"unit": "line", "skip_blank": false}},
+        {"id": "time", "type": "time.retime", "fields": {"mode": "syl"}},
+        {"id": "emit", "type": "output.emit"}],
+      "wires": [{"from": "line.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+                {"from": "time.end", "to": "emit.end"}]})"),
+              std::vector<std::string>{"time"});
+}
+
+TEST(NodeEffectExport, AudioPeaksBlockTheExport)
+{
+    const auto lines = exportTemplateLines(graphOf(peakGraph()), u8"g");
+    ASSERT_FALSE(lines.has_value());
+    ASSERT_EQ(lines.error().size(), 1u);
+    EXPECT_EQ(lines.error().front().node, "peak");
+    EXPECT_EQ(lines.error().front().message, "reads the audio, which the templater can't");
+}
+
+TEST(NodeEffectExport, StripsCopiesAndParticlesBlockTheExport)
+{
+    for (const std::string type : {"units.clip_gradient", "units.array", "units.particles"}) {
+        SCOPED_TRACE(type);
+        const auto lines = exportTemplateLines(graphOf(R"({"format": 1, "nodes": [
+            {"id": "syl", "type": "units.for_each"},
+            {"id": "many", "type": ")" + type + R"("},
+            {"id": "emit", "type": "output.emit"}],
+          "wires": [{"from": "syl.units", "to": "many.units"}, {"from": "many.units", "to": "emit.units"}]})"),
+                                               u8"g");
+        ASSERT_FALSE(lines.has_value());
+        ASSERT_EQ(lines.error().size(), 1u);
+        EXPECT_EQ(lines.error().front().node, "many");
+        EXPECT_NE(lines.error().front().message.find("which"), std::string::npos);
+    }
+}
+
+TEST(NodeEffectExport, ExportAddsTheTemplateLinesAfterTheGraphInOneStep)
+{
+    EditSession session(presetDocument(kPresets[1]));
+    const std::string before = text(core::encodeAss(session.document()));
+    const core::LineId graph = graphLineOf(session.document(), u8"bounce");
+    ASSERT_TRUE(exportTemplateLines(session, graph));
+    std::vector<const core::LineRecord *> added;
+    bool after = false;
+    for (const core::LineRecord *l : session.document().lines()) {
+        if (after && l->effect.starts_with(u8"template "))
+            added.push_back(l);
+        after = after || l->id == graph;
+    }
+    ASSERT_EQ(added.size(), 4u);
+    for (const core::LineRecord *l : added) {
+        EXPECT_TRUE(l->comment);
+        EXPECT_EQ(l->style, u8"Romaji");
+        EXPECT_EQ(l->effect, u8"template syl noblank");
+    }
+    EXPECT_EQ(session.history().back().name, "Export as template lines");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(text(core::encodeAss(session.document())), before);
 }

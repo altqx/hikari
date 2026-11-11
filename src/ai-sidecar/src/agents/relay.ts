@@ -15,6 +15,7 @@ export interface AgentSpawnOptions {
     args: string[];
     env: Record<string, string | undefined>;
     signal?: AbortSignal;
+    session?: string;
 }
 
 function asError(error: unknown): Error {
@@ -108,7 +109,8 @@ export class AgentRelay {
         const child = new RelayedProcess(this.peer, this.next++);
         this.running.set(child.id, child);
         const env = Object.fromEntries(Object.entries(options.env).filter((e): e is [string, string] => typeof e[1] === "string"));
-        const params: AgentStartParams = { process: child.id, agent, args: options.args, env };
+        const params: AgentStartParams = { process: child.id, agent, args: options.args, env,
+            ...(options.session === undefined ? {} : { session: options.session }) };
         this.peer.request(Method.agentStart, params).catch((error: unknown) => {
             this.running.delete(child.id);
             child.failed(asError(error));

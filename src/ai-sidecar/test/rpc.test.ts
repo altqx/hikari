@@ -272,4 +272,21 @@ describe("Sidecar", () => {
         await settle();
         expect((sent.find((m) => m.id === 4)!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
     });
+
+    test("a session's tools channel makes its calls as that session, and only for an open session", async () => {
+        const { peer, sent, feed } = link({ ...limits, maxOutstandingBytes: 1 << 20, maxMessageBytes: 1 << 20 });
+        new Sidecar(peer, build);
+        feed({ jsonrpc: "2.0", id: 1, method: Method.initialize, params: { protocolVersion: kProtocolVersion } });
+        const call = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "documents_get" } });
+        feed({ jsonrpc: "2.0", id: 2, method: Method.mcpMessage, params: { connection: "channel:t1", text: call } });
+        await settle();
+        expect((sent.find((m) => m.id === 2)!.error as { code: number }).code).toBe(ErrorCode.invalidParams);
+
+        feed({ jsonrpc: "2.0", id: 3, method: Method.sessionNew,
+            params: { sessionId: "t1", agent: "codex", model: { providerId: "", model: "" } } });
+        feed({ jsonrpc: "2.0", id: 4, method: Method.mcpMessage, params: { connection: "channel:t1", text: call } });
+        await settle();
+        const relayed = sent.find((m) => m.method === Method.apiCall)!;
+        expect(relayed.params).toEqual({ operation: "documents.get", params: {}, session: "t1" });
+    });
 });

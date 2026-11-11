@@ -5,6 +5,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/lyrics_text.h"
 #include "hikari/backends/mecab_readings.h"
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
@@ -44,6 +45,7 @@
 #include "automation_services_qt.h"
 #include "dialog_placement.h"
 #include "list_files.h"
+#include "project_file.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -607,6 +609,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         writeFinished(r);
     });
     m_files = std::make_unique<application::DocumentFiles>(*m_reader, *m_writes);
+    m_files->setLyricsDecoder([](std::span<const std::byte> bytes) {
+        return backends::lyricsUtf8(bytes, backends::detectLyricsEncoding(bytes));
+    });
     m_log = std::make_unique<ui::LogController>();
     m_log->setActiveWindow([this] { return m_workspace.activeWindow(); });
     m_mediaHelper = mediaHelperPath(options.mediaHelper);
@@ -925,6 +930,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
     }
     {
+        LyricsImportController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.openNew = [this](core::LoadResult load, const QString &path) {
+            application::StagedOpen staged{{}, std::move(load), std::nullopt, 0, 0};
+            staged.imported = true;
+            (void)publish(std::move(staged), path, false);
+        };
+        hooks.describe = [this](const QString &path, const core::LyricsProblem &problem) {
+            return openProblem(path, application::StageFailure{application::OpenError::MalformedLyrics, problem});
+        };
+        m_lyricsImport = std::make_unique<LyricsImportController>(*m_settings, std::move(hooks));
+    }
+    {
         QcNotesController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.editable = [this] {
@@ -1086,8 +1108,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened"));
     m_projects = std::make_unique<ProjectWindows>(
         *m_settings, m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath());
-    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
     connect(m_projects.get(), &ProjectWindows::changed, this, &Application::applyWindowProject);
+    connect(m_projects.get(), &ProjectWindows::changed, this, &Application::projectsChanged);
     connect(m_projects.get(), &ProjectWindows::recentChanged, this, &Application::recentProjectsChanged);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
@@ -1950,6 +1972,12 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
     });
     effects->shareTrustWith(v.templateEditor.get());
     effects->setLuaNodes([this] { return &luaNodes(); });
+    effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
+        ui::AudioController *audio = activeMedia().audio.get();
+        if (!audio || !audio->box().isOpen())
+            return std::nullopt;
+        return audio->box().audio();
+    });
 }
 
 void Application::makeKanjiTimer(WindowViews &v, int shellWindow)
@@ -2166,6 +2194,10 @@ QString Application::openProblem(const QString &path, const application::StageFa
         what = QCoreApplication::translate("HikariSub.Documents", "it is too large for a lyrics file");
         break;
     case Kind::NoLyrics: what = QCoreApplication::translate("HikariSub.Documents", "it has no timed lyrics"); break;
+    case Kind::Encrypted:
+        what = QCoreApplication::translate("HikariSub.Documents",
+                                           "it is encrypted. Decode it to text with your own tool first");
+        break;
     }
     return problem.line > 0
                ? QCoreApplication::translate("HikariSub.Documents", "Could not import %1: line %2: %3. Nothing was imported.")
@@ -2417,7 +2449,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && activeMedia().video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (nodeEffects().videoPreview()) {
+    if (m_layerPreview) {
+        templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
+    } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
     } else if (templateEditor().videoPreview()) {
         const auto &video = activeMedia().video->session();
@@ -6536,6 +6570,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
@@ -6912,6 +6947,71 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
     if (std::ranges::any_of(written, [](const std::string &id) { return id.starts_with("updater."); }))
         m_updates->reload();
     m_hotkeys->commitOptions();
+}
+
+namespace {
+
+constexpr std::string_view kMoveTags = "translation.autoMoveTagsFromOriginal";
+
+application::OptionsState projectableOnly(application::OptionsState state)
+{
+    std::erase_if(state, [](const auto &entry) {
+        const auto *setting = application::findSetting(entry.first);
+        return !setting || !setting->projectable;
+    });
+    return state;
+}
+
+}
+
+QVariantMap Application::openProjectSettings(int shellWindow)
+{
+    auto &window = *views(shellWindow).settings;
+    const auto *project = window.project();
+    if (!project)
+        return {};
+    auto values = toVariant(projectableOnly(application::openOptionsDialog(window.settings(), m_optionsLists).state));
+    values.insert(qs(kMoveTags), window.settings().boolean(kMoveTags));
+    auto yours = toVariant(projectableOnly(application::openOptionsDialog(m_settings->settings(), m_optionsLists).state));
+    yours.insert(qs(kMoveTags), m_settings->boolean(kMoveTags.data()));
+    QVariantMap sources;
+    for (const auto &setting : application::settingDefinitions())
+        if (const auto file = project->source(setting))
+            sources.insert(qs(setting.id), *file == ui::ProjectFile::Local ? QStringLiteral("local") : QStringLiteral("project"));
+    return {{QStringLiteral("values"), values}, {QStringLiteral("yours"), yours}, {QStringLiteral("sources"), sources}};
+}
+
+QStringList Application::projectOverrides(int shellWindow) const
+{
+    QStringList ids;
+    const auto &window = *views(shellWindow).settings;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.projectable && window.overridden(setting.id))
+            ids << qs(setting.id);
+    return ids;
+}
+
+bool Application::applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared)
+{
+    auto &window = *views(shellWindow).settings;
+    auto *project = window.project();
+    if (!project)
+        return false;
+    window.takeProjectWriteFailure();
+    auto &target = window.projectWrites();
+    for (const QString &id : cleared)
+        if (const auto *setting = application::findSetting(id.toStdString());
+            setting && project->source(*setting) == ui::ProjectFile::Shared)
+            target.remove(*setting);
+    application::Settings writes(target);
+    application::commitOptionsDialog(writes, m_optionsLists, projectableOnly(fromVariant(values)));
+    if (const auto moveTags = values.constFind(qs(kMoveTags));
+        moveTags != values.cend() && moveTags->toBool() != writes.boolean(kMoveTags))
+        writes.set(kMoveTags, moveTags->toBool());
+    const bool failed = window.takeProjectWriteFailure();
+    applyWindowProject(shellWindow);
+    emit projectsChanged();
+    return !failed;
 }
 
 bool Application::gettingStartedDue() const

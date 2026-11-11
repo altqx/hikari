@@ -256,6 +256,7 @@ private:
     void runTaskText(const QString &text);
     void presentDialog(const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply);
     bool startStep(Run &run);
+    bool reportTooLarge(const Run &run);
     void resolveScriptResolution(const application::ScriptResolutionRequest &request,
                                  std::function<void(std::optional<application::Resolution>)> reply);
     void finished(const QString &path, backends::LuaScriptHost::RunOutcome outcome, const QString &message);

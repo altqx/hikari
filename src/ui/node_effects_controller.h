@@ -77,6 +77,7 @@ class NodeEffectsController : public QObject {
 public:
     using SessionSource = std::function<application::EditSession *()>;
     using LuaNodesSource = std::function<application::LuaNodePort *()>;
+    using AudioSource = std::function<std::optional<const application::DisplayAudio *>()>;
 
     explicit NodeEffectsController(QObject *parent = nullptr);
     ~NodeEffectsController() override;
@@ -86,6 +87,7 @@ public:
     void shareTrustWith(TemplateEditorController *editor);
     // Called only when a graph with a Lua node runs, so the helper starts then.
     void setLuaNodes(LuaNodesSource source);
+    void setAudio(AudioSource source) { m_audio = std::move(source); }
     void setLibraryFolder(std::filesystem::path folder);
     void setEditable(bool editable);
     void setMeasure(application::TextMeasurePort *measure) { m_measure = measure; }
@@ -176,6 +178,8 @@ public:
     Q_INVOKABLE bool renameGraph(const QString &name);
     Q_INVOKABLE bool duplicateGraph();
     Q_INVOKABLE bool deleteGraph();
+    // Inserts the graph's template Lines after it; when it has no template form, the nodes that block it.
+    Q_INVOKABLE QVariantList exportAsTemplate();
     Q_INVOKABLE bool apply(bool selectedOnly);
     Q_INVOKABLE void trustDocument();
 
@@ -199,6 +203,7 @@ private:
     void edit(const application::NodeGraph &root);
     void editView(const application::NodeGraph &view);
     bool runGraphCommand(const std::function<bool(application::EditSession &)> &command);
+    QVariantMap problemRow(const std::string &node, const std::string &port, const std::string &message) const;
     void reload();
     void updateSources();
     void schedulePreview();
@@ -211,6 +216,7 @@ private:
     SessionSource m_sessionSource;
     QPointer<TemplateEditorController> m_trustOwner;
     LuaNodesSource m_luaNodes;
+    AudioSource m_audio;
     QtTextMeasurePort m_qtMeasure;
     application::TextMeasurePort *m_measure = &m_qtMeasure;
     std::filesystem::path m_libraryFolder;

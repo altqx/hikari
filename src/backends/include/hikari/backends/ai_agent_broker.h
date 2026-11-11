@@ -5,6 +5,7 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QPointer>
 #include <QProcessEnvironment>
 #include <QString>
 #include <QStringList>
@@ -22,6 +23,8 @@
 namespace hikari::backends::ai {
 
 class AiSidecarHost;
+class CodexLease;
+class McpServer;
 
 inline constexpr const char *kAgentStart = "_hikari/agent.start";
 inline constexpr const char *kAgentWrite = "_hikari/agent.write";
@@ -57,6 +60,13 @@ struct AgentSpec {
     /// Why the sidecar's arguments are refused; empty when they're fine.
     std::function<QString(const QStringList &arguments)> refuse;
     std::function<std::unique_ptr<AgentGuard>()> guard;
+    /// Gives each process a private MCP channel for the session the sidecar names: the arguments that point the
+    /// agent at `url`. The token goes in HIKARI_MCP_TOKEN.
+    std::function<QStringList(const QString &url)> channelArguments;
+    /// Runs before the process starts, which it does once `go` gets no error.
+    std::function<void(std::function<void(QString error)> go)> before;
+    /// Runs after the process exits.
+    std::function<void()> after;
 };
 
 /// Refuses permission bypass, extra folders, plugins, inline settings and any MCP server but the SDK's in-process
@@ -68,9 +78,10 @@ std::unique_ptr<AgentGuard> codexGuard();
 
 /// Claude Code at `program` with only its own state writable: `<home>/.claude`, `<home>/.claude.json` and `work`.
 AgentSpec claudeAgent(const QString &program, const QString &home, const QString &work);
-/// Codex app-server behind `program`, which may be npm's launcher, with Hikari's own `CODEX_HOME`. Empty when no
-/// native binary is found.
-std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work);
+/// Codex app-server behind `program`, which may be npm's launcher, with Hikari's own `CODEX_HOME`, signed in through
+/// `lease` and given Hikari's tools on a private MCP channel. Empty when no native binary is found.
+std::optional<AgentSpec> codexAgent(const QString &program, const QString &codexHome, const QString &work,
+                                    std::shared_ptr<CodexLease> lease);
 
 /// Answers the sidecar's `_hikari/agent.*` requests: starts the agents Qt knows, each in its own sandbox and under
 /// the process number the sidecar picked, and relays their stdio as `_hikari/agent.output` and `_hikari/agent.exit`
@@ -105,6 +116,7 @@ private:
 
     std::map<std::string, AgentSpec> m_specs;
     std::map<std::uint64_t, std::unique_ptr<Running>> m_running;
+    QPointer<AiSidecarHost> m_host;
     Notify m_notify;
 };
 

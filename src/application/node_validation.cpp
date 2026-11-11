@@ -115,7 +115,7 @@ std::optional<std::string> listProblem(const GraphNode &node)
 }
 
 constexpr std::string_view kLoopNodes[] = {"units.repeat", "units.frames", "units.clip_gradient", "units.array",
-                                           "units.particles"};
+                                           "units.particles", "units.highlights", "units.inline_fx"};
 
 bool isLoopNode(std::string_view type)
 {

@@ -397,6 +397,10 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_FALSE(a.mcp);
     EXPECT_TRUE(parseStartupArguments({"--mcp"}).mcp);
     EXPECT_TRUE(parseStartupArguments({"--mcp"}).rest.empty());
+    const auto channel = parseStartupArguments({"--mcp", "--channel", "hikarisub-ch-1"});
+    EXPECT_TRUE(channel.mcp);
+    EXPECT_EQ(channel.mcpChannel, "hikarisub-ch-1");
+    EXPECT_TRUE(channel.rest.empty());
 }
 
 TEST(StartupArguments, WindowFlagsLeaveTheFiles)
@@ -410,6 +414,15 @@ TEST(StartupArguments, WindowFlagsLeaveTheFiles)
     for (const char *flag : {"-r", "--reuse-window"})
         EXPECT_EQ(parseStartupArguments({"show", flag}).window, WindowRequest::Reuse) << flag;
     EXPECT_EQ(parseStartupArguments({"-n", "-r"}).window, WindowRequest::Reuse);
+}
+
+TEST(StartupArguments, OpenFolderAsksForAFolder)
+{
+    EXPECT_FALSE(parseStartupArguments({"show"}).openFolder);
+    const auto a = parseStartupArguments({"--open-folder", "-n"});
+    EXPECT_TRUE(a.openFolder);
+    EXPECT_EQ(a.window, WindowRequest::New);
+    EXPECT_TRUE(a.rest.empty());
 }
 
 TEST(UpdateVerify, releaseVersionsOnly)

@@ -479,6 +479,88 @@ constexpr std::string_view kParticleBurst = R"({"format": 1, "nodes": [
     {"from": "time.start", "to": "emit.start"}, {"from": "time.end", "to": "emit.end"},
     {"from": "fade.tags", "to": "emit.tags"}]})";
 
+constexpr std::string_view kAudioPulse = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "info", "type": "units.info"},
+    {"id": "peak", "type": "audio.peaks"},
+    {"id": "grow", "type": "math.calculate", "fields": {"op": "multiply", "b": 60}},
+    {"id": "size", "type": "math.calculate", "fields": {"op": "add", "b": 100}},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 5}},
+    {"id": "centre", "type": "values.point"},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "fscx", "type": "tags.tag", "fields": {"tag": "fscx"}},
+    {"id": "fscy", "type": "tags.tag", "fields": {"tag": "fscy"}},
+    {"id": "time", "type": "time.retime", "fields": {"mode": "syl", "end_offset": 200}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "info.center", "to": "centre.x"}, {"from": "info.middle", "to": "centre.y"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "centre.point", "to": "pos.point"},
+    {"from": "peak.level", "to": "grow.a"}, {"from": "grow.result", "to": "size.a"},
+    {"from": "pos.tags", "to": "fscx.before"}, {"from": "size.result", "to": "fscx.value"},
+    {"from": "fscx.tags", "to": "fscy.before"}, {"from": "size.result", "to": "fscy.value"},
+    {"from": "syl.units", "to": "emit.units"}, {"from": "time.start", "to": "emit.start"},
+    {"from": "time.end", "to": "emit.end"}, {"from": "fscy.tags", "to": "emit.tags"}]})";
+constexpr std::string_view kHighlightFlashes = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "hl", "type": "units.highlights"},
+    {"id": "info", "type": "units.info"},
+    {"id": "here", "type": "values.point"},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 5}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "hide", "type": "tags.tag", "fields": {"tag": "1a", "alpha": 255}},
+    {"id": "bord", "type": "tags.tag", "fields": {"tag": "bord", "value": 5}},
+    {"id": "fadeEdge", "type": "tags.tag", "fields": {"tag": "3a", "alpha": 255}},
+    {"id": "flash", "type": "tags.transform"},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "hl.units"},
+    {"from": "info.center", "to": "here.x"}, {"from": "info.middle", "to": "here.y"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "here.point", "to": "pos.point"},
+    {"from": "pos.tags", "to": "hide.before"}, {"from": "bord.tags", "to": "fadeEdge.before"},
+    {"from": "hide.tags", "to": "flash.before"}, {"from": "fadeEdge.tags", "to": "flash.tags"},
+    {"from": "info.start", "to": "flash.t1"}, {"from": "info.end", "to": "flash.t2"},
+    {"from": "hl.units", "to": "emit.units"}, {"from": "flash.tags", "to": "emit.tags"}]})";
+
+constexpr std::string_view kPaintAndCloud = R"({"format": 1, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "paint", "type": "units.inline_fx", "fields": {"fx": "paint"}},
+    {"id": "cloud", "type": "units.inline_fx", "fields": {"fx": "cloud"}},
+    {"id": "plain", "type": "units.inline_fx"},
+    {"id": "info", "type": "units.info"},
+    {"id": "an", "type": "tags.tag", "fields": {"tag": "an", "value": 5}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+
+    {"id": "red", "type": "tags.tag", "fields": {"tag": "1c", "colour": "#FF0000"}},
+    {"id": "white", "type": "tags.tag", "fields": {"tag": "1c", "colour": "#FFFFFF"}},
+    {"id": "fill", "type": "tags.transform"},
+    {"id": "painted", "type": "output.emit"},
+
+    {"id": "up", "type": "math.calculate", "fields": {"op": "subtract", "b": 20}},
+    {"id": "above", "type": "values.point"},
+    {"id": "rise", "type": "tags.move", "fields": {"timed": true}},
+    {"id": "blur", "type": "tags.tag", "fields": {"tag": "blur", "value": 2}},
+    {"id": "clouded", "type": "output.emit"},
+
+    {"id": "rest", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "paint.units"}, {"from": "syl.units", "to": "cloud.units"},
+    {"from": "syl.units", "to": "plain.units"},
+    {"from": "an.tags", "to": "pos.before"}, {"from": "info.position", "to": "pos.point"},
+
+    {"from": "pos.tags", "to": "red.before"}, {"from": "red.tags", "to": "fill.before"},
+    {"from": "white.tags", "to": "fill.tags"},
+    {"from": "info.start", "to": "fill.t1"}, {"from": "info.end", "to": "fill.t2"},
+    {"from": "paint.units", "to": "painted.units"}, {"from": "fill.tags", "to": "painted.tags"},
+
+    {"from": "info.y", "to": "up.a"}, {"from": "info.x", "to": "above.x"}, {"from": "up.result", "to": "above.y"},
+    {"from": "an.tags", "to": "rise.before"}, {"from": "info.position", "to": "rise.from"},
+    {"from": "above.point", "to": "rise.to"},
+    {"from": "info.start", "to": "rise.t1"}, {"from": "info.end", "to": "rise.t2"},
+    {"from": "rise.tags", "to": "blur.before"},
+    {"from": "cloud.units", "to": "clouded.units"}, {"from": "blur.tags", "to": "clouded.tags"},
+
+    {"from": "plain.units", "to": "rest.units"}, {"from": "pos.tags", "to": "rest.tags"}]})";
+
 constexpr NodeGraphPreset kPresets[] = {
     {"01-classic-fill.ass", kClassicFill},
     {"02-staggered-fade.ass", kStaggeredFade},
@@ -493,6 +575,9 @@ constexpr NodeGraphPreset kPresets[] = {
     {{}, kGradientStrips, "gradient-strips"},
     {{}, kRingOfCopies, "ring-of-copies"},
     {{}, kParticleBurst, "particle-burst"},
+    {{}, kAudioPulse, "audio-pulse"},
+    {{}, kHighlightFlashes, "highlight-flashes"},
+    {{}, kPaintAndCloud, "paint-and-cloud"},
 };
 
 }

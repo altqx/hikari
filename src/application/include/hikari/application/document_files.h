@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -107,9 +108,15 @@ struct SaveStatus {
     std::optional<WriteOutcome> outcome; // empty while the write is running
 };
 
+// A lyrics file's bytes as UTF-8, or nullopt when they are not text.
+using LyricsDecoder = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
+
 class DocumentFiles {
 public:
     DocumentFiles(FileReadPort &reader, WriteCoordinator &writes);
+
+    // Without one, lyrics files must be UTF-8.
+    void setLyricsDecoder(LyricsDecoder decoder) { m_lyricsDecoder = std::move(decoder); }
 
     std::expected<StagedOpen, StageFailure> stageOpen(const DestinationKey &destination);
     std::expected<StagedOpen, StageFailure> stageReload(DocumentId document);
@@ -173,6 +180,7 @@ private:
     Entry *find(DocumentId document);
 
     FileReadPort &m_reader;
+    LyricsDecoder m_lyricsDecoder;
     WriteCoordinator &m_writes;
     std::map<DocumentId, Entry> m_documents;
     std::map<PermitId, Pending> m_pending;

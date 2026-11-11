@@ -83,6 +83,28 @@ void Application::applyWindowProject(int shellWindow)
     spellingRefresh();
 }
 
+bool Application::projectNeedsTrust(int shellWindow) const
+{
+    const auto &window = *views(shellWindow).settings;
+    const auto *project = window.project();
+    if (!project || window.trusted())
+        return false;
+    return QFileInfo(window.root() + QStringLiteral("/.hikari/automation")).isDir() || project->hasTable("plugins");
+}
+
+void Application::trustProject(int shellWindow)
+{
+    const QString root = views(shellWindow).settings->root();
+    if (root.isEmpty())
+        return;
+    QStringList folders = m_settings->list("trust.folders");
+    const QString folder = QDir::toNativeSeparators(root);
+    if (!folders.contains(folder))
+        m_settings->setValue(QStringLiteral("trust.folders"), folders << folder);
+    m_settings->sync();
+    emit projectsChanged();
+}
+
 bool Application::windowEmpty(int shellWindow) const
 {
     if (!m_projects->root(shellWindow).isEmpty())

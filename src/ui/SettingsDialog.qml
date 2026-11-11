@@ -34,6 +34,10 @@ DialogWindow {
     property ToastStack notices: null
     property var tagButtonList: []
     property bool resetAllStaged: false
+    property int shellWindow: 0
+    property bool hasProject: false
+    property bool projectTab: false
+    property var overrides: []
     signal reloaded()
     signal creditsRequested()
     signal legacyImportRequested()
@@ -70,6 +74,11 @@ DialogWindow {
         outputDevices = r.outputDevices
         values = r.values
         resetAllStaged = false
+        hasProject = app.projectRoot(shellWindow).length > 0
+        projectTab = false
+        overrides = hasProject ? app.projectOverrides(shellWindow) : []
+        if (hasProject)
+            projectPages.load()
         copyTagButtons()
         legacyNotFound = ""
         if (importer && importer.available) {
@@ -137,6 +146,13 @@ DialogWindow {
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
+        applyProject()
+    }
+    function applyProject() {
+        if (!hasProject)
+            return
+        projectPages.apply()
+        overrides = app.projectOverrides(shellWindow)
     }
     function resetPage() {
         if (currentPage === "hotkeys") {
@@ -234,6 +250,7 @@ DialogWindow {
         app.applySettings(values, resetAllStaged)
         resetAllStaged = false
         commitTagButtons()
+        applyProject()
     }
     onVisibleChanged: if (!visible) {
         Theme.endPreview()
@@ -243,6 +260,7 @@ DialogWindow {
     leadingActions: [
         RowLayout {
             spacing: 2
+            visible: !dialog.projectTab
             IconTextButton {
                 objectName: "settingsResetPage"
                 iconRole: "restore-default"
@@ -308,6 +326,12 @@ DialogWindow {
             width: settingsPage.availableWidth - 48
             spacing: 16
         }
+    }
+    component OverriddenNote: SettingNote {
+        required property string overriddenId
+        objectName: "overridden_" + overriddenId
+        visible: dialog.overrides.includes(overriddenId)
+        text: qsTranslate("HikariSub.Project", "Overridden in this project")
     }
     component SettingNote: Label {
         color: Theme.muted
@@ -432,9 +456,39 @@ DialogWindow {
         spacing: 0
         Layout.fillWidth: true
         Layout.fillHeight: true
+        TabBar {
+            objectName: "settingsScope"
+            visible: dialog.hasProject
+            currentIndex: dialog.projectTab ? 1 : 0
+            Layout.leftMargin: 12
+            TabButton {
+                objectName: "settingsScopeYours"
+                text: qsTranslate("HikariSub.Project", "Yours")
+                width: implicitWidth
+                onClicked: dialog.projectTab = false
+            }
+            TabButton {
+                objectName: "settingsScopeProject"
+                text: qsTranslate("HikariSub.Project", "Project")
+                width: implicitWidth
+                onClicked: dialog.projectTab = true
+            }
+        }
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
+        ProjectSettingsPages {
+            id: projectPages
+            app: dialog.app
+            shellWindow: dialog.shellWindow
+            dictionaries: dialog.dictionaries
+            visible: dialog.projectTab
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 880
+            Layout.preferredHeight: 528
+        }
         RowLayout {
             spacing: 0
+            visible: !dialog.projectTab
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 880
@@ -833,6 +887,7 @@ DialogWindow {
                         title: qsTr("Spelling")
                         ruled: false
                         SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
+                        OverriddenNote { overriddenId: "editor.spellchecker" }
                         SettingsRow {
                             iconRole: "dictionary"
                             text: qsTr("Primary language")
@@ -846,6 +901,7 @@ DialogWindow {
                                 Accessible.name: qsTr("Primary language")
                             }
                         }
+                        OverriddenNote { overriddenId: "editor.dictionaryLanguage" }
                         SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions on double-click") }
                     }
                     SettingsSection {
@@ -861,6 +917,7 @@ DialogWindow {
                                 Accessible.name: qsTr("Grammar check")
                             }
                         }
+                        OverriddenNote { overriddenId: "grammar.language" }
                         SettingNote {
                             visible: spellingPage.grammarOn && dialog.values["editor.spellchecker"] === true
                             text: qsTr("While spelling is checked, Harper leaves spelling to the dictionary above, so a word is never marked twice.")
@@ -922,6 +979,13 @@ DialogWindow {
                                             wrapMode: Text.Wrap
                                             Layout.leftMargin: group.indicator.width + group.spacing
                                             Layout.fillWidth: true
+                                        }
+                                        Label {
+                                            objectName: "overridden_" + group.setting
+                                            visible: dialog.overrides.includes(group.setting)
+                                            text: qsTranslate("HikariSub.Project", "Overridden in this project")
+                                            color: Theme.muted
+                                            Layout.leftMargin: group.indicator.width + group.spacing
                                         }
                                     }
                                 }

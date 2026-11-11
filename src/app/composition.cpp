@@ -227,7 +227,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 #endif
     SingleInstance instance(mode == StartupMode::Run ? SingleInstance::forSession() : SingleInstance::Location{});
     const SingleInstance::Role role =
-        instance.claim({files, activationToken, startup.window}, startup.healthFile.empty());
+        instance.claim({files, activationToken, startup.window, startup.openFolder}, startup.healthFile.empty());
     if (role == SingleInstance::Role::Forwarded)
         return 0;
     QTimer reclaim;
@@ -314,8 +314,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         startKind == application::OpenKind::Subtitles || startKind == application::OpenKind::Video ? files.front()
                                                                                                    : QString();
     const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
-    if (startPath.isEmpty() && !files.isEmpty())
-        forwarded.take({files, {}, startup.window});
+    if ((startPath.isEmpty() && !files.isEmpty()) || startup.openFolder)
+        forwarded.take({startPath.isEmpty() ? files : QStringList(), {}, startup.window, startup.openFolder});
 
     hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;
@@ -443,6 +443,9 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
     if (startup.mcp) {
         QCoreApplication core(argc, argv);
         const UserFolder userFolder = UserFolder::locate(folderEnvironmentOf(UpdateEnvironment::current()));
+        if (!startup.mcpChannel.empty())
+            backends::ai::runMcpBridge(backends::ai::McpEndpoint{QString::fromStdString(startup.mcpChannel),
+                                                                 qgetenv(backends::ai::kMcpTokenVariable), 0});
         backends::ai::runMcpBridge(backends::ai::mcpEndpointFile(userFolder.root()));
     }
     if (startup.exportDocs) {

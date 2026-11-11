@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
     required property var fontCatalogs
@@ -1456,6 +1457,7 @@ ApplicationWindow {
             closeReview.review(result.rows)
     }
     function openInstallLink(id) { pluginManagerDialog.followLink(id) }
+    function showFolderPicker() { projectFolderDialog.show() }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }
@@ -1721,6 +1723,14 @@ ApplicationWindow {
                     text: qsTr("Import subtitles from MKV…")
                     enabled: root.matroska.available
                     onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_IMPORT_LYRICS"
+                    help: qsTr("Turns a lyrics file into lines, in the open file or a new one")
+                    iconRole: "import-lyrics"
+                    objectName: "importLyricsMenuItem"
+                    text: qsTr("Import lyrics…")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_SUBS"
@@ -2126,6 +2136,27 @@ ApplicationWindow {
                 objectName: "showTimingPostprocessor"
                 text: qsTr("Timing &postprocessor…")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
+            }
+            ShellMenuItem {
+                command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
+                help: qsTr("Builds glow, border and shadow layers under the selected lines")
+                iconRole: "layers"
+                objectName: "blurAndGlowLayersMenuItem"
+                action: Action {
+                    id: blurAndGlowLayersAction
+                    text: qsTr("&Blur and glow layers…")
+                    enabled: root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT"
+                help: qsTr("Builds the layers again with the values Blur and glow layers last built with")
+                iconRole: "layers-repeat"
+                objectName: "blurAndGlowLayersRepeatMenuItem"
+                text: qsTr("Build layers with the &last values")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
             }
             ShellMenuItem {
                 command: "GLOBAL_SHOW_QC_NOTES"
@@ -3607,6 +3638,17 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
+            MenuSeparator {}
+            ShellMenuItem {
+                command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
+                iconRole: "layers"
+                objectName: field.objectName + "BlurAndGlowLayers"
+                text: qsTranslate("HikariSub.Hotkeys", "Blur and glow layers…")
+                enabled: root.editor.hasLine
+                keepsMenuOpen: false
+                onTriggered: root.openBlurAndGlowLayers()
+            }
+            ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
             MenuSeparator { visible: field.spelled; height: visible ? implicitHeight : 0 }
             ShellMenuItem {
                 iconRole: "spellchecker"
@@ -6135,6 +6177,20 @@ ApplicationWindow {
                             readonly property string docsText: qsTranslate("HikariSub.Hotkeys", "Duplicate lines")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
+                            objectName: "gridBlurAndGlowLayers"
+                            iconRole: "layers"
+                            text: qsTranslate("HikariSub.Hotkeys", "Blur and glow layers…")
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS")) root.openBlurAndGlowLayers()
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT"
+                            objectName: "gridBlurAndGlowLayersRepeat"
+                            iconRole: "layers-repeat"
+                            text: qsTranslate("HikariSub.Hotkeys", "Build layers with the last values")
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT")) root.repeatBlurAndGlowLayers()
+                        }
                         ShellMenuItem { command: "GRID_CUT"; iconRole: "edit-cut"; objectName: "cutLines"; standardKey: StandardKey.Cut; text: qsTranslate("HikariSub.Grid", "Cut"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
                         ShellMenuItem { command: "GRID_COPY"; iconRole: "edit-copy"; objectName: "copyLines"; standardKey: StandardKey.Copy; text: qsTranslate("HikariSub.Grid", "Copy"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
                         ShellMenuItem { command: "GRID_PASTE"; iconRole: "edit-paste"; objectName: "pasteLines"; standardKey: StandardKey.Paste; text: qsTranslate("HikariSub.Grid", "Paste"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
@@ -6220,6 +6276,7 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
@@ -6870,6 +6927,36 @@ ApplicationWindow {
             }
         }
         InlineBar {
+            id: projectTrustBar
+            objectName: "projectTrustBar"
+            property string dismissed: ""
+            readonly property string folder: {
+                root.projectRevision
+                return root.app.projectRoot(root.shellWindow)
+            }
+            readonly property bool needed: {
+                root.projectRevision
+                return root.app.projectNeedsTrust(root.shellWindow)
+            }
+            visible: needed && dismissed !== folder
+            iconRole: "trust"
+            closable: false
+            text: qsTranslate("HikariSub.Project", "This project has its own scripts or plugin settings. Trust “%1” to run them.")
+                  .arg(root.projectName)
+            Layout.fillWidth: true
+            IconTextButton {
+                iconRole: "trust"
+                objectName: "projectTrust"
+                text: qsTranslate("HikariSub.Project", "Trust folder")
+                onClicked: root.app.trustProject(root.shellWindow)
+            }
+            Button {
+                objectName: "projectTrustNotNow"
+                text: qsTranslate("HikariSub.MainWindow", "Not now")
+                onClicked: projectTrustBar.dismissed = projectTrustBar.folder
+            }
+        }
+        InlineBar {
             id: projectOfferBar
             objectName: "projectOfferBar"
             property string folder: ""
@@ -7448,6 +7535,41 @@ ApplicationWindow {
             open()
         }
     }
+    FileChooser {
+        id: lyricsDialog
+        objectName: "lyricsOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Import lyrics")
+        nameFilters: [qsTranslate("HikariSub.Documents", "Lyrics (*.lrc *.krc *.qrc *.ttml)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("lyrics", selectedFile)
+            root.openLyricsImport(root.app.localPath(selectedFile))
+        }
+        function show() {
+            const folder = root.pickerFolder("lyrics")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+    }
+    Loader {
+        id: lyricsImportLoader
+        active: false
+        sourceComponent: LyricsImportDialog {
+            controller: root.lyricsImport
+            settings: root.app.settings
+            onChooseAnother: lyricsDialog.show()
+        }
+    }
+    function openLyricsImport(path) {
+        if (!root.lyricsImport.load(path)) {
+            root.notices.post("error", qsTranslate("HikariSub.Documents", "Import lyrics"),
+                              qsTranslate("HikariSub.Documents", "Could not read %1.").arg(path))
+            return
+        }
+        lyricsImportLoader.active = true
+        lyricsImportLoader.item.open()
+    }
     Loader {
         id: dummyVideoLoader
         active: false
@@ -7555,7 +7677,7 @@ ApplicationWindow {
             open()
         }
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
-                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
+                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
                       qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
@@ -8064,6 +8186,24 @@ ApplicationWindow {
     function trackingToast(result) {
         root.notify(result.ok ? "info" : "warning", result.text, "")
     }
+    function openBlurAndGlowLayers() {
+        blurAndGlowLayersLoader.active = true
+        blurAndGlowLayersLoader.item.openDialog()
+    }
+    function repeatBlurAndGlowLayers() {
+        const result = root.app.repeatLayerBuilders()
+        root.notify(result.ok ? "info" : "warning", result.text, "")
+    }
+    Loader {
+        id: blurAndGlowLayersLoader
+        active: false
+        sourceComponent: BlurAndGlowLayersDialog {
+            app: root.app
+            shell: root.shell
+            colourPicker: root.colourPicker
+            settings: root.app.settings
+        }
+    }
     function openPerspectiveTracking() {
         perspectiveTrackingLoader.active = true
         perspectiveTrackingLoader.item.openDialog()
@@ -8212,6 +8352,7 @@ ApplicationWindow {
         sourceComponent: Component {
             SettingsDialog {
                 app: root.app
+                shellWindow: root.shellWindow
                 notices: root.notices
                 hotkeys: root.hotkeys
                 updates: root.updates
@@ -8624,6 +8765,24 @@ ApplicationWindow {
         root.review.undo(0, -1, false)
     }
     Action {
+        id: removeTagsAction
+        text: qsTranslate("HikariSub.Tags", "Remove tags…")
+        enabled: root.shell.hasEditingTarget
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_TAGS")) root.openRemoveTags()
+    }
+    function openRemoveTags() {
+        removeTagsLoader.active = true
+        removeTagsLoader.item.openDialog()
+    }
+    Loader {
+        id: removeTagsLoader
+        active: false
+        sourceComponent: RemoveTagsDialog {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    Action {
         id: keepAiChangeAction
         text: qsTranslate("HikariSub.Review", "Keep AI change")
         enabled: root.review.on && root.review.current.count !== undefined
@@ -8709,11 +8868,13 @@ ApplicationWindow {
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
+        GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
         GLOBAL_REVERT_MOTION_DATA: revertMotionDataAction,
         GLOBAL_COPY_MOTION_DATA: copyMotionDataAction,
         GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,
         GLOBAL_EXTEND_TRACKED_LINES: extendTrackedLinesAction,
         GLOBAL_EXTRAPOLATE_MOVE: extrapolateMoveAction,
+        GLOBAL_REMOVE_TAGS: removeTagsAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
@@ -8885,6 +9046,7 @@ ApplicationWindow {
         switch (symbol) {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
+        case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
@@ -8899,6 +9061,7 @@ ApplicationWindow {
             return true
         case "GLOBAL_SHIFT_TIMES": if (editing) root.applyShift("shift"); return true
         case "GLOBAL_TIMING_POSTPROCESSOR": if (editing) root.applyShift("postprocessor"); return true
+        case "GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT": if (editing) root.repeatBlurAndGlowLayers(); return true
         case "GLOBAL_NEXT_QC_NOTE": if (editing) root.stepQcNote(true); return true
         case "GLOBAL_PREVIOUS_QC_NOTE": if (editing) root.stepQcNote(false); return true
         case "GLOBAL_ADD_QC_NOTE": if (editing) root.addQcNote(-1); return true

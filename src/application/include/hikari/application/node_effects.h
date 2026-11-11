@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/audio_display.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/node_graph.h"
@@ -88,6 +89,8 @@ struct NodeEffectOptions {
     // The user trusts the Document's Lua; without it a graph with a Lua node writes nothing.
     bool trustLua = false;
     LuaNodePort *lua = nullptr;
+    // As MacroMediaPort::peakAudio gives it: nullopt without audio, null while it opens.
+    std::optional<const DisplayAudio *> audio;
     // Only these karaoke Lines; all of them when unset.
     std::optional<std::set<core::LineId>> sources;
     NodeEffectCache *cache = nullptr;
@@ -145,5 +148,20 @@ bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const N
 // As one undo step named "Apply node effect".
 std::expected<void, CommandRefusal> applyNodeEffect(EditSession &session, const NodeEffectRun &run,
                                                     const NodeEffectRun *owners = nullptr);
+
+// One Comment Line of a karaoke template; it takes the graph's Style.
+struct TemplateLine {
+    int layer = 0;
+    std::u8string effect, text;
+    friend bool operator==(const TemplateLine &, const TemplateLine &) = default;
+};
+
+// The graph `name` as `template` Lines that give its Lines through the stock 2.1.7 karaoke
+// templater, in the engine's order; or each node that has no template form, and why.
+std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
+                                                                                           std::u8string_view name);
+
+// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines".
+std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine);
 
 }

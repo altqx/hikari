@@ -13,6 +13,7 @@
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
+#include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/font_collector_controller.h"
@@ -317,6 +318,16 @@ public:
     Q_INVOKABLE QString projectName(int shellWindow) const { return m_projects->name(shellWindow); }
     Q_INVOKABLE QString projectRoot(int shellWindow) const { return m_projects->root(shellWindow); }
     Q_INVOKABLE QVariantList homeRecentProjects() const { return m_projects->recentRows(); }
+    // The Settings Project tab: {values, yours} in the dialog's control form for the projectable settings,
+    // and {sources}: "project" or "local" for each one a project file sets. Empty without a Project.
+    Q_INVOKABLE QVariantMap openProjectSettings(int shellWindow);
+    Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
+    // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
+    Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
+    // The Project is untrusted and holds scripts (.hikari/automation/) or a [plugins] table.
+    Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
+    // Adds the window's Project folder to trust.folders, which applies the Project again.
+    Q_INVOKABLE void trustProject(int shellWindow);
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes
@@ -497,6 +508,12 @@ public:
     Q_INVOKABLE QVariantMap copyMotionData();
     Q_INVOKABLE QVariantMap copyPowerPinTrack();
     Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {changed, deleted, rows: [{row, before, after, deleted}], more}: what removeTags(options) does,
+    // the first 200 rows.
+    Q_INVOKABLE QVariantMap tagRemovalPreview(const QVariantMap &options) const;
+    // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
+    // "selected"/"file", and the Cleanup flags by their names.
+    Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
@@ -505,6 +522,15 @@ public:
     Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
     // {text} or {error}.
     Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
+    // {state, text, canApply} for the dialog's options.
+    Q_INVOKABLE QVariantMap checkLayerBuilders(const QVariantMap &options) const;
+    // The video shows the selected Lines' stacks until cleared.
+    Q_INVOKABLE void setLayerPreview(const QVariantMap &options);
+    Q_INVOKABLE void clearLayerPreview();
+    // Empty when built, else why not.
+    Q_INVOKABLE QString applyLayerBuilders(const QVariantMap &options);
+    // With the options the dialog last built with; {ok, text}.
+    Q_INVOKABLE QVariantMap repeatLayerBuilders();
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -805,6 +831,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
@@ -1034,6 +1061,8 @@ private:
     void storeRecent();
     // MUST KILL: returns whether the Document changed since the video last showed it.
     bool showVideoSubtitles();
+    std::optional<core::Document> layerPreviewDocument(const core::Document &doc,
+                                                       const std::set<core::LineId> &selection) const;
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
@@ -1218,6 +1247,7 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
+    std::optional<QVariantMap> m_layerPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
@@ -1240,6 +1270,7 @@ private:
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;

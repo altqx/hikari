@@ -63,7 +63,9 @@ struct AgentCli {
 /// Runs `path --version`; calls back with the version, or empty when it didn't answer.
 void agentVersion(const QString &path, std::function<void(QString)> done);
 
-/// Finds `agent` in `dirs`, or on PATH when `dirs` is empty, and asks it for its version. Nullopt when it isn't there.
+/// Where `agent` ("claude" or "codex") is: on `dirs`, or on PATH when `dirs` is empty. Empty when it isn't found.
+QString findAgentCli(const QString &agent, const QStringList &dirs = {});
+/// Finds `agent` with findAgentCli and asks it for its version. Nullopt when it isn't there.
 void probeAgentCli(const QString &agent, std::function<void(std::optional<AgentCli>)> done, const QStringList &dirs = {});
 
 enum class AgentBadge { Current, UpdateAvailable, Unsupported, KnownBroken, Unknown };
