@@ -7,6 +7,7 @@
 #include "hikari/application/legacy_timebase.h"
 
 #include <cstdint>
+#include <expected>
 #include <filesystem>
 #include <memory>
 #include <functional>
@@ -107,6 +108,18 @@ struct WaveformColumns {
     std::vector<int> min, peak;
 };
 WaveformColumns legacyWaveform(const DisplayAudio &audio, std::int64_t start, int w, int h, int samples, float scale);
+
+struct AudioPeakBuckets {
+    std::vector<std::int16_t> min, max;
+};
+
+// A range too long to read sample by sample while the peak table is not ready.
+struct AudioPeaksTooLong {};
+
+// The lowest and highest sample in each of `buckets` equal slices of [startMs, endMs), from the peak
+// table once the slices are as long as its blocks; the Hikari API's audio.peaks.
+std::expected<AudioPeakBuckets, AudioPeaksTooLong> audioPeaks(const DisplayAudio &audio, std::int64_t startMs,
+                                                               std::int64_t endMs, int buckets);
 
 // Colours as 0xAARRGGBB.
 struct AudioDisplayOptions {
