@@ -54,6 +54,9 @@ find_library(HIKARI_CLIPPER2_LIBRARY NAMES Clipper2 REQUIRED)
 add_library(hikari_ill_clipper2 SHARED "${PROJECT_SOURCE_DIR}/Thirdparty/ILL-clipper2/clipper.wrap.cpp")
 target_include_directories(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_INCLUDE_DIR}")
 target_link_libraries(hikari_ill_clipper2 PRIVATE "${HIKARI_CLIPPER2_LIBRARY}")
+if(NOT WIN32)
+    target_link_options(hikari_ill_clipper2 PRIVATE "LINKER:--exclude-libs,ALL")
+endif()
 set_target_properties(hikari_ill_clipper2 PROPERTIES OUTPUT_NAME clipper2 CXX_STANDARD 17 CXX_VISIBILITY_PRESET hidden)
 
 # Layout scripts expect: Automation/automation/{Autoload,Include}, log/autosave/temp beside it.
