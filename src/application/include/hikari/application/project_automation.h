@@ -36,8 +36,8 @@ struct AutoloadPlan {
 AutoloadPlan planAutoload(const std::vector<FolderListing> &base, const std::vector<WindowScripts> &windows,
                           bool windowsPaths);
 
-// A script inside a trusted Project's folder searches that Project's include folder before `base`; any
-// other script searches `base` only.
+// The include path: a script inside a trusted Project's folder gets that Project's include folder before
+// `base`, any other script `base` only. The Lua helper still loads a shipped module from the shipped folder.
 std::vector<std::string> includeFoldersFor(const std::string &script, const std::vector<std::string> &base,
                                            const std::vector<std::string> &trustedRoots, bool windows);
 
