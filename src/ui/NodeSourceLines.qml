@@ -143,7 +143,9 @@ Pane {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 color: Theme.muted
-                text: root.controller.source === 0 ? qsTr("No karaoke line of this graph’s style to preview on.")
+                text: root.controller.source === 0 && root.controller.typesetting
+                      ? qsTr("No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….")
+                      : root.controller.source === 0 ? qsTr("No karaoke line of this graph’s style to preview on.")
                       : root.controller.hasLua && !root.controller.trusted ? qsTr("Nothing runs until the file’s Lua is trusted.")
                       : root.controller.problems.length > 0 ? qsTr("No preview: the graph has problems.")
                       : qsTr("The graph writes no lines for line %1.").arg(root.controller.sourceNumber)
@@ -219,8 +221,10 @@ Pane {
                 elide: Text.ElideRight
                 textFormat: Text.PlainText
                 //: Which karaoke lines the graph applies to: "24 karaoke lines, Default" or "24 karaoke lines, all styles"
-                text: (root.controller.sources.length === 1 ? qsTr("1 karaoke line") : qsTr("%n karaoke lines", "", root.controller.sources.length))
-                      + ", " + (root.controller.allStyles ? qsTr("all styles") : root.controller.style)
+                text: root.controller.typesetting
+                      ? (root.controller.sources.length === 1 ? qsTr("1 selected line") : qsTr("%n selected lines", "", root.controller.sources.length))
+                      : (root.controller.sources.length === 1 ? qsTr("1 karaoke line") : qsTr("%n karaoke lines", "", root.controller.sources.length))
+                        + ", " + (root.controller.allStyles ? qsTr("all styles") : root.controller.style)
             }
         }
 

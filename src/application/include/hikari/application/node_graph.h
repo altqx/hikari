@@ -13,8 +13,8 @@
 
 namespace hikari::application {
 
-// The graph format's number; it grows add-only, as the Hikari API does.
-inline constexpr int kNodeGraphFormat = 1;
+// The newest graph format this HikariSub reads; it grows add-only, as the Hikari API does.
+inline constexpr int kNodeGraphFormat = 2;
 
 // Letters, digits, '_' and '-'.
 bool isNodeId(std::string_view id);
@@ -35,11 +35,15 @@ struct GraphWire {
     GraphEnd from, to;
 };
 
+// Karaoke: the karaoke Lines of the graph Line's Style. Lines: the Lines a run names (format 2).
+enum class GraphTarget { Karaoke, Lines };
+
 struct NodeGraph {
-    int format = kNodeGraphFormat;
+    int format = 1;
     std::int64_t seed = 0;
     // The karaoke Lines of every Style, not only the graph Line's.
     bool allStyles = false;
+    GraphTarget target = GraphTarget::Karaoke;
     std::vector<GraphNode> nodes;
     std::vector<GraphWire> wires;
 };
@@ -52,6 +56,8 @@ struct GraphProblem {
     friend bool operator==(const GraphProblem &, const GraphProblem &) = default;
 };
 
+// The format a graph is written in: 2 once it targets Lines.
+int formatOf(const NodeGraph &graph);
 json::Json graphJson(const NodeGraph &graph);
 std::expected<NodeGraph, GraphProblem> graphFromJson(const json::Json &json);
 std::string graphText(const NodeGraph &graph);

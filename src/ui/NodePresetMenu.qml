@@ -26,4 +26,26 @@ ShellMenu {
         onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
         onObjectRemoved: (index, object) => presetMenu.removeItem(object)
     }
+    MenuSeparator {}
+    MenuItem {
+        objectName: "nodeTypesettingHeading"
+        text: qsTr("For selected lines")
+        enabled: false
+    }
+    Instantiator {
+        model: presetMenu.controller.typesettingPresets
+        delegate: ShellMenuItem {
+            required property var modelData
+            required property int index
+            objectName: "nodeTypesettingPreset_" + index
+            iconRole: modelData.iconRole
+            text: modelData.title
+            help: modelData.description
+            ToolTip.visible: hovered
+            ToolTip.text: modelData.description
+            onTriggered: presetMenu.controller.addTypesettingGraph(modelData.index)
+        }
+        onObjectAdded: (index, object) => presetMenu.insertItem(presetMenu.count, object)
+        onObjectRemoved: (index, object) => presetMenu.removeItem(object)
+    }
 }

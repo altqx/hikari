@@ -116,6 +116,7 @@ struct NodeEffectRun {
     std::u8string name;
     bool ran = false; // false: invalid, Lua not trusted or its helper stopped; applying it changes nothing
     bool complete = true; // every karaoke Line was run, not only some
+    bool typesetting = false; // the graph targets Lines: each source's Lines go right after it
     // The karaoke Lines run, in Document order, and which of them got Lines.
     std::vector<core::LineId> sources;
     std::set<core::LineId> applied;
@@ -128,6 +129,9 @@ struct NodeEffectRun {
     double seconds = 0;
     bool ok() const { return problems.empty(); }
 };
+
+// A Line a typesetting graph may run on: not a graph, template, code or generated Line.
+bool isTypesettingSource(const core::LineRecord &line);
 
 // The karaoke Lines (the templater's: a Dialogue without Effect, or any Line whose Effect says
 // karaoke) of `style`, or of every Style with allStyles. A graph that fails validation, or holds
@@ -143,6 +147,8 @@ std::expected<NodeEffectRun, GraphProblem> runDocumentGraph(const core::Document
 // with the run's, where the first of them stood or else at the end, and turns each source that
 // got Lines into a Comment with Effect "karaoke". Lines of other graphs and of the templater stay.
 // A file read back has no generatedFrom marks: `owners` (from a complete run) matches them.
+// A typesetting run puts each source's Lines right after it and comments the source, keeping its
+// Effect; a source's earlier Lines are those it generated or, read back, the graph's Lines right after it.
 bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const NodeEffectRun *owners = nullptr);
 
 // As one undo step named "Apply node effect".

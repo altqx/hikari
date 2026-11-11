@@ -19,6 +19,8 @@ Rectangle {
         return qsTr("%1 ms").arg(ms < 10 ? ms.toFixed(1) : Math.round(ms))
     }
     function karaokeLines(n) {
+        if (root.controller.typesetting)
+            return n === 1 ? qsTr("1 selected line") : qsTr("%n selected lines", "", n)
         return n === 1 ? qsTr("1 karaoke line") : qsTr("%n karaoke lines", "", n)
     }
 
@@ -77,13 +79,18 @@ Rectangle {
                 color: Theme.line
             }
             Label {
-                visible: root.controller.hasGraph
+                objectName: "nodeTarget"
+                visible: root.controller.hasGraph && root.controller.typesetting
+                text: qsTr("Target: selected lines")
+            }
+            Label {
+                visible: root.controller.hasGraph && !root.controller.typesetting
                 text: qsTr("Style")
             }
             ComboBox {
                 id: styleBox
                 objectName: "nodeStyleBox"
-                visible: root.controller.hasGraph
+                visible: root.controller.hasGraph && !root.controller.typesetting
                 Layout.preferredWidth: 130
                 enabled: root.editable
                 readonly property string allStyles: qsTr("All styles")
@@ -171,9 +178,10 @@ Rectangle {
                 PrimaryButton {
                     objectName: "nodeApply"
                     text: qsTr("Apply")
-                    enabled: root.controller.canApply
-                    onClicked: root.controller.apply(false)
-                    Accessible.description: qsTr("Apply to every karaoke line")
+                    enabled: root.controller.typesetting ? root.controller.canApplySelected : root.controller.canApply
+                    onClicked: root.controller.apply(root.controller.typesetting)
+                    Accessible.description: root.controller.typesetting ? qsTr("Apply to the selected lines")
+                                                                        : qsTr("Apply to every karaoke line")
                 }
                 PrimaryButton {
                     id: applyArrow
@@ -314,6 +322,8 @@ Rectangle {
         ShellMenuItem {
             objectName: "nodeApplyAll"
             iconRole: "karaoke"
+            visible: !root.controller.typesetting
+            height: visible ? implicitHeight : 0
             text: qsTr("Apply to every karaoke line")
             onTriggered: root.controller.apply(false)
         }
@@ -323,6 +333,7 @@ Rectangle {
             text: qsTr("Apply to the selected lines")
             help: root.controller.canApplySelected
                   ? qsTr("Only the lines selected in “Source lines” are regenerated; the others keep their output.")
+                  : root.controller.typesetting ? qsTr("Select lines in “Source lines” first.")
                   : qsTr("Select karaoke lines in “Source lines” first.")
             enabled: root.controller.canApplySelected
             onTriggered: root.controller.apply(true)

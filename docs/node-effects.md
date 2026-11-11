@@ -1,6 +1,6 @@
 # Node effects
 
-A node effect is a graph that turns karaoke Lines into generated Lines. The decision is [ADR 0023](adr/0023-node-effects.md). This page is the contract for the engine, the node catalogue and the graph format (NE1, [#423](https://github.com/altqx/hikari/issues/423)). The canvas and its editor mode (NE2, [#424](https://github.com/altqx/hikari/issues/424)) and the ten [karaoke presets](karaoke-presets.md) as graphs (NE3) build on it.
+A node effect is a graph that turns karaoke Lines, or the ordinary Lines a [typesetting graph](#typesetting-graphs) runs on, into generated Lines. The decision is [ADR 0023](adr/0023-node-effects.md). This page is the contract for the engine, the node catalogue and the graph format (NE1, [#423](https://github.com/altqx/hikari/issues/423)). The canvas and its editor mode (NE2, [#424](https://github.com/altqx/hikari/issues/424)) and the ten [karaoke presets](karaoke-presets.md) as graphs (NE3) build on it.
 
 The engine is `hikari::application` code with no Qt: `node_catalogue.h`, `node_graph.h`, `node_graph_library.h` and `node_effects.h`.
 
@@ -27,9 +27,10 @@ The Lines a graph generates carry the Effect `fx <name>`, and the Grid folds the
  "wires": [{"from": "syl.units", "to": "emit.units"}]}
 ```
 
-- `format` is the graph format, now 1. HikariSub refuses a graph whose format is newer than its own.
+- `format` is the graph format: 1, or 2 for a graph with `target`. HikariSub refuses a graph whose format is newer than its own.
 - `seed` seeds every Random node.
 - `allStyles` runs the graph on karaoke Lines of every Style, not only the graph Line's.
+- `target` (format 2) is `karaoke`, the default, or `lines` for a [typesetting graph](#typesetting-graphs).
 - A node has:
   - an `id` (letters, digits, `_` and `-`, unique in its graph);
   - a `type` from the catalogue;
@@ -151,6 +152,19 @@ The engine runs only a graph without problems.
 - the karaoke Line and its Style.
 
 A change to one branch therefore re-runs only the Emits that read it, and only for the Lines that changed.
+
+## Typesetting graphs
+
+A graph whose `target` is `lines` runs on the ordinary Lines it is given (AU9, [#844](https://github.com/altqx/hikari/issues/844); [ADR 0023](adr/0023-node-effects.md#typesetting-graphs)).
+
+- **Its sources.** A run takes them from `sources`, and Lines of any Style count, karaoke or not, Dialogue or Comment. Graph Lines, template and code Lines, and generated Lines (Effect `fx` or `fx <name>`) never count. A run with no `sources` writes nothing: "targets the Lines you choose, and none were chosen".
+- **Its layout.** A Line is laid out as karaskel lays out a karaoke Line, with three changes (`placeTypesettingLine`, `typesetting_line.h`):
+  - the first `\pos`, or else the first `\move`'s start, places the units, by the first `\an`, or else the Style's alignment. The Line unit's position is that point, and every syllable and character moves with it. A Line with neither keeps karaskel's place by its Style;
+  - the Line unit's raw text has every `\pos` and `\move` taken out, so an Emit with `unit_text` raw and a `pos` tag gives `{\pos(x,y)}{\an7\fs20}text`;
+  - a Line with no karaoke tags is one syllable that spans the Line, and its characters (grapheme clusters, as TH4 cuts them) span it too. A unit is blank only when it holds nothing but spaces.
+
+  Widths still come from the Style, as karaskel measures them; tags inside the text don't change them.
+- **Apply** puts each source's Lines right after it, in the engine's order, and turns the source into a Comment that keeps its Effect, so running again (on the Comment) replaces them. A file read back has no record of which source made which Line, so a source's earlier Lines are the graph's `fx <name>` Lines that follow it. Lines of other sources, graphs and the templater stay. It is one undo step, "Apply node effect".
 
 ## Lua
 
