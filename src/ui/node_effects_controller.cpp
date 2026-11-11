@@ -50,6 +50,10 @@ constexpr NodeExampleText kExamples[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Twelve copies of each syllable fly out to random places around it and fade.")},
     {"audio-pulse", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Audio pulse"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable grows with how loud the audio is while it is sung. Needs audio open.")},
+    {"highlight-flashes", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Highlight flashes"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "An outline flashes on each syllable once for every highlight, as the templater’s multi does.")},
+    {"paint-and-cloud", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Paint and cloud"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Syllables marked {\\-paint} fill from red to white, those marked {\\-cloud} rise and blur, and the rest stay in place.")},
 };
 
 const NodeExampleText *exampleText(std::string_view example)

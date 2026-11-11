@@ -51,3 +51,28 @@ char` over Thai clusters, a combining accent, an emoji ZWJ sequence and a
 flag. `named-line-templates` locks TH5b-line-template-order: the unnamed
 line templates in file order, then the named ones in the order their names
 first appear.
+
+## karaOK
+
+`karaok/` holds Documents in karaOK mode (their `[Script Info]` says
+`Karaoke Templater: karaOK`). `kara-templater-karaok.lua` is upstream
+karaOK's templater unchanged: `lost-logarithm/karaOK` commit `f749c4fa64e7`,
+`autoload/ln.kara-templater-mod.lua`, under its BSD-3 header ("Karaoke
+Templater mod by logarithm"). It is the oracle, run with its "Apply karaoke
+template (modded with furigana)" macro.
+
+| Document | Covers |
+|---|---|
+| `classes` | `line`, `lsyl`, `lword`, `lchar`, `word`, `syl`, `char`, `furi`, `notext` on a line template, `$ci`/`$slen`/`$llen`/`$len` |
+| `code-units` | `code word`/`char`, `word`/`syll`/`char` in the template environment, the unit tables, `subs`, `table`, `pairs`, `ipairs`, `tonumber`, `tostring`, `type` |
+| `environment` | `maxloop` gating every Line, `k_retime`, places to 0.1 px, zero-length syllables, no syllable 0 |
+| `style` | The `style` modifier over Style names without pattern characters |
+| `furigana` | `furi`, `furichar` and `code furichar` |
+| `leading-text` | Text before the first karaoke tag, which belongs to syllable 1 |
+
+The built-in and upstream karaOK must both give the golden. To rewrite these
+goldens from upstream, run the test with `HIKARI_UPDATE_KARAOKE_GOLDENS=1`.
+
+`karaok/departures/` holds one Document for each place where the built-in
+fixes upstream karaOK, named after its ledger entry. Its golden comes from the
+built-in, and upstream must give different bytes.

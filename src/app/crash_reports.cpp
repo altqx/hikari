@@ -174,13 +174,27 @@ report::Report CrashReports::fresh() const
     r.system = m_system;
     r.system.ai = Analytics::conforming(QStringLiteral("crash_report"), m_analytics.aiVersions());
     r.settings = report::settingsSummary(m_settings);
+    r.windows = m_windows;
     return r;
+}
+
+void CrashReports::setWindows(const QList<report::Window> &windows)
+{
+    if (windows == m_windows)
+        return;
+    m_windows = windows;
+    QSaveFile file(m_config.windows);
+    if (!m_config.windows.isEmpty() && inPrivateFolder(m_config.windows) && file.open(QIODevice::WriteOnly)) {
+        file.write(QJsonDocument(report::windowsJson(m_windows)).toJson(QJsonDocument::Compact));
+        file.commit();
+    }
 }
 
 void CrashReports::collect()
 {
     const QStringList lastLog = report::boundLog(QString::fromUtf8(readPrivate(m_config.logTail)).split(u'\n', Qt::SkipEmptyParts));
     QFile::remove(m_config.logTail);
+    const QList<report::Window> lastWindows = report::windowsOf(QJsonDocument::fromJson(readPrivate(m_config.windows)).array());
     std::optional<crash::Record> record;
     QDateTime when;
     for (const QString &path : {m_config.crashRecord, m_config.freezeRecord}) {
@@ -198,6 +212,7 @@ void CrashReports::collect()
         m_pending->record = record;
         m_pending->when = when;
         m_pending->log = lastLog;
+        m_pending->windows = lastWindows;
         savePending();
         if (!sendingFile().isEmpty())
             QFile::remove(sendingFile());

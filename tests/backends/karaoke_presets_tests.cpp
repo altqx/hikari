@@ -311,6 +311,85 @@ TEST_F(KaraokePresets, ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplate
     }
 }
 
+class FakeMeasure : public hikari::application::TextMeasurePort {
+public:
+    std::optional<hikari::application::TextExtents> measure(const std::vector<std::string> &style,
+                                                            const std::string &text) override
+    {
+        hikari::application::HostServiceReply r;
+        hikari::test::appendFakeExtents(r, style, text);
+        return hikari::application::TextExtents{r.numbers[0], r.numbers[1], r.numbers[2], r.numbers[3]};
+    }
+};
+
+struct NodeExample {
+    std::string_view example;
+    std::vector<std::pair<std::u8string, std::u8string>> templates;
+};
+
+TEST_F(KaraokePresets, NodeExamplesGiveTheLinesOfTheirStockTemplates)
+{
+    const std::string karaoke =
+        R"(Dialogue: 0,0:00:13.00,0:00:16.00,Romaji,,0,0,0,,{\k40}ha{\k20}#{\k0}#{\k30}na{\k25\-paint}bi{\k15}#{\k35}ga{\k0} {\k30\-cloud}ru{\k20}#{\k10}yo)"
+        "\n"
+        R"(Dialogue: 0,0:00:17.00,0:00:19.00,Romaji,,0,0,0,,{\-cloud\k30}ku{\k30}mo {\k20\-paint}no{\k10}#{\k40}i)"
+        "\n";
+    const NodeExample examples[] = {
+        {"highlight-flashes",
+         {{u8"template syl noblank multi", u8R"({\an5\pos($center,$middle)\1a&HFF&\t($start,$end,\bord5\3a&HFF&)})"}}},
+        {"paint-and-cloud",
+         {{u8"template syl noblank fx paint", u8R"({\an5\pos($x,$y)\1c&H0000FF&\t($start,$end,\1c&HFFFFFF&)})"},
+          {u8"template syl noblank fx cloud", u8R"({\an5\move($x,$y,$x,!$y-20!,$start,$end)\blur2})"},
+          {u8"code syl", u8R"(fxgroup.plain = (syl.inline_fx == ""))"},
+          {u8"template syl noblank fxgroup plain", u8R"({\an5\pos($x,$y)})"}}},
+    };
+    const auto graphs = hikari::application::nodeGraphPresets();
+    for (const NodeExample &example : examples) {
+        SCOPED_TRACE(std::string(example.example));
+        const auto preset = std::ranges::find(graphs, example.example, &hikari::application::NodeGraphPreset::example);
+        ASSERT_NE(preset, graphs.end());
+        const auto graph = hikari::application::parseGraph(preset->graph);
+        ASSERT_TRUE(graph.has_value());
+
+        KaraokePreset stock;
+        for (const auto &[effect, text] : example.templates)
+            stock.lines.push_back({0, effect, text});
+        const std::string input = textOf(fixtureWith(stock)) + karaoke;
+        const std::vector<std::string> expected = generatedLines(templated(bytesOf(input), pristineScript()));
+        ASSERT_GT(expected.size(), 10u);
+        EXPECT_EQ(generatedLines(templated(bytesOf(input), bundledScript())), expected)
+            << "the built-in templater";
+
+        KaraokePreset graphLine;
+        const std::string json = hikari::application::graphText(*graph);
+        graphLine.lines.push_back({0, u8"graph example", std::u8string(json.begin(), json.end())});
+        const auto doc = hikari::core::loadAss(bytesOf(textOf(fixtureWith(graphLine)) + karaoke)).document;
+        FakeMeasure measure;
+        hikari::application::NodeEffectOptions options;
+        options.measure = &measure;
+        const auto run = hikari::application::runDocumentGraph(doc, hikari::application::documentGraphs(doc).front().line,
+                                                               options);
+        ASSERT_TRUE(run.has_value());
+        EXPECT_TRUE(run->problems.empty());
+        std::vector<std::string> lines;
+        for (const auto &line : run->lines) {
+            std::string text = narrow(hikari::core::legacy::assLineText(line));
+            text.replace(text.find(",fx example,"), 12, ",fx,");
+            lines.push_back(std::move(text));
+        }
+        EXPECT_EQ(lines, expected);
+
+        const auto exported = hikari::application::exportTemplateLines(*graph, u8"example");
+        ASSERT_TRUE(exported.has_value()) << exported.error().front().node << " " << exported.error().front().message;
+        KaraokePreset round;
+        for (const auto &l : *exported)
+            round.lines.push_back({l.layer, l.effect, l.text});
+        const std::string exportedInput = textOf(fixtureWith(round)) + karaoke;
+        EXPECT_EQ(generatedLines(templated(bytesOf(exportedInput), pristineScript())), expected) << "exported";
+        EXPECT_EQ(generatedLines(templated(bytesOf(exportedInput), bundledScript())), expected) << "exported, built in";
+    }
+}
+
 TEST_F(KaraokePresets, ScaledStylesKeepTheirScale)
 {
     const struct {

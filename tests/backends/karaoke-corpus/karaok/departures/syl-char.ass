@@ -1,0 +1,18 @@
+[Script Info]
+; TH5c-karaok-syl-char: template syl char is a char template, not a syl and a char template
+Title: TH5c corpus karaOK syl char
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl char,{\pos($x,$y)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,{\k50}ab{\k40}cd

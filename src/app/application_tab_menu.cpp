@@ -301,7 +301,8 @@ void Application::loadAssociations(application::DocumentId document, const appli
         const QString keyframes = QDir::toNativeSeparators(qs(load.keyframes));
         if (shown) {
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(qs(load.keyframes))); !problem.isEmpty())
-                m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
+                m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem,
+                              {}, windowOfTab(document.value));
         } else {
             media.keyframes = keyframes;
         }
@@ -317,7 +318,8 @@ void Application::loadAssociations(application::DocumentId document, const appli
             problem = times.error();
         }
         if (!problem.isEmpty())
-            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), problem);
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open timecodes file"), problem,
+                          {}, windowOfTab(document.value));
     }
 }
 

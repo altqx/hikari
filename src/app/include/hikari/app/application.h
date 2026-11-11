@@ -514,6 +514,13 @@ public:
     // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
     // "selected"/"file", and the Cleanup flags by their names.
     Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
+    // The selected run interpolated with the dialog's {accel, shortestRotation, cascade, excluded}: {count,
+    // firstRow, lastRow, problem, startBlockOnly, changes [{id, tag, before, from, to, fromColour, toColour,
+    // skip}], results [{row, text}]}. The video shows the result until clearInterpolationPreview().
+    Q_INVOKABLE QVariantMap interpolationPlan(const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyInterpolation(const QVariantMap &options);
+    Q_INVOKABLE void clearInterpolationPreview();
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
@@ -900,6 +907,8 @@ public:
     Q_INVOKABLE void activateShellWindow(int shellWindow);
     // tabs, currentTab and home of one shell window; the properties are the active window's.
     Q_INVOKABLE QVariantList windowTabs(int shellWindow) const;
+    // The shell window holding the tab; the active window for none.
+    Q_INVOKABLE int windowOfTab(qulonglong document) const;
     Q_INVOKABLE int windowCurrentTab(int shellWindow) const;
     Q_INVOKABLE bool windowHome(int shellWindow) const;
     // Waits for running writes and delivers their results.
@@ -1246,6 +1255,7 @@ private:
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     std::optional<QVariantMap> m_layerPreview;
+    std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
@@ -1315,6 +1325,7 @@ private:
     void leaveShellWindow(int shellWindow);
     void showFirstWindow();
     void noteLastUsedWindow();
+    void noteCrashWindows();
     ui::WorkspaceLayoutController &layoutOf(int shellWindow);
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();

@@ -166,7 +166,7 @@ qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml ResampleWindow.qml)
-qt_target_qml_sources(hikari_ui QML_FILES PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml
+qt_target_qml_sources(hikari_ui QML_FILES PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml InterpolateLinesWindow.qml
     ExtendTrackingWindow.qml BlurAndGlowLayersDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES RemoveTagsDialog.qml)
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/icons/dawn-peek/app.svg")

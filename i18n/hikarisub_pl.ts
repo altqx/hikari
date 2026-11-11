@@ -5640,6 +5640,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Według łamań wierszy</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>Interpoluj między wierszami…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>Zaznacz co najmniej trzy wiersze: pierwszy, ostatni i wiersze między nimi.</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>Wypełnia wiersze między pierwszym a ostatnim zaznaczonym wierszem wartościami tagów pośrednimi między ich wartościami</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>Zamień linijki</translation>
     </message>
@@ -7490,6 +7502,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń tagi…</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>Interpoluj między wierszami…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>Przenieś zakładkę do nowego okna</translation>
     </message>
@@ -7588,6 +7604,109 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Align to video…</source>
         <translation>Dopasuj do wideo…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>Zaznacz co najmniej trzy wiersze: pierwszy, ostatni i wiersze między nimi.</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>Pierwszy i ostatni wiersz mają te same tagi, więc nie ma czego interpolować.</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>Przycięcia mają różne kształty.</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>Jedno przycięcie jest prostokątem, a drugie rysunkiem.</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>Tylko jeden z dwóch wierszy ma to przycięcie.</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>Przekształcenia mają różną budowę.</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>Z tymi tagami nic by się nie zmieniło.</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>Interpoluj między wierszami</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n wiersz, od wiersza %1 do wiersza %2. Wideo pokazuje wynik, dopóki to okno jest otwarte.</numerusform>
+            <numerusform>%n wiersze, od wiersza %1 do wiersza %2. Wideo pokazuje wynik, dopóki to okno jest otwarte.</numerusform>
+            <numerusform>%n wierszy, od wiersza %1 do wiersza %2. Wideo pokazuje wynik, dopóki to okno jest otwarte.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>Pierwszy i ostatni wiersz mają różny tekst, więc interpolowane są tylko tagi początkowe.</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>Tag</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>Pierwszy wiersz</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>Ostatni wiersz</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>%1 przed „%2”</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>brak</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>Przyspieszenie</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1 to ruch równomierny. Powyżej 1 zaczyna wolno i kończy szybko; poniżej 1 zaczyna szybko i kończy wolno.</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>Obracaj najkrótszą drogą</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>Przekształcenia kaskadowo</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>Tagi %1 każdego wiersza działają jeden po drugim przez cały wiersz</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>Wynik</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>
@@ -10624,6 +10743,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Każda sylaba rośnie wraz z głośnością dźwięku, gdy jest śpiewana. Wymaga otwartego dźwięku.</translation>
     </message>
     <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10839,6 +10974,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11012,6 +11163,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

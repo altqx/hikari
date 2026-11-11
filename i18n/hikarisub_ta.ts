@@ -5594,6 +5594,18 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளின்படி</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>குறைந்தது மூன்று வரிகளைத் தேர்ந்தெடுக்கவும்: முதல், கடைசி மற்றும் அவற்றுக்கு இடையிலான வரிகள்.</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>தேர்ந்தெடுத்த முதல் மற்றும் கடைசி வரிகளுக்கு இடையிலான வரிகளை அவற்றின் குறிச்சொல் மதிப்புகளுக்கு இடைப்பட்ட மதிப்புகளால் நிரப்பும்</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>வரிகளை இடமாற்று</translation>
     </message>
@@ -7434,6 +7446,10 @@ Failed to copy %2 fonts.</source>
         <translation>குறிச்சொற்களை நீக்கு…</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
     </message>
@@ -7532,6 +7548,108 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>குறைந்தது மூன்று வரிகளைத் தேர்ந்தெடுக்கவும்: முதல், கடைசி மற்றும் அவற்றுக்கு இடையிலான வரிகள்.</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>முதல் மற்றும் கடைசி வரிகளில் ஒரே குறிச்சொற்கள் உள்ளன, எனவே இடைக்கணிக்க எதுவும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>கிளிப்புகளின் வடிவங்கள் வேறுபடுகின்றன.</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>ஒரு கிளிப் செவ்வகம், மற்றொன்று வரைபடம்.</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>இரண்டு வரிகளில் ஒன்றில் மட்டுமே இந்தக் கிளிப் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>உருமாற்றங்களின் அமைப்பு வேறுபடுகிறது.</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>இந்தக் குறிச்சொற்களால் எதுவும் மாறாது.</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n வரி, வரி %1 முதல் வரி %2 வரை. இது திறந்திருக்கும் வரை வீடியோ முடிவைக் காட்டும்.</numerusform>
+            <numerusform>%n வரிகள், வரி %1 முதல் வரி %2 வரை. இது திறந்திருக்கும் வரை வீடியோ முடிவைக் காட்டும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>முதல் மற்றும் கடைசி வரிகளின் உரை வேறுபடுகிறது, எனவே தொடக்கக் குறிச்சொற்கள் மட்டுமே இடைக்கணிக்கப்படுகின்றன.</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>குறிச்சொல்</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>முதல் வரி</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>கடைசி வரி</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>“%2” க்கு முன் %1</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>இல்லை</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>முடுக்கம்</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1 என்பது சீரானது. 1-க்கு மேல் மெதுவாகத் தொடங்கி வேகமாக முடியும்; 1-க்குக் கீழ் வேகமாகத் தொடங்கி மெதுவாக முடியும்.</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>குறுகிய வழியில் சுழற்று</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>உருமாற்றங்களை அடுக்கு</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>ஒவ்வொரு வரியின் %1 குறிச்சொற்களும் வரி முழுவதும் ஒன்றன் பின் ஒன்றாக இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>
@@ -10543,6 +10661,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒவ்வொரு அசையும் பாடப்படும்போது ஒலியின் உரத்தலுக்கு ஏற்பப் பெரிதாகிறது. ஒலி திறந்திருக்க வேண்டும்.</translation>
     </message>
     <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10758,6 +10892,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10931,6 +11081,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
