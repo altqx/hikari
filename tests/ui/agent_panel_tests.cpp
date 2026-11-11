@@ -4,6 +4,7 @@
 #include "hikari/application/ai_providers.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_agent_broker.h"
+#include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_sidecar_host.h"
 #include "hikari/backends/ai_signin.h"
 #include "hikari/backends/desktop_handoff.h"
@@ -15,6 +16,7 @@
 #include "theme.h"
 
 #include <QFile>
+#include <QPointer>
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QGuiApplication>
@@ -82,6 +84,7 @@ class AgentPanelTest : public QObject {
     Q_OBJECT
     QTemporaryDir root;
     std::unique_ptr<app::Application> application;
+    QPointer<backends::ai::AiSidecarHost> realHost;
     std::unique_ptr<QQmlApplicationEngine> engine;
 
     QString at(const QString &name) const
@@ -206,6 +209,8 @@ class AgentPanelTest : public QObject {
         return qScopeGuard([this, path = qEnvironmentVariable(variable.toLatin1().constData())] {
             if (QFile file(path); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 file.write(agent().markdown(agent().current()).toUtf8());
+            if (QFile file(path + QStringLiteral(".sidecar-stderr.txt")); realHost && file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                file.write(realHost->diagnostics());
         });
     }
 
@@ -224,14 +229,16 @@ class AgentPanelTest : public QObject {
             o.sandbox = backends::sandbox::Profile{.name = QStringLiteral("HikariSub.AI.Sidecar"),
                                                    .readExecute = {QFileInfo(runtime).absolutePath(), QFileInfo(bundle).absolutePath()},
                                                    .readWrite = {o.workingDirectory, at(QStringLiteral("ai/vendor"))}};
-            return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
-                                                                 api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+            auto host = std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
+                                                                      api::Caller{.id = "ai", .label = "AI", .reviewed = true});
+            realHost = host.get();
+            return host;
         };
         ports.agents = [this](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
-            broker.add("claude", backends::ai::claudeAgent(QStandardPaths::findExecutable(QStringLiteral("claude")),
+            broker.add("claude", backends::ai::claudeAgent(backends::ai::findAgentCli(QStringLiteral("claude")),
                                                          QDir::homePath(), at(QStringLiteral("ai/agents/claude"))));
             const QString home = at(QStringLiteral("ai/agents/codex/home"));
-            if (auto codex = backends::ai::codexAgent(QStandardPaths::findExecutable(QStringLiteral("codex")), home,
+            if (auto codex = backends::ai::codexAgent(backends::ai::findAgentCli(QStringLiteral("codex")), home,
                                                       at(QStringLiteral("ai/agents/codex/work")),
                                                       std::make_shared<backends::ai::CodexLease>(keys, home)))
                 broker.add("codex", std::move(*codex));
