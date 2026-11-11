@@ -369,6 +369,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_TEXT_HALF_WIDTH", 5281},
         {"GLOBAL_SWAP_DIALOGUE_ALTERNATIVES", 5282},
         {"GLOBAL_NODE_EFFECTS", 5244},
+        {"GLOBAL_BLUR_AND_GLOW_LAYERS", 5264},
+        {"GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT", 5265},
 };
 
 struct NameRow {
@@ -704,6 +706,8 @@ constexpr NameRow kNames[] = {
         {5281, "Change text to half-width"},
         {5282, "Swap dialogue alternatives"},
         {5244, "Node effects"},
+        {5264, "Blur and glow layers…"},
+        {5265, "Build layers with the last values"},
 };
 
 struct DefaultRow {

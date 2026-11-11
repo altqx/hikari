@@ -336,6 +336,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open folder…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close project"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Node effects"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Blur and glow layers…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Build layers with the last values"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
