@@ -60,13 +60,13 @@ void Application::noticeOnsets()
 {
     //: Status bar while Snap to vocal onsets (the audio panel's Tap menu, Karaoke mode) reads the audio
     const QString finding = QCoreApplication::translate("HikariSub.Audio", "Finding vocal onsets…");
-    if (m_audio->findingOnsets()) {
+    if (activeMedia().audio->findingOnsets()) {
         shell().setStatusText(finding);
         return;
     }
     if (shell().statusText() != finding)
         return;
-    if (!m_audio->onsetsFound()) {
+    if (!activeMedia().audio->onsetsFound()) {
         shell().setStatusText(QString());
         return;
     }
@@ -98,23 +98,23 @@ bool Application::isVideoAudio(const QString &audio, const QString &videoPath)
 
 void Application::syncAudioWithVideo()
 {
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const bool ready = video.state() == application::VideoSession::State::Ready;
-    m_audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
-    if (!ready || video.playing() || !m_audio->playing() || !m_audio->syncVideo()) {
+    activeMedia().audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
+    if (!ready || video.playing() || !activeMedia().audio->playing() || !activeMedia().audio->syncVideo()) {
         m_audioWantsFrame.reset();
         return;
     }
     if (m_audioWantsFrame && video.requestedFrame() == video.shownFrame()) {
         const int frame = *std::exchange(m_audioWantsFrame, std::nullopt);
         if (frame != video.requestedFrame())
-            m_video->session().showFrame(frame);
+            activeMedia().video->session().showFrame(frame);
     }
 }
 
 void Application::showVideoAtAudio(int ms)
 {
-    auto &video = m_video->session();
+    auto &video = activeMedia().video->session();
     if (video.state() != application::VideoSession::State::Ready || video.playing() || video.frameCount() <= 0
         || !m_audioTimebase || m_audioTimebasePath != video.path()
         || m_audioTimebaseSerial != video.frameTimesSerial())

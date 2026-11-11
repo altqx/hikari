@@ -226,6 +226,7 @@ AgentSpec claudeAgent(const QString &program, const QString &home, const QString
                     .network = sandbox::Network::Any};
     spec.workingDirectory = work;
     spec.environment = privateTemporary(work);
+    spec.environment.insert(QStringLiteral("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"), QStringLiteral("1"));
     spec.sidecarEnvironment = {QStringLiteral("CLAUDE_CODE_ENTRYPOINT"), QStringLiteral("CLAUDE_AGENT_SDK_VERSION"),
                                QStringLiteral("CLAUDE_CODE_SDK_READS_SESSION_STATE"),
                                QStringLiteral("CLAUDE_CODE_SDK_READS_STARTUP_MARKS")};

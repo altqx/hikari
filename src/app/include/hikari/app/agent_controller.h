@@ -3,6 +3,7 @@
 #include "hikari/application/workspace.h"
 
 #include <QAbstractListModel>
+#include <QColor>
 #include <QObject>
 #include <QString>
 #include <QUrl>
@@ -64,7 +65,8 @@ class AgentController final : public QObject {
     Q_PROPERTY(QVariantList threads READ threads NOTIFY threadsChanged FINAL)
     Q_PROPERTY(QString current READ current NOTIFY currentChanged FINAL)
     // The open thread: {id, title, mode, running, queued, cost, cap, costUnknown, contextTokens, contextWindow,
-    // model, modelText, attached: [{id, title}]}; empty with none open.
+    // model, modelText, attached: [{id, title}], webSearch (the globe), webSearchReady (the provider or a search
+    // service can search), webSearchCacheMiss (Anthropic)}; empty with none open.
     Q_PROPERTY(QVariantMap thread READ thread NOTIFY threadChanged FINAL)
     Q_PROPERTY(QObject *items READ items CONSTANT FINAL)
     // [{value, text, provider}] from Settings › AI.
@@ -77,6 +79,8 @@ class AgentController final : public QObject {
     Q_PROPERTY(double spentToday READ spentToday NOTIFY threadChanged FINAL)
     Q_PROPERTY(double dailyCap READ dailyCap NOTIFY settingsChanged FINAL)
     Q_PROPERTY(double threadCap READ threadCap NOTIFY settingsChanged FINAL)
+    // Settings › AI lets AI search the web, so the composer shows the globe.
+    Q_PROPERTY(bool webSearchShown READ webSearchShown NOTIFY threadChanged FINAL)
 
 public:
     struct Wiring {
@@ -113,6 +117,7 @@ public:
     double spentToday() const;
     double dailyCap() const;
     double threadCap() const;
+    bool webSearchShown() const;
     bool running() const;
     backends::ai::AgentThreads *engine() const { return m_threads.get(); }
     /// The tabs or the editing target changed.
@@ -140,6 +145,14 @@ public:
     Q_INVOKABLE void attach(qulonglong document);
     Q_INVOKABLE void detach(qulonglong document);
     Q_INVOKABLE void setFullAccessWarned();
+    Q_INVOKABLE void setWebSearch(bool on);
+    /// A text item's answer with its citation chips, as rich text.
+    Q_INVOKABLE QString citedText(const QVariantMap &item, const QColor &chip, const QColor &ink) const;
+    Q_INVOKABLE QString siteOf(const QString &url) const;
+    /// Opens an http or https page in the browser.
+    Q_INVOKABLE bool openLink(const QString &url) const;
+    /// SearchSuggestions.qml's properties for Google's snippet.
+    Q_INVOKABLE QVariantMap suggestions(const QString &html) const;
 
 signals:
     void switched();

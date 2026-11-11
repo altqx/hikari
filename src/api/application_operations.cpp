@@ -109,6 +109,11 @@ const application::SettingDefinition *offered(std::string_view id)
     return definition && definition->disposition == application::SettingDisposition::Mapped ? definition : nullptr;
 }
 
+bool keptFrom(const Caller &caller, std::string_view id)
+{
+    return caller.reviewed && (id.starts_with("privacy.") || id.starts_with("recent."));
+}
+
 Result settingsList(const Context &context, const Json &params)
 {
     if (!context.host.settings)
@@ -116,7 +121,8 @@ Result settingsList(const Context &context, const Json &params)
     const std::string prefix = params.find("prefix") ? params.find("prefix")->asString() : std::string();
     Json list = Json::array();
     for (const application::SettingDefinition &definition : application::settingDefinitions()) {
-        if (definition.disposition != application::SettingDisposition::Mapped || !definition.id.starts_with(prefix))
+        if (definition.disposition != application::SettingDisposition::Mapped || !definition.id.starts_with(prefix) ||
+            keptFrom(context.caller, definition.id))
             continue;
         list.push(Json::object({{"setting", Json(definition.id)},
                                 {"type", Json(typeName(definition.type))},
@@ -136,6 +142,9 @@ Result settingsGet(const Context &context, const Json &params)
         if (!offered(id.asString()))
             return fail(errors::kNotFound, "No setting is named \"" + id.asString() + "\".",
                         Json::object({{"setting", id}}));
+        if (keptFrom(context.caller, id.asString()))
+            return fail(errors::kRefused, "AI callers can't read \"" + id.asString() + "\": privacy.* and recent.* settings stay private.",
+                        Json::object({{"setting", id}, {"reason", Json("private")}}));
         values[id.asString()] = settingJson(context.host.settings->value(id.asString()));
     }
     return Json::object({{"values", values}});

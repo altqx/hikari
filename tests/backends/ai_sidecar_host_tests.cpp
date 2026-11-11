@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QThread>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -85,6 +86,8 @@ protected:
         static int argc = 1;
         static char name[] = "hikari_backends_ai_sidecar_host_tests";
         static char *argv[] = {name, nullptr};
+        // The glib dispatcher reads pipes even under ExcludeSocketNotifiers, which the busy-owner tests rely on.
+        qputenv("QT_NO_GLIB", "1");
         static QCoreApplication app(argc, argv);
     }
 
@@ -141,6 +144,38 @@ TEST_F(AiSidecarHostTest, NoAnswerToInitializeInTimeIsACrash)
     EXPECT_EQ(result.error().error, SidecarError::SidecarLost);
     EXPECT_EQ(lost.count(), 1);
     EXPECT_EQ(h->state(), AiSidecarHost::State::Idle);
+}
+
+TEST_F(AiSidecarHostTest, AStartThatCameWhileTheOwnerWasBusyStillGetsItsHandshake)
+{
+    auto o = options();
+    o.handshakeMs = 200;
+    auto h = host(o);
+    Call c;
+    h->request("echo", Json::object({{"x", 1}}), c.reply());
+    QThread::msleep(1500);
+    ASSERT_TRUE(waitFor([&] { return c.done(); }));
+    ASSERT_TRUE(*c.result) << c.result->error().message;
+    EXPECT_EQ(h->state(), AiSidecarHost::State::Ready);
+}
+
+TEST_F(AiSidecarHostTest, AnInitializeAnswerThatCameWhileTheOwnerWasBusyStillCounts)
+{
+    auto o = options(QStringLiteral("slow-initialize"));
+    o.handshakeMs = 400;
+    auto h = host(o);
+    Call c;
+    h->request("echo", Json::object({{"x", 1}}), c.reply());
+    QElapsedTimer t;
+    t.start();
+    while (t.elapsed() < 100)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+    ASSERT_EQ(h->state(), AiSidecarHost::State::Starting);
+    QThread::msleep(1500);
+    t.restart();
+    while (h->state() == AiSidecarHost::State::Starting && t.elapsed() < 2000)
+        QCoreApplication::processEvents(QEventLoop::ExcludeSocketNotifiers, 20);
+    EXPECT_EQ(h->state(), AiSidecarHost::State::Ready);
 }
 
 TEST_F(AiSidecarHostTest, RunsASidecarFromAnotherBuildAndKeepsWhatItReports)

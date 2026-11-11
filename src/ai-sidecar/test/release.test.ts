@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import lock from "../bun.lock";
 import { bundledPackages, forbiddenInputs, kRoot, notices } from "../tools/bundle";
 
 describe("the release checks", () => {
@@ -23,6 +24,15 @@ describe("the release checks", () => {
         const text = notices(["@protobufjs/base64"]);
         expect(text).toContain("@protobufjs/base64");
         expect(text).not.toContain("\r");
+    });
+
+    test("only the Claude Agent SDK has optional packages, which `bun ci --omit=optional` leaves out", () => {
+        const optional = Object.entries(lock.packages).filter(([, entry]) => {
+            const meta = entry[2] as { optionalDependencies?: object; os?: unknown } | undefined;
+            return meta?.optionalDependencies !== undefined || meta?.os !== undefined;
+        }).map(([name]) => name);
+        expect(optional.length).toBeGreaterThan(0);
+        expect(optional.filter((name) => !name.startsWith("@anthropic-ai/claude-agent-sdk"))).toEqual([]);
     });
 
     test("NOTICES.txt matches what the bundle holds", () => {

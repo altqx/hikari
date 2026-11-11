@@ -476,6 +476,11 @@ hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_u
 target_compile_definitions(hikari_ui_icon_tests PRIVATE
     HIKARI_ICON_DIR="${PROJECT_SOURCE_DIR}/src/ui/icons"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
+hikari_add_qttest(hikari_ui_cited_answer_tests SOURCES cited_answer_tests.cpp LIBRARIES hikari_ui OFFSCREEN_ONLY)
+hikari_add_qttest(hikari_ui_search_suggestions_tests SOURCES search_suggestions_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
+target_compile_definitions(hikari_ui_search_suggestions_tests PRIVATE
+    HIKARI_SEARCH_SUGGESTIONS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/gemini_search_suggestions.html")
 hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
 if(UNIX AND NOT APPLE)
     target_link_libraries(hikari_ui_theme_tests PRIVATE Qt6::DBus)
