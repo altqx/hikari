@@ -123,6 +123,14 @@ class AgentPanelTest : public QObject {
         auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
         return items->index(items->rowCount() - 1, 0).data(app::AgentItemsModel::ItemRole).toMap();
     }
+    QVariantMap lastProposal() const
+    {
+        auto *items = qobject_cast<QAbstractItemModel *>(agent().items());
+        for (int row = items->rowCount() - 1; row >= 0; --row)
+            if (items->index(row, 0).data(app::AgentItemsModel::KindRole).toString() == QLatin1String("proposal"))
+                return items->index(row, 0).data(app::AgentItemsModel::ItemRole).toMap();
+        return {};
+    }
     QString applyScript(const char *say) const
     {
         const auto line = session().document().lines().front()->id;
@@ -317,8 +325,16 @@ private slots:
                  QStringLiteral("episode.ass · active tab"));
 
         type(applyScript("I tightened the first line."));
+        QTRY_COMPARE(kinds().last(), QStringLiteral("proposal"));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply")));
+        QCOMPARE(session().document().lines().front()->text, u8"A rather long first line");
+        QVERIFY(item(QStringLiteral("agentComposer"))->hasActiveFocus());
+        QVERIFY(!item(QStringLiteral("agentProposalApply"))->hasActiveFocus());
+        shoot(QStringLiteral("agent-proposal"), QStringLiteral("Tighten the long first line"));
+        QVERIFY(click(QStringLiteral("agentProposalApply")));
         QTRY_COMPARE(kinds().last(), QStringLiteral("change"));
-        QCOMPARE(kinds(), (QStringList{"user", "text", "change"}));
+        QCOMPARE(kinds(), (QStringList{"user", "text", "proposal", "change"}));
+        QVERIFY(!item(QStringLiteral("agentProposal")));
         QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
         QCOMPARE(lastItem().value(QStringLiteral("name")).toString(), QStringLiteral("Tightened"));
         QCOMPARE(session().document().lines().front()->text, u8"Shorter.");
@@ -333,6 +349,42 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadsButton")));
         QTRY_VERIFY(item(QStringLiteral("agentThreadRow")));
         shoot(QStringLiteral("agent-threads"), QStringLiteral("Tighten the long first line"));
+    }
+
+    void aProposalTakesTheFocusFromThePanelButNotFromTheComposer()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        QQuickItem *mode = item(QStringLiteral("agentModeButton"));
+        QVERIFY(mode);
+        mode->forceActiveFocus();
+        QTRY_VERIFY(mode->hasActiveFocus());
+        agent().send(applyScript("Tightened."));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply")));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalApply"))->hasActiveFocus());
+        QCOMPARE(session().document().lines().front()->text, u8"A rather long first line");
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(kinds().last(), QStringLiteral("change"));
+        QCOMPARE(session().document().lines().front()->text, u8"Shorter.");
+    }
+
+    void aDeclinedProposalWritesNothing()
+    {
+        application->settingsStore()->set(app::AgentController::kModeSetting, QStringLiteral("manual"));
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        type(applyScript("Tightened."));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalTell")));
+        QVERIFY(click(QStringLiteral("agentProposalTell")));
+        QTRY_VERIFY(item(QStringLiteral("agentProposalReply")));
+        item(QStringLiteral("agentProposalReply"))->setProperty("text", QStringLiteral("Keep it long"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(lastProposal().value(QStringLiteral("status")).toString(), QStringLiteral("declined"));
+        QTRY_VERIFY(!agent().thread().value(QStringLiteral("running")).toBool());
+        QCOMPARE(session().document().lines().front()->text, u8"A rather long first line");
+        QVERIFY(!kinds().contains(QStringLiteral("change")));
     }
 
     void aThreadIsRenamedInItsOwnWindow()
