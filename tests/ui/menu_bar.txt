@@ -69,6 +69,27 @@ Edit > Insert hard space [GLOBAL_INSERT_HARD_SPACE]
 Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
+Subtitles > Timing helpers >
+Subtitles > Timing helpers > Start to previous keyframe [GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME]
+Subtitles > Timing helpers > Start to next keyframe [GLOBAL_SNAP_START_TO_NEXT_KEYFRAME]
+Subtitles > Timing helpers > End to previous keyframe [GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME]
+Subtitles > Timing helpers > End to next keyframe [GLOBAL_SNAP_END_TO_NEXT_KEYFRAME]
+Subtitles > Timing helpers > -
+Subtitles > Timing helpers > Add lead-in [GLOBAL_ADD_LEAD_IN]
+Subtitles > Timing helpers > Remove lead-in [GLOBAL_REMOVE_LEAD_IN]
+Subtitles > Timing helpers > Add lead-out [GLOBAL_ADD_LEAD_OUT]
+Subtitles > Timing helpers > Remove lead-out [GLOBAL_REMOVE_LEAD_OUT]
+Subtitles > Timing helpers > -
+Subtitles > Timing helpers > Start one frame earlier [GLOBAL_START_FRAME_EARLIER]
+Subtitles > Timing helpers > Start one frame later [GLOBAL_START_FRAME_LATER]
+Subtitles > Timing helpers > End one frame earlier [GLOBAL_END_FRAME_EARLIER]
+Subtitles > Timing helpers > End one frame later [GLOBAL_END_FRAME_LATER]
+Subtitles > Timing helpers > -
+Subtitles > Timing helpers > Extend previous line to this start [GLOBAL_EXTEND_PREVIOUS_TO_START]
+Subtitles > Timing helpers > Extend next line to this end [GLOBAL_EXTEND_NEXT_TO_END]
+Subtitles > Timing helpers > -
+Subtitles > Timing helpers > Timing assistant [GLOBAL_TIMING_ASSISTANT]
+Subtitles > Timing helpers > Accept assistant suggestion [GLOBAL_TIMING_ASSISTANT_ACCEPT]
 Subtitles > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Subtitles > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
 Subtitles > QC notes… [GLOBAL_SHOW_QC_NOTES]
