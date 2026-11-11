@@ -10,11 +10,13 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <random>
 #include <fstream>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -615,6 +617,236 @@ TEST(NodeCatalogue, EveryNodeHasAValidFieldSchemaAndUniqueId)
                 EXPECT_NE(fieldSpec(spec, in.name), nullptr) << spec.id << " has no constant for " << in.name;
     }
     EXPECT_GE(ids.size(), 20u);
+}
+
+namespace {
+
+std::vector<std::string> runOn(std::string_view graphJson, NodeEffectOptions options = {})
+{
+    const core::Document doc = fixtureWith(commentLine("graph g", graphText(graphOf(graphJson))));
+    return linesOf(runGraph(doc, u8"g", options));
+}
+
+std::vector<double> numbersAfter(const std::string &line, std::string_view tag)
+{
+    std::vector<double> out;
+    const auto at = line.find(std::string(tag) + "(");
+    if (at == std::string::npos)
+        return out;
+    std::istringstream in(line.substr(at + tag.size() + 1));
+    for (double v; in >> v;) {
+        out.push_back(v);
+        if (in.peek() != ',')
+            break;
+        in.ignore();
+    }
+    return out;
+}
+
+std::string between(const std::string &line, std::string_view from, char to)
+{
+    const auto at = line.find(from);
+    if (at == std::string::npos)
+        return {};
+    const auto start = at + from.size();
+    return line.substr(start, line.find_first_of(std::string(1, to) + "\\}", start) - start);
+}
+
+constexpr std::string_view kStrips = R"({"format": 1, "nodes": [
+    {"id": "line", "type": "units.for_each", "fields": {"unit": "line"}},
+    {"id": "strip", "type": "units.clip_gradient", "fields": {"strips": 4, "colours": ["#FF0000", "#0000FF"], "padding": 2}},
+    {"id": "c", "type": "tags.tag", "fields": {"tag": "1c"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "line.units", "to": "strip.units"}, {"from": "strip.clip", "to": "c.before"},
+    {"from": "strip.colour", "to": "c.colour"}, {"from": "strip.units", "to": "emit.units"},
+    {"from": "c.tags", "to": "emit.tags"}]})";
+
+}
+
+TEST(NodeEffectsClipGradient, SplitsEachUnitIntoStripsThatShareTheirEdges)
+{
+    const auto lines = runOn(kStrips);
+    ASSERT_EQ(lines.size(), 3u * 4u);
+    for (std::size_t first = 0; first < lines.size(); first += 4) {
+        std::vector<std::vector<double>> clips;
+        for (std::size_t k = 0; k < 4; ++k) {
+            clips.push_back(numbersAfter(lines[first + k], "\\clip"));
+            ASSERT_EQ(clips.back().size(), 4u) << lines[first + k];
+            for (const double v : clips.back())
+                EXPECT_EQ(v, std::floor(v)) << lines[first + k];
+            EXPECT_LT(clips.back()[0], clips.back()[2]);
+            EXPECT_EQ(clips.back()[1], clips.front()[1]);
+            EXPECT_EQ(clips.back()[3], clips.front()[3]);
+            if (k > 0)
+                EXPECT_EQ(clips[k - 1][2], clips[k][0]);
+        }
+        EXPECT_EQ(between(lines[first], "\\1c", '\\'), "&H0000FF&");
+        EXPECT_EQ(between(lines[first + 1], "\\1c", '\\'), "&H5500AA&");
+        EXPECT_EQ(between(lines[first + 3], "\\1c", '\\'), "&HFF0000&");
+    }
+}
+
+TEST(NodeEffectsClipGradient, StacksStripsDownAndPadsTheBox)
+{
+    std::string down(kStrips);
+    down.replace(down.find("\"strips\": 4"), 11, "\"strips\": 2, \"direction\": \"down\"");
+    std::string unpadded(kStrips);
+    unpadded.replace(unpadded.find(", \"padding\": 2"), 14, "");
+    const auto stacked = runOn(down), plain = runOn(unpadded), padded = runOn(kStrips);
+    ASSERT_EQ(stacked.size(), 3u * 2u);
+    const auto a = numbersAfter(stacked[0], "\\clip"), b = numbersAfter(stacked[1], "\\clip");
+    EXPECT_EQ(a[3], b[1]);
+    EXPECT_EQ(a[0], b[0]);
+    EXPECT_EQ(a[2], b[2]);
+    const auto p = numbersAfter(padded[0], "\\clip"), q = numbersAfter(plain[0], "\\clip");
+    EXPECT_LE(p[0], q[0] - 2);
+    EXPECT_LE(p[1], q[1] - 2);
+}
+
+namespace {
+
+std::string arrayGraph(std::string_view fields, bool withPath = false)
+{
+    return std::string(R"({"format": 1, "nodes": [
+    {"id": "line", "type": "units.for_each", "fields": {"unit": "line"}},
+    {"id": "copy", "type": "units.array", "fields": )") +
+           std::string(fields) + R"(},
+    {"id": "path", "type": "drawings.shape", "fields": {"shape": "m 0 0 l 100 0 100 50"}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "frz", "type": "tags.tag", "fields": {"tag": "frz"}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "line.units", "to": "copy.units"}, )" +
+           std::string(withPath ? R"({"from": "path.drawing", "to": "copy.path"}, )" : "") +
+           R"({"from": "copy.offset", "to": "pos.point"}, {"from": "pos.tags", "to": "frz.before"},
+    {"from": "copy.angle", "to": "frz.value"}, {"from": "copy.units", "to": "emit.units"},
+    {"from": "frz.tags", "to": "emit.tags"}]})";
+}
+
+std::vector<std::string> placesOfFirstLine(const std::vector<std::string> &lines, std::size_t count)
+{
+    std::vector<std::string> out;
+    for (std::size_t k = 0; k < count && k < lines.size(); ++k)
+        out.push_back(between(lines[k], "\\pos(", ')') + " " + between(lines[k], "\\frz", '\\'));
+    return out;
+}
+
+}
+
+TEST(NodeEffectsArray, CopiesOnAGridACircleAndAlongAPath)
+{
+    const auto grid = runOn(arrayGraph(R"({"shape": "grid", "columns": 3, "rows": 2, "spacing": [10, 20]})"));
+    ASSERT_EQ(grid.size(), 3u * 6u);
+    EXPECT_EQ(placesOfFirstLine(grid, 6), (std::vector<std::string>{"-10,-10 0", "0,-10 0", "10,-10 0", "-10,10 0",
+                                                                     "0,10 0", "10,10 0"}));
+    const auto circle = runOn(arrayGraph(R"({"shape": "circle", "count": 4, "radius": 10, "start_angle": 0})"));
+    ASSERT_EQ(circle.size(), 3u * 4u);
+    EXPECT_EQ(placesOfFirstLine(circle, 4),
+              (std::vector<std::string>{"10,0 0", "0,-10 90", "-10,0 180", "0,10 270"}));
+    const auto path = runOn(arrayGraph(R"({"shape": "path", "count": 4})", true));
+    ASSERT_EQ(path.size(), 3u * 4u);
+    EXPECT_EQ(placesOfFirstLine(path, 4),
+              (std::vector<std::string>{"0,0 0", "50,0 0", "100,0 0", "100,50 -90"}));
+}
+
+TEST(NodeEffectsArray, APathNeedsADrawingOfLineAndCurveCommands)
+{
+    const auto problems = validateGraph(graphOf(arrayGraph(R"({"shape": "path"})")));
+    EXPECT_EQ(problems, (std::vector<GraphProblem>{{"copy", "path", "needs a drawing wired in for a path"}}));
+    std::string spline = arrayGraph(R"({"shape": "path"})", true);
+    spline.replace(spline.find("m 0 0 l 100 0 100 50"), 20, "m 0 0 s 10 0 10 10 0 10");
+    static FakeMeasure measure;
+    NodeEffectOptions options;
+    options.measure = &measure;
+    const core::Document doc = fixtureWith(commentLine("graph g", graphText(graphOf(spline))));
+    const auto run = runDocumentGraph(doc, graphLineOf(doc, u8"g"), options);
+    ASSERT_TRUE(run);
+    EXPECT_TRUE(run->lines.empty());
+    ASSERT_FALSE(run->problems.empty());
+    EXPECT_EQ(run->problems.front().message, "uses a path command other than m, n, l and b");
+}
+
+namespace {
+
+std::string particleGraph(std::int64_t seed, std::string_view area)
+{
+    return R"({"format": 1, "seed": )" + std::to_string(seed) + R"(, "nodes": [
+    {"id": "syl", "type": "units.for_each"},
+    {"id": "spark", "type": "units.particles", "fields": {"count": 5, "width": 40, "height": 20, "area": ")" +
+           std::string(area) + R"("}},
+    {"id": "pos", "type": "tags.tag", "fields": {"tag": "pos"}},
+    {"id": "fade", "type": "tags.tag", "fields": {"tag": "alpha"}},
+    {"id": "scale", "type": "math.calculate", "fields": {"op": "multiply", "b": 255}},
+    {"id": "emit", "type": "output.emit"}],
+  "wires": [
+    {"from": "syl.units", "to": "spark.units"}, {"from": "spark.offset", "to": "pos.point"},
+    {"from": "pos.tags", "to": "fade.before"}, {"from": "spark.random", "to": "scale.a"},
+    {"from": "scale.result", "to": "fade.alpha"}, {"from": "spark.units", "to": "emit.units"},
+    {"from": "fade.tags", "to": "emit.tags"}]})";
+}
+
+}
+
+TEST(NodeEffectsParticles, SpreadWithinTheirAreaFromTheSeedAlone)
+{
+    NodeEffectOptions one, many;
+    one.threads = 1;
+    many.threads = 4;
+    const auto a = runOn(particleGraph(3, "rectangle"), one);
+    ASSERT_EQ(a.size(), 17u * 5u);
+    EXPECT_EQ(a, runOn(particleGraph(3, "rectangle"), many));
+    EXPECT_NE(a, runOn(particleGraph(4, "rectangle"), one));
+    std::set<std::string> places;
+    for (const std::string &line : a) {
+        const auto p = numbersAfter(line, "\\pos");
+        ASSERT_EQ(p.size(), 2u) << line;
+        EXPECT_LE(std::fabs(p[0]), 20) << line;
+        EXPECT_LE(std::fabs(p[1]), 10) << line;
+        places.insert(between(line, "\\pos(", ')'));
+    }
+    EXPECT_GT(places.size(), a.size() / 2);
+    for (const std::string &line : runOn(particleGraph(3, "ellipse"), one)) {
+        const auto p = numbersAfter(line, "\\pos");
+        ASSERT_EQ(p.size(), 2u) << line;
+        EXPECT_LE((p[0] / 20) * (p[0] / 20) + (p[1] / 10) * (p[1] / 10), 1.0 + 1e-6) << line;
+    }
+}
+
+TEST(NodeEffectsParticles, TheirValuesAreReadOnlyInsideTheirUnits)
+{
+    std::string outside = particleGraph(0, "rectangle");
+    const std::string_view inside = R"({"from": "spark.units", "to": "emit.units"})";
+    outside.replace(outside.find(inside), inside.size(), R"({"from": "syl.units", "to": "emit.units"})");
+    EXPECT_EQ(validateGraph(graphOf(outside)),
+              (std::vector<GraphProblem>{{"pos", "point", "reads spark.offset outside its units"},
+                                         {"scale", "a", "reads spark.random outside its units"}}));
+}
+
+TEST(NodeEffectExamples, EachShowsItsNodeAndRunsTheSameEveryTime)
+{
+    const std::map<std::string_view, std::string_view> nodeOf = {{"gradient-strips", "units.clip_gradient"},
+                                                                 {"ring-of-copies", "units.array"},
+                                                                 {"particle-burst", "units.particles"}};
+    std::set<std::string_view> seen;
+    for (const NodeGraphPreset &p : nodeGraphPresets()) {
+        if (p.example.empty())
+            continue;
+        seen.insert(p.example);
+        const NodeGraph graph = graphOf(p.graph);
+        EXPECT_TRUE(validateGraph(graph).empty()) << p.example;
+        ASSERT_TRUE(nodeOf.contains(p.example)) << p.example;
+        EXPECT_TRUE(std::ranges::any_of(graph.nodes, [&](const GraphNode &n) { return n.type == nodeOf.at(p.example); }))
+            << p.example;
+        NodeEffectOptions one, many;
+        one.threads = 1;
+        many.threads = 8;
+        const auto lines = runOn(p.graph, one);
+        EXPECT_FALSE(lines.empty()) << p.example;
+        EXPECT_EQ(lines, runOn(p.graph, many)) << p.example;
+        EXPECT_EQ(lines, runOn(p.graph, one)) << p.example;
+    }
+    EXPECT_EQ(seen.size(), nodeOf.size());
 }
 
 TEST(KaraokeSyllables, SplitsAsTheAutomationHelperDoes)
