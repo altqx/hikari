@@ -29,6 +29,7 @@ namespace {
 
 namespace kt = application::karaoke_templates;
 using application::MacroDialogueLine;
+using application::MacroInfoLine;
 
 double clockNow()
 {
@@ -240,6 +241,44 @@ int tenvRetime(lua_State *L)
     setNumber(L, line, "start_time", newstart);
     setNumber(L, line, "end_time", newend);
     setNumber(L, line, "duration", newend - newstart);
+    lua_pushliteral(L, "");
+    return 1;
+}
+
+constexpr const char *kKRetimeUndo = "hikari.kara_templater.k_retime";
+
+// karaOK's k_retime: retime, then shift the syllable by the Line's change in start. The shift is undone when the
+// template's loop iteration ends, so later templates and iterations see the syllable's own times.
+int tenvKRetime(lua_State *L)
+{
+    const int tenv = lua_upvalueindex(kTenv);
+    lua_settop(L, 3);
+    lua_getfield(L, tenv, "line");
+    const int line = lua_gettop(L);
+    lua_getfield(L, tenv, "syl");
+    const int syl = lua_gettop(L);
+    const double oldstart = number(L, line, "start_time");
+    lua_getfield(L, tenv, "retime");
+    for (int i = 1; i <= 3; ++i)
+        lua_pushvalue(L, i);
+    lua_call(L, 3, 0);
+    const double shift = oldstart - number(L, line, "start_time");
+    lua_getfield(L, LUA_REGISTRYINDEX, kKRetimeUndo);
+    const int undo = lua_gettop(L);
+    lua_pushvalue(L, syl);
+    lua_rawget(L, undo);
+    if (lua_isnil(L, -1)) {
+        lua_createtable(L, 2, 0);
+        lua_getfield(L, syl, "start_time");
+        lua_rawseti(L, -2, 1);
+        lua_getfield(L, syl, "end_time");
+        lua_rawseti(L, -2, 2);
+        lua_pushvalue(L, syl);
+        lua_insert(L, -2);
+        lua_rawset(L, undo);
+    }
+    setNumber(L, syl, "start_time", number(L, syl, "start_time") + shift);
+    setNumber(L, syl, "end_time", number(L, syl, "end_time") + shift);
     lua_pushliteral(L, "");
     return 1;
 }
@@ -567,6 +606,13 @@ private:
     int applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars, bool skipPerchar, bool skipMulti);
     bool matches(const kt::Template &t, int line);
     template <typename Body> void loop(double initMaxj, Body body);
+    void undoKRetime();
+    bool withinMaxloop();
+    void name(int tenv, const char *field, int value);
+    void pushUnits(int line, const application::karaoke_layout::KaraOKUnits &units);
+    bool needsUnits() const;
+    bool applyUnits(int line, const char *list, const std::vector<kt::TemplateRef> &templates, kt::Variables &v,
+                    int from, const std::function<void(int tenv, int unit)> &names);
     void runCode(const kt::Template &t);
     std::string runText(const std::string &text, const kt::Variables *vars, const std::optional<kt::Where> &where,
                         const std::vector<kt::Part> *parts);
@@ -580,6 +626,8 @@ private:
     int m_subs;
     int m_tenv = LUA_NOREF, m_meta = LUA_NOREF, m_styles = LUA_NOREF;
     kt::Templates m_templates;
+    kt::Mode m_mode = kt::Mode::Stock;
+    std::set<std::string> m_owned; // the unit names stock mode set in tenv itself
     std::set<int> m_problemLines;
     std::optional<std::vector<Deferred>> m_deferred;
     bool m_quiet = false;
@@ -619,7 +667,12 @@ void Run::parse(bool keepFx)
         lua_pop(L, 1);
         return out;
     };
-    kt::Parsed parsed = kt::parseTemplates(entries, keepFx, toNumber);
+    std::optional<std::string_view> modeLine;
+    for (const MacroInfoLine &info : s.info)
+        if (info.key == kt::kModeKey)
+            modeLine = info.value;
+    m_mode = kt::modeOf(modeLine, entries);
+    kt::Parsed parsed = kt::parseTemplates(entries, keepFx, toNumber, m_mode);
     for (const kt::Problem &p : parsed.problems)
         problem(p.level, p.where, p.at, p.message);
     if (!parsed.removed.empty()) {
@@ -662,6 +715,17 @@ void Run::makeTenv()
     lua_getfield(L, tenv, "maxloop");
     lua_setfield(L, tenv, "maxloops");
     closure("loopctl", tenvLoopctl);
+    closure("k_retime", tenvKRetime);
+    for (const char *lib : {"table", "ipairs", "pairs", "tonumber", "tostring", "type"}) {
+        lua_getglobal(L, lib);
+        lua_setfield(L, tenv, lib);
+    }
+    if (m_mode == kt::Mode::KaraOK) {
+        lua_pushvalue(L, m_subs);
+        lua_setfield(L, tenv, "subs");
+    }
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, kKRetimeUndo);
 
     lua_newtable(L);
     lua_newtable(L);
@@ -719,8 +783,59 @@ template <typename Body> void Run::loop(double initMaxj, Body body)
             break;
         setNumber(L, tenv, "j", j + 1);
         body();
+        undoKRetime();
     }
     lua_pop(L, 1);
+}
+
+void Run::undoKRetime()
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, kKRetimeUndo);
+    const int undo = lua_gettop(L);
+    bool any = false;
+    lua_pushnil(L);
+    while (lua_next(L, undo)) {
+        any = true;
+        lua_rawgeti(L, -1, 1);
+        lua_setfield(L, -3, "start_time");
+        lua_rawgeti(L, -1, 2);
+        lua_setfield(L, -3, "end_time");
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    if (any) {
+        lua_newtable(L);
+        lua_setfield(L, LUA_REGISTRYINDEX, kKRetimeUndo);
+    }
+}
+
+// karaOK writes a loop's Line only while j <= maxj, so a maxloop below j drops it.
+bool Run::withinMaxloop()
+{
+    if (m_mode != kt::Mode::KaraOK)
+        return true;
+    pushRef(m_tenv);
+    const double j = number(L, lua_gettop(L), "j"), maxj = number(L, lua_gettop(L), "maxj");
+    lua_pop(L, 1);
+    return j <= maxj;
+}
+
+// karaOK's word, char and syll names; stock mode sets them only where the script has not.
+void setTenvField(lua_State *L, int tenv, const char *name, int value);
+
+void Run::name(int tenv, const char *field, int value)
+{
+    if (m_mode == kt::Mode::Stock && !m_owned.contains(field)) {
+        if (value == 0)
+            return;
+        lua_getfield(L, tenv, field);
+        const bool taken = !lua_isnil(L, -1);
+        lua_pop(L, 1);
+        if (taken)
+            return;
+        m_owned.insert(field);
+    }
+    setTenvField(L, tenv, field, value);
 }
 
 void Run::runCode(const kt::Template &t)
@@ -790,6 +905,8 @@ bool Run::matches(const kt::Template &t, int line)
         if (!same)
             return false;
     }
+    if (t.stylegroup && stringField(L, line, "style").find(*t.stylegroup) == std::string::npos)
+        return false;
     if (!t.fxgroup)
         return true;
     pushRef(m_tenv);
@@ -818,9 +935,12 @@ void Run::emit(int newline)
     lua_pcall(L, 2, 0, 0) && (lua_pop(L, 1), true);
 }
 
-// set_ctx_syl
-void sylVariables(lua_State *L, kt::Variables &v, int line, int syl)
+// set_ctx_syl; karaOK rounds places to 0.1 px where 2.1.7 rounds to whole ones.
+void sylVariables(lua_State *L, kt::Variables &v, int line, int syl, kt::Mode mode)
 {
+    const auto round = [mode](double x) {
+        return mode == kt::Mode::KaraOK ? std::floor(x * 10 + 0.5) / 10 : std::floor(x + 0.5);
+    };
     const auto put = [&](const char *name, std::optional<kt::Value> value) {
         if (value)
             v[name] = *value;
@@ -850,17 +970,17 @@ void sylVariables(lua_State *L, kt::Variables &v, int line, int syl)
     put("si", value(L, syl, "i"));
     put("i", get("si"));
     const double left = number(L, line, "left");
-    put("sleft", std::floor(left + number(L, syl, "left") + 0.5));
-    put("scenter", std::floor(left + number(L, syl, "center") + 0.5));
-    put("sright", std::floor(left + number(L, syl, "right") + 0.5));
-    put("swidth", std::floor(number(L, syl, "width") + 0.5));
+    put("sleft", round(left + number(L, syl, "left")));
+    put("scenter", round(left + number(L, syl, "center")));
+    put("sright", round(left + number(L, syl, "right")));
+    put("swidth", round(number(L, syl, "width")));
     lua_getfield(L, syl, "isfuri");
     const bool furi = lua_toboolean(L, -1) != 0;
     lua_pop(L, 1);
     if (furi) {
         put("sbottom", get("ltop"));
-        put("stop", std::floor(numberOf("ltop") - number(L, syl, "height") + 0.5));
-        put("smiddle", std::floor(numberOf("ltop") - number(L, syl, "height") / 2 + 0.5));
+        put("stop", round(numberOf("ltop") - number(L, syl, "height")));
+        put("smiddle", round(numberOf("ltop") - number(L, syl, "height") / 2));
     } else {
         put("stop", get("ltop"));
         put("smiddle", get("lmiddle"));
@@ -869,17 +989,19 @@ void sylVariables(lua_State *L, kt::Variables &v, int line, int syl)
     put("sheight", value(L, syl, "height"));
     const std::string halign = stringField(L, line, "halign"), valign = stringField(L, line, "valign");
     if (halign == "left")
-        put("sx", std::floor(left + number(L, syl, "left") + 0.5));
+        put("sx", round(left + number(L, syl, "left")));
     else if (halign == "center")
-        put("sx", std::floor(left + number(L, syl, "center") + 0.5));
+        put("sx", round(left + number(L, syl, "center")));
     else if (halign == "right")
-        put("sx", std::floor(left + number(L, syl, "right") + 0.5));
+        put("sx", round(left + number(L, syl, "right")));
     if (valign == "top")
         put("sy", get("stop"));
     else if (valign == "middle")
         put("sy", get("smiddle"));
     else if (valign == "bottom")
         put("sy", get("sbottom"));
+    put("ci", value(L, syl, "ci"));
+    put("slen", value(L, syl, "length"));
     put("left", get("sleft"));
     put("center", get("scenter"));
     put("right", get("sright"));
@@ -890,6 +1012,7 @@ void sylVariables(lua_State *L, kt::Variables &v, int line, int syl)
     put("height", get("sheight"));
     put("x", get("sx"));
     put("y", get("sy"));
+    put("len", get("slen"));
 }
 
 void setTenvField(lua_State *L, int tenv, const char *name, int value)
@@ -904,6 +1027,7 @@ void setTenvField(lua_State *L, int tenv, const char *name, int value)
 bool Run::applyLine(int line)
 {
     line = absolute(L, line);
+    const bool karaOK = m_mode == kt::Mode::KaraOK;
     bool applied = false;
     kt::Variables v;
     const auto put = [&](const char *name, std::optional<kt::Value> value) {
@@ -937,22 +1061,39 @@ bool Run::applyLine(int line)
     put("syln", value(L, kara, "n"));
     put("li", value(L, line, "i"));
     const double left = number(L, line, "left"), width = number(L, line, "width");
-    put("lleft", std::floor(left + 0.5));
-    put("lcenter", std::floor(left + width / 2 + 0.5));
-    put("lright", std::floor(left + width + 0.5));
-    put("lwidth", std::floor(width + 0.5));
-    put("ltop", std::floor(number(L, line, "top") + 0.5));
-    put("lmiddle", std::floor(number(L, line, "middle") + 0.5));
-    put("lbottom", std::floor(number(L, line, "bottom") + 0.5));
-    put("lheight", std::floor(number(L, line, "height") + 0.5));
-    put("lx", std::floor(number(L, line, "x") + 0.5));
-    put("ly", std::floor(number(L, line, "y") + 0.5));
+    const auto tenths = [](double x) { return std::floor(x * 10 + 0.5) / 10; };
+    if (karaOK) {
+        put("lleft", tenths(left));
+        put("lcenter", std::floor(left * 10 + width * 5 + 0.5) / 10);
+        put("lright", std::floor(left * 10 + width * 10 + 0.5) / 10);
+        put("lwidth", tenths(width));
+        put("ltop", tenths(number(L, line, "top")));
+        put("lmiddle", tenths(number(L, line, "middle")));
+        put("lbottom", tenths(number(L, line, "bottom")));
+        put("lheight", tenths(number(L, line, "height")));
+        put("lx", tenths(number(L, line, "x")));
+        put("ly", tenths(number(L, line, "y")));
+    } else {
+        put("lleft", std::floor(left + 0.5));
+        put("lcenter", std::floor(left + width / 2 + 0.5));
+        put("lright", std::floor(left + width + 0.5));
+        put("lwidth", std::floor(width + 0.5));
+        put("ltop", std::floor(number(L, line, "top") + 0.5));
+        put("lmiddle", std::floor(number(L, line, "middle") + 0.5));
+        put("lbottom", std::floor(number(L, line, "bottom") + 0.5));
+        put("lheight", std::floor(number(L, line, "height") + 0.5));
+        put("lx", std::floor(number(L, line, "x") + 0.5));
+        put("ly", std::floor(number(L, line, "y") + 0.5));
+    }
+    put("llen", value(L, line, "length"));
 
     pushRef(m_tenv);
     const int tenv = lua_gettop(L);
     setTenvField(L, tenv, "orgline", line);
     for (const char *f : {"line", "syl", "basesyl"})
         setTenvField(L, tenv, f, 0);
+    for (const char *f : {"word", "baseword", "syll", "basesyll", "char", "basechar"})
+        name(tenv, f, 0);
 
     const auto copy = [&](const char *from, const char *to) {
         const auto it = v.find(from);
@@ -986,6 +1127,7 @@ bool Run::applyLine(int line)
         copy("lheight", "height");
         copy("lx", "x");
         copy("ly", "y");
+        copy("llen", "len");
 
         const double since = clockNow();
         int generated = 0;
@@ -1000,8 +1142,14 @@ bool Run::applyLine(int line)
             const int newline = lua_gettop(L);
             setTenvField(L, tenv, "line", newline);
             setNumber(L, newline, "layer", t.layer);
-            setString(L, newline, "text", "");
+            std::string buffer;
+            if (!karaOK)
+                setString(L, newline, "text", "");
             const auto append = [&](const std::function<std::string()> &more) {
+                if (karaOK) {
+                    buffer += more();
+                    return;
+                }
                 const std::string before = concatenated(L, newline, "text");
                 const std::string added = more();
                 setString(L, newline, "text", before + added);
@@ -1009,48 +1157,131 @@ bool Run::applyLine(int line)
             if (!t.pre.empty())
                 append([&] { return runText(t.pre, &v, t.preWhere, &t.preParts); });
             if (!t.text.empty()) {
-                for (int i = 1; i <= syln; ++i) {
-                    lua_rawgeti(L, kara, i);
-                    const int syl = lua_gettop(L);
-                    setTenvField(L, tenv, "syl", syl);
-                    setTenvField(L, tenv, "basesyl", syl);
-                    sylVariables(L, v, line, syl);
+                const char *list = t.unit == kt::Unit::Word ? "words" : t.unit == kt::Unit::Char ? "chars" : nullptr;
+                if (list)
+                    lua_getfield(L, line, list);
+                else
+                    lua_pushvalue(L, kara);
+                const int units = lua_gettop(L);
+                const int n = lua_istable(L, units) ? static_cast<int>(number(L, units, "n")) : 0;
+                for (int i = 1; i <= n; ++i) {
+                    lua_rawgeti(L, units, i);
+                    const int unit = lua_gettop(L);
+                    setTenvField(L, tenv, "syl", unit);
+                    setTenvField(L, tenv, "basesyl", unit);
+                    if (t.unit == kt::Unit::Word) {
+                        name(tenv, "word", unit);
+                        name(tenv, "baseword", unit);
+                    } else if (t.unit == kt::Unit::Char || karaOK) {
+                        lua_getfield(L, unit, "word");
+                        name(tenv, "word", lua_gettop(L));
+                        name(tenv, "baseword", lua_gettop(L));
+                        if (t.unit == kt::Unit::Char)
+                            lua_getfield(L, unit, "syll");
+                        else
+                            lua_pushvalue(L, unit);
+                        name(tenv, "syll", lua_gettop(L));
+                        name(tenv, "basesyll", lua_gettop(L));
+                        if (t.unit == kt::Unit::Char) {
+                            name(tenv, "char", unit);
+                            name(tenv, "basechar", unit);
+                        }
+                        lua_settop(L, unit);
+                    }
+                    sylVariables(L, v, line, unit, m_mode);
                     append([&] { return runText(t.text, &v, t.textWhere, &t.textParts); });
                     if (t.addtext)
-                        append([&] { return concatenated(L, syl, t.keeptags ? "text" : "text_stripped"); });
-                    lua_pop(L, 1);
+                        append([&] { return concatenated(L, unit, t.keeptags ? "text" : "text_stripped"); });
+                    lua_settop(L, units);
                 }
-            } else {
+                lua_pop(L, 1);
+            } else if (!karaOK || t.addtext) {
                 append([&] { return concatenated(L, line, t.keeptags ? "text" : "text_stripped"); });
             }
+            if (karaOK)
+                setString(L, newline, "text", buffer);
             setString(L, newline, "effect", "fx");
-            emit(newline);
-            ++generated;
+            if (withinMaxloop()) {
+                emit(newline);
+                ++generated;
+            }
             lua_pop(L, 1);
         });
         spend(t, since, generated);
     }
 
-    for (int i = 0; i <= syln; ++i) {
-        if (cancelled(L))
-            break;
-        lua_rawgeti(L, kara, i);
-        if (applySyllableTemplates(lua_gettop(L), line, m_templates.syl, v))
-            applied = true;
+    const auto wordOf = [&](int tenv, int unit) {
+        lua_getfield(L, unit, "word");
+        name(tenv, "word", lua_gettop(L));
+        name(tenv, "baseword", lua_gettop(L));
         lua_pop(L, 1);
-    }
-    lua_getfield(L, line, "furi");
-    const int furi = lua_gettop(L);
-    const int furin = static_cast<int>(number(L, furi, "n"));
-    for (int i = 1; i <= furin; ++i) {
-        if (cancelled(L))
-            break;
-        lua_rawgeti(L, furi, i);
-        if (applySyllableTemplates(lua_gettop(L), line, m_templates.furi, v))
+    };
+    if (karaOK) {
+        if (applyUnits(line, "furi", m_templates.furi, v, 1, nullptr))
             applied = true;
-        lua_pop(L, 1);
+        if (applyUnits(line, "fchars", m_templates.furichar, v, 1, nullptr))
+            applied = true;
+        if (applyUnits(line, "words", m_templates.word, v, 1, [&](int tenv, int unit) {
+                name(tenv, "word", unit);
+                name(tenv, "baseword", unit);
+            }))
+            applied = true;
+        if (applyUnits(line, "kara", m_templates.syl, v, 1, [&](int tenv, int unit) {
+                wordOf(tenv, unit);
+                name(tenv, "syll", unit);
+                name(tenv, "basesyll", unit);
+            }))
+            applied = true;
+        if (applyUnits(line, "chars", m_templates.chr, v, 1, [&](int tenv, int unit) {
+                wordOf(tenv, unit);
+                lua_getfield(L, unit, "syll");
+                name(tenv, "syll", lua_gettop(L));
+                name(tenv, "basesyll", lua_gettop(L));
+                lua_pop(L, 1);
+                name(tenv, "char", unit);
+                name(tenv, "basechar", unit);
+            }))
+            applied = true;
+    } else {
+        if (applyUnits(line, "kara", m_templates.syl, v, 0, nullptr))
+            applied = true;
+        if (applyUnits(line, "furi", m_templates.furi, v, 1, nullptr))
+            applied = true;
+        if (applyUnits(line, "fchars", m_templates.furichar, v, 1, nullptr))
+            applied = true;
+        if (applyUnits(line, "words", m_templates.word, v, 1, [&](int tenv, int unit) {
+                name(tenv, "word", unit);
+                name(tenv, "baseword", unit);
+            }))
+            applied = true;
     }
     lua_settop(L, line);
+    return applied;
+}
+
+bool Run::applyUnits(int line, const char *list, const std::vector<kt::TemplateRef> &templates, kt::Variables &v,
+                     int from, const std::function<void(int tenv, int unit)> &names)
+{
+    if (templates.empty())
+        return false;
+    bool applied = false;
+    pushRef(m_tenv);
+    const int tenv = lua_gettop(L);
+    lua_getfield(L, line, list);
+    const int units = lua_gettop(L);
+    const int n = lua_istable(L, units) ? static_cast<int>(number(L, units, "n")) : 0;
+    for (int i = from; i <= n; ++i) {
+        if (cancelled(L))
+            break;
+        lua_rawgeti(L, units, i);
+        const int unit = lua_gettop(L);
+        if (names)
+            names(tenv, unit);
+        if (applySyllableTemplates(unit, line, templates, v))
+            applied = true;
+        lua_settop(L, units);
+    }
+    lua_settop(L, tenv - 1);
     return applied;
 }
 
@@ -1066,7 +1297,7 @@ bool Run::applySyllableTemplates(int syl, int line, const std::vector<kt::Templa
             break;
         setTenvField(L, tenv, "syl", syl);
         setTenvField(L, tenv, "basesyl", syl);
-        sylVariables(L, vars, line, syl);
+        sylVariables(L, vars, line, syl, m_mode);
         const double since = clockNow();
         const int generated = applyOne(syl, line, *ref, vars, false, false);
         spend(*ref, since, generated);
@@ -1076,9 +1307,10 @@ bool Run::applySyllableTemplates(int syl, int line, const std::vector<kt::Templa
     return applied > 0;
 }
 
-bool sylBlank(lua_State *L, int syl)
+// is_syl_blank; karaOK counts only spaces as blank, where 2.1.7 skips a syllable with no duration too.
+bool sylBlank(lua_State *L, int syl, kt::Mode mode)
 {
-    if (number(L, syl, "duration") <= 0)
+    if (mode == kt::Mode::Stock && number(L, syl, "duration") <= 0)
         return true;
     std::string t = concatenated(L, syl, "text_stripped");
     std::string out;
@@ -1106,7 +1338,7 @@ int Run::applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars,
         if (!same)
             return 0;
     }
-    if (t.noblank && sylBlank(L, syl))
+    if (t.noblank && sylBlank(L, syl, m_mode))
         return 0;
     pushRef(m_tenv);
     const int tenv = lua_gettop(L);
@@ -1144,7 +1376,7 @@ int Run::applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars,
             setNumber(L, charsyl, "prespacewidth", 0);
             setNumber(L, charsyl, "postspacewidth", 0);
             left += width;
-            sylVariables(L, vars, line, charsyl);
+            sylVariables(L, vars, line, charsyl, m_mode);
             applied += applyOne(charsyl, line, t, vars, true, false);
         }
         lua_settop(L, tenv - 1);
@@ -1164,7 +1396,7 @@ int Run::applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars,
                 lua_setfield(L, hlsyl, f);
             }
             lua_pop(L, 1);
-            sylVariables(L, vars, line, hlsyl);
+            sylVariables(L, vars, line, hlsyl, m_mode);
             applied += applyOne(hlsyl, line, t, vars, true, true);
         }
         lua_settop(L, tenv - 1);
@@ -1195,13 +1427,204 @@ int Run::applyOne(int syl, int line, const kt::Template &t, kt::Variables &vars,
                 text += concatenated(L, syl, "text_stripped");
             setString(L, newline, "text", text);
             setString(L, newline, "effect", "fx");
-            emit(newline);
-            ++applied;
+            if (withinMaxloop()) {
+                emit(newline);
+                ++applied;
+            }
             lua_pop(L, 1);
         });
     }
     lua_settop(L, tenv - 1);
     return applied;
+}
+
+bool Run::needsUnits() const
+{
+    if (m_mode == kt::Mode::KaraOK || !m_templates.word.empty() || !m_templates.furichar.empty() ||
+        !m_templates.chr.empty())
+        return true;
+    return std::ranges::any_of(m_templates.line, [](const kt::TemplateRef &t) {
+        return t->unit == kt::Unit::Word || t->unit == kt::Unit::Char;
+    });
+}
+
+// additional_proc_line's tables: line.words, line.chars and line.fchars, and each syllable's ci, chars and word.
+void Run::pushUnits(int line, const application::karaoke_layout::KaraOKUnits &u)
+{
+    namespace kl = application::karaoke_layout;
+    line = absolute(L, line);
+    lua_getfield(L, line, "kara");
+    const int kara = lua_gettop(L);
+    lua_getfield(L, line, "furi");
+    const int furi = lua_gettop(L);
+    lua_getfield(L, line, "styleref");
+    const int styleref = lua_gettop(L);
+    lua_getfield(L, line, "furistyle");
+    const int furistyle = lua_gettop(L);
+    setNumber(L, line, "length", u.length);
+    for (std::size_t i = 0; i < u.sylCi.size(); ++i) {
+        lua_rawgeti(L, kara, static_cast<int>(i));
+        if (lua_istable(L, -1)) {
+            if (i > 0)
+                setNumber(L, lua_gettop(L), "ci", u.sylCi[i]);
+            lua_createtable(L, static_cast<int>(u.sylChars[i].size()), 1);
+            setNumber(L, lua_gettop(L), "n", 0);
+            lua_setfield(L, -2, "chars");
+        }
+        lua_pop(L, 1);
+    }
+    const auto list = [&](std::size_t n) {
+        lua_createtable(L, static_cast<int>(n), 1);
+        setNumber(L, lua_gettop(L), "n", static_cast<double>(n));
+    };
+    const auto append = [&](int owner, const char *field, int item) {
+        lua_getfield(L, owner, field);
+        const int t = lua_gettop(L);
+        const int n = static_cast<int>(number(L, t, "n")) + 1;
+        lua_pushvalue(L, item);
+        lua_rawseti(L, t, n);
+        setNumber(L, t, "n", n);
+        lua_pop(L, 1);
+    };
+    const auto fields = [&](int t, const kl::KaraUnit &k) {
+        setString(L, t, "tags", k.tags);
+        setString(L, t, "text", k.text);
+        setString(L, t, "text_stripped", k.stripped);
+        setString(L, t, "text_spacestripped", k.spaceStripped);
+        setString(L, t, "prespace", k.prespace);
+        setString(L, t, "postspace", k.postspace);
+        setNumber(L, t, "width", k.width);
+        setNumber(L, t, "left", k.left);
+        setNumber(L, t, "center", k.center);
+        setNumber(L, t, "right", k.right);
+        setNumber(L, t, "prespacewidth", k.prespaceWidth);
+        setNumber(L, t, "postspacewidth", k.postspaceWidth);
+        setNumber(L, t, "length", k.length);
+        if (k.timed) {
+            setNumber(L, t, "start_time", k.start);
+            setNumber(L, t, "end_time", k.end);
+            setNumber(L, t, "duration", k.duration);
+        } else {
+            for (const char *f : {"start_time", "end_time", "duration"}) {
+                lua_getfield(L, line, f);
+                lua_setfield(L, t, f);
+            }
+        }
+    };
+
+    list(u.words.size());
+    const int words = lua_gettop(L);
+    for (std::size_t w = 0; w < u.words.size(); ++w) {
+        const kl::KaraUnit &k = u.words[w];
+        lua_newtable(L);
+        const int t = lua_gettop(L);
+        setNumber(L, t, "i", k.i);
+        setNumber(L, t, "ci", k.ci);
+        fields(t, k);
+        list(0);
+        lua_setfield(L, t, "chars");
+        list(k.kara.size());
+        const int wkara = lua_gettop(L);
+        for (std::size_t j = 0; j < k.kara.size(); ++j) {
+            lua_rawgeti(L, kara, k.kara[j]);
+            lua_rawseti(L, wkara, static_cast<int>(j) + 1);
+        }
+        lua_setfield(L, t, "kara");
+        lua_pushvalue(L, styleref);
+        lua_setfield(L, t, "style");
+        if (k.timed) {
+            list(k.highlights.size());
+            for (std::size_t h = 0; h < k.highlights.size(); ++h) {
+                lua_createtable(L, 0, 3);
+                setNumber(L, lua_gettop(L), "duration", k.highlights[h].duration);
+                setNumber(L, lua_gettop(L), "start_time", k.highlights[h].start);
+                setNumber(L, lua_gettop(L), "end_time", k.highlights[h].end);
+                lua_rawseti(L, -2, static_cast<int>(h) + 1);
+            }
+            lua_setfield(L, t, "highlights");
+            lua_rawgeti(L, kara, k.kara.front());
+            lua_getfield(L, -1, "i");
+            lua_setfield(L, t, "si");
+            lua_getfield(L, -1, "inline_fx");
+            lua_setfield(L, t, "inline_fx");
+            lua_pop(L, 1);
+        }
+        lua_rawseti(L, words, static_cast<int>(w) + 1);
+    }
+    for (std::size_t i = 1; i < u.sylWord.size(); ++i) {
+        if (u.sylWord[i] == 0)
+            continue;
+        lua_rawgeti(L, kara, static_cast<int>(i));
+        lua_rawgeti(L, words, u.sylWord[i]);
+        lua_setfield(L, -2, "word");
+        setNumber(L, lua_gettop(L), "wi", u.sylWord[i]);
+        lua_pop(L, 1);
+    }
+
+    list(u.chars.size());
+    const int chars = lua_gettop(L);
+    for (std::size_t c = 0; c < u.chars.size(); ++c) {
+        const kl::KaraUnit &k = u.chars[c];
+        lua_newtable(L);
+        const int t = lua_gettop(L);
+        setNumber(L, t, "i", k.i);
+        setNumber(L, t, "ci", k.ci);
+        fields(t, k);
+        lua_pushvalue(L, styleref);
+        lua_setfield(L, t, "style");
+        if (k.word > 0) {
+            lua_rawgeti(L, words, k.word);
+            const int word = lua_gettop(L);
+            lua_pushvalue(L, word);
+            lua_setfield(L, t, "word");
+            setNumber(L, t, "wi", k.word);
+            append(word, "chars", t);
+            lua_pop(L, 1);
+        }
+        if (k.timed) {
+            lua_rawgeti(L, kara, k.syl);
+            const int syll = lua_gettop(L);
+            lua_pushvalue(L, syll);
+            lua_setfield(L, t, "syll");
+            setNumber(L, t, "si", k.syl);
+            lua_getfield(L, syll, "highlights");
+            lua_setfield(L, t, "highlights");
+            lua_getfield(L, syll, "inline_fx");
+            lua_setfield(L, t, "inline_fx");
+            append(syll, "chars", t);
+            lua_pop(L, 1);
+        }
+        lua_rawseti(L, chars, static_cast<int>(c) + 1);
+    }
+
+    list(u.fchars.size());
+    const int fchars = lua_gettop(L);
+    for (std::size_t c = 0; c < u.fchars.size(); ++c) {
+        const kl::KaraUnit &k = u.fchars[c];
+        lua_newtable(L);
+        const int t = lua_gettop(L);
+        fields(t, k);
+        lua_pushvalue(L, furistyle);
+        lua_setfield(L, t, "style");
+        lua_rawgeti(L, furi, k.syl + 1);
+        const int part = lua_gettop(L);
+        lua_pushvalue(L, part);
+        lua_setfield(L, t, "syll");
+        setNumber(L, t, "si", k.syl + 1);
+        lua_getfield(L, part, "highlights");
+        lua_setfield(L, t, "highlights");
+        lua_getfield(L, part, "inline_fx");
+        lua_setfield(L, t, "inline_fx");
+        lua_pop(L, 1);
+        lua_rawseti(L, fchars, static_cast<int>(c) + 1);
+    }
+    lua_pushvalue(L, words);
+    lua_setfield(L, line, "words");
+    lua_pushvalue(L, chars);
+    lua_setfield(L, line, "chars");
+    lua_pushvalue(L, fchars);
+    lua_setfield(L, line, "fchars");
+    lua_settop(L, kara - 1);
 }
 
 void Run::applyTemplates(const std::vector<int> *sources, const std::set<int> *chosen)
@@ -1232,6 +1655,20 @@ void Run::applyTemplates(const std::vector<int> *sources, const std::set<int> *c
         pushRef(m_styles);
         karaskel_tables::pushKaraskelLine(L, -1, l, layout);
         lua_settop(L, l);
+        if (needsUnits()) {
+            pushRef(m_tenv);
+            lua_getfield(L, -1, "graphemes");
+            const bool graphemes = !(lua_isboolean(L, -1) && !lua_toboolean(L, -1));
+            lua_settop(L, l);
+            application::karaoke_layout::KaraOKUnits units;
+            lua_helper::raiseOnHostFailure(L, "text_extents", [&] {
+                units = m_layout->karaOKUnits(layout,
+                                              graphemes ? application::karaoke_layout::CharSplit::Graphemes
+                                                        : application::karaoke_layout::CharSplit::CodePoints,
+                                              unmeasured);
+            });
+            pushUnits(l, units);
+        }
         for (const std::string &failure : unmeasured)
             problem(2, std::nullopt, std::nullopt, failure + "; it counts as 0 wide.\n");
         if (m_stats && !m_quiet) {
@@ -1295,7 +1732,8 @@ void Run::reportRun(const char *mode, int generated, const std::function<int(con
         return;
     std::vector<const kt::Template *> list;
     std::set<const kt::Template *> seen;
-    for (const auto *klass : {&m_templates.once, &m_templates.line, &m_templates.syl, &m_templates.furi})
+    for (const auto *klass : {&m_templates.once, &m_templates.line, &m_templates.syl, &m_templates.furi,
+                              &m_templates.word, &m_templates.chr, &m_templates.furichar})
         for (const kt::TemplateRef &t : *klass)
             if (t->where && seen.insert(t.get()).second)
                 list.push_back(t.get());

@@ -34,6 +34,15 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | TH5b-no-trace-lines | The level 5 trace lines are gone. |
 | TH5b-unmeasured-text | Text the host cannot measure is a problem and counts as 0 wide; 3.2.2 stopped the run. |
 | TH5b-native-layout | Karaoke Lines are laid out from the Styles as they were when the run started; `code` Lines that change Style tables no longer move later syllables. |
+| TH5c-karaok-mode | `Karaoke Templater: karaOK` in `[Script Info]`, or karaOK-only syntax, runs the templates as upstream karaOK does. |
+| TH5c-karaok-word-positions | karaOK words count characters, not bytes. |
+| TH5c-karaok-syl-char | `template syl char` is a char template; upstream ran it twice. |
+| TH5c-karaok-named-classes | A named line template keeps its first unit class. |
+| TH5c-karaok-k-retime | `k_retime` shifts this loop iteration's syllable only. |
+| TH5c-karaok-style-text | `style X` matches X as plain text, not as a Lua pattern. |
+| TH5c-karaok-furichar-tags | `furichar` characters take no tags from the main text. |
+| TH5c-karaok-no-leaked-globals | A karaOK run leaves no `textbuffer` or `w` global. |
+| TH5c-karaok-graphemes | karaOK's `char`, `lchar` and `$ci`/`$slen`/`$llen`/`$len` count grapheme clusters. Thai support by Jibrill. |
 
 The generated Lines are byte for byte 3.2.2's in every case, apart from `char` templates over clusters (TH1, locked by `departures/thai.ass`), the order of several named line templates (`departures/named-line-templates.ass`) and the marks below, which a save adds to `[Aegisub Extradata]`. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
 
