@@ -814,10 +814,14 @@ public:
     backends::SubtitleRendererSelection &subtitleRenderer() { return m_renderer; }
     static QString subtitleRendererLabel(const std::string &name);
     static QString outputDeviceLabel(const application::OutputDeviceChoice &choice);
-    application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
+    application::OutputRoute audioRoute()
+    {
+        ensureAudioRoute();
+        return m_audioRouting->route();
+    }
     // {label, checked, id, name} entries, the stored choice checked; choosing one stores
     // it as Settings' OK does.
-    Q_INVOKABLE QVariantList audioOutputMenu() const;
+    Q_INVOKABLE QVariantList audioOutputMenu();
     Q_INVOKABLE void chooseAudioOutput(const QString &id, const QString &name);
     Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
     QString audioOutputName() const;
@@ -1536,7 +1540,9 @@ private:
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
     std::string m_audioOutputHostApi;
     std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
+    // Made on the first media open, playback or device list: listing devices loads Qt Multimedia's backend.
     std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
+    void ensureAudioRoute();
     void routeAudio(const application::OutputRoute &route, bool move);
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
     void noticeOnsets();
