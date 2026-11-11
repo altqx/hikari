@@ -13995,6 +13995,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Open project</source>
         <translation>เปิดโปรเจกต์</translation>
     </message>
+    <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>ตั้งไว้ในโปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>ตั้งไว้ใน project.local.toml</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>ถูกแทนที่ในโปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>การบันทึกไฟล์จะเขียนช่องที่เปิดไว้ลงใน Script Info ของไฟล์</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>ถามก่อนเปลี่ยนเมื่อบันทึก</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>โปรเจกต์นี้มีสคริปต์หรือการตั้งค่าปลั๊กอินของตัวเอง เชื่อถือ “%1” เพื่อเรียกใช้</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>เชื่อถือโฟลเดอร์</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>

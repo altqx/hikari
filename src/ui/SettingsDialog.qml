@@ -328,9 +328,9 @@ DialogWindow {
         }
     }
     component OverriddenNote: SettingNote {
-        required property string setting
-        objectName: "overridden_" + setting
-        visible: dialog.overrides.includes(setting)
+        required property string overriddenId
+        objectName: "overridden_" + overriddenId
+        visible: dialog.overrides.includes(overriddenId)
         text: qsTranslate("HikariSub.Project", "Overridden in this project")
     }
     component SettingNote: Label {
@@ -887,7 +887,7 @@ DialogWindow {
                         title: qsTr("Spelling")
                         ruled: false
                         SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
-                        OverriddenNote { setting: "editor.spellchecker" }
+                        OverriddenNote { overriddenId: "editor.spellchecker" }
                         SettingsRow {
                             iconRole: "dictionary"
                             text: qsTr("Primary language")
@@ -901,7 +901,7 @@ DialogWindow {
                                 Accessible.name: qsTr("Primary language")
                             }
                         }
-                        OverriddenNote { setting: "editor.dictionaryLanguage" }
+                        OverriddenNote { overriddenId: "editor.dictionaryLanguage" }
                         SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions on double-click") }
                     }
                     SettingsSection {
@@ -917,7 +917,7 @@ DialogWindow {
                                 Accessible.name: qsTr("Grammar check")
                             }
                         }
-                        OverriddenNote { setting: "grammar.language" }
+                        OverriddenNote { overriddenId: "grammar.language" }
                         SettingNote {
                             visible: spellingPage.grammarOn && dialog.values["editor.spellchecker"] === true
                             text: qsTr("While spelling is checked, Harper leaves spelling to the dictionary above, so a word is never marked twice.")

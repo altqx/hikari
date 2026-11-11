@@ -14161,6 +14161,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Open project</source>
         <translation>Otwórz projekt</translation>
     </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>Projekt</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>Używa Twoich</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>Ustawione w tym projekcie</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>Ustawione w project.local.toml</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>Użyj Twoich</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>Zastąpione w tym projekcie</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>Nie udało się zapisać project.toml, więc część ustawień projektu nie została zapisana.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>Zapisanie pliku wpisuje włączone pola do jego Script Info.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>Pytaj przed ich zmianą przy zapisie</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>Ten projekt ma własne skrypty lub ustawienia wtyczek. Zaufaj “%1”, aby je uruchomić.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>Zaufaj folderowi</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QcNotes</name>
