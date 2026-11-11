@@ -122,7 +122,7 @@ TEST(NodeGraphEditing, NewNodesGetAFreeIdFromTheirType)
 
 TEST(NodeGraphEditing, EveryPresetIsValidAndLaysOutLeftToRight)
 {
-    ASSERT_EQ(nodeGraphPresets().size(), 10u);
+    ASSERT_EQ(nodeGraphPresets().size(), 13u);
     for (const NodeGraphPreset &p : nodeGraphPresets()) {
         const NodeGraph graph = laidOutGraph(graphOf(p.graph));
         EXPECT_TRUE(validateGraph(graph).empty()) << p.templateFile;

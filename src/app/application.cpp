@@ -5,6 +5,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/lyrics_text.h"
 #include "hikari/backends/mecab_readings.h"
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
@@ -605,6 +606,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         writeFinished(r);
     });
     m_files = std::make_unique<application::DocumentFiles>(*m_reader, *m_writes);
+    m_files->setLyricsDecoder([](std::span<const std::byte> bytes) {
+        return backends::lyricsUtf8(bytes, backends::detectLyricsEncoding(bytes));
+    });
     m_log = std::make_unique<ui::LogController>();
     m_mediaHelper = mediaHelperPath(options.mediaHelper);
     m_playbackAudio = options.playbackAudio;
@@ -926,6 +930,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             refreshViews();
         };
         m_alignToVideo = std::make_unique<AlignToVideoController>(*m_settings, std::move(hooks));
+    }
+    {
+        LyricsImportController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.openNew = [this](core::LoadResult load, const QString &path) {
+            application::StagedOpen staged{{}, std::move(load), std::nullopt, 0, 0};
+            staged.imported = true;
+            (void)publish(std::move(staged), path, false);
+        };
+        hooks.describe = [this](const QString &path, const core::LyricsProblem &problem) {
+            return openProblem(path, application::StageFailure{application::OpenError::MalformedLyrics, problem});
+        };
+        m_lyricsImport = std::make_unique<LyricsImportController>(*m_settings, std::move(hooks));
     }
     {
         QcNotesController::Hooks hooks;
@@ -2169,6 +2190,10 @@ QString Application::openProblem(const QString &path, const application::StageFa
         what = QCoreApplication::translate("HikariSub.Documents", "it is too large for a lyrics file");
         break;
     case Kind::NoLyrics: what = QCoreApplication::translate("HikariSub.Documents", "it has no timed lyrics"); break;
+    case Kind::Encrypted:
+        what = QCoreApplication::translate("HikariSub.Documents",
+                                           "it is encrypted. Decode it to text with your own tool first");
+        break;
     }
     return problem.line > 0
                ? QCoreApplication::translate("HikariSub.Documents", "Could not import %1: line %2: %3. Nothing was imported.")
@@ -6527,6 +6552,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(views(shellWindow).kanjiTimer.get()))},
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
+            {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},

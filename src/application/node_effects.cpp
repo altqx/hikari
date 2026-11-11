@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cctype>
 #include <atomic>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <functional>
@@ -951,6 +952,35 @@ NodeValue Evaluator::join(int node, const Element &)
     return out;
 }
 
+double calculated(std::string_view op, double a, double b)
+{
+    if (op == "add")
+        return a + b;
+    if (op == "subtract")
+        return a - b;
+    if (op == "multiply")
+        return a * b;
+    if (op == "divide")
+        return a / b;
+    if (op == "modulo")
+        return a - std::floor(a / b) * b;
+    if (op == "power")
+        return std::pow(a, b);
+    if (op == "minimum")
+        return std::min(a, b);
+    if (op == "maximum")
+        return std::max(a, b);
+    if (op == "floor")
+        return std::floor(a);
+    if (op == "ceil")
+        return std::ceil(a);
+    if (op == "round")
+        return std::floor(a + 0.5);
+    if (op == "absolute")
+        return std::fabs(a);
+    return -a;
+}
+
 double eased(double t, std::string_view ease)
 {
     t = std::clamp(t, 0.0, 1.0);
@@ -1004,35 +1034,8 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
         const auto k = static_cast<std::int64_t>(std::floor(index)) - 1;
         return n.list[static_cast<std::size_t>(((k % count) + count) % count)];
     }
-    case Kind::Calculate: {
-        const double a = num("a"), b = num("b");
-        const std::string &op = n.mode;
-        if (op == "add")
-            return a + b;
-        if (op == "subtract")
-            return a - b;
-        if (op == "multiply")
-            return a * b;
-        if (op == "divide")
-            return a / b;
-        if (op == "modulo")
-            return a - std::floor(a / b) * b;
-        if (op == "power")
-            return std::pow(a, b);
-        if (op == "minimum")
-            return std::min(a, b);
-        if (op == "maximum")
-            return std::max(a, b);
-        if (op == "floor")
-            return std::floor(a);
-        if (op == "ceil")
-            return std::ceil(a);
-        if (op == "round")
-            return std::floor(a + 0.5);
-        if (op == "absolute")
-            return std::fabs(a);
-        return -a;
-    }
+    case Kind::Calculate:
+        return calculated(n.mode, num("a"), num("b"));
     case Kind::Compare: {
         const double a = num("a"), b = num("b");
         const std::string &op = n.mode;
@@ -1499,6 +1502,651 @@ std::expected<void, CommandRefusal> applyNodeEffect(EditSession &session, const 
     command.expectedRevision = session.revision();
     command.apply = [&](core::Document &document) { return applyNodeEffect(document, run, owners); };
     return session.run(command);
+}
+
+namespace {
+
+struct Scalar {
+    std::optional<NodeValue> constant;
+    std::string lua;
+    bool var = false;
+};
+
+struct PointSym {
+    Scalar x, y;
+};
+
+using Sym = std::variant<Scalar, PointSym, NodeTags, NodeDrawing>;
+
+enum class Scope { Line, Unit };
+
+struct Context {
+    Scope scope = Scope::Unit;
+    int loop = kUnwired;
+};
+
+std::string luaString(std::string_view s)
+{
+    std::string out = "\"";
+    for (const char c : s) {
+        if (c == '"' || c == '\\')
+            out += '\\';
+        out += c == '\n' ? std::string("\\n") : std::string(1, c);
+    }
+    return out + "\"";
+}
+
+Scalar luaScalar(std::string code)
+{
+    return {std::nullopt, std::move(code), false};
+}
+
+Scalar variable(std::string_view name)
+{
+    return {std::nullopt, "$" + std::string(name), true};
+}
+
+std::string operand(const Scalar &s)
+{
+    if (!s.constant)
+        return s.var ? "(" + s.lua + ")" : s.lua;
+    if (const auto *v = std::get_if<double>(&*s.constant))
+        return *v < 0 ? "(" + numberText(*v) + ")" : numberText(*v);
+    if (const auto *b = std::get_if<bool>(&*s.constant))
+        return *b ? "true" : "false";
+    if (const auto *t = std::get_if<std::string>(&*s.constant))
+        return luaString(*t);
+    if (const auto *c = std::get_if<NodeColour>(&*s.constant))
+        return luaString(assColour(*c));
+    return "nil";
+}
+
+std::optional<double> constantNumber(const Scalar &s)
+{
+    if (s.constant)
+        if (const auto *v = std::get_if<double>(&*s.constant))
+            return *v;
+    return std::nullopt;
+}
+
+bool templateSafe(std::string_view text)
+{
+    return text.find('!') == std::string_view::npos && text.find('$') == std::string_view::npos;
+}
+
+bool isLineTemplateKeyword(std::string_view word)
+{
+    constexpr std::string_view kKeywords[] = {"pre-line", "line", "syl", "furi", "char", "all", "repeat",
+                                              "loop", "notext", "keeptags", "noblank", "multi", "fx", "fxgroup"};
+    return std::ranges::find(kKeywords, word) != std::end(kKeywords);
+}
+
+std::string templateId(std::u8string_view graph, std::string_view emit)
+{
+    std::string out;
+    for (const char c : narrow(graph) + "_" + std::string(emit)) {
+        const auto u = static_cast<unsigned char>(c);
+        out += std::isalnum(u) && u < 0x80 ? static_cast<char>(std::tolower(u)) : '_';
+    }
+    return isLineTemplateKeyword(out) ? out + "_" : out;
+}
+
+class TemplateWriter {
+public:
+    TemplateWriter(const Compiled &c, std::u8string_view name, bool allStyles)
+        : m_c(c), m_name(name), m_allStyles(allStyles)
+    {
+    }
+
+    std::vector<TemplateLine> lines()
+    {
+        std::vector<TemplateLine> out;
+        for (const int emit : m_c.emits)
+            if (auto more = emitLines(emit))
+                out.insert(out.end(), more->begin(), more->end());
+        return out;
+    }
+
+    std::vector<NodeEffectProblem> problems;
+
+private:
+    const CNode &node(int i) const { return m_c.nodes[static_cast<std::size_t>(i)]; }
+    const CNode::Input &wire(int i, std::string_view port) const { return node(i).inputs[node(i).in(port)]; }
+    bool wired(int i, std::string_view port) const { return wire(i, port).node != kUnwired; }
+
+    std::nullopt_t refuse(int i, std::string message)
+    {
+        NodeEffectProblem p{node(i).graph->id, std::nullopt, std::move(message)};
+        if (std::ranges::find(problems, p) == problems.end())
+            problems.push_back(std::move(p));
+        return std::nullopt;
+    }
+
+    std::optional<Sym> input(int i, std::string_view port, const Context &ctx)
+    {
+        const CNode::Input &in = wire(i, port);
+        if (in.node != kUnwired)
+            return output(in.node, in.port, ctx);
+        if (const auto *p = std::get_if<NodePoint>(&in.constant))
+            return PointSym{Scalar{p->x}, Scalar{p->y}};
+        if (const auto *t = std::get_if<NodeTags>(&in.constant))
+            return *t;
+        if (const auto *d = std::get_if<NodeDrawing>(&in.constant))
+            return *d;
+        return Scalar{in.constant};
+    }
+
+    template <typename T> std::optional<T> get(int i, std::string_view port, const Context &ctx)
+    {
+        auto sym = input(i, port, ctx);
+        if (!sym)
+            return std::nullopt;
+        if (auto *v = std::get_if<T>(&*sym))
+            return std::move(*v);
+        return refuse(i, "reads " + std::string(port) + " of a type the template can't write");
+    }
+
+    std::optional<std::string> text(int i, const Scalar &s, PortType type)
+    {
+        if (s.constant) {
+            if (const auto *v = std::get_if<double>(&*s.constant))
+                return type == PortType::Alpha ? assAlpha(*v) : numberText(*v);
+            if (const auto *c = std::get_if<NodeColour>(&*s.constant))
+                return assColour(*c);
+            if (const auto *t = std::get_if<std::string>(&*s.constant)) {
+                if (!templateSafe(*t))
+                    return refuse(i, "writes a ! or $, which the templater reads as code");
+                return *t;
+            }
+            return refuse(i, "writes a value the template can't hold");
+        }
+        if (s.var && type != PortType::Alpha)
+            return s.lua;
+        if (type == PortType::Alpha)
+            return "!string.format(\"&H%02X&\", math.max(0, math.min(255, math.floor(" + operand(s) + " + 0.5))))!";
+        return "!" + s.lua + "!";
+    }
+
+    std::optional<std::string> textOf(int i, std::string_view port, PortType type, const Context &ctx)
+    {
+        auto s = get<Scalar>(i, port, ctx);
+        return s ? text(i, *s, type) : std::nullopt;
+    }
+
+    std::optional<std::string> pointText(int i, std::string_view port, const Context &ctx)
+    {
+        auto p = get<PointSym>(i, port, ctx);
+        if (!p)
+            return std::nullopt;
+        auto x = text(i, p->x, PortType::Number), y = text(i, p->y, PortType::Number);
+        if (!x || !y)
+            return std::nullopt;
+        return *x + "," + *y;
+    }
+
+    std::optional<Sym> output(int i, int port, const Context &ctx)
+    {
+        const CNode &n = node(i);
+        const std::string &name = n.ports.outputs[static_cast<std::size_t>(port)].name;
+        switch (n.kind) {
+        case Kind::Repeat:
+            if (i != ctx.loop)
+                return refuse(i, "is read outside its units");
+            if (name == "j")
+                return luaScalar("j");
+            if (name == "count")
+                return luaScalar("maxj");
+            return refuse(i, "gives its units only to an Emit");
+        case Kind::Info:
+            return info(i, name, ctx);
+        case Kind::Number:
+        case Kind::Text:
+        case Kind::Colour:
+            return Scalar{constantOf(nodeField(*n.graph, "value"), n.ports.outputs.front().type)};
+        case Kind::Point: {
+            auto x = get<Scalar>(i, "x", ctx), y = get<Scalar>(i, "y", ctx);
+            if (!x || !y)
+                return std::nullopt;
+            return PointSym{std::move(*x), std::move(*y)};
+        }
+        case Kind::Choose:
+            return choose(i, ctx);
+        case Kind::Calculate:
+            return calculate(i, ctx);
+        case Kind::Stagger:
+            return stagger(i, ctx);
+        case Kind::Progress:
+            return progress(i, ctx);
+        case Kind::Tag:
+            return tag(i, ctx);
+        case Kind::Move:
+            return move(i, ctx);
+        case Kind::Fade: {
+            auto in = textOf(i, "fade_in", PortType::Time, ctx), out = textOf(i, "fade_out", PortType::Time, ctx);
+            auto before = get<NodeTags>(i, "before", ctx);
+            if (!in || !out || !before)
+                return std::nullopt;
+            return NodeTags{before->text + "\\fad(" + *in + "," + *out + ")"};
+        }
+        case Kind::Transform:
+            return transform(i, ctx);
+        case Kind::Shape:
+            if (!templateSafe(n.text))
+                return refuse(i, "writes a ! or $, which the templater reads as code");
+            return NodeDrawing{n.text, static_cast<int>(n.number)};
+        case Kind::ForEach:
+            return refuse(i, "gives a unit's place among the units, which has no templater variable");
+        case Kind::ClipGradient:
+        case Kind::Array:
+        case Kind::Particles:
+            return refuse(i, unitsRefusal(n.kind));
+        case Kind::Retime:
+            return refuse(i, "gives times only to an Emit's start and end");
+        case Kind::Join:
+            return refuse(i, "gives text only to the Emit of its Line");
+        case Kind::Random:
+            return refuse(i, "draws numbers the templater can't draw again");
+        case Kind::Lua:
+            return refuse(i, "runs in HikariSub's Lua helper, not in the templater");
+        default:
+            return refuse(i, "has no template form");
+        }
+    }
+
+    std::optional<Sym> info(int i, const std::string &port, const Context &ctx)
+    {
+        static const std::map<std::string_view, std::string_view> kVariables{
+            {"i", "i"},           {"n", "syln"},          {"start", "start"},     {"end", "end"},
+            {"duration", "dur"},  {"kdur", "kdur"},       {"mid", "mid"},         {"left", "left"},
+            {"center", "center"}, {"right", "right"},     {"width", "width"},     {"top", "top"},
+            {"middle", "middle"}, {"bottom", "bottom"},   {"height", "height"},   {"x", "x"},
+            {"y", "y"},           {"layer", "layer"},     {"line_index", "li"},   {"line_start", "lstart"},
+            {"line_end", "lend"}, {"line_duration", "ldur"}, {"line_left", "lleft"}, {"line_center", "lcenter"},
+            {"line_right", "lright"}, {"line_width", "lwidth"}, {"line_top", "ltop"}, {"line_middle", "lmiddle"},
+            {"line_bottom", "lbottom"}, {"line_height", "lheight"}};
+        static const std::map<std::string_view, std::string_view> kStyle{
+            {"style_fontsize", "fontsize"}, {"style_scale_x", "scale_x"}, {"style_scale_y", "scale_y"},
+            {"style_spacing", "spacing"},   {"style_angle", "angle"},     {"style_outline", "outline"},
+            {"style_shadow", "shadow"},     {"style_alignment", "align"}};
+        if (const auto v = kVariables.find(port); v != kVariables.end())
+            return variable(v->second);
+        if (const auto s = kStyle.find(port); s != kStyle.end())
+            return luaScalar("orgline.styleref." + std::string(s->second));
+        if (port == "text")
+            return luaScalar(ctx.scope == Scope::Line ? "orgline.text_stripped" : "syl.text_stripped");
+        if (port == "position")
+            return PointSym{variable("x"), variable("y")};
+        return refuse(i, "gives " + port + ", which has no templater variable");
+    }
+
+    std::optional<Sym> choose(int i, const Context &ctx)
+    {
+        const CNode &n = node(i);
+        auto index = get<Scalar>(i, "index", ctx);
+        if (!index)
+            return std::nullopt;
+        if (n.list.empty())
+            return refuse(i, "has no values");
+        const auto count = static_cast<std::int64_t>(n.list.size());
+        if (const auto k = constantNumber(*index)) {
+            if (!std::isfinite(*k))
+                return refuse(i, "has no value at that place");
+            const auto at = static_cast<std::int64_t>(std::floor(*k)) - 1;
+            return Scalar{n.list[static_cast<std::size_t>(((at % count) + count) % count)]};
+        }
+        std::string table = "({";
+        for (std::size_t k = 0; k < n.list.size(); ++k)
+            table += (k ? ", " : "") + operand(Scalar{n.list[k]});
+        return luaScalar(table + "})[(math.floor(" + operand(*index) + ") - 1) % " + std::to_string(count) + " + 1]");
+    }
+
+    std::optional<Sym> calculate(int i, const Context &ctx)
+    {
+        static const std::map<std::string_view, std::string_view> kInfix{
+            {"add", "+"}, {"subtract", "-"}, {"multiply", "*"}, {"divide", "/"}, {"modulo", "%"}, {"power", "^"}};
+        static const std::map<std::string_view, std::string_view> kCalls{
+            {"minimum", "math.min"}, {"maximum", "math.max"}, {"floor", "math.floor"},
+            {"ceil", "math.ceil"},   {"absolute", "math.abs"}};
+        const std::string &op = node(i).mode;
+        auto a = get<Scalar>(i, "a", ctx), b = get<Scalar>(i, "b", ctx);
+        if (!a || !b)
+            return std::nullopt;
+        const bool binary = kInfix.contains(op) || op == "minimum" || op == "maximum";
+        const auto ca = constantNumber(*a), cb = constantNumber(*b);
+        if (ca && (cb || !binary))
+            return Scalar{calculated(op, *ca, cb.value_or(0))};
+        const std::string x = operand(*a), y = operand(*b);
+        if (const auto infix = kInfix.find(op); infix != kInfix.end())
+            return luaScalar("(" + x + " " + std::string(infix->second) + " " + y + ")");
+        if (const auto call = kCalls.find(op); call != kCalls.end())
+            return luaScalar(std::string(call->second) + "(" + x + (binary ? ", " + y : std::string()) + ")");
+        if (op == "round")
+            return luaScalar("math.floor(" + x + " + 0.5)");
+        return luaScalar("(-" + x + ")");
+    }
+
+    std::optional<Sym> stagger(int i, const Context &ctx)
+    {
+        auto index = get<Scalar>(i, "index", ctx), count = get<Scalar>(i, "count", ctx), step = get<Scalar>(i, "step", ctx);
+        if (!index || !count || !step)
+            return std::nullopt;
+        const std::string &from = node(i).mode;
+        const std::string x = operand(*index), n = operand(*count), s = operand(*step);
+        if (from == "end")
+            return luaScalar("((" + n + " - " + x + ") * " + s + ")");
+        if (from == "centre")
+            return luaScalar("(math.abs(" + x + " - (" + n + " + 1) / 2) * " + s + ")");
+        return luaScalar("((" + x + " - 1) * " + s + ")");
+    }
+
+    std::optional<Sym> progress(int i, const Context &ctx)
+    {
+        auto index = get<Scalar>(i, "index", ctx), count = get<Scalar>(i, "count", ctx);
+        if (!index || !count)
+            return std::nullopt;
+        const std::string &ease = node(i).mode;
+        if (const auto x = constantNumber(*index), n = constantNumber(*count); x && n)
+            return Scalar{eased(*n > 1 ? (*x - 1) / (*n - 1) : 0.0, ease)};
+        const std::string curve = ease == "in"       ? "t * t"
+                                  : ease == "out"    ? "1 - (1 - t) * (1 - t)"
+                                  : ease == "in_out" ? "(t < 0.5 and 2 * t * t or 1 - 2 * (1 - t) * (1 - t))"
+                                                     : "t";
+        return luaScalar("(function(i, n) local t = n > 1 and (i - 1) / (n - 1) or 0; t = math.max(0, math.min(1, t)); "
+                         "return " + curve + " end)(" + operand(*index) + ", " + operand(*count) + ")");
+    }
+
+    std::optional<Sym> tag(int i, const Context &ctx)
+    {
+        const std::string &tag = node(i).mode;
+        auto before = get<NodeTags>(i, "before", ctx);
+        if (!before)
+            return std::nullopt;
+        std::optional<std::string> arg;
+        if (tag == "raw")
+            arg = textOf(i, "text", PortType::Text, ctx);
+        else if (tag == "fn" || tag == "r")
+            arg = textOf(i, "text", PortType::Text, ctx).transform([&](std::string t) { return "\\" + tag + t; });
+        else if (tag == "pos" || tag == "org")
+            arg = pointText(i, "point", ctx).transform([&](std::string p) { return "\\" + tag + "(" + p + ")"; });
+        else if ((tag == "clip" || tag == "iclip") && wired(i, "drawing")) {
+            if (auto d = get<NodeDrawing>(i, "drawing", ctx))
+                arg = "\\" + tag + "(" + (d->scale != 1 ? std::to_string(d->scale) + "," : std::string()) + d->commands + ")";
+        } else if (tag == "clip" || tag == "iclip") {
+            auto a = pointText(i, "point", ctx), b = pointText(i, "point2", ctx);
+            if (a && b)
+                arg = "\\" + tag + "(" + *a + "," + *b + ")";
+        } else if (tag.size() == 2 && tag[1] == 'c')
+            arg = textOf(i, "colour", PortType::Colour, ctx).transform([&](std::string c) { return "\\" + tag + c; });
+        else if (tag == "alpha" || (tag.size() == 2 && tag[1] == 'a'))
+            arg = textOf(i, "alpha", PortType::Alpha, ctx).transform([&](std::string a) { return "\\" + tag + a; });
+        else
+            arg = textOf(i, "value", PortType::Number, ctx).transform([&](std::string v) { return "\\" + tag + v; });
+        if (!arg)
+            return std::nullopt;
+        return NodeTags{before->text + *arg};
+    }
+
+    std::optional<Sym> move(int i, const Context &ctx)
+    {
+        auto before = get<NodeTags>(i, "before", ctx);
+        auto from = pointText(i, "from", ctx), to = pointText(i, "to", ctx);
+        if (!before || !from || !to)
+            return std::nullopt;
+        std::string out = before->text + "\\move(" + *from + "," + *to;
+        if (node(i).flag) {
+            auto t1 = textOf(i, "t1", PortType::Time, ctx), t2 = textOf(i, "t2", PortType::Time, ctx);
+            if (!t1 || !t2)
+                return std::nullopt;
+            out += "," + *t1 + "," + *t2;
+        }
+        return NodeTags{out + ")"};
+    }
+
+    std::optional<Sym> transform(int i, const Context &ctx)
+    {
+        auto before = get<NodeTags>(i, "before", ctx), tags = get<NodeTags>(i, "tags", ctx);
+        auto accel = get<Scalar>(i, "accel", ctx);
+        if (!before || !tags || !accel)
+            return std::nullopt;
+        std::string out = before->text + "\\t(";
+        if (node(i).flag) {
+            auto t1 = textOf(i, "t1", PortType::Time, ctx), t2 = textOf(i, "t2", PortType::Time, ctx);
+            if (!t1 || !t2)
+                return std::nullopt;
+            out += *t1 + "," + *t2 + ",";
+        }
+        const auto a = constantNumber(*accel);
+        if (!a)
+            return refuse(i, "takes an acceleration that is not a constant");
+        if (*a != 1)
+            out += numberText(*a) + ",";
+        return NodeTags{out + tags->text + ")"};
+    }
+
+    static std::string unitsRefusal(Kind kind)
+    {
+        switch (kind) {
+        case Kind::ClipGradient:
+            return "cuts units into gradient strips, which a template can't write";
+        case Kind::Array:
+            return "copies units on a grid, circle or path, which a template can't write";
+        case Kind::Particles:
+            return "places units at random, which the templater can't repeat";
+        case Kind::Repeat:
+            return "repeats inside another repeat, which a template can't";
+        default:
+            return "gives units the templater can't go through";
+        }
+    }
+
+    struct Units {
+        int forEach = kUnwired;
+        std::string unit;
+        bool skipBlank = false;
+        int loop = kUnwired;
+        int count = 1;
+    };
+
+    std::optional<Units> unitsOf(int emit)
+    {
+        int at = wire(emit, "units").node;
+        if (at == kUnwired)
+            return refuse(emit, "has no units");
+        Units u;
+        if (node(at).kind == Kind::Repeat) {
+            const auto count = get<Scalar>(at, "count", {}).and_then([](const Scalar &s) { return constantNumber(s); });
+            if (!count || *count < 1 || *count != std::floor(*count))
+                return refuse(at, "repeats a number of times that is not a constant whole number above 0");
+            u.loop = at;
+            u.count = static_cast<int>(*count);
+            at = wire(at, "units").node;
+            if (at == kUnwired)
+                return refuse(u.loop, "has no units");
+        }
+        if (node(at).kind != Kind::ForEach)
+            return refuse(at, unitsRefusal(node(at).kind));
+        u.forEach = at;
+        u.unit = node(at).mode;
+        u.skipBlank = node(at).flag;
+        return u;
+    }
+
+    std::optional<std::string> retime(int emit, const Context &ctx)
+    {
+        const CNode::Input &start = wire(emit, "start"), &end = wire(emit, "end");
+        if (start.node == kUnwired && end.node == kUnwired)
+            return std::string();
+        if (start.node == kUnwired || start.node != end.node || node(start.node).kind != Kind::Retime || start.port != 0 ||
+            end.port != 1)
+            return refuse(emit, "takes its start and end from something other than one Retime node");
+        const int r = start.node;
+        const std::string &mode = node(r).mode;
+        if (ctx.scope == Scope::Line && mode != "line" && mode != "preline" && mode != "postline" && mode != "set")
+            return refuse(r, "times a Line by a syllable");
+        auto a = get<Scalar>(r, "start_offset", ctx), b = get<Scalar>(r, "end_offset", ctx);
+        if (!a || !b)
+            return std::nullopt;
+        return "!retime(" + luaString(mode) + ", " + operand(*a) + ", " + operand(*b) + ")!";
+    }
+
+    static std::string textModifier(const std::string &unitText)
+    {
+        return unitText == "raw" ? "keeptags" : unitText == "none" ? "notext" : "";
+    }
+
+    std::optional<std::vector<TemplateLine>> emitLines(int emit)
+    {
+        const CNode &n = node(emit);
+        const auto units = unitsOf(emit);
+        if (!units)
+            return std::nullopt;
+        const Context ctx{units->unit == "line" ? Scope::Line : Scope::Unit, units->loop};
+        const auto when = get<Scalar>(emit, "when", ctx);
+        const auto layer = get<Scalar>(emit, "layer", ctx).and_then([](const Scalar &s) { return constantNumber(s); });
+        auto times = retime(emit, ctx);
+        auto tags = get<NodeTags>(emit, "tags", ctx);
+        if (when && !when->constant)
+            refuse(emit, "writes Lines on a condition, which a template can't");
+        if (!layer)
+            refuse(emit, "takes a Layer that is not a constant");
+        if (!when || !when->constant || !layer || !times || !tags)
+            return std::nullopt;
+        if (!std::get<bool>(*when->constant))
+            return std::vector<TemplateLine>{};
+
+        std::vector<std::string> modifiers;
+        const auto addModifier = [&](std::string m) {
+            if (!m.empty())
+                modifiers.push_back(std::move(m));
+        };
+        std::string body, joinText;
+        bool joined = false;
+        if (ctx.scope == Scope::Line) {
+            if (units->skipBlank)
+                return refuse(units->forEach, "leaves out blank Lines, which a line template can't");
+            if (wired(emit, "drawing"))
+                return refuse(emit, "draws in place of a Line's text, which a line template can't");
+            if (wired(emit, "text")) {
+                const int j = wire(emit, "text").node;
+                if (node(j).kind != Kind::Join)
+                    return refuse(emit, "writes a Line's text from something other than a Join of its syllables");
+                const int syls = wire(j, "units").node;
+                if (syls == kUnwired || node(syls).kind != Kind::ForEach || node(syls).mode != "syl" || node(syls).flag)
+                    return refuse(j, "joins something other than every syllable of the Line");
+                if (wired(j, "text"))
+                    return refuse(j, "joins text of its own, which a line template can't");
+                auto jtags = get<NodeTags>(j, "tags", Context{Scope::Unit, units->loop});
+                if (!jtags)
+                    return std::nullopt;
+                addModifier(textModifier(node(j).mode));
+                joinText = jtags->text.empty() ? std::string() : "{" + jtags->text + "}";
+                joined = true;
+            } else if (n.mode == "none") {
+                return refuse(emit, "writes a Line without text, which a line template can't");
+            } else {
+                addModifier(textModifier(n.mode));
+            }
+        } else if (wired(emit, "text")) {
+            auto t = textOf(emit, "text", PortType::Text, ctx);
+            if (!t)
+                return std::nullopt;
+            body = *t;
+            addModifier("notext");
+        } else if (wired(emit, "drawing")) {
+            auto d = get<NodeDrawing>(emit, "drawing", ctx);
+            if (!d)
+                return std::nullopt;
+            tags->text += "\\p" + std::to_string(d->scale);
+            body = d->commands;
+            addModifier("notext");
+        } else {
+            addModifier(textModifier(n.mode));
+        }
+        if (units->count != 1)
+            addModifier("loop " + std::to_string(units->count));
+        if (m_allStyles)
+            addModifier("all");
+
+        std::string head;
+        if (ctx.scope == Scope::Line)
+            head = joined ? "pre-line " + templateId(m_name, n.graph->id) : "pre-line";
+        else if (units->unit == "furi")
+            head = units->skipBlank ? "furi noblank" : "furi";
+        else
+            head = std::string(units->skipBlank ? "syl noblank" : "syl") + (units->unit == "char" ? " char" : "");
+        for (const std::string &m : modifiers)
+            head += " " + m;
+        const int layerValue = static_cast<int>(*layer);
+        const std::string text = *times + (tags->text.empty() ? std::string() : "{" + tags->text + "}") + body;
+        std::vector<TemplateLine> out{{layerValue, wide("template " + head), wide(text)}};
+        if (joined)
+            out.push_back({layerValue, wide("template line " + templateId(m_name, n.graph->id)), wide(joinText)});
+        return out;
+    }
+
+    const Compiled &m_c;
+    std::u8string_view m_name;
+    bool m_allStyles = false;
+};
+
+}
+
+std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
+                                                                                           std::u8string_view name)
+{
+    std::vector<NodeEffectProblem> problems;
+    for (const GraphProblem &p : validateGraph(graph))
+        problems.push_back({p.node, std::nullopt, p.port.empty() ? p.message : p.port + " " + p.message});
+    if (!problems.empty())
+        return std::unexpected(std::move(problems));
+    const Compiled compiled = compile(*flattenGraph(graph));
+    TemplateWriter writer(compiled, name, graph.allStyles);
+    std::vector<TemplateLine> lines = writer.lines();
+    if (!writer.problems.empty())
+        return std::unexpected(std::move(writer.problems));
+    return lines;
+}
+
+std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine)
+{
+    const auto refused = [](std::string message) {
+        return std::unexpected(std::vector<NodeEffectProblem>{{{}, std::nullopt, std::move(message)}});
+    };
+    for (const DocumentGraph &g : documentGraphs(session.document())) {
+        if (g.line != graphLine)
+            continue;
+        if (!g.graph)
+            return std::unexpected(std::vector<NodeEffectProblem>{{g.graph.error().node, std::nullopt, g.graph.error().message}});
+        auto lines = exportTemplateLines(*g.graph, g.name);
+        if (!lines)
+            return std::unexpected(std::move(lines.error()));
+        Command command;
+        command.name = "Export as template lines";
+        command.expectedRevision = session.revision();
+        command.apply = [&](core::Document &document) {
+            const std::vector<const core::LineRecord *> all = document.lines();
+            const auto at = std::ranges::find(all, graphLine, &core::LineRecord::id);
+            if (at == all.end())
+                return false;
+            const core::LineRecord source = **at;
+            core::LineId after = graphLine;
+            for (const TemplateLine &t : *lines) {
+                core::LineRecord line = source;
+                line.layer = core::IntField{wide(std::to_string(t.layer)), t.layer};
+                line.effect = t.effect;
+                line.text = t.text;
+                const auto added = document.insertLineAfter(after, std::move(line));
+                if (!added)
+                    return false;
+                after = *added;
+            }
+            return true;
+        };
+        if (!session.run(command))
+            return refused("the file did not take the template Lines");
+        return {};
+    }
+    return refused("the Line is not a graph Line");
 }
 
 }

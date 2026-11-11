@@ -13,6 +13,7 @@
 #include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/align_to_video_controller.h"
+#include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/font_collector_controller.h"
@@ -498,6 +499,12 @@ public:
     Q_INVOKABLE QVariantMap copyMotionData();
     Q_INVOKABLE QVariantMap copyPowerPinTrack();
     Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {changed, deleted, rows: [{row, before, after, deleted}], more}: what removeTags(options) does,
+    // the first 200 rows.
+    Q_INVOKABLE QVariantMap tagRemovalPreview(const QVariantMap &options) const;
+    // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
+    // "selected"/"file", and the Cleanup flags by their names.
+    Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
@@ -806,6 +813,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     KanjiTimerController &kanjiTimer() const { return *activeViews().kanjiTimer; }
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
+    LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
@@ -1241,6 +1249,7 @@ private:
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector;
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
+    std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;

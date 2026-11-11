@@ -10,6 +10,10 @@ if(WIN32)
 endif()
 hikari_add_gtest(hikari_backends_legacy_text_tests SOURCES legacy_text_file_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
+hikari_add_gtest(hikari_backends_lyrics_text_tests SOURCES lyrics_text_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_lyrics_text_tests PRIVATE
+    HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_gtest(hikari_backends_open_save_tests SOURCES open_save_reopen_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_open_save_tests PRIVATE

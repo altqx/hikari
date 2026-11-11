@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
     required property var fontCatalogs
@@ -1457,6 +1458,7 @@ ApplicationWindow {
             closeReview.review(result.rows)
     }
     function openInstallLink(id) { pluginManagerDialog.followLink(id) }
+    function showFolderPicker() { projectFolderDialog.show() }
     function openSessionFile(path) {
         sessionWindows.load(root.app.fileUrl(path))
     }
@@ -1722,6 +1724,14 @@ ApplicationWindow {
                     text: qsTr("Import subtitles from MKV…")
                     enabled: root.matroska.available
                     onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_IMPORT_LYRICS"
+                    help: qsTr("Turns a lyrics file into lines, in the open file or a new one")
+                    iconRole: "import-lyrics"
+                    objectName: "importLyricsMenuItem"
+                    text: qsTr("Import lyrics…")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
                 }
                 ShellMenuItem {
                     command: "GLOBAL_SAVE_SUBS"
@@ -3608,6 +3618,8 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
+            MenuSeparator {}
+            ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
             MenuSeparator { visible: fieldAiMenu.shown; height: visible ? implicitHeight : 0 }
             InlineAiMenu {
                 id: fieldAiMenu
@@ -6282,6 +6294,7 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
@@ -7505,6 +7518,41 @@ ApplicationWindow {
             open()
         }
     }
+    FileChooser {
+        id: lyricsDialog
+        objectName: "lyricsOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Import lyrics")
+        nameFilters: [qsTranslate("HikariSub.Documents", "Lyrics (*.lrc *.krc *.qrc *.ttml)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("lyrics", selectedFile)
+            root.openLyricsImport(root.app.localPath(selectedFile))
+        }
+        function show() {
+            const folder = root.pickerFolder("lyrics")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+    }
+    Loader {
+        id: lyricsImportLoader
+        active: false
+        sourceComponent: LyricsImportDialog {
+            controller: root.lyricsImport
+            settings: root.app.settings
+            onChooseAnother: lyricsDialog.show()
+        }
+    }
+    function openLyricsImport(path) {
+        if (!root.lyricsImport.load(path)) {
+            root.notices.post("error", qsTranslate("HikariSub.Documents", "Import lyrics"),
+                              qsTranslate("HikariSub.Documents", "Could not read %1.").arg(path))
+            return
+        }
+        lyricsImportLoader.active = true
+        lyricsImportLoader.item.open()
+    }
     Loader {
         id: dummyVideoLoader
         active: false
@@ -7612,7 +7660,7 @@ ApplicationWindow {
             open()
         }
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
-                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
+                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
                       qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
@@ -8692,6 +8740,24 @@ ApplicationWindow {
         root.review.undo(0, -1, false)
     }
     Action {
+        id: removeTagsAction
+        text: qsTranslate("HikariSub.Tags", "Remove tags…")
+        enabled: root.shell.hasEditingTarget
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_TAGS")) root.openRemoveTags()
+    }
+    function openRemoveTags() {
+        removeTagsLoader.active = true
+        removeTagsLoader.item.openDialog()
+    }
+    Loader {
+        id: removeTagsLoader
+        active: false
+        sourceComponent: RemoveTagsDialog {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    Action {
         id: keepAiChangeAction
         text: qsTranslate("HikariSub.Review", "Keep AI change")
         enabled: root.review.on && root.review.current.count !== undefined
@@ -8799,6 +8865,7 @@ ApplicationWindow {
         GLOBAL_COPY_POWER_PIN_TRACK: copyPowerPinTrackAction,
         GLOBAL_EXTEND_TRACKED_LINES: extendTrackedLinesAction,
         GLOBAL_EXTRAPOLATE_MOVE: extrapolateMoveAction,
+        GLOBAL_REMOVE_TAGS: removeTagsAction,
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
@@ -8971,6 +9038,7 @@ ApplicationWindow {
         switch (symbol) {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
+        case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":

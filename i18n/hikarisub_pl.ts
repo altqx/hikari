@@ -1820,6 +1820,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Makro zostało anulowane; ustawiono tylko rozdzielczość skryptu.</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>Nie można uruchomić „%1” na tym dokumencie: potrzebuje %2 MB, a makro może użyć najwyżej %3 MB.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>Uruchom makro na mniejszym pliku, na przykład na kopii zawierającej tylko potrzebne linijki.</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>Warunki skryptu Lua “%1” nie zostały spełnione</translation>
     </message>
@@ -2707,6 +2715,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nadpisz</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>Importuj tekst piosenki</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>Teksty piosenek (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>Nie można odczytać %1.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>Otwórz napisy</translation>
     </message>
@@ -2715,8 +2735,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Napisy (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>Teksty piosenek z czasami słów (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
+        <translation type="vanished">Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2801,6 +2825,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>it has no timed lyrics</source>
         <translation>nie zawiera tekstu piosenki z czasami</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>jest zaszyfrowany. Najpierw odkoduj go do tekstu własnym narzędziem</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -3026,6 +3054,134 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>Zapisywane: %1 · Odrzucane: %2</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>Plik nie jest tekstem w tym kodowaniu.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, odkodowany</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, odkodowany</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>czasy słów</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>czasy wierszy</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n wiersz</numerusform>
+            <numerusform>%n wiersze</numerusform>
+            <numerusform>%n wierszy</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>zastosowano przesunięcie %1 s</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Plik</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>Utwór</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>Kodowanie</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · wykryte</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>Ten plik z tekstem piosenki z Kugou jest zaszyfrowany, więc HikariSub nie może go odczytać.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>Ten plik z tekstem piosenki z QQ Music jest zaszyfrowany, więc HikariSub nie może go odczytać.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>Najpierw odkoduj go do tekstu własnym narzędziem, a potem zaimportuj odkodowany plik. HikariSub nie odszyfrowuje plików z tekstami piosenek.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>Podgląd</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>i jeszcze %n wiersz</numerusform>
+            <numerusform>i jeszcze %n wiersze</numerusform>
+            <numerusform>i jeszcze %n wierszy</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>Dodaj wiersze do</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>Za ostatnim wierszem otwartego pliku</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>Nowy plik</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>Styl</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>Czasy końca</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>Każdy wiersz kończy się, gdy zaczyna się następny</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>Zostaw przerwę przed następnym wierszem</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>Przerwa (s)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>Długość ostatniego wiersza (s)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>Wybierz inny plik…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Importuj</translation>
     </message>
 </context>
 <context>
@@ -7326,6 +7482,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ekstrapoluj \move na całą linijkę</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>Usuń tagi…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>Przenieś zakładkę do nowego okna</translation>
     </message>
@@ -7336,6 +7496,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close window</source>
         <translation>Zamknij okno</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>Importuj tekst piosenki…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -8717,6 +8881,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>Importuj napisy z MKV…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>Zamienia plik z tekstem piosenki na wiersze w otwartym pliku lub w nowym</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>Importuj tekst piosenki…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -10367,6 +10539,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10384,6 +10564,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18485,6 +18669,253 @@ Usunięte style:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %3 z %4</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>Zmieniono %n linijkę</numerusform>
+            <numerusform>Zmieniono %n linijki</numerusform>
+            <numerusform>Zmieniono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>Żadna linijka się nie zmienia.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>Usuń tagi…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>Usuń tagi</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>Kolor</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alfa</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>Obramowanie</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Czcionka</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>Skala</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>Odstępy</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Obrót</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>Pochylenie</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>Pogrubienie, kursywa, podkreślenie, przekreślenie</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>Pozycja</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>Punkt odniesienia</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>Wyrównanie</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>Wycinek</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>Zanikanie</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>Przekształcenia</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>Karaoke</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Reset</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>Styl zawijania</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>Rysunek</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>Inne tagi</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>Każdy tag spoza listy</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>Usuń komentarze</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>Bloki bez tagów, np. {note}</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>Scal sąsiednie bloki tagów</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 staje się %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>Usuń nadpisane tagi</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>Tag, który zastępuje późniejszy tag w tym samym bloku, oraz powtórzenia %1, %2, %3 i %4</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Reguły Clean Tags</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>To samo co dołączony skrypt Clean Tags: scala bloki, przenosi tagi całej linijki na początek, usuwa puste bloki</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>Usuń linijki, które zostały puste</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>Zaznaczone linijki</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>Cały plik bez linijek-komentarzy</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>Bloki</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>Wszystkie bloki</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>Blok początkowy</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>Bloki w tekście</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>Tagi</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Wyczyść</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>Zaznacz wszystkie</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>Porządkowanie</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>Podgląd</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>Linijka %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>usunięta</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>Linijka usunięta</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>Żadna linijka się nie zmienia</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>Zmienia się %n linijka</numerusform>
+            <numerusform>Zmieniają się %n linijki</numerusform>
+            <numerusform>Zmienia się %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n usunięta</numerusform>
+            <numerusform>%n usunięte</numerusform>
+            <numerusform>%n usuniętych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>pokazano pierwszą %n</numerusform>
+            <numerusform>pokazano pierwsze %n</numerusform>
+            <numerusform>pokazano pierwszych %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>

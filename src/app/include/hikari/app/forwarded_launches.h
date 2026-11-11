@@ -21,7 +21,7 @@ public:
     // Requests taken before the window is set are carried out then.
     void setWindow(QWindow *window);
     void take(const SingleInstance::Request &request);
-    bool pending() const { return !m_files.isEmpty() || !m_link.isEmpty(); }
+    bool pending() const { return !m_files.isEmpty() || !m_link.isEmpty() || m_pickFolder; }
     // The files not opened yet, and the install link not followed yet.
     QStringList takeUnopened();
     // True when a start without files came during the quit that went ahead.
@@ -43,6 +43,7 @@ private:
     QStringList m_files;
     application::WindowRequest m_request = application::WindowRequest::Default;
     QString m_link;
+    bool m_pickFolder = false;
     QString m_token;
     bool m_activate = false;
     int m_afterQuitReview = 0;
