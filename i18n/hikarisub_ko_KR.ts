@@ -1782,6 +1782,14 @@ Output device: %2</source>
         <translation>편집기를 시작할 수 없습니다.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>불러오지 않음: 이 스크립트의 매크로 %1은(는) 내장 Karaoke Templater의 매크로이며, 내장 버전이 대신 실행합니다.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>매크로가 취소되어 아무것도 변경되지 않았습니다.</translation>
     </message>
@@ -17849,8 +17857,8 @@ Styles deleted:
         <translation>영상에서 미리 보기</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>노래방 템플릿 실행기는 스크립트(kara-templater.lua)를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>노래방 템플릿 실행기는 내장 Karaoke Templater를 불러온 뒤 열려 있는 자막 파일에서 실행됩니다.</translation>
     </message>
     <message>
         <source>Templates</source>

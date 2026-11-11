@@ -1,5 +1,6 @@
 #include "hikari/app/automation_shell.h"
 
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/karaoke_preview_runner.h"
@@ -307,6 +308,8 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
+    connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::dropBuiltinClashes,
+            Qt::QueuedConnection);
     connect(&m_manager, &backends::AutomationManager::logged, this,
             [this](const QString &, const QString &text, int level) { runLogged(text, level); });
     connect(&m_manager, &backends::AutomationManager::progressChanged, this,
@@ -503,10 +506,9 @@ public:
     std::string path() const
     {
         for (const auto &s : m_shell.m_manager.scripts())
-            if ((s.state == application::ScriptStatus::State::Ready ||
+            if (application::isBuiltinScript(s.path) &&
+                (s.state == application::ScriptStatus::State::Ready ||
                  s.state == application::ScriptStatus::State::Running) &&
-                QFileInfo(QString::fromStdString(s.path)).fileName().compare(QStringLiteral("kara-templater.lua"),
-                                                                             Qt::CaseInsensitive) == 0 &&
                 s.info.macros.size() >= 2)
                 return s.path;
         return {};
@@ -608,6 +610,7 @@ void AutomationShell::setAutoloadEnabled(const QString &script, bool enabled)
 
 void AutomationShell::autoload()
 {
+    m_manager.load(std::string(application::kBuiltinKaraokeTemplater));
     for (const QString &script : autoloadScripts())
         if (autoloadEnabled(script))
             m_manager.load(script.toStdString());
@@ -616,6 +619,9 @@ void AutomationShell::autoload()
 
 void AutomationShell::reloadAutoload()
 {
+    const std::string builtin(application::kBuiltinKaraokeTemplater);
+    if (!m_manager.reload(builtin) && !m_manager.host(builtin))
+        m_manager.load(builtin);
     for (const QString &script : autoloadScripts()) {
         if (!autoloadEnabled(script))
             continue;
@@ -925,6 +931,8 @@ void AutomationShell::continueLastScript()
 
 void AutomationShell::editScript(const QString &script)
 {
+    if (application::isBuiltinScript(script.toStdString()))
+        return;
     const QString editor = m_settings ? m_settings->text("automation.scriptEditor") : QString();
     if (editor.isEmpty() || QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier)) {
         emit chooseScriptEditor(script);
@@ -955,8 +963,46 @@ void AutomationShell::startEditor(const QString &editor, const QString &script)
 
 void AutomationShell::unload(const std::string &path)
 {
+    if (application::isBuiltinScript(path))
+        return;
     m_manager.unload(path);
     m_documentScripts.remove(path);
+}
+
+void AutomationShell::dropBuiltinClashes()
+{
+    const auto scripts = m_manager.scripts();
+    const auto ready = [](const application::ScriptStatus &s) {
+        return s.state == application::ScriptStatus::State::Ready;
+    };
+    const auto builtin = std::ranges::find_if(
+        scripts, [&](const application::ScriptStatus &s) { return application::isBuiltinScript(s.path) && ready(s); });
+    if (builtin == scripts.end())
+        return;
+    std::set<std::string> names;
+    for (const auto &m : builtin->info.macros)
+        names.insert(m.name);
+    for (const auto &s : scripts) {
+        if (application::isBuiltinScript(s.path) || !ready(s))
+            continue;
+        QStringList clashing;
+        for (const auto &m : s.info.macros)
+            if (names.contains(m.name))
+                clashing << QString::fromStdString(m.name);
+        if (clashing.isEmpty())
+            continue;
+        if (m_builtinClashes.insert(s.path).second) {
+            const QString message =
+                QCoreApplication::translate("HikariSub.Automation",
+                                            "Not loaded: its macros %1 are the built-in Karaoke Templater’s, "
+                                            "which runs them instead.")
+                    .arg(clashing.join(QStringLiteral(", ")));
+            const int id = m_runs.begin(QString::fromStdString(s.info.name), prettyName(s.path), QString());
+            m_runs.note(id, message, ui::AutomationRuns::kHostError);
+            m_runs.finish(id, QStringLiteral("failed"), message);
+        }
+        unload(s.path);
+    }
 }
 
 bool AutomationShell::rerunLast()
