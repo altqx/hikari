@@ -187,6 +187,29 @@ private slots:
         QVERIFY(controller().lastApply().value(QStringLiteral("lines")).toInt() > 0);
     }
 
+    void exportAddsTemplateLinesOrNamesTheNodesThatBlockIt()
+    {
+        QVERIFY(controller().addPreset(presetIndex(QStringLiteral("10-palette.ass"))));
+        const std::size_t before = m_session->historySize();
+        QVERIFY(controller().exportAsTemplate().isEmpty());
+        QCOMPARE(m_session->historySize(), before + 1);
+        QCOMPARE(historyNames(*m_session).back(), std::string("Export as template lines"));
+        const auto templates = std::ranges::count_if(m_session->document().lines(), [](const core::LineRecord *l) {
+            return l->comment && l->effect.starts_with(u8"template ");
+        });
+        QCOMPARE(templates, 2);
+
+        const QString random = controller().addNode(QStringLiteral("math.random"), 40, 40);
+        QVERIFY(controller().connectPorts(random, QStringLiteral("value"), QStringLiteral("place"), QStringLiteral("b")).isEmpty());
+        const std::size_t edited = m_session->historySize();
+        const QVariantList blockers = controller().exportAsTemplate();
+        QCOMPARE(blockers.size(), 1);
+        QCOMPARE(blockers.front().toMap().value(QStringLiteral("node")).toString(), random);
+        QCOMPARE(blockers.front().toMap().value(QStringLiteral("viewNode")).toString(), random);
+        QCOMPARE(m_session->historySize(), edited + 1);
+        QCOMPARE(historyNames(*m_session).back(), std::string("Edit graph"));
+    }
+
     void presetNamesAreGraphNames()
     {
         for (const QVariant &p : controller().presets())

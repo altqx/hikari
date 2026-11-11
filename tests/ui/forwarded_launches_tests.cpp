@@ -77,13 +77,16 @@ class ForwardedLaunchesTests : public QObject {
         return o;
     }
     void start(int restore = 0) { startWith(options(), restore); }
-    void startWith(const app::Application::Options &o, int restore = 0, const QStringList &beforeWindow = {})
+    void startWith(const app::Application::Options &o, int restore = 0, const QStringList &beforeWindow = {},
+                   bool pickFolderBeforeWindow = false)
     {
         application = new app::Application(o);
         application->setSessionRestore(restore);
         forwarded = new app::ForwardedLaunches(*application);
         if (!beforeWindow.isEmpty())
             take(beforeWindow);
+        if (pickFolderBeforeWindow)
+            forwarded->take({{}, {}, hikari::application::WindowRequest::Default, true});
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
@@ -639,6 +642,26 @@ private slots:
         QVERIFY(forwarded->startAfterQuit());
         QCOMPARE(forwarded->activationTokenAfterQuit(), QStringLiteral("token"));
         QVERIFY(forwarded->takeUnopened().isEmpty());
+    }
+
+    void aForwardedOpenFolderShowsTheFolderPicker()
+    {
+        start();
+        QObject *picker = named("projectFolderDialog");
+        QVERIFY(picker);
+        QVERIFY(!picker->property("visible").toBool());
+        forwarded->take({{}, {}, hikari::application::WindowRequest::Default, true});
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QVERIFY(!forwarded->pending());
+        QMetaObject::invokeMethod(picker, "reject");
+    }
+
+    void openFolderOnAColdStartWaitsForTheWindow()
+    {
+        startWith(options(), 0, {}, true);
+        QObject *picker = named("projectFolderDialog");
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QMetaObject::invokeMethod(picker, "reject");
     }
 
     void theWindowComesForward()

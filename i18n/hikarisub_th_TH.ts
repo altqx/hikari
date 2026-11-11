@@ -1798,6 +1798,14 @@ Output device: %2</source>
         <translation>แมโครถูกยกเลิก มีเพียงความละเอียดสคริปต์ที่ถูกกำหนดค่า</translation>
     </message>
     <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>เรียกใช้ “%1” กับเอกสารนี้ไม่ได้ ต้องใช้ %2 MB แต่แมโครใช้ได้สูงสุด %3 MB</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>เรียกใช้แมโครกับไฟล์ที่เล็กลง เช่น สำเนาที่มีเฉพาะบรรทัดที่ต้องใช้</translation>
+    </message>
+    <message>
         <source>Validation Lua script “%1” failed</source>
         <translation>การตรวจสอบสคริปต์ Lua “%1” ไม่ผ่าน</translation>
     </message>
@@ -9886,6 +9894,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9903,6 +9919,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
