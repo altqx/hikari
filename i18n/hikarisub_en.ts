@@ -984,6 +984,37 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>Changed %n line</numerusform>
+            <numerusform>Changed %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n line changes</numerusform>
+            <numerusform>%n lines change</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n deleted</numerusform>
+            <numerusform>%n deleted</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>first %n shown</numerusform>
+            <numerusform>first %n shown</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.TemplateEditor</name>
     <message numerus="yes">
         <source>%n lines</source>

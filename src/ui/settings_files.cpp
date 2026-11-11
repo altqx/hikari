@@ -49,7 +49,8 @@ bool rememberedByTheApp(std::string_view id)
         "find.recentFinds",       "find.recentReplacements", "findInSubs.recentFilters", "findInSubs.recentPaths",
         "selectLines.recentSelections", "colourPicker.recentColours", "automation.dialogAnswers",
         "automation.lastScript",  "styles.lastCatalog",      "privacy.usageDataId",      "updater.skippedVersion",
-        "qcNotes.lastSection",    "tracking.motionOptions",  "tracking.extendOptions", "lyrics.importOptions"};
+        "qcNotes.lastSection",    "tracking.motionOptions",  "tracking.extendOptions", "lyrics.importOptions",
+        "tags.removeOptions"};
     return id.starts_with("recent.") || ids.contains(id);
 }
 
