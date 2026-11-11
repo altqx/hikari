@@ -988,6 +988,7 @@ api::Caller AgentThreads::callerOf(const AgentThread &thread) const
     caller.id = "ai:" + thread.id;
     caller.label = "AI";
     caller.reviewed = true;
+    caller.skills = true;
     if (const auto it = m_attached.find(thread.id); it != m_attached.end())
         caller.attached = it->second;
     return caller;
