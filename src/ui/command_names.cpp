@@ -302,6 +302,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Copy Power-Pin track from lines"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extend tracked lines…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Extrapolate \\move to the line"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Remove tags…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Insert balanced break"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move break left"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move break right"),
