@@ -7402,6 +7402,54 @@ Failed to copy %2 fonts.</source>
         <translation>ประมาณค่าระหว่างบรรทัด…</translation>
     </message>
     <message>
+        <source>Insert balanced break</source>
+        <translation>แทรกการขึ้นบรรทัดแบบสมดุล</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางซ้าย</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางขวา</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>ลบการขึ้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>ตัดบรรทัดเฉพาะที่ \N (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์เล็ก</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์ใหญ่ขึ้นต้นทุกคำ</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>เปลี่ยนเป็นตัวพิมพ์ใหญ่ขึ้นต้นประโยค</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>เปลี่ยนข้อความเป็นแบบเต็มความกว้าง</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>เปลี่ยนข้อความเป็นแบบครึ่งความกว้าง</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>สลับบทพูดทางเลือก</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -20108,6 +20156,65 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>ตัวประมวลผลเทมเพลตหยุดก่อนทำงานเสร็จ</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>สลับบทพูดทางเลือก</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>การขึ้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>แทรกการขึ้นบรรทัดแบบสมดุล</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางซ้าย</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>ย้ายการขึ้นบรรทัดไปทางขวา</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>ลบการขึ้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>ตัดบรรทัดเฉพาะที่ %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>เปลี่ยนตัวพิมพ์</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>ตัวพิมพ์เล็ก</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>ตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>ขึ้นต้นทุกคำด้วยตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>ขึ้นต้นประโยคด้วยตัวพิมพ์ใหญ่</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>เต็มความกว้าง</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>ครึ่งความกว้าง</translation>
     </message>
 </context>
 <context>

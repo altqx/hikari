@@ -431,6 +431,11 @@ public:
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
     Q_INVOKABLE bool deleteText();
+    // AU20 text commands on the shown selection, one undo step each. command: "balancedBreak",
+    // "breakLeft", "breakRight", "removeBreaks", "wrapAtBreaksOnly", "lowercase", "uppercase",
+    // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".
+    Q_INVOKABLE bool textCommand(const QString &command);
+    Q_INVOKABLE bool selectionWrapsAtBreaksOnly() const;
     Q_INVOKABLE void toggleHideTags();
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);

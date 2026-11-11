@@ -3838,6 +3838,25 @@ ApplicationWindow {
             TextMenuItem { kind: TextMenuItem.Delete; editor: field }
             MenuSeparator {}
             TextMenuItem { kind: TextMenuItem.SelectAll; editor: field }
+            MenuSeparator { visible: !field.readOnly; height: visible ? implicitHeight : 0 }
+            LineBreaksMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
+            ChangeCaseMenu {
+                shellRoot: root
+                prefix: field.objectName
+                enabled: !field.readOnly && root.editor.hasLine
+            }
+            ShellMenuItem {
+                command: "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"
+                iconRole: "dialogue-swap"
+                objectName: field.objectName + "SwapAlternatives"
+                text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
+                enabled: !field.readOnly && root.editor.hasLine
+                onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
+            }
             MenuSeparator {}
             ShellMenuItem {
                 command: "GLOBAL_BLUR_AND_GLOW_LAYERS"
@@ -6571,6 +6590,16 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups")
                             enabled: gridMenu.visible && root.app.canConvertFolds()
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_CONVERT_FOLDS_TO_GROUPS")) root.app.convertFoldsToGroups()
+                        }
+                        MenuSeparator {}
+                        LineBreaksMenu { shellRoot: root; prefix: "grid" }
+                        ChangeCaseMenu { shellRoot: root; prefix: "grid" }
+                        ShellMenuItem {
+                            command: "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES"
+                            iconRole: "dialogue-swap"
+                            objectName: "gridSwapAlternatives"
+                            text: qsTranslate("HikariSub.Text", "Swap dialogue alternatives")
+                            onTriggered: if (!root.hotkeyGesture(command)) root.app.textCommand("swapAlternatives")
                         }
                         MenuSeparator {}
                         ShellMenuItem {
@@ -9414,6 +9443,18 @@ ApplicationWindow {
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
+        case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
+        case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
+        case "GLOBAL_TEXT_REMOVE_BREAKS": if (editing) root.app.textCommand("removeBreaks"); return true
+        case "GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY": if (editing) root.app.textCommand("wrapAtBreaksOnly"); return true
+        case "GLOBAL_TEXT_LOWERCASE": if (editing) root.app.textCommand("lowercase"); return true
+        case "GLOBAL_TEXT_UPPERCASE": if (editing) root.app.textCommand("uppercase"); return true
+        case "GLOBAL_TEXT_TITLE_CASE": if (editing) root.app.textCommand("titleCase"); return true
+        case "GLOBAL_TEXT_SENTENCE_CASE": if (editing) root.app.textCommand("sentenceCase"); return true
+        case "GLOBAL_TEXT_FULL_WIDTH": if (editing) root.app.textCommand("fullWidth"); return true
+        case "GLOBAL_TEXT_HALF_WIDTH": if (editing) root.app.textCommand("halfWidth"); return true
+        case "GLOBAL_SWAP_DIALOGUE_ALTERNATIVES": if (editing) root.app.textCommand("swapAlternatives"); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
         case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
         case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true
