@@ -1392,6 +1392,7 @@ FocusScope {
             }
             LinkButton {
                 objectName: "agentScriptShowAll"
+                iconRole: "chevron-down"
                 visible: lua.open && !lua.allLines && lua.lines.length > 12
                 text: qsTr("Show all %n lines", "", lua.lines.length)
                 onClicked: lua.allLines = true
@@ -1479,6 +1480,7 @@ FocusScope {
                 }
                 LinkButton {
                     objectName: "agentScriptOpen"
+                    iconRole: "edit"
                     visible: (lua.item.file ?? "").length > 0
                     text: qsTr("Open")
                     onClicked: panel.agent.openScript(lua.item.file)

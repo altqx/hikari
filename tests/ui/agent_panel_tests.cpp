@@ -481,7 +481,7 @@ private slots:
         QVERIFY(click(QStringLiteral("agentScriptRun")));
         QTRY_COMPARE_WITH_TIMEOUT(session().document().lines()[0]->text, u8"A RATHER LONG FIRST LINE", 20000);
         QCOMPARE(session().historySize(), steps + 1);
-        QCOMPARE(session().history().back().name, std::string("Shout"));
+        QCOMPARE(session().history().back().name, std::string("Automation: Shout"));
         QVERIFY(QFileInfo::exists(at(QStringLiteral("user/ai/scripts/Shout.lua"))));
 
         QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentScriptRun")), 10000);
