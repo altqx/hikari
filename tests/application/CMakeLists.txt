@@ -257,3 +257,7 @@ hikari_add_gtest(hikari_application_visual_gradient_tests SOURCES visual_gradien
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_karaoke_layout_tests SOURCES karaoke_layout_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_commands_tests SOURCES text_commands_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_text_commands_tests PRIVATE
+    HIKARI_AU20_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/au20")

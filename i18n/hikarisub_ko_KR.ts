@@ -7124,6 +7124,54 @@ Failed to copy %2 fonts.</source>
         <translation>줄 전체로 \move 외삽</translation>
     </message>
     <message>
+        <source>Insert balanced break</source>
+        <translation>균형 잡힌 줄바꿈 삽입</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>줄바꿈을 왼쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>줄바꿈을 오른쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>줄바꿈 제거</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>\N에서만 줄바꿈 (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>소문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>대문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>단어 첫 글자를 대문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>문장 첫 글자를 대문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>전각 문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>반각 문자로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>대사 대안 맞바꾸기</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>탭을 새 창으로 이동</translation>
     </message>
@@ -18410,6 +18458,65 @@ Styles deleted:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>템플릿 실행기가 완료되기 전에 중단되었습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>대사 대안 맞바꾸기</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>줄바꿈</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>균형 잡힌 줄바꿈 삽입</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>줄바꿈을 왼쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>줄바꿈을 오른쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>줄바꿈 제거</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>%1에서만 줄바꿈 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>대소문자 바꾸기</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>소문자</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>대문자</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>단어 첫 글자 대문자</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>문장 첫 글자 대문자</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>전각</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>반각</translation>
     </message>
 </context>
 <context>

@@ -4,6 +4,7 @@
 
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
+#include "hikari/backends/icu_text.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/mecab_readings.h"
 #include "hikari/backends/libass_font_service.h"
@@ -20,6 +21,7 @@
 #include "hikari/application/fold_groups.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
+#include "hikari/application/text_commands.h"
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
@@ -6117,6 +6119,36 @@ bool Application::deleteText()
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+bool Application::textCommand(const QString &command)
+{
+    using application::text_commands::Command;
+    static const std::map<QString, Command> commands{
+        {"balancedBreak", Command::InsertBalancedBreak}, {"breakLeft", Command::MoveBreakLeft},
+        {"breakRight", Command::MoveBreakRight},         {"removeBreaks", Command::RemoveBreaks},
+        {"wrapAtBreaksOnly", Command::ToggleWrapStyle2}, {"lowercase", Command::Lowercase},
+        {"uppercase", Command::Uppercase},               {"titleCase", Command::TitleCase},
+        {"sentenceCase", Command::SentenceCase},         {"fullWidth", Command::FullWidth},
+        {"halfWidth", Command::HalfWidth},               {"swapAlternatives", Command::SwapAlternatives},
+    };
+    auto *session = targetSession();
+    const auto found = commands.find(command);
+    if (!session || found == commands.end())
+        return false;
+    static const auto services = backends::icuTextServices();
+    ui::QtTextMeasurePort measure;
+    const bool done = application::text_commands::run(*session, found->second, services, measure, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::selectionWrapsAtBreaksOnly() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    return session && application::text_commands::selectionWrapsAtBreaksOnly(*session, shownLines());
 }
 
 bool Application::joinLines(const QString &kind)

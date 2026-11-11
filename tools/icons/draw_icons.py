@@ -1425,8 +1425,6 @@ for card, roles in {
     "AU18 #852": ["layers", "layers-repeat"],
     "AU19 #853": ["snap-start-to-previous-keyframe", "snap-start-to-next-keyframe", "snap-end-to-previous-keyframe",
                   "snap-end-to-next-keyframe", "lead-in-remove", "lead-out-remove", "timing-assistant"],
-    "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
-                  "case-upper", "case-lower", "case-title", "case-sentence", "fullwidth", "halfwidth", "dialogue-swap"],
     "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",
                   "align-bottom", "distribute-horizontal", "distribute-vertical", "pos-to-margins", "margins-to-pos",
                   "phantom", "cycle-values", "shift-by-x", "shift-by-y"],

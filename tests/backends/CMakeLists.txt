@@ -532,3 +532,6 @@ target_include_directories(hikari_backends_ai_agent_cli_tests PRIVATE "${PROJECT
 target_compile_definitions(hikari_backends_ai_agent_cli_tests PRIVATE
     HIKARI_FAKE_AGENT_CLI="$<TARGET_FILE:hikari_fake_agent_cli>")
 add_dependencies(hikari_backends_ai_agent_cli_tests hikari_fake_agent_cli)
+
+hikari_add_gtest(hikari_backends_icu_text_tests SOURCES icu_text_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)

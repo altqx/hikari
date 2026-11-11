@@ -5194,8 +5194,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-left",
@@ -5207,8 +5206,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-right",
@@ -5220,8 +5218,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "line-break-remove",
@@ -5233,8 +5230,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "change-case",
@@ -5246,8 +5242,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-upper",
@@ -5259,8 +5254,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-lower",
@@ -5272,8 +5266,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-title",
@@ -5285,8 +5278,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "case-sentence",
@@ -5298,8 +5290,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "fullwidth",
@@ -5311,8 +5302,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "halfwidth",
@@ -5324,8 +5314,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "dialogue-swap",
@@ -5337,8 +5326,7 @@
    "surfaces": [
     "line-editor",
     "grid-menu"
-   ],
-   "pending": "AU20 #854"
+   ]
   },
   {
    "role": "change-alignment",
