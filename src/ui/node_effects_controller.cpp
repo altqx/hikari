@@ -627,24 +627,30 @@ QVariantList NodeEffectsController::wires() const
     return out;
 }
 
+QVariantMap NodeEffectsController::problemRow(const std::string &node, const std::string &port,
+                                              const std::string &message) const
+{
+    std::string prefix;
+    for (const std::string &id : m_path)
+        prefix += id + "/";
+    QString viewNode;
+    if (node.starts_with(prefix) && node.size() > prefix.size()) {
+        const std::string rest = node.substr(prefix.size());
+        viewNode = qstr(rest.substr(0, rest.find('/')));
+    }
+    return {{QStringLiteral("node"), qstr(node)},
+            {QStringLiteral("viewNode"), viewNode},
+            {QStringLiteral("port"), qstr(port)},
+            {QStringLiteral("message"), qstr(message)}};
+}
+
 QVariantList NodeEffectsController::problems() const
 {
     QVariantList out;
     if (!m_graph)
         return out;
-    std::string prefix;
-    for (const std::string &id : m_path)
-        prefix += id + "/";
     const auto add = [&](const std::string &node, const std::string &port, const std::string &message) {
-        QString viewNode;
-        if (node.starts_with(prefix) && node.size() > prefix.size()) {
-            const std::string rest = node.substr(prefix.size());
-            viewNode = qstr(rest.substr(0, rest.find('/')));
-        }
-        out << QVariantMap{{QStringLiteral("node"), qstr(node)},
-                           {QStringLiteral("viewNode"), viewNode},
-                           {QStringLiteral("port"), qstr(port)},
-                           {QStringLiteral("message"), qstr(message)}};
+        out << problemRow(node, port, message);
     };
     const std::vector<application::GraphProblem> found = application::validateGraph(*m_graph);
     for (const application::GraphProblem &p : found)
@@ -1454,6 +1460,24 @@ bool NodeEffectsController::duplicateGraph()
     if (done)
         setCurrent(added->value);
     return done;
+}
+
+QVariantList NodeEffectsController::exportAsTemplate()
+{
+    if (!m_current)
+        return {};
+    const core::LineId line = *m_current;
+    std::vector<application::NodeEffectProblem> blockers;
+    runGraphCommand([&](application::EditSession &s) {
+        auto exported = application::exportTemplateLines(s, line);
+        if (!exported)
+            blockers = std::move(exported.error());
+        return exported.has_value();
+    });
+    QVariantList out;
+    for (const application::NodeEffectProblem &p : blockers)
+        out << problemRow(p.node, {}, p.message);
+    return out;
 }
 
 bool NodeEffectsController::deleteGraph()

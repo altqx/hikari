@@ -178,6 +178,8 @@ public:
     Q_INVOKABLE bool renameGraph(const QString &name);
     Q_INVOKABLE bool duplicateGraph();
     Q_INVOKABLE bool deleteGraph();
+    // Inserts the graph's template Lines after it; when it has no template form, the nodes that block it.
+    Q_INVOKABLE QVariantList exportAsTemplate();
     Q_INVOKABLE bool apply(bool selectedOnly);
     Q_INVOKABLE void trustDocument();
 
@@ -201,6 +203,7 @@ private:
     void edit(const application::NodeGraph &root);
     void editView(const application::NodeGraph &view);
     bool runGraphCommand(const std::function<bool(application::EditSession &)> &command);
+    QVariantMap problemRow(const std::string &node, const std::string &port, const std::string &message) const;
     void reload();
     void updateSources();
     void schedulePreview();

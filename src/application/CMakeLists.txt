@@ -1,5 +1,5 @@
 add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp ai_review.cpp word_diff.cpp workspace.cpp document_files.cpp
-    automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp extents_cache.cpp compile_cache.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp fold_groups.cpp timecodes_file.cpp
+    automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp extents_cache.cpp compile_cache.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp lyrics_insert.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp fold_groups.cpp timecodes_file.cpp
     dialog_memory.cpp)
 target_sources(hikari_application PRIVATE hotkeys.cpp)
 target_sources(hikari_application PRIVATE audio_timing.cpp)
@@ -13,6 +13,7 @@ target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/applica
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
 target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
+target_sources(hikari_application PRIVATE karaoke_templates.cpp include/hikari/application/karaoke_templates.h)
 target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
 target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp karaoke_layout.cpp node_graph_editing.cpp node_graph_presets.cpp
     include/hikari/application/karaoke_layout.h node_effects.cpp include/hikari/application/node_catalogue.h

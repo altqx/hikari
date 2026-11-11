@@ -2026,7 +2026,7 @@ private:
 
 }
 
-std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> bytes)
+std::expected<ImportedLyrics, LyricsProblem> detail::readTtml(std::span<const std::byte> bytes)
 {
     if (bytes.size() > kMaxLyricsFileSize)
         return std::unexpected(LyricsProblem{Kind::TooLarge, 0, {}});
@@ -2055,6 +2055,7 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
     auto sheet = TtmlReader(detail::lyricsBudget(bytes.size())).read(*root);
     if (!sheet)
         return std::unexpected(sheet.error());
+    sheet->format = LyricsFormat::Ttml;
     return detail::lyricsDocument(std::move(*sheet));
 }
 

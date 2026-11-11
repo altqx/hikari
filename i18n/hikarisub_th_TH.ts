@@ -1782,12 +1782,28 @@ Output device: %2</source>
         <translation>ไม่สามารถเรียกใช้ตัวแก้ไขได้</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ไม่ได้โหลด: แมโคร %1 ของสคริปต์นี้เป็นของ Karaoke Templater ในตัว ซึ่งจะทำงานแทน</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>แมโครถูกยกเลิก จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
         <translation>แมโครถูกยกเลิก มีเพียงความละเอียดสคริปต์ที่ถูกกำหนดค่า</translation>
+    </message>
+    <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>เรียกใช้ “%1” กับเอกสารนี้ไม่ได้ ต้องใช้ %2 MB แต่แมโครใช้ได้สูงสุด %3 MB</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>เรียกใช้แมโครกับไฟล์ที่เล็กลง เช่น สำเนาที่มีเฉพาะบรรทัดที่ต้องใช้</translation>
     </message>
     <message>
         <source>Validation Lua script “%1” failed</source>
@@ -2651,6 +2667,18 @@ Output device: %2</source>
         <translation>บันทึกทับ</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>นำเข้าเนื้อเพลง</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>เนื้อเพลง (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>อ่าน %1 ไม่ได้</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>เปิดคำบรรยาย</translation>
     </message>
@@ -2659,8 +2687,12 @@ Output device: %2</source>
         <translation>คำบรรยาย (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
+        <translation type="vanished">เนื้อเพลงที่จัดเวลารายคำ (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2745,6 +2777,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>ไม่มีเนื้อเพลงที่จัดเวลาไว้</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>ไฟล์ถูกเข้ารหัส ถอดรหัสเป็นข้อความด้วยเครื่องมือของคุณเองก่อน</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2964,6 +3000,130 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>บันทึก %1 · ละทิ้ง %2</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความในการเข้ารหัสอักขระนี้</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC ที่ถอดรหัสแล้ว</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC ที่ถอดรหัสแล้ว</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>จัดเวลารายคำ</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>จัดเวลารายบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>ใช้ค่าชดเชย %1 วินาทีแล้ว</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>เพลง</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>การเข้ารหัสอักขระ</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · ตรวจพบ</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>ไฟล์เนื้อเพลง Kugou นี้ถูกเข้ารหัส HikariSub จึงอ่านไม่ได้</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>ไฟล์เนื้อเพลง QQ Music นี้ถูกเข้ารหัส HikariSub จึงอ่านไม่ได้</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>ถอดรหัสเป็นข้อความด้วยเครื่องมือของคุณเองก่อน แล้วจึงนำเข้าไฟล์ที่ถอดรหัสแล้ว HikariSub ไม่ถอดรหัสไฟล์เนื้อเพลง</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>ตัวอย่าง</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>และอีก %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>เพิ่มบรรทัดลงใน</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>ต่อจากบรรทัดสุดท้ายของไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>ไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>สไตล์</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>เวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>แต่ละบรรทัดสิ้นสุดเมื่อบรรทัดถัดไปเริ่ม</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>เว้นช่วงก่อนบรรทัดถัดไป</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>ช่วงเว้น (วินาที)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>ความยาวบรรทัดสุดท้าย (วินาที)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>เลือกไฟล์อื่น…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>นำเข้า</translation>
     </message>
 </context>
 <context>
@@ -7214,6 +7374,10 @@ Failed to copy %2 fonts.</source>
         <translation>ปิดหน้าต่าง</translation>
     </message>
     <message>
+        <source>Import lyrics…</source>
+        <translation>นำเข้าเนื้อเพลง…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8252,6 +8416,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>นำเข้าคำบรรยายจาก MKV…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>แปลงไฟล์เนื้อเพลงเป็นบรรทัด ในไฟล์ที่เปิดอยู่หรือไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>นำเข้าเนื้อเพลง…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -9874,6 +10046,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9891,6 +10071,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14591,7 +14775,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ลบแล้ว</translation>
     </message>
     <message>
         <source>New</source>
@@ -17877,8 +18061,8 @@ Styles deleted:
         <translation>แสดงตัวอย่างบนวิดีโอ</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลดสคริปต์ของมัน (kara-templater.lua) แล้ว</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>ตัวประมวลผลเทมเพลตคาราโอเกะทำงานกับไฟล์คำบรรยายที่เปิดอยู่ เมื่อโหลด Karaoke Templater ในตัวแล้ว</translation>
     </message>
     <message>
         <source>Templates</source>

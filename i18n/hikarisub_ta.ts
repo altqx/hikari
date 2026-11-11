@@ -1793,12 +1793,28 @@ Output device: %2</source>
         <translation>எடிட்டரைத் தொடங்க முடியாது.</translation>
     </message>
     <message>
+        <source>Not loaded: its macros %1 are the built-in Karaoke Templater’s, which runs them instead.</source>
+        <translation>ஏற்றப்படவில்லை: இதன் குறுநிரல்கள் %1 உள்ளமைந்த Karaoke Templater-இன் குறுநிரல்கள்; அதுவே அவற்றை இயக்கும்.</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>உள்ளமைந்தது</translation>
+    </message>
+    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
         <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
+        <translation>“%1” இந்த ஆவணத்தில் இயங்க முடியாது: இதற்கு %2 MB தேவை, ஆனால் ஒரு குறுநிரல் அதிகபட்சம் %3 MB மட்டுமே பயன்படுத்த முடியும்.</translation>
+    </message>
+    <message>
+        <source>Run the macro on a smaller file, for example a copy with only the lines it needs.</source>
+        <translation>குறுநிரலைச் சிறிய கோப்பில் இயக்கவும், எடுத்துக்காட்டாக அதற்குத் தேவையான வரிகள் மட்டும் உள்ள ஒரு நகலில்.</translation>
     </message>
     <message>
         <source>Validation Lua script “%1” failed</source>
@@ -2675,6 +2691,18 @@ Output device: %2</source>
         <translation>அதன் மேல் சேமி</translation>
     </message>
     <message>
+        <source>Import lyrics</source>
+        <translation>பாடல் வரிகளை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>பாடல் வரிகள் (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
+        <source>Could not read %1.</source>
+        <translation>%1 ஐப் படிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>வசன வரிகளைத் திற</translation>
     </message>
@@ -2683,8 +2711,12 @@ Output device: %2</source>
         <translation>வசன வரிகள் (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
+        <translation>சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.krc *.qrc *.ttml)</translation>
+    </message>
+    <message>
         <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation>சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.ttml)</translation>
+        <translation type="vanished">சொல்வாரியாக நேரமிட்ட பாடல் வரிகள் (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -2769,6 +2801,10 @@ Output device: %2</source>
     <message>
         <source>it has no timed lyrics</source>
         <translation>இதில் நேரமிட்ட பாடல் வரிகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>it is encrypted. Decode it to text with your own tool first</source>
+        <translation>இது மறையாக்கப்பட்டுள்ளது. முதலில் உங்கள் கருவியால் இதை உரையாகக் குறிவிலக்கவும்</translation>
     </message>
     <message>
         <source>Could not import %1: line %2: %3. Nothing was imported.</source>
@@ -2991,6 +3027,132 @@ Output device: %2</source>
     <message>
         <source>Saves %1 · Discards %2</source>
         <translation>%1 சேமிக்கப்படும் · %2 கைவிடப்படும்</translation>
+    </message>
+    <message>
+        <source>The file is not text in this encoding.</source>
+        <translation>இந்தக் குறியாக்கத்தில் கோப்பு உரையாக இல்லை.</translation>
+    </message>
+    <message>
+        <source>LRC</source>
+        <translation>LRC</translation>
+    </message>
+    <message>
+        <source>TTML</source>
+        <translation>TTML</translation>
+    </message>
+    <message>
+        <source>Kugou KRC, decoded</source>
+        <translation>Kugou KRC, குறிவிலக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>QQ Music QRC, decoded</source>
+        <translation>QQ Music QRC, குறிவிலக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>word-timed</source>
+        <translation>சொல்வாரியாக நேரமிட்டது</translation>
+    </message>
+    <message>
+        <source>line-timed</source>
+        <translation>வரிவாரியாக நேரமிட்டது</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>offset %1 s applied</source>
+        <translation>%1 வி. இடப்பெயர்ச்சி பயன்படுத்தப்பட்டது</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>கோப்பு</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>வடிவம்</translation>
+    </message>
+    <message>
+        <source>Song</source>
+        <translation>பாடல்</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>குறியாக்கம்</translation>
+    </message>
+    <message>
+        <source>%1 · detected</source>
+        <translation>%1 · கண்டறியப்பட்டது</translation>
+    </message>
+    <message>
+        <source>This Kugou lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>இந்த Kugou பாடல் வரி கோப்பு மறையாக்கப்பட்டுள்ளதால் HikariSub ஆல் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>This QQ Music lyrics file is encrypted, so HikariSub can’t read it.</source>
+        <translation>இந்த QQ Music பாடல் வரி கோப்பு மறையாக்கப்பட்டுள்ளதால் HikariSub ஆல் படிக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>Decode it to text with your own tool first, then import the decoded file. HikariSub doesn’t decrypt lyric files.</source>
+        <translation>முதலில் உங்கள் கருவியால் அதை உரையாகக் குறிவிலக்கி, பின் குறிவிலக்கிய கோப்பை இறக்குமதி செய்யவும். HikariSub பாடல் வரி கோப்புகளை மறைவிலக்குவதில்லை.</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>முன்னோட்டம்</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>மேலும் %n வரி</numerusform>
+            <numerusform>மேலும் %n வரிகள்</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add the lines to</source>
+        <translation>வரிகளைச் சேர்க்கும் இடம்</translation>
+    </message>
+    <message>
+        <source>After the last line of the open file</source>
+        <translation>திறந்த கோப்பின் கடைசி வரிக்குப் பின்</translation>
+    </message>
+    <message>
+        <source>A new file</source>
+        <translation>புதிய கோப்பு</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation>முடிவு நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Each line ends when the next one starts</source>
+        <translation>ஒவ்வொரு வரியும் அடுத்தது தொடங்கும்போது முடிகிறது</translation>
+    </message>
+    <message>
+        <source>Leave a gap before the next line</source>
+        <translation>அடுத்த வரிக்கு முன் இடைவெளி விடு</translation>
+    </message>
+    <message>
+        <source>Gap (s)</source>
+        <translation>இடைவெளி (வி.)</translation>
+    </message>
+    <message>
+        <source>Last line lasts (s)</source>
+        <translation>கடைசி வரியின் நீளம் (வி.)</translation>
+    </message>
+    <message>
+        <source>Choose another file…</source>
+        <translation>வேறு கோப்பைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>இறக்குமதி</translation>
     </message>
 </context>
 <context>
@@ -7268,6 +7430,10 @@ Failed to copy %2 fonts.</source>
         <translation>சாளரத்தை மூடு</translation>
     </message>
     <message>
+        <source>Import lyrics…</source>
+        <translation>பாடல் வரிகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8309,6 +8475,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import subtitles from MKV…</source>
         <translation>MKV இலிருந்து வசன வரிகளை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
+        <source>Turns a lyrics file into lines, in the open file or a new one</source>
+        <translation>பாடல் வரி கோப்பைத் திறந்த கோப்பிலோ புதிய கோப்பிலோ வரிகளாக மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Import lyrics…</source>
+        <translation>பாடல் வரிகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Save current file</source>
@@ -9945,6 +10119,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Export as template lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds template lines after the graph line that make the same lines in Aegisub’s karaoke templater.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete graph</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9962,6 +10144,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Select karaoke lines in “Source lines” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These nodes have no form in a karaoke template, so the graph can’t be exported:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14686,7 +14872,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">நீக்கப்பட்டது</translation>
     </message>
     <message>
         <source>New</source>
@@ -18005,8 +18191,8 @@ Styles deleted:
         <translation>வீடியோவில் முன்னோட்டமிடு</translation>
     </message>
     <message>
-        <source>The karaoke templater runs on an open subtitle file once its script (kara-templater.lua) is loaded.</source>
-        <translation>கரோக்கி வார்ப்புருவாக்கி, அதன் ச்கிரிப்ட் (kara-templater.lua) ஏற்றப்பட்டதும் திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
+        <source>The karaoke templater runs on an open subtitle file once the built-in Karaoke Templater has loaded.</source>
+        <translation>உள்ளமைந்த Karaoke Templater ஏற்றப்பட்டதும், கரோக்கி வார்ப்புருவாக்கி திறந்த வசனக் கோப்பில் இயங்கும்.</translation>
     </message>
     <message>
         <source>Templates</source>
