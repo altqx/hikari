@@ -1,0 +1,11 @@
+{
+  "name": "clipper2",
+  "version": "1.2.2",
+  "port-version": 100,
+  "description": "Clipper2 (Hikari-owned overlay: the commit ILL's clipper2 wrapper is built against)",
+  "homepage": "https://github.com/AngusJohnson/Clipper2",
+  "license": "BSL-1.0",
+  "dependencies": [
+    {"name": "vcpkg-cmake", "host": true}
+  ]
+}
