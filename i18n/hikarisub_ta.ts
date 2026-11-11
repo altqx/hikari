@@ -10346,7 +10346,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">மதிப்புகள்</translation>
     </message>
     <message>
         <source>Math</source>
@@ -21545,10 +21545,6 @@ increasing or decreasing the value.</source>
     <message>
         <source>Spikes</source>
         <translation>முனைகள்</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>மையம்</translation>
     </message>
     <message>
         <source>Hole</source>

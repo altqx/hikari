@@ -10279,7 +10279,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ค่า</translation>
     </message>
     <message>
         <source>Math</source>
@@ -21383,10 +21383,6 @@ increasing or decreasing the value.</source>
     <message>
         <source>Spikes</source>
         <translation>แฉก</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>กึ่งกลาง</translation>
     </message>
     <message>
         <source>Hole</source>

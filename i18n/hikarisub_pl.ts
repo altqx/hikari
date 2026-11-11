@@ -10413,7 +10413,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wartości</translation>
     </message>
     <message>
         <source>Math</source>
@@ -21707,10 +21707,6 @@ zwiększając lub zmniejszając wartość.</translation>
     <message>
         <source>Spikes</source>
         <translation>Promienie</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation>Środek</translation>
     </message>
     <message>
         <source>Hole</source>
