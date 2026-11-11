@@ -268,6 +268,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.crashReports.freezeRecord = userFolder.cache() + QStringLiteral("/hang-record.txt");
     options.crashReports.pendingFile = userFolder.cache() + QStringLiteral("/reports/crash-report.json");
     options.crashReports.logTail = userFolder.cache() + QStringLiteral("/reports/log-tail.txt");
+    options.crashReports.windows = userFolder.cache() + QStringLiteral("/reports/windows.json");
     options.crashReports.attachments = userFolder.cache() + QStringLiteral("/reports/issue");
     options.crashReports.version = QStringLiteral(HIKARI_VERSION);
     options.analytics.version = QStringLiteral(HIKARI_VERSION);

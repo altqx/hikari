@@ -2295,6 +2295,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     noteLastUsedWindow();
+    noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
     for (const int window : sessionWindows())
@@ -6452,9 +6453,20 @@ void Application::noteLastUsedWindow()
         emit lastUsedWindowChanged();
 }
 
+void Application::noteCrashWindows()
+{
+    if (!m_crashReports)
+        return;
+    QList<report::Window> windows;
+    for (const int window : sessionWindows())
+        windows << report::Window{static_cast<int>(m_workspace.tabs(window).size()), window == m_workspace.activeWindow()};
+    m_crashReports->setWindows(windows);
+}
+
 void Application::shellWindowClosed(int shellWindow)
 {
     forgetShellWindow(shellWindow);
+    noteCrashWindows();
     saveLastSession();
 }
 

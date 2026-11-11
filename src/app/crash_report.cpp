@@ -254,7 +254,33 @@ QString Report::systemText() const
             ai << QLatin1String(name) + QLatin1Char(' ') + version;
     if (!ai.isEmpty())
         text += QStringLiteral("\n  ") + ai.join(QStringLiteral(" · "));
+    if (!windows.isEmpty()) {
+        QStringList parts{windows.size() == 1 ? QStringLiteral("1 window") : QStringLiteral("%1 windows").arg(windows.size())};
+        for (qsizetype i = 0; i < windows.size(); ++i)
+            parts << QStringLiteral("window %1%2: %3").arg(i + 1)
+                         .arg(windows[i].active ? QStringLiteral(" (active)") : QString(),
+                              windows[i].tabs == 1 ? QStringLiteral("1 tab") : QStringLiteral("%1 tabs").arg(windows[i].tabs));
+        text += QStringLiteral("\n  ") + parts.join(QStringLiteral(" · "));
+    }
     return text;
+}
+
+QJsonArray windowsJson(const QList<Window> &windows)
+{
+    QJsonArray out;
+    for (const Window &w : windows)
+        out.append(QJsonObject{{QStringLiteral("tabs"), w.tabs}, {QStringLiteral("active"), w.active}});
+    return out;
+}
+
+QList<Window> windowsOf(const QJsonArray &json)
+{
+    QList<Window> out;
+    for (const QJsonValue &v : json) {
+        const QJsonObject w = v.toObject();
+        out << Window{std::max(0, w.value(QStringLiteral("tabs")).toInt()), w.value(QStringLiteral("active")).toBool()};
+    }
+    return out;
 }
 
 QString Report::settingsText() const
@@ -366,6 +392,8 @@ QJsonObject Report::reportProperties(const QString &note) const
                     {QStringLiteral("qt_version"), system.qtVersion},
                     {QStringLiteral("settings"), settingsJson},
                     {QStringLiteral("log"), log.join(u'\n')}};
+    if (std::ranges::count(windows, true, &Window::active) == 1)
+        out.insert(QStringLiteral("windows"), windowsJson(windows));
     for (auto it = system.ai.begin(); it != system.ai.end(); ++it)
         out.insert(it.key(), it.value());
     if (const QString n = note.trimmed().left(kNoteChars); !n.isEmpty())
@@ -379,7 +407,8 @@ QJsonObject Report::toJson() const
                     {QStringLiteral("when"), when.toUTC().toString(Qt::ISODate)},
                     {QStringLiteral("exceptionSent"), exceptionSent},
                     {QStringLiteral("recovered"), recovered},
-                    {QStringLiteral("log"), QJsonArray::fromStringList(log)}};
+                    {QStringLiteral("log"), QJsonArray::fromStringList(log)},
+                    {QStringLiteral("windows"), windowsJson(windows)}};
     if (record) {
         const auto json = [](const QList<crash::Frame> &stack) {
             QJsonArray frames;
@@ -415,6 +444,7 @@ std::optional<Report> Report::fromJson(const QJsonObject &json)
     for (const QJsonValue &l : json.value(QStringLiteral("log")).toArray())
         r.log << l.toString();
     r.log = boundLog(r.log);
+    r.windows = windowsOf(json.value(QStringLiteral("windows")).toArray());
     const QJsonObject rec = json.value(QStringLiteral("record")).toObject();
     if (!rec.isEmpty()) {
         crash::Record record{rec.value(QStringLiteral("type")).toString(), rec.value(QStringLiteral("mechanism")).toString(),

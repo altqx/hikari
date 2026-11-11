@@ -35,6 +35,8 @@ public:
         QString freezeRecord;
         QString pendingFile;
         QString logTail;
+        // The windows' facts for the report of a crash in this session.
+        QString windows;
         // A folder for the issue's screenshot and zip, until discardAttachments.
         QString attachments;
         QString version;
@@ -50,6 +52,7 @@ public:
     void setKnown(std::function<QStringList()> names, std::function<QStringList()> texts);
     // The callback returns "" without an editing target file.
     void setCurrentFile(std::function<QString()> file) { m_currentFile = std::move(file); }
+    void setWindows(const QList<report::Window> &windows);
     // Call once the window shows: completes a pending report and, with "Always send", sends it.
     void started(const QString &package, int screens, qreal scale, const QString &layout);
     void freezeRecovered(const crash::Record &record);
@@ -129,6 +132,7 @@ private:
     std::optional<report::Report> m_pending;
     std::optional<report::Report> m_freeze;
     QStringList m_tail;
+    QList<report::Window> m_windows;
     QString m_sentText;
     std::function<QString()> m_currentFile;
     QString m_issueLog;

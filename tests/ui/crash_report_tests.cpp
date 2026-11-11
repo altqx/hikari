@@ -140,6 +140,7 @@ class CrashReportTest : public QObject {
         c.freezeRecord = path("hang-record.txt");
         c.pendingFile = path("crash-report.json");
         c.logTail = path("log-tail.txt");
+        c.windows = path("windows.json");
         c.version = QStringLiteral("0.1.0-beta.1");
         c.openUrl = [this](const QUrl &url) {
             opened << url;
@@ -194,7 +195,7 @@ private slots:
     void init()
     {
         for (const char *f : {"crash-record.txt", "hang-record.txt", "crash-report.json", "log-tail.txt",
-                              "analytics-queue.json"})
+                              "analytics-queue.json", "windows.json"})
             QFile::remove(path(f));
         opened.clear();
         copied.clear();
@@ -259,6 +260,43 @@ private slots:
 
         CrashReports again(settings, analytics, log, config());
         QCOMPARE(again.pending(), QStringLiteral("crash"));
+    }
+
+    void aCrashReportListsEachWindowsTabsAndTheActiveOne()
+    {
+        hikari::ui::SettingsStore settings;
+        Analytics analytics(settings, analyticsConfig({}));
+        hikari::ui::LogController log;
+        const QList<report::Window> windows{{3, false}, {1, true}};
+        {
+            CrashReports crashed(settings, analytics, log, config());
+            crashed.setWindows(windows);
+        }
+        writeRecord("crash-record.txt", crashRecordText());
+        CrashReports reports(settings, analytics, log, config());
+        QCOMPARE(reports.pending(), QStringLiteral("crash"));
+        reports.setWindows({{1, true}});
+        const QString text = reports.text(kStart, {});
+        QVERIFY2(text.contains(QStringLiteral("\n  2 windows · window 1: 3 tabs · window 2 (active): 1 tab\n")), qPrintable(text));
+
+        report::Report r;
+        r.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        r.windows = windows;
+        const QJsonObject properties = r.reportProperties({});
+        QCOMPARE(properties.value(QStringLiteral("windows")),
+                 QJsonValue(QJsonArray{QJsonObject{{QStringLiteral("tabs"), 3}, {QStringLiteral("active"), false}},
+                                       QJsonObject{{QStringLiteral("tabs"), 1}, {QStringLiteral("active"), true}}}));
+        QVERIFY(Analytics::conforms(QStringLiteral("crash_report"), {{QStringLiteral("windows"), properties.value(QStringLiteral("windows"))}}));
+        QCOMPARE(report::Report::fromJson(r.toJson())->windows, windows);
+        r.windows = {{2, false}};
+        QVERIFY(!r.reportProperties({}).contains(QStringLiteral("windows")));
+        for (const QJsonValue &leak : {QJsonValue(QJsonArray{QJsonObject{{QStringLiteral("tabs"), 1}, {QStringLiteral("active"), true},
+                                                                         {QStringLiteral("title"), QStringLiteral("Episode 03.ass")}}}),
+                                       QJsonValue(QJsonArray{QJsonObject{{QStringLiteral("tabs"), 1}, {QStringLiteral("active"), true}},
+                                                             QJsonObject{{QStringLiteral("tabs"), 2}, {QStringLiteral("active"), true}}}),
+                                       QJsonValue(QJsonArray{QJsonObject{{QStringLiteral("tabs"), QStringLiteral("3")}, {QStringLiteral("active"), true}}}),
+                                       QJsonValue(QJsonArray{QJsonObject{{QStringLiteral("tabs"), 1}, {QStringLiteral("active"), false}}})})
+            QVERIFY(!Analytics::conforms(QStringLiteral("crash_report"), {{QStringLiteral("windows"), leak}}));
     }
 
     void theSystemIsNamedAsPeopleKnowIt()

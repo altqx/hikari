@@ -1286,6 +1286,7 @@ private:
     void leaveShellWindow(int shellWindow);
     void showFirstWindow();
     void noteLastUsedWindow();
+    void noteCrashWindows();
     ui::WorkspaceLayoutController &layoutOf(int shellWindow);
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();
