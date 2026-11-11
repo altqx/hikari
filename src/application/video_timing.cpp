@@ -90,8 +90,8 @@ using retiming::msOf;
 using retiming::Retime;
 using retiming::zeroIt;
 
-std::expected<void, CommandRefusal> retime(EditSession &session, const char *name,
-                                           const std::map<core::LineId, Retime> &times)
+std::expected<void, CommandRefusal> retimeLines(EditSession &session, const char *name,
+                                                const std::map<core::LineId, Retime> &times)
 {
     return retiming::retime(session, name, times).transform([](bool) {});
 }
@@ -160,7 +160,7 @@ std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool
             }
         }
     }
-    return retime(session, end ? "Setting end time" : "Setting start time", times);
+    return retimeLines(session, end ? "Setting end time" : "Setting start time", times);
 }
 
 std::expected<void, CommandRefusal> joinPreviousToAudioSelection(EditSession &session, int startMs, int endMs)
@@ -182,7 +182,7 @@ std::expected<void, CommandRefusal> joinPreviousToAudioSelection(EditSession &se
         if (msOf(before.start.value) > startMs)
             t.startMs = startMs;
     }
-    return retime(session, "Joining with previous", times);
+    return retimeLines(session, "Joining with previous", times);
 }
 
 std::expected<void, CommandRefusal> shiftFramesToVideo(EditSession &session, const LegacyTimebase &timebase,
@@ -208,7 +208,7 @@ std::expected<void, CommandRefusal> shiftFramesToVideo(EditSession &session, con
         if (moves || l->id == *active)
             times[l->id] = Retime{shifted(l->start.value), shifted(l->end.value)};
     }
-    return retime(session, "Shifting times by frames", times);
+    return retimeLines(session, "Shifting times by frames", times);
 }
 
 std::optional<core::LineId> lineAtVideoTime(const core::Document &document, const ShownLine &shown, int tellMs,
