@@ -9946,7 +9946,15 @@ private slots:
         const auto settled = [](QQuickWindow *window) {
             QVERIFY(QTest::qWaitForWindowExposed(window));
             QTRY_VERIFY(window->contentItem()->width() > 0);
-            QVERIFY(QTest::qWaitForWindowActive(window));
+            const QQuickItem *scope = window->findChild<QQuickItem *>(QStringLiteral("dialogScope"));
+            QVERIFY(scope);
+            const auto takesKeys = [&] {
+                const QQuickItem *focused = window->activeFocusItem();
+                return QGuiApplication::focusWindow() == window && focused && (focused == scope || scope->isAncestorOf(focused));
+            };
+            QTRY_VERIFY2(takesKeys(), qPrintable(QStringLiteral("focus window %1, focus item %2")
+                                                     .arg(QGuiApplication::focusWindow() ? QGuiApplication::focusWindow()->objectName() : QStringLiteral("none"),
+                                                          window->activeFocusItem() ? window->activeFocusItem()->objectName() : QStringLiteral("none"))));
         };
         auto *root = engine->rootObjects().first();
         auto &updates = application->updates();

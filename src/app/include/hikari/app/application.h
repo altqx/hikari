@@ -361,7 +361,7 @@ public:
     // Adds the format's extension when missing. "readonly" asks again; "" when the
     // save started.
     Q_INVOKABLE QString saveChosen(const QUrl &file);
-    // Saves in-place tabs now; returns the others, in tab order, as {id, route, title}.
+    // Saves in-place tabs now; returns the others, in tab order, as {id, route, title}. Route "scriptInfo": ask with scriptInfoQuestion first.
     Q_INVOKABLE QVariantList saveAll();
     // As saveRoute, saveDialogValues, saveChosen and Save for Document id (0: the
     // editing target).
@@ -653,6 +653,10 @@ public:
     void setFindProcessorCount(int count) { m_findProcessors = count; }
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
+    // With scriptProperties.askForChange on: the {key, from, to} the next save would write, for the dialog to ask about.
+    Q_INVOKABLE QVariantList scriptInfoQuestion(qulonglong id) const;
+    // The keys the next save of `id` writes while askForChange is on; none skips them.
+    Q_INVOKABLE void approveScriptInfo(qulonglong id, const QStringList &keys);
     Q_INVOKABLE bool shiftTranslation(int mode);
     Q_INVOKABLE bool makeGroups();
     // description: the id of the group's description Line.
@@ -1158,6 +1162,9 @@ private:
     void makeNodeEffects(WindowViews &views, int shellWindow);
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
+    void applyScriptInfoOnSave(application::DocumentId document);
+    const application::Settings &documentSettings(application::DocumentId document) const;
+    std::map<std::uint64_t, std::vector<std::u8string>> m_scriptInfoApproved;
     bool kanjiPending(application::DocumentId document);
     bool applyKanji(application::DocumentId document, application::EditSession &session);
     void refreshWindowViews(int shellWindow);
