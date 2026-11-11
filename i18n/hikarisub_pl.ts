@@ -383,6 +383,10 @@
         <source>Show the log</source>
         <translation>Pokaż dziennik</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -22343,13 +22347,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>QT_LAYOUT_DIRECTION</source>
         <translation>LTR</translation>
-    </message>
-</context>
-<context>
-    <name>hikari::app::AgentController</name>
-    <message>
-        <source>Claude Code</source>
-        <translation>Claude Code</translation>
     </message>
 </context>
 </TS>
