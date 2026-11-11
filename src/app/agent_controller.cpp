@@ -4,6 +4,10 @@
 #include "hikari/application/ai_review.h"
 #include "hikari/application/document_files.h"
 #include "hikari/backends/ai_agent.h"
+#include "hikari/backends/ai_requests.h"
+#include "hikari/backends/desktop_handoff.h"
+#include "cited_answer.h"
+#include "search_suggestions_view.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
@@ -136,6 +140,8 @@ AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(paren
     connect(&m_wiring.settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
         if (id.startsWith(QLatin1String("ai.agent.")))
             emit settingsChanged();
+        if (id == QLatin1String(AiFeatures::kWebSearchSetting) || id == QLatin1String(AiFeatures::kSearchServiceSetting))
+            emit threadChanged();
         if (id.startsWith(QLatin1String("ai.")))
             emit modelsChanged();
     });
@@ -296,6 +302,11 @@ QVariantMap AgentController::thread() const
             window = m->contextTokens.value_or(0);
         }
     }
+    const ai::Provider *provider = nullptr;
+    if (const auto ref = m_threads->modelOf(*t); ref && providers)
+        provider = providers->config().provider(ref->providerId);
+    const backends::ai::AiRequests *requests = m_wiring.ai.requests();
+    const bool searchReady = (provider && ai::searchesNatively(*provider)) || (requests && requests->searchService());
     QVariantList attached;
     if (const auto it = m_attached.find(m_current); it != m_attached.end())
         for (const application::DocumentId d : it->second)
@@ -313,7 +324,10 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("contextWindow"), window},
             {QStringLiteral("model"), model},
             {QStringLiteral("modelText"), modelText},
-            {QStringLiteral("attached"), attached}};
+            {QStringLiteral("attached"), attached},
+            {QStringLiteral("webSearch"), t->webSearch},
+            {QStringLiteral("webSearchReady"), searchReady},
+            {QStringLiteral("webSearchCacheMiss"), provider && provider->preset == ai::Preset::Anthropic}};
 }
 
 QVariantList AgentController::models() const
@@ -403,6 +417,42 @@ void AgentController::remove(const QString &id)
     m_threads->remove(id.toStdString());
 }
 
+bool AgentController::webSearchShown() const
+{
+    return m_wiring.settings.boolean(AiFeatures::kWebSearchSetting);
+}
+
+void AgentController::setWebSearch(bool on)
+{
+    if (m_threads && !m_current.empty())
+        m_threads->setWebSearch(m_current, on);
+}
+
+QString AgentController::citedText(const QVariantMap &item, const QColor &chip, const QColor &ink) const
+{
+    return ui::citedAnswerHtml(item.value(QStringLiteral("text")).toString(),
+                               item.value(QStringLiteral("citations")).toList(), chip, ink);
+}
+
+QString AgentController::siteOf(const QString &url) const
+{
+    return ui::siteOf(url);
+}
+
+bool AgentController::openLink(const QString &url) const
+{
+    const QUrl target(url, QUrl::StrictMode);
+    if (!target.isValid() || (target.scheme() != QLatin1String("https") && target.scheme() != QLatin1String("http")) ||
+        target.host().isEmpty() || !target.userInfo().isEmpty())
+        return false;
+    return backends::desktop::openUrl(target);
+}
+
+QVariantMap AgentController::suggestions(const QString &html) const
+{
+    return ui::searchSuggestionsView(html.toStdString());
+}
+
 QString AgentController::markdown(const QString &id) const
 {
     const AgentThread *t = m_threads ? m_threads->thread(id.toStdString()) : nullptr;
@@ -413,8 +463,15 @@ QString AgentController::markdown(const QString &id) const
         const std::string kind = at(item, "kind");
         if (kind == "user")
             out += QStringLiteral("**You:** ") + qs(at(item, "text")) + QStringLiteral("\n\n");
-        else if (kind == "text")
+        else if (kind == "text") {
             out += qs(at(item, "text")) + QStringLiteral("\n\n");
+            if (const Json *citations = item.find("citations"); citations && citations->isArray())
+                for (const Json &c : citations->asArray())
+                    out += QStringLiteral("[%1] [%2](%3)\n").arg(QString::number(c.find("index") ? c.find("index")->asNumber() : 0),
+                                                              qs(at(c, "title")), qs(at(c, "url")));
+            if (item.find("citations"))
+                out += QLatin1Char('\n');
+        }
         else if (kind == "change")
             out += QStringLiteral("- ") + qs(at(item, "name")) + QStringLiteral(" (") + qs(at(item, "title")) +
                    QStringLiteral(")\n\n");

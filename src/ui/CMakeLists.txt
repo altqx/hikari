@@ -32,6 +32,7 @@ qt_target_qml_sources(hikari_ui QML_FILES NodeGraphCanvas.qml NodePort.qml NodeA
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
 target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
+target_sources(hikari_ui PRIVATE search_suggestions_view.cpp search_suggestions_view.h cited_answer.cpp cited_answer.h)
 qt_add_shaders(hikari_ui "hikari_ui_shaders"
     BATCHABLE
     PREFIX "/hikari/ui"
@@ -93,7 +94,7 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsAiPage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SearchSuggestions.qml AppearancePage.qml SettingsAiPage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 add_subdirectory(style)
 add_subdirectory(plugin_api)
 target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)

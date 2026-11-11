@@ -39,11 +39,11 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 | `typeset` | `video_frame`, `video_ink_bounds`, `video_colours`, `video_keyframes` ([frames](#frames)) |
 | `karaoke` | `audio_peaks` |
 | `effects` | `nodes_catalogue` |
-| `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set` |
+| `app` | `panels_list`, `panels_open`, `panels_close`, `panels_focus`, `settings_list`, `settings_get`, `settings_set`; the two reads leave out `privacy.*` and `recent.*` ([Agent](ai-agent.md#modes)) |
 | `translate`, `automation`, `plugins` | none yet; the tool cards add them. |
 | `web` | `web_search`, `web_fetch`, while a search service is chosen ([Web search](#web-search)). |
 
-- **`search_tools {query?, group?}`** matches words against names, descriptions and groups, ranking words in a name first. It answers up to ten tools with their schemas and offers them from then on.
+- **`search_tools {query?, group?}`** matches words against names, descriptions and groups, ranking words in a name first. It answers up to ten tools with their schemas and offers them from then on. Found tools are sent after the tools offered from the start, in the order found, so the cached prefix stays the same. On Anthropic's own API with Claude 4.5 or later they go as `defer_loading` tools, and the search's result goes back as `tool_reference` blocks, which keeps the cache ([tool search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool#custom-tool-search-implementation)).
 - **`search_commands {query, window?, limit?}`** reads `commands.list` and keeps the commands whose id or name holds every word.
 - **`run_command`** is `commands.run`.
 

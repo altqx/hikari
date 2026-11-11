@@ -17,7 +17,7 @@ import type { OperationName, Operations } from "./tools/api.gen";
 import { Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
-import { WebSearch } from "./tools/web";
+import { WebSearch, whileOn } from "./tools/web";
 
 export interface Build {
     buildId: string;
@@ -127,7 +127,8 @@ export class Sidecar {
         this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
             info, () => this.catalogue);
-        this.sessions = new AgentSessions((id) => new ToolSet(new HikariApi(peer, undefined, id), this.catalogue, [this.web]),
+        this.sessions = new AgentSessions((id, webSearch) =>
+            new ToolSet(new HikariApi(peer, undefined, id), this.catalogue, [whileOn(this.web, webSearch)]),
             (params, signal, emit) => this.providers.complete(params, signal, emit),
             (method, params) => peer.notify(method, params),
             (providerId) => this.providers.imageBudget(providerId),

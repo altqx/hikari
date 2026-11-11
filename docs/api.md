@@ -23,7 +23,7 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `selection.get` | read | The active Line and the selected Lines, in Document order. |
 | `commands.list` | read | Commands with their id (`GLOBAL_SAVE_SUBS`), name, window, enabled state, disabled reason and keys; `query` searches ids and names. |
 | `panels.list` | read | Workspace panels: open, floating, focused. |
-| `settings.list`, `settings.get` | read | Settings with type, scope, default and value. |
+| `settings.list`, `settings.get` | read | Settings with type, scope, default and value. AI callers (`reviewed`) never see `privacy.*` or `recent.*`: a list leaves them out and a get answers `refused` with reason `private`. |
 | `video.info` | read | Whether a video is open; its size, aspect ratio, the frame shown and the keyframes. |
 | `video.frame_at_time`, `video.time_of_frame` | read | Converts between milliseconds and frame numbers. |
 | `video.frame` | read | One frame as BGRA in base64, with every Line, one Line (`line`) or none drawn on it, optionally cropped, scaled to fit `maxEdge` and `maxPixels`; `crop` gives the part of the frame shown. |
@@ -99,7 +99,7 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `stale_revision` | The Document changed since the given revision; `data.current` is the revision now. |
 | `read_only` | The Document can't be edited (an open Automation macro holds it). |
 | `protected` | The Document is the protected reference. |
-| `refused` | The application refused; `data.reason` says why when the caller can act on it (`disabled`, `not_run`, `group_break`, `invalid_draft`, `loading`, `too_large`, `not_text`, …). |
+| `refused` | The application refused; `data.reason` says why when the caller can act on it (`disabled`, `not_run`, `group_break`, `invalid_draft`, `loading`, `private`, `too_large`, `not_text`, …). |
 | `busy` | Another write is running. |
 
 ## Versioning

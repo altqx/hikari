@@ -164,6 +164,26 @@
         <translation>Dołącz</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>Wyszukaj w sieci</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>Wyszukiwanie w sieci: włączone w tym wątku</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>Zatrzymaj</translation>
     </message>
@@ -204,8 +224,8 @@
         <translation>Ustawienia › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>Zatwierdzasz każdą zmianę. Odczyt nigdy nie pyta.</translation>
+        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
+        <translation>Zmiany w napisach trafiają do przeglądu, gdzie je zachowujesz albo cofasz. Inne zmiany pytają.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -238,6 +258,38 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>Przywróć punkt kontrolny</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>Źródła</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>Pokaż jeszcze %n</numerusform>
+            <numerusform>Pokaż jeszcze %n</numerusform>
+            <numerusform>Pokaż jeszcze %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>Otwórz w przeglądarce</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>Przeczytano %1</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>Wyszukano w Google</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>Wyszukano w sieci</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>Wyszukano przez %1</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +400,14 @@
         <translation>Wybierz model czatu w Ustawienia › AI</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>W %1 nie zostało już wyszukiwań</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1 odrzucił klucz HikariSub</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>Komponent AI nie jest gotowy</translation>
     </message>
@@ -366,6 +426,10 @@
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
         <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+    </message>
+    <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>Usługa wyszukiwania odpowiedziała kodem %1. Odpowiedź powstaje dalej bez wyszukiwania w sieci.</translation>
     </message>
     <message>
         <source>Raise to %1 and continue</source>

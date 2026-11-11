@@ -164,6 +164,26 @@
         <translation>แนบ</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>ค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>ผู้ให้บริการนี้ค้นหาเว็บเองไม่ได้ เลือกบริการค้นหาในการตั้งค่า › AI › การค้นหาเว็บ</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>ค้นหาเว็บ: เปิดสำหรับเธรดนี้</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>ค้นหาเว็บ: ปิดสำหรับเธรดนี้</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>การเปลี่ยนระหว่างเธรดทำให้แคชพลาดหนึ่งครั้งบน Anthropic</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>หยุด</translation>
     </message>
@@ -204,8 +224,8 @@
         <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
-        <source>You approve every change. Reading never asks.</source>
-        <translation>คุณอนุมัติการเปลี่ยนแปลงทุกครั้ง การอ่านไม่ถามเลย</translation>
+        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
+        <translation>การแก้ไขคำบรรยายจะเข้าไปในการตรวจทาน ซึ่งคุณเลือกคงไว้หรือเลิกทำได้ การเปลี่ยนแปลงอื่นจะถาม</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -238,6 +258,36 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>คืนค่าจุดตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>แหล่งที่มา</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>แสดงอีก %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>เปิดในเบราว์เซอร์</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>อ่าน %1 แล้ว</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>ค้นหาด้วย Google แล้ว</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>ค้นหาเว็บแล้ว</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>ค้นหาด้วย %1 แล้ว</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +398,14 @@
         <translation>เลือกโมเดลแชตในการตั้งค่า › AI</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>%1 ไม่เหลือจำนวนการค้นหาแล้ว</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1 ปฏิเสธคีย์ของ HikariSub</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>คอมโพเนนต์ AI ยังไม่พร้อม</translation>
     </message>
@@ -366,6 +424,10 @@
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
         <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>บริการค้นหาตอบกลับ %1 คำตอบจะดำเนินต่อโดยไม่ค้นหาเว็บ</translation>
     </message>
     <message>
         <source>Raise to %1 and continue</source>

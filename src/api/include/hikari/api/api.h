@@ -47,7 +47,7 @@ struct Caller {
     bool allDocuments = false;
     // The Documents the user attached with @, besides the editing target.
     std::vector<application::DocumentId> attached;
-    // Its document.apply changes go to the review (AI callers).
+    // An AI caller: its document.apply changes go to the review, and privacy.* and recent.* settings stay hidden.
     bool reviewed = false;
     // May read the user's skills (AI callers).
     bool skills = false;

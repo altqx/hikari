@@ -64,8 +64,9 @@ export interface ToolDefinition {
 export type CacheLifetime = "minutes" | "hour";
 
 /**
- * Sent as system, tools sorted by name, context, then messages, so everything before the messages is a prefix the
- * provider can cache. Nothing that changes per turn belongs in system, tools or context.
+ * Sent as system, tools sorted by name and then those search_tools found, context, then messages, so everything
+ * before the messages is a prefix the provider can cache. Nothing that changes per turn belongs in system, tools or
+ * context.
  */
 export interface Request {
     model: string;
@@ -130,6 +131,20 @@ export interface Citation {
     url: string;
     title: string;
     quote?: string;
+    /**
+     * Where the chip goes: [start, end) of `Finished.text` in UTF-16 code units. Only in `Finished`, and only when the
+     * provider's offsets map onto the text; added in protocol 1 without a version change, so a reader ignores them.
+     */
+    start?: number;
+    end?: number;
+}
+
+/** One search or page read the provider ran itself; `urls` are the pages a search found, when it says. */
+export interface WebAction {
+    kind: "search" | "read";
+    query?: string;
+    url?: string;
+    urls?: string[];
 }
 
 export interface Finished {
@@ -140,6 +155,8 @@ export interface Finished {
     citations?: Citation[];
     /** Google's search suggestions as the HTML Gemini returned; its terms require showing them with the answer. */
     searchSuggestions?: string;
+    /** The provider's own searches and page reads, in order. */
+    searches?: WebAction[];
     /** Goes back in the assistant message's parts when the conversation continues. */
     providerState?: ProviderState;
 }

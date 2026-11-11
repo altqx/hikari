@@ -97,6 +97,8 @@ interface Turn {
 export class AgentSession {
     readonly history: Message[];
     private model: SessionModel;
+    private webSearch: boolean;
+    private readonly tools: ToolSet;
     private turn?: Turn;
     private pendingText = "";
     private flushTimer?: ReturnType<typeof setTimeout>;
@@ -105,7 +107,7 @@ export class AgentSession {
     constructor(
         readonly id: string,
         private readonly params: SessionNewParams,
-        private readonly tools: ToolSet,
+        tools: (webSearch: () => boolean) => ToolSet,
         private readonly complete: Complete,
         private readonly send: (update: SessionUpdate) => void,
         private readonly nextStream: () => number,
@@ -114,6 +116,8 @@ export class AgentSession {
     ) {
         this.history = [...(params.history ?? [])];
         this.model = params.model;
+        this.webSearch = params.webSearch === true;
+        this.tools = tools(() => this.webSearch);
     }
 
     get running(): boolean {
@@ -125,6 +129,8 @@ export class AgentSession {
             throw new RpcError(ErrorCode.busy, "A turn is already running in this session");
         if (params.model)
             this.model = params.model;
+        if (params.webSearch !== undefined)
+            this.webSearch = params.webSearch;
         this.tools.imageBudget = this.imageBudget(this.model.providerId);
         const turn: Turn = { controller: new AbortController(), steers: [] };
         this.turn = turn;
@@ -163,6 +169,7 @@ export class AgentSession {
                 throw error;
             }
             this.flush();
+            this.sources(finished);
             this.send({ sessionUpdate: "usage", usage: finished.usage });
             const parts: Part[] = finished.text ? [{ type: "text", text: finished.text }] : [];
             parts.push(...finished.toolCalls);
@@ -196,6 +203,8 @@ export class AgentSession {
                 : call.name === kPlanTool.name ? this.plan(args)
                 : call.name === kReadSkillTool.name ? await this.skills.read(args as Record<string, unknown>)
                 : await this.tools.call(call.name, args);
+            if (result.searchFailure)
+                this.send({ sessionUpdate: "search_failed", ...result.searchFailure });
             const text = resultText(result);
             this.send({ sessionUpdate: "tool_call_update", toolCallId: call.id, status: result.isError ? "failed" : "completed",
                 content: [{ type: "content", content: { type: "text", text } }] });
@@ -207,6 +216,15 @@ export class AgentSession {
     private async instructions(): Promise<string> {
         const skills = await this.skills.instructions();
         return [this.params.system, skills].filter(Boolean).join("\n\n");
+    }
+
+    private sources(finished: Finished): void {
+        const { citations, searchSuggestions, searches } = finished;
+        if (!citations?.length && !searchSuggestions && !searches?.length)
+            return;
+        this.send({ sessionUpdate: "sources", textLength: finished.text.length,
+            ...(citations?.length ? { citations } : {}), ...(searchSuggestions ? { searchSuggestions } : {}),
+            ...(searches?.length ? { searches } : {}) });
     }
 
     private plan(args: unknown): CallToolResult {
@@ -239,6 +257,7 @@ export class AgentSession {
                 ...(this.params.cacheKey ? { cacheKey: this.params.cacheKey } : {}),
                 ...(caching === undefined ? {} : { caching }),
                 ...(this.params.maxOutputTokens ? { maxOutputTokens: this.params.maxOutputTokens } : {}),
+                ...(this.webSearch ? { webSearch: true } : {}),
             },
         };
     }
@@ -282,7 +301,7 @@ export class AgentSessions {
     private stream = 1 << 30;
 
     constructor(
-        private readonly tools: (sessionId: string) => ToolSet,
+        private readonly tools: (sessionId: string, webSearch: () => boolean) => ToolSet,
         private readonly complete: Complete,
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
         private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
@@ -301,7 +320,8 @@ export class AgentSessions {
             this.sessions.set(id, agent(id, params, send));
             return { sessionId: id };
         }
-        this.sessions.set(id, new AgentSession(id, params, this.tools(id), this.complete, send, () => this.stream++,
+        this.sessions.set(id, new AgentSession(id, params, (webSearch) => this.tools(id, webSearch), this.complete, send,
+            () => this.stream++,
             this.imageBudget, this.skills(id)));
         return { sessionId: id };
     }
@@ -333,7 +353,7 @@ export class AgentSessions {
         return this.sessions.has(sessionId);
     }
 
-    private session(id: string): AgentSession {
+    private session(id: string): Session {
         const session = this.sessions.get(id);
         if (!session)
             throw new RpcError(ErrorCode.invalidParams, `No session is named "${id}"; open it with session/new`);
