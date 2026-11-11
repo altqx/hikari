@@ -1027,6 +1027,15 @@ TEST(NodeEffectExport, NodesWithoutATemplateFormBlockTheExportByName)
               std::vector<std::string>{"time"});
 }
 
+TEST(NodeEffectExport, AudioPeaksBlockTheExport)
+{
+    const auto lines = exportTemplateLines(graphOf(peakGraph()), u8"g");
+    ASSERT_FALSE(lines.has_value());
+    ASSERT_EQ(lines.error().size(), 1u);
+    EXPECT_EQ(lines.error().front().node, "peak");
+    EXPECT_EQ(lines.error().front().message, "reads the audio, which the templater can't");
+}
+
 TEST(NodeEffectExport, StripsCopiesAndParticlesBlockTheExport)
 {
     for (const std::string type : {"units.clip_gradient", "units.array", "units.particles"}) {

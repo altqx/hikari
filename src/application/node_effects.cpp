@@ -1798,6 +1798,8 @@ private:
             return refuse(i, "draws numbers the templater can't draw again");
         case Kind::Lua:
             return refuse(i, "runs in HikariSub's Lua helper, not in the templater");
+        case Kind::AudioPeaks:
+            return refuse(i, "reads the audio, which the templater can't");
         default:
             return refuse(i, "has no template form");
         }
