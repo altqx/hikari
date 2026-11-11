@@ -1754,6 +1754,9 @@ TEST_F(LuaHelper, DependencyControlConfigSuitsOldScriptsAndOtherWriters)
     ASSERT_TRUE(runToEnd(*host, "Migrate"));
     EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     EXPECT_EQ(run.log, QStringList{"true,1,test-2"});
+    ASSERT_TRUE(runToEnd(*host, "Empty"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"1,false"});
 }
 
 TEST_F(LuaHelper, DependencyControlFindsTheShippedModules)
