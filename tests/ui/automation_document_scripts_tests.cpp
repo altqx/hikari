@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/automation_registry.h"
 #include "desktop_guard.h"
 #include "settings_store.h"
 
@@ -131,6 +132,46 @@ private slots:
     }
     void cleanup() { app.reset(); }
 
+    void aScriptWithTheBuiltinTemplatersMacrosIsUnloadedAndReportedOnce()
+    {
+        const std::string builtin(application::kBuiltinKaraokeTemplater);
+        const QString old = dir.filePath(QStringLiteral("kara-templater.lua"));
+        writeFile(old, "script_name = \"Old templater\"\n"
+                       "aegisub.register_macro(\"Apply karaoke template\", \"\", function() end)\n"
+                       "aegisub.register_macro(\"Mine\", \"\", function() end)\n");
+        app.reset();
+        auto o = options();
+        o.automationDir = QFileInfo(QStringLiteral(HIKARI_LUA_INCLUDE "/../..")).absoluteFilePath();
+        app = std::make_unique<app::Application>(o);
+        trustTheTestFolder();
+        const auto loaded = [&](const std::string &path) {
+            return std::ranges::any_of(app->automation().scripts(), [&](const auto &s) {
+                return s.path == path && s.state == application::ScriptStatus::State::Ready;
+            });
+        };
+        app->automation().load(builtin);
+        QTRY_VERIFY_WITH_TIMEOUT(loaded(builtin), 30'000);
+        auto *runs = app->automation().runs();
+        const int before = runs->count();
+        for (int round = 0; round < 2; ++round) {
+            app->automation().load(old.toStdString());
+            QTRY_VERIFY_WITH_TIMEOUT(settled(), 30'000);
+            QTRY_VERIFY(std::ranges::none_of(app->automation().scripts(),
+                                             [&](const auto &s) { return s.path == old.toStdString(); }));
+            QVERIFY(loaded(builtin));
+            QCOMPARE(runs->count(), before + 1);
+        }
+        const auto *run = runs->run(runs->idAt(0));
+        QVERIFY(run);
+        QCOMPARE(run->state, QStringLiteral("failed"));
+        QCOMPARE(run->script, QStringLiteral("kara-templater.lua"));
+        QVERIFY2(run->message.contains(QStringLiteral("Apply karaoke template")), qPrintable(run->message));
+        QVERIFY(!run->message.contains(QStringLiteral("Mine")));
+        QVERIFY(!app->automation().scripts().empty());
+        app->automation().unload(builtin);
+        QVERIFY(loaded(builtin));
+    }
+
     void autoloadScriptsCanBeTurnedOff()
     {
         QTemporaryDir shipped;
@@ -164,7 +205,8 @@ private slots:
         const auto loaded = [&] {
             QStringList paths;
             for (const auto &s : app->automation().scripts())
-                paths << QString::fromStdString(s.path);
+                if (!application::isBuiltinScript(s.path))
+                    paths << QString::fromStdString(s.path);
             return paths;
         };
         const auto row = [&](const QString &path) {

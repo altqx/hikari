@@ -1,5 +1,6 @@
 #include "hikari/app/automation_shell.h"
 
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/helper_protocol.h"
@@ -53,13 +54,13 @@ QString sharedIncludes(const AutomationShell::Paths &paths)
 
 class MediaAdapter : public application::MacroMediaPort {
 public:
-    MediaAdapter(ui::VideoController &video, application::DocumentFiles &files, application::Workspace &workspace)
-        : m_video(video), m_files(files), m_workspace(workspace)
+    MediaAdapter(AutomationShell::VideoSource video, application::DocumentFiles &files, application::Workspace &workspace)
+        : m_video(std::move(video)), m_files(files), m_workspace(workspace)
     {
     }
     std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         if (s.state() != application::VideoSession::State::Ready)
             return std::nullopt;
         int frame = 0;
@@ -73,7 +74,7 @@ public:
     }
     std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         if (s.state() != application::VideoSession::State::Ready || s.frameCount() == 0)
             return std::nullopt;
         const auto start = s.frameStart(static_cast<int>(std::clamp<std::int64_t>(frame, 0, s.frameCount() - 1)));
@@ -81,23 +82,23 @@ public:
     }
     std::optional<VideoSize> videoSize() const override
     {
-        const auto frame = m_video.session().lastFrame();
-        if (m_video.session().state() != application::VideoSession::State::Ready || !frame)
+        const auto frame = m_video().session().lastFrame();
+        if (m_video().session().state() != application::VideoSession::State::Ready || !frame)
             return std::nullopt;
-        const auto geometry = m_video.session().sourceGeometry();
+        const auto geometry = m_video().session().sourceGeometry();
         const int g = std::gcd(geometry.width, geometry.height);
         return VideoSize{geometry.width, geometry.height, geometry.width / g, geometry.height / g};
     }
     std::optional<std::vector<std::int64_t>> keyframes() const override
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         if (s.state() != application::VideoSession::State::Ready)
             return std::nullopt;
         return std::vector<std::int64_t>(s.keyframes().begin(), s.keyframes().end());
     }
     void frame(std::int64_t index, bool withSubtitles, std::function<void(std::optional<Frame>)> reply) override
     {
-        m_video.session().requestFrame(static_cast<int>(index), withSubtitles,
+        m_video().session().requestFrame(static_cast<int>(index), withSubtitles,
                                        [reply](std::shared_ptr<const application::IndexedFrame> f) {
                                            if (!f)
                                                return reply(std::nullopt);
@@ -133,8 +134,8 @@ public:
     std::optional<Project> project() const override
     {
         Project p;
-        p.videoFrameShown = m_video.session().reportedFrame().value_or(0);
-        p.videoFile = m_video.session().path();
+        p.videoFrameShown = m_video().session().reportedFrame().value_or(0);
+        p.videoFile = m_video().session().path();
         if (const application::AudioBox *box = audioBox ? audioBox() : nullptr; box && box->isOpen())
             p.audioFile = box->path();
         if (keyframesFile)
@@ -160,11 +161,11 @@ public:
             return std::nullopt;
         return box->audio();
     }
-    std::optional<application::AegisubFrameTimes> frameTimes() const override { return m_video.session().aegisubFrameTimes(); }
+    std::optional<application::AegisubFrameTimes> frameTimes() const override { return m_video().session().aegisubFrameTimes(); }
     // MUST KILL: the video path, frame count and frame-times serial stand in for the frame times
     std::string state() const
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         std::string out = s.path() + '\n' + std::to_string(static_cast<int>(s.state())) + ' ' +
                           std::to_string(s.frameCount()) + " times " + std::to_string(s.frameTimesSerial());
         if (const auto size = videoSize())
@@ -189,7 +190,7 @@ public:
     std::function<double()> videoZoom;
 
 private:
-    ui::VideoController &m_video;
+    AutomationShell::VideoSource m_video;
     application::DocumentFiles &m_files;
     application::Workspace &m_workspace;
 };
@@ -260,7 +261,7 @@ QString refusalText(const application::MacroApplyFailure &failure)
 }
 
 AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
-                                 EditorSource editor, ui::VideoController &video, ShellSource shell,
+                                 EditorSource editor, VideoSource video, ShellSource shell,
                                  application::IndexedSourcePort &, QObject *parent)
     : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(std::move(editor)),
       m_video(video), m_shell(std::move(shell)),
@@ -291,7 +292,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         const auto target = m_workspace.editingTarget();
         if (const auto destination = target ? m_files.destination(*target) : std::nullopt)
             c.subtitlePath = QDir::toNativeSeparators(QString::fromStdString(destination->value)).toStdString();
-        c.videoPath = m_video.session().path();
+        c.videoPath = m_video().session().path();
 #ifdef _WIN32
         c.windows = true;
 #endif
@@ -309,6 +310,8 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
+    connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::dropBuiltinClashes,
+            Qt::QueuedConnection);
     connect(&m_manager, &backends::AutomationManager::logged, this,
             [this](const QString &, const QString &text, int level) { runLogged(text, level); });
     connect(&m_manager, &backends::AutomationManager::progressChanged, this,
@@ -505,10 +508,9 @@ public:
     std::string path() const
     {
         for (const auto &s : m_shell.m_manager.scripts())
-            if ((s.state == application::ScriptStatus::State::Ready ||
+            if (application::isBuiltinScript(s.path) &&
+                (s.state == application::ScriptStatus::State::Ready ||
                  s.state == application::ScriptStatus::State::Running) &&
-                QFileInfo(QString::fromStdString(s.path)).fileName().compare(QStringLiteral("kara-templater.lua"),
-                                                                             Qt::CaseInsensitive) == 0 &&
                 s.info.macros.size() >= 2)
                 return s.path;
         return {};
@@ -610,6 +612,7 @@ void AutomationShell::setAutoloadEnabled(const QString &script, bool enabled)
 
 void AutomationShell::autoload()
 {
+    m_manager.load(std::string(application::kBuiltinKaraokeTemplater));
     for (const QString &script : autoloadScripts())
         if (autoloadEnabled(script))
             m_manager.load(script.toStdString());
@@ -618,6 +621,9 @@ void AutomationShell::autoload()
 
 void AutomationShell::reloadAutoload()
 {
+    const std::string builtin(application::kBuiltinKaraokeTemplater);
+    if (!m_manager.reload(builtin) && !m_manager.host(builtin))
+        m_manager.load(builtin);
     for (const QString &script : autoloadScripts()) {
         if (!autoloadEnabled(script))
             continue;
@@ -927,6 +933,8 @@ void AutomationShell::continueLastScript()
 
 void AutomationShell::editScript(const QString &script)
 {
+    if (application::isBuiltinScript(script.toStdString()))
+        return;
     const QString editor = m_settings ? m_settings->text("automation.scriptEditor") : QString();
     if (editor.isEmpty() || QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier)) {
         emit chooseScriptEditor(script);
@@ -957,8 +965,46 @@ void AutomationShell::startEditor(const QString &editor, const QString &script)
 
 void AutomationShell::unload(const std::string &path)
 {
+    if (application::isBuiltinScript(path))
+        return;
     m_manager.unload(path);
     m_documentScripts.remove(path);
+}
+
+void AutomationShell::dropBuiltinClashes()
+{
+    const auto scripts = m_manager.scripts();
+    const auto ready = [](const application::ScriptStatus &s) {
+        return s.state == application::ScriptStatus::State::Ready;
+    };
+    const auto builtin = std::ranges::find_if(
+        scripts, [&](const application::ScriptStatus &s) { return application::isBuiltinScript(s.path) && ready(s); });
+    if (builtin == scripts.end())
+        return;
+    std::set<std::string> names;
+    for (const auto &m : builtin->info.macros)
+        names.insert(m.name);
+    for (const auto &s : scripts) {
+        if (application::isBuiltinScript(s.path) || !ready(s))
+            continue;
+        QStringList clashing;
+        for (const auto &m : s.info.macros)
+            if (names.contains(m.name))
+                clashing << QString::fromStdString(m.name);
+        if (clashing.isEmpty())
+            continue;
+        if (m_builtinClashes.insert(s.path).second) {
+            const QString message =
+                QCoreApplication::translate("HikariSub.Automation",
+                                            "Not loaded: its macros %1 are the built-in Karaoke Templater’s, "
+                                            "which runs them instead.")
+                    .arg(clashing.join(QStringLiteral(", ")));
+            const int id = m_runs.begin(QString::fromStdString(s.info.name), prettyName(s.path), QString());
+            m_runs.note(id, message, ui::AutomationRuns::kHostError);
+            m_runs.finish(id, QStringLiteral("failed"), message);
+        }
+        unload(s.path);
+    }
 }
 
 bool AutomationShell::rerunLast()

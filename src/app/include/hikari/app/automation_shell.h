@@ -80,8 +80,9 @@ public:
     };
     using EditorSource = std::function<ui::LineEditorController &()>;
     using ShellSource = std::function<ui::ShellController &()>;
+    using VideoSource = std::function<ui::VideoController &()>;
     AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
-                    EditorSource editor, ui::VideoController &video, ShellSource shell,
+                    EditorSource editor, VideoSource video, ShellSource shell,
                     application::IndexedSourcePort &source, QObject *parent = nullptr);
     ~AutomationShell() override;
 
@@ -276,6 +277,8 @@ private:
     void addPickedScript(const std::string &path);
     void finishRunLastLoadedScript();
     void continueLastScript();
+    // Unloads a script whose macro names are the built-in Karaoke Templater's.
+    void dropBuiltinClashes();
     void startEditor(const QString &editor, const QString &script);
     bool waitingForUser() const;
     void updateCardTimer();
@@ -286,7 +289,7 @@ private:
     application::DocumentFiles &m_files;
     application::Workspace &m_workspace;
     EditorSource m_editor;
-    ui::VideoController &m_video;
+    VideoSource m_video;
     ShellSource m_shell;
     backends::AutomationManager m_manager;
     application::AutomationServiceRouter m_router;
@@ -309,6 +312,7 @@ private:
     std::optional<RepeatRecord> m_repeat;
     application::DocumentScripts m_documentScripts;
     std::set<std::string> m_readScriptInfo;
+    std::set<std::string> m_builtinClashes; // reported once each
     std::optional<std::string> m_pendingLast;
     std::optional<TrustQuestion> m_trust;
     int m_trustSerial = 0;
