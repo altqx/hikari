@@ -7426,6 +7426,10 @@ Failed to copy %2 fonts.</source>
         <translation>\move ஐ வரி முழுவதற்கும் புறச்செருகு</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>குறிச்சொற்களை நீக்கு…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>தாவலை புதிய சாளரத்திற்கு நகர்த்து</translation>
     </message>
@@ -18435,6 +18439,249 @@ Styles deleted:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %4 இல் %3</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>%n வரி மாற்றப்பட்டது</numerusform>
+            <numerusform>%n வரிகள் மாற்றப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>எந்த வரியும் மாறவில்லை.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>குறிச்சொற்களை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>குறிச்சொற்களை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>நிறம்</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>ஆல்ஃபா</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>எல்லை</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>நிழல்</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>மங்கல்</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>இடைவெளி</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>சாய்வு</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>தடிமன், சாய்வெழுத்து, அடிக்கோடு, குறுக்குக்கோடு</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>தொடக்கப்புள்ளி</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>சீரமைப்பு</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>கிளிப்</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>மங்குதல்</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>உருமாற்றங்கள்</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>கரோக்கி</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>மடிப்பு பாணி</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>வரைபடம்</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>பிற குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>பட்டியலில் இல்லாத எந்தக் குறிச்சொல்லும்</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>கருத்துகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>{note} போன்ற குறிச்சொல் இல்லாத தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>அடுத்தடுத்த குறிச்சொல் தொகுதிகளை இணை</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 என்பது %2 ஆகும்</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>மேலெழுதப்பட்ட குறிச்சொற்களை நீக்கு</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>அதே தொகுதியில் பின்வரும் குறிச்சொல் மாற்றும் குறிச்சொல், மற்றும் %1, %2, %3, %4 இன் மறுநிகழ்வுகள்</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Clean Tags விதிகள்</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>உள்ளிணைந்த Clean Tags ஸ்கிரிப்ட் செய்வது: தொகுதிகளை இணைக்கிறது, முழு வரிக் குறிச்சொற்களைத் தொடக்கத்திற்கு நகர்த்துகிறது, வெற்றுத் தொகுதிகளை நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>வெறுமையான வரிகளை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>தேர்ந்தெடுத்த வரிகள்</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>முழுக் கோப்பு, கருத்து வரிகள் தவிர</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>அனைத்துத் தொகுதிகளும்</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>தொடக்கத் தொகுதி</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>உள்வரித் தொகுதிகள்</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>அழி</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>அனைத்தையும் தேர்ந்தெடு</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>சுத்தம் செய்</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>வரி %1: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>வரி நீக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>எந்த வரியும் மாறவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n வரி மாறுகிறது</numerusform>
+            <numerusform>%n வரிகள் மாறுகின்றன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n நீக்கப்பட்டது</numerusform>
+            <numerusform>%n நீக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>முதல் %n காட்டப்படுகிறது</numerusform>
+            <numerusform>முதல் %n காட்டப்படுகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>

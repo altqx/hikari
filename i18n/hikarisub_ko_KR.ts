@@ -7370,6 +7370,10 @@ Failed to copy %2 fonts.</source>
         <translation>줄 전체로 \move 외삽</translation>
     </message>
     <message>
+        <source>Remove tags…</source>
+        <translation>태그 제거…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>탭을 새 창으로 이동</translation>
     </message>
@@ -18297,6 +18301,245 @@ Styles deleted:
     <message>
         <source>%1, %2, %3 of %4</source>
         <translation>%1, %2, %3/%4</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Tags</name>
+    <message numerus="yes">
+        <source>Changed %n line(s)</source>
+        <translation>
+            <numerusform>%n줄을 바꿨습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No line changes.</source>
+        <translation>바뀌는 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Remove tags…</source>
+        <translation>태그 제거…</translation>
+    </message>
+    <message>
+        <source>Remove tags</source>
+        <translation>태그 제거</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>간격</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Shear</source>
+        <translation>기울이기</translation>
+    </message>
+    <message>
+        <source>Bold, italic, underline, strikeout</source>
+        <translation>굵게, 기울임, 밑줄, 취소선</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>위치</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation>원점</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>정렬</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>클립</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>페이드</translation>
+    </message>
+    <message>
+        <source>Transforms</source>
+        <translation>변환</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation>노래방</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>재설정</translation>
+    </message>
+    <message>
+        <source>Wrap style</source>
+        <translation>줄 바꿈 스타일</translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation>도형</translation>
+    </message>
+    <message>
+        <source>Other tags</source>
+        <translation>기타 태그</translation>
+    </message>
+    <message>
+        <source>Any tag not listed</source>
+        <translation>목록에 없는 모든 태그</translation>
+    </message>
+    <message>
+        <source>Remove comments</source>
+        <translation>주석 제거</translation>
+    </message>
+    <message>
+        <source>Blocks with no tag, such as {note}</source>
+        <translation>{note}처럼 태그가 없는 블록</translation>
+    </message>
+    <message>
+        <source>Merge adjacent tag blocks</source>
+        <translation>인접한 태그 블록 합치기</translation>
+    </message>
+    <message>
+        <source>%1 becomes %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>Drop overridden tags</source>
+        <translation>덮어쓰인 태그 버리기</translation>
+    </message>
+    <message>
+        <source>A tag a later one in its block replaces, and repeats of %1, %2, %3 and %4</source>
+        <translation>같은 블록에서 뒤의 태그가 대신하는 태그와 %1, %2, %3, %4의 반복</translation>
+    </message>
+    <message>
+        <source>Clean Tags rules</source>
+        <translation>Clean Tags 규칙</translation>
+    </message>
+    <message>
+        <source>What the bundled Clean Tags script does: merges blocks, moves line-wide tags to the start, drops empty blocks</source>
+        <translation>내장 Clean Tags 스크립트와 같습니다: 블록을 합치고, 줄 전체에 적용되는 태그를 앞으로 옮기고, 빈 블록을 버립니다</translation>
+    </message>
+    <message>
+        <source>Delete lines left empty</source>
+        <translation>비게 된 줄 삭제</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Selected lines</source>
+        <translation>선택한 줄</translation>
+    </message>
+    <message>
+        <source>Whole file, without comment lines</source>
+        <translation>파일 전체(주석 줄 제외)</translation>
+    </message>
+    <message>
+        <source>Blocks</source>
+        <translation>블록</translation>
+    </message>
+    <message>
+        <source>All blocks</source>
+        <translation>모든 블록</translation>
+    </message>
+    <message>
+        <source>Start block</source>
+        <translation>시작 블록</translation>
+    </message>
+    <message>
+        <source>Inline blocks</source>
+        <translation>본문 블록</translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation>태그</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>지우기</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>모두 선택</translation>
+    </message>
+    <message>
+        <source>Clean up</source>
+        <translation>정리</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리 보기</translation>
+    </message>
+    <message>
+        <source>Line %1: %2</source>
+        <translation>%1번 줄: %2</translation>
+    </message>
+    <message>
+        <source>deleted</source>
+        <translation>삭제됨</translation>
+    </message>
+    <message>
+        <source>Line deleted</source>
+        <translation>줄 삭제됨</translation>
+    </message>
+    <message>
+        <source>No line changes</source>
+        <translation>바뀌는 줄 없음</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n줄 바뀜</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n deleted</source>
+        <translation>
+            <numerusform>%n줄 삭제</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>first %n shown</source>
+        <translation>
+            <numerusform>처음 %n줄 표시</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
     </message>
 </context>
 <context>
