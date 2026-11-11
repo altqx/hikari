@@ -6,7 +6,7 @@ configure_file(manifest_schema.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/manifest_sche
 configure_file(marketplace_schema.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/marketplace_schema.cpp" @ONLY)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${schema}" "${market_schema}")
 
-add_library(hikari_plugins STATIC manifest.cpp marketplace.cpp media.cpp package.cpp places.cpp qml_imports.cpp registry.cpp installer.cpp
+add_library(hikari_plugins STATIC manifest.cpp marketplace.cpp media.cpp package.cpp places.cpp project_plugins.cpp qml_imports.cpp registry.cpp installer.cpp
     surface.cpp "${CMAKE_CURRENT_BINARY_DIR}/manifest_schema.cpp" "${CMAKE_CURRENT_BINARY_DIR}/marketplace_schema.cpp")
 target_include_directories(hikari_plugins PUBLIC include)
 target_link_libraries(hikari_plugins PUBLIC hikari_api hikari_minisign)

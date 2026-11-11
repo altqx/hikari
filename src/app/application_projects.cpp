@@ -52,6 +52,8 @@ const application::Settings &Application::windowSettings(int shellWindow) const
 
 void Application::applyWindowProject(int shellWindow)
 {
+    if (m_automation)
+        m_automation->projectsChanged();
     if (shellWindow != 0 && !m_shellWindows.contains(shellWindow)) {
         m_projectFonts.erase(shellWindow);
         return;

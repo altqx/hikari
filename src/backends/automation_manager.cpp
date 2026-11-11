@@ -142,7 +142,8 @@ void AutomationManager::load(const std::string &path)
         return;
     }
     Entry entry;
-    entry.host = std::make_unique<LuaScriptHost>(m_helperPath, QString::fromStdString(path), m_sharedInclude,
+    entry.host = std::make_unique<LuaScriptHost>(m_helperPath, QString::fromStdString(path),
+                                                 m_includesFor ? m_includesFor(path) : m_sharedInclude,
                                                  m_traceLevel);
     entry.generation = 1;
     entry.modified = modifiedTime(path);

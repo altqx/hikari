@@ -94,8 +94,9 @@ ApplicationWindow {
     readonly property var macroItems: {
         const out = []
         for (const script of root.automationManager.scripts)
-            for (const macro of script.macros)
-                out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
+            if (root.automation.shownIn(script.path, root.shellWindow))
+                for (const macro of script.macros)
+                    out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
         return out
     }
 
@@ -6933,6 +6934,13 @@ ApplicationWindow {
                     anchors.fill: parent
                     controller: root.automationManager
                     automation: root.automation
+                    shellWindow: root.shellWindow
+                    lockedScripts: {
+                        root.projectRevision
+                        root.automationManager.scripts
+                        return root.automation.lockedScripts(root.shellWindow)
+                    }
+                    onTrustRequested: root.app.trustProject(root.shellWindow)
                     macroHotkeys: root.automationHotkeys
                     hotkeys: root.hotkeys
                     loadAction: loadScriptAction

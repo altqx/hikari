@@ -36,6 +36,11 @@ bool windowsPaths()
 #endif
 }
 
+QString absoluteScript(const std::string &script)
+{
+    return QDir::toNativeSeparators(QDir::cleanPath(QFileInfo(QString::fromStdString(script)).absoluteFilePath()));
+}
+
 application::AutomationFolders folders(const AutomationShell::Paths &paths)
 {
     const auto native = [](const QString &dir) { return QDir::toNativeSeparators(dir).toStdString(); };
@@ -346,6 +351,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     });
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::servicesWithdrawn, this, [this] { m_router.withdraw(); });
+    m_manager.setIncludesFor([this](const std::string &script) { return includesFor(script); });
     m_managerController = std::make_unique<ui::AutomationManagerController>(*this);
     m_managerController->setDocumentScript([this](const std::string &path) {
         return std::ranges::find(m_documentScripts.scripts(), path) != m_documentScripts.scripts().end();
@@ -570,20 +576,95 @@ QString AutomationShell::autoloadDir() const
     return QDir(m_paths.automationDir).filePath(QStringLiteral("automation/Autoload"));
 }
 
+namespace {
+
+std::vector<std::string> scriptNames(const std::string &folder)
+{
+    std::vector<std::string> names;
+    const QDir dir(QString::fromStdString(folder));
+    for (const QString &file : dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name))
+        names.push_back(file.toStdString());
+    return names;
+}
+
+QStringList qtList(const std::vector<std::string> &paths)
+{
+    QStringList out;
+    for (const auto &path : paths)
+        out << QString::fromStdString(path);
+    return out;
+}
+
+}
+
+application::AutoloadPlan AutomationShell::autoloadPlan() const
+{
+    std::vector<application::FolderListing> base;
+    for (const auto &folder : folders(m_paths).autoload)
+        base.emplace_back(folder, scriptNames(folder));
+    std::vector<application::WindowScripts> windows;
+    if (m_windowProjects)
+        for (const auto &[window, project] : m_windowProjects())
+            windows.push_back({window, project,
+                               project.root.empty()
+                                   ? std::vector<std::string>()
+                                   : scriptNames(application::projectAutoloadFolder(project.root, windowsPaths()))});
+    return application::planAutoload(base, windows, windowsPaths());
+}
+
 QStringList AutomationShell::autoloadScripts() const
 {
-    std::vector<std::pair<std::string, std::vector<std::string>>> listed;
-    for (const auto &folder : folders(m_paths).autoload) {
-        std::vector<std::string> names;
-        const QDir dir(QString::fromStdString(folder));
-        for (const QString &file : dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name))
-            names.push_back(file.toStdString());
-        listed.emplace_back(folder, std::move(names));
-    }
-    QStringList scripts;
-    for (const auto &path : application::chooseAutoloadScripts(listed, windowsPaths()))
-        scripts << QString::fromStdString(path);
-    return scripts;
+    return qtList(autoloadPlan().load);
+}
+
+void AutomationShell::setWindowProjects(std::function<std::map<int, application::WindowProject>()> projects)
+{
+    m_windowProjects = std::move(projects);
+    m_plan = autoloadPlan();
+}
+
+void AutomationShell::projectsChanged()
+{
+    if (!m_autoloaded)
+        return;
+    const auto before = m_plan.load;
+    m_plan = autoloadPlan();
+    for (const auto &script : before)
+        if (std::ranges::find(m_plan.load, script) == m_plan.load.end() && m_manager.host(script)
+            && !(m_run && m_run->active == script))
+            unload(script);
+    for (const auto &script : m_plan.load)
+        if (!m_manager.host(script) && autoloadEnabled(QString::fromStdString(script)))
+            m_manager.load(script);
+    m_managerController->refresh();
+    emit windowScriptsChanged();
+}
+
+bool AutomationShell::shownIn(const QString &script, int shellWindow) const
+{
+    const std::string path = script.toStdString();
+    if (std::ranges::find(m_plan.load, path) == m_plan.load.end())
+        return true;
+    const auto shown = m_plan.shown.find(shellWindow);
+    return shown == m_plan.shown.end() ? true : std::ranges::find(shown->second, path) != shown->second.end();
+}
+
+QStringList AutomationShell::lockedScripts(int shellWindow) const
+{
+    const auto locked = m_plan.locked.find(shellWindow);
+    return locked == m_plan.locked.end() ? QStringList() : qtList(locked->second);
+}
+
+QString AutomationShell::includesFor(const std::string &script) const
+{
+    std::vector<std::string> roots;
+    if (m_windowProjects)
+        for (const auto &[window, project] : m_windowProjects())
+            if (project.trusted && !project.root.empty())
+                roots.push_back(project.root);
+    return qtList(application::includeFoldersFor(absoluteScript(script).toStdString(), folders(m_paths).include, roots,
+                                                 windowsPaths()))
+        .join(QLatin1Char('\n'));
 }
 
 bool AutomationShell::autoloadEnabled(const QString &script) const
@@ -620,6 +701,8 @@ void AutomationShell::setAutoloadEnabled(const QString &script, bool enabled)
 
 void AutomationShell::autoload()
 {
+    m_plan = autoloadPlan();
+    m_autoloaded = true;
     m_manager.load(std::string(application::kBuiltinKaraokeTemplater));
     for (const QString &script : autoloadScripts())
         if (autoloadEnabled(script))
@@ -629,6 +712,7 @@ void AutomationShell::autoload()
 
 void AutomationShell::reloadAutoload()
 {
+    m_plan = autoloadPlan();
     const std::string builtin(application::kBuiltinKaraokeTemplater);
     if (!m_manager.reload(builtin) && !m_manager.host(builtin))
         m_manager.load(builtin);
@@ -717,15 +801,6 @@ std::string AutomationShell::trustKey(application::DocumentId document, const st
 QStringList AutomationShell::trustedFolders() const
 {
     return m_settings ? m_settings->list("trust.folders") : QStringList();
-}
-
-namespace {
-
-QString absoluteScript(const std::string &script)
-{
-    return QDir::toNativeSeparators(QDir::cleanPath(QFileInfo(QString::fromStdString(script)).absoluteFilePath()));
-}
-
 }
 
 bool AutomationShell::trusted(const std::string &script) const

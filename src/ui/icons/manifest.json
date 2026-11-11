@@ -4441,10 +4441,10 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "automation",
     "settings-dialog",
     "plugin-manager"
-   ],
-   "pending": "PJ8 #776"
+   ]
   },
   {
    "role": "explorer",
