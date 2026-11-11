@@ -119,7 +119,7 @@ QString problemText(application::ExtendFailure failure, int frames)
 QVariantMap Application::motionDataValues() const
 {
     auto *session = targetSession();
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto times = video.aegisubFrameTimes();
     if (!session || video.state() != application::VideoSession::State::Ready || !times)
         return {};
@@ -153,7 +153,7 @@ QVariantMap Application::checkMotionData(const QString &data, const QString &cli
         return finish(status("idle", QCoreApplication::translate("HikariSub.Tracking", "Paste the After Effects keyframe data exported from Mocha or Blender. "
                     "Apply reads its Position, Scale and Rotation.")));
     auto *session = targetSession();
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto times = video.aegisubFrameTimes();
     if (!session || !times)
         return {};
@@ -229,7 +229,7 @@ QVariantMap Application::checkMotionData(const QString &data, const QString &cli
 
 QString Application::applyMotionData(const QString &data, const QString &clipData, const QVariantMap &o)
 {
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto times = video.aegisubFrameTimes();
     auto track = motionTrack(data);
     if (!track || !times || video.state() != application::VideoSession::State::Ready)
@@ -297,7 +297,7 @@ QString Application::revertMotionData()
 QVariantMap Application::copyMotionData()
 {
     auto *session = targetSession();
-    const auto times = m_video->session().aegisubFrameTimes();
+    const auto times = activeMedia().video->session().aegisubFrameTimes();
     if (!session || !times)
         return toast(false, QCoreApplication::translate("HikariSub.Tracking", "Open a video first: motion data is per frame."));
     const auto track = application::deriveMotion(*session, *times, shownLines());
@@ -318,7 +318,7 @@ QVariantMap Application::copyMotionData()
 QVariantMap Application::copyPowerPinTrack()
 {
     auto *session = targetSession();
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto times = video.aegisubFrameTimes();
     if (!session || video.state() != application::VideoSession::State::Ready || !times)
         return toast(false, QCoreApplication::translate("HikariSub.Tracking", "Open a video first: tracking data is per frame."));
@@ -357,7 +357,7 @@ QVariantMap Application::extrapolateMoves()
 QVariantMap Application::extendTrackingValues() const
 {
     auto *session = targetSession();
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto times = video.aegisubFrameTimes();
     if (!session || video.state() != application::VideoSession::State::Ready || !times)
         return {};
@@ -373,7 +373,7 @@ QVariantMap Application::extendTrackingValues() const
 QVariantMap Application::checkExtendTracking(int frames, bool after) const
 {
     auto *session = targetSession();
-    const auto times = m_video->session().aegisubFrameTimes();
+    const auto times = activeMedia().video->session().aegisubFrameTimes();
     if (!session || !times)
         return {};
     const auto shown = shownLines();
@@ -399,7 +399,7 @@ QVariantMap Application::checkExtendTracking(int frames, bool after) const
 
 QString Application::extendTrackedLines(int frames, bool after, bool origin)
 {
-    const auto times = m_video->session().aegisubFrameTimes();
+    const auto times = activeMedia().video->session().aegisubFrameTimes();
     if (!times)
         return QCoreApplication::translate("HikariSub.Tracking", "Open a video first: tracking data is per frame.");
     std::optional<application::ExtendFailure> failure;

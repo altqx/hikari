@@ -24,7 +24,7 @@ std::optional<application::PowerPin> powerPin(const QString &text)
 QVariantMap Application::perspectiveTrackingValues() const
 {
     auto *session = targetSession();
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     if (!session || video.state() != application::VideoSession::State::Ready)
         return {};
     const auto timebase = video.legacyTimebase();
@@ -89,7 +89,7 @@ QVariantMap Application::checkPerspectiveTracking(const QString &data, int relat
     if (!pin)
         return result("error", QCoreApplication::translate(
                                    "HikariSub.Tracking", "This isn’t Power-Pin data: no CC Power Pin corners were found."));
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     const auto check =
         application::checkTracking(*session, video.legacyTimebase(), *pin, relativeFrame, shownLines());
     const int count = static_cast<int>(pin->frames.size());
@@ -152,7 +152,7 @@ QString Application::applyPerspectiveTracking(const QString &data, int relativeF
                                               bool moveClips, bool scaleBorders)
 {
     const auto pin = powerPin(data);
-    const auto &video = m_video->session();
+    const auto &video = activeMedia().video->session();
     if (!pin || video.state() != application::VideoSession::State::Ready)
         return QCoreApplication::translate("HikariSub.Tracking",
                                            "This isn’t Power-Pin data: no CC Power Pin corners were found.");
