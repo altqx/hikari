@@ -26,7 +26,7 @@ The sidecar's assets never contain `@anthropic-ai/claude-agent-sdk`, and the [re
 3. It unpacks only the tarball's regular files into `ai/vendor/claude-agent-sdk/<version>/`. A link, or a path outside the package, fails the fetch.
 4. It loads the SDK's `sdk.mjs` with a dynamic `import()`.
 
-Each version is fetched once. The SDK's `sdk.mjs` bundles what it needs, so its peer packages aren't fetched. Its optional native packages, which hold a `claude` of their own, are never fetched, here or in the build (`bun ci --omit=optional`). The weekly `AI sidecar bump` moves the version once a newer one is 7 days old.
+Each version is fetched once. The SDK's `sdk.mjs` bundles what it needs, so its peer packages aren't fetched, and the build doesn't install them either (`peer = false` in `bunfig.toml`). Its optional native packages, which hold a `claude` of their own, are never fetched, here or in the build (`bun ci --omit=optional`). The weekly `AI sidecar bump` moves the version once a newer one is 7 days old.
 
 ## Tests
 
