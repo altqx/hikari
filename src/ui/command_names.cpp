@@ -311,6 +311,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to new window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close window"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import lyrics…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Exit"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep AI change"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo AI change"),
