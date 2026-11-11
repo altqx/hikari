@@ -82,6 +82,7 @@ ApplicationWindow {
     required property var matroska
     required property var review
     required property var agent
+    required property var inlineAi
     required property var hotkeys
     required property var settingsImport
     required property VisualToolsController visualTools
@@ -3848,6 +3849,18 @@ ApplicationWindow {
                 onTriggered: root.openBlurAndGlowLayers()
             }
             ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: field.objectName + "RemoveTags"; action: removeTagsAction }
+            MenuSeparator { visible: fieldAiMenu.shown; height: visible ? implicitHeight : 0 }
+            InlineAiMenu {
+                id: fieldAiMenu
+                objectName: field.objectName + "AiMenu"
+                controller: root.inlineAi
+                ready: root.agent.ready
+                editor: true
+                shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
+                onChosen: ask => inlineAiBox.begin(ask, true, field)
+                onRepeatRequested: root.repeatInlineAi(true, field)
+                onSettingsRequested: root.openSettings("ai")
+            }
             MenuSeparator { visible: field.spelled; height: visible ? implicitHeight : 0 }
             ShellMenuItem {
                 iconRole: "spellchecker"
@@ -6079,8 +6092,20 @@ ApplicationWindow {
                             original: lineText
                             translated: translationText
                             translationTools: root.editor.translationMode && !root.originalShown
+                            aiShown: root.inlineAi.on && root.editor.hasLine
+                            onAiActionsRequested: anchor => editorAiMenu.popup(anchor, 0, anchor.height)
                             Layout.fillWidth: true
                             Layout.minimumWidth: minimumWidth
+                        }
+                        InlineAiMenu {
+                            id: editorAiMenu
+                            objectName: "editorAiMenu"
+                            controller: root.inlineAi
+                            ready: root.agent.ready
+                            editor: true
+                            onChosen: ask => inlineAiBox.begin(ask, true, lineText)
+                            onRepeatRequested: root.repeatInlineAi(true, lineText)
+                            onSettingsRequested: root.openSettings("ai")
                         }
 
                         ReviewStrip {
@@ -6216,10 +6241,20 @@ ApplicationWindow {
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
                 focus: true
                 keyTarget: grid
+                InlineAiBar {
+                    id: inlineAiBar
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    z: 1
+                    controller: root.inlineAi
+                    onSettingsRequested: root.openSettings("ai")
+                }
                 HikariGrid {
                     id: grid
                     objectName: "editingGrid"
                     anchors.fill: parent
+                    anchors.topMargin: inlineAiBar.visible ? inlineAiBar.height : 0
                     focus: true
                     // Qt Quick puts only items with an Accessible attachment in the accessibility tree.
                     Accessible.role: Accessible.Table
@@ -6233,7 +6268,25 @@ ApplicationWindow {
                     onLineClicked: (id, modifiers, endColumn, doubleClick) => root.app.clickLine(id, modifiers, endColumn, doubleClick)
                     onLineDragged: id => root.app.dragSelection(id)
                     onSelectAllRequested: root.app.selectAllLines()
-                    onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                    property bool aiMenuNext: false
+                    onContextMenuRequested: (x, y) => {
+                        if (aiMenuNext) {
+                            aiMenuNext = false
+                            gridAiHotkeyMenu.popup(grid, x, y)
+                        } else {
+                            gridMenu.popup(grid, x, y)
+                        }
+                    }
+                    InlineAiMenu {
+                        id: gridAiHotkeyMenu
+                        objectName: "gridAiHotkeyMenu"
+                        controller: root.inlineAi
+                        ready: root.agent.ready
+                        lineCount: Math.max(1, root.shell.selectedCount)
+                        onChosen: ask => inlineAiBox.begin(ask, false, null)
+                        onRepeatRequested: root.repeatInlineAi(false, null)
+                        onSettingsRequested: root.openSettings("ai")
+                    }
                     onHeaderMenuRequested: (x, y) => gridHeaderMenu.popup(grid, x, y)
                     MenuKey.onRequested: grid.requestMenu()
                     GridToolTip { grid: grid }
@@ -6414,6 +6467,15 @@ ApplicationWindow {
                                     translationFileDialog.open()
                                 }
                             }
+                        }
+                        InlineAiMenu {
+                            objectName: "gridAiMenu"
+                            controller: root.inlineAi
+                            ready: root.agent.ready
+                            lineCount: gridMenu.lineCount
+                            onChosen: ask => inlineAiBox.begin(ask, false, null)
+                            onRepeatRequested: root.repeatInlineAi(false, null)
+                            onSettingsRequested: root.openSettings("ai")
                         }
                         MenuSeparator {}
                         ShellMenu {
@@ -7347,6 +7409,8 @@ ApplicationWindow {
         objectName: "toastStack"
         log: root.log
         settings: root.app.settings
+        shellWindow: root.shellWindow
+        activeWindow: root.app.lastUsedWindow === root.shellWindow
         readonly property bool inFullscreen: root.videoFullscreen.active
         parent: inFullscreen ? videoFullscreenWindow.contentItem : root.Overlay.overlay.parent
         anchors.right: parent ? parent.right : undefined
@@ -7414,6 +7478,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app.pluginManager
+        enabled: notices.activeWindow
         function onRolledBack(id, name, version) {
             root.notices.post("info", qsTranslate("HikariSub.Plugins", "%1 rolled back to %2").arg(name, version),
                               qsTranslate("HikariSub.Plugins", "Automatic updates skip the version you left."),
@@ -7422,6 +7487,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app.pluginMarketplace
+        enabled: notices.activeWindow
         function onRevoked(id, name, version, reason) {
             root.notices.post("warning", qsTranslate("HikariSub.Plugins", "%1 turned off").arg(name),
                               qsTranslate("HikariSub.Plugins", "The marketplace revoked version %1: %2.").arg(version, reason),
@@ -7715,6 +7781,7 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
+        active: notices.activeWindow
         toasts: root.notices
         messages: root.messages
     }
@@ -8245,6 +8312,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.updates
+        enabled: notices.activeWindow
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
                 updateAvailable.showRelease(release, !interactive)
@@ -8307,6 +8375,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.crashReports
+        enabled: notices.activeWindow
         function onFreezeNoticed(seconds) {
             root.notices.post("warning", qsTranslate("HikariSub.Reports", "HikariSub stopped responding for %n seconds", "", seconds),
                               qsTranslate("HikariSub.Reports", "It works again. Send a report of where it was stuck?"),
@@ -8531,6 +8600,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app
+        enabled: notices.activeWindow
         function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
         function onVideoPropertyQuestion(question) { root.askVideoProperty(question) }
     }
@@ -8573,6 +8643,7 @@ ApplicationWindow {
                 updates: root.updates
                 crashReports: root.crashReports
                 ai: root.aiSettings
+                inlineAi: root.inlineAi
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
@@ -8587,6 +8658,24 @@ ApplicationWindow {
         return settingsLoader.item
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
+    function repeatInlineAi(inEditor, field) {
+        if (root.inlineAi.last.action)
+            inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)
+    }
+    function openInlineAiMenu() {
+        if (lineText.activeFocus && editorStrip.aiShown) {
+            editorAiMenu.popup(editorStrip.aiButton, 0, editorStrip.aiButton.height)
+            return
+        }
+        grid.aiMenuNext = true
+        grid.requestMenu()
+        grid.aiMenuNext = false
+    }
+    InlineAiBox {
+        id: inlineAiBox
+        parent: Overlay.overlay
+        controller: root.inlineAi
+    }
     function importLegacySettings() {
         if (root.settingsImport.available)
             settingsImportDialog.openDialog()
@@ -8778,9 +8867,12 @@ ApplicationWindow {
     Connections {
         target: root.app
         function onAegisubFoldsFound(document, folds) {
+            if (root.app.windowOfTab(document) !== root.shellWindow)
+                return
             root.notices.post("info", qsTranslate("HikariSub.Grid", "Aegisub folds"),
                               qsTranslate("HikariSub.Grid", "This file has %n Aegisub folds.", "", folds), {
                 actions: [{ text: qsTranslate("HikariSub.Grid", "Convert to line groups"), run: () => {
+                    root.app.activateShellWindow(root.shellWindow)
                     const tab = root.app.tabs.findIndex(t => t.id === document)
                     if (tab >= 0)
                         root.app.selectTab(tab)
@@ -8790,10 +8882,12 @@ ApplicationWindow {
         }
         function onFoldsConverted(converted, skipped) {
             const done = qsTranslate("HikariSub.Grid", "%n Aegisub folds became line groups.", "", converted)
-            root.notices.post("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
+            root.notices.postForApp("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
                               : done + " " + qsTranslate("HikariSub.Grid", "%n folds were skipped: they overlap a line group or do not pair.", "", skipped))
         }
         function onGroupBreakRefused(description, title) {
+            if (!notices.activeWindow)
+                return
             if (!description) {
                 root.notices.post("warning", qsTranslate("HikariSub.Grid", "This would leave lines outside their line group"),
                             qsTranslate("HikariSub.Grid", "Nothing was changed."))
@@ -8893,7 +8987,7 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => gettingStartedDialog.openSetup())
-        if (root.crashReports.pending.length > 0
+        if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
     }
@@ -9029,6 +9123,23 @@ ApplicationWindow {
         onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_ALL_AI_CHANGES")) root.undoAllAiChanges()
     }
     Action {
+        id: aiActionsAction
+        text: qsTranslate("HikariSub.Hotkeys", "AI actions…")
+        enabled: root.inlineAi.on
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_AI_ACTIONS")) root.openInlineAiMenu()
+    }
+    Action {
+        id: repeatAiActionAction
+        text: qsTranslate("HikariSub.Hotkeys", "Repeat last AI action")
+        enabled: root.inlineAi.on && root.agent.ready && !!root.inlineAi.last.action
+        onTriggered: {
+            if (root.hotkeyGesture("GLOBAL_REPEAT_AI_ACTION"))
+                return
+            const inEditor = lineText.activeFocus
+            root.repeatInlineAi(inEditor, inEditor ? lineText : null)
+        }
+    }
+    Action {
         id: showAiAgentAction
         text: qsTranslate("HikariSub.Agent", "Agent panel")
         enabled: root.agent.on
@@ -9110,6 +9221,7 @@ ApplicationWindow {
         GLOBAL_KEEP_ALL_AI_CHANGES: keepAllAiChangesAction, GLOBAL_UNDO_ALL_AI_CHANGES: undoAllAiChangesAction,
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
+        GLOBAL_AI_ACTIONS: aiActionsAction, GLOBAL_REPEAT_AI_ACTION: repeatAiActionAction,
         GLOBAL_CLOSE_PAGE: closeAction
     }
     }

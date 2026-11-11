@@ -16,6 +16,16 @@ Line editor text > -
 Line editor text > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
 Line editor text > Remove tags… [GLOBAL_REMOVE_TAGS]
 Line editor text > -
+Line editor text > AI >
+Line editor text > AI > Rewrite…
+Line editor text > AI > Shorten to 15 CPS
+Line editor text > AI > Fix spelling and grammar
+Line editor text > AI > Translate to English
+Line editor text > AI > Translate to…
+Line editor text > AI > -
+Line editor text > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Line editor text > AI > Add a model in Settings › AI…
+Line editor text > -
 Line editor text > Check spelling
 Text field
 Text field > Undo
@@ -48,6 +58,15 @@ Grid > Paste special > Copy columns [GRID_COPY_COLUMNS]
 Grid > Paste special > Paste columns [GRID_PASTE_COLUMNS]
 Grid > Paste special > -
 Grid > Paste special > Paste translation from a file… [GRID_PASTE_TRANSLATION]
+Grid > AI >
+Grid > AI > Rewrite…
+Grid > AI > Shorten to 15 CPS
+Grid > AI > Fix spelling and grammar
+Grid > AI > Translate to English
+Grid > AI > Translate to…
+Grid > AI > -
+Grid > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Grid > AI > Add a model in Settings › AI…
 Grid > -
 Grid > Join >
 Grid > Join > Join [GRID_JOIN_LINES]
