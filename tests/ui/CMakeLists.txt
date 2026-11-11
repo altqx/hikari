@@ -285,9 +285,13 @@ target_compile_definitions(hikari_ui_layout_migration_tests PRIVATE
     HIKARI_LAYOUT_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/layout-fixtures")
 hikari_add_qttest(hikari_ui_shell_windows_tests SOURCES shell_windows_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest
-    PARTS windows sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
+    PARTS windows media=eachWindowShowsItsOwnVideoAndKeepsItWhileAnotherIsActive
+          sessions=aSessionReopensEachWindowWithItsTabsAndPlace closing=closingAWindowReviewsOnlyItsTabs
           moving=aTabDraggedOutOfEveryWindowOpensANewWindowHoldingIt)
 target_include_directories(hikari_ui_shell_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_shell_windows_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_shell_windows_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE

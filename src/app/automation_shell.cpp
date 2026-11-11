@@ -51,13 +51,13 @@ QString sharedIncludes(const AutomationShell::Paths &paths)
 
 class MediaAdapter : public application::MacroMediaPort {
 public:
-    MediaAdapter(ui::VideoController &video, application::DocumentFiles &files, application::Workspace &workspace)
-        : m_video(video), m_files(files), m_workspace(workspace)
+    MediaAdapter(AutomationShell::VideoSource video, application::DocumentFiles &files, application::Workspace &workspace)
+        : m_video(std::move(video)), m_files(files), m_workspace(workspace)
     {
     }
     std::optional<std::int64_t> frameFromMs(std::int64_t ms) const override
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         if (s.state() != application::VideoSession::State::Ready)
             return std::nullopt;
         int frame = 0;
@@ -71,7 +71,7 @@ public:
     }
     std::optional<std::int64_t> msFromFrame(std::int64_t frame) const override
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         if (s.state() != application::VideoSession::State::Ready || s.frameCount() == 0)
             return std::nullopt;
         const auto start = s.frameStart(static_cast<int>(std::clamp<std::int64_t>(frame, 0, s.frameCount() - 1)));
@@ -79,23 +79,23 @@ public:
     }
     std::optional<VideoSize> videoSize() const override
     {
-        const auto frame = m_video.session().lastFrame();
-        if (m_video.session().state() != application::VideoSession::State::Ready || !frame)
+        const auto frame = m_video().session().lastFrame();
+        if (m_video().session().state() != application::VideoSession::State::Ready || !frame)
             return std::nullopt;
-        const auto geometry = m_video.session().sourceGeometry();
+        const auto geometry = m_video().session().sourceGeometry();
         const int g = std::gcd(geometry.width, geometry.height);
         return VideoSize{geometry.width, geometry.height, geometry.width / g, geometry.height / g};
     }
     std::optional<std::vector<std::int64_t>> keyframes() const override
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         if (s.state() != application::VideoSession::State::Ready)
             return std::nullopt;
         return std::vector<std::int64_t>(s.keyframes().begin(), s.keyframes().end());
     }
     void frame(std::int64_t index, bool withSubtitles, std::function<void(std::optional<Frame>)> reply) override
     {
-        m_video.session().requestFrame(static_cast<int>(index), withSubtitles,
+        m_video().session().requestFrame(static_cast<int>(index), withSubtitles,
                                        [reply](std::shared_ptr<const application::IndexedFrame> f) {
                                            if (!f)
                                                return reply(std::nullopt);
@@ -131,8 +131,8 @@ public:
     std::optional<Project> project() const override
     {
         Project p;
-        p.videoFrameShown = m_video.session().reportedFrame().value_or(0);
-        p.videoFile = m_video.session().path();
+        p.videoFrameShown = m_video().session().reportedFrame().value_or(0);
+        p.videoFile = m_video().session().path();
         if (const application::AudioBox *box = audioBox ? audioBox() : nullptr; box && box->isOpen())
             p.audioFile = box->path();
         if (keyframesFile)
@@ -158,11 +158,11 @@ public:
             return std::nullopt;
         return box->audio();
     }
-    std::optional<application::AegisubFrameTimes> frameTimes() const override { return m_video.session().aegisubFrameTimes(); }
+    std::optional<application::AegisubFrameTimes> frameTimes() const override { return m_video().session().aegisubFrameTimes(); }
     // MUST KILL: the video path, frame count and frame-times serial stand in for the frame times
     std::string state() const
     {
-        const auto &s = m_video.session();
+        const auto &s = m_video().session();
         std::string out = s.path() + '\n' + std::to_string(static_cast<int>(s.state())) + ' ' +
                           std::to_string(s.frameCount()) + " times " + std::to_string(s.frameTimesSerial());
         if (const auto size = videoSize())
@@ -187,7 +187,7 @@ public:
     std::function<double()> videoZoom;
 
 private:
-    ui::VideoController &m_video;
+    AutomationShell::VideoSource m_video;
     application::DocumentFiles &m_files;
     application::Workspace &m_workspace;
 };
@@ -258,7 +258,7 @@ QString refusalText(const application::MacroApplyFailure &failure)
 }
 
 AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
-                                 EditorSource editor, ui::VideoController &video, ShellSource shell,
+                                 EditorSource editor, VideoSource video, ShellSource shell,
                                  application::IndexedSourcePort &, QObject *parent)
     : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(std::move(editor)),
       m_video(video), m_shell(std::move(shell)),
@@ -289,7 +289,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         const auto target = m_workspace.editingTarget();
         if (const auto destination = target ? m_files.destination(*target) : std::nullopt)
             c.subtitlePath = QDir::toNativeSeparators(QString::fromStdString(destination->value)).toStdString();
-        c.videoPath = m_video.session().path();
+        c.videoPath = m_video().session().path();
 #ifdef _WIN32
         c.windows = true;
 #endif

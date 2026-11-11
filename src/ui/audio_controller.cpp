@@ -897,6 +897,8 @@ void AudioController::playRange(int startMs, int endMs)
     const auto *audio = m_box.audio();
     if (!audio || !m_playback)
         return;
+    if (m_beforePlay)
+        m_beforePlay();
     m_playedSerial = m_box.serial();
     stopFollowingVideo();
     m_lastRange = m_playback->play(audio->sampleRate(), audio->sampleCount(), startMs, endMs);
