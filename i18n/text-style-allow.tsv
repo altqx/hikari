@@ -46,3 +46,6 @@ HikariSub.Agent	Export as Markdown…	title-case	Markdown is the file format’s
 HikariSub.Agent	Turn on Full access?	title-case	Full access is the agent mode’s name
 HikariSub.Agent	Turn on Full access	title-case	Full access is the agent mode’s name
 HikariSub.Agent	Searched with Google	title-case	Google is the product name
+HikariSub.Hotkeys	Change case to Title Case	title-case	Title Case is the case style’s name, shown in it
+HikariSub.Hotkeys	Change case to Sentence case	title-case	Sentence case is the case style’s name
+HikariSub.Text	Title Case	title-case	the Change case menu shows each case style in that style

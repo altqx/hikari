@@ -48,7 +48,7 @@ ShellMenu {
     ShellMenuItem {
         command: "GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY"
         objectName: menu.prefix + "WrapAtBreaksOnly"
-        text: qsTr("Wrap only at %1 (%2)").arg("\\N").arg("\\q2")
+        text: qsTr("Wrap only at %1 (%2)").arg("\\N", "\\q2")
         checkable: true
         checked: menu.wraps
         onTriggered: menu.run(command, "wrapAtBreaksOnly")
