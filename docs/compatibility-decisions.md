@@ -193,7 +193,7 @@ A Document can say which template language it uses: `Karaoke Templater: karaOK` 
 
 ## TH5c-karaok-word-positions
 
-Words count characters as the rest of the Line does. Upstream found words with `gmatch("()…")`, which gives byte positions, and compared them with character positions, so on any Line with non-ASCII text characters and syllables went to the wrong words and word tags to the wrong characters. Corpus: `tests/backends/karaoke-corpus/karaok/departures/word-positions.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), Q161 and Q160.
+Words count characters as the rest of the Line does. Upstream found words with `gmatch("()…")`, which gives byte positions, and compared them with character positions, so on any Line with non-ASCII text characters and syllables went to the wrong words and word tags to the wrong characters. Corpus: `tests/backends/karaoke-corpus/karaok/departures/word-positions.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decisions Q161 and Q160.
 
 ## TH5c-karaok-syl-char
 
