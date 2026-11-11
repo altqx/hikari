@@ -16,6 +16,7 @@ import {
 import { ProviderError } from "../providers/errors";
 import type { CompleteParams, Finished, Message, Part, StopReason, ToolCall, ToolDefinition, Update } from "../providers/types";
 import { RpcError } from "../rpc";
+import { kReadSkillTool, Skills } from "../skills/skills";
 import type { Tool } from "../tools/catalogue";
 import { type ImageBudget, kDefaultImageBudget } from "../tools/images";
 import type { CallToolResult, ToolSet } from "../tools/toolset";
@@ -29,7 +30,7 @@ export const kMaxTurnRequests = 64;
 /** Text deltas wait this long so a turn sends at most one chunk per frame. */
 export const kChunkMs = 16;
 
-const kPlanTool: Tool = {
+export const kPlanTool: Tool = {
     name: "update_plan",
     description: "Shows the user your plan as a checklist. Send every step each time, with at most one in_progress.",
     inputSchema: {
@@ -101,6 +102,7 @@ export class AgentSession {
     private turn?: Turn;
     private pendingText = "";
     private flushTimer?: ReturnType<typeof setTimeout>;
+    private system?: string;
 
     constructor(
         readonly id: string,
@@ -110,6 +112,7 @@ export class AgentSession {
         private readonly send: (update: SessionUpdate) => void,
         private readonly nextStream: () => number,
         private readonly imageBudget: (providerId: string) => ImageBudget,
+        private readonly skills: Skills = new Skills(),
     ) {
         this.history = [...(params.history ?? [])];
         this.model = params.model;
@@ -132,6 +135,7 @@ export class AgentSession {
         const turn: Turn = { controller: new AbortController(), steers: [] };
         this.turn = turn;
         try {
+            this.system ??= await this.instructions();
             this.keep({ author: "user", parts: params.prompt });
             return { stopReason: await this.run(turn, params.caching ?? this.params.caching) };
         } finally {
@@ -196,7 +200,9 @@ export class AgentSession {
                 status: "in_progress", rawInput: args ?? call.argumentsJson });
             const result = args === undefined
                 ? { content: [{ type: "text" as const, text: `${call.name}: the arguments aren't JSON.` }], isError: true }
-                : call.name === kPlanTool.name ? this.plan(args) : await this.tools.call(call.name, args);
+                : call.name === kPlanTool.name ? this.plan(args)
+                : call.name === kReadSkillTool.name ? await this.skills.read(args as Record<string, unknown>)
+                : await this.tools.call(call.name, args);
             if (result.searchFailure)
                 this.send({ sessionUpdate: "search_failed", ...result.searchFailure });
             const text = resultText(result);
@@ -205,6 +211,11 @@ export class AgentSession {
             results.push({ type: "toolResult", callId: call.id, content: text, ...(result.isError ? { isError: true } : {}) });
         }
         return results;
+    }
+
+    private async instructions(): Promise<string> {
+        const skills = await this.skills.instructions();
+        return [this.params.system, skills].filter(Boolean).join("\n\n");
     }
 
     private sources(finished: Finished): void {
@@ -228,19 +239,19 @@ export class AgentSession {
     private kindOf(name: string): ToolCallKind {
         if (name === "document_apply")
             return "edit";
-        if (name === kPlanTool.name)
+        if (name === kPlanTool.name || name === kReadSkillTool.name)
             return "read";
         return this.tools.list(true).find((t) => t.name === name)?.annotations.readOnlyHint ? "read" : "other";
     }
 
     private request(caching: boolean | undefined): CompleteParams {
-        const tools = [...this.tools.list(), kPlanTool].map(definition);
+        const tools = [...this.tools.list(), kPlanTool, kReadSkillTool].map(definition);
         return {
             stream: this.nextStream(),
             providerId: this.model.providerId,
             request: {
                 model: this.model.model,
-                ...(this.params.system ? { system: this.params.system } : {}),
+                ...(this.system ? { system: this.system } : {}),
                 messages: this.history,
                 tools,
                 ...(this.params.cacheKey ? { cacheKey: this.params.cacheKey } : {}),
@@ -295,6 +306,7 @@ export class AgentSessions {
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
         private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
         private readonly agents: Partial<Record<NonNullable<SessionNewParams["agent"]>, ExternalAgent>> = {},
+        private readonly skills: (sessionId: string) => Skills = () => new Skills(),
     ) {}
 
     open(params: SessionNewParams): { sessionId: string } {
@@ -310,7 +322,7 @@ export class AgentSessions {
         }
         this.sessions.set(id, new AgentSession(id, params, (webSearch) => this.tools(id, webSearch), this.complete, send,
             () => this.stream++,
-            this.imageBudget));
+            this.imageBudget, this.skills(id)));
         return { sessionId: id };
     }
 

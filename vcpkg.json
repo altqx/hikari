@@ -25,6 +25,7 @@
     "hikari-unidic-lite",
     "kddockwidgets",
     "qtkeychain",
+    "clipper2",
     "luajit",
     {
       "name": "boost-regex",
