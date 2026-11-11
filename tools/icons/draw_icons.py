@@ -1411,7 +1411,6 @@ for card, roles in {
     "AI21 #725": ["compact"],
     "AI24 #744": ["update"],
     "PL7 #419": ["plugin-sandbox"],
-    "AU4 #839": ["remove-tags"],
     "AU6 #845": ["shape-unite", "shape-subtract", "shape-intersect", "shape-exclude", "shape-offset", "clip-to-shape",
                  "shape-to-clip", "shape-merge"],
     "AU9 #844": ["graph-shake", "graph-wobble", "graph-bounce", "graph-typewriter", "graph-fade-by-letter",

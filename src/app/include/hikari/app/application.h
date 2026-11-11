@@ -508,6 +508,12 @@ public:
     Q_INVOKABLE QVariantMap copyMotionData();
     Q_INVOKABLE QVariantMap copyPowerPinTrack();
     Q_INVOKABLE QVariantMap extrapolateMoves();
+    // {changed, deleted, rows: [{row, before, after, deleted}], more}: what removeTags(options) does,
+    // the first 200 rows.
+    Q_INVOKABLE QVariantMap tagRemovalPreview(const QVariantMap &options) const;
+    // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
+    // "selected"/"file", and the Cleanup flags by their names.
+    Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
