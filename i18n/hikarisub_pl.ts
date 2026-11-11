@@ -7574,6 +7574,54 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Interpoluj między wierszami…</translation>
     </message>
     <message>
+        <source>Insert balanced break</source>
+        <translation>Wstaw zrównoważony podział wiersza</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>Przesuń podział w lewo</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>Przesuń podział w prawo</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>Usuń podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Wrap only at \N (\q2)</source>
+        <translation>Zawijaj tylko przy \N (\q2)</translation>
+    </message>
+    <message>
+        <source>Change case to lowercase</source>
+        <translation>Zmień na małe litery</translation>
+    </message>
+    <message>
+        <source>Change case to UPPERCASE</source>
+        <translation>Zmień na wielkie litery</translation>
+    </message>
+    <message>
+        <source>Change case to Title Case</source>
+        <translation>Zmień na wielkie pierwsze litery wyrazów</translation>
+    </message>
+    <message>
+        <source>Change case to Sentence case</source>
+        <translation>Zmień na wielką literę na początku zdania</translation>
+    </message>
+    <message>
+        <source>Change text to full-width</source>
+        <translation>Zmień tekst na pełną szerokość</translation>
+    </message>
+    <message>
+        <source>Change text to half-width</source>
+        <translation>Zmień tekst na połowę szerokości</translation>
+    </message>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>Przenieś zakładkę do nowego okna</translation>
     </message>
@@ -20506,6 +20554,65 @@ Usunięte style:
     <message>
         <source>The templater stopped before it finished.</source>
         <translation>Templater zatrzymał się przed zakończeniem.</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Text</name>
+    <message>
+        <source>Swap dialogue alternatives</source>
+        <translation>Zamień warianty dialogu</translation>
+    </message>
+    <message>
+        <source>Line breaks</source>
+        <translation>Podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Insert balanced break</source>
+        <translation>Wstaw zrównoważony podział wiersza</translation>
+    </message>
+    <message>
+        <source>Move break left</source>
+        <translation>Przesuń podział w lewo</translation>
+    </message>
+    <message>
+        <source>Move break right</source>
+        <translation>Przesuń podział w prawo</translation>
+    </message>
+    <message>
+        <source>Remove breaks</source>
+        <translation>Usuń podziały wierszy</translation>
+    </message>
+    <message>
+        <source>Wrap only at %1 (%2)</source>
+        <translation>Zawijaj tylko przy %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Change case</source>
+        <translation>Zmień wielkość liter</translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation>małe litery</translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation>WIELKIE LITERY</translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation>Wielkie Pierwsze Litery</translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation>Jak w zdaniu</translation>
+    </message>
+    <message>
+        <source>Full-width</source>
+        <translation>Pełna szerokość</translation>
+    </message>
+    <message>
+        <source>Half-width</source>
+        <translation>Połowa szerokości</translation>
     </message>
 </context>
 <context>

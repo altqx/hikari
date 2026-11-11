@@ -26,6 +26,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     include/hikari/backends/helper_host.h
     legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
+    icu_text.cpp include/hikari/backends/icu_text.h
     harper_client.cpp include/hikari/backends/harper_client.h
     plugin_process.cpp include/hikari/backends/plugin_process.h
     lua_node_helper.cpp include/hikari/backends/lua_node_helper.h
