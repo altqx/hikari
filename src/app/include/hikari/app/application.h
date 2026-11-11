@@ -319,6 +319,16 @@ public:
     Q_INVOKABLE QString projectName(int shellWindow) const { return m_projects->name(shellWindow); }
     Q_INVOKABLE QString projectRoot(int shellWindow) const { return m_projects->root(shellWindow); }
     Q_INVOKABLE QVariantList homeRecentProjects() const { return m_projects->recentRows(); }
+    // The Settings Project tab: {values, yours} in the dialog's control form for the projectable settings,
+    // and {sources}: "project" or "local" for each one a project file sets. Empty without a Project.
+    Q_INVOKABLE QVariantMap openProjectSettings(int shellWindow);
+    Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
+    // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
+    Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
+    // The Project is untrusted and holds scripts (.hikari/automation/) or a [plugins] table.
+    Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
+    // Adds the window's Project folder to trust.folders, which applies the Project again.
+    Q_INVOKABLE void trustProject(int shellWindow);
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes

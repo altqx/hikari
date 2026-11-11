@@ -512,6 +512,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>Propozycja: %1</translation>
     </message>
@@ -10680,6 +10684,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Każda sylaba rośnie wraz z głośnością dźwięku, gdy jest śpiewana. Wymaga otwartego dźwięku.</translation>
     </message>
     <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10895,6 +10915,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11068,6 +11104,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14555,6 +14599,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>Otwórz projekt</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>Projekt</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>Używa Twoich</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>Ustawione w tym projekcie</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>Ustawione w project.local.toml</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>Użyj Twoich</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>Zastąpione w tym projekcie</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>Nie udało się zapisać project.toml, więc część ustawień projektu nie została zapisana.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>Zapisanie pliku wpisuje włączone pola do jego Script Info.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>Pytaj przed ich zmianą przy zapisie</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>Ten projekt ma własne skrypty lub ustawienia wtyczek. Zaufaj “%1”, aby je uruchomić.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>Zaufaj folderowi</translation>
     </message>
 </context>
 <context>

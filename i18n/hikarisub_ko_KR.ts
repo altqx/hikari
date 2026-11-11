@@ -510,6 +510,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>제안: %1</translation>
     </message>
@@ -10518,6 +10522,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>각 음절이 불리는 동안 소리의 크기에 따라 커집니다. 오디오가 열려 있어야 합니다.</translation>
     </message>
     <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10733,6 +10753,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10906,6 +10942,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14373,6 +14417,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>프로젝트 열기</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>내 설정</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>프로젝트</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>내 설정 사용 중</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>이 프로젝트에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>project.local.toml에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>내 설정 사용</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>이 프로젝트에서 덮어씀</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>project.toml에 쓸 수 없어 일부 프로젝트 설정이 저장되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>파일을 저장하면 켜 둔 항목이 Script Info에 기록됩니다.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>저장할 때 바꾸기 전에 묻기</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>이 프로젝트에는 자체 스크립트나 플러그인 설정이 있습니다. 실행하려면 “%1”을(를) 신뢰하세요.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>폴더 신뢰</translation>
     </message>
 </context>
 <context>
