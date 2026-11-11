@@ -354,7 +354,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     for (std::size_t i = 0; const auto &[id, control] : {std::pair{"ai.agent.mode", OptionsControl::Text},
                                                          std::pair{"ai.agent.threadCapCents", OptionsControl::Number},
                                                          std::pair{"ai.agent.dailyCapCents", OptionsControl::Number},
-                                                         std::pair{"ai.agent.costMeter", OptionsControl::Check}}) {
+                                                         std::pair{"ai.agent.costMeter", OptionsControl::Check},
+                                                         std::pair{"ai.agent.autoCompact", OptionsControl::Check}}) {
         const auto &agent = all[std::size(kLegacy) + 61 + i++];
         EXPECT_EQ(agent.setting, id);
         EXPECT_EQ(agent.control, control) << id;

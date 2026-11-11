@@ -193,7 +193,7 @@ void AgentController::apply()
         w.defaults = [this] {
             return AgentThreads::Defaults{
                 backends::ai::agentModeFromId(m_wiring.settings.text(kModeSetting).toStdString()).value_or(AgentMode::Auto),
-                threadCap(), dailyCap()};
+                threadCap(), dailyCap(), autoCompact()};
         };
         w.beginTurn = [this](const std::string &caller, const std::string &label) {
             return m_wiring.review.beginTurn(caller, label);
@@ -215,6 +215,10 @@ void AgentController::apply()
             emit threadsChanged();
             if (id.toStdString() == m_current)
                 refreshThread();
+        });
+        connect(m_threads.get(), &AgentThreads::summarised, this, [this](const QString &from, const QString &to) {
+            if (from.toStdString() == m_current)
+                select(to.toStdString());
         });
         connect(m_threads.get(), &AgentThreads::asked, this, [this](quint64 ask) {
             if (const auto it = m_threads->asks().find(ask); it != m_threads->asks().end())
@@ -343,12 +347,17 @@ QVariantMap AgentController::thread() const
             {QStringLiteral("title"), qs(t->title)},
             {QStringLiteral("mode"), qs(std::string(backends::ai::agentModeId(t->mode)))},
             {QStringLiteral("running"), m_threads->running(t->id)},
+            {QStringLiteral("compacting"), m_threads->compacting(t->id)},
+            {QStringLiteral("external"), m_threads->modelOf(*t) && backends::ai::externalAgentOf(*m_threads->modelOf(*t))},
             {QStringLiteral("queued"), qs(m_threads->queued(t->id))},
             {QStringLiteral("cost"), t->cost},
             {QStringLiteral("cap"), t->cap},
             {QStringLiteral("costUnknown"), t->costUnknown},
             {QStringLiteral("contextTokens"), qint64(t->contextTokens)},
             {QStringLiteral("contextWindow"), window},
+            {QStringLiteral("compactWindow"),
+             qint64(backends::ai::contextWindowOf(providers ? &providers->config() : nullptr,
+                                                  m_threads->modelOf(*t).value_or(ai::ModelRef{})))},
             {QStringLiteral("model"), model},
             {QStringLiteral("modelText"), modelText},
             {QStringLiteral("attached"), attached},
@@ -397,6 +406,23 @@ QString AgentController::activeTitle() const
 bool AgentController::costMeter() const
 {
     return m_wiring.settings.boolean(kCostMeterSetting);
+}
+
+bool AgentController::autoCompact() const
+{
+    return m_wiring.settings.boolean(kAutoCompactSetting);
+}
+
+void AgentController::compact(const QString &instruction)
+{
+    if (m_threads && !m_current.empty())
+        m_threads->compact(m_current, instruction.trimmed().toStdString());
+}
+
+void AgentController::newThreadFromSummary()
+{
+    if (m_threads && !m_current.empty())
+        m_threads->newThreadFromSummary(m_current);
 }
 
 bool AgentController::fullAccessWarned() const

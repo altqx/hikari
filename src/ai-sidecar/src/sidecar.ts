@@ -6,7 +6,7 @@ import { type ClaudeAgentSdk, loadClaudeAgentSdk } from "./agents/vendor";
 import { McpServer, type ServerInfo } from "./mcp/server";
 import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
-    type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
+    type SessionCompactParams, type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
     type ToolCallKind, type ToolsCallParams, type ToolsListParams } from "./protocol";
 import { ProviderError } from "./providers/errors";
 import { LinkRelay, relayFetch } from "./providers/relay";
@@ -168,6 +168,12 @@ export class Sidecar {
             if (typeof id === "string")
                 this.sessions.cancel(id);
         });
+        this.handle(Method.sessionCompact, (params) => wire(() => {
+            const p = params as Partial<SessionCompactParams>;
+            if (p.instruction !== undefined && typeof p.instruction !== "string")
+                throw new RpcError(ErrorCode.invalidParams, `${Method.sessionCompact}'s instruction is text`);
+            return this.sessions.compact({ ...p, sessionId: sessionId(Method.sessionCompact, params) });
+        }));
         this.handle(Method.sessionClose, (params) => {
             this.sessions.close(sessionId(Method.sessionClose, params));
             return null;
