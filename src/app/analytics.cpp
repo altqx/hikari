@@ -11,6 +11,7 @@
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -31,10 +32,10 @@ constexpr char kEnabled[] = "privacy.usageData";
 constexpr char kId[] = "privacy.usageDataId";
 
 struct Rule {
-    enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions, DebugImages, Text, Settings } kind;
+    enum Kind { OneOf, Pattern, Bool, Count, ListOf, Exceptions, DebugImages, Text, Settings, Windows } kind;
     QStringList values;
     QString pattern;
-    // MUST KILL: max is Text's length cap but Settings' entry-count cap.
+    // MUST KILL: max is Text's length cap but Settings' and Windows' entry-count cap.
     int max = 0;
 };
 
@@ -176,6 +177,7 @@ const Table &table()
             {QStringLiteral("note"), {Rule::Text, {}, {}, 4000}},
             {QStringLiteral("log"), {Rule::Text, {}, {}, 64 * 1024}},
             {QStringLiteral("settings"), {Rule::Settings, {}, {}, 64}},
+            {QStringLiteral("windows"), {Rule::Windows, {}, {}, 64}},
         };
         for (const char *key : {"version", "channel", "$os", "$os_version", "arch", "package", "qt_version"})
             report.emplace(QString::fromLatin1(key), started.at(QString::fromLatin1(key)));
@@ -305,6 +307,20 @@ bool conformsTo(const Rule &rule, const QJsonValue &value)
             if (!id.match(it.key()).hasMatch() || !it.value().isString() || !plain.match(it.value().toString()).hasMatch())
                 return false;
         return true;
+    }
+    case Rule::Windows: {
+        const QJsonArray windows = value.toArray();
+        if (!value.isArray() || windows.isEmpty() || windows.size() > rule.max)
+            return false;
+        int active = 0;
+        for (const QJsonValue &v : windows) {
+            const QJsonObject w = v.toObject();
+            if (w.keys() != QStringList{QStringLiteral("active"), QStringLiteral("tabs")} ||
+                !conformsTo({Rule::Count, {}, {}}, w.value(QStringLiteral("tabs"))) || !w.value(QStringLiteral("active")).isBool())
+                return false;
+            active += w.value(QStringLiteral("active")).toBool();
+        }
+        return active == 1;
     }
     }
     return false;

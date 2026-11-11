@@ -907,6 +907,8 @@ public:
     Q_INVOKABLE void activateShellWindow(int shellWindow);
     // tabs, currentTab and home of one shell window; the properties are the active window's.
     Q_INVOKABLE QVariantList windowTabs(int shellWindow) const;
+    // The shell window holding the tab; the active window for none.
+    Q_INVOKABLE int windowOfTab(qulonglong document) const;
     Q_INVOKABLE int windowCurrentTab(int shellWindow) const;
     Q_INVOKABLE bool windowHome(int shellWindow) const;
     // Waits for running writes and delivers their results.
@@ -1323,6 +1325,7 @@ private:
     void leaveShellWindow(int shellWindow);
     void showFirstWindow();
     void noteLastUsedWindow();
+    void noteCrashWindows();
     ui::WorkspaceLayoutController &layoutOf(int shellWindow);
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();

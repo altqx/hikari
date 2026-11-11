@@ -7148,6 +7148,8 @@ ApplicationWindow {
         objectName: "toastStack"
         log: root.log
         settings: root.app.settings
+        shellWindow: root.shellWindow
+        activeWindow: root.app.lastUsedWindow === root.shellWindow
         readonly property bool inFullscreen: root.videoFullscreen.active
         parent: inFullscreen ? videoFullscreenWindow.contentItem : root.Overlay.overlay.parent
         anchors.right: parent ? parent.right : undefined
@@ -7215,6 +7217,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app.pluginManager
+        enabled: notices.activeWindow
         function onRolledBack(id, name, version) {
             root.notices.post("info", qsTranslate("HikariSub.Plugins", "%1 rolled back to %2").arg(name, version),
                               qsTranslate("HikariSub.Plugins", "Automatic updates skip the version you left."),
@@ -7223,6 +7226,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app.pluginMarketplace
+        enabled: notices.activeWindow
         function onRevoked(id, name, version, reason) {
             root.notices.post("warning", qsTranslate("HikariSub.Plugins", "%1 turned off").arg(name),
                               qsTranslate("HikariSub.Plugins", "The marketplace revoked version %1: %2.").arg(version, reason),
@@ -7516,6 +7520,7 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
+        active: notices.activeWindow
         toasts: root.notices
         messages: root.messages
     }
@@ -8046,6 +8051,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.updates
+        enabled: notices.activeWindow
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
                 updateAvailable.showRelease(release, !interactive)
@@ -8108,6 +8114,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.crashReports
+        enabled: notices.activeWindow
         function onFreezeNoticed(seconds) {
             root.notices.post("warning", qsTranslate("HikariSub.Reports", "HikariSub stopped responding for %n seconds", "", seconds),
                               qsTranslate("HikariSub.Reports", "It works again. Send a report of where it was stuck?"),
@@ -8332,6 +8339,7 @@ ApplicationWindow {
     }
     Connections {
         target: root.app
+        enabled: notices.activeWindow
         function onResolutionMismatch(sizes) { root.askResolutionMismatch(sizes) }
         function onVideoPropertyQuestion(question) { root.askVideoProperty(question) }
     }
@@ -8579,9 +8587,12 @@ ApplicationWindow {
     Connections {
         target: root.app
         function onAegisubFoldsFound(document, folds) {
+            if (root.app.windowOfTab(document) !== root.shellWindow)
+                return
             root.notices.post("info", qsTranslate("HikariSub.Grid", "Aegisub folds"),
                               qsTranslate("HikariSub.Grid", "This file has %n Aegisub folds.", "", folds), {
                 actions: [{ text: qsTranslate("HikariSub.Grid", "Convert to line groups"), run: () => {
+                    root.app.activateShellWindow(root.shellWindow)
                     const tab = root.app.tabs.findIndex(t => t.id === document)
                     if (tab >= 0)
                         root.app.selectTab(tab)
@@ -8591,10 +8602,12 @@ ApplicationWindow {
         }
         function onFoldsConverted(converted, skipped) {
             const done = qsTranslate("HikariSub.Grid", "%n Aegisub folds became line groups.", "", converted)
-            root.notices.post("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
+            root.notices.postForApp("info", qsTranslate("HikariSub.Grid", "Convert Aegisub folds to line groups"), skipped === 0 ? done
                               : done + " " + qsTranslate("HikariSub.Grid", "%n folds were skipped: they overlap a line group or do not pair.", "", skipped))
         }
         function onGroupBreakRefused(description, title) {
+            if (!notices.activeWindow)
+                return
             if (!description) {
                 root.notices.post("warning", qsTranslate("HikariSub.Grid", "This would leave lines outside their line group"),
                             qsTranslate("HikariSub.Grid", "Nothing was changed."))
@@ -8694,7 +8707,7 @@ ApplicationWindow {
             root.workspaceLayout.resumeMode("Karaoke")
         if (root.app.gettingStartedDue())
             Qt.callLater(() => gettingStartedDialog.openSetup())
-        if (root.crashReports.pending.length > 0
+        if (root.shellWindow === 0 && root.crashReports.pending.length > 0
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
     }
