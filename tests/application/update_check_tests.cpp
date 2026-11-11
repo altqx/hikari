@@ -397,6 +397,10 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_FALSE(a.mcp);
     EXPECT_TRUE(parseStartupArguments({"--mcp"}).mcp);
     EXPECT_TRUE(parseStartupArguments({"--mcp"}).rest.empty());
+    const auto channel = parseStartupArguments({"--mcp", "--channel", "hikarisub-ch-1"});
+    EXPECT_TRUE(channel.mcp);
+    EXPECT_EQ(channel.mcpChannel, "hikarisub-ch-1");
+    EXPECT_TRUE(channel.rest.empty());
 }
 
 TEST(StartupArguments, WindowFlagsLeaveTheFiles)

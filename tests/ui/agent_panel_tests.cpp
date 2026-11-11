@@ -192,7 +192,7 @@ class AgentPanelTest : public QObject {
             return std::make_unique<backends::ai::AiSidecarHost>(std::move(o), &application->apiHost()->api(),
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
-        ports.agents = [this](backends::ai::AgentBroker &broker) {
+        ports.agents = [this](backends::ai::AgentBroker &broker, application::ai::KeyStore &) {
             broker.add("claude", backends::ai::claudeAgent(QStandardPaths::findExecutable(QStringLiteral("claude")),
                                                          QDir::homePath(), at(QStringLiteral("ai/agents/claude"))));
         };
@@ -202,7 +202,8 @@ class AgentPanelTest : public QObject {
 private slots:
     void init()
     {
-        const bool chatModel = QTest::currentTestFunction() != QByteArrayLiteral("withoutAChatModelThePanelPointsToSettings");
+        const QByteArray test(QTest::currentTestFunction());
+        const bool chatModel = test != "withoutAChatModelThePanelPointsToSettings" && test != "withOnlyClaudeCodeThePanelRunsOnIt";
         QVERIFY(QDir(root.path()).mkpath(QString::fromLatin1(QTest::currentTestFunction())));
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
@@ -230,9 +231,12 @@ private slots:
                                                                  api::Caller{.id = "ai", .label = "AI", .reviewed = true});
         };
         ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
-        ports.agents = [](backends::ai::AgentBroker &) {};
-        const bool claude = QTest::currentTestFunction() == QByteArrayLiteral("claudeCodeIsAModelOnlyWhenItIsFound");
-        ports.agentOnPath = [claude](const QString &agent) { return claude && agent == QStringLiteral("claude"); };
+        ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
+        const bool found = QTest::currentTestFunction() == QByteArrayLiteral("agentsAreModelsOnlyWhenTheyAreFound");
+        const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
+        ports.agentOnPath = [found, onlyClaude](const QString &agent) {
+            return found || (onlyClaude && agent == QStringLiteral("claude"));
+        };
         if (QTest::currentTestFunction() == QByteArrayLiteral("theInstalledClaudeEditsIntoTheReview"))
             realClaude(ports);
 
@@ -266,18 +270,20 @@ private slots:
         application.reset();
     }
 
-    void claudeCodeIsAModelOnlyWhenItIsFound()
+    void agentsAreModelsOnlyWhenTheyAreFound()
     {
         openPanel();
         const QVariantList models = agent().models();
-        QCOMPARE(models.size(), 2);
-        QCOMPARE(models.front().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Claude Code"));
-        const QString claude = models.front().toMap().value(QStringLiteral("value")).toString();
-        QCOMPARE(claude, QStringLiteral("agent:claude\t"));
+        QCOMPARE(models.size(), 3);
+        QCOMPARE(models[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Claude Code"));
+        QCOMPARE(models[0].toMap().value(QStringLiteral("value")).toString(), QStringLiteral("agent:claude\t"));
+        QCOMPARE(models[1].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Codex"));
+        const QString codex = models[1].toMap().value(QStringLiteral("value")).toString();
+        QCOMPARE(codex, QStringLiteral("agent:codex\t"));
         agent().newThread();
-        agent().setModel(claude);
-        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
-        QCOMPARE(agent().thread().value(QStringLiteral("model")).toString(), claude);
+        agent().setModel(codex);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Codex"));
+        QCOMPARE(agent().thread().value(QStringLiteral("model")).toString(), codex);
     }
     void theInstalledClaudeEditsIntoTheReview()
     {
@@ -300,7 +306,7 @@ private slots:
         }
         shoot(QStringLiteral("agent-claude"));
     }
-    void claudeCodeIsNoModelWhenItIsMissing()
+    void agentsAreNoModelsWhenTheyAreMissing()
     {
         openPanel();
         QCOMPARE(agent().models().size(), 1);
@@ -435,6 +441,16 @@ private slots:
         shoot(QStringLiteral("agent-no-provider"));
         QVERIFY(click(QStringLiteral("agentOpenSettings")));
         QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
+    }
+
+    void withOnlyClaudeCodeThePanelRunsOnIt()
+    {
+        openPanel();
+        QVERIFY(agent().ready());
+        QVERIFY(!item(QStringLiteral("agentNoProvider")));
+        agent().newThread();
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\t"));
+        QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
     }
 
     void withAiOffThePanelAndItsCommandsAreGone()

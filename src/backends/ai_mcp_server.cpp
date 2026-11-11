@@ -15,6 +15,7 @@
 #include <QTcpSocket>
 #include <QTimer>
 
+#include <algorithm>
 #include <array>
 
 #ifdef _WIN32
@@ -191,7 +192,8 @@ struct McpServer::Local {
     QPointer<QLocalSocket> socket;
     QByteArray buffer;
     bool authorised = false;
-    std::string connection() const { return "local-" + std::to_string(id); }
+    std::string channel;
+    std::string connection() const { return channel.empty() ? "local-" + std::to_string(id) : "channel:" + channel; }
 };
 
 struct McpServer::Http {
@@ -213,12 +215,13 @@ McpServer::~McpServer()
     *m_alive = false;
     if (!m_host)
         return;
-    m_host->setMcpGate({});
+    if (m_channel.empty())
+        m_host->setMcpGate({});
     for (const auto &[id, client] : m_local)
         if (client->authorised)
             m_host->notify(kMcpClosed, api::Json::object({{"connection", client->connection()}}));
     if (m_httpServer)
-        m_host->notify(kMcpClosed, api::Json::object({{"connection", kHttpConnection}}));
+        m_host->notify(kMcpClosed, api::Json::object({{"connection", httpConnection()}}));
 }
 
 bool McpServer::listenLocal(QString *error)
@@ -234,6 +237,21 @@ bool McpServer::listenLocal(QString *error)
     }
     connect(m_localServer.get(), &QLocalServer::newConnection, this, &McpServer::acceptLocal);
     return true;
+}
+
+void McpServer::setChannel(std::string session)
+{
+    m_channel = std::move(session);
+}
+
+std::string McpServer::httpConnection() const
+{
+    return m_channel.empty() ? std::string(kHttpConnection) : "channel:" + m_channel;
+}
+
+bool McpServer::channelTaken() const
+{
+    return std::ranges::any_of(m_local, [](const auto &entry) { return entry.second->authorised; });
 }
 
 QString McpServer::socketName() const
@@ -265,7 +283,7 @@ void McpServer::closeHttp()
             client->socket->deleteLater();
     m_http.clear();
     if (m_host)
-        m_host->notify(kMcpClosed, api::Json::object({{"connection", kHttpConnection}}));
+        m_host->notify(kMcpClosed, api::Json::object({{"connection", httpConnection()}}));
 }
 
 quint16 McpServer::httpPort() const
@@ -283,7 +301,7 @@ void McpServer::setToken(QByteArray token)
         if (client->socket)
             client->socket->disconnectFromHost();
     if (m_host && m_httpServer)
-        m_host->notify(kMcpClosed, api::Json::object({{"connection", kHttpConnection}}));
+        m_host->notify(kMcpClosed, api::Json::object({{"connection", httpConnection()}}));
 }
 
 std::expected<api::Caller, api::Error> McpServer::callerFor(const api::Json &mcp, const std::string &operation) const
@@ -307,10 +325,11 @@ AiSidecarHost *McpServer::host()
 {
     AiSidecarHost *sidecar = m_sidecar ? m_sidecar() : nullptr;
     if (sidecar && sidecar != m_host) {
-        if (m_host)
+        if (m_host && m_channel.empty())
             m_host->setMcpGate({});
         m_host = sidecar;
-        sidecar->setMcpGate([this](const api::Json &mcp, const std::string &operation) { return callerFor(mcp, operation); });
+        if (m_channel.empty())
+            sidecar->setMcpGate([this](const api::Json &mcp, const std::string &operation) { return callerFor(mcp, operation); });
     }
     return sidecar;
 }
@@ -364,9 +383,10 @@ void McpServer::readLocal(Local &client)
         if (line.endsWith('\r'))
             line.chop(1);
         if (!client.authorised) {
-            if (!sameSecret(line, m_token))
+            if (!sameSecret(line, m_token) || (!m_channel.empty() && channelTaken()))
                 return client.socket->disconnectFromServer();
             client.authorised = true;
+            client.channel = m_channel;
             continue;
         }
         if (line.trimmed().isEmpty())
@@ -493,7 +513,7 @@ void McpServer::answerHttp(Http &client)
             headers[key] = value.toStdString();
     client.busy = true;
     const std::uint64_t id = client.id;
-    relay(kHttpConnection, std::move(request.body), std::move(headers),
+    relay(httpConnection(), std::move(request.body), std::move(headers),
           [this, id, alive = std::weak_ptr(m_alive)](std::optional<std::string> reply, int status) {
               const auto it = m_http.find(id);
               if (alive.expired() || it == m_http.end() || !it->second->socket)

@@ -99,7 +99,7 @@ export interface SessionModel {
 export interface SessionNewParams {
     sessionId: string;
     /** An external agent runs the thread instead of Hikari's loop; `model.model` is then the agent's model, if any. */
-    agent?: "claude";
+    agent?: "claude" | "codex";
     model: SessionModel;
     system?: string;
     history?: Message[];
@@ -237,6 +237,8 @@ export interface AgentStartParams {
     agent: string;
     args: string[];
     env: Record<string, string>;
+    /** The session an agent with a tools channel serves. */
+    session?: string;
 }
 
 export interface AgentProcessParams {

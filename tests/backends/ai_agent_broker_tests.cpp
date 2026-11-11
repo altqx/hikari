@@ -1,12 +1,16 @@
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/ai_signin.h"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QHostAddress>
+#include <QTcpSocket>
 #include <QTemporaryDir>
+#include <QUrl>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -59,6 +63,21 @@ TEST(ClaudeArguments, BypassExtraFoldersPluginsSettingsAndOutsideServersAreRefus
     EXPECT_FALSE(refusedClaudeArguments(strings({"--strict-mcp-config"})).isEmpty());
 }
 
+struct Keys final : hikari::application::ai::KeyStore {
+    void read(const std::string &, std::function<void(hikari::application::ai::KeyResult)> done) override
+    {
+        done(hikari::application::ai::KeyError::NotFound);
+    }
+    void write(const std::string &, const std::string &, std::function<void(std::optional<hikari::application::ai::KeyError>)> done) override
+    {
+        done(std::nullopt);
+    }
+    void remove(const std::string &, std::function<void(std::optional<hikari::application::ai::KeyError>)> done) override
+    {
+        done(std::nullopt);
+    }
+};
+
 void writeFile(const QString &path, const QByteArray &content, bool executable)
 {
     QDir().mkpath(QFileInfo(path).absolutePath());
@@ -99,7 +118,9 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     const QString native = dir.filePath(QStringLiteral("node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex"));
 #endif
     writeFile(native, "ELF", true);
-    const auto spec = codexAgent(launcher, dir.filePath(QStringLiteral("home")), dir.filePath(QStringLiteral("work")));
+    Keys keys;
+    const auto lease = std::make_shared<CodexLease>(keys, dir.filePath(QStringLiteral("home")));
+    const auto spec = codexAgent(launcher, dir.filePath(QStringLiteral("home")), dir.filePath(QStringLiteral("work")), lease);
     ASSERT_TRUE(spec);
     EXPECT_EQ(spec->program, QFileInfo(native).canonicalFilePath());
     EXPECT_EQ(spec->arguments, QStringList{QStringLiteral("app-server")});
@@ -109,10 +130,17 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     EXPECT_TRUE(spec->guard);
     EXPECT_TRUE(spec->refuse({}).isEmpty());
     EXPECT_FALSE(spec->refuse(QStringList{QStringLiteral("--dangerously-bypass-approvals-and-sandbox")}).isEmpty());
+    EXPECT_EQ(spec->channelArguments(QStringLiteral("http://127.0.0.1:9/mcp")),
+              strings({"-c", R"(mcp_servers.hikari.url="http://127.0.0.1:9/mcp")", "-c",
+                       R"(mcp_servers.hikari.bearer_token_env_var="HIKARI_MCP_TOKEN")", "-c",
+                       R"(mcp_servers.hikari.default_tools_approval_mode="approve")"}));
+    std::optional<QString> refused;
+    spec->before([&](QString error) { refused = std::move(error); });
+    EXPECT_TRUE(refused && !refused->isEmpty());
 
-    EXPECT_EQ(codexAgent(native, dir.path(), dir.path())->program, QFileInfo(native).canonicalFilePath());
+    EXPECT_EQ(codexAgent(native, dir.path(), dir.path(), lease)->program, QFileInfo(native).canonicalFilePath());
     QFile::remove(native);
-    EXPECT_FALSE(codexAgent(launcher, dir.path(), dir.path()));
+    EXPECT_FALSE(codexAgent(launcher, dir.path(), dir.path(), lease));
 }
 
 class AgentBrokerTest : public ::testing::Test {
@@ -226,7 +254,8 @@ TEST_F(AgentBrokerTest, QtPicksTheProgramAndOnlyListedVariablesComeFromTheSideca
     ASSERT_TRUE(waitFor([&] { return lines(process).size() == 2; }));
     EXPECT_EQ(lines(process)[0], Json::object({{"started", Json::object({{"args", Json::array({"app-server", "--x"})},
                                                                          {"entry", "sdk-ts"},
-                                                                         {"secret", ""}})}}));
+                                                                         {"secret", ""},
+                                                                         {"mcpToken", ""}})}}));
     EXPECT_EQ(lines(process)[1], Json::object({{"hello", 1}}));
     ASSERT_TRUE(*call(kAgentCloseInput, Json::object({{"process", process}})));
     ASSERT_TRUE(waitFor([&] { return exitCode(process).has_value(); }));
@@ -311,6 +340,71 @@ TEST_F(AgentBrokerTest, QtDeclinesCodexApprovalsAndPassesOnlyAnswersToForwardedR
     const std::vector<Json> out = lines(process);
     ASSERT_EQ(out.size(), 7u);
     EXPECT_EQ(out[5], Json::object({{"id", "d"}, {"result", Json::object({{"ok", true}})}}));
+}
+
+TEST_F(AgentBrokerTest, AChannelAgentGetsItsOwnToolsChannelForTheSessionUntilItExits)
+{
+    AgentSpec s = spec();
+    s.channelArguments = [](const QString &url) { return QStringList{QStringLiteral("--tools-url=") + url}; };
+    broker.add("fake", s);
+    const auto refused = call(kAgentStart, Json::object({{"process", 1}, {"agent", "fake"}}));
+    ASSERT_FALSE(*refused);
+    EXPECT_EQ(refused->error().first, rpc::kInvalidParams);
+
+    const auto started = call(kAgentStart, Json::object({{"process", 2}, {"agent", "fake"}, {"session", "t1"},
+                                                         {"args", Json::array({"--x"})}}));
+    ASSERT_TRUE(started && *started);
+    ASSERT_TRUE(waitFor([&] { return !lines(2).empty(); }));
+    const Json report = *lines(2)[0].find("started");
+    const std::string url = report.find("args")->asArray()[1].asString();
+    ASSERT_TRUE(url.starts_with("--tools-url=http://127.0.0.1:")) << url;
+    EXPECT_EQ(report.find("args")->asArray()[2], Json("--x"));
+    EXPECT_EQ(report.find("mcpToken")->asString().size(), 64u);
+    const QUrl tools(QString::fromStdString(url.substr(std::string_view("--tools-url=").size())));
+    EXPECT_EQ(tools.path(), QStringLiteral("/mcp"));
+
+    const auto opens = [&] {
+        QTcpSocket socket;
+        socket.connectToHost(QHostAddress::LocalHost, quint16(tools.port()));
+        return socket.waitForConnected(2000);
+    };
+    EXPECT_TRUE(opens());
+    ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
+    EXPECT_FALSE(opens());
+}
+
+TEST_F(AgentBrokerTest, AnAgentStartsOnlyAfterItsBeforeHookAndItsAfterHookRunsOnceItEnds)
+{
+    std::function<void(QString)> go;
+    int afters = 0;
+    AgentSpec s = spec();
+    s.before = [&](std::function<void(QString)> g) { go = std::move(g); };
+    s.after = [&] { ++afters; };
+    broker.add("fake", s);
+
+    std::optional<std::expected<Json, std::pair<int, std::string>>> first;
+    broker.call(kAgentStart, Json::object({{"process", 1}, {"agent", "fake"}}), [&](auto r) { first = std::move(r); });
+    EXPECT_FALSE(first);
+    std::exchange(go, {})(QStringLiteral("Sign in first"));
+    ASSERT_TRUE(first && !*first);
+    EXPECT_EQ(first->error().second, "Sign in first");
+    EXPECT_EQ(broker.running(), 0u);
+    EXPECT_EQ(afters, 0);
+
+    std::optional<std::expected<Json, std::pair<int, std::string>>> second;
+    broker.call(kAgentStart, Json::object({{"process", 2}, {"agent", "fake"}}), [&](auto r) { second = std::move(r); });
+    ASSERT_TRUE(*call(kAgentKill, Json::object({{"process", 2}})));
+    std::exchange(go, {})(QString());
+    ASSERT_TRUE(second && !*second);
+    EXPECT_EQ(afters, 1);
+
+    broker.call(kAgentStart, Json::object({{"process", 3}, {"agent", "fake"}}), [](auto) {});
+    std::exchange(go, {})(QString());
+    ASSERT_TRUE(waitFor([&] { return !lines(3).empty(); }));
+    EXPECT_EQ(afters, 1);
+    ASSERT_TRUE(*call(kAgentCloseInput, Json::object({{"process", 3}})));
+    ASSERT_TRUE(waitFor([&] { return exitCode(3).has_value(); }));
+    EXPECT_EQ(afters, 2);
 }
 
 #ifndef _WIN32

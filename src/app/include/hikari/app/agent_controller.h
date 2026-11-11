@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/ai_providers.h"
 #include "hikari/application/workspace.h"
 
 #include <QAbstractListModel>
@@ -153,6 +154,9 @@ signals:
 
 private:
     void apply();
+    /// The first installed agent, which a thread falls back to when no provider has a Chat model.
+    std::optional<application::ai::ModelRef> foundAgent() const;
+    void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
     void refreshThread();
     std::vector<std::string> safeFolders() const;

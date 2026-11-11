@@ -9,6 +9,8 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QTcpServer>
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
@@ -457,4 +459,86 @@ TEST_F(AiSignInTest, SigningOutDeletesOnlyHikariSubsSession)
     EXPECT_EQ(keys.keys.at("openrouter"), "sk-or-v1-kept");
     signIn.signOutCodex([&](std::optional<app::KeyError> e) { result = e; });
     EXPECT_EQ(*result, std::nullopt);
+}
+
+class CodexLeaseTest : public AiSignInTest {
+protected:
+    CodexSession signedIn(const char *refresh, const char *account = "acct-1")
+    {
+        return {.access = test::jwt({{"exp", 2'000'000}}).toStdString(), .refresh = refresh,
+                .idToken = test::jwt({{"email", "owner@example.com"}}).toStdString(), .accountId = account,
+                .email = "owner@example.com", .expiresAt = 2'000'000'000};
+    }
+
+    QString auth() const { return dir.filePath(QStringLiteral("auth.json")); }
+
+    QString acquire()
+    {
+        std::optional<QString> error;
+        lease.acquire([&](QString e) { error = std::move(e); });
+        EXPECT_TRUE(error);
+        return error.value_or(QStringLiteral("no answer"));
+    }
+
+    CodexLease lease{keys, dir.path()};
+};
+
+TEST_F(CodexLeaseTest, CodexGetsTheKeychainSessionAndItsRefreshComesBackAfterTheLastProcess)
+{
+    keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
+    ASSERT_EQ(acquire(), QString());
+    EXPECT_EQ(sessionFromCodexAuth(auth())->refresh, "first");
+    EXPECT_EQ(QFileInfo(auth()).permissions() & ~(QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::WriteUser),
+              QFileDevice::Permissions());
+    const QJsonObject written = [&] {
+        QFile file(auth());
+        EXPECT_TRUE(file.open(QIODevice::ReadOnly));
+        return QJsonDocument::fromJson(file.readAll()).object();
+    }();
+    EXPECT_EQ(written.value(QStringLiteral("auth_mode")), QJsonValue(QStringLiteral("chatgpt")));
+    EXPECT_TRUE(written.value(QStringLiteral("OPENAI_API_KEY")).isNull());
+
+    keys.keys.clear();
+    ASSERT_EQ(acquire(), QString());
+    keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
+    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("rotated")));
+    lease.release();
+    EXPECT_TRUE(QFileInfo::exists(auth()));
+    EXPECT_EQ(sessionFromJson(keys.keys.at(kCodexSecret))->refresh, "first");
+    lease.release();
+    EXPECT_EQ(sessionFromJson(keys.keys.at(kCodexSecret))->refresh, "rotated");
+    EXPECT_FALSE(QFileInfo::exists(auth()));
+}
+
+TEST_F(CodexLeaseTest, WithoutASessionCodexDoesntStartAndALeftoverFileGoes)
+{
+    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("left")));
+    EXPECT_FALSE(acquire().isEmpty());
+    EXPECT_FALSE(QFileInfo::exists(auth()));
+    lease.release();
+    EXPECT_TRUE(keys.keys.empty());
+}
+
+TEST_F(CodexLeaseTest, AFileLeftForTheSameAccountIsNewerThanTheKeychainAndAnotherAccountsIsReplaced)
+{
+    keys.keys[kCodexSecret] = sessionJson(signedIn("stored"));
+    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("left")));
+    ASSERT_EQ(acquire(), QString());
+    EXPECT_EQ(sessionFromCodexAuth(auth())->refresh, "left");
+    lease.release();
+    EXPECT_EQ(sessionFromJson(keys.keys.at(kCodexSecret))->refresh, "left");
+
+    ASSERT_TRUE(writeCodexAuth(auth(), signedIn("other", "acct-2")));
+    ASSERT_EQ(acquire(), QString());
+    EXPECT_EQ(sessionFromCodexAuth(auth())->refresh, "left");
+}
+
+TEST_F(CodexLeaseTest, SigningOutWhileCodexRunsKeepsItSignedOut)
+{
+    keys.keys[kCodexSecret] = sessionJson(signedIn("first"));
+    ASSERT_EQ(acquire(), QString());
+    keys.keys.clear();
+    lease.release();
+    EXPECT_TRUE(keys.keys.empty());
+    EXPECT_FALSE(QFileInfo::exists(auth()));
 }
