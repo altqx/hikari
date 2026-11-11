@@ -7928,6 +7928,10 @@ Failed to copy %2 fonts.</source>
         <translation>தானியங்கு ஸ்கிரிப்டுகளில் தாய் மொழி ஆதரவு</translation>
     </message>
     <message>
+        <source>No licence stated</source>
+        <translation>உரிமம் குறிப்பிடப்படவில்லை</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>மொழிபெயர்ப்பு</translation>
     </message>

@@ -1,11 +1,12 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { kCompileFlags, kRoot } from "../tools/bundle";
+import { removeTempDir } from "./temp_dir";
 
 const dir = mkdtempSync(join(tmpdir(), "hikari-ai-compile-"));
-afterAll(() => rmSync(dir, { recursive: true, force: true }));
+afterAll(() => removeTempDir(dir));
 
 const probe = join(dir, "probe.ts");
 writeFileSync(probe, `process.stdout.write(JSON.stringify({

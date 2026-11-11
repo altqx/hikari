@@ -7876,6 +7876,10 @@ Failed to copy %2 fonts.</source>
         <translation>자동화 스크립트의 태국어 지원</translation>
     </message>
     <message>
+        <source>No licence stated</source>
+        <translation>라이선스가 명시되지 않음</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>번역</translation>
     </message>

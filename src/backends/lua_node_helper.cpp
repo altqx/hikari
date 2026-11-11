@@ -148,9 +148,13 @@ LuaNodeHelper::LuaNodeHelper(Options options) : m(std::make_unique<Worker>(std::
         qCWarning(lcNodesSandbox) << "Lua nodes run without a complete sandbox:" << m->launcher.coverage().missing;
     m->limit.setSingleShot(true);
     QObject::connect(&m->limit, &QTimer::timeout, m.get(), [w = m.get()] {
+        if (!w->host)
+            return;
+        w->host->readPending();
+        if (!w->job)
+            return;
         w->timedOut = true;
-        if (w->host)
-            w->host->stop();
+        w->host->stop();
     });
     m->thread.setObjectName(QStringLiteral("hikari.lua.nodes"));
     m->moveToThread(&m->thread);
