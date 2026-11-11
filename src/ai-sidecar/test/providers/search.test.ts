@@ -127,6 +127,7 @@ describe("citations", () => {
             { index: 2, url: "https://example.org/b", title: "https://example.org/b", quote: "B text", start: 0, end: 6 },
         ]);
         expect(run.updates.filter((u) => u.kind === "citation")).toHaveLength(2);
+        expect(run.finished!.searches).toEqual([{ kind: "search", query: "aimer", urls: ["https://example.org/a"] }]);
 
         const state = run.finished!.providerState!;
         expect(state.wire).toBe("anthropic-messages");
@@ -150,6 +151,7 @@ describe("citations", () => {
         const run = await h.stream("anthropic-messages", asking(true));
         expect(run.finished!.providerState).toBeUndefined();
         expect(run.finished!.citations).toBeUndefined();
+        expect(run.finished!.searches).toBeUndefined();
     });
 
     test("OpenRouter cites url_citation annotations on the delta and on the message", async () => {
@@ -182,6 +184,24 @@ describe("citations", () => {
         expect(run.finished!.citations).toEqual([{ index: 1, url: "https://example.org/a", title: "A", start: 0, end: 6 }]);
     });
 
+    test("OpenAI's web_search_call items become the turn's searches and page reads", async () => {
+        const call = (action: object) => sse("response.output_item.done", { type: "response.output_item.done", output_index: 0, item: { type: "web_search_call", status: "completed", action } });
+        h.mock.replies.push({
+            chunks: [
+                call({ type: "search", query: "aimer", sources: [{ type: "url", url: "https://example.org/a" }] }),
+                call({ type: "open_page", url: "https://example.org/b" }),
+                call({ type: "find_in_page", url: "https://example.org/b", pattern: "x" }),
+                sse("response.completed", { type: "response.completed", response: { status: "completed", usage: {} } }),
+            ],
+        });
+        const run = await h.stream("responses", asking(true));
+        expect(run.finished!.searches).toEqual([
+            { kind: "search", query: "aimer", urls: ["https://example.org/a"] },
+            { kind: "read", url: "https://example.org/b" },
+        ]);
+        expect((h.mock.received[0]!.json() as any).include).toEqual(["web_search_call.action.sources"]);
+    });
+
     test("Gemini cites the grounded sources, passes Google's suggestions on and keeps server tool parts", async () => {
         const toolCall = { toolCall: { id: "s1", toolType: "GOOGLE_SEARCH_WEB", args: { queries: ["aimer"] } } };
         const toolResponse = { toolResponse: { id: "s1", toolType: "GOOGLE_SEARCH_WEB", response: {} } };
@@ -209,6 +229,7 @@ describe("citations", () => {
             { index: 2, url: "https://example.org/a", title: "a.org" },
         ]);
         expect(run.finished!.searchSuggestions).toBe("<div>chips</div>");
+        expect(run.finished!.searches).toEqual([{ kind: "search", query: "aimer", urls: ["https://example.org/a", "https://example.org/b"] }]);
         const state = run.finished!.providerState!;
         expect(state.wire).toBe("gemini");
         const parts = JSON.parse(state.json);

@@ -32,7 +32,7 @@ qt_target_qml_sources(hikari_ui QML_FILES NodeGraphCanvas.qml NodePort.qml NodeA
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
 target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
-target_sources(hikari_ui PRIVATE search_suggestions_view.cpp search_suggestions_view.h)
+target_sources(hikari_ui PRIVATE search_suggestions_view.cpp search_suggestions_view.h cited_answer.cpp cited_answer.h)
 qt_add_shaders(hikari_ui "hikari_ui_shaders"
     BATCHABLE
     PREFIX "/hikari/ui"

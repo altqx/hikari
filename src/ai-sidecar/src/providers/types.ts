@@ -139,6 +139,14 @@ export interface Citation {
     end?: number;
 }
 
+/** One search or page read the provider ran itself; `urls` are the pages a search found, when it says. */
+export interface WebAction {
+    kind: "search" | "read";
+    query?: string;
+    url?: string;
+    urls?: string[];
+}
+
 export interface Finished {
     reason: StopReason;
     text: string;
@@ -147,6 +155,8 @@ export interface Finished {
     citations?: Citation[];
     /** Google's search suggestions as the HTML Gemini returned; its terms require showing them with the answer. */
     searchSuggestions?: string;
+    /** The provider's own searches and page reads, in order. */
+    searches?: WebAction[];
     /** Goes back in the assistant message's parts when the conversation continues. */
     providerState?: ProviderState;
 }

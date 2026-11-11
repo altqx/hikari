@@ -164,6 +164,26 @@
         <translation>첨부</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>웹 검색</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>이 공급자는 자체적으로 웹을 검색할 수 없습니다. 설정 › AI › 웹 검색에서 검색 서비스를 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>웹 검색: 이 스레드에서 켜짐</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>웹 검색: 이 스레드에서 꺼짐</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>스레드 중간에 바꾸면 Anthropic에서 캐시 미스가 한 번 발생합니다.</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>멈춤</translation>
     </message>
@@ -238,6 +258,36 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>체크포인트 복원</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>출처</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>%n개 더 보기</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>브라우저에서 열기</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>%1 읽음</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>Google로 검색함</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>웹을 검색함</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>%1(으)로 검색함</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +398,14 @@
         <translation>설정 › AI에서 채팅 모델을 고르세요</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>%1에 남은 검색 횟수가 없습니다</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1이(가) HikariSub의 키를 거부했습니다</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>AI 구성 요소가 준비되지 않았습니다</translation>
     </message>
@@ -366,6 +424,10 @@
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
         <translation>HikariSub가 아직 AI 구성 요소를 받는 중이거나 구성 요소를 시작하지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>검색 서비스가 %1(으)로 응답했습니다. 웹 검색 없이 답변을 계속합니다.</translation>
     </message>
     <message>
         <source>Raise to %1 and continue</source>

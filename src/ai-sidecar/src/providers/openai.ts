@@ -213,8 +213,10 @@ function responsesClient(options: ClientOptions): Client {
                 type: "function", name: t.name, description: t.description,
                 parameters: schemaObject(t.parametersJson), strict: false,
             }));
-            if (nativeSearch(options.config, request))
+            if (nativeSearch(options.config, request)) {
                 tools.push({ type: "web_search" });
+                body.include = ["web_search_call.action.sources"];
+            }
             if (tools.length)
                 body.tools = tools;
             let hasCalls = false;
@@ -242,6 +244,19 @@ function responsesClient(options: ClientOptions): Client {
                         if (item.type === "function_call") {
                             hasCalls = true;
                             out.startCall(Number(event.output_index ?? 0), String(item.call_id ?? ""), String(item.name ?? ""));
+                        }
+                        break;
+                    }
+                    case "response.output_item.done": {
+                        const item = (event.item ?? {}) as Json;
+                        const action = (item.action ?? {}) as Json;
+                        if (item.type !== "web_search_call")
+                            break;
+                        if (action.type === "search") {
+                            out.addSearch({ kind: "search", ...(typeof action.query === "string" ? { query: action.query } : {}) });
+                            out.addFound(((action.sources as Json[] | undefined) ?? []).map((r) => String(r.url ?? "")));
+                        } else if (action.type === "open_page" && typeof action.url === "string") {
+                            out.addSearch({ kind: "read", url: action.url });
                         }
                         break;
                     }

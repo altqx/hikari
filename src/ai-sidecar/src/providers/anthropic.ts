@@ -7,7 +7,7 @@ import { kKeyPlaceholder } from "./relay";
 import { ProviderError, wrapsProviderError } from "./errors";
 import { sdk } from "./sdks";
 import { nativeSearch, providerState } from "./search";
-import type { ErrorKind, ProviderConfig, Request, StopReason, ToolDefinition, Usage } from "./types";
+import type { ErrorKind, ProviderConfig, Request, StopReason, ToolDefinition, Usage, WebAction } from "./types";
 
 type Json = Record<string, unknown>;
 
@@ -28,6 +28,13 @@ const kErrorKinds: Record<string, ErrorKind> = {
     permission_error: "unauthorized",
     invalid_request_error: "rejected",
 };
+
+function webAction(block: Json): WebAction {
+    const input = (block.input ?? {}) as Json;
+    return block.name === "web_fetch"
+        ? { kind: "read", ...(typeof input.url === "string" ? { url: input.url } : {}) }
+        : { kind: "search", ...(typeof input.query === "string" ? { query: input.query } : {}) };
+}
 
 /**
  * Whether search_tools can load found tools as `tool_reference` blocks, which keeps the cache: Anthropic's own API on
@@ -172,6 +179,8 @@ export function anthropicClient({ config, fetch }: ClientOptions): Client {
                         blocks[index] = block;
                         if (block.type === "server_tool_use")
                             searched = true;
+                        else if (block.type === "web_search_tool_result" && Array.isArray(block.content))
+                            out.addFound((block.content as Json[]).map((r) => String(r.url ?? "")));
                         if (block.type === "tool_use")
                             out.startCall(index, String(block.id ?? ""), String(block.name ?? ""));
                         else if (block.type === "text") {
@@ -205,6 +214,8 @@ export function anthropicClient({ config, fetch }: ClientOptions): Client {
                         const input = inputs.get(index);
                         if (input !== undefined && blocks[index])
                             blocks[index].input = argumentsObject(input);
+                        if (blocks[index]?.type === "server_tool_use")
+                            out.addSearch(webAction(blocks[index]));
                         placeCitations(index);
                         break;
                     }

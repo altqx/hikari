@@ -91,6 +91,8 @@ struct AgentThread {
     /// The soft cap in US dollars; 0 means none.
     double cap = 0;
     std::set<std::string> allowed;
+    /// The globe; the thread searches only while Settings › AI lets AI search the web too.
+    bool webSearch = true;
 
     api::Json toJson() const;
     static std::optional<AgentThread> fromJson(const api::Json &json);
@@ -161,6 +163,8 @@ public:
     void remove(const std::string &id);
     void setMode(const std::string &id, AgentMode mode);
     void setModel(const std::string &id, application::ai::ModelRef model);
+    void setWebSearch(const std::string &id, bool on);
+    bool searches(const AgentThread &thread) const;
     /// Tabs the user attached with @, besides the editing target.
     void setAttached(const std::string &id, std::vector<application::DocumentId> documents);
     /// The model a thread's next turn runs on: its own, else the chat model.
@@ -207,6 +211,8 @@ private:
                    AiSidecarHost::Admit admit);
     api::Caller callerOf(const AgentThread &thread) const;
     void addUsage(AgentThread &thread, const api::Json &usage);
+    void addSources(AgentThread &thread, Run *run, const api::Json &update);
+    void searchFailed(AgentThread &thread, Run *run, const api::Json &update);
     void stopFor(AgentThread &thread, const std::string &notice);
     void closeAsks(const std::string &thread, const std::string &why);
     void push(AgentThread &thread, api::Json item);

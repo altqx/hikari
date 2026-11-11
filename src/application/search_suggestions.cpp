@@ -2,7 +2,8 @@
 
 #include <charconv>
 #include <cstdint>
-#include <regex>
+#include <cctype>
+#include <optional>
 
 namespace hikari::application::ai {
 
@@ -71,61 +72,143 @@ std::string decoded(std::string_view text)
     return out;
 }
 
-std::string plainText(const std::string &inner)
+bool isSpace(char c)
 {
-    static const std::regex kTag("<[^>]*>");
-    static const std::regex kSpace("\\s+");
-    std::string text = std::regex_replace(decoded(std::regex_replace(inner, kTag, "")), kSpace, " ");
-    const auto first = text.find_first_not_of(' ');
-    if (first == std::string::npos)
-        return {};
-    return text.substr(first, text.find_last_not_of(' ') - first + 1);
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f';
 }
 
-std::string attribute(const std::string &tag, const char *name)
+std::string lowered(std::string_view text)
 {
-    const std::regex pattern(std::string("\\b") + name + "\\s*=\\s*(\"([^\"]*)\"|'([^']*)')", std::regex::icase);
-    std::smatch match;
-    if (!std::regex_search(tag, match, pattern))
-        return {};
-    return match[2].matched ? match[2].str() : match[3].str();
+    std::string out(text);
+    for (char &c : out)
+        if (c >= 'A' && c <= 'Z')
+            c = static_cast<char>(c - 'A' + 'a');
+    return out;
 }
 
-bool isChip(const std::string &tag)
+std::string plainText(std::string_view inner)
 {
-    static const std::regex kChipClass("(^|\\s)chip(\\s|$)");
-    return std::regex_search(attribute(tag, "class"), kChipClass);
+    std::string stripped;
+    for (std::size_t i = 0; i < inner.size(); ++i) {
+        if (inner[i] != '<') {
+            stripped += inner[i];
+            continue;
+        }
+        const std::size_t close = inner.find('>', i);
+        if (close == std::string_view::npos)
+            break;
+        i = close;
+    }
+    std::string text;
+    for (const char c : decoded(stripped)) {
+        if (!isSpace(c))
+            text += c;
+        else if (!text.empty() && text.back() != ' ')
+            text += ' ';
+    }
+    if (!text.empty() && text.back() == ' ')
+        text.pop_back();
+    return text;
 }
 
-std::string logo(const std::string &html, const char *cls)
+std::string attribute(std::string_view tag, std::string_view name)
 {
-    const std::regex pattern(std::string("<svg\\b[^>]*\\bclass\\s*=\\s*[\"']") + cls + "[\"'][^>]*>[\\s\\S]*?</svg>",
-                             std::regex::icase);
-    std::smatch match;
-    return std::regex_search(html, match, pattern) ? match.str() : std::string();
+    const std::string lower = lowered(tag);
+    for (std::size_t at = lower.find(name); at != std::string::npos; at = lower.find(name, at + 1)) {
+        const bool starts = at == 0 || !(std::isalnum(static_cast<unsigned char>(lower[at - 1])) || lower[at - 1] == '-');
+        std::size_t i = at + name.size();
+        while (i < tag.size() && isSpace(tag[i]))
+            ++i;
+        if (!starts || i >= tag.size() || tag[i] != '=')
+            continue;
+        ++i;
+        while (i < tag.size() && isSpace(tag[i]))
+            ++i;
+        if (i >= tag.size() || (tag[i] != '"' && tag[i] != '\''))
+            continue;
+        const std::size_t close = tag.find(tag[i], i + 1);
+        if (close == std::string_view::npos)
+            return {};
+        return std::string(tag.substr(i + 1, close - i - 1));
+    }
+    return {};
+}
+
+bool hasClass(std::string_view tag, std::string_view cls)
+{
+    const std::string classes = attribute(tag, "class");
+    std::size_t i = 0;
+    while (i < classes.size()) {
+        while (i < classes.size() && isSpace(classes[i]))
+            ++i;
+        std::size_t j = i;
+        while (j < classes.size() && !isSpace(classes[j]))
+            ++j;
+        if (std::string_view(classes).substr(i, j - i) == cls)
+            return true;
+        i = j;
+    }
+    return false;
+}
+
+struct Element {
+    std::string_view tag;
+    std::string_view inner;
+    std::size_t end = 0;
+};
+
+std::optional<Element> nextElement(std::string_view html, const std::string &lower, std::string_view name, std::size_t from)
+{
+    const std::string open = "<" + std::string(name);
+    const std::string close = "</" + std::string(name);
+    for (std::size_t at = lower.find(open, from); at != std::string::npos; at = lower.find(open, at + 1)) {
+        const std::size_t after = at + open.size();
+        if (after >= lower.size() || !(isSpace(lower[after]) || lower[after] == '>'))
+            continue;
+        const std::size_t tagEnd = lower.find('>', after);
+        if (tagEnd == std::string::npos)
+            return std::nullopt;
+        for (std::size_t c = lower.find(close, tagEnd); c != std::string::npos; c = lower.find(close, c + 1)) {
+            std::size_t i = c + close.size();
+            while (i < lower.size() && isSpace(lower[i]))
+                ++i;
+            if (i < lower.size() && lower[i] == '>')
+                return Element{html.substr(at, tagEnd + 1 - at), html.substr(tagEnd + 1, c - tagEnd - 1), i + 1};
+        }
+        return std::nullopt;
+    }
+    return std::nullopt;
+}
+
+std::string logo(std::string_view html, const std::string &lower, std::string_view cls)
+{
+    for (auto svg = nextElement(html, lower, "svg", 0); svg; svg = nextElement(html, lower, "svg", svg->end))
+        if (attribute(svg->tag, "class") == cls) {
+            const std::size_t at = static_cast<std::size_t>(svg->tag.data() - html.data());
+            return std::string(html.substr(at, svg->end - at));
+        }
+    return {};
 }
 
 }
 
 std::optional<SearchSuggestions> parseSearchSuggestions(std::string_view html)
 {
-    const std::string source(html);
-    static const std::regex kAnchor("(<a\\b[^>]*>)([\\s\\S]*?)</a\\s*>", std::regex::icase);
+    const std::string lower = lowered(html);
     SearchSuggestions parts;
-    for (auto it = std::sregex_iterator(source.begin(), source.end(), kAnchor);
-         it != std::sregex_iterator() && parts.chips.size() < kMaxSearchSuggestions; ++it) {
-        const std::string tag = (*it)[1].str();
-        if (!isChip(tag))
+    for (auto a = nextElement(html, lower, "a", 0); a && parts.chips.size() < kMaxSearchSuggestions;
+         a = nextElement(html, lower, "a", a->end)) {
+        if (!hasClass(a->tag, "chip"))
             continue;
-        std::string url = decoded(attribute(tag, "href"));
-        std::string text = plainText((*it)[2].str());
+        std::string url = decoded(attribute(a->tag, "href"));
+        std::string text = plainText(a->inner);
         if (url.starts_with("https://") && !text.empty())
             parts.chips.push_back({std::move(text), std::move(url)});
     }
     if (parts.chips.empty())
         return std::nullopt;
-    parts.lightLogo = logo(source, "logo-light");
-    parts.darkLogo = logo(source, "logo-dark");
+    parts.lightLogo = logo(html, lower, "logo-light");
+    parts.darkLogo = logo(html, lower, "logo-dark");
     return parts;
 }
 

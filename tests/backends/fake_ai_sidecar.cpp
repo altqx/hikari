@@ -327,6 +327,9 @@ int main(int argc, char **argv)
             if (!turn.say.empty())
                 sessionUpdate(session, Json::object({{"sessionUpdate", "agent_message_chunk"},
                                                      {"content", Json::object({{"type", "text"}, {"text", turn.say}})}}));
+            if (const Json *updates = script ? script->find("updates") : nullptr; updates && updates->isArray())
+                for (const Json &update : updates->asArray())
+                    sessionUpdate(session, update);
             turns[session] = std::move(turn);
             advance(session);
         } else if (name == "_hikari/session.steer") {

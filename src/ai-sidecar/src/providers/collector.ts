@@ -1,4 +1,4 @@
-import type { Citation, Finished, ProviderState, StopReason, ToolCall, Update, Usage, Wire } from "./types";
+import type { Citation, Finished, ProviderState, StopReason, ToolCall, Update, Usage, WebAction, Wire } from "./types";
 
 /**
  * Where a provider says a citation's text is, in its own units, from `base` (UTF-16, into the collected text). The
@@ -45,6 +45,7 @@ export class Collector {
     private readonly citations = new Map<string, Citation>();
     private readonly placements = new Map<string, Placement>();
     private searchSuggestions: string | undefined;
+    private readonly searches: WebAction[] = [];
     private providerState: ProviderState | undefined;
 
     constructor(private readonly emit: (update: Update) => void) {}
@@ -122,6 +123,20 @@ export class Collector {
             this.searchSuggestions = html;
     }
 
+    addSearch(action: WebAction): void {
+        if (!action.query && !action.url && !action.urls?.length)
+            return;
+        if (!this.searches.some((a) => a.kind === action.kind && a.query === action.query && a.url === action.url))
+            this.searches.push(action);
+    }
+
+    /** The pages the last search found, for providers that send them after the query. */
+    addFound(urls: string[]): void {
+        const last = this.searches.findLast((a) => a.kind === "search");
+        if (last && urls.length)
+            last.urls = [...(last.urls ?? []), ...urls.filter((u) => u && !last.urls?.includes(u))];
+    }
+
     keepProviderState(wire: Wire, parts: unknown[]): void {
         this.providerState = { type: "providerState", wire, json: JSON.stringify(parts) };
     }
@@ -133,6 +148,7 @@ export class Collector {
             reason, text: this.text, toolCalls, usage: this.usage,
             ...(this.citations.size ? { citations: [...this.citations.values()].map((c) => this.placed(c)) } : {}),
             ...(this.searchSuggestions ? { searchSuggestions: this.searchSuggestions } : {}),
+            ...(this.searches.length ? { searches: this.searches } : {}),
             ...(this.providerState ? { providerState: this.providerState } : {}),
         };
     }

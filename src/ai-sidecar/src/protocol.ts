@@ -1,5 +1,6 @@
-import type { Message, Part, Usage } from "./providers/types";
+import type { Citation, Message, Part, SearchService, Usage, WebAction } from "./providers/types";
 import type { Reference } from "./tools/catalogue";
+import type { SearchFailure } from "./tools/toolset";
 
 /** The link's major version; Qt refuses a sidecar whose major differs. */
 export const kProtocolVersion = 1;
@@ -105,6 +106,8 @@ export interface SessionNewParams {
     cacheKey?: string;
     caching?: boolean;
     maxOutputTokens?: number;
+    /** Lets the session search the web, with the provider's own search or the user's service. */
+    webSearch?: boolean;
 }
 
 export interface SessionPromptParams {
@@ -113,6 +116,8 @@ export interface SessionPromptParams {
     /** Switches the session's model from this turn on. */
     model?: SessionModel;
     caching?: boolean;
+    /** Switches web search for the session from this turn on. */
+    webSearch?: boolean;
 }
 
 /** ACP's stop reasons. */
@@ -150,7 +155,11 @@ export type SessionUpdate =
         content: { type: "content"; content: { type: "text"; text: string } }[] }
     | { sessionUpdate: "plan"; entries: { content: string; priority: "medium"; status: PlanStatus }[] }
     | { sessionUpdate: "usage"; usage: Usage }
-    | { sessionUpdate: "history"; message: Message };
+    | { sessionUpdate: "history"; message: Message }
+    /** After a completion that cited, searched or sent search suggestions; `textLength` is its text's in UTF-16. */
+    | { sessionUpdate: "sources"; textLength: number; citations?: Citation[]; searchSuggestions?: string;
+        searches?: WebAction[] }
+    | { sessionUpdate: "search_failed"; service: SearchService; reason: SearchFailure["reason"]; httpStatus: number };
 
 export interface SessionUpdateParams {
     sessionId: string;

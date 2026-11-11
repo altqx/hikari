@@ -143,6 +143,10 @@ function addGrounding(out: Collector, metadata: Json | undefined): void {
     }
     for (const chunk of chunks)
         out.addCitation(String(chunk.uri ?? ""), String(chunk.title ?? ""));
+    for (const query of (metadata.webSearchQueries as unknown[] | undefined) ?? [])
+        if (typeof query === "string")
+            out.addSearch({ kind: "search", query });
+    out.addFound(chunks.map((c) => String(c.uri ?? "")));
     const suggestions = (metadata.searchEntryPoint as Json | undefined)?.renderedContent;
     out.setSearchSuggestions(typeof suggestions === "string" ? suggestions : undefined);
 }
