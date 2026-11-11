@@ -581,6 +581,24 @@ TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)
     EXPECT_NE(fake.target()->document().lines()[0]->text, u8"Sneaky");
 }
 
+TEST_F(AgentThreadsTest, AThreadMayReadTheUsersSkillsAndACallWithoutOneMayNot)
+{
+    const std::string id = threads->create();
+    threads->send(id, "Hi");
+    ASSERT_TRUE(idle(id));
+    std::optional<SidecarResult> result;
+    Json list = call("skills.list");
+    list["session"] = id;
+    sidecar()->request("api", list, [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_TRUE(*result);
+    EXPECT_NE((*result)->dump().find("\"skills\":[]"), std::string::npos) << (*result)->dump();
+    result.reset();
+    sidecar()->request("api", call("skills.list"), [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    EXPECT_NE((*result)->dump().find(hikari::api::errors::kNotGranted), std::string::npos);
+}
+
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
 {
     const std::string id = withMode(AgentMode::Manual);
