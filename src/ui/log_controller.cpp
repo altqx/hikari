@@ -152,28 +152,31 @@ void LogController::log(const QString &text, Severity severity, const QString &t
     add(severity, title, text, {});
 }
 
-void LogController::notice(Severity severity, const QString &title, const QString &text, const QString &details)
+void LogController::notice(Severity severity, const QString &title, const QString &text, const QString &details,
+                           int window)
 {
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, [=, this] { notice(severity, title, text, details); },
+        QMetaObject::invokeMethod(this, [=, this] { notice(severity, title, text, details, window); },
                                   Qt::QueuedConnection);
         return;
     }
+    if (window == kActiveWindow)
+        window = m_activeWindow ? m_activeWindow() : 0;
     const int id = add(severity, title, text, details);
     if (!isSignalConnected(QMetaMethod::fromSignal(&LogController::noticed))) {
-        m_unshown.push_back(id);
+        m_unshown.push_back({id, window});
         if (m_unshown.size() > kUnshownKept)
             m_unshown.erase(m_unshown.begin());
         return;
     }
-    emit noticed(id, severity, title, text, details);
+    emit noticed(id, severity, title, text, details, window);
 }
 
 void LogController::replayNotices()
 {
-    for (const int id : std::exchange(m_unshown, {})) {
+    for (const auto [id, window] : std::exchange(m_unshown, {})) {
         const Entry &entry = m_model->entries[size_t(id - 1)];
-        emit noticed(id, entry.severity, entry.title, entry.text, entry.details);
+        emit noticed(id, entry.severity, entry.title, entry.text, entry.details, window);
     }
 }
 

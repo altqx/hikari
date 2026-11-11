@@ -1,9 +1,12 @@
 #include "hikari/app/api_host.h"
 #include "hikari/app/application.h"
+#include "hikari/app/crash_reports.h"
+#include "hikari/app/update_checker.h"
 #include "hikari/app/forwarded_launches.h"
 #include "hikari/app/hotkeys_controller.h"
 
 #include "docking.h"
+#include "log_controller.h"
 #include "qtest_parts.h"
 #include "audio_controller.h"
 #include "status_bar_controller.h"
@@ -249,6 +252,13 @@ class ShellWindowsTest : public QObject {
     static QString misspelling(QQuickWindow *window) { return item(window, "spellMisspell")->property("text").toString(); }
     static QStringList kanjiStyles(QQuickWindow *window) { return controller(window, "kanjiTimer")->property("styles").toStringList(); }
     static int templates(QQuickWindow *window) { return controller(window, "templateEditor")->property("templateCount").toInt(); }
+    static QStringList toastTitles(QQuickWindow *window)
+    {
+        QStringList titles;
+        for (const QVariant &entry : item(window, "toastStack")->property("entries").toList())
+            titles << entry.toMap().value(QStringLiteral("title")).toString();
+        return titles;
+    }
     void loadFirstWindow()
     {
         engine = std::make_unique<QQmlApplicationEngine>();
@@ -677,6 +687,69 @@ private slots:
         click(second, close);
         QTRY_VERIFY(rows(1).isEmpty());
         QCOMPARE(rows(0).size(), 1);
+    }
+
+    void aTaskToastOpensInTheWindowOfItsTabWhileAnotherIsActive()
+    {
+        QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("locked")));
+        const QString locked = dir.filePath(QStringLiteral("locked"));
+        application->activateShellWindow(0);
+        QVERIFY(application->openFile(writeSubtitles(locked + QStringLiteral("/third.ass"), "third", 640)));
+        const application::DocumentId third = *target();
+        QCOMPARE(application->windowOfTab(third.value), 0);
+        edit(third);
+        application->activateShellWindow(1);
+        QVERIFY(QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        auto unlock = qScopeGuard([&] { QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner); });
+        const QStringList before = toastTitles(first());
+        application->saveDocument(third.value);
+        QTRY_VERIFY(toastTitles(first()).size() > before.size());
+        QCOMPARE(application->workspace().activeWindow(), 1);
+        QVERIFY(toastTitles(second).isEmpty());
+    }
+
+    void aTaskQuestionOpensInTheWindowOfItsTabWhileAnotherIsActive()
+    {
+        application->activateShellWindow(0);
+        QVERIFY(QMetaObject::invokeMethod(first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock(first(), "searchDock")))));
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = first()->findChild<QObject *>(QStringLiteral("findQuestion"))));
+        application->activateShellWindow(1);
+        emit application->findQuestion(0, QStringLiteral("styles"), {{QStringLiteral("title"), QStringLiteral("Find")},
+                                              {QStringLiteral("text"), QStringLiteral("a.ass has no style named “X”.")},
+                                              {QStringLiteral("severity"), QStringLiteral("warning")}},
+                                       0);
+        QTRY_VERIFY(question->property("opened").toBool());
+        QObject *other = second->findChild<QObject *>(QStringLiteral("findQuestion"));
+        QVERIFY(!other || !other->property("opened").toBool());
+        QCOMPARE(application->workspace().activeWindow(), 1);
+    }
+
+    void aQuestionAboutTheEditingTabOpensOnlyInItsWindow()
+    {
+        application->activateShellWindow(1);
+        emit application->groupBreakRefused(1, QStringLiteral("Intro"));
+        QObject *box = second->findChild<QObject *>(QStringLiteral("groupBreakBox"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(!first()->findChild<QObject *>(QStringLiteral("groupBreakBox"))->property("visible").toBool());
+        QMetaObject::invokeMethod(box, "close");
+    }
+
+    void aNoticeOfNoTabOpensOnceInTheActiveWindow()
+    {
+        for (const int active : {1, 0}) {
+            application->activateShellWindow(active);
+            QQuickWindow *shown = shellWindow(active);
+            QQuickWindow *other = shellWindow(1 - active);
+            const int logged = application->log().entries()->rowCount();
+            const QStringList otherBefore = toastTitles(other);
+            const QStringList shownBefore = toastTitles(shown);
+            emit application->updates().finished(QStringLiteral("current"), {}, true);
+            emit application->crashReports().freezeNoticed(30);
+            QTRY_COMPARE(toastTitles(shown).size(), shownBefore.size() + 2);
+            QCOMPARE(toastTitles(other), otherBefore);
+            QCOMPARE(application->log().entries()->rowCount(), logged + 2);
+        }
     }
 
     void aThemeChangeAppliesToBothWindows()
