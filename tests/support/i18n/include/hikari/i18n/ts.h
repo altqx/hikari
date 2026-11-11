@@ -41,6 +41,9 @@ struct TsCatalog {
 };
 
 std::expected<TsCatalog, QString> readTs(const QByteArray &bytes);
+
+// The extracted messages the catalog has no live (not vanished or obsolete) entry for.
+QList<std::pair<QString, const TsMessage *>> missingFromCatalog(const TsCatalog &extracted, const TsCatalog &catalog);
 QByteArray writeTs(const TsCatalog &catalog);
 
 // Numerus forms lupdate 6.12.0 creates for a catalog language; -1 for others.

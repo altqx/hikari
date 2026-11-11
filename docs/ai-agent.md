@@ -6,7 +6,7 @@ AI7 ships in parts:
 
 - **AI7a**: the loop and the thread engine, with no UI.
 - **AI7b**: the Agent panel (panel 14), its two commands (5252, 5253) and the Settings section.
-- **AI7c**: Manual-mode proposals.
+- **AI7c**: Manual-mode proposals ([#886](https://github.com/altqx/hikari/issues/886)).
 
 Context compaction (AI21) and sub-agents (AI22) are separate cards.
 
@@ -14,7 +14,7 @@ Context compaction (AI21) and sub-agents (AI22) are separate cards.
 
 | Path | Holds |
 | --- | --- |
-| `src/ai-sidecar/src/agent/session.ts` | `AgentSession`: one thread's turns, its tools, `update_plan`, steering and cancel. `AgentSessions` holds them by id. |
+| `src/ai-sidecar/src/agent/session.ts` | `AgentSession`: one thread's turns, its tools, `update_plan`, `read_skill`, steering and cancel. `AgentSessions` holds them by id. |
 | `src/ai-sidecar/src/protocol.ts` | The session methods and `session/update` shapes. |
 | `src/backends/ai_agent.{h,cpp}` | The policy functions, `AgentThread`, `ThreadStore` and `AgentThreads`, which runs the threads and decides every call. |
 | `src/backends/ai_sidecar_host.{h,cpp}` | The session gate: a call that names a session waits for Qt's decision. |
@@ -35,12 +35,13 @@ The messages follow the [Agent Client Protocol](https://agentclientprotocol.com)
 | `session/update` | sidecar → Qt | `{sessionId, update}` | none |
 
 - Qt names the session: the thread's id. `session/new` again replaces the session, which is how a thread reopens after a restart or a crash, with its saved `history`.
+- The system prompt is Qt's `system` followed by the [skills catalogue](ai-skills.md#progressive-disclosure), which the first turn looks up and the thread keeps.
 - A turn makes at most 64 model requests. Text comes in `agent_message_chunk` updates, at most one every 16 ms.
 - `update` is one of `agent_message_chunk {content}`, `tool_call {toolCallId, title, kind, status, rawInput}`, `tool_call_update {toolCallId, status, content}`, `plan {entries}`, `usage {usage}`, `history {message}`, `sources {textLength, citations?, searchSuggestions?, searches?}` and `search_failed {service, reason, httpStatus}`. `history` carries each message the sidecar keeps, in the order kept, so Qt's copy stays whole.
 - **Web search** (AI23b). `webSearch` on `session/new` lets the session search, and on `session/prompt` switches it from that turn on. While it is on, requests ask for the provider's own search, and `search_tools` offers the `web` group if the sidecar has a search service. While it is off, the `web` tools leave the offered tools too, even ones `search_tools` already found.
 - **`sources`** comes after each model request that cited, searched or sent Google's suggestions, before its `usage`. `textLength` is that request's answer text in UTF-16. `citations` are AI23a's `{index, url, title, quote?, start?, end?}`, with spans in that text. `searches` are the provider's own searches and page reads, `{kind: "search" | "read", query?, url?, urls?}`: Anthropic's `server_tool_use` blocks, OpenAI's `web_search_call` items (with their `sources`), and Gemini's `webSearchQueries` with its grounding pages.
 - **`search_failed`** comes when the search service answers that the plan has no searches left (`usedUp`) or refuses the key (`key`). The tool call still fails for the model with words saying to answer without searching, so the turn goes on.
-- The tools are the [Hikari AI tools](ai-tools.md), plus `update_plan`, plus the `web` group while web search has a search service (AI23). Every call the session makes goes out as `_hikari/api.call` with `session` set.
+- The tools are the [Hikari AI tools](ai-tools.md), plus `update_plan` and `read_skill`, plus the `web` group while web search has a search service (AI23). Every call the session makes goes out as `_hikari/api.call` with `session` set.
 - **Cancel.** A cancelled model request ends at once. During tool calls, the running call finishes and each one after it gets the result "The user stopped the turn.", so the history stays valid.
 - **Steer.** A steered message joins the turn after its next tool call, appended to the tool results. `{taken: false}` means the turn ended first. Qt then sends the message as the next turn.
 
@@ -50,7 +51,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 
 | Mode | Writes |
 | --- | --- |
-| Manual | `document.apply` runs, into the review. Other writes ask: Allow once, Allow in this thread, or Deny. |
+| Manual | `document.apply` becomes a [proposal](#proposals) and writes nothing until the user applies it. Other writes ask: Allow once, Allow in this thread, or Deny. |
 | Auto | The judge decides. When it doesn't approve, the user is asked with the judge's reason. |
 | Full access | Everything runs, except the always-ask list. |
 
@@ -74,6 +75,17 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 - **A denial** goes to the model as a `refused` error that says the user denied it, with the user's message if they wrote one, and tells it not to try again.
 - **The judge** is a `_hikari/complete` request on the Judge role. It sees the action and the user's own messages, never a file's content or a tool's output, so nothing the agent read can talk it into approving. Anything but `{"decision": "approve"}` asks the user. Its cost counts toward the thread's.
 - A write with no session, other than from an MCP connection, is refused once any thread runs. So is a write from a thread whose turn has stopped.
+
+## Proposals
+
+In Manual mode each `document.apply` waits as a proposal card in the thread's timeline. The Review panel and the Grid don't change until the user applies it (owner Q225, Q253–Q262).
+
+- **One card per call.** It shows the Document, the change's name and one row per edit: the Line's row with its old text struck through and its new text, or Inserted, Deleted, Moved, the other fields set, or the Script Info or Style operation. The first five rows show; Show all opens the rest. Clicking a row selects its Line and applies nothing.
+- **Apply** runs the call as it came, into the review as one undoable turn, and the card gives way to the change row. **Decline** writes nothing; the agent gets `refused` with reason `declined`: "The user declined these subtitle edits; nothing changed. Don't propose them again unless they ask.", followed by the user's words from **Decline and tell the agent…**. Edits are applied or declined as a whole, never one Line at a time, and there's no Allow in this thread for them.
+- **Out of date.** When the Document's revision moves while a proposal waits, the card turns out of date and Apply goes off, since `document.apply` would refuse the old revision anyway. **Ask again** answers the agent `stale_revision`, so it reads the Document again and proposes again.
+- **The turn waits** on the proposal as it does on a question. Stop, a cost cap and deleting the thread withdraw it with nothing written.
+- **Focus.** A new proposal takes the keyboard focus on Apply only when the focus is in the Agent panel but not in the message box, so Enter in the message box never applies one. Enter presses the focused button; Esc closes the reply field.
+- MCP agents, plugins and AI features are unchanged: their edits go straight into the review.
 
 ## Threads
 

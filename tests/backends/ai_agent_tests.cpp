@@ -93,7 +93,8 @@ TEST(AgentPolicy, ReadsAndViewChangesNeverAsk)
 
 TEST(AgentPolicy, EachModeDecidesWrites)
 {
-    EXPECT_EQ(decide(AgentMode::Manual, "document.apply", false, false), Decision::Run);
+    EXPECT_EQ(decide(AgentMode::Manual, "document.apply", false, false), Decision::Propose);
+    EXPECT_EQ(decide(AgentMode::Manual, "document.apply", false, true), Decision::Propose);
     EXPECT_EQ(decide(AgentMode::Manual, "commands.run", false, false), Decision::Ask);
     EXPECT_EQ(decide(AgentMode::Manual, "commands.run", false, true), Decision::Run);
     EXPECT_EQ(decide(AgentMode::Auto, "document.apply", false, false), Decision::Judge);
@@ -295,6 +296,7 @@ protected:
         providers = std::make_unique<app::Providers>(configs, keys);
         requests = std::make_unique<AiRequests>(*providers, [this] { return sidecar(); });
         store = std::make_unique<ThreadStore>(dir.filePath(QStringLiteral("threads")));
+        fake.api = &api;
         threads = makeThreads();
     }
 
@@ -478,14 +480,13 @@ TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)
     EXPECT_EQ(at(tools[0], "status"), "done");
 }
 
-TEST_F(AgentThreadsTest, ManualRunsDocumentApplyAndAsksForOtherWritesUntilAllowedInTheThread)
+TEST_F(AgentThreadsTest, ManualAsksForOtherWritesUntilAllowedInTheThread)
 {
     const std::string id = withMode(AgentMode::Manual);
     const Json save = call("commands.run", Json::object({{"command", "GLOBAL_SAVE_SUBS"}}));
-    threads->send(id, script(Json::array({apply("Hi"), save, save})));
+    threads->send(id, script(Json::array({save, save})));
     const std::uint64_t ask = openAsk();
     ASSERT_NE(ask, 0u);
-    EXPECT_EQ(fake.target()->document().lines()[0]->text, u8"Hi");
     EXPECT_EQ(threads->asks().at(ask).kind, Decision::Ask);
     threads->answer(ask, Answer::AllowInThread);
     ASSERT_TRUE(idle(id));
@@ -496,6 +497,95 @@ TEST_F(AgentThreadsTest, ManualRunsDocumentApplyAndAsksForOtherWritesUntilAllowe
     EXPECT_TRUE(thread(id).allowed.contains("commands.run:GLOBAL_SAVE_SUBS"));
     for (const Json &answer : receivedAs("answer"))
         EXPECT_TRUE(answer.find("result")) << answer.dump();
+}
+
+TEST_F(AgentThreadsTest, ManualWritesNothingUntilTheUserAppliesTheProposal)
+{
+    const std::string id = withMode(AgentMode::Manual);
+    const std::u8string before = fake.target()->document().lines()[0]->text;
+    threads->send(id, script(Json::array({apply("Hi")})));
+    const std::uint64_t ask = openAsk();
+    ASSERT_NE(ask, 0u);
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::Propose);
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, before);
+    const auto targetId = fake.workspace().editingTarget();
+    ASSERT_TRUE(targetId);
+    EXPECT_TRUE(fake.review.changes(*targetId).empty());
+    const auto proposals = items(id, "proposal");
+    ASSERT_EQ(proposals.size(), 1u);
+    EXPECT_EQ(at(proposals[0], "status"), "open");
+    EXPECT_EQ(at(proposals[0], "name"), "Fix");
+    const Json &row = proposals[0].find("rows")->asArray().at(0);
+    EXPECT_EQ(at(row, "change"), "edited");
+    EXPECT_EQ(at(row, "before"), std::string(before.begin(), before.end()));
+    EXPECT_EQ(at(row, "after"), "Hi");
+    EXPECT_EQ(*row.find("row"), Json(1));
+
+    threads->answer(ask, Answer::AllowInThread);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, u8"Hi");
+    EXPECT_EQ(fake.review.changes(*targetId).size(), 1u);
+    EXPECT_EQ(at(items(id, "proposal")[0], "status"), "applied");
+    EXPECT_EQ(items(id, "change").size(), 1u);
+    EXPECT_FALSE(thread(id).allowed.contains("document.apply"));
+}
+
+TEST_F(AgentThreadsTest, ADeclinedProposalWritesNothingAndTellsTheAgentWhatTheUserSaid)
+{
+    const std::string id = withMode(AgentMode::Manual);
+    const std::u8string before = fake.target()->document().lines()[0]->text;
+    threads->send(id, script(Json::array({apply("Hi")})));
+    threads->answer(openAsk(), Answer::Deny, "Keep line one");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, before);
+    EXPECT_TRUE(fake.review.changes(*fake.workspace().editingTarget()).empty());
+    const auto answers = receivedAs("answer");
+    ASSERT_EQ(answers.size(), 1u);
+    const std::string error = answers[0].dump();
+    EXPECT_NE(error.find("declined these subtitle edits"), std::string::npos);
+    EXPECT_NE(error.find("Keep line one"), std::string::npos);
+    EXPECT_EQ(at(items(id, "proposal")[0], "status"), "declined");
+}
+
+TEST_F(AgentThreadsTest, AProposalGoesOutOfDateWhenTheDocumentChangesAndAskAgainSendsTheAgentBackToRead)
+{
+    const std::string id = withMode(AgentMode::Manual);
+    threads->send(id, script(Json::array({apply("Hi")})));
+    const std::uint64_t ask = openAsk();
+    std::optional<hikari::api::Result> other;
+    api.call(hikari::api::Caller{"plugin:x", "X", true}, "document.apply",
+             Json::object({{"revision", static_cast<std::int64_t>(fake.target()->revision())},
+                           {"name", "Other"},
+                           {"edits", Json::array({Json::object({{"op", "set_line"},
+                                                                {"line", 2},
+                                                                {"fields", Json::object({{"text", "Mine"}})}})})}}),
+             [&](hikari::api::Result r) { other = std::move(r); });
+    ASSERT_TRUE(other && *other);
+    EXPECT_TRUE(threads->asks().at(ask).stale);
+    EXPECT_EQ(at(items(id, "proposal")[0], "status"), "stale");
+
+    threads->answer(ask, Answer::AllowOnce);
+    ASSERT_TRUE(threads->asks().contains(ask));
+    threads->answer(ask, Answer::AskAgain);
+    ASSERT_TRUE(idle(id));
+    EXPECT_NE(fake.target()->document().lines()[0]->text, u8"Hi");
+    const auto answers = receivedAs("answer");
+    ASSERT_EQ(answers.size(), 1u);
+    EXPECT_NE(answers[0].dump().find(hikari::api::errors::kStaleRevision), std::string::npos);
+    EXPECT_EQ(at(items(id, "proposal")[0], "status"), "retried");
+}
+
+TEST_F(AgentThreadsTest, StopWithdrawsAnOpenProposalWithNothingWritten)
+{
+    const std::string id = withMode(AgentMode::Manual);
+    const std::u8string before = fake.target()->document().lines()[0]->text;
+    threads->send(id, script(Json::array({apply("Hi")})));
+    openAsk();
+    threads->stop(id);
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(threads->asks().empty());
+    EXPECT_EQ(fake.target()->document().lines()[0]->text, before);
+    EXPECT_EQ(at(items(id, "proposal")[0], "status"), "withdrawn");
 }
 
 TEST_F(AgentThreadsTest, ADenialGoesToTheAgentAsARefusalWithTheUsersMessage)
@@ -579,6 +669,24 @@ TEST_F(AgentThreadsTest, QtRefusesWritesWithoutAThreadOrAfterTheTurnStopped)
     ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
     EXPECT_NE((*result)->dump().find("This turn has stopped"), std::string::npos);
     EXPECT_NE(fake.target()->document().lines()[0]->text, u8"Sneaky");
+}
+
+TEST_F(AgentThreadsTest, AThreadMayReadTheUsersSkillsAndACallWithoutOneMayNot)
+{
+    const std::string id = threads->create();
+    threads->send(id, "Hi");
+    ASSERT_TRUE(idle(id));
+    std::optional<SidecarResult> result;
+    Json list = call("skills.list");
+    list["session"] = id;
+    sidecar()->request("api", list, [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_TRUE(*result);
+    EXPECT_NE((*result)->dump().find("\"skills\":[]"), std::string::npos) << (*result)->dump();
+    result.reset();
+    sidecar()->request("api", call("skills.list"), [&](SidecarResult r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    EXPECT_NE((*result)->dump().find(hikari::api::errors::kNotGranted), std::string::npos);
 }
 
 TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)

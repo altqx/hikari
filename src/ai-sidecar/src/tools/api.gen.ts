@@ -3,6 +3,9 @@
 /** An open Document, as documents.list gives it. */
 export type DocumentId = number;
 
+/** A skill's name, which is its folder's. */
+export type SkillName = string;
+
 /** A Line's stable id: it survives edits, moves and undo, unlike its row. */
 export type LineId = number;
 
@@ -648,6 +651,30 @@ export type FilesWriteResult = {
     size: number;
 };
 
+/** The user's skills: each skill folder's name and its files, SKILL.md among them. */
+export type SkillsListParams = Record<string, never>;
+
+export type SkillsListResult = {
+    skills: ({
+        skill: SkillName;
+        files: string[];
+    })[];
+};
+
+/** One file of a user's skill, as UTF-8 text; at most 256 KiB. */
+export type SkillsReadParams = {
+    skill: SkillName;
+    /** A path skills.list gives, such as SKILL.md or references/tags.md. */
+    file: string;
+};
+
+export type SkillsReadResult = {
+    skill: SkillName;
+    file: string;
+    size: number;
+    data: string;
+};
+
 /** The node types the node-effect editor offers, with their ports and parameters. */
 export type NodesCatalogueParams = {
     category?: string;
@@ -750,6 +777,8 @@ export interface Operations {
     "files.list": { access: "read"; params: FilesListParams; result: FilesListResult };
     "files.read": { access: "read"; params: FilesReadParams; result: FilesReadResult };
     "files.write": { access: "write"; params: FilesWriteParams; result: FilesWriteResult };
+    "skills.list": { access: "read"; params: SkillsListParams; result: SkillsListResult };
+    "skills.read": { access: "read"; params: SkillsReadParams; result: SkillsReadResult };
     "nodes.catalogue": { access: "read"; params: NodesCatalogueParams; result: NodesCatalogueResult };
     "nodes.validate": { access: "read"; params: NodesValidateParams; result: NodesValidateResult };
 }

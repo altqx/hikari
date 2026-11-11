@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/api/api.h"
+#include "hikari/api/folder_skills.h"
 #include "hikari/api/host.h"
 #include "hikari/application/audio_display.h"
 #include "hikari/core/ass_load.h"
@@ -183,7 +184,8 @@ public:
         return id;
     }
 
-    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render}; }
+    FolderSkills skills{std::filesystem::path()};
+    Host host() { return Host{this, this, this, &settings, &media, &files, &review, render, &skills}; }
 
     const application::Workspace &workspace() const override { return workspace_; }
     application::EditSession *session(application::DocumentId document) const override
