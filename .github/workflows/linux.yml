@@ -21,6 +21,8 @@ on:
       - tests/dependency-load/**
       - tests/runners/**
       - tests/support/**
+      - tests/i18n/**
+      - i18n/**
       - tests/perf/**
       - tests/references/**
       - tests/modules/**

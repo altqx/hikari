@@ -224,8 +224,8 @@
         <translation>설정 › AI…</translation>
     </message>
     <message>
-        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
-        <translation>자막 수정은 검토로 들어가며, 거기서 유지하거나 실행 취소합니다. 다른 변경은 묻습니다.</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>각 자막 수정은 적용되기 전에 직접 승인하며, 다른 모든 변경도 마찬가지입니다. 읽기는 묻지 않습니다.</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -448,6 +448,84 @@
     <message>
         <source>Claude Code</source>
         <translation>Claude Code</translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>제안: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>오래됨</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>삭제됨</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>이동됨</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>삽입됨</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>%1 변경</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>에이전트가 읽은 뒤 자막이 바뀌었습니다.</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>행을 클릭하면 그 줄을 선택합니다. 적용하면 실행 취소할 수 있는 단계 하나가 검토에 추가됩니다.</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>다시 요청</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>거절</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>거절하고 에이전트에게 알리기…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>에이전트에게 돌려보냄: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>거절함: %1 · 바뀐 것 없음</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>적용 안 됨: %1 · 바뀐 것 없음</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>제안: %1, %n줄</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>%n줄 모두 보기</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -14695,6 +14773,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Scale border and shadow</source>
         <translation>테두리 및 그림자 크기 조정</translation>
+    </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>“%1”(을)를 저장하면 다음 스크립트 속성이 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>건너뛰기</translation>
     </message>
 </context>
 <context>

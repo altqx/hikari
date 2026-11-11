@@ -622,7 +622,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this]() -> ui::ShellController & { return shell(); }, *activeMedia().videoHelper);
     m_automation->setDocumentChanged([this] { refreshViews(); });
     m_automation->setBeforeRun([this] { commitTemplates(); });
-    m_files->setBeforeSave([this] { commitTemplates(); });
+    m_files->setBeforeSave([this](application::DocumentId document) {
+        commitTemplates();
+        applyScriptInfoOnSave(document);
+    });
     connect(m_automation.get(), &AutomationShell::karaokeApplied, this,
             [this](quint64 document, const QByteArray &report) {
                 const application::DocumentId id{document};
@@ -734,7 +737,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this]() -> const application::VideoSession * { return activeMedia().video ? &activeMedia().video->session() : nullptr; },
         [this](const core::Document &document) { return rendererScript(document); },
         [this](application::DocumentId document) { return subtitleFonts(document); },
-        [this] { return m_settings->text("video.subtitleProvider").toStdString(); }});
+        [this] { return m_settings->text("video.subtitleProvider").toStdString(); },
+        m_userFolder.isEmpty() ? std::filesystem::path()
+                               : std::filesystem::path((m_userFolder + QStringLiteral("/ai/skills")).toStdU16String())});
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -3039,7 +3044,9 @@ QVariantList Application::saveAll()
         auto *session = m_files->session(id);
         if (!session || !session->isDirty())
             continue;
-        const QString route = saveRouteFor(id.value);
+        QString route = saveRouteFor(id.value);
+        if (route.isEmpty() && !scriptInfoQuestion(id.value).isEmpty())
+            route = QStringLiteral("scriptInfo");
         if (!route.isEmpty()) {
             const std::string *title = m_workspace.title(id);
             later << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
@@ -5935,6 +5942,52 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+const application::Settings &Application::documentSettings(application::DocumentId document) const
+{
+    return windowSettings(m_workspace.window(document).value_or(m_workspace.activeWindow()));
+}
+
+QVariantList Application::scriptInfoQuestion(qulonglong id) const
+{
+    const auto document = documentOf(id);
+    const auto *session = document ? m_files->session(*document) : nullptr;
+    if (!session || !documentSettings(*document).boolean("scriptProperties.askForChange"))
+        return {};
+    auto q = [](const std::u8string &s) { return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size())); };
+    QVariantList rows;
+    for (const auto &change : application::scriptInfoOnSave(session->document(), documentSettings(*document)))
+        rows << QVariantMap{{QStringLiteral("key"), q(change.key)},
+                            {QStringLiteral("from"), q(change.from)},
+                            {QStringLiteral("to"), q(change.to)}};
+    return rows;
+}
+
+void Application::approveScriptInfo(qulonglong id, const QStringList &keys)
+{
+    const auto document = documentOf(id);
+    if (!document)
+        return;
+    auto &approved = m_scriptInfoApproved[document->value];
+    approved.clear();
+    for (const QString &key : keys)
+        approved.push_back(toU8(key));
+}
+
+void Application::applyScriptInfoOnSave(application::DocumentId document)
+{
+    auto *session = m_files->session(document);
+    auto approval = m_scriptInfoApproved.extract(document.value);
+    if (!session)
+        return;
+    const auto &settings = documentSettings(document);
+    auto changes = application::scriptInfoOnSave(session->document(), settings);
+    if (settings.boolean("scriptProperties.askForChange")) {
+        const std::vector<std::u8string> approved = approval ? std::move(approval.mapped()) : std::vector<std::u8string>{};
+        std::erase_if(changes, [&](const auto &c) { return std::ranges::find(approved, c.key) == approved.end(); });
+    }
+    application::applyScriptInfo(*session, changes);
 }
 
 bool Application::makeGroups()

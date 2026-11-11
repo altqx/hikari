@@ -10,7 +10,9 @@ namespace hikari::api::testing {
 
 Caller aiCaller()
 {
-    return Caller{"test.ai", "Test AI", true};
+    Caller caller{"test.ai", "Test AI", true};
+    caller.skills = true;
+    return caller;
 }
 
 Caller pluginCaller()

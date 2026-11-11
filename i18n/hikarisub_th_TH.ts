@@ -224,8 +224,8 @@
         <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
-        <source>Subtitle edits go into the review, where you keep or undo them. Other changes ask.</source>
-        <translation>การแก้ไขคำบรรยายจะเข้าไปในการตรวจทาน ซึ่งคุณเลือกคงไว้หรือเลิกทำได้ การเปลี่ยนแปลงอื่นจะถาม</translation>
+        <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
+        <translation>คุณอนุมัติการแก้ไขคำบรรยายแต่ละครั้งก่อนที่จะเกิดขึ้น และการเปลี่ยนแปลงอื่นทุกครั้ง การอ่านไม่ถามเลย</translation>
     </message>
     <message>
         <source>The judge model approves each action, or asks you. It sees the action and your messages, never your files.</source>
@@ -448,6 +448,84 @@
     <message>
         <source>Claude Code</source>
         <translation>Claude Code</translation>
+    </message>
+    <message>
+        <source>Proposed: %1</source>
+        <translation>ข้อเสนอ: %1</translation>
+    </message>
+    <message>
+        <source>out of date</source>
+        <translation>ล้าสมัย</translation>
+    </message>
+    <message>
+        <source>Deleted</source>
+        <translation>ลบแล้ว</translation>
+    </message>
+    <message>
+        <source>Moved</source>
+        <translation>ย้ายแล้ว</translation>
+    </message>
+    <message>
+        <source>Inserted</source>
+        <translation>แทรกแล้ว</translation>
+    </message>
+    <message>
+        <source>Changes %1</source>
+        <translation>เปลี่ยน %1</translation>
+    </message>
+    <message>
+        <source>The subtitles changed after the agent read them.</source>
+        <translation>คำบรรยายเปลี่ยนไปหลังจากที่เอเจนต์อ่านแล้ว</translation>
+    </message>
+    <message>
+        <source>Click a row to select its line. Applying adds one undoable step to the review.</source>
+        <translation>คลิกแถวเพื่อเลือกบรรทัดนั้น การนำไปใช้จะเพิ่มขั้นตอนที่เลิกทำได้หนึ่งขั้นในการตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation>ขอใหม่อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>ปฏิเสธ</translation>
+    </message>
+    <message>
+        <source>Decline and tell the agent…</source>
+        <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+    </message>
+    <message>
+        <source>Sent back to the agent: %1</source>
+        <translation>ส่งกลับให้เอเจนต์แล้ว: %1</translation>
+    </message>
+    <message>
+        <source>Declined: %1 · nothing changed</source>
+        <translation>ปฏิเสธแล้ว: %1 · ไม่มีอะไรเปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Not applied: %1 · nothing changed</source>
+        <translation>ไม่ได้นำไปใช้: %1 · ไม่มีอะไรเปลี่ยน</translation>
+    </message>
+    <message numerus="yes">
+        <source>Proposal: %1, %n lines</source>
+        <translation>
+            <numerusform>ข้อเสนอ: %1, %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n lines</source>
+        <translation>
+            <numerusform>แสดงทั้งหมด %n บรรทัด</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -14695,6 +14773,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Scale border and shadow</source>
         <translation>ปรับขนาดของขอบและเงา</translation>
+    </message>
+    <message>
+        <source>Saving “%1” changes these script properties.</source>
+        <translation>การบันทึก “%1” จะเปลี่ยนคุณสมบัติของสคริปต์ต่อไปนี้</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>ข้าม</translation>
     </message>
 </context>
 <context>

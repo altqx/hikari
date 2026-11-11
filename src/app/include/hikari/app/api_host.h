@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/api/api.h"
+#include "hikari/api/folder_skills.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/document_overlay.h"
 #include "hikari/application/video_session.h"
@@ -52,6 +53,8 @@ public:
         std::function<std::vector<std::byte>(const core::Document &)> encode;
         std::function<std::vector<application::FontLease>(application::DocumentId)> fonts;
         std::function<std::string()> renderer;
+        // Empty: the user has no skills.
+        std::filesystem::path skills;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -95,6 +98,7 @@ private:
 
     Wiring m_wiring;
     application::AiReview m_review;
+    std::unique_ptr<api::FolderSkills> m_skills;
     api::Api m_api;
     QJSValue m_commandHandler;
     QJSValue m_panelHandler;

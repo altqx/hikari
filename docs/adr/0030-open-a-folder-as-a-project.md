@@ -58,7 +58,7 @@ The Explorer is core, not a plugin ([ADR 0022](0022-hikarisub-plugins.md), "Plug
 - **Default < User < Project, per key,** for an allowlist of settings.
 - **A Project can never set:** privacy, analytics, updates, AI providers and permissions, plugin network, trusted folders, the theme and UI fonts, or hotkeys. Display preferences stay the user's.
 - **Settings gets two tabs, Yours and Project.**
-- **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info defaults for new files, and moving tags from the original in translation mode. Lists are replaced, not merged.
+- **The allowlist** is the dictionary language and spelling switch, grammar, the Script Info values written on save ([#892](https://github.com/altqx/hikari/issues/892)), and moving tags from the original in translation mode. Lists are replaced, not merged.
 - **A setting that widens** what a Project may do applies only once its folder is trusted. None of today's allowlisted settings widens.
 
 ## Shared things with a Project tier
