@@ -321,7 +321,7 @@ export class AgentSessions {
         return this.sessions.has(sessionId);
     }
 
-    private session(id: string): AgentSession {
+    private session(id: string): Session {
         const session = this.sessions.get(id);
         if (!session)
             throw new RpcError(ErrorCode.invalidParams, `No session is named "${id}"; open it with session/new`);
