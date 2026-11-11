@@ -816,6 +816,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
     };
+    pluginWiring.windowPlugins = [this] { return windowPlugins(); };
+    pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);

@@ -5,6 +5,7 @@
 #include <QDir>
 
 #include <filesystem>
+#include <sstream>
 #include <utility>
 #include <variant>
 
@@ -95,6 +96,39 @@ std::vector<QString> ProjectFile::fontFolders() const
         return out;
     }
     return {};
+}
+
+ProjectFile::PluginTable ProjectFile::plugins() const
+{
+    PluginTable out;
+    const auto names = [](const toml::array *list) {
+        std::vector<std::string> ids;
+        if (list)
+            for (const auto &node : *list)
+                if (const auto *id = node.as_string(); id && !id->get().empty())
+                    ids.push_back(id->get());
+        return ids;
+    };
+    std::map<std::string, toml::table> settings;
+    for (const File file : {Shared, Local}) {
+        const auto *table = m_tables[file]["plugins"].as_table();
+        if (!table)
+            continue;
+        if (const auto *list = (*table)["enabled"].as_array())
+            out.enabled = names(list);
+        if (const auto *list = (*table)["disabled"].as_array())
+            out.disabled = names(list);
+        for (const auto &[key, node] : *table)
+            if (const auto *values = node.as_table())
+                for (const auto &[setting, value] : *values)
+                    settings[std::string(key.str())].insert_or_assign(setting, value);
+    }
+    for (const auto &[id, table] : settings) {
+        std::ostringstream json;
+        json << toml::json_formatter(table, toml::format_flags::none);
+        out.settingsJson.emplace(id, json.str());
+    }
+    return out;
 }
 
 std::optional<SettingValue> ProjectFile::read(const SettingDefinition &setting) const

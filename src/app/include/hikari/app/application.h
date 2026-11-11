@@ -331,6 +331,9 @@ public:
     Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
     // Adds the window's Project folder to trust.folders, which applies the Project again.
     Q_INVOKABLE void trustProject(int shellWindow);
+    // {trusted, named: the ids its [plugins] table names, missing: those a trusted one enables that
+    // aren't installed}; empty without a Project.
+    Q_INVOKABLE QVariantMap projectPlugins(int shellWindow) const;
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes
@@ -1428,6 +1431,7 @@ private:
     };
     std::map<int, ProjectFonts> m_projectFonts;
     void loadProjectFonts(int shellWindow);
+    std::map<int, std::optional<plugins::ProjectPlugins>> windowPlugins() const;
     void subtitleFontsChanged();
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;

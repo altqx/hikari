@@ -121,6 +121,30 @@ private slots:
         QVERIFY(!project.read(setting("translation.autoMoveTagsFromOriginal")));
     }
 
+    void pluginsLocalListsReplaceAndSettingsGoOverKeyByKey()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")),
+                 "version = 1\n[plugins]\nenabled = [\"kf\", \"\"]\ndisabled = [\"qc\"]\n"
+                 "[plugins.\"kf\"]\nsize = 12\nname = \"team\"\n");
+        const ProjectFile shared(root.path());
+        QVERIFY(shared.problems().empty());
+        QVERIFY(shared.refused().empty());
+        QVERIFY(shared.hasTable("plugins"));
+        const auto table = shared.plugins();
+        QCOMPARE(table.enabled, std::vector<std::string>{"kf"});
+        QCOMPARE(table.disabled, std::vector<std::string>{"qc"});
+        QCOMPARE(table.settingsJson.at("kf"), std::string(R"({"name":"team","size":12})"));
+
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")),
+                 "version = 1\n[plugins]\nenabled = []\n[plugins.\"kf\"]\nsize = 20\n");
+        const auto local = ProjectFile(root.path()).plugins();
+        QVERIFY(local.enabled.empty());
+        QCOMPARE(local.disabled, std::vector<std::string>{"qc"});
+        QCOMPARE(local.settingsJson.at("kf"), std::string(R"({"name":"team","size":20})"));
+        QVERIFY(ProjectFile(QTemporaryDir().path()).plugins().settingsJson.empty());
+    }
+
     void fontFoldersAreRelativeToTheProjectFolder()
     {
         QTemporaryDir root;

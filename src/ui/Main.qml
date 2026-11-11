@@ -478,7 +478,10 @@ ApplicationWindow {
     readonly property var dockList: builtInDocks.concat(pluginDocks)
     readonly property var pluginUi: root.app.pluginRuntime ? root.app.pluginRuntime.ui : null
     readonly property var pluginPanelRows: {
-        const rows = root.pluginUi ? root.pluginUi.panels.slice() : []
+        const runtime = root.app.pluginRuntime
+        if (runtime)
+            runtime.windowsRevision
+        const rows = root.pluginUi ? root.pluginUi.panels.filter(r => !runtime || runtime.onIn(r.plugin, root.shellWindow)) : []
         for (const dock of root.pluginDocks)
             if (!rows.some(r => r.dock === dock.storedName))
                 rows.push({ dock: dock.storedName, title: dock.title, pluginName: dock.pluginName, area: "right" })
@@ -3159,7 +3162,13 @@ ApplicationWindow {
             MacroMenuEntries {
                 menu: automationMenu
                 after: pluginsMenuItem
-                macros: root.app.pluginRuntime ? root.app.pluginRuntime.commands : []
+                macros: {
+                    const runtime = root.app.pluginRuntime
+                    if (!runtime)
+                        return []
+                    runtime.windowsRevision
+                    return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
+                }
                 itemPrefix: "pluginCommand_"
                 menuPrefix: "pluginCommandMenu_"
                 onTriggered: command => root.app.pluginRuntime.run(command.id)
@@ -7532,7 +7541,14 @@ ApplicationWindow {
         market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
+        project: {
+            root.projectRevision
+            if (root.app.pluginRuntime)
+                root.app.pluginRuntime.windowsRevision
+            return root.app.projectPlugins(root.shellWindow)
+        }
         onCopyRequested: text => root.app.copyText(text)
+        onTrustRequested: root.app.trustProject(root.shellWindow)
     }
     Connections {
         target: root.app.pluginManager
