@@ -10,6 +10,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <limits>
+#include <map>
 #include <set>
 #include <string>
 
@@ -506,6 +507,24 @@ void prepareInserted(LineRecord &line, LineId id, std::size_t offset)
     line.span = SourceSpan{offset, 0, 0};
 }
 
+std::size_t endOfSpan(const SourceSpan &span)
+{
+    return span.offset + span.length + span.terminatorLength;
+}
+
+std::size_t endOfSection(const Section &section)
+{
+    std::size_t offset = section.headerSpan ? section.headerSpan->offset + section.headerSpan->length +
+                                                  section.headerSpan->terminatorLength
+                                            : 0;
+    for (const auto &record : section.records)
+        std::visit([&](const auto &r) {
+            if constexpr (requires { r.span; })
+                offset = std::max(offset, endOfSpan(r.span));
+        }, record);
+    return offset;
+}
+
 }
 
 std::optional<LineId> Document::insertLineBefore(LineId before, LineRecord line, ChangeMark mark)
@@ -530,15 +549,7 @@ std::optional<LineId> Document::appendLine(LineRecord line, ChangeMark mark)
     for (auto it = m_sections.rbegin(); it != m_sections.rend(); ++it) {
         if (it->kind != SectionKind::Events)
             continue;
-        std::size_t offset = it->headerSpan ? it->headerSpan->offset + it->headerSpan->length +
-                                                  it->headerSpan->terminatorLength
-                                            : 0;
-        for (const auto &record : it->records)
-            std::visit([&](const auto &r) {
-                if constexpr (requires { r.span; })
-                    offset = std::max(offset, r.span.offset + r.span.length + r.span.terminatorLength);
-            }, record);
-        prepareInserted(line, LineId{m_nextLineId++}, offset);
+        prepareInserted(line, LineId{m_nextLineId++}, endOfSection(*it));
         const LineId id = line.id;
         it->records.push_back(std::move(line));
         return id;
@@ -610,6 +621,132 @@ bool Document::moveLine(LineId id, std::optional<LineId> before)
             }
     }
     return false;
+}
+
+std::size_t Document::editLines(const std::function<bool(LineRecord &)> &change)
+{
+    std::size_t edited = 0;
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record); line && change(*line)) {
+                line->edited = true;
+                line->changeVersion = newChangeVersion();
+                ++edited;
+            }
+    return edited;
+}
+
+bool Document::arrangeLines(std::vector<std::variant<LineId, LineRecord>> order)
+{
+    constexpr std::size_t none = std::numeric_limits<std::size_t>::max();
+    struct Node {
+        Record *record = nullptr;
+        LineRecord *line = nullptr;
+        std::size_t endOf = none;
+        std::size_t prev = none;
+        std::size_t next = none;
+    };
+    std::vector<Node> nodes(1);
+    const auto pushLinked = [&](Node node) {
+        node.prev = nodes.size() - 1;
+        nodes.back().next = nodes.size();
+        nodes.push_back(node);
+    };
+    std::map<LineId, std::size_t> nodeOfLine;
+    std::vector<std::size_t> endNode(m_sections.size());
+    std::optional<std::size_t> lastEvents;
+    for (std::size_t s = 0; s < m_sections.size(); ++s) {
+        for (auto &record : m_sections[s].records) {
+            auto *line = std::get_if<LineRecord>(&record);
+            if (line)
+                nodeOfLine.emplace(line->id, nodes.size());
+            pushLinked(Node{&record, line});
+        }
+        endNode[s] = nodes.size();
+        pushLinked(Node{.endOf = s});
+        if (m_sections[s].kind == SectionKind::Events)
+            lastEvents = s;
+    }
+
+    std::set<LineId> listed;
+    bool adds = false;
+    for (const auto &entry : order) {
+        const auto *id = std::get_if<LineId>(&entry);
+        adds = adds || !id;
+        if (id && (!nodeOfLine.contains(*id) || !listed.insert(*id).second))
+            return false;
+    }
+    if (listed.size() != nodeOfLine.size() || (adds && nodeOfLine.empty() && !lastEvents))
+        return false;
+
+    const auto unlink = [&](std::size_t n) {
+        nodes[nodes[n].prev].next = nodes[n].next;
+        if (nodes[n].next != none)
+            nodes[nodes[n].next].prev = nodes[n].prev;
+    };
+    const auto linkBefore = [&](std::size_t n, std::size_t at) {
+        nodes[n].prev = nodes[at].prev;
+        nodes[n].next = at;
+        nodes[nodes[at].prev].next = n;
+        nodes[at].prev = n;
+    };
+    const auto linkAfter = [&](std::size_t n, std::size_t at) {
+        nodes[n].prev = at;
+        nodes[n].next = nodes[at].next;
+        if (nodes[at].next != none)
+            nodes[nodes[at].next].prev = n;
+        nodes[at].next = n;
+    };
+    const auto nextLine = [&](std::size_t n) {
+        for (n = nodes[n].next; n != none && !nodes[n].line; n = nodes[n].next) {
+        }
+        return n;
+    };
+
+    std::size_t previous = none;
+    std::size_t upNext = nextLine(0);
+    for (auto &entry : order) {
+        if (const auto *id = std::get_if<LineId>(&entry)) {
+            const std::size_t n = nodeOfLine.at(*id);
+            if (n == upNext) {
+                upNext = nextLine(n);
+            } else {
+                unlink(n);
+                linkBefore(n, upNext);
+            }
+            previous = n;
+            continue;
+        }
+        auto &line = std::get<LineRecord>(entry);
+        line.changeVersion = newChangeVersion();
+        const std::size_t offset = previous != none ? endOfSpan(nodes[previous].line->span)
+                                   : upNext != none ? nodes[upNext].line->span.offset
+                                                    : endOfSection(m_sections[*lastEvents]);
+        prepareInserted(line, LineId{m_nextLineId++}, offset);
+        const std::size_t n = nodes.size();
+        nodes.push_back(Node{.line = &line});
+        if (previous != none)
+            linkAfter(n, previous);
+        else if (upNext != none)
+            linkBefore(n, upNext);
+        else
+            linkBefore(n, endNode[*lastEvents]);
+        previous = n;
+    }
+
+    std::vector<std::vector<Record>> arranged(m_sections.size());
+    std::size_t section = 0;
+    for (std::size_t n = nodes[0].next; n != none; n = nodes[n].next) {
+        if (nodes[n].endOf != none)
+            section = nodes[n].endOf + 1;
+        else if (nodes[n].record)
+            arranged[section].push_back(std::move(*nodes[n].record));
+        else
+            arranged[section].push_back(std::move(*nodes[n].line));
+    }
+    for (std::size_t s = 0; s < m_sections.size(); ++s)
+        m_sections[s].records = std::move(arranged[s]);
+    return true;
 }
 
 bool Document::markLineChanged(LineId id)
