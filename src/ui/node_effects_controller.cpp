@@ -48,6 +48,8 @@ constexpr NodeExampleText kExamples[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Eight copies of each syllable on a circle around it, each turned to its place, while it is sung.")},
     {"particle-burst", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Particle burst"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Twelve copies of each syllable fly out to random places around it and fade.")},
+    {"audio-pulse", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Audio pulse"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable grows with how loud the audio is while it is sung. Needs audio open.")},
 };
 
 const NodeExampleText *exampleText(std::string_view example)
@@ -992,6 +994,8 @@ application::NodeEffectOptions NodeEffectsController::options() const
     if (m_luaNodes && o.trustLua && hasLua())
         o.lua = m_luaNodes();
     o.cache = const_cast<application::NodeEffectCache *>(&m_cache);
+    if (m_audio)
+        o.audio = m_audio();
     return o;
 }
 

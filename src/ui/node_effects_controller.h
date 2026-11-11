@@ -77,6 +77,7 @@ class NodeEffectsController : public QObject {
 public:
     using SessionSource = std::function<application::EditSession *()>;
     using LuaNodesSource = std::function<application::LuaNodePort *()>;
+    using AudioSource = std::function<std::optional<const application::DisplayAudio *>()>;
 
     explicit NodeEffectsController(QObject *parent = nullptr);
     ~NodeEffectsController() override;
@@ -86,6 +87,7 @@ public:
     void shareTrustWith(TemplateEditorController *editor);
     // Called only when a graph with a Lua node runs, so the helper starts then.
     void setLuaNodes(LuaNodesSource source);
+    void setAudio(AudioSource source) { m_audio = std::move(source); }
     void setLibraryFolder(std::filesystem::path folder);
     void setEditable(bool editable);
     void setMeasure(application::TextMeasurePort *measure) { m_measure = measure; }
@@ -214,6 +216,7 @@ private:
     SessionSource m_sessionSource;
     QPointer<TemplateEditorController> m_trustOwner;
     LuaNodesSource m_luaNodes;
+    AudioSource m_audio;
     QtTextMeasurePort m_qtMeasure;
     application::TextMeasurePort *m_measure = &m_qtMeasure;
     std::filesystem::path m_libraryFolder;

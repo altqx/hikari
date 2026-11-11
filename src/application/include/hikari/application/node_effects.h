@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/audio_display.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/node_graph.h"
@@ -88,6 +89,8 @@ struct NodeEffectOptions {
     // The user trusts the Document's Lua; without it a graph with a Lua node writes nothing.
     bool trustLua = false;
     LuaNodePort *lua = nullptr;
+    // As MacroMediaPort::peakAudio gives it: nullopt without audio, null while it opens.
+    std::optional<const DisplayAudio *> audio;
     // Only these karaoke Lines; all of them when unset.
     std::optional<std::set<core::LineId>> sources;
     NodeEffectCache *cache = nullptr;
