@@ -401,9 +401,11 @@ TEST_F(KaraokeTemplater, TextTheHostCannotMeasureIsAProblemAndCountsAsZeroWide)
                    ? HostServiceReply::unavailable()
                    : hikari::test::fakeMeasureReply(r);
     };
-    const std::string out = templatedBytes(bytesOf(kCharTemplateDocument), builtinScript());
+    std::string document = kCharTemplateDocument;
+    document.replace(document.find("template char"), 13, "template syl");
+    const std::string out = templatedBytes(bytesOf(document), builtinScript());
     ASSERT_FALSE(out.empty()) << "the run goes on";
-    EXPECT_NE(out.find("{\\pos(640,"), std::string::npos) << "every char at the centre, 0 wide\n" << out;
+    EXPECT_NE(out.find("{\\pos(640,"), std::string::npos) << "every syllable at the centre, 0 wide\n" << out;
     EXPECT_TRUE(run.log.join(QString()).contains(
         QStringLiteral("could not measure text in the Style \"Default\"; it counts as 0 wide.")))
         << run.log.join(QString()).toStdString();
