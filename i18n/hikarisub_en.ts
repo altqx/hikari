@@ -204,6 +204,20 @@
             <numerusform>Save the changes to %n documents before loading the session?</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more lines</source>
+        <translation>
+            <numerusform>and %n more line</numerusform>
+            <numerusform>and %n more lines</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Export</name>

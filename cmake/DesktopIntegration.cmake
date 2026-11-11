@@ -44,6 +44,13 @@ function(hikari_generate_desktop_files version)
         set(HIKARISUB_RELEASE_DATE "1970-01-01")
     endif()
     hikari_collect_mimetypes(HIKARISUB_DESKTOP_MIMETYPES)
+    string(CONCAT HIKARISUB_DESKTOP_ACTIONS
+        "Actions=open-folder;\n"
+        "\n"
+        "[Desktop Action open-folder]\n"
+        "Name=Open Folder…\n"
+        "Name[pl]=Otwórz folder…\n"
+        "Exec=${HIKARI_DESKTOP_EXEC} --open-folder\n")
 
     set(_pkg "${PROJECT_SOURCE_DIR}/packaging/linux")
     set(_gen "${CMAKE_BINARY_DIR}/packaging")
