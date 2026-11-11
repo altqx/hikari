@@ -4431,8 +4431,7 @@
    "surfaces": [
     "notices",
     "settings-dialog"
-   ],
-   "pending": "PJ3 #771"
+   ]
   },
   {
    "role": "untrusted",
