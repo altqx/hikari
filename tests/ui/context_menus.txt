@@ -56,6 +56,7 @@ Grid > Split > -
 Grid > Split > Into characters [GRID_SPLIT_BY_CHARS]
 Grid > Split > Into words [GRID_SPLIT_BY_WORDS]
 Grid > Split > By wraps [GRID_SPLIT_BY_WRAPS]
+Grid > Interpolate across lines… [GLOBAL_INTERPOLATE_LINES]
 Grid > Swap lines [GRID_SWAP_LINES]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]

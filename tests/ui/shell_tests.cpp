@@ -9552,6 +9552,63 @@ private slots:
         application->editor().discard();
     }
 
+    void interpolateLinesScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        application->setAskForBadResolution(false);
+        const QString path = dir.filePath(QStringLiteral("interpolate-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                    "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Sign,Arial,48,&H0000E0FF,&H000000FF,&H00202020,&H00000000,-1,0,0,0,100,100,0,0,1,3,"
+                    "0,5,10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:01.04,Sign,,0,0,0,,{\\pos(120,180)\\1c&H0000FF&\\fscx100\\frz0}SIGN\n"
+                    "Dialogue: 0,0:00:01.04,0:00:01.08,Sign,,0,0,0,,SIGN\n"
+                    "Dialogue: 0,0:00:01.08,0:00:01.12,Sign,,0,0,0,,SIGN\n"
+                    "Dialogue: 0,0:00:01.12,0:00:01.16,Sign,,0,0,0,,SIGN\n"
+                    "Dialogue: 0,0:00:01.16,0:00:01.20,Sign,,0,0,0,,{\\pos(520,180)\\1c&HFF8000&\\fscx160\\frz30"
+                    "\\clip(m 0 0 l 640 0 640 360 0 360)}SIGN\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        application->selectLine(session->document().lines().front()->id.value);
+        application->extendSelection(4);
+        auto *item = named("interpolateLines");
+        QTRY_VERIFY(item->property("enabled").toBool());
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+            QQuickWindow *dialog = nullptr;
+            QTRY_VERIFY((dialog = root->findChild<QQuickWindow *>(QStringLiteral("interpolateLinesDialog"))) &&
+                        dialog->isVisible());
+            QTRY_COMPARE(dialog->property("changes").toList().size(), 5);
+            QTest::qWait(300);
+            QVERIFY(dialog->grabWindow().save(out + QStringLiteral("/au22-interpolate-") + ui::theme::codeName(code) +
+                                              QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY(!dialog->isVisible());
+        }
+        application->editor().discard();
+    }
+
     void motionDataScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");

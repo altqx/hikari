@@ -5384,6 +5384,18 @@ Failed to copy %2 fonts.</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>ประมาณค่าระหว่างบรรทัด…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>เลือกอย่างน้อยสามบรรทัด: บรรทัดแรก บรรทัดสุดท้าย และบรรทัดระหว่างทั้งสอง</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>เติมบรรทัดระหว่างบรรทัดแรกและบรรทัดสุดท้ายที่เลือกด้วยค่าแท็กที่อยู่ระหว่างค่าของทั้งสอง</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>สลับบรรทัด</translation>
     </message>
@@ -7202,6 +7214,10 @@ Failed to copy %2 fonts.</source>
         <translation>ประมาณค่า \move นอกช่วงให้เต็มบรรทัด</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>ประมาณค่าระหว่างบรรทัด…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -7296,6 +7312,107 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>จัดให้ตรงกับวิดีโอ…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>เลือกอย่างน้อยสามบรรทัด: บรรทัดแรก บรรทัดสุดท้าย และบรรทัดระหว่างทั้งสอง</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>บรรทัดแรกและบรรทัดสุดท้ายมีแท็กเหมือนกัน จึงไม่มีอะไรให้ประมาณค่า</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>คลิปมีรูปร่างต่างกัน</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>คลิปหนึ่งเป็นสี่เหลี่ยม อีกคลิปเป็นภาพวาด</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>มีเพียงบรรทัดเดียวจากสองบรรทัดที่มีคลิปนี้</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>การแปลงมีโครงสร้างต่างกัน</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>แท็กเหล่านี้จะไม่ทำให้มีอะไรเปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>ประมาณค่าระหว่างบรรทัด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n บรรทัด จากบรรทัด %1 ถึงบรรทัด %2 วิดีโอจะแสดงผลลัพธ์ขณะที่หน้าต่างนี้เปิดอยู่</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>บรรทัดแรกและบรรทัดสุดท้ายมีข้อความต่างกัน จึงประมาณค่าเฉพาะแท็กต้นบรรทัด</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>แท็ก</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>บรรทัดแรก</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>บรรทัดสุดท้าย</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>%1 ก่อน “%2”</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>ความเร่ง</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1 คือสม่ำเสมอ มากกว่า 1 เริ่มช้าแล้วจบเร็ว น้อยกว่า 1 เริ่มเร็วแล้วจบช้า</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>หมุนทางที่สั้นที่สุด</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>ต่อการแปลงเป็นลำดับ</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>แท็ก %1 ของแต่ละบรรทัดทำงานต่อกันตลอดบรรทัด</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>ผลลัพธ์</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>ใช้</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
     </message>
 </context>
 <context>

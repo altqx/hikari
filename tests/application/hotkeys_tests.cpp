@@ -698,7 +698,7 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
     ASSERT_EQ(list.rowCount(), 315u);
-    const auto &added = list.row(313);
+    const auto &added = list.row(314);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
@@ -706,7 +706,7 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.rowCount(), 315u);
-    EXPECT_EQ(list.row(313).accel, "F6");
+    EXPECT_EQ(list.row(314).accel, "F6");
     EXPECT_EQ(list.selection(), 314);
 }
 
