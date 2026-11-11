@@ -282,6 +282,8 @@ switch ($env:ACTION) {
         $copy = if ("$env:ARGS" -match '/ALLUSERS') { 'nsis-machine' } else { 'nsis-user' }
         $result = Join-Path $env:LOCALAPPDATA "HikariSub\Updates\last-result-$copy.json"
         Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
+        $setupLog = Join-Path $env:LOCALAPPDATA "HikariSub\Updates\setup-$copy.log"
+        Remove-Item -LiteralPath $setupLog -ErrorAction SilentlyContinue
         $a = "/S /UPDATE /WAITPID=$($app.Id) $env:ARGS".Trim()
         Write-Output "run: `"$env:SETUP`" $a"
         $sw = [Diagnostics.Stopwatch]::StartNew()
@@ -321,7 +323,17 @@ switch ($env:ACTION) {
             if (Test-Path -LiteralPath $result) { Write-Output "     $(Get-Content -Raw -LiteralPath $result)" }
             Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
         }
-        if ($env:ARGS -match '/RELAUNCH') {
+        $logged = if (Test-Path -LiteralPath $setupLog) { Get-Content -Raw -LiteralPath $setupLog } else { '' }
+        if ($logged) { Write-Output "     setup log: $($logged.Trim())" }
+        if ($env:RELAUNCH -eq 'none') {
+            Start-Sleep -Seconds 20
+            $new = @(Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $app.Id })
+            foreach ($extra in $new) { Write-Output "     unexpected pid $($extra.Id), elevated: $([HsRes]::IsElevated($extra.Id))" }
+            Check ($new.Count -eq 0) 'the installer started no HikariSub'
+            Check ($logged -match 'relaunch: skipped') 'the setup log says the relaunch was skipped'
+            $new | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
+        } elseif ($env:ARGS -match '/RELAUNCH') {
+            if ($copy -eq 'nsis-machine') { Check ($logged -match 'relaunch: started') 'the setup log says the desktop shell started HikariSub' }
             $new = $null
             $deadline = (Get-Date).AddSeconds(20)
             while (-not $new -and (Get-Date) -lt $deadline) {
