@@ -355,6 +355,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_EXTEND_TRACKED_LINES", 5261},
         {"GLOBAL_EXTRAPOLATE_MOVE", 5262},
         {"GLOBAL_NODE_EFFECTS", 5244},
+        {"GLOBAL_BLUR_AND_GLOW_LAYERS", 5264},
+        {"GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT", 5265},
 };
 
 struct NameRow {
@@ -676,6 +678,8 @@ constexpr NameRow kNames[] = {
         {5261, "Extend tracked lines…"},
         {5262, "Extrapolate \\move to the line"},
         {5244, "Node effects"},
+        {5264, "Blur and glow layers…"},
+        {5265, "Build layers with the last values"},
 };
 
 struct DefaultRow {

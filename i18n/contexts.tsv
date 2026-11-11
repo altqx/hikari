@@ -15,6 +15,7 @@ HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups,
 HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the Project, the recent projects and files and their menus
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
 HikariSub.Karaoke	The karaoke check: its window, problems and their details
+HikariSub.Layers	Blur and glow layers: the layer builder window, its status and its repeat command (AU18)
 HikariSub.MainWindow	The main window: title, its title bar (menus, window buttons, the window menu), menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files
 HikariSub.NodeEffects	The Node effects mode: its graph canvas, node inspector, source Lines, preview and Apply

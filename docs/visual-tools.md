@@ -256,6 +256,57 @@ The UI-free parts are shared with AU22 and NE5:
 
 **Preview and commit.** After the drag (at once in the modes without one) the new Lines show over the video through `previewLines`, and `hiddenLines` leaves the originals out of the preview. Handles, values and options still change it. Apply or Enter commits one "Gradient" step through `Gesture::stageReplacement`: each target is commented and its strips follow it (the stops are all commented, and the strips follow the last), or its text is changed in the other modes. The new Lines are selected. Esc drops the preview. A gradient that can't be made says why over the video, and Apply rings the bell.
 
+## Blur and glow layers (AU18)
+
+AU18 ([#852](https://github.com/altqx/hikari/issues/852), owner gate Q240 on 2026-11-11) builds natively what ua.BlurAndGlow, lyger.BorderSplit and NecrosCopy's 3D shadow build: layered copies of each selected Dialogue Line. None of the three is bundled, so there is no byte-identical target. The window is `BlurAndGlowLayersDialog.qml`, which is modeless. It opens from Subtitles > "Blur and glow layers…" (5264), the Grid row menu and the Line editor's text menu. 5265 builds again with the values last built with, which are kept in `typesetting.layerOptions`.
+
+- `layer_builders.h`: `buildLayers` gives one Line's stack. `planLayers` covers the whole selection: the new layers, the skipped Lines, the Lines a stack will cover and the limits. `applyLayerPlan` writes it, and `buildLayerStacks` is the one "Blur and glow layers" step. Tags are read and written with `override_blocks.h`, frame_bake's parser.
+- **Order**, bottom to top: glows in list order, shadow copies farthest first, the second border, the border, then the source. A stack of k Lines takes layers L … L+k−1 and the source moves to L+k. The source keeps its LineId, so its extradata and QC notes stay with it. The built Lines go in just above it in the Grid and carry no extradata. Other Lines' layers never change.
+- **Glow**: every `\blur` takes the glow's blur and the border grows by its Border. `\alpha` and `\3a` rise to its Alpha (`\1a` on a Line without a border), and a colour replaces `\3c` (`\c`). The glow keeps the Line's shadow (Q4) unless Shadow is on, because then the copies are the shadow.
+- **Border**: with Border colour, the border layer's fill is its border (`\c` after each `\3c`, `\1a` after each `\3a`, the Style's after `\r`) and the top gets `\bord0`. With Transparent, the border layer hides its fill and grows by the blur, and the top keeps a fill-coloured border as wide as the blur. Border blur replaces the border layer's `\blur`. During `\fad` the border layer hides its fill (`\1a&HFF&` with `\t` over the fade transition). The second border is the border layer widened, in its own colour (the fill by default), and keeps the shadow.
+- **Shadow**: the steps default to one a pixel of the larger shadow offset. Copy k of N has `\xshad`/`\yshad` × k/N (cut to 2 decimals) and `\1a&HFE&\3a&HFF&`, with `\4c`/`\4a` ramped from the nearest copy to the farthest. The ramp is new. The top drops its shadow.
+- `\clip`, `\move`, `\pos`, `\org`, `\fad`, drawings and the text stay on every layer. Inside `\t`, only what a layer changes is mapped. A Line without a border skips Border, a Line whose shadow is under 1 px skips Shadow, and the status line counts both. Built layers get "Blur where a line has none" (0.6) when a Line has no `\blur` or `\be`.
+- **Limits**: 8 glows, 64 shadow steps and 20 000 built Lines a run.
+- **Preview**: while the window is open, the video shows the selected Lines' stacks through `showVideoSubtitles` (the Template editor's document swap). It follows the options and the selection 100 ms after a change, and closing the window drops it.
+
+### What the scripts write (read, not run)
+
+Sources: `ua.BlurAndGlow.lua` 2.5 (corpus copy, unanimated-Aegisub-Scripts@ade40a212b0a), `lyger.BorderSplit.lua` 1.1.0 (TypesettingTools feed, sha1 caa12243177b44e2e92e61df45029337474606f6), `ua.NecrosCopy.lua` 4.1 (unanimated.github.io/ts/necros.lua; function `shad3`). L = the source Line's layer, i = its row.
+
+#### ua.BlurAndGlow
+
+Every built Line first gets `preprocess`: `\blur<def>` (default 0.6) at the start of the first block when the Line has no `\blur`, and after each `\r`; `\1c` becomes `\c`; a first block with `\t` but no `\3c` before it gets the Style's `\3c`.
+
+| Button / case | Rows after the macro (top row first) | Layers | What each row's text gets |
+|---|---|---|---|
+| Blur / Layers, one border | row i: border, row i+1: top | L, L+1 | **border** (`borderline`): `\c` removed, then `\c` = the `\3c` (Style's 3c when the first block has none; also after each `\r` from that Style), every `\3c&H..&` followed by the same `\c`; "bottom blur" replaces every `\blur` value. **top** (`topline`): `\bord`/`\shad` dropped from `\t`, empty `\t` removed, `\bord0` (every `\bord` → `\bord0`, one at the first block's start if none, after each `\r`), `\xbord`/`\ybord` and `\3c` removed, `\shad<shadow>` + `\4a&HFF&` in the first block (and after `\r`), duplicates collapsed. "keep shadow on top layer" drops the `\4a&HFF&`. |
+| Blur / Layers, double border | 2nd border, 1st border, top | L, L+1, L+2 | **2nd border** (`borderline2`): `\bord` = 2 × border (or border + "2nd b. size"), `\xbord`/`\ybord` doubled, `\3c` = the fill colour (or "2nd b. colour"), `\c` kept. **1st border** as above plus `\4a&HFF&` unless "keep shadow on middle layer". |
+| Blur + Glow, one border | glow, border, top | L, L+1, L+2 | **glow** (`glowlayer`): every `\blur` value → glow blur; `\alpha` and `\3a` raised to at least glow alpha (default 80), `\alpha&H<a>&` added to the first block when it has none (left out when alpha is 00); glow colour, if set, replaces every `\3c` and goes in the first block. Fill and shadow are left as they are. |
+| Blur + Glow, double border | glow, 2nd border, 1st border, top | L … L+3 | the glow is built from the 2nd-border text. |
+| Blur + Glow, no border | glow, top (unchanged) | L, L+1 | the glow uses `\c` / `\1a` instead of `\3c` / `\3a`. |
+| only add glow | glow, the Line unchanged | L, L+1 | |
+| fix `\1a` with fade (default on, 45 ms) | — | — | on the border (and 2nd-border) rows of a Line with `\fad(in,out)`: `\1a&HFF&\t(in−T,in,\1a&H00&)` and `\t(dur−out,dur−out+T,\1a&HFF&)` in the first block. |
+
+The selection stays on the top rows.
+
+#### lyger.BorderSplit ("Duplicate and Blur")
+
+Runs on every Line whose Actor starts `bord` (or `shad`), not on the selection. Modes `s` (default) and `a`; options `g`, `d`. The original is kept as a comment (Actor gets a leading `*`), the new rows are inserted after it with Effect `done`.
+
+| Mode | Rows (top row first) | Layers | Text |
+|---|---|---|---|
+| `s` | comment, border, top | —, L, L+1 | **top**: `\3c`, `\3a`, `\shad`, `\xshad`, `\yshad` removed; every `\bord` outside `\t` → `\bord0` (plus `\blur0.6` if the Line had no blur); `\bord0` at the head if no `\bord`; `\shad0` at the head when the Style has a shadow; empty `\t()` removed. **border**: `\c`, `\1c`, `\1a` removed; `\1c` = `\3c` and `\1a` = `\3a` (head and alongside each); `\blur0.6` at the head if none. |
+| `a` | comment, border, top | —, L, L+1 | **top**: as `s`, but `\3c` = `\1c`, `\3a` = `\1a` and `\bord` = the blur value (a thin border of fill colour). **border**: `\bord` + blur, every `\alpha` → `\3a`, `\1a&HFF&` at the head. |
+| `d` option | comment, 3rd, border, top | —, L, L+1, L+2 | **3rd**: `\3c` = `\1c`; `s`: `\bord` × 2; `a`: `\bord` × 2 + blur and `\1a&HFF&`. The middle row loses its shadow. |
+| `g` option | | | the top row's blur is removed first (only the border blurs). |
+| `shad` actor | comment, shadow, top | —, L, L+1 | **shadow**: `\1c` and `\3c` = `\4c`, alphas likewise, shadow tags removed, `\pos` moved by (`\xshad`, `\yshad`). Marked "temporary" in the source. |
+
+#### ua.NecrosCopy "3D shadow" (`shad3`)
+
+- With no shadow tag, `\shad<Style's shadow>` is put at the start; `\shad<n>` in the first block becomes `\xshad<n>\yshad<n>`; duplicate tags in the first block are collapsed.
+- N = floor(max(|xshad|, |yshad|)) of the first block (outside `\t`). With N < 1 the Line is left as it is.
+- It writes N rows in place of the Line, top row first: the original text with `\xshad`/`\yshad` × 1/N at layer L+N−1, then copies with `\xshad`/`\yshad` × k/N (k = 2 … N, values cut to 2 decimals) at layers L+N−k, each with `\3a&HFF&` and `\1a&HFE&` in the first block (fill nearly and border fully transparent, so only the shadow shows). There is no colour or alpha ramp. The original row is deleted.
+
 ## Edit shapes and Edit tags (PU5)
 PU5 ([#307](https://github.com/altqx/hikari/issues/307), [mockup](https://github.com/altqx/hikari/issues/307#issuecomment-6336250092) approved by the owner 2026-10-22) puts both editors on DG1's frame as modeless, resizable windows (`ShapesEditionDialog.qml`, `AllTagsEditionDialog.qml`, kept where they were left under `shapesEdition` and `allTagsEdition`), one layout for both: the list on the left with New, Duplicate, Delete and ⋯ under it, the selected item's fields on the right, its preview, and a footer with Undo and Redo at the leading edge and Close at the trailing one.
 A click or Up and Down in either list chooses through the editor; the list's highlight follows the editor's selection only. The bar's chosen preset or tag follows a rename (the name typed, Replace, their Undo and Redo, Undo all: the history keeps each step's renames, and Redo brings back the step's own selection), and a change made while another family is shown reaches the drawing tool or Hydra all the same, so it comes back on the same entry, read again. New shape, Take from the active line and the tags preview read the Line editor's pending text, as the video shows it. A window that goes with the one it opened from (fullscreen left, a floating panel hidden) is not closed: the editor and its history stay, the bar showing the dialogs opens it again, and Edit shapes… or Edit tags… brings an open editor's window forward.

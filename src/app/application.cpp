@@ -2365,7 +2365,9 @@ bool Application::showVideoSubtitles()
     if (!m_settings->boolean("video.disableLiveEditing") && activeViews().editorDocument == target && m_video->hasVideo())
         draft = editor().draftDocument();
     std::optional<core::Document> templated;
-    if (nodeEffects().videoPreview()) {
+    if (m_layerPreview) {
+        templated = layerPreviewDocument(draft ? *draft : session->document(), session->selection().selected);
+    } else if (nodeEffects().videoPreview()) {
         templated = nodeEffects().videoDocument(draft ? *draft : session->document());
     } else if (templateEditor().videoPreview()) {
         const auto &video = m_video->session();

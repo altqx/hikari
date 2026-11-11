@@ -5084,9 +5084,9 @@
    "legacy": [],
    "surfaces": [
     "grid-menu",
-    "menu:subtitles"
-   ],
-   "pending": "AU18 #852"
+    "menu:subtitles",
+    "text-field-menu"
+   ]
   },
   {
    "role": "layers-repeat",
@@ -5098,8 +5098,7 @@
    "surfaces": [
     "grid-menu",
     "menu:subtitles"
-   ],
-   "pending": "AU18 #852"
+   ]
   },
   {
    "role": "snap-start-to-previous-keyframe",

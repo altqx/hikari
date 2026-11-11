@@ -505,6 +505,15 @@ public:
     Q_INVOKABLE QString extendTrackedLines(int frames, bool after, bool origin);
     // {text} or {error}.
     Q_INVOKABLE QVariantMap readTrackingFile(const QUrl &url) const;
+    // {state, text, canApply} for the dialog's options.
+    Q_INVOKABLE QVariantMap checkLayerBuilders(const QVariantMap &options) const;
+    // The video shows the selected Lines' stacks until cleared.
+    Q_INVOKABLE void setLayerPreview(const QVariantMap &options);
+    Q_INVOKABLE void clearLayerPreview();
+    // Empty when built, else why not.
+    Q_INVOKABLE QString applyLayerBuilders(const QVariantMap &options);
+    // With the options the dialog last built with; {ok, text}.
+    Q_INVOKABLE QVariantMap repeatLayerBuilders();
     // choice 1 sets the video's value, 2 (missingLayoutRes) the PlayRes; false when the question is stale.
     Q_INVOKABLE bool answerVideoProperty(const QVariantMap &question, int choice);
     // The question's setting then does what `choice` did: 0 leaves things as they are.
@@ -1027,6 +1036,8 @@ private:
     void storeRecent();
     // MUST KILL: returns whether the Document changed since the video last showed it.
     bool showVideoSubtitles();
+    std::optional<core::Document> layerPreviewDocument(const core::Document &doc,
+                                                       const std::set<core::LineId> &selection) const;
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
@@ -1153,6 +1164,7 @@ private:
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     bool m_videoShowsTemplate = false;
+    std::optional<QVariantMap> m_layerPreview;
     std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
