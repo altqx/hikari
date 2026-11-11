@@ -450,6 +450,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>제안: %1</translation>
     </message>
@@ -6110,6 +6114,14 @@ Failed to copy %2 fonts.</source>
         <translation>취소</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>흐림 및 글로우 레이어…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>마지막 값으로 레이어 만들기</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+클릭으로 단축키를 설정합니다</translation>
     </message>
@@ -7430,70 +7442,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Snap start to the previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap start to the next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap end to the previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap end to the next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-in to the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-in from the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-out to the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-out from the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move start one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move start one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move end one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move end one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend the previous line to this start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend the next line to this end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Timing assistant</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept the timing assistant’s suggestion</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -7911,6 +7859,269 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Accept all suggestions</source>
         <translation>모든 제안 수락</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>글로우, 테두리 또는 그림자를 켜세요.</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>아래에 레이어를 만들 줄을 선택하세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>글로우 레이어는 한 번에 최대 %n개까지 만들 수 있습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>그림자는 최대 %n단계까지 가능합니다. 단계를 줄이세요.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>%n줄을 넘게 만들게 됩니다. 줄을 더 적게 선택하세요.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>선택한 줄에 만들 것이 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>%1번 줄 아래에 %n줄을 만듭니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>레이어 %1에서 레이어 %2(으)로 올라갑니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>선택한 줄 아래에 %n줄을 만듭니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>각 줄은 그 아래에 만든 줄 수만큼 위로 올라갑니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n줄은 테두리가 없어 테두리를 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n줄은 그림자가 1px 미만이라 그림자를 건너뜁니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>%1번 줄(레이어 %2)은 %3번 줄과 함께 표시되며 그 위에 있었습니다. 만들고 나면 %3번 줄의 스택이 이 줄을 덮습니다.</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>여기에서는 레이어를 만들 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>값을 정하려면 ‘흐림 및 글로우 레이어…’에서 레이어를 한 번 만드세요.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>레이어 줄 %n개를 만들었습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>흐림 및 글로우 레이어</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>글로우</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>각 줄 아래의 흐린 복사본</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>알파</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>글로우 %1 흐림</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>글로우 %1 테두리, 줄의 테두리에 더함</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>글로우 %1 색상: 줄의 테두리 색상</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>글로우 %1 색상</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>글로우 %1 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>글로우 %1 제거</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>글로우 레이어 추가</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>채우기와 따로 흐리게 한, 별도 레이어의 테두리</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>테두리 아래</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>테두리 색상</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>투명</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>채우기 색의 얇은 테두리가 흐림 아래의 틈을 메웁니다</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>테두리 흐림</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>줄 값</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>채우기는 줄의 흐림을 유지합니다.</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>페이드 중에 테두리 아래 채우기 숨기기</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>페이드 전환, ms</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>ms</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>두 번째 테두리</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>두 번째 테두리 두께</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>두 번째 테두리 색상: 줄의 채우기 색상</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>두 번째 테두리 색상</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>복사본을 쌓은 3D 그림자</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>단계</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>자동: 각 줄의 그림자 오프셋 1픽셀마다 하나</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>가장 가까운 복사본: 줄의 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>가장 가까운 복사본 색상</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>가장 먼 복사본: 줄의 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>가장 먼 복사본 색상</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>가장 가까운 복사본 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>가장 먼 복사본 알파, 16진수</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>흐림이 없는 줄의 흐림</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>영상에서 미리 보기</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>레이어 만들기</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
     </message>
 </context>
 <context>
@@ -8442,10 +8653,6 @@ Failed to copy %2 fonts.</source>
         <translation>정렬 / 태그가 없는 글자</translation>
     </message>
     <message>
-        <source>No line changed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Open subtitle file</source>
         <translation>자막 파일 열기</translation>
     </message>
@@ -8594,136 +8801,20 @@ Failed to copy %2 fonts.</source>
         <translation>조건식으로 줄을 선택합니다</translation>
     </message>
     <message>
-        <source>Timing helpers</source>
-        <translation type="unfinished"></translation>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>선택한 줄 아래에 글로우, 테두리, 그림자 레이어를 만듭니다</translation>
     </message>
     <message>
-        <source>Moves the start of each selected line to the keyframe before it</source>
-        <translation type="unfinished"></translation>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>흐림 및 글로우 레이어…[&amp;B]</translation>
     </message>
     <message>
-        <source>Start to previous keyframe</source>
-        <translation type="unfinished"></translation>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>‘흐림 및 글로우 레이어’가 마지막으로 쓴 값으로 레이어를 다시 만듭니다</translation>
     </message>
     <message>
-        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start to next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End to previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line to the keyframe after it</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End to next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-in</source>
-        <translation type="unfinished">도입부 추가</translation>
-    </message>
-    <message>
-        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-in</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-out</source>
-        <translation type="unfinished">종결부 추가</translation>
-    </message>
-    <message>
-        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ends the line before the active line where the active line starts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend previous line to this start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Starts the line after the active line where the active line ends</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend next line to this end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Steps through the lines one at a time with a suggested start and end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Timing assistant</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept assistant suggestion</source>
-        <translation type="unfinished"></translation>
+        <source>Build layers with the &amp;last values</source>
+        <translation>마지막 값으로 레이어 만들기[&amp;L]</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -10363,6 +10454,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>각 음절의 복제 열두 개가 주변의 무작위 위치로 날아가며 사라집니다.</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>소리 맥박</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>각 음절이 불리는 동안 소리의 크기에 따라 커집니다. 오디오가 열려 있어야 합니다.</translation>
+    </message>
+    <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10578,6 +10693,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10599,7 +10730,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished">페이드</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>\fad after `before`.</source>
@@ -10619,6 +10750,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10735,6 +10874,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10940,6 +11095,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">소리</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -14198,6 +14357,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>프로젝트 열기</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>내 설정</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>프로젝트</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>내 설정 사용 중</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>이 프로젝트에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>project.local.toml에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>내 설정 사용</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>이 프로젝트에서 덮어씀</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>project.toml에 쓸 수 없어 일부 프로젝트 설정이 저장되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>파일을 저장하면 켜 둔 항목이 Script Info에 기록됩니다.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>저장할 때 바꾸기 전에 묻기</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>이 프로젝트에는 자체 스크립트나 플러그인 설정이 있습니다. 실행하려면 “%1”을(를) 신뢰하세요.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>폴더 신뢰</translation>
     </message>
 </context>
 <context>
@@ -19551,10 +19758,6 @@ Styles deleted:
         <translation>%1ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The rules need a video.</source>
         <translation>규칙을 쓰려면 영상이 필요합니다.</translation>
     </message>
@@ -19629,14 +19832,6 @@ Styles deleted:
     <message>
         <source>Open keyframes…</source>
         <translation>키 프레임 열기…</translation>
-    </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -19753,114 +19948,6 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>열린 영상이 없어 시간을 프레임 안에서 가운데 맞추지 않았습니다</translation>
-    </message>
-    <message>
-        <source>Already on a keyframe.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Snapped to the keyframe %n frame(s) earlier.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Snapped to the keyframe %n frame(s) later.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lead-in of %1 ms, linked to the previous line.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead-in of %1 ms.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead-out of %1 ms.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No rule applies.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linked: it ended %1 ms before this start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linked: it overlapped this line by %1 ms.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No more lines. Accepted %1, skipped %2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a line to time.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1 of %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Now</source>
-        <translation type="unfinished">현재</translation>
-    </message>
-    <message>
-        <source>Suggested</source>
-        <translation type="unfinished">제안됨</translation>
-    </message>
-    <message>
-        <source>Why</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Suggested start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Suggested end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Previous end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept (Enter)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">완료</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation type="unfinished">변경</translation>
-    </message>
-    <message>
-        <source>Change the suggested times (Alt+C)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Skip</source>
-        <translation type="unfinished">건너뛰기</translation>
-    </message>
-    <message>
-        <source>Skip this line (Alt+S)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

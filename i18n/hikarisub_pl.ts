@@ -452,6 +452,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>Propozycja: %1</translation>
     </message>
@@ -6222,6 +6226,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Anuluj</translation>
     </message>
     <message>
+        <source>Blur and glow layers…</source>
+        <translation>Warstwy rozmycia i poświaty…</translation>
+    </message>
+    <message>
+        <source>Build layers with the last values</source>
+        <translation>Zbuduj warstwy z ostatnimi wartościami</translation>
+    </message>
+    <message>
         <source>Shift+click to set a shortcut</source>
         <translation>Shift+kliknięcie ustawia skrót</translation>
     </message>
@@ -7542,70 +7554,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Snap start to the previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap start to the next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap end to the previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap end to the next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-in to the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-in from the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-out to the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-out from the selected lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move start one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move start one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move end one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move end one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend the previous line to this start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend the next line to this end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Timing assistant</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept the timing assistant’s suggestion</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -8027,6 +7975,285 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Accept all suggestions</source>
         <translation>Akceptuj wszystkie sugestie</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Layers</name>
+    <message>
+        <source>Turn on glow, border or shadow.</source>
+        <translation>Włącz poświatę, obwódkę lub cień.</translation>
+    </message>
+    <message>
+        <source>Select the lines to build layers under.</source>
+        <translation>Zaznacz linijki, pod którymi mają powstać warstwy.</translation>
+    </message>
+    <message numerus="yes">
+        <source>At most %n glow layer(s) can be built at once.</source>
+        <translation>
+            <numerusform>Naraz można zbudować najwyżej %n warstwę poświaty.</numerusform>
+            <numerusform>Naraz można zbudować najwyżej %n warstwy poświaty.</numerusform>
+            <numerusform>Naraz można zbudować najwyżej %n warstw poświaty.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>A shadow can have at most %n step(s). Set fewer steps.</source>
+        <translation>
+            <numerusform>Cień może mieć najwyżej %n krok. Ustaw mniej kroków.</numerusform>
+            <numerusform>Cień może mieć najwyżej %n kroki. Ustaw mniej kroków.</numerusform>
+            <numerusform>Cień może mieć najwyżej %n kroków. Ustaw mniej kroków.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>That builds more than %n line(s). Select fewer lines.</source>
+        <translation>
+            <numerusform>To zbuduje ponad %n linijkę. Zaznacz mniej linijek.</numerusform>
+            <numerusform>To zbuduje ponad %n linijki. Zaznacz mniej linijek.</numerusform>
+            <numerusform>To zbuduje ponad %n linijek. Zaznacz mniej linijek.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing to build for the selected lines.</source>
+        <translation>Dla zaznaczonych linijek nie ma czego budować.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under line %1.</source>
+        <translation>
+            <numerusform>Buduje %n linijkę pod linijką %1.</numerusform>
+            <numerusform>Buduje %n linijki pod linijką %1.</numerusform>
+            <numerusform>Buduje %n linijek pod linijką %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>It moves up from layer %1 to layer %2.</source>
+        <translation>Przesuwa się z warstwy %1 na warstwę %2.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Builds %n line(s) under the selected lines.</source>
+        <translation>
+            <numerusform>Buduje %n linijkę pod zaznaczonymi linijkami.</numerusform>
+            <numerusform>Buduje %n linijki pod zaznaczonymi linijkami.</numerusform>
+            <numerusform>Buduje %n linijek pod zaznaczonymi linijkami.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Each moves up by the lines built under it.</source>
+        <translation>Każda przesuwa się w górę o liczbę linijek zbudowanych pod nią.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have no border and skip Border.</source>
+        <translation>
+            <numerusform>%n linijka nie ma obwódki i pomija Obwódkę.</numerusform>
+            <numerusform>%n linijki nie mają obwódki i pomijają Obwódkę.</numerusform>
+            <numerusform>%n linijek nie ma obwódki i pomija Obwódkę.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) have a shadow under 1 px and skip Shadow.</source>
+        <translation>
+            <numerusform>%n linijka ma cień poniżej 1 px i pomija Cień.</numerusform>
+            <numerusform>%n linijki mają cień poniżej 1 px i pomijają Cień.</numerusform>
+            <numerusform>%n linijek ma cień poniżej 1 px i pomija Cień.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Line %1 (layer %2) is shown with line %3 and was above it. Once built, line %3’s stack covers it.</source>
+        <translation>Linijka %1 (warstwa %2) jest wyświetlana razem z linijką %3 i była nad nią. Po zbudowaniu stos linijki %3 ją zakryje.</translation>
+    </message>
+    <message>
+        <source>The layers can’t be built here.</source>
+        <translation>Tutaj nie można zbudować warstw.</translation>
+    </message>
+    <message>
+        <source>Build layers once from Blur and glow layers… to choose the values.</source>
+        <translation>Aby wybrać wartości, zbuduj raz warstwy w oknie „Warstwy rozmycia i poświaty…”.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Built %n layer line(s)</source>
+        <translation>
+            <numerusform>Zbudowano %n linijkę warstw</numerusform>
+            <numerusform>Zbudowano %n linijki warstw</numerusform>
+            <numerusform>Zbudowano %n linijek warstw</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Blur and glow layers</source>
+        <translation>Warstwy rozmycia i poświaty</translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation>Linijka</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>Poświata</translation>
+    </message>
+    <message>
+        <source>Blurred copies under each line</source>
+        <translation>Rozmyte kopie pod każdą linijką</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Rozmycie</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>Kolor</translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>Alfa</translation>
+    </message>
+    <message>
+        <source>Glow %1 blur</source>
+        <translation>Rozmycie poświaty %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 border, added to the line’s</source>
+        <translation>Obwódka poświaty %1, dodawana do obwódki linijki</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour: the line’s border colour</source>
+        <translation>Kolor poświaty %1: kolor obwódki linijki</translation>
+    </message>
+    <message>
+        <source>Glow %1 colour</source>
+        <translation>Kolor poświaty %1</translation>
+    </message>
+    <message>
+        <source>Glow %1 alpha, hex</source>
+        <translation>Alfa poświaty %1, szesnastkowo</translation>
+    </message>
+    <message>
+        <source>Remove glow %1</source>
+        <translation>Usuń poświatę %1</translation>
+    </message>
+    <message>
+        <source>Add a glow layer</source>
+        <translation>Dodaj warstwę poświaty</translation>
+    </message>
+    <message>
+        <source>The border on its own layer, blurred apart from the fill</source>
+        <translation>Obwódka na osobnej warstwie, rozmywana niezależnie od wypełnienia</translation>
+    </message>
+    <message>
+        <source>Under the border</source>
+        <translation>Pod obwódką</translation>
+    </message>
+    <message>
+        <source>Border colour</source>
+        <translation>Kolor obwódki</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>Przezroczyste</translation>
+    </message>
+    <message>
+        <source>A thin fill-coloured border closes the gap under the blur</source>
+        <translation>Cienka obwódka w kolorze wypełnienia zamyka szczelinę pod rozmyciem</translation>
+    </message>
+    <message>
+        <source>Border blur</source>
+        <translation>Rozmycie obwódki</translation>
+    </message>
+    <message>
+        <source>Line’s</source>
+        <translation>Z linijki</translation>
+    </message>
+    <message>
+        <source>The fill keeps the line’s blur.</source>
+        <translation>Wypełnienie zachowuje rozmycie linijki.</translation>
+    </message>
+    <message>
+        <source>Hide the fill under the border during fades</source>
+        <translation>Ukryj wypełnienie pod obwódką podczas zanikania</translation>
+    </message>
+    <message>
+        <source>Fade transition, ms</source>
+        <translation>Przejście zanikania, ms</translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation>ms</translation>
+    </message>
+    <message>
+        <source>Second border</source>
+        <translation>Druga obwódka</translation>
+    </message>
+    <message>
+        <source>Second border width</source>
+        <translation>Grubość drugiej obwódki</translation>
+    </message>
+    <message>
+        <source>Second border colour: the line’s fill colour</source>
+        <translation>Kolor drugiej obwódki: kolor wypełnienia linijki</translation>
+    </message>
+    <message>
+        <source>Second border colour</source>
+        <translation>Kolor drugiej obwódki</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Cień</translation>
+    </message>
+    <message>
+        <source>A 3D shadow of stacked copies</source>
+        <translation>Cień 3D z nałożonych kopii</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>Kroki</translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation>Automatycznie</translation>
+    </message>
+    <message>
+        <source>Auto: one a pixel of each line’s shadow offset</source>
+        <translation>Automatycznie: jeden na każdy piksel przesunięcia cienia linijki</translation>
+    </message>
+    <message>
+        <source>Nearest copy: the line’s shadow colour</source>
+        <translation>Najbliższa kopia: kolor cienia linijki</translation>
+    </message>
+    <message>
+        <source>Nearest copy colour</source>
+        <translation>Kolor najbliższej kopii</translation>
+    </message>
+    <message>
+        <source>Farthest copy: the line’s shadow colour</source>
+        <translation>Najdalsza kopia: kolor cienia linijki</translation>
+    </message>
+    <message>
+        <source>Farthest copy colour</source>
+        <translation>Kolor najdalszej kopii</translation>
+    </message>
+    <message>
+        <source>Nearest copy alpha, hex</source>
+        <translation>Alfa najbliższej kopii, szesnastkowo</translation>
+    </message>
+    <message>
+        <source>Farthest copy alpha, hex</source>
+        <translation>Alfa najdalszej kopii, szesnastkowo</translation>
+    </message>
+    <message>
+        <source>Blur where a line has none</source>
+        <translation>Rozmycie dla linijek bez rozmycia</translation>
+    </message>
+    <message>
+        <source>Preview on video</source>
+        <translation>Podgląd na wideo</translation>
+    </message>
+    <message>
+        <source>Build layers</source>
+        <translation>Zbuduj warstwy</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>
@@ -8560,10 +8787,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sortuj według tekstu bez tagów</translation>
     </message>
     <message>
-        <source>No line changed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Open subtitle file</source>
         <translation>Otwórz plik napisów</translation>
     </message>
@@ -8712,136 +8935,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacza linijki według wyrażeń</translation>
     </message>
     <message>
-        <source>Timing helpers</source>
-        <translation type="unfinished"></translation>
+        <source>Builds glow, border and shadow layers under the selected lines</source>
+        <translation>Buduje warstwy poświaty, obwódki i cienia pod zaznaczonymi linijkami</translation>
     </message>
     <message>
-        <source>Moves the start of each selected line to the keyframe before it</source>
-        <translation type="unfinished"></translation>
+        <source>&amp;Blur and glow layers…</source>
+        <translation>&amp;Warstwy rozmycia i poświaty…</translation>
     </message>
     <message>
-        <source>Start to previous keyframe</source>
-        <translation type="unfinished"></translation>
+        <source>Builds the layers again with the values Blur and glow layers last built with</source>
+        <translation>Ponownie buduje warstwy z wartościami, których ostatnio użyto w oknie „Warstwy rozmycia i poświaty”</translation>
     </message>
     <message>
-        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start to next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End to previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line to the keyframe after it</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End to next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-in</source>
-        <translation type="unfinished">Dodaj wstęp</translation>
-    </message>
-    <message>
-        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-in</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add lead-out</source>
-        <translation type="unfinished">Dodaj zakończenie</translation>
-    </message>
-    <message>
-        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove lead-out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ends the line before the active line where the active line starts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend previous line to this start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Starts the line after the active line where the active line ends</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend next line to this end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Steps through the lines one at a time with a suggested start and end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Timing assistant</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept assistant suggestion</source>
-        <translation type="unfinished"></translation>
+        <source>Build layers with the &amp;last values</source>
+        <translation>Zbuduj warstwy z &amp;ostatnimi wartościami</translation>
     </message>
     <message>
         <source>Notes from a QC pass, kept in the file, with the lines they mark</source>
@@ -10509,6 +10616,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Dwanaście kopii każdej sylaby wylatuje w losowe miejsca wokół niej i znika.</translation>
     </message>
     <message>
+        <source>Audio pulse</source>
+        <translation>Puls dźwięku</translation>
+    </message>
+    <message>
+        <source>Each syllable grows with how loud the audio is while it is sung. Needs audio open.</source>
+        <translation>Każda sylaba rośnie wraz z głośnością dźwięku, gdy jest śpiewana. Wymaga otwartego dźwięku.</translation>
+    </message>
+    <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10724,6 +10855,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10745,7 +10892,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished">Zanikanie</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>\fad after `before`.</source>
@@ -10765,6 +10912,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The colour at progress (0 to 1) along evenly spaced stops.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio peaks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio’s level over the unit’s span, or from start to end (absolute ms), read as the Hikari API’s audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10881,6 +11036,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The area’s height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s start; null: the unit’s start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11086,6 +11257,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Colours</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audio</translation>
     </message>
     <message>
         <source>Drawings</source>
@@ -14364,6 +14539,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>Otwórz projekt</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>Projekt</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>Używa Twoich</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>Ustawione w tym projekcie</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>Ustawione w project.local.toml</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>Użyj Twoich</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>Zastąpione w tym projekcie</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>Nie udało się zapisać project.toml, więc część ustawień projektu nie została zapisana.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>Zapisanie pliku wpisuje włączone pola do jego Script Info.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>Pytaj przed ich zmianą przy zapisie</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>Ten projekt ma własne skrypty lub ustawienia wtyczek. Zaufaj “%1”, aby je uruchomić.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>Zaufaj folderowi</translation>
     </message>
 </context>
 <context>
@@ -19853,10 +20076,6 @@ Usunięte style:
         <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The rules need a video.</source>
         <translation>Reguły wymagają wideo.</translation>
     </message>
@@ -19931,14 +20150,6 @@ Usunięte style:
     <message>
         <source>Open keyframes…</source>
         <translation>Otwórz klatki kluczowe…</translation>
-    </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -20055,118 +20266,6 @@ Usunięte style:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>Czasy nie zostały wyśrodkowane w klatkach: nie otwarto wideo</translation>
-    </message>
-    <message>
-        <source>Already on a keyframe.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Snapped to the keyframe %n frame(s) earlier.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>Snapped to the keyframe %n frame(s) later.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Lead-in of %1 ms, linked to the previous line.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead-in of %1 ms.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lead-out of %1 ms.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No rule applies.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linked: it ended %1 ms before this start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linked: it overlapped this line by %1 ms.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No more lines. Accepted %1, skipped %2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select a line to time.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1 of %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Now</source>
-        <translation type="unfinished">Obecnie</translation>
-    </message>
-    <message>
-        <source>Suggested</source>
-        <translation type="unfinished">Sugestia</translation>
-    </message>
-    <message>
-        <source>Why</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Suggested start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Suggested end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Previous end</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept (Enter)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">Gotowe</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation type="unfinished">Zmiana</translation>
-    </message>
-    <message>
-        <source>Change the suggested times (Alt+C)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Skip</source>
-        <translation type="unfinished">Pomiń</translation>
-    </message>
-    <message>
-        <source>Skip this line (Alt+S)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

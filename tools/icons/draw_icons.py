@@ -1271,7 +1271,7 @@ icon("tool-text-on-path", "Text on path", [], [VISUAL],
 
 icon("reinstall-scripts", "Reinstall scripts", [], ["automation-reset"], SCRIPT_CUT + DOWNLOAD_BADGE)
 
-icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS],
+icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS, "text-field-menu"],
      LAYERS_TOP + accent(stroke("M1.5 8l6.5 3.5L14.5 8M1.5 11l6.5 3.5 6.5-3.5")))
 icon("layers-repeat", "Repeat blur and glow layers", [], [GRIDMENU, SUBS],
      solid("M6 1.5l4.5 2.5L6 6.5 1.5 4z") + stroke("M1.5 6.5l4.5 2.5 2.5-1.25M1.5 9l4.5 2.5 1.5-.75") + REPEAT_BADGE)
@@ -1409,7 +1409,6 @@ NOT_REPLACED = {
 PENDING = {}
 for card, roles in {
     "AI2 #430": ["review-panel"],
-    "PJ3 #771": ["trust"],
     "PJ4 #772": ["explorer", "new-subtitle-file", "show-all-files", "group-by-name"],
     "PJ5 #773": ["mine", "copy-to-tier", "move-to-tier"],
     "PJ8 #776": ["untrusted"],
@@ -1425,7 +1424,6 @@ for card, roles in {
     "AU11 #846": ["track-colour", "find-fade"],
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
-    "AU18 #852": ["layers", "layers-repeat"],
     "AU20 #854": ["line-break-insert", "line-break-left", "line-break-right", "line-break-remove", "change-case",
                   "case-upper", "case-lower", "case-title", "case-sentence", "fullwidth", "halfwidth", "dialogue-swap"],
     "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",

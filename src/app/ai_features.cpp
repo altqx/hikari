@@ -75,6 +75,20 @@ struct AiFeatures::Live {
     QTimer pollTimer;
 };
 
+namespace {
+
+/// The agents Qt can start here. Codex needs a tools channel its AppContainer can reach on Windows (#931).
+QString agentCli(const QString &agent)
+{
+#ifdef Q_OS_WIN
+    if (agent == QLatin1String("codex"))
+        return {};
+#endif
+    return backends::ai::findAgentCli(agent);
+}
+
+}
+
 AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *api, const QString &)
 {
     const QString ai = userFolder + QStringLiteral("/ai");
@@ -118,16 +132,17 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
         return aiAutoUpdateOffByPolicy(qEnvironmentVariable("HIKARI_AI_AUTO_UPDATE"),
                                        QStringLiteral("/etc/hikarisub/policy.json"));
     };
-    ports.agents = [ai](backends::ai::AgentBroker &broker) {
+    ports.agents = [ai](backends::ai::AgentBroker &broker, application::ai::KeyStore &keys) {
         const QString agents = ai + QStringLiteral("/agents");
-        if (const QString claude = QStandardPaths::findExecutable(QStringLiteral("claude")); !claude.isEmpty())
+        if (const QString claude = agentCli(QStringLiteral("claude")); !claude.isEmpty())
             broker.add("claude", backends::ai::claudeAgent(claude, QDir::homePath(), agents + QStringLiteral("/claude")));
-        if (const QString codex = QStandardPaths::findExecutable(QStringLiteral("codex")); !codex.isEmpty())
-            if (auto spec = backends::ai::codexAgent(codex, agents + QStringLiteral("/codex/home"),
-                                                     agents + QStringLiteral("/codex/work")))
+        if (const QString codex = agentCli(QStringLiteral("codex")); !codex.isEmpty())
+            if (auto spec = backends::ai::codexAgent(
+                    codex, agents + QStringLiteral("/codex/home"), agents + QStringLiteral("/codex/work"),
+                    std::make_shared<backends::ai::CodexLease>(keys, agents + QStringLiteral("/codex/home"))))
                 broker.add("codex", std::move(*spec));
     };
-    ports.agentOnPath = [](const QString &agent) { return !QStandardPaths::findExecutable(agent).isEmpty(); };
+    ports.agentOnPath = [](const QString &agent) { return !agentCli(agent).isEmpty(); };
     ports.signIn = [](application::ai::KeyStore &keys) { return std::make_unique<backends::ai::AiSignIn>(keys); };
     ports.findAgent = [](const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)> done) {
         backends::ai::probeAgentCli(agent, std::move(done));
@@ -358,7 +373,7 @@ backends::ai::AiSidecarHost *AiFeatures::buildHost()
                 m_live->relay->attach(*m_live->host);
                 m_live->agents = std::make_unique<backends::ai::AgentBroker>();
                 if (m_ports.agents)
-                    m_ports.agents(*m_live->agents);
+                    m_ports.agents(*m_live->agents, *m_live->keys);
                 m_live->agents->attach(*m_live->host);
                 watchHost(m_live->host.get(), install->version);
             }

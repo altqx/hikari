@@ -21,4 +21,25 @@ bool WindowSettings::overridden(std::string_view id) const
     return setting && m_storage.fromProject(*setting);
 }
 
+std::optional<application::SettingValue> WindowSettings::ProjectWrites::read(const application::SettingDefinition &setting) const
+{
+    return m_window.m_storage.read(setting);
+}
+
+void WindowSettings::ProjectWrites::write(const application::SettingDefinition &setting, const application::SettingValue &value)
+{
+    if (!m_window.m_project)
+        return;
+    m_window.m_project->write(setting, value);
+    failed = failed || m_window.m_project->lastWriteFailed();
+}
+
+void WindowSettings::ProjectWrites::remove(const application::SettingDefinition &setting)
+{
+    if (!m_window.m_project)
+        return;
+    m_window.m_project->remove(setting);
+    failed = failed || m_window.m_project->lastWriteFailed();
+}
+
 }

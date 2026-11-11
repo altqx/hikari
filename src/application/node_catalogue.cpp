@@ -128,6 +128,18 @@ std::vector<NodeSpec> makeCatalogue()
                   atLeast(field("width", FieldKind::Number, Json(100), "The area's width."), 0),
                   atLeast(field("height", FieldKind::Number, Json(100), "The area's height."), 0),
                   field("seed", FieldKind::Integer, Json(0), "Added to the graph's seed.")}});
+    c.push_back({"units.highlights", "units",
+                 "Each syllable or character once per highlight, as the templater's multi gives it: the "
+                 "highlight's start, end and duration. A furigana or Line unit has one, its own.",
+                 {port("units", Units)},
+                 domainPorts({port("index", Number), port("count", Number)}),
+                 {field("skip_blank", FieldKind::Bool, Json(true), "Leave out highlights with no duration.")}});
+    c.push_back({"units.inline_fx", "units",
+                 "Only the units whose inline-fx ({\\-name}, kept until the next one) is `fx`, as the templater's "
+                 "fx modifier keeps them. Characters have their syllable's; a Line unit has none.",
+                 {port("units", Units)},
+                 {port("units", Units)},
+                 {field("fx", FieldKind::Text, Json(""), "The inline-fx name; empty: units without one.")}});
     c.push_back({"units.info", "units",
                  "What the karaoke templater's $variables give for the current unit and its Line, rounded as the "
                  "templater rounds them. Times of a syllable are from its Line's start.",
@@ -265,6 +277,12 @@ std::vector<NodeSpec> makeCatalogue()
                  {field("colours", FieldKind::List, Json::array({Json("#FFFFFF"), Json("#000000")}),
                         "The stops, as #RRGGBB, at least one."),
                   field("progress", FieldKind::Number, Json(0), "How far along.")}});
+    c.push_back({"audio.peaks", "audio",
+                 "The audio's level over the unit's span, or from start to end (absolute ms), read as the Hikari API's audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.",
+                 {port("start", Time), port("end", Time)},
+                 {port("level", Number), port("low", Number), port("high", Number)},
+                 {field("start", FieldKind::Time, Json(), "The span's start; null: the unit's start."),
+                  field("end", FieldKind::Time, Json(), "The span's end; null: the unit's end.")}});
     c.push_back({"drawings.shape", "drawings", "A vector drawing.", {}, {port("drawing", Drawing)},
                  {field("shape", FieldKind::Text, Json("m 0 0 l 10 0 10 10 0 10"), "The drawing commands."),
                   atLeast(field("scale", FieldKind::Integer, Json(1), "The \\p scale."), 1)}});
