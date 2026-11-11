@@ -450,6 +450,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>제안: %1</translation>
     </message>

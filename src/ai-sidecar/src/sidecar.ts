@@ -1,8 +1,9 @@
 import { AgentSessions } from "./agent/session";
 import { ClaudeSession } from "./agents/claude";
+import { CodexSession } from "./agents/codex";
 import { AgentRelay } from "./agents/relay";
 import { type ClaudeAgentSdk, loadClaudeAgentSdk } from "./agents/vendor";
-import { McpServer } from "./mcp/server";
+import { McpServer, type ServerInfo } from "./mcp/server";
 import { ErrorCode, kProtocolVersion, kRequiredApiVersion, Method, type ApiCallParams, type InitializeParams,
     type InitializeResult, type McpClosedParams, type McpMessageParams, type McpMessageResult, type McpVia,
     type SessionIdParams, type SessionNewParams, type SessionPromptParams, type SessionSteerParams,
@@ -18,6 +19,8 @@ import { Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls } from "./tools/toolset";
 import { WebSearch, whileOn } from "./tools/web";
+
+const kChannelPrefix = "channel:";
 
 export interface Build {
     buildId: string;
@@ -113,6 +116,8 @@ export class Sidecar {
     catalogue: Catalogue = kCatalogue;
     readonly mcp: McpServer;
     readonly sessions: AgentSessions;
+    /** Each agent session's private tools channel, by connection. */
+    private readonly channels = new Map<string, McpServer>();
     private initialized = false;
 
     private claudeSdk?: Promise<ClaudeAgentSdk>;
@@ -140,6 +145,12 @@ export class Sidecar {
                 mcp: new McpServer(() => new HikariApi(peer, undefined, id), info, () => this.catalogue),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
+            }),
+            codex: (id, params, send) => new CodexSession(id, params, {
+                spawn: (session) => agentRelay.start("codex", { args: [], env: {}, session }),
+                kindOf: (tool) => this.kindOf(tool),
+                send,
+                version: build.version,
             }) },
             (id) => new Skills(new HikariApi(peer, undefined, id)));
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
@@ -179,13 +190,30 @@ export class Sidecar {
             const p = (params ?? {}) as Partial<McpMessageParams>;
             if (typeof p.connection !== "string" || typeof p.text !== "string")
                 throw new RpcError(ErrorCode.invalidParams, "_hikari/mcp.message needs a connection and a text");
-            return this.mcp.message(p.connection, p.text, p.http);
+            return this.mcpFor(p.connection, info).message(p.connection, p.text, p.http);
         });
         peer.onNotification(Method.mcpClosed, (params) => {
             const connection = (params as Partial<McpClosedParams> | null)?.connection;
-            if (typeof connection === "string")
-                this.mcp.closed(connection);
+            if (typeof connection !== "string")
+                return;
+            (this.channels.get(connection) ?? this.mcp).closed(connection);
+            this.channels.delete(connection);
         });
+    }
+
+    /** A `channel:<session>` connection is that session's agent, and its calls are the session's. */
+    private mcpFor(connection: string, info: ServerInfo): McpServer {
+        if (!connection.startsWith(kChannelPrefix))
+            return this.mcp;
+        const session = connection.slice(kChannelPrefix.length);
+        if (!this.sessions.has(session))
+            throw new RpcError(ErrorCode.invalidParams, `No session is named "${session}"`);
+        let channel = this.channels.get(connection);
+        if (!channel) {
+            channel = new McpServer(() => new HikariApi(this.peer, undefined, session), info, () => this.catalogue);
+            this.channels.set(connection, channel);
+        }
+        return channel;
     }
 
     private kindOf(tool: string): ToolCallKind {

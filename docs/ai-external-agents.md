@@ -28,6 +28,18 @@ The sidecar's assets never contain `@anthropic-ai/claude-agent-sdk`, and the [re
 
 Each version is fetched once. The SDK's `sdk.mjs` bundles what it needs, so its peer packages aren't fetched, and the build doesn't install them either (`peer = false` in `bunfig.toml`). Its optional native packages, which hold a `claude` of their own, are never fetched, here or in the build (`bun ci --omit=optional`). The weekly `AI sidecar bump` moves the version once a newer one is 7 days old.
 
+## Codex
+
+Codex runs as `codex app-server`, on the user's own `codex` and a ChatGPT sign-in that belongs to HikariSub.
+
+- **Picking it.** When Qt finds `codex` on `PATH`, the model menu lists **Codex** after Claude Code. A thread on it has the model `agent:codex`.
+- **Its own home and sign-in.** Qt starts Codex with `CODEX_HOME` set to `ai/agents/codex/home`, never `~/.codex`. Before the first Codex process starts, Qt writes that home's `auth.json` (readable only by the user) from HikariSub's sign-in in the keychain (`codex-chatgpt`, from Settings › AI). While Codex runs, only Codex refreshes the tokens. After the last Codex process exits, Qt puts the refreshed tokens back in the keychain and deletes the file. With no sign-in, Codex doesn't start. A file left behind for the same account is newer than the keychain, so Qt keeps it. If the user signed out while Codex ran, they stay signed out.
+- **A private tools channel.** For each Codex process, Qt opens an MCP server on `127.0.0.1` with a random port and a token of its own. Codex gets them as `-c mcp_servers.hikari.url=…` and `bearer_token_env_var="HIKARI_MCP_TOKEN"`. Qt relays the channel's messages to the sidecar as the connection `channel:<session>`, and the sidecar runs their calls as that session, under the thread's mode, as it does for Hikari's own loop. The channel closes when the process exits.
+- **Writes go to the review.** Codex would ask for approval of each MCP write, so Qt passes `default_tools_approval_mode="approve"` for Hikari's server. Hikari's review stays the gate. A Manual-mode edit waits as a proposal until the user applies it, and Codex fails a tool call after 60 seconds by default, so Qt also passes `tool_timeout_sec=86400`.
+- **Read-only.** Qt's guard lets only a conversation's methods through. It makes every thread read-only with the approval policy `untrusted` and no `config` overrides, and declines every command, file change and permission request. The sidecar declines MCP elicitations.
+- **One app-server per thread.** The first turn starts the process and a thread. Later turns go to the same thread. `session/steer` uses `turn/steer`, and Stop sends `turn/interrupt`. If Codex exits, the next turn starts a new process and resumes the thread. The `usage` update after each turn carries that turn's tokens.
+- **Linux only for now.** Windows' AppContainer blocks loopback, so Qt neither offers nor starts Codex there until it has a channel the container can reach ([#931](https://github.com/altqx/hikari/issues/931)).
+
 ## Tests
 
 `test/fixtures/fake-claude.ts` stands in for `claude`. It speaks the SDK's control protocol as recorded from Claude Code 2.1.322: initialize, hook callbacks, `mcp_message` and interrupt. Each user message it gets is a script of tool calls. The sidecar tests drive the real SDK against it. They check that:
@@ -36,3 +48,12 @@ Each version is fetched once. The SDK's `sdk.mjs` bundles what it needs, so its 
 - a built-in tool is denied;
 - the arguments that turn Claude's tools, settings and permissions off are passed;
 - one process serves every turn.
+
+`test/fixtures/fake-codex.ts` stands in for `codex app-server`. It reads the channel from its `-c` arguments and makes each turn's scripted tool calls over MCP. The sidecar tests check:
+
+- an edit over the session's channel;
+- one process and thread for every turn, with each turn's usage;
+- Stop as `turn/interrupt`;
+- resuming the thread after Codex exits.
+
+In Qt, the broker tests cover the channel (its token, its arguments and its end) and the hooks around each process. The sign-in tests cover handing the sign-in to Codex and back.

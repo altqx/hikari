@@ -39,6 +39,29 @@ std::optional<CodexSession> sessionFromJson(std::string_view json);
 
 /// The Codex CLI's own sign-in, read-only: `tokens` in its auth.json.
 std::optional<CodexSession> sessionFromCodexAuth(const QString &authJsonPath);
+/// Writes `session` as a Codex auth.json that only the user can read.
+bool writeCodexAuth(const QString &authJsonPath, const CodexSession &session);
+
+/// Lends HikariSub's ChatGPT sign-in to the Codex processes sharing a private CODEX_HOME. The first `acquire` writes
+/// its auth.json from the keychain; after the last `release`, Codex's refreshed tokens go back to the keychain and
+/// the file goes. A file left behind for the same account is newer than the keychain, so it is kept.
+class CodexLease {
+public:
+    CodexLease(application::ai::KeyStore &keys, QString codexHome);
+
+    /// `done` gets an error when there is no sign-in to lend.
+    void acquire(std::function<void(QString error)> done);
+    void release();
+
+private:
+    QString authPath() const;
+    void giveBack();
+
+    application::ai::KeyStore &m_keys;
+    QString m_home;
+    int m_users = 0;
+    std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
+};
 
 enum class SignInFlow { CodexDevice, CodexBrowser, OpenRouter };
 
