@@ -2,6 +2,7 @@
 
 #include "hikari/app/crash_record.h"
 #include "hikari/app/localisation.h"
+#include "hikari/application/automation_registry.h"
 #include "hikari/application/hotkeys.h"
 #include "theme.h"
 
@@ -663,6 +664,8 @@ void Analytics::automationError(const QString &kind, const QString &bundledScrip
 
 QString Analytics::bundledScript(const QString &path, const QString &manifestPath)
 {
+    if (application::isBuiltinScript(path.toStdString()))
+        return QStringLiteral("kara-templater.lua");
     const QFileInfo script(path);
     const QString name = script.fileName();
     QFile manifest(manifestPath);
