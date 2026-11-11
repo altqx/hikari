@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace hikari::application::lerp {
 
@@ -34,6 +35,19 @@ std::string format(const TagSpec &spec, const Value &value);
 Value lerp(const TagSpec &spec, const Value &from, const Value &to, double t, Blend blend = Blend::Rgb);
 // The Style's value; nullopt for \pos, \org and \clip, which have none.
 std::optional<Value> styleDefault(const TagSpec &spec, const core::StyleValues &style);
+
+// A vector clip's drawing: "(m 0 0 l 10 0 10 10)" or, with a scale, "(2,m 0 0 l 20 0)".
+struct Drawing {
+    int scale = 0; // 0: none written
+    std::string shape; // each command letter followed by one '#' per number: "m##l####"
+    std::vector<double> numbers;
+    bool operator==(const Drawing &) const = default;
+};
+std::optional<Drawing> parseDrawing(std::string_view args);
+// nullopt when the two differ in shape or scale.
+std::optional<Drawing> lerp(const Drawing &from, const Drawing &to, double t);
+// "\clip(m 0 0 l 10 0)" with whole-number points.
+std::string format(std::string_view name, const Drawing &drawing);
 
 // t^accel, with t clamped to [0, 1].
 double accelerate(double t, double accel);

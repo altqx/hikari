@@ -5640,6 +5640,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Według łamań wierszy</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>Interpoluj między wierszami…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>Zaznacz co najmniej trzy wiersze: pierwszy, ostatni i wiersze między nimi.</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>Wypełnia wiersze między pierwszym a ostatnim zaznaczonym wierszem wartościami tagów pośrednimi między ich wartościami</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>Zamień linijki</translation>
     </message>
@@ -7490,6 +7502,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń tagi…</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>Interpoluj między wierszami…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>Przenieś zakładkę do nowego okna</translation>
     </message>
@@ -7652,6 +7668,109 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Align to video…</source>
         <translation>Dopasuj do wideo…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>Zaznacz co najmniej trzy wiersze: pierwszy, ostatni i wiersze między nimi.</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>Pierwszy i ostatni wiersz mają te same tagi, więc nie ma czego interpolować.</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>Przycięcia mają różne kształty.</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>Jedno przycięcie jest prostokątem, a drugie rysunkiem.</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>Tylko jeden z dwóch wierszy ma to przycięcie.</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>Przekształcenia mają różną budowę.</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>Z tymi tagami nic by się nie zmieniło.</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>Interpoluj między wierszami</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n wiersz, od wiersza %1 do wiersza %2. Wideo pokazuje wynik, dopóki to okno jest otwarte.</numerusform>
+            <numerusform>%n wiersze, od wiersza %1 do wiersza %2. Wideo pokazuje wynik, dopóki to okno jest otwarte.</numerusform>
+            <numerusform>%n wierszy, od wiersza %1 do wiersza %2. Wideo pokazuje wynik, dopóki to okno jest otwarte.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>Pierwszy i ostatni wiersz mają różny tekst, więc interpolowane są tylko tagi początkowe.</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>Tag</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>Pierwszy wiersz</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>Ostatni wiersz</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>%1 przed „%2”</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>brak</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>Przyspieszenie</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1 to ruch równomierny. Powyżej 1 zaczyna wolno i kończy szybko; poniżej 1 zaczyna szybko i kończy wolno.</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>Obracaj najkrótszą drogą</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>Przekształcenia kaskadowo</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>Tagi %1 każdego wiersza działają jeden po drugim przez cały wiersz</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>Wynik</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
     </message>
 </context>
 <context>

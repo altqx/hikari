@@ -5548,6 +5548,18 @@ Failed to copy %2 fonts.</source>
         <translation>줄 바꿈 기준으로</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>여러 줄에 걸쳐 보간…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>세 줄 이상을 선택하세요: 첫 줄, 마지막 줄, 그리고 그 사이의 줄.</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>선택한 첫 줄과 마지막 줄 사이의 줄을 두 줄의 태그 값 사이 값으로 채웁니다</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>줄 서로 바꾸기</translation>
     </message>
@@ -7378,6 +7390,10 @@ Failed to copy %2 fonts.</source>
         <translation>태그 제거…</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>여러 줄에 걸쳐 보간…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>탭을 새 창으로 이동</translation>
     </message>
@@ -7540,6 +7556,107 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>영상에 맞추기…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>세 줄 이상을 선택하세요: 첫 줄, 마지막 줄, 그리고 그 사이의 줄.</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>첫 줄과 마지막 줄의 태그가 같아서 보간할 것이 없습니다.</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>클립 모양이 서로 다릅니다.</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>한 클립은 사각형이고 다른 클립은 그림입니다.</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>두 줄 중 한 줄에만 이 클립이 있습니다.</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>변형의 구성이 서로 다릅니다.</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>이 태그로는 바뀌는 것이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>여러 줄에 걸쳐 보간</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n줄, %1번 줄부터 %2번 줄까지. 이 창이 열려 있는 동안 영상에 결과가 표시됩니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>첫 줄과 마지막 줄의 텍스트가 달라서 시작 태그만 보간합니다.</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>태그</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>첫 줄</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>마지막 줄</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>“%2” 앞의 %1</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>가속</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1은 일정합니다. 1보다 크면 느리게 시작해 빠르게 끝나고, 1보다 작으면 빠르게 시작해 느리게 끝납니다.</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>가장 짧은 방향으로 회전</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>변형 연쇄</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>각 줄의 %1 태그가 줄 길이에 걸쳐 차례로 실행됩니다</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>결과</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
     </message>
 </context>
 <context>

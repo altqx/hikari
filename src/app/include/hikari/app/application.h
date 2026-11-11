@@ -514,6 +514,13 @@ public:
     // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
     // "selected"/"file", and the Cleanup flags by their names.
     Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
+    // The selected run interpolated with the dialog's {accel, shortestRotation, cascade, excluded}: {count,
+    // firstRow, lastRow, problem, startBlockOnly, changes [{id, tag, before, from, to, fromColour, toColour,
+    // skip}], results [{row, text}]}. The video shows the result until clearInterpolationPreview().
+    Q_INVOKABLE QVariantMap interpolationPlan(const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyInterpolation(const QVariantMap &options);
+    Q_INVOKABLE void clearInterpolationPreview();
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
@@ -1261,6 +1268,7 @@ private:
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     std::optional<QVariantMap> m_layerPreview;
+    std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;

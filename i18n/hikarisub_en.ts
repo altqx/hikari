@@ -421,6 +421,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Interpolate</name>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n line, from line %1 to line %2. The video shows the result while this is open.</numerusform>
+            <numerusform>%n lines, from line %1 to line %2. The video shows the result while this is open.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Karaoke</name>
     <message numerus="yes">
         <source>%n more problems not listed; fix these and check again</source>
