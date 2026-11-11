@@ -185,12 +185,12 @@ std::vector<NodeSpec> makeCatalogue()
     c.push_back(std::move(chooseSpec));
 
     c.push_back({"math.calculate", "math",
-                 "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5). "
-                 "One-input operations use a.",
+                 "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); "
+                 "sine and cosine take a in degrees and round to millionths. One-input operations use a.",
                  {port("a", Number), port("b", Number)},
                  {port("result", Number)},
                  {choice("op", {"add", "subtract", "multiply", "divide", "modulo", "power", "minimum", "maximum",
-                                "floor", "ceil", "round", "absolute", "negate"},
+                                "floor", "ceil", "round", "absolute", "negate", "sine", "cosine"},
                          "The operation."),
                   field("a", FieldKind::Number, Json(0), "The first operand."),
                   field("b", FieldKind::Number, Json(0), "The second operand.")}});

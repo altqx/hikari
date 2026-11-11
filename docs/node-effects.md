@@ -166,6 +166,31 @@ A graph whose `target` is `lines` runs on the ordinary Lines it is given (AU9, [
   Widths still come from the Style, as karaskel measures them; tags inside the text don't change them.
 - **Apply** puts each source's Lines right after it, in the engine's order, and turns the source into a Comment that keeps its Effect, so running again (on the Comment) replaces them. A file read back has no record of which source made which Line, so a source's earlier Lines are the graph's `fx <name>` Lines that follow it. Lines of other sources, graphs and the templater stay. It is one undo step, "Apply node effect".
 
+### The library
+
+"From a preset" lists these under "For selected lines" (`typesettingGraphs`, `typesetting_graphs.h`), and Subtitles › "Typesetting graph…" (`GLOBAL_TYPESETTING_GRAPH`, also on the Grid menu) opens the mode with the Grid's selected lines as the sources. Each graph's knobs are value nodes named by their ids; the Node panel edits them. The scripts they stand in for keep shipping (D1); what each script does is in [the AU9 survey](research/au9-script-parameters.md).
+
+| Graph | One Line per | Knobs | Stands in for |
+|---|---|---|---|
+| Shake | frame step | `step` 42 ms, `amplitude` 6 px | l0.ShakeIt, petzku.Shake, ua.Relocator's shake |
+| Typewriter | character | `delay` 60 ms | petzku.Typewriter |
+| Fade by letter | character | `delay` 40 ms, `fade` 200 ms | ua.FadeWorks by letter |
+| Wobble | character and frame step | `step`, `period` 1000 ms, `phase` 30°, `amplitude` 6 px | phos.wave |
+| Bounce | character and frame step | `step`, `delay` 100 ms, `duration` 200 ms, `max_offset` 100 px, `final_offset` 30 px | myaa.Bounce |
+| Focus lines | spike and frame step | `step`, `count` 40, `min_blur` 5, `max_blur` 10, `length_change` 10 %, `colour` | arch.FocusLines |
+| Grain | character and copy | `intensity` 1, `colour1`, `colour2` (needs the Grain font) | phos.AddGrain |
+| Chromatic aberration | colour copy | `x_offset` 2, `y_offset` 2, `colour1`, `colour2` | phos.ChromaticAbberation |
+| Random move | Line | `distance_x` 20, `distance_y` 20 | ua.Relocator's randomove |
+| Karaoke to alpha | syllable | none | karaoke2alpha |
+
+- Randomness comes from Random nodes, so the graph's Seed gives the same Lines on every run. The scripts drew from an unseeded `math.random`.
+- A one-character or one-Line source works; FadeWorks, FocusLines and phos.wobble divide by zero there.
+- Chromatic aberration offsets whole copies; phos's pathfinder regions wait for the clipper nodes (NE5a). A colour tag in the Line's own first block wins over the copies' colours.
+- Karaoke to alpha keeps each syllable's place and its \k time, and keeps the leading block's `\pos` and `\an`, which karaoke2alpha dropped with syllable 0.
+- `LibraryGraphsGiveTheirGoldens` (`hikari_application_node_effects_tests`) runs each graph on one sign Line and compares the output with `tests/application/typesetting-graphs/<id>.txt`; `HIKARI_WRITE_GOLDENS=1` writes them again.
+
+`math.calculate` has `sine` and `cosine` for these graphs. They take degrees and round to millionths, so Linux and Windows write the same numbers.
+
 ## Lua
 
 The `lua.code` node is the only place Lua runs (NE1b, [#753](https://github.com/altqx/hikari/issues/753)).

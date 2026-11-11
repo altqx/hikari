@@ -39,7 +39,7 @@ constexpr NodeText kNodes[] = {
     {"units.inline_fx", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Inline-fx"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "Only the units whose inline-fx ({\\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.")},
     {"units.info", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Unit info"),
-     QT_TRANSLATE_NOOP("HikariSub.Nodes", "What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start.")},
+     QT_TRANSLATE_NOOP("HikariSub.Nodes", "What the karaoke templater’s $variables give for the current unit and its line, rounded as the templater rounds them. Times of a syllable are from its line’s start. line_alignment is the line’s first \\an, or its Style’s alignment.")},
     {"values.number", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Number"),
      QT_TRANSLATE_NOOP("HikariSub.Nodes", "A number.")},
     {"values.text", QT_TRANSLATE_NOOP("HikariSub.Nodes", "Text"),

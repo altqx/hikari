@@ -64,6 +64,20 @@ constexpr NodeExampleText kTypesettingTexts[] = {
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character appears after the one before it, by grapheme cluster, and stays to the line’s end.")},
     {"fade-by-letter", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Fade by letter"),
      QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character fades in after the one before it.")},
+    {"wobble", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Wobble"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "The characters rise and fall in a wave, one line per character and frame step.")},
+    {"bounce", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Bounce"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each character jumps up after the one before it and settles at the final offset.")},
+    {"focus-lines", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Focus lines"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Spikes at random angles around the line’s position, drawn again on every frame step.")},
+    {"grain", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Grain"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Random characters in the Grain font over each character, in two colours. Needs the Grain font.")},
+    {"chromatic-aberration", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Chromatic aberration"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Two coloured copies offset either side of the line, under the line itself.")},
+    {"randomove", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Random move"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "The line moves from its position to a random point within the distance.")},
+    {"karaoke-to-alpha", QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Karaoke to alpha"),
+     QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "Each syllable appears at its karaoke time and stays to the line’s end.")},
 };
 
 const NodeExampleText *exampleText(std::string_view example)

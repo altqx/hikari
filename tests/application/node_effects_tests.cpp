@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -1529,4 +1530,16 @@ TEST(TypesettingGraphs, LibraryGraphsGiveTheirGoldens)
             std::ofstream(golden, std::ios::binary) << got;
         EXPECT_EQ(got, readFile(golden));
     }
+}
+
+TEST(TypesettingGraphs, KaraokeToAlphaKeepsTheSyllableTiming)
+{
+    const auto all = typesettingGraphs();
+    const auto it = std::ranges::find_if(all, [](const TypesettingGraph &g) { return g.id == "karaoke-to-alpha"; });
+    ASSERT_NE(it, all.end());
+    const core::Document doc = libraryDocument(*it);
+    std::vector<std::string> times;
+    for (const std::string &line : linesOf(runGraph(doc, u8"lib", onlyLine(lineWithText(doc, u8"ki")))))
+        times.push_back(line.substr(12, 21) + line.substr(line.rfind('}') + 1));
+    EXPECT_EQ(times, (std::vector<std::string>{"0:00:03.00,0:00:04.00ki", "0:00:03.40,0:00:04.00ra"}));
 }

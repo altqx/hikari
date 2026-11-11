@@ -1064,6 +1064,10 @@ double calculated(std::string_view op, double a, double b)
         return std::floor(a + 0.5);
     if (op == "absolute")
         return std::fabs(a);
+    if (op == "sine" || op == "cosine") {
+        const double radians = a * std::numbers::pi / 180;
+        return std::floor((op == "sine" ? std::sin(radians) : std::cos(radians)) * 1e6 + 0.5) / 1e6;
+    }
     return -a;
 }
 
@@ -2007,6 +2011,9 @@ private:
             return luaScalar(std::string(call->second) + "(" + x + (binary ? ", " + y : std::string()) + ")");
         if (op == "round")
             return luaScalar("math.floor(" + x + " + 0.5)");
+        if (op == "sine" || op == "cosine")
+            return luaScalar("(math.floor(math." + std::string(op == "sine" ? "sin" : "cos") + "(" + x +
+                             " * math.pi / 180) * 1e6 + 0.5) / 1e6)");
         return luaScalar("(-" + x + ")");
     }
 
