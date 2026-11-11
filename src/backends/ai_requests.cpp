@@ -5,6 +5,7 @@
 #include <QPointer>
 
 #include <algorithm>
+#include <limits>
 
 namespace hikari::backends::ai {
 
@@ -52,6 +53,26 @@ Json providersJson(const app::Config &config, std::optional<app::SearchService> 
     return params;
 }
 
+std::optional<int> offsetAt(const Json &citation, std::string_view key)
+{
+    const std::optional<double> value = numberAt(citation, key);
+    if (!value || *value < 0 || *value > std::numeric_limits<int>::max() || *value != static_cast<int>(*value))
+        return std::nullopt;
+    return static_cast<int>(*value);
+}
+
+std::optional<app::CitedSpan> spanOf(const Json &citation, const QString &text)
+{
+    const std::optional<int> start = offsetAt(citation, "start");
+    const std::optional<int> end = offsetAt(citation, "end");
+    if (!start || !end || *start >= *end || *end > text.size())
+        return std::nullopt;
+    const auto splitsAPair = [&](int at) { return at > 0 && at < text.size() && text.at(at).isLowSurrogate(); };
+    if (splitsAPair(*start) || splitsAPair(*end))
+        return std::nullopt;
+    return app::CitedSpan{*start, *end};
+}
+
 app::Finished finishedOf(const Json &result)
 {
     app::Finished finished;
@@ -64,11 +85,13 @@ app::Finished finishedOf(const Json &result)
                                       .signature = stringAt(call, "signature")});
     if (const Json *usage = result.find("usage"))
         finished.usage = usageOf(*usage);
+    const QString text = QString::fromStdString(finished.text);
     for (const Json &c : arrayAt(result, "citations").asArray())
         finished.citations.push_back({.index = static_cast<int>(intAt(c, "index")),
                                       .url = stringAt(c, "url"),
                                       .title = stringAt(c, "title"),
-                                      .quote = stringAt(c, "quote")});
+                                      .quote = stringAt(c, "quote"),
+                                      .span = spanOf(c, text)});
     finished.searchSuggestions = stringAt(result, "searchSuggestions");
     if (const Json *state = result.find("providerState"); state && state->isObject())
         finished.providerState = state->dump();

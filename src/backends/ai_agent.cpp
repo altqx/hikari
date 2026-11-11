@@ -140,6 +140,57 @@ Json withoutImages(Json message)
     return message;
 }
 
+bool isWebTool(std::string_view tool)
+{
+    return tool == "web_search" || tool == "web_fetch";
+}
+
+qsizetype utf16Size(const std::string &text)
+{
+    return QString::fromStdString(text).size();
+}
+
+/// The pages a web tool's answer names; the rest of it isn't kept.
+Json urlsOf(const std::string &tool, const std::string &output)
+{
+    Json urls = Json::array();
+    const auto parsed = Json::parse(output);
+    if (!parsed || !parsed->isObject())
+        return urls;
+    if (tool == "web_fetch") {
+        if (std::string url = stringAt(*parsed, "url"); !url.empty())
+            urls.push(std::move(url));
+        return urls;
+    }
+    if (const Json *results = parsed->find("results"); results && results->isArray())
+        for (const Json &r : results->asArray())
+            if (std::string url = stringAt(r, "url"); !url.empty())
+                urls.push(std::move(url));
+    return urls;
+}
+
+/// Search services' terms don't let us store their results, so a finished turn keeps only that it searched.
+void dropSearchResults(AgentThread &thread, const std::set<std::string> &calls)
+{
+    if (calls.empty())
+        return;
+    for (Json &message : thread.history.asArray()) {
+        if (!message.isObject() || !message.find("parts") || !message["parts"].isArray())
+            continue;
+        for (Json &part : message["parts"].asArray())
+            if (stringAt(part, "type") == "toolResult" && calls.contains(stringAt(part, "callId")))
+                part["content"] = std::string("The search results aren't kept after the turn.");
+    }
+}
+
+std::optional<qsizetype> offsetAt(const Json &citation, std::string_view key)
+{
+    const Json *value = citation.find(key);
+    if (!value || !value->isInt() || value->asInt() < 0)
+        return std::nullopt;
+    return static_cast<qsizetype>(value->asInt());
+}
+
 Json *itemWith(AgentThread &thread, std::string_view key, const Json &value)
 {
     auto &items = thread.items.asArray();
@@ -311,7 +362,8 @@ Json AgentThread::toJson() const
                              {"costUnknown", costUnknown},
                              {"contextTokens", contextTokens},
                              {"cap", cap},
-                             {"allowed", std::move(allowedJson)}});
+                             {"allowed", std::move(allowedJson)},
+                             {"webSearch", webSearch}});
     if (model)
         out["model"] = modelJson(*model);
     return out;
@@ -354,6 +406,8 @@ std::optional<AgentThread> AgentThread::fromJson(const Json &json)
         for (const Json &key : a->asArray())
             if (key.isString())
                 t.allowed.insert(key.asString());
+    if (const Json *w = json.find("webSearch"); w && w->isBool())
+        t.webSearch = w->asBool();
     return t;
 }
 
@@ -432,6 +486,10 @@ struct AgentThreads::Run {
     std::uint64_t request = 0;
     std::string stoppedFor;
     std::map<std::string, std::string> toolByCallId;
+    /// Where the current completion's text starts: the item and the UTF-16 offset in its text.
+    std::optional<std::pair<std::size_t, qsizetype>> answerStart;
+    std::set<std::string> webCalls;
+    bool searchFailureShown = false;
 };
 
 AgentThreads::AgentThreads(Wiring wiring, ThreadStore *store, QObject *parent)
@@ -537,6 +595,20 @@ void AgentThreads::setModel(const std::string &id, app::ModelRef model)
         t->model = std::move(model);
         touch(*t);
     }
+}
+
+void AgentThreads::setWebSearch(const std::string &id, bool on)
+{
+    if (AgentThread *t = find(id); t && t->webSearch != on) {
+        t->webSearch = on;
+        touch(*t);
+    }
+}
+
+bool AgentThreads::searches(const AgentThread &thread) const
+{
+    AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
+    return thread.webSearch && requests && requests->webSearch();
 }
 
 void AgentThreads::setAttached(const std::string &id, std::vector<application::DocumentId> documents)
@@ -664,13 +736,15 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
             prompt.push(std::move(part));
     AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
     const bool caching = requests && requests->caching();
+    const bool search = searches(thread);
     if (!m_live.contains(id)) {
         Json open = Json::object({{"sessionId", id},
                                   {"model", modelJson(*model)},
                                   {"system", std::string(kSystemPrompt)},
                                   {"history", thread.history},
                                   {"cacheKey", id},
-                                  {"caching", caching}});
+                                  {"caching", caching},
+                                  {"webSearch", search}});
         if (agent)
             open["agent"] = *agent;
         h->request("session/new", std::move(open), [](SidecarResult) {});
@@ -681,7 +755,8 @@ void AgentThreads::start(AgentThread &thread, std::string text, Json parts)
                               Json::object({{"sessionId", id},
                                             {"prompt", std::move(prompt)},
                                             {"model", modelJson(*model)},
-                                            {"caching", caching}}),
+                                            {"caching", caching},
+                                            {"webSearch", search}}),
                               [this, alive = std::weak_ptr(m_alive), id](SidecarResult result) {
                                   if (alive.lock())
                                       finished(id, result);
@@ -696,11 +771,13 @@ void AgentThreads::finished(const std::string &id, const SidecarResult &result)
     if (it == m_runs.end())
         return;
     const std::string stop = it->second->stoppedFor;
+    const std::set<std::string> webCalls = std::move(it->second->webCalls);
     m_runs.erase(it);
     closeAsks(id, "The turn ended.");
     AgentThread *t = find(id);
     if (!t)
         return;
+    dropSearchResults(*t, webCalls);
     std::string notice;
     std::string detail;
     if (result) {
@@ -758,7 +835,11 @@ void AgentThreads::sessionUpdate(const Json &params)
         if (text.empty())
             return;
         auto &items = t->items.asArray();
-        if (!items.empty() && stringAt(items.back(), "kind") == "text")
+        const bool appends = !items.empty() && stringAt(items.back(), "kind") == "text";
+        if (run != m_runs.end() && !run->second->answerStart)
+            run->second->answerStart = {appends ? items.size() - 1 : items.size(),
+                                        appends ? utf16Size(stringAt(items.back(), "text")) : 0};
+        if (appends)
             items.back()["text"] = stringAt(items.back(), "text") + text;
         else
             push(*t, Json::object({{"kind", "text"}, {"text", text}}));
@@ -768,16 +849,23 @@ void AgentThreads::sessionUpdate(const Json &params)
     if (kind == "tool_call") {
         const std::string callId = stringAt(*update, "toolCallId");
         const std::string tool = stringAt(*update, "title");
-        if (run != m_runs.end())
+        if (run != m_runs.end()) {
             run->second->toolByCallId[callId] = tool;
+            if (isWebTool(tool))
+                run->second->webCalls.insert(callId);
+        }
         if (stringAt(*update, "kind") != "edit") {
             const Json *input = update->find("rawInput");
-            push(*t, Json::object({{"kind", "tool"},
-                                   {"id", callId},
-                                   {"tool", tool},
-                                   {"read", stringAt(*update, "kind") == "read"},
-                                   {"input", input ? *input : Json()},
-                                   {"status", "running"}}));
+            Json item = Json::object({{"kind", "tool"},
+                                      {"id", callId},
+                                      {"tool", tool},
+                                      {"read", stringAt(*update, "kind") == "read"},
+                                      {"input", input ? *input : Json()},
+                                      {"status", "running"}});
+            AiRequests *requests = m_wiring.requests ? m_wiring.requests() : nullptr;
+            if (const auto service = requests ? requests->searchService() : std::nullopt; service && isWebTool(tool))
+                item["service"] = std::string(app::searchServiceId(*service));
+            push(*t, std::move(item));
         }
     } else if (kind == "tool_call_update") {
         const std::string callId = stringAt(*update, "toolCallId");
@@ -789,7 +877,10 @@ void AgentThreads::sessionUpdate(const Json &params)
         const std::string status = stringAt(*update, "status") == "failed" ? "failed" : "done";
         if (Json *item = itemWith(*t, "id", Json(callId)); item && stringAt(*item, "kind") == "tool") {
             (*item)["status"] = status;
-            (*item)["output"] = clipped(output, kOutputChars);
+            if (isWebTool(stringAt(*item, "tool")) && status == "done")
+                (*item)["urls"] = urlsOf(stringAt(*item, "tool"), output);
+            else
+                (*item)["output"] = clipped(output, kOutputChars);
         } else if (status == "failed") {
             std::string tool;
             if (run != m_runs.end())
@@ -809,7 +900,13 @@ void AgentThreads::sessionUpdate(const Json &params)
             items.back()["entries"] = entries ? *entries : Json::array();
         else
             push(*t, Json::object({{"kind", "plan"}, {"entries", entries ? *entries : Json::array()}}));
+    } else if (kind == "sources") {
+        addSources(*t, run == m_runs.end() ? nullptr : run->second.get(), *update);
+    } else if (kind == "search_failed") {
+        searchFailed(*t, run == m_runs.end() ? nullptr : run->second.get(), *update);
     } else if (kind == "usage") {
+        if (run != m_runs.end())
+            run->second->answerStart.reset();
         if (const Json *usage = update->find("usage"))
             addUsage(*t, *usage);
     } else if (kind == "history") {
@@ -820,6 +917,69 @@ void AgentThreads::sessionUpdate(const Json &params)
         return;
     }
     touch(*t);
+}
+
+void AgentThreads::addSources(AgentThread &thread, Run *run, const Json &update)
+{
+    auto &items = thread.items.asArray();
+    const auto start = run ? run->answerStart : std::nullopt;
+    Json *answer = start && start->first < items.size() && stringAt(items[start->first], "kind") == "text"
+                       ? &items[start->first]
+                       : nullptr;
+    if (answer) {
+        const qsizetype length = offsetAt(update, "textLength").value_or(-1);
+        const qsizetype base = start->second;
+        const bool placeable = base + length == utf16Size(stringAt(*answer, "text"));
+        Json cited = answer->find("citations") && (*answer)["citations"].isArray() ? (*answer)["citations"] : Json::array();
+        if (const Json *citations = update.find("citations"); citations && citations->isArray())
+            for (const Json &c : citations->asArray()) {
+                const std::string url = stringAt(c, "url");
+                if (url.empty() || std::ranges::any_of(cited.asArray(), [&](const Json &k) { return stringAt(k, "url") == url; }))
+                    continue;
+                Json kept = Json::object({{"index", static_cast<std::int64_t>(cited.asArray().size() + 1)},
+                                          {"url", url},
+                                          {"title", stringAt(c, "title").empty() ? url : stringAt(c, "title")}});
+                if (std::string quote = stringAt(c, "quote"); !quote.empty())
+                    kept["quote"] = clipped(std::move(quote), kOutputChars);
+                const auto from = offsetAt(c, "start");
+                const auto to = offsetAt(c, "end");
+                if (placeable && from && to && *from < *to && *to <= length) {
+                    kept["start"] = static_cast<std::int64_t>(base + *from);
+                    kept["end"] = static_cast<std::int64_t>(base + *to);
+                }
+                cited.push(std::move(kept));
+            }
+        if (!cited.asArray().empty())
+            (*answer)["citations"] = std::move(cited);
+        if (std::string suggestions = stringAt(update, "searchSuggestions"); !suggestions.empty())
+            (*answer)["searchSuggestions"] = std::move(suggestions);
+    }
+    const Json *searches = update.find("searches");
+    if (!searches || !searches->isArray() || searches->asArray().empty())
+        return;
+    const app::Config *config = m_wiring.config ? m_wiring.config() : nullptr;
+    const auto model = modelOf(thread);
+    const app::Provider *provider = config && model ? config->provider(model->providerId) : nullptr;
+    Json item = Json::object({{"kind", "search"},
+                              {"by", provider && provider->preset == app::Preset::Gemini ? "google" : "provider"},
+                              {"searches", *searches}});
+    if (answer && start->second == 0) {
+        items.insert(items.begin() + static_cast<std::ptrdiff_t>(start->first), std::move(item));
+        run->answerStart.reset();
+    } else {
+        push(thread, std::move(item));
+    }
+}
+
+void AgentThreads::searchFailed(AgentThread &thread, Run *run, const Json &update)
+{
+    if (run && std::exchange(run->searchFailureShown, true))
+        return;
+    const Json *status = update.find("httpStatus");
+    push(thread, Json::object({{"kind", "notice"},
+                               {"notice", stringAt(update, "reason") == "key" ? "searchKey" : "searchUsedUp"},
+                               {"service", stringAt(update, "service")},
+                               {"status", status && status->isNumber() ? static_cast<std::int64_t>(status->asNumber()) : 0}}));
 }
 
 api::Caller AgentThreads::callerOf(const AgentThread &thread) const

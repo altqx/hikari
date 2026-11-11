@@ -164,6 +164,26 @@
         <translation>இணை</translation>
     </message>
     <message>
+        <source>Search the web</source>
+        <translation>இணையத்தில் தேடு</translation>
+    </message>
+    <message>
+        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
+        <translation>இந்த வழங்குநரால் தானாக இணையத்தில் தேட முடியாது. அமைப்புகள் › AI › இணையத் தேடல் இல் ஒரு தேடல் சேவையைத் தேர்ந்தெடு.</translation>
+    </message>
+    <message>
+        <source>Search the web: on for this thread</source>
+        <translation>இணையத் தேடல்: இந்த இழையில் இயக்கத்தில்</translation>
+    </message>
+    <message>
+        <source>Search the web: off for this thread</source>
+        <translation>இணையத் தேடல்: இந்த இழையில் அணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
+        <translation>இழையின் நடுவில் இதை மாற்றினால் Anthropic இல் ஒரு தற்காலிக நினைவக இழப்பு ஏற்படும்.</translation>
+    </message>
+    <message>
         <source>Stop</source>
         <translation>நிறுத்து</translation>
     </message>
@@ -238,6 +258,37 @@
     <message>
         <source>Restore checkpoint</source>
         <translation>சோதனைப்புள்ளியை மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Sources</source>
+        <translation>மூலங்கள்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show %n more</source>
+        <translation>
+            <numerusform>மேலும் %n ஐக் காட்டு</numerusform>
+            <numerusform>மேலும் %n ஐக் காட்டு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open in browser</source>
+        <translation>உலாவியில் திற</translation>
+    </message>
+    <message>
+        <source>Read %1</source>
+        <translation>%1 படிக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searched with Google</source>
+        <translation>Google மூலம் தேடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searched the web</source>
+        <translation>இணையத்தில் தேடப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Searched with %1</source>
+        <translation>%1 மூலம் தேடப்பட்டது</translation>
     </message>
     <message>
         <source>judge approved</source>
@@ -348,6 +399,14 @@
         <translation>அமைப்புகள் › AI இல் ஒரு அரட்டை மாதிரியைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
+        <source>%1 has no searches left</source>
+        <translation>%1 இல் தேடல்கள் எதுவும் மீதமில்லை</translation>
+    </message>
+    <message>
+        <source>%1 refused HikariSub’s key</source>
+        <translation>%1 HikariSub இன் விசையை மறுத்தது</translation>
+    </message>
+    <message>
         <source>AI component isn’t ready</source>
         <translation>AI கூறு தயாராக இல்லை</translation>
     </message>
@@ -366,6 +425,10 @@
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
         <translation>HikariSub இன்னும் AI கூறைப் பெற்றுக்கொண்டிருக்கிறது, அல்லது அதைத் தொடங்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>The search service answered %1. The answer goes on without searching the web.</source>
+        <translation>தேடல் சேவை %1 என பதிலளித்தது. இணையத்தில் தேடாமல் பதில் தொடர்கிறது.</translation>
     </message>
     <message>
         <source>Raise to %1 and continue</source>

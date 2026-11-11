@@ -163,6 +163,7 @@ describe("WebSearch", () => {
         const result = await search.call("web_search", { query: "a" });
         expect(result.isError).toBe(true);
         expect(textOf(result)).toMatch(kind === "rateLimited" ? /no searches left/ : /refused HikariSub's key/);
+        expect(result.searchFailure).toEqual({ service, reason: kind === "rateLimited" ? "usedUp" : "key", httpStatus: status });
         const error = await search.test(service).catch((e: unknown) => e);
         expect(error).toBeInstanceOf(ProviderError);
         expect((error as ProviderError).kind).toBe(kind);
