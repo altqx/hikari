@@ -74,6 +74,26 @@ TEST(ContextLint, FailsOnAnExtractedMessageWithoutASemanticContext)
     EXPECT_TRUE(lintContexts(registry, catalog({{QStringLiteral("HikariSub.Grid"), {message(QStringLiteral("x"))}}}), {}).isEmpty());
 }
 
+TEST(CatalogDrift, ListsTheExtractedMessagesACatalogLacks)
+{
+    TsMessage disambiguated = message(QStringLiteral("Open"));
+    disambiguated.comment = QStringLiteral("menu");
+    const TsCatalog extracted = catalog({{QStringLiteral("HikariSub.Editor"),
+                                          {message(QStringLiteral("Comment")), message(QStringLiteral("New string")),
+                                           message(QStringLiteral("Gone")), disambiguated}},
+                                         {QStringLiteral("HikariSub.Grid"), {message(QStringLiteral("Comment"))}}});
+    const TsCatalog checkedIn = catalog({{QStringLiteral("HikariSub.Editor"),
+                                          {message(QStringLiteral("Comment"), {}, TsState::Finished, {QStringLiteral("Komentarz")}),
+                                           message(QStringLiteral("Gone"), {}, TsState::Vanished),
+                                           message(QStringLiteral("Open")),
+                                           message(QStringLiteral("Only here"), {}, TsState::Obsolete)}}});
+    QStringList missing;
+    for (const auto &[context, m] : missingFromCatalog(extracted, checkedIn))
+        missing.append(context + u' ' + m->source);
+    EXPECT_EQ(missing, (QStringList{QStringLiteral("HikariSub.Editor New string"), QStringLiteral("HikariSub.Editor Gone"),
+                                    QStringLiteral("HikariSub.Editor Open"), QStringLiteral("HikariSub.Grid Comment")}));
+}
+
 TEST(ContextLint, ChecksTheContextsSourcesName)
 {
     const QList<SourceFile> clean{
