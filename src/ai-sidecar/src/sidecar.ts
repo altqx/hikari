@@ -135,6 +135,8 @@ export class Sidecar {
     /** Each agent session's private tools channel, by connection. */
     private readonly channels = new Map<string, McpServer>();
     private initialized = false;
+    /** Some session asked for tools, so a server added now connects at once. */
+    private toolsWanted = false;
 
     private claudeSdk?: Promise<ClaudeAgentSdk>;
 
@@ -175,12 +177,17 @@ export class Sidecar {
         peer.onRequest(Method.initialize, (params) => this.initialize(params));
         this.handle(Method.sessionNew, (params) => {
             const opened = this.sessions.open(checkedNew(params));
+            this.toolsWanted = true;
             if (this.mcpClients.size === 0)
                 return opened;
             return Promise.race([this.mcpClients.ensure(), Bun.sleep(kMcpConnectWaitMs)]).then(() => opened);
         });
         this.handle(Method.mcpServersSet, (params) =>
-            this.mcpClients.set(checkedServers(params)).then(() => null));
+            this.mcpClients.set(checkedServers(params)).then(() => {
+                if (this.toolsWanted)
+                    void this.mcpClients.ensure();
+                return null;
+            }));
         this.handle(Method.sessionPrompt, (params) =>
             wire(() => this.sessions.prompt(checkedPrompt<SessionPromptParams>(Method.sessionPrompt, params))));
         this.handle(Method.sessionSteer, (params) =>

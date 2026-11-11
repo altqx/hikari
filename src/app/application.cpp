@@ -761,7 +761,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder));
-    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get());
+    m_aiMcpServers = std::make_unique<AiMcpServers>(*m_settings, *m_ai);
+    m_aiSettings = std::make_unique<AiSettings>(*m_ai, m_aiMcp.get(), m_aiMcpServers.get());
     m_review = std::make_unique<ReviewController>(ReviewController::Wiring{
         m_apiHost->review(), *m_files, m_workspace, [this] { return m_ai->on(); },
         [this](application::Selection next) { return applySelection(std::move(next)); },

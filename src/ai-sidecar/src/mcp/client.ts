@@ -278,12 +278,11 @@ export class McpClients {
     }
 }
 
-export function connector(peer: { request(method: string, params?: unknown): Promise<unknown>;
-    notify(method: string, params?: unknown): void }, stdio: Connector["stdio"], relay: Relay,
+export function connector(peer: { request(method: string, params?: unknown): Promise<unknown> }, stdio: Connector["stdio"], relay: Relay,
 info: Connector["info"]): Connector {
     return {
         stdio, relay, info,
         admit: (params) => peer.request(Method.mcpAdmit, params),
-        status: (params) => peer.notify(Method.mcpServerStatus, params),
+        status: (params) => void peer.request(Method.mcpServerStatus, params).catch(() => {}),
     };
 }
