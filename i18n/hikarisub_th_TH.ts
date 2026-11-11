@@ -7537,10 +7537,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your actions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Edit actions…</source>
         <translation type="unfinished"></translation>
     </message>

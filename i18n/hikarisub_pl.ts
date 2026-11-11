@@ -7653,10 +7653,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Your actions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Edit actions…</source>
         <translation type="unfinished"></translation>
     </message>
