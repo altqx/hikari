@@ -87,7 +87,8 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     include/hikari/backends/ai_channel.h ai_sidecar_updater.cpp include/hikari/backends/ai_sidecar_updater.h
     ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent.cpp include/hikari/backends/ai_agent.h ai_agent_broker.cpp
     include/hikari/backends/ai_agent_broker.h ai_agent_cli.cpp include/hikari/backends/ai_agent_cli.h
-    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h)
+    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
+    ai_inline_run.cpp include/hikari/backends/ai_inline_run.h)
 find_package(ZLIB REQUIRED)
 target_include_directories(hikari_ai PUBLIC include)
 target_link_libraries(hikari_ai PUBLIC hikari_application hikari_api hikari_sandbox Qt6::Core Qt6::Network

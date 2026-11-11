@@ -67,12 +67,13 @@ void Application::applyWindowProject(int shellWindow)
                                                             "kept as %2.")
                                     .arg(QString::fromStdString(application::displayPath(problem.file)),
                                          QString::fromStdString(application::displayPath(problem.keptAs))),
-                          QString::fromStdString(problem.failure.message));
+                          QString::fromStdString(problem.failure.message), shellWindow);
         for (const auto &id : project->refused())
             m_log->notice(ui::LogController::Warning, title,
                           QCoreApplication::translate("HikariSub.Project",
                                                       "A Project can’t set %1, so the project file’s value is ignored.")
-                              .arg(QString::fromStdString(id)));
+                              .arg(QString::fromStdString(id)),
+                          {}, shellWindow);
     }
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
@@ -80,6 +81,28 @@ void Application::applyWindowProject(int shellWindow)
     if (shellWindow == m_workspace.activeWindow())
         applyGrammarSettings();
     spellingRefresh();
+}
+
+bool Application::projectNeedsTrust(int shellWindow) const
+{
+    const auto &window = *views(shellWindow).settings;
+    const auto *project = window.project();
+    if (!project || window.trusted())
+        return false;
+    return QFileInfo(window.root() + QStringLiteral("/.hikari/automation")).isDir() || project->hasTable("plugins");
+}
+
+void Application::trustProject(int shellWindow)
+{
+    const QString root = views(shellWindow).settings->root();
+    if (root.isEmpty())
+        return;
+    QStringList folders = m_settings->list("trust.folders");
+    const QString folder = QDir::toNativeSeparators(root);
+    if (!folders.contains(folder))
+        m_settings->setValue(QStringLiteral("trust.folders"), folders << folder);
+    m_settings->sync();
+    emit projectsChanged();
 }
 
 bool Application::windowEmpty(int shellWindow) const

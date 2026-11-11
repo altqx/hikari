@@ -1,5 +1,6 @@
 #include "hikari/api/json.h"
 
+#include <cctype>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -352,6 +353,21 @@ int main(int argc, char **argv)
                     ? R"(Sure. {"decision": "approve"})"
                     : R"({"decision": "escalate", "reason": "The user didn't ask for that."})";
                 respond(*id, Json::object({{"reason", "end"}, {"text", text}, {"toolCalls", Json::array()},
+                                           {"usage", Json::object({{"inputTokens", 1000000}, {"outputTokens", 0}})}}));
+            } else if (modelId == "inline-upper" || modelId == "inline-drop") {
+                const Json *messages = request->find("messages");
+                std::string text = messages->asArray()[0].find("parts")->asArray()[0].find("text")->asString();
+                const auto open = text.find("<line>") + 6;
+                text = text.substr(open, text.find("</line>") - open);
+                std::string answer;
+                for (std::size_t i = 0; i < text.size(); ++i) {
+                    if (modelId == "inline-drop" && text.compare(i, 3, "\xE2\x9F\xA6") == 0) {
+                        i = text.find("\xE2\x9F\xA7", i) + 2;
+                        continue;
+                    }
+                    answer += static_cast<char>(std::toupper(static_cast<unsigned char>(text[i])));
+                }
+                respond(*id, Json::object({{"reason", "end"}, {"text", answer}, {"toolCalls", Json::array()},
                                            {"usage", Json::object({{"inputTokens", 1000000}, {"outputTokens", 0}})}}));
             } else if (modelId == "hang") {
                 hanging.push_back(*id);

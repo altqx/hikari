@@ -79,6 +79,7 @@
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_settings.h"
 #include "hikari/app/agent_controller.h"
+#include "hikari/app/inline_ai_controller.h"
 #include "hikari/app/review_controller.h"
 #include "hikari/app/window_settings.h"
 #include "shell_controller.h"
@@ -318,6 +319,16 @@ public:
     Q_INVOKABLE QString projectName(int shellWindow) const { return m_projects->name(shellWindow); }
     Q_INVOKABLE QString projectRoot(int shellWindow) const { return m_projects->root(shellWindow); }
     Q_INVOKABLE QVariantList homeRecentProjects() const { return m_projects->recentRows(); }
+    // The Settings Project tab: {values, yours} in the dialog's control form for the projectable settings,
+    // and {sources}: "project" or "local" for each one a project file sets. Empty without a Project.
+    Q_INVOKABLE QVariantMap openProjectSettings(int shellWindow);
+    Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
+    // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
+    Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
+    // The Project is untrusted and holds scripts (.hikari/automation/) or a [plugins] table.
+    Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
+    // Adds the window's Project folder to trust.folders, which applies the Project again.
+    Q_INVOKABLE void trustProject(int shellWindow);
     Q_INVOKABLE void removeRecentProject(const QString &path) { m_projects->remove(path); }
     Q_INVOKABLE void removeMissingRecentProjects() { m_projects->removeMissing(); }
     // Close project: the rows to review before the window's tabs close; finishClose then closes
@@ -509,6 +520,13 @@ public:
     // {ok, text}. Options: families (TagFamily ints), scope "start"/"inline"/"all", lines
     // "selected"/"file", and the Cleanup flags by their names.
     Q_INVOKABLE QVariantMap removeTags(const QVariantMap &options);
+    // The selected run interpolated with the dialog's {accel, shortestRotation, cascade, excluded}: {count,
+    // firstRow, lastRow, problem, startBlockOnly, changes [{id, tag, before, from, to, fromColour, toColour,
+    // skip}], results [{row, text}]}. The video shows the result until clearInterpolationPreview().
+    Q_INVOKABLE QVariantMap interpolationPlan(const QVariantMap &options);
+    // Empty when done, else why not.
+    Q_INVOKABLE QString applyInterpolation(const QVariantMap &options);
+    Q_INVOKABLE void clearInterpolationPreview();
     // {lines, firstFrame, frames}; empty without frame times or selected lines.
     Q_INVOKABLE QVariantMap extendTrackingValues() const;
     // {state, text, canApply}.
@@ -789,6 +807,21 @@ public:
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
+    // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
+    Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // The amounts are audio.leadInValue / audio.leadOutValue.
+    Q_INVOKABLE bool changeLead(bool end, bool add);
+    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool extendNeighbour(bool next);
+    // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
+    // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
+    // endReason, startFrames, endFrames, linked, linkedEndBefore, leadIn, leadOut, keyframes, windowStart,
+    // windowEnd}; ok false with "problem".
+    Q_INVOKABLE QVariantMap timingSuggestion(int shellWindow);
+    // Applies the suggestion (startMs/endMs override it when >= 0) in one step, then makes
+    // the next uncommented Line active.
+    Q_INVOKABLE bool acceptTimingSuggestion(int shellWindow, int startMs = -1, int endMs = -1);
+    Q_INVOKABLE bool skipTimingSuggestion(int shellWindow);
     Q_INVOKABLE bool centerTimesInFrames();
     Q_INVOKABLE bool commitAndAdvance();
 
@@ -866,6 +899,7 @@ public:
     AiSettings *aiSettings() const { return m_aiSettings.get(); }
     ReviewController *review() const { return m_review.get(); }
     AgentController *agent() const { return m_agent.get(); }
+    InlineAiController *inlineAi() const { return m_inlineAi.get(); }
     Q_PROPERTY(hikari::app::PluginManager *pluginManager READ pluginManager CONSTANT)
     PluginManager *pluginManager() const { return m_pluginManager.get(); }
     Q_PROPERTY(hikari::app::PluginMarketplace *pluginMarketplace READ pluginMarketplace CONSTANT)
@@ -895,6 +929,8 @@ public:
     Q_INVOKABLE void activateShellWindow(int shellWindow);
     // tabs, currentTab and home of one shell window; the properties are the active window's.
     Q_INVOKABLE QVariantList windowTabs(int shellWindow) const;
+    // The shell window holding the tab; the active window for none.
+    Q_INVOKABLE int windowOfTab(qulonglong document) const;
     Q_INVOKABLE int windowCurrentTab(int shellWindow) const;
     Q_INVOKABLE bool windowHome(int shellWindow) const;
     // Waits for running writes and delivers their results.
@@ -1241,6 +1277,7 @@ private:
     QString m_luaHelper;
     std::unique_ptr<backends::LuaNodeHelper> m_luaNodes;
     std::optional<QVariantMap> m_layerPreview;
+    std::map<core::LineId, std::u8string> m_interpolationPreview;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     // MUST KILL: must be declared after m_automationHotkeys, which it holds a reference to.
     std::unique_ptr<HotkeysController> m_hotkeys;
@@ -1250,6 +1287,7 @@ private:
     std::unique_ptr<AiSettings> m_aiSettings;
     std::unique_ptr<ReviewController> m_review;
     std::unique_ptr<AgentController> m_agent;
+    std::unique_ptr<InlineAiController> m_inlineAi;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
@@ -1310,6 +1348,7 @@ private:
     void leaveShellWindow(int shellWindow);
     void showFirstWindow();
     void noteLastUsedWindow();
+    void noteCrashWindows();
     ui::WorkspaceLayoutController &layoutOf(int shellWindow);
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();

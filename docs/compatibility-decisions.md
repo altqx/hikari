@@ -155,6 +155,18 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D5, Whole file.** Changes every Line but Comments, as Clean Tags does. Selected lines changes Comments too, as Strip tags and phos.RemoveTags do.
 - **D6, phos.RemoveTags.** Families replace its per-tag list, which lists only the tags the selection holds. Its "inline except last", "invert" and "from transforms only" choices stay in the script.
 
+## AU22-interpolate
+
+Interpolate across lines does natively what lyger.FbfTransform 2.0.1 and l0.CascadeTransforms 0.1.0 do (records on [AU22 #856](https://github.com/altqx/hikari/issues/856)). Neither is bundled, so there is no byte-identical target. The departures below were accepted at the owner's gate on 2026-11-11 (Q247–Q250).
+
+- **I1, which tags.** The tags whose values differ between the ends are found and listed, all ticked. FbfTransform offers 30 fixed checkboxes and presets, and rewrites every ticked tag even when both ends agree.
+- **I2, blocks.** Inline blocks line up by character. FbfTransform compares byte lengths, so it splits multibyte text mid-character, and it corrupts Lines whose text differs; here only the start block counts then, and the dialog says why.
+- **I3, spellings.** `\1c` stays `\1c` and `\fr` is interpolated. FbfTransform rewrites `\1c` as `\c` and ignores `\fr`.
+- **I4, clips.** Rect clips round to whole pixels and vector clips lerp point by point, `\iclip` too; a pair that can't be interpolated is shown with the reason. FbfTransform truncates rect clips and silently skips anything else.
+- **I5, rounding.** Numbers keep two decimals, colours and alphas round half up (tag_lerp). FbfTransform writes three decimals.
+- **I6, transforms.** `\t` lists of the same shape at both ends are interpolated. FbfTransform only strips its tags from `\t`.
+- **I7, cascade.** Cascade transforms re-times each Line of the run as line0's script does, after the interpolation, with whole milliseconds.
+
 ## TH2-unicode-graphemes
 
 `aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.
@@ -199,6 +211,57 @@ When the host cannot measure a karaoke Line's text, the templater logs "could no
 
 The templater lays karaoke Lines out from the Document's Styles as they were when the run started. A `code` Line that changes a Style table (`line.styleref`, the `styles` table) or replaces `aegisub.text_extents` no longer changes where later Lines' syllables go. `char` templates still measure each character with `aegisub.text_extents`, as 3.2.2 did. [TH5b #833](https://github.com/altqx/hikari/issues/833).
 
+## TH5c-karaok-mode
+
+A Document can say which template language it uses: `Karaoke Templater: karaOK` or `Karaoke Templater: Aegisub 3.2.2` in `[Script Info]`. Without that line, a template or code Line using syntax only karaOK has picks karaOK. That syntax is `lsyl`, `lword`, `lchar`, `furichar` or `word` in a template's Effect, `code word`/`char`/`furichar`, `k_retime(`, `$ci`/`$slen`/`$llen`/`$len`, or `tenv.word`/`char`/`syll`/`basechar`. `template char` and `style` alone don't. Otherwise the Document stays in 3.2.2 mode. In karaOK mode the built-in templater behaves as upstream karaOK (`lost-logarithm/karaOK` f749c4fa64e7) does, apart from the TH5c-karaok entries below. Upstream karaOK is a separate script with its own two macros; the built-in keeps "Apply karaoke template". Corpus: `tests/backends/karaoke-corpus/karaok/`, compared byte for byte with upstream. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decisions Q153, Q157 and Q166.
+
+## TH5c-karaok-word-positions
+
+Words count characters as the rest of the Line does. Upstream found words with `gmatch("()…")`, which gives byte positions, and compared them with character positions, so on any Line with non-ASCII text characters and syllables went to the wrong words and word tags to the wrong characters. Corpus: `tests/backends/karaoke-corpus/karaok/departures/word-positions.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decisions Q161 and Q160.
+
+## TH5c-karaok-syl-char
+
+`template syl char` is a `char` template. Upstream put it in both lists, so it ran once per syllable and again once per character. Another pair of unit classes on one template keeps the first and reports "Unable to combine … class templates with the … class this template has". Corpus: `tests/backends/karaoke-corpus/karaok/departures/syl-char.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q161.
+
+## TH5c-karaok-named-classes
+
+A named line template keeps the unit class of its first Line. Upstream let each Line of a named template reset it, so `template lsyl X` followed by `template line X` lost its per-syllable part and wrote no text. A later Line with a different unit class (`lword` after `lsyl`) reports "Unable to combine … class templates with the … class this template has" and adds nothing. Corpus: `tests/backends/karaoke-corpus/karaok/departures/named-classes.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q161.
+
+## TH5c-karaok-k-retime
+
+`k_retime` shifts the syllable for the current loop iteration only. Upstream shifted the shared syllable, so every later loop iteration and every later template on that syllable saw the times already moved. Corpus: `tests/backends/karaoke-corpus/karaok/departures/k-retime.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q161.
+
+## TH5c-karaok-style-text
+
+`style X` runs a template on Lines whose Style name contains X as plain text. Upstream read X as a Lua pattern, so `.`, `-`, `(` and similar in X matched more Styles than written. Corpus: `tests/backends/karaoke-corpus/karaok/departures/style-plain.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q161.
+
+## TH5c-karaok-furichar-tags
+
+Each furigana character of a `furichar` template takes its own syllable's override tags, without `\k`. Upstream matched each furigana character's index inside its furigana part against the tags' places in the main text. So the first character of every furigana part took the Line's first tags, whichever syllable it belonged to, and the other characters took none. With `{\k40\1c&H0000FF&}漢|かん{\k30\b1}字|じ`, upstream gives `{\1c&H0000FF&}か`, `ん`, `{\1c&H0000FF&}じ`; HikariSub gives `{\1c&H0000FF&}か`, `{\1c&H0000FF&}ん`, `{\b1}じ`. It shows with `keeptags` and wherever an expression reads a furigana character's `text`. Corpus: `tests/backends/karaoke-corpus/karaok/departures/furichar-tags.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q343.
+
+## TH5c-karaok-no-leaked-globals
+
+A run no longer sets the globals `textbuffer` and `w`, which upstream wrote while it built Lines and words. Corpus: `tests/backends/karaoke-corpus/karaok/departures/leaked-globals.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q161.
+
+## TH5c-karaok-graphemes
+
+In karaOK mode, `char`, `lchar`, `$ci`, `$slen`, `$llen` and `$len` count grapheme clusters, as TH1 does for 3.2.2's `char`. Upstream counts code points. `graphemes = false` in a `code once` Line counts code points again. Corpus: `tests/backends/karaoke-corpus/karaok/departures/thai.ass`. [TH5c #833](https://github.com/altqx/hikari/issues/833), owner decision Q160. Thai support by Jibrill.
+
+Q161's seventh defect, text before the first `\k` shifting the character-to-syllable map, can't happen in HikariSub: that text belongs to syllable 1 for upstream and the built-in alike (corpus `karaok/leading-text.ass`), so it is not a departure.
+
 ## 892-script-info-on-save
 
 Every save but an autosave writes the Script Info values switched on in the `scriptProperties.*` settings (Title, Original Script, Original Translation, Original Editing, Original Timing, Script Updated By) into the file, as legacy's `SubsGrid::SwapAssProperties` does. They come from the window's settings, so a Project's values win over the user's. With `scriptProperties.askForChange` on, a dialog first lists each value that would change, old and new, with a check box. OK writes the checked values, Skip saves without any of them, and Cancel stops the save. In legacy the check boxes are the switches themselves and OK stores them in the settings; here they apply to that one save. Legacy's third button, "Disable confirmation", turned the question off for good and then saved without the values; Skip keeps the question on. The values are one undo step, "Changing the subtitle header", and it stays when the save fails. [#892](https://github.com/altqx/hikari/issues/892), owner decision Q234 2026-11-11, refined the same day.
+
+## AU19-timing-helpers
+
+Subtitles › Timing helpers and the Timing postprocessor's Assistant tab do natively what Timing Assistant (phos), Bidirectional Snapping (phos), Snapper (petzku), ShiftCut and Join/Split/Snap (unanimated) and JoinPrevious (The0x539) do. None of them is bundled. The behaviour table is in [AU19 #853](https://github.com/altqx/hikari/issues/853#issuecomment-6790132429). The departures below were accepted at the owner's gate on 2026-11-11 (Q322–Q328).
+
+- **L1, join text.** Merge with previous/next line (F4/F5) joins with `\N` and keeps every tag. Join/Split/Snap's tag pruning, `\N`-to-space and `...`/hyphen merging aren't copied; its same-text join is Join › Keep first.
+- **L2, split.** Split › At video time splits at the video frame. There is no split at `\N` with estimated times and no keyframe snap after a split.
+- **L3, neighbours.** Extend previous line to this start and Extend next line to this end skip commented Lines, and do nothing at the first or last Line. JoinPrevious writes to the row above, even a header.
+- **L4, snaps.** Four explicit commands replace Bidirectional Snapping's press-again-to-flip. A time already on a keyframe moves to the one before or after; Snapper leaves it. Each Line keeps its own times; Snapper copies the audio selection into every selected Line. No keyframe that way leaves the Line unchanged; the scripts throw.
+- **L5, leads.** The amounts are Settings › Audio's lead-in and lead-out, in ms. Adding never overlaps the neighbouring uncommented Line, and removing keeps at least one frame (ShiftCut allows zero). There is no style filter and no skip-on-keyframe option.
+- **L6, frame shifts.** One frame per press. ShiftCut's "by frames per lines" isn't copied; whole-Line shifts stay in Shift times.
+- **L7, linking and snapping in batch.** These stay the Timing postprocessor's close-gaps and snap rules, with windows in ms rather than frames and no CPS or 450 ms guard.
+- **L8, assistant.** The thresholds are the postprocessor's rules and presets; a rule that is off isn't used. There is no CPS special case for a keyframe 850 ms or more away. A start already on a keyframe doesn't stop the end being timed. Leads are rounded to frame starts, and nothing is inserted after the last Line.

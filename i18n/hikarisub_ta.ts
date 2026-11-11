@@ -451,6 +451,10 @@
         <translation>Claude Code</translation>
     </message>
     <message>
+        <source>Codex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>முன்மொழிவு: %1</translation>
     </message>
@@ -5590,6 +5594,18 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளின்படி</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
+    </message>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>குறைந்தது மூன்று வரிகளைத் தேர்ந்தெடுக்கவும்: முதல், கடைசி மற்றும் அவற்றுக்கு இடையிலான வரிகள்.</translation>
+    </message>
+    <message>
+        <source>Fills the lines between the first and last selected line with the tag values between theirs</source>
+        <translation>தேர்ந்தெடுத்த முதல் மற்றும் கடைசி வரிகளுக்கு இடையிலான வரிகளை அவற்றின் குறிச்சொல் மதிப்புகளுக்கு இடைப்பட்ட மதிப்புகளால் நிரப்பும்</translation>
+    </message>
+    <message>
         <source>Swap lines</source>
         <translation>வரிகளை இடமாற்று</translation>
     </message>
@@ -6176,6 +6192,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shift+click to set a shortcut</source>
         <translation>குறுக்குவிசையை அமைக்க Shift+சொடுக்கு</translation>
+    </message>
+    <message>
+        <source>AI actions…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat last AI action</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>This shortcut already exists for “%1”. What to do?</source>
@@ -7430,6 +7454,10 @@ Failed to copy %2 fonts.</source>
         <translation>குறிச்சொற்களை நீக்கு…</translation>
     </message>
     <message>
+        <source>Interpolate across lines…</source>
+        <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு…</translation>
+    </message>
+    <message>
         <source>Insert balanced break</source>
         <translation>சமநிலை வரி முறிவைச் செருகு</translation>
     </message>
@@ -7542,6 +7570,70 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out from the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -7576,6 +7668,420 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Align to video…</source>
         <translation>வீடியோவுடன் சீரமை…</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.InlineAi</name>
+    <message>
+        <source>Rewrite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix spelling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation type="unfinished">மொழிபெயர்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>AI actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation type="unfinished">AI</translation>
+    </message>
+    <message>
+        <source>Rewrite…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Shorten to %1 CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rewrites each line over %1 characters per second so it reads at that speed or less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix spelling and grammar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit actions…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a model in Settings › AI…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chat</source>
+        <translation type="unfinished">அரட்டை</translation>
+    </message>
+    <message>
+        <source>Translator</source>
+        <translation type="unfinished">மொழிபெயர்ப்பாளர்</translation>
+    </message>
+    <message>
+        <source>Reviewer</source>
+        <translation type="unfinished">மதிப்பாய்வாளர்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">மூடு</translation>
+    </message>
+    <message>
+        <source>How to rewrite, for example: less formal, fewer words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished">மொழி</translation>
+    </message>
+    <message>
+        <source>No model for this role</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s) · about %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 left of today’s %2 cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>This sends %n request(s) to %1 with the %2 model, %3.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>About %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The model has no price, so the cost is unknown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The run stops if it reaches the daily cap. Stop also works at any time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Results wait for you to apply them: Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes go into the review: Full access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes go into the review: Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message numerus="yes">
+        <source>Rewriting %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shortening %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Fixing spelling in %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Translating %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1: %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No model for this action. Add one in Settings › AI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer dropped a tag: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer was empty: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Came back the same: line %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>You edited line %1 first, so it was left as it is.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Stopped at today’s cost cap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 failed: %2</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) weren’t sent.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 of %2 done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished">முன்னேற்றம்</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>Open Settings › AI</source>
+        <translation type="unfinished">அமைப்புகள் › AI ஐத் திற</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n result(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation type="unfinished">கைமுறை</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished">கைவிடு</translation>
+    </message>
+    <message>
+        <source>Apply line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out of date: you edited line %1 after it was sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 ticked · click a row to select it in the Grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message>
+        <source>Select at least three lines: the first, the last and the lines between them.</source>
+        <translation>குறைந்தது மூன்று வரிகளைத் தேர்ந்தெடுக்கவும்: முதல், கடைசி மற்றும் அவற்றுக்கு இடையிலான வரிகள்.</translation>
+    </message>
+    <message>
+        <source>The first and last lines have the same tags, so there’s nothing to interpolate.</source>
+        <translation>முதல் மற்றும் கடைசி வரிகளில் ஒரே குறிச்சொற்கள் உள்ளன, எனவே இடைக்கணிக்க எதுவும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>The clips have different shapes.</source>
+        <translation>கிளிப்புகளின் வடிவங்கள் வேறுபடுகின்றன.</translation>
+    </message>
+    <message>
+        <source>One clip is a rectangle and the other a drawing.</source>
+        <translation>ஒரு கிளிப் செவ்வகம், மற்றொன்று வரைபடம்.</translation>
+    </message>
+    <message>
+        <source>Only one of the two lines has this clip.</source>
+        <translation>இரண்டு வரிகளில் ஒன்றில் மட்டுமே இந்தக் கிளிப் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>The transforms have different shapes.</source>
+        <translation>உருமாற்றங்களின் அமைப்பு வேறுபடுகிறது.</translation>
+    </message>
+    <message>
+        <source>Nothing would change with these tags.</source>
+        <translation>இந்தக் குறிச்சொற்களால் எதுவும் மாறாது.</translation>
+    </message>
+    <message>
+        <source>Interpolate across lines</source>
+        <translation>வரிகளுக்கு இடையே இடைக்கணிப்பு</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n வரி, வரி %1 முதல் வரி %2 வரை. இது திறந்திருக்கும் வரை வீடியோ முடிவைக் காட்டும்.</numerusform>
+            <numerusform>%n வரிகள், வரி %1 முதல் வரி %2 வரை. இது திறந்திருக்கும் வரை வீடியோ முடிவைக் காட்டும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The first and last lines have different text, so only the start tags are interpolated.</source>
+        <translation>முதல் மற்றும் கடைசி வரிகளின் உரை வேறுபடுகிறது, எனவே தொடக்கக் குறிச்சொற்கள் மட்டுமே இடைக்கணிக்கப்படுகின்றன.</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation>குறிச்சொல்</translation>
+    </message>
+    <message>
+        <source>First line</source>
+        <translation>முதல் வரி</translation>
+    </message>
+    <message>
+        <source>Last line</source>
+        <translation>கடைசி வரி</translation>
+    </message>
+    <message>
+        <source>%1 before “%2”</source>
+        <translation>“%2” க்கு முன் %1</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>none</source>
+        <translation>இல்லை</translation>
+    </message>
+    <message>
+        <source>Acceleration</source>
+        <translation>முடுக்கம்</translation>
+    </message>
+    <message>
+        <source>1 is even. Above 1 starts slow and ends fast; below 1 starts fast and ends slow.</source>
+        <translation>1 என்பது சீரானது. 1-க்கு மேல் மெதுவாகத் தொடங்கி வேகமாக முடியும்; 1-க்குக் கீழ் வேகமாகத் தொடங்கி மெதுவாக முடியும்.</translation>
+    </message>
+    <message>
+        <source>Rotate the shortest way</source>
+        <translation>குறுகிய வழியில் சுழற்று</translation>
+    </message>
+    <message>
+        <source>Cascade transforms</source>
+        <translation>உருமாற்றங்களை அடுக்கு</translation>
+    </message>
+    <message>
+        <source>Each line’s %1 tags run one after another over the line</source>
+        <translation>ஒவ்வொரு வரியின் %1 குறிச்சொற்களும் வரி முழுவதும் ஒன்றன் பின் ஒன்றாக இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>முடிவு</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
     </message>
 </context>
 <context>
@@ -8764,6 +9270,10 @@ Failed to copy %2 fonts.</source>
         <translation>குறிச்சொற்கள் இல்லாத உரை மூலம் வரிசைப்படுத்துங்கள்</translation>
     </message>
     <message>
+        <source>No line changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitle file</source>
         <translation>வசனக் கோப்பைத் திற</translation>
     </message>
@@ -8910,6 +9420,138 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Selects lines by expressions</source>
         <translation>வெளிப்பாடுகளால் வரிகளைத் தேர்ந்தெடுக்கிறது</translation>
+    </message>
+    <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line to the keyframe after it, staying before its end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts each selected line earlier by the lead-in, no earlier than the line before it ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-in</source>
+        <translation type="unfinished">லீட்-இன் சேர்</translation>
+    </message>
+    <message>
+        <source>Starts each selected line later by the lead-in, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends each selected line later by the lead-out, no later than the next line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add lead-out</source>
+        <translation type="unfinished">லீட்-அவுட் சேர்</translation>
+    </message>
+    <message>
+        <source>Ends each selected line earlier by the lead-out, keeping at least one frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ends the line before the active line where the active line starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steps through the lines one at a time with a suggested start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Builds glow, border and shadow layers under the selected lines</source>
@@ -10587,6 +11229,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒவ்வொரு அசையும் பாடப்படும்போது ஒலியின் உரத்தலுக்கு ஏற்பப் பெரிதாகிறது. ஒலி திறந்திருக்க வேண்டும்.</translation>
     </message>
     <message>
+        <source>Highlight flashes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An outline flashes on each syllable once for every highlight, as the templater’s multi does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint and cloud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables marked {\-paint} fill from red to white, those marked {\-cloud} rise and blur, and the rest stay in place.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A graph name can’t be empty, start or end with a space, end with a dot, or hold “karaoke”, a comma, a double quote, a control character or any of / \ : * ? &lt; &gt; |.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10802,6 +11460,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Highlights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable or character once per highlight, as the templater’s multi gives it: the highlight’s start, end and duration. A furigana or line unit has one, its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inline-fx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only the units whose inline-fx ({\-name}, kept until the next one) is `fx`, as the templater’s fx modifier keeps them. Characters have their syllable’s; a line unit has none.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10823,7 +11497,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Fade</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">மங்குதல்</translation>
     </message>
     <message>
         <source>\fad after `before`.</source>
@@ -10975,6 +11649,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The span’s end; null: the unit’s end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out highlights with no duration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The inline-fx name; empty: units without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13406,6 +14088,50 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செலவு அளவியைக் காட்டு</translation>
     </message>
     <message>
+        <source>Inline actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asks each time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add an action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For example: make it sound like a pirate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask each time, starting from this instruction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translate to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines of context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>before and after each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>AI components</source>
         <translation>AI கூறுகள்</translation>
     </message>
@@ -13596,6 +14322,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>It is deleted from the keychain. Providers without their own search stop searching until you add a key.</source>
         <translation>இது விசைக்கொத்திலிருந்து நீக்கப்படும். நீங்கள் விசையைச் சேர்க்கும் வரை சொந்தத் தேடல் இல்லாத வழங்குநர்கள் தேட மாட்டார்கள்.</translation>
+    </message>
+    <message>
+        <source>Your actions appear in the AI menus. They follow the mode for new threads and change only the text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actions save at once. The other settings here save with OK or Apply.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
@@ -14452,6 +15186,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Open project</source>
         <translation>திட்டப்பணியைத் திற</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
+        <source>Project</source>
+        <translation>திட்டப்பணி</translation>
+    </message>
+    <message>
+        <source>Uses yours</source>
+        <translation>உங்களுடையதைப் பயன்படுத்துகிறது</translation>
+    </message>
+    <message>
+        <source>Set in this project</source>
+        <translation>இந்தத் திட்டப்பணியில் அமைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Set in project.local.toml</source>
+        <translation>project.local.toml இல் அமைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>உங்களுடையதைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Overridden in this project</source>
+        <translation>இந்தத் திட்டப்பணியில் மேலெழுதப்பட்டது</translation>
+    </message>
+    <message>
+        <source>project.toml could not be written, so some Project settings were not saved.</source>
+        <translation>project.toml ஐ எழுத முடியவில்லை, எனவே சில திட்டப்பணி அமைப்புகள் சேமிக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Saving a file writes the switched-on fields into its Script Info.</source>
+        <translation>ஒரு கோப்பைச் சேமிக்கும்போது இயக்கிய புலங்கள் அதன் Script Info இல் எழுதப்படும்.</translation>
+    </message>
+    <message>
+        <source>Ask before changing them on save</source>
+        <translation>சேமிக்கும்போது அவற்றை மாற்றும் முன் கேள்</translation>
+    </message>
+    <message>
+        <source>This project has its own scripts or plugin settings. Trust “%1” to run them.</source>
+        <translation>இந்தத் திட்டப்பணியில் அதன் சொந்த ஸ்கிரிப்ட்கள் அல்லது செருகுநிரல் அமைப்புகள் உள்ளன. அவற்றை இயக்க “%1” ஐ நம்புங்கள்.</translation>
+    </message>
+    <message>
+        <source>Trust folder</source>
+        <translation>கோப்புறையை நம்பு</translation>
     </message>
 </context>
 <context>
@@ -19932,6 +20714,10 @@ Styles deleted:
         <translation>%1 ms</translation>
     </message>
     <message>
+        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The rules need a video.</source>
         <translation>விதிகளுக்கு வீடியோ தேவை.</translation>
     </message>
@@ -20006,6 +20792,14 @@ Styles deleted:
     <message>
         <source>Open keyframes…</source>
         <translation>கீஃப்ரேம்களைத் திற…</translation>
+    </message>
+    <message>
+        <source>Assistant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -20122,6 +20916,116 @@ Styles deleted:
     <message>
         <source>Times were not centred within frames: no video is open</source>
         <translation>நேரங்கள் சட்டகங்களுக்குள் மையப்படுத்தப்படவில்லை: வீடியோ எதுவும் திறக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Already on a keyframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms, linked to the previous line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-out of %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No rule applies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it ended %1 ms before this start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linked: it overlapped this line by %1 ms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No more lines. Accepted %1, skipped %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a line to time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished">இப்போது</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished">பரிந்துரைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Why</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">முடிந்தது</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">மாற்றம்</translation>
+    </message>
+    <message>
+        <source>Change the suggested times (Alt+C)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished">தவிர்</translation>
+    </message>
+    <message>
+        <source>Skip this line (Alt+S)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

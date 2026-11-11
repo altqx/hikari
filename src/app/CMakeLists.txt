@@ -32,6 +32,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h
     ai_settings.cpp include/hikari/app/ai_settings.h
     review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h
+    inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h
     plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
@@ -122,8 +123,8 @@ target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/h
 target_sources(hikari_composition PRIVATE single_instance.cpp include/hikari/app/single_instance.h
     forwarded_launches.cpp include/hikari/app/forwarded_launches.h)
 target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
-target_sources(hikari_composition PRIVATE application_video_timing.cpp)
-target_sources(hikari_composition PRIVATE application_tracking.cpp application_motion.cpp application_layers.cpp application_tag_removal.cpp)
+target_sources(hikari_composition PRIVATE application_video_timing.cpp application_timing_helpers.cpp)
+target_sources(hikari_composition PRIVATE application_tracking.cpp application_motion.cpp application_layers.cpp application_tag_removal.cpp application_interpolate.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
 target_sources(hikari_composition PRIVATE application_grammar.cpp)

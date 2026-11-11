@@ -421,6 +421,152 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.InlineAi</name>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 %n line(s)</source>
+        <translation>
+            <numerusform>%1 %n line</numerusform>
+            <numerusform>%1 %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s) · about %1</source>
+        <translation>
+            <numerusform>%n request · about %1</numerusform>
+            <numerusform>%n requests · about %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n request(s)</source>
+        <translation>
+            <numerusform>%n request</numerusform>
+            <numerusform>%n requests</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</source>
+        <translation>
+            <numerusform>%n line isn’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</numerusform>
+            <numerusform>%n lines aren’t sent: comments, empty lines, tag-only lines, drawings and karaoke.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>This sends %n request(s) to %1 with the %2 model, %3.</source>
+        <translation>
+            <numerusform>This sends %n request to %1 with the %2 model, %3.</numerusform>
+            <numerusform>This sends %n requests to %1 with the %2 model, %3.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Rewriting %n line(s)</source>
+        <translation>
+            <numerusform>Rewriting %n line</numerusform>
+            <numerusform>Rewriting %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shortening %n line(s)</source>
+        <translation>
+            <numerusform>Shortening %n line</numerusform>
+            <numerusform>Shortening %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Fixing spelling in %n line(s)</source>
+        <translation>
+            <numerusform>Fixing spelling in %n line</numerusform>
+            <numerusform>Fixing spelling in %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Translating %n line(s)</source>
+        <translation>
+            <numerusform>Translating %n line</numerusform>
+            <numerusform>Translating %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1: %n line(s)</source>
+        <translation>
+            <numerusform>%1: %n line</numerusform>
+            <numerusform>%1: %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer dropped a tag: line %1.</source>
+        <translation>
+            <numerusform>Not changed, because the answer dropped a tag: line %1.</numerusform>
+            <numerusform>Not changed, because the answers dropped a tag: lines %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Not changed, because the answer was empty: line %1.</source>
+        <translation>
+            <numerusform>Not changed, because the answer was empty: line %1.</numerusform>
+            <numerusform>Not changed, because the answers were empty: lines %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 failed: %2</source>
+        <translation>
+            <numerusform>Line %1 failed: %2</numerusform>
+            <numerusform>Lines %1 failed: %2</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) weren’t sent.</source>
+        <translation>
+            <numerusform>%n line wasn’t sent.</numerusform>
+            <numerusform>%n lines weren’t sent.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Came back the same: line %1.</source>
+        <translation>
+            <numerusform>Came back the same: line %1.</numerusform>
+            <numerusform>Came back the same: lines %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>You edited line %1 first, so it was left as it is.</source>
+        <translation>
+            <numerusform>You edited line %1 first, so it was left as it is.</numerusform>
+            <numerusform>You edited lines %1 first, so they were left as they are.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n result(s)</source>
+        <translation>
+            <numerusform>%1 · %n result</numerusform>
+            <numerusform>%1 · %n results</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s))</source>
+        <translation>
+            <numerusform>%1 (%n line)</numerusform>
+            <numerusform>%1 (%n lines)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Interpolate</name>
+    <message numerus="yes">
+        <source>%n line(s), from line %1 to line %2. The video shows the result while this is open.</source>
+        <translation>
+            <numerusform>%n line, from line %1 to line %2. The video shows the result while this is open.</numerusform>
+            <numerusform>%n lines, from line %1 to line %2. The video shows the result while this is open.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Karaoke</name>
     <message numerus="yes">
         <source>%n more problems not listed; fix these and check again</source>
@@ -1197,6 +1343,20 @@
         <translation>
             <numerusform>%n more line changes.</numerusform>
             <numerusform>%n more lines change.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) earlier.</source>
+        <translation>
+            <numerusform>Snapped to the keyframe %n frame earlier.</numerusform>
+            <numerusform>Snapped to the keyframe %n frames earlier.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Snapped to the keyframe %n frame(s) later.</source>
+        <translation>
+            <numerusform>Snapped to the keyframe %n frame later.</numerusform>
+            <numerusform>Snapped to the keyframe %n frames later.</numerusform>
         </translation>
     </message>
 </context>

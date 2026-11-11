@@ -63,9 +63,10 @@ public:
         std::optional<backends::ai::SidecarInstall> localSidecar;
         std::function<bool()> autoUpdateOffByPolicy;
         /// Adds the agent CLIs the sidecar may ask Qt to start.
-        std::function<void(backends::ai::AgentBroker &)> agents;
+        std::function<void(backends::ai::AgentBroker &, application::ai::KeyStore &)> agents;
         std::function<std::unique_ptr<backends::ai::AiSignIn>(application::ai::KeyStore &)> signIn;
-        /// Whether Qt can start `agent` ("claude"); the panel offers only these.
+        /// Whether Qt can start `agent` ("claude" or "codex"), found as Settings › AI › External agents finds it; the
+        /// panel offers only these.
         std::function<bool(const QString &agent)> agentOnPath;
         /// Finds an agent CLI ("claude" or "codex") and asks it for its version.
         std::function<void(const QString &agent, std::function<void(std::optional<backends::ai::AgentCli>)>)> findAgent;

@@ -1,0 +1,24 @@
+[Script Info]
+; TH5c: the style modifier over Style names without pattern characters; compared against upstream karaOK f749c4fa64e7
+Title: TH5c corpus karaOK style modifier
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+Karaoke Templater: karaOK
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Romaji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: RomajiTop,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,7,20,20,20,1
+Style: Kanji,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template line all style omaji,{\be1}
+Comment: 0,0:00:00.00,0:00:05.00,Romaji,,0,0,0,template syl all style Top,{\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Kanji,,0,0,0,template syl style Kan,{\an5}
+Dialogue: 0,0:00:01.00,0:00:04.00,Romaji,,0,0,0,,{\k30}ki{\k0}ra{\k20}ri
+Dialogue: 0,0:00:01.00,0:00:04.00,RomajiTop,,0,0,0,,{\k30}ki{\k0}ra{\k20}ri
+Dialogue: 0,0:00:01.00,0:00:04.00,Kanji,,0,0,0,,{\k30}ki{\k0}ra{\k20}ri
