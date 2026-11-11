@@ -7382,6 +7382,14 @@ Failed to copy %2 fonts.</source>
         <translation>จัดเวลาให้อยู่กลางเฟรม</translation>
     </message>
     <message>
+        <source>Track colour…</source>
+        <translation>ติดตามสี…</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>หาการจาง…</translation>
+    </message>
+    <message>
         <source>Import legacy settings…</source>
         <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
@@ -9595,6 +9603,22 @@ Failed to copy %2 fonts.</source>
         <translation>ปิดไทม์โค้ด</translation>
     </message>
     <message>
+        <source>Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags</source>
+        <translation>ติดตามสีของจุดที่เลือกตลอดเฟรมของบรรทัดที่เลือก แล้วเขียนเป็นแท็กสีหรืออัลฟา</translation>
+    </message>
+    <message>
+        <source>Track colour…</source>
+        <translation>ติดตามสี…</translation>
+    </message>
+    <message>
+        <source>Finds where the active line’s sign fades in and out at a picked point and writes %1</source>
+        <translation>หาตำแหน่งที่ป้ายของบรรทัดที่ใช้งานจางเข้าและจางออกที่จุดที่เลือก แล้วเขียน %1</translation>
+    </message>
+    <message>
+        <source>Find fade…</source>
+        <translation>หาการจาง…</translation>
+    </message>
+    <message>
         <source>Shift by frames to video</source>
         <translation>เลื่อนทีละเฟรมไปยังวิดีโอ</translation>
     </message>
@@ -9645,6 +9669,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Applies Power-Pin tracking data to the selected lines, one line a frame</source>
         <translation>ใช้ข้อมูลการติดตาม Power-Pin กับบรรทัดที่เลือก โดยแยกเป็นหนึ่งบรรทัดต่อเฟรม</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>หาการจาง</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>ติดตามสี</translation>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
@@ -22467,6 +22499,156 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Track colour</source>
+        <translation>ติดตามสี</translation>
+    </message>
+    <message>
+        <source>Select the lines to track first.</source>
+        <translation>เลือกบรรทัดที่จะติดตามก่อน</translation>
+    </message>
+    <message>
+        <source>The clipboard holds no After Effects tracking data.</source>
+        <translation>คลิปบอร์ดไม่มีข้อมูลการติดตาม After Effects</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the active line.</source>
+        <translation>ข้อมูลการติดตามไม่ได้มีหนึ่งแถวต่อหนึ่งเฟรมของบรรทัดที่ใช้งาน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation>
+            <numerusform>บรรทัดที่เลือก %n บรรทัด ตั้งแต่ %1 ถึง %2 จำนวน %3 เฟรม อ่านเฟรมโดยไม่มีคำบรรยาย</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Follow tracking data</source>
+        <translation>ตามข้อมูลการติดตาม</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the active line</source>
+        <translation>ย้ายจุดตามข้อมูลการติดตาม After Effects จากคลิปบอร์ด หนึ่งแถวต่อหนึ่งเฟรมของบรรทัดที่ใช้งาน</translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation>
+            <numerusform>ข้อมูล After Effects จากคลิปบอร์ด %n เฟรม</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Alpha</source>
+        <translation>อัลฟา</translation>
+    </message>
+    <message>
+        <source>Skip repeated colours</source>
+        <translation>ข้ามสีที่ซ้ำ</translation>
+    </message>
+    <message>
+        <source>A frame whose value is the same as the frame before writes no %1</source>
+        <translation>เฟรมที่ค่าเท่ากับเฟรมก่อนหน้าจะไม่เขียน %1</translation>
+    </message>
+    <message>
+        <source>Sign colour</source>
+        <translation>สีป้าย</translation>
+    </message>
+    <message>
+        <source>Background colour</source>
+        <translation>สีพื้นหลัง</translation>
+    </message>
+    <message>
+        <source>Use the point’s colour</source>
+        <translation>ใช้สีของจุด</translation>
+    </message>
+    <message>
+        <source>Colour on each frame</source>
+        <translation>สีในแต่ละเฟรม</translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation>ผลลัพธ์</translation>
+    </message>
+    <message>
+        <source>Reading frame %1 of %2…</source>
+        <translation>กำลังอ่านเฟรม %1 จาก %2…</translation>
+    </message>
+    <message>
+        <source>Read %1 of %2 frames</source>
+        <translation>อ่านแล้ว %1 จาก %2 เฟรม</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Find fade</source>
+        <translation>หาการจาง</translation>
+    </message>
+    <message>
+        <source>Select a line first.</source>
+        <translation>เลือกบรรทัดก่อน</translation>
+    </message>
+    <message>
+        <source>Move the video to a frame of the line where the sign is fully shown.</source>
+        <translation>เลื่อนวิดีโอไปยังเฟรมของบรรทัดที่ป้ายแสดงเต็มที่</translation>
+    </message>
+    <message>
+        <source>The tracking data doesn’t have one row for each frame of the line.</source>
+        <translation>ข้อมูลการติดตามไม่ได้มีหนึ่งแถวต่อหนึ่งเฟรมของบรรทัด</translation>
+    </message>
+    <message>
+        <source>No frame up to this one has the point’s colour, so the fade in can’t be found.</source>
+        <translation>ไม่มีเฟรมใดจนถึงเฟรมนี้ที่มีสีของจุด จึงหาการจางเข้าไม่ได้</translation>
+    </message>
+    <message>
+        <source>The point keeps its colour to the end of the line, so the fade out can’t be found.</source>
+        <translation>จุดคงสีไว้จนจบบรรทัด จึงหาการจางออกไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation>
+            <numerusform>บรรทัด %1 ตั้งแต่ %2 ถึง %3 จำนวน %n เฟรม สีของจุดในเฟรมนี้คือสีตอนแสดงเต็มที่</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>จุด</translation>
+    </message>
+    <message>
+        <source>Moves the point with After Effects tracking data from the clipboard, one row for each frame of the line</source>
+        <translation>ย้ายจุดตามข้อมูลการติดตาม After Effects จากคลิปบอร์ด หนึ่งแถวต่อหนึ่งเฟรมของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>หา</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation>จางเข้า</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation>จางออก</translation>
+    </message>
+    <message>
+        <source>How far, in RGB, a frame’s colour may be from the point’s and still count as shown</source>
+        <translation>สีของเฟรมห่างจากสีของจุดได้แค่ไหนใน RGB แล้วยังนับว่าแสดงอยู่</translation>
+    </message>
+    <message>
+        <source>Distance from the colour on each frame</source>
+        <translation>ระยะห่างจากสีในแต่ละเฟรม</translation>
+    </message>
+    <message>
+        <source>fade in ends, frame %1</source>
+        <translation>จางเข้าสิ้นสุด เฟรม %1</translation>
+    </message>
+    <message>
+        <source>fade out starts, frame %1</source>
+        <translation>จางออกเริ่ม เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Arrow keys move the point; Enter applies</source>
+        <translation>ปุ่มลูกศรย้ายจุด กด Enter เพื่อนำไปใช้</translation>
     </message>
 </context>
 <context>

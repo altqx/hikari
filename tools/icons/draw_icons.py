@@ -1420,7 +1420,6 @@ for card, roles in {
                  "graph-focus-lines", "graph-grain", "graph-chromatic-aberration", "graph-randomove",
                  "graph-karaoke-to-alpha"],
     "AU10 #841": ["select-overlapping", "split-tag-blocks", "split-every-n"],
-    "AU11 #846": ["track-colour", "find-fade"],
     "AU14 #847": ["tool-text-on-path"],
     "AU16 #850": ["reinstall-scripts"],
     "AU21 #855": ["change-alignment", "align-left", "align-center", "align-right", "align-top", "align-middle",

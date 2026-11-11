@@ -114,6 +114,17 @@ The Gradient visual tool does natively what the gradient scripts do (records in 
 - **G8, wedge thickness.** Thickness is limited to 0–1. phos declares a minimum of 1 and a maximum of 0.
 - **G9, inline tags.** In the strip modes, inline instances of an interpolated tag are replaced, so no older `\1c` overrides a strip. Gradient Factory removes only the last channel's.
 
+## AU11-video-analysis
+
+Video › "Track colour…" and "Find fade…" do natively what zah.aegi-color-track 2.1.1 and phos.AutoFade 1.1.2 do (records in [AU11 #846](https://github.com/altqx/hikari/issues/846)). Both read one pixel a frame, decoded without subtitles. The departures below were accepted at the owner's gate on 2026-11-11 (Q271–Q278).
+
+- **V1, repeated colours.** Skip repeated colours, on by default, writes no `\t` for a frame whose value is the same as the last one written. With it off, the tags are byte for byte color-track's.
+- **V2, alpha hex.** A colour equal to the sign or background colour writes `&H00&` or `&HFF&`. color-track writes the decimal `&H0&` and `&H255&`.
+- **V3, tracking data.** Tracking data moves the picked point by the data's offset from the video's frame. color-track reads the rows as absolute positions, which is the same when the picked point is the tracked point.
+- **V4, each Line's own frames.** Each selected Line gets the colours of its own frames. color-track tracks over the first selected Line's frames and writes that to every Line.
+- **V5, every frame.** Find fade checks every frame after the video's frame for the fade out. AutoFade first halves the distance to the end while the colour holds, so it can step over a flicker.
+- **V6, unread frames.** A frame where the point is outside the picture counts as neither shown nor gone. AutoFade stops with an error.
+
 ## AU20-text-commands
 
 Line breaks, Change case and Swap dialogue alternatives do natively what these scripts do: ua.LineBreaker, petzku.Autowrapper, l0.InsertLineBreaks, ua.ChangeCase, Flux.TitleCase, zf.allCharsTo and Flux.DialogSwapper. The bundled "Make text fullwidth" demo still ships unchanged. The behaviour record and the owner's answers are on [AU20 #854](https://github.com/altqx/hikari/issues/854) (Q279–Q286, 2026-11-11).

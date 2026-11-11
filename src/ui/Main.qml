@@ -75,6 +75,7 @@ ApplicationWindow {
     required property var styleManager
     required property var kanjiTimer
     required property var alignToVideo
+    required property var videoAnalysis
     required property var lyricsImport
     required property var qcNotes
     required property var fontCollector
@@ -2604,6 +2605,30 @@ ApplicationWindow {
                     text: qsTr("Align to video…")
                     enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ALIGN_TO_VIDEO")) root.openAlignToVideo()
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_TRACK_COLOUR"
+                help: qsTr("Follows a picked point’s colour across the selected lines’ frames and writes it as colour or alpha tags")
+                iconRole: "track-colour"
+                objectName: "trackColourMenuItem"
+                action: Action {
+                    id: trackColourAction
+                    text: qsTr("Track colour…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_TRACK_COLOUR")) root.openVideoAnalysis("track")
+                }
+            }
+            ShellMenuItem {
+                command: "GLOBAL_FIND_FADE"
+                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
+                iconRole: "find-fade"
+                objectName: "findFadeMenuItem"
+                action: Action {
+                    id: findFadeAction
+                    text: qsTr("Find fade…")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_FADE")) root.openVideoAnalysis("fade")
                 }
             }
             ShellMenuItem {
@@ -8782,6 +8807,29 @@ ApplicationWindow {
         if (problem.length > 0)
             root.notices.post("error", qsTr("Align to video"), problem)
     }
+    Loader {
+        id: trackColourLoader
+        active: false
+        sourceComponent: TrackColourDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    Loader {
+        id: findFadeLoader
+        active: false
+        sourceComponent: FindFadeDialog {
+            controller: root.videoAnalysis
+            settings: root.app.settings
+        }
+    }
+    function openVideoAnalysis(mode) {
+        const loader = mode === "fade" ? findFadeLoader : trackColourLoader
+        loader.active = true
+        const problem = loader.item.openDialog()
+        if (problem.length > 0)
+            root.notices.post("error", mode === "fade" ? qsTr("Find fade") : qsTr("Track colour"), problem)
+    }
     ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
@@ -9212,6 +9260,8 @@ ApplicationWindow {
         GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION: joinPreviousAudioSelectionAction,
         GLOBAL_CENTER_TIMES_IN_FRAMES: centerTimesInFramesAction,
         GLOBAL_ALIGN_TO_VIDEO: alignToVideoAction,
+        GLOBAL_TRACK_COLOUR: trackColourAction,
+        GLOBAL_FIND_FADE: findFadeAction,
         GLOBAL_PERSPECTIVE_TRACKING: perspectiveTrackingAction,
         GLOBAL_APPLY_MOTION_DATA: applyMotionDataAction,
         GLOBAL_BLUR_AND_GLOW_LAYERS: blurAndGlowLayersAction,
