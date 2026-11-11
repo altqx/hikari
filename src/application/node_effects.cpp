@@ -7,13 +7,16 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <atomic>
 #include <cctype>
 #include <chrono>
 #include <cmath>
 #include <functional>
 #include <map>
+#include <charconv>
 #include <mutex>
+#include <numbers>
 #include <thread>
 
 namespace hikari::application {
@@ -50,12 +53,13 @@ NodeColour nodeColour(karaoke_layout::StyleColour c)
 }
 
 enum class Kind {
-    ForEach, Repeat, Frames, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
+    ForEach, Repeat, Frames, ClipGradient, Array, Particles, Info, Number, Text, Colour, Point, Choose, Calculate, Compare, Progress, Random,
     Retime, Stagger, Tag, Move, Fade, Transform, Gradient, Shape, Join, Emit, Lua
 };
 
 const std::map<std::string, Kind, std::less<>> kKinds{
     {"units.for_each", Kind::ForEach}, {"units.repeat", Kind::Repeat},     {"units.frames", Kind::Frames},
+    {"units.clip_gradient", Kind::ClipGradient}, {"units.array", Kind::Array}, {"units.particles", Kind::Particles},
     {"units.info", Kind::Info},        {"values.number", Kind::Number},    {"values.text", Kind::Text},
     {"values.colour", Kind::Colour},   {"values.point", Kind::Point},      {"values.choose", Kind::Choose},
     {"math.calculate", Kind::Calculate}, {"math.compare", Kind::Compare},  {"math.progress", Kind::Progress},
@@ -140,6 +144,129 @@ std::string assColour(const NodeColour &c)
 std::string assAlpha(double a)
 {
     return "&H" + hexByte(static_cast<int>(std::floor(a + 0.5))) + "&";
+}
+
+double toThousandths(double v)
+{
+    return std::floor(v * 1000 + 0.5) / 1000;
+}
+
+double unitDraw(std::uint64_t h)
+{
+    return static_cast<double>(h >> 11) * 0x1.0p-53;
+}
+
+NodeColour gradientAt(const std::vector<NodeValue> &stops, double progress)
+{
+    const double p = std::clamp(progress, 0.0, 1.0);
+    if (stops.size() == 1 || std::isnan(p))
+        return std::get<NodeColour>(stops.front());
+    const double at = p * double(stops.size() - 1);
+    const std::size_t k = std::min(static_cast<std::size_t>(at), stops.size() - 2);
+    const double f = at - double(k);
+    const NodeColour a = std::get<NodeColour>(stops[k]), b = std::get<NodeColour>(stops[k + 1]);
+    const auto channel = [&](int x, int y) { return static_cast<int>(std::floor(x + (y - x) * f + 0.5)); };
+    return {channel(a.r, b.r), channel(a.g, b.g), channel(a.b, b.b)};
+}
+
+struct PathStop {
+    NodePoint at;
+    double angle = 0;
+};
+
+std::expected<std::vector<PathStop>, std::string> pathStops(const NodeDrawing &drawing, int count)
+{
+    std::vector<std::string> tokens;
+    std::string token;
+    for (const char c : drawing.commands + ' ') {
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
+            if (!token.empty())
+                tokens.push_back(std::move(token));
+            token.clear();
+        } else {
+            token += c;
+        }
+    }
+    const double scale = std::ldexp(1.0, 1 - std::max(1, drawing.scale));
+    std::vector<std::pair<NodePoint, NodePoint>> segments;
+    NodePoint pen;
+    char command = 0;
+    std::size_t i = 0;
+    const auto coordinate = [&](std::size_t at) -> std::optional<NodePoint> {
+        if (at + 1 >= tokens.size())
+            return std::nullopt;
+        const auto read = [](const std::string &t) -> std::optional<double> {
+            double v = 0;
+            const auto [end, error] = std::from_chars(t.data(), t.data() + t.size(), v);
+            if (error != std::errc() || end != t.data() + t.size() || !std::isfinite(v))
+                return std::nullopt;
+            return v;
+        };
+        const auto x = read(tokens[at]), y = read(tokens[at + 1]);
+        if (!x || !y)
+            return std::nullopt;
+        return NodePoint{*x * scale, *y * scale};
+    };
+    while (i < tokens.size()) {
+        if (tokens[i].size() == 1 && std::isalpha(static_cast<unsigned char>(tokens[i][0]))) {
+            command = tokens[i][0];
+            ++i;
+            if (command != 'm' && command != 'n' && command != 'l' && command != 'b')
+                return std::unexpected("uses a path command other than m, n, l and b");
+            continue;
+        }
+        if (command == 'b') {
+            const auto p1 = coordinate(i), p2 = coordinate(i + 2), p3 = coordinate(i + 4);
+            if (!p1 || !p2 || !p3)
+                return std::unexpected("has a path that is not drawing commands");
+            constexpr int kPieces = 16;
+            NodePoint last = pen;
+            for (int k = 1; k <= kPieces; ++k) {
+                const double t = double(k) / kPieces, u = 1 - t;
+                const auto at = [&](double a, double b, double c, double d) {
+                    return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d;
+                };
+                const NodePoint next{at(pen.x, p1->x, p2->x, p3->x), at(pen.y, p1->y, p2->y, p3->y)};
+                segments.emplace_back(last, next);
+                last = next;
+            }
+            pen = *p3;
+            i += 6;
+            continue;
+        }
+        const auto p = coordinate(i);
+        if (!p || command == 0)
+            return std::unexpected("has a path that is not drawing commands");
+        if (command == 'l')
+            segments.emplace_back(pen, *p);
+        pen = *p;
+        i += 2;
+    }
+    double total = 0;
+    for (const auto &[a, b] : segments)
+        total += std::hypot(b.x - a.x, b.y - a.y);
+    if (!(total > 0))
+        return std::unexpected("has a path with no length");
+    std::vector<PathStop> stops;
+    std::size_t at = 0;
+    double walked = 0;
+    for (int k = 0; k < count; ++k) {
+        const double target = count > 1 ? total * k / (count - 1) : 0;
+        while (at + 1 < segments.size() &&
+               walked + std::hypot(segments[at].second.x - segments[at].first.x,
+                                   segments[at].second.y - segments[at].first.y) < target) {
+            walked += std::hypot(segments[at].second.x - segments[at].first.x,
+                                 segments[at].second.y - segments[at].first.y);
+            ++at;
+        }
+        const auto &[a, b] = segments[at];
+        const double length = std::hypot(b.x - a.x, b.y - a.y);
+        const double f = length > 0 ? std::clamp((target - walked) / length, 0.0, 1.0) : 0;
+        const double angle = std::atan2(-(b.y - a.y), b.x - a.x) * 180 / std::numbers::pi;
+        stops.push_back({{toThousandths(a.x + (b.x - a.x) * f), toThousandths(a.y + (b.y - a.y) * f)},
+                         toThousandths(angle)});
+    }
+    return stops;
 }
 
 constexpr int kUnwired = -1;
@@ -243,8 +370,17 @@ Compiled compile(const NodeGraph &flat)
             break;
         }
         case Kind::Gradient:
+        case Kind::ClipGradient:
+            n.mode = text("direction");
             for (const Json &v : nodeField(g, "colours").asArray())
                 n.list.push_back(colourOf(v));
+            break;
+        case Kind::Array:
+            n.mode = text("shape");
+            break;
+        case Kind::Particles:
+            n.mode = text("area");
+            n.number = nodeField(g, "seed").asNumber();
             break;
         case Kind::Calculate:
         case Kind::Compare:
@@ -314,6 +450,9 @@ Compiled compile(const NodeGraph &flat)
         case Kind::ForEach:
         case Kind::Repeat:
         case Kind::Frames:
+        case Kind::ClipGradient:
+        case Kind::Array:
+        case Kind::Particles:
         case Kind::Info:
         case Kind::Retime:
         case Kind::Lua:
@@ -365,6 +504,8 @@ struct Loop {
     int node = 0;
     int index = 1, count = 1;
     double start = 0, end = 0;
+    NodePoint from, to;
+    double value = 0;
 };
 
 struct Element {
@@ -466,6 +607,18 @@ private:
                 }
                 continue;
             }
+            if (n.kind == Kind::ClipGradient) {
+                strips(node, p, memo, out);
+                continue;
+            }
+            if (n.kind == Kind::Array) {
+                copies(node, p, memo, out);
+                continue;
+            }
+            if (n.kind == Kind::Particles) {
+                particles(node, p, memo, out);
+                continue;
+            }
             const Unit &u = unitOf(p);
             const double lineStart = static_cast<double>(m_line.macro.startMs);
             const bool wiredStart = n.inputs[n.in("start")].node != kUnwired;
@@ -485,6 +638,172 @@ private:
             }
         }
         return out;
+    }
+
+    Loop loopAt(int node, int index, int count) const
+    {
+        Loop l;
+        l.node = node;
+        l.index = index;
+        l.count = count;
+        return l;
+    }
+
+    void strips(int node, const Element &p, Memo &memo, std::vector<Element> &out)
+    {
+        const CNode &n = m_c.nodes[node];
+        const double strips = number(node, "strips", p, memo), pad = number(node, "padding", p, memo);
+        if (!(strips >= 1) || !std::isfinite(strips) || !std::isfinite(pad)) {
+            m_problems.add(n.graph->id, "has fewer than 1 strip or a padding that is not a number");
+            return;
+        }
+        const Unit &u = unitOf(p);
+        const double left = std::floor(u.left - pad), right = std::ceil(u.right + pad);
+        const double top = std::floor(u.top - pad), bottom = std::ceil(u.bottom + pad);
+        const bool across = n.mode != "down";
+        const double lo = across ? left : top, hi = across ? right : bottom;
+        const int count = static_cast<int>(strips);
+        const auto edge = [&](int k) { return std::floor(lo + (hi - lo) * k / count + 0.5); };
+        for (int k = 0; k < count; ++k) {
+            Element e = p;
+            Loop l = loopAt(node, k + 1, count);
+            l.from = across ? NodePoint{edge(k), top} : NodePoint{left, edge(k)};
+            l.to = across ? NodePoint{edge(k + 1), bottom} : NodePoint{right, edge(k + 1)};
+            l.value = count > 1 ? double(k) / double(count - 1) : 0.0;
+            e.loops.push_back(l);
+            out.push_back(std::move(e));
+        }
+    }
+
+    void copies(int node, const Element &p, Memo &memo, std::vector<Element> &out)
+    {
+        const CNode &n = m_c.nodes[node];
+        const auto place = [&](int index, int count, NodePoint offset, double angle) {
+            Element e = p;
+            Loop l = loopAt(node, index, count);
+            l.from = offset;
+            l.value = angle;
+            e.loops.push_back(l);
+            out.push_back(std::move(e));
+        };
+        if (n.mode == "grid") {
+            const int columns = static_cast<int>(nodeField(*n.graph, "columns").asNumber());
+            const int rows = static_cast<int>(nodeField(*n.graph, "rows").asNumber());
+            const Json spacing = nodeField(*n.graph, "spacing");
+            const double dx = spacing.asArray()[0].asNumber(), dy = spacing.asArray()[1].asNumber();
+            for (int r = 0; r < rows; ++r)
+                for (int c = 0; c < columns; ++c)
+                    place(r * columns + c + 1, rows * columns,
+                          {toThousandths((c - (columns - 1) / 2.0) * dx), toThousandths((r - (rows - 1) / 2.0) * dy)},
+                          0);
+            return;
+        }
+        const double wanted = number(node, "count", p, memo);
+        if (!(wanted >= 1) || !std::isfinite(wanted)) {
+            m_problems.add(n.graph->id, "has fewer than 1 copy");
+            return;
+        }
+        const int count = static_cast<int>(wanted);
+        if (n.mode == "circle") {
+            const double radius = number(node, "radius", p, memo);
+            const double first = nodeField(*n.graph, "start_angle").asNumber();
+            for (int k = 0; k < count; ++k) {
+                const double degrees = first + 360.0 * k / count;
+                const double rad = degrees * std::numbers::pi / 180;
+                place(k + 1, count, {toThousandths(radius * std::cos(rad)), toThousandths(-radius * std::sin(rad))},
+                      toThousandths(degrees));
+            }
+            return;
+        }
+        const auto stops = pathStops(get<NodeDrawing>(node, "path", p, memo), count);
+        if (!stops) {
+            m_problems.add(n.graph->id, stops.error());
+            return;
+        }
+        for (int k = 0; k < count; ++k)
+            place(k + 1, count, (*stops)[static_cast<std::size_t>(k)].at, (*stops)[static_cast<std::size_t>(k)].angle);
+    }
+
+    void particles(int node, const Element &p, Memo &memo, std::vector<Element> &out)
+    {
+        const CNode &n = m_c.nodes[node];
+        const double wanted = number(node, "count", p, memo);
+        const double width = number(node, "width", p, memo), height = number(node, "height", p, memo);
+        if (!(wanted >= 0) || !std::isfinite(wanted) || !std::isfinite(width) || !std::isfinite(height)) {
+            m_problems.add(n.graph->id, "has a count, width or height that is not a number");
+            return;
+        }
+        const int count = static_cast<int>(wanted);
+        const std::uint64_t base = seeded(n, p, "element");
+        for (int k = 0; k < count; ++k) {
+            const std::uint64_t h = mix(base, static_cast<std::uint64_t>(k + 1));
+            const double a = unitDraw(mix(h, 1)), b = unitDraw(mix(h, 2));
+            NodePoint at{(a - 0.5) * width, (b - 0.5) * height};
+            if (n.mode == "ellipse") {
+                const double r = std::sqrt(a), turn = 2 * std::numbers::pi * b;
+                at = {width / 2 * r * std::cos(turn), height / 2 * r * std::sin(turn)};
+            }
+            Element e = p;
+            Loop l = loopAt(node, k + 1, count);
+            l.from = {toThousandths(at.x), toThousandths(at.y)};
+            l.value = unitDraw(mix(h, 3));
+            e.loops.push_back(l);
+            out.push_back(std::move(e));
+        }
+    }
+
+    std::uint64_t seeded(const CNode &n, const Element &e, std::string_view scope) const
+    {
+        std::uint64_t h = mix(static_cast<std::uint64_t>(m_seed), static_cast<std::uint64_t>(n.number));
+        h = mix(h, hashText(n.graph->id));
+        h = mix(h, static_cast<std::uint64_t>(m_line.macro.startMs));
+        h = mix(h, hashText(m_line.macro.text));
+        if (scope != "line") {
+            h = mix(h, static_cast<std::uint64_t>(e.kind));
+            h = mix(h, static_cast<std::uint64_t>(e.syl + 1));
+            h = mix(h, static_cast<std::uint64_t>(e.ch + 1));
+            h = mix(h, static_cast<std::uint64_t>(e.furi + 1));
+        }
+        if (scope == "element")
+            for (const Loop &l : e.loops)
+                h = mix(mix(h, static_cast<std::uint64_t>(l.node)), static_cast<std::uint64_t>(l.index));
+        return h;
+    }
+
+    NodeValue loopOutput(const CNode &n, const Loop &loop, std::string_view name, const Element &e) const
+    {
+        if (name == "index")
+            return double(loop.index);
+        if (name == "count")
+            return double(loop.count);
+        switch (n.kind) {
+        case Kind::ClipGradient:
+            if (name == "progress")
+                return loop.value;
+            if (name == "clip")
+                return NodeTags{"\\clip(" + numberText(loop.from.x) + "," + numberText(loop.from.y) + "," +
+                                numberText(loop.to.x) + "," + numberText(loop.to.y) + ")"};
+            if (name == "colour")
+                return gradientAt(n.list, loop.value);
+            return name == "from" ? loop.from : loop.to;
+        case Kind::Array:
+        case Kind::Particles: {
+            if (name == "offset")
+                return loop.from;
+            if (name == "position") {
+                const Unit &u = unitOf(e);
+                return NodePoint{u.x + loop.from.x, u.y + loop.from.y};
+            }
+            return loop.value;
+        }
+        default:
+            break;
+        }
+        if (name == "start")
+            return loop.start;
+        if (name == "end")
+            return loop.end;
+        return loop.count > 1 ? double(loop.index - 1) / double(loop.count - 1) : 0.0;
     }
 
     const Loop *loopOf(const Element &e, int node) const
@@ -683,24 +1002,19 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
     case Kind::ForEach:
         return double(port == 1 ? e.index : e.count);
     case Kind::Repeat:
-    case Kind::Frames: {
+    case Kind::Frames:
+    case Kind::ClipGradient:
+    case Kind::Array:
+    case Kind::Particles: {
         const Loop *loop = loopOf(e, node);
         if (!loop) {
             m_problems.add(n.graph->id, "was read outside its units");
-            return 0.0;
+            return constantOf(Json(), n.ports.outputs[port].type);
         }
         const std::string &name = n.ports.outputs[port].name;
         if (n.kind == Kind::Repeat)
             return double(name == "j" ? loop->index : loop->count);
-        if (name == "start")
-            return loop->start;
-        if (name == "end")
-            return loop->end;
-        if (name == "index")
-            return double(loop->index);
-        if (name == "count")
-            return double(loop->count);
-        return loop->count > 1 ? double(loop->index - 1) / double(loop->count - 1) : 0.0;
+        return loopOutput(n, *loop, name, e);
     }
     case Kind::Info:
         return info(n.ports.outputs[port].name, e);
@@ -738,20 +1052,7 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
     }
     case Kind::Random: {
         const double lo = num("min"), hi = num("max"), step = num("step");
-        std::uint64_t h = mix(static_cast<std::uint64_t>(m_seed), static_cast<std::uint64_t>(n.number));
-        h = mix(h, hashText(n.graph->id));
-        h = mix(h, static_cast<std::uint64_t>(m_line.macro.startMs));
-        h = mix(h, hashText(m_line.macro.text));
-        if (n.mode != "line") {
-            h = mix(h, static_cast<std::uint64_t>(e.kind));
-            h = mix(h, static_cast<std::uint64_t>(e.syl + 1));
-            h = mix(h, static_cast<std::uint64_t>(e.ch + 1));
-            h = mix(h, static_cast<std::uint64_t>(e.furi + 1));
-        }
-        if (n.mode == "element")
-            for (const Loop &l : e.loops)
-                h = mix(mix(h, static_cast<std::uint64_t>(l.node)), static_cast<std::uint64_t>(l.index));
-        const double u = static_cast<double>(h >> 11) * 0x1.0p-53;
+        const double u = unitDraw(seeded(n, e, n.mode));
         if (step > 0) {
             const double steps = std::floor((hi - lo) / step);
             return lo + std::floor(u * (steps + 1)) * step;
@@ -840,17 +1141,8 @@ NodeValue Evaluator::compute(int node, int port, const Element &e, Memo &memo)
             out += numberText(accel) + ",";
         return NodeTags{out + get<NodeTags>(node, "tags", e, memo).text + ")"};
     }
-    case Kind::Gradient: {
-        const double p = std::clamp(num("progress"), 0.0, 1.0);
-        if (n.list.size() == 1 || std::isnan(p))
-            return n.list.front();
-        const double at = p * double(n.list.size() - 1);
-        const std::size_t k = std::min(static_cast<std::size_t>(at), n.list.size() - 2);
-        const double f = at - double(k);
-        const NodeColour a = std::get<NodeColour>(n.list[k]), b = std::get<NodeColour>(n.list[k + 1]);
-        const auto channel = [&](int x, int y) { return static_cast<int>(std::floor(x + (y - x) * f + 0.5)); };
-        return NodeColour{channel(a.r, b.r), channel(a.g, b.g), channel(a.b, b.b)};
-    }
+    case Kind::Gradient:
+        return gradientAt(n.list, num("progress"));
     case Kind::Shape:
         return NodeDrawing{n.text, static_cast<int>(n.number)};
     case Kind::Join:
