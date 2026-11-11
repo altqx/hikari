@@ -256,9 +256,18 @@ export class AgentSession {
     }
 }
 
+export interface Session {
+    prompt(params: SessionPromptParams): Promise<SessionPromptResult>;
+    steer(params: SessionSteerParams): Promise<SessionSteerResult>;
+    cancel(): void;
+    close?(): void;
+}
+
+export type ExternalAgent = (id: string, params: SessionNewParams, send: (update: SessionUpdate) => void) => Session;
+
 /** The sessions Qt opened, by id. */
 export class AgentSessions {
-    private readonly sessions = new Map<string, AgentSession>();
+    private readonly sessions = new Map<string, Session>();
     private stream = 1 << 30;
 
     constructor(
@@ -266,13 +275,21 @@ export class AgentSessions {
         private readonly complete: Complete,
         private readonly notify: (method: string, params: SessionUpdateParams) => void,
         private readonly imageBudget: (providerId: string) => ImageBudget = () => kDefaultImageBudget,
+        private readonly agents: Partial<Record<NonNullable<SessionNewParams["agent"]>, ExternalAgent>> = {},
     ) {}
 
     open(params: SessionNewParams): { sessionId: string } {
-        this.sessions.get(params.sessionId)?.cancel();
+        this.end(params.sessionId);
         const id = params.sessionId;
-        this.sessions.set(id, new AgentSession(id, params, this.tools(id), this.complete,
-            (update) => this.notify(Method.sessionUpdate, { sessionId: id, update }), () => this.stream++,
+        const send = (update: SessionUpdate) => this.notify(Method.sessionUpdate, { sessionId: id, update });
+        if (params.agent !== undefined) {
+            const agent = this.agents[params.agent];
+            if (!agent)
+                throw new RpcError(ErrorCode.invalidParams, `This sidecar can't run ${params.agent}`);
+            this.sessions.set(id, agent(id, params, send));
+            return { sessionId: id };
+        }
+        this.sessions.set(id, new AgentSession(id, params, this.tools(id), this.complete, send, () => this.stream++,
             this.imageBudget));
         return { sessionId: id };
     }
@@ -290,8 +307,14 @@ export class AgentSessions {
     }
 
     close(sessionId: string): void {
-        this.sessions.get(sessionId)?.cancel();
+        this.end(sessionId);
         this.sessions.delete(sessionId);
+    }
+
+    private end(sessionId: string): void {
+        const session = this.sessions.get(sessionId);
+        session?.cancel();
+        session?.close?.();
     }
 
     has(sessionId: string): boolean {

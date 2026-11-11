@@ -383,6 +383,10 @@
         <source>Show the log</source>
         <translation>Pokaż dziennik</translation>
     </message>
+    <message>
+        <source>Claude Code</source>
+        <translation>Claude Code</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>

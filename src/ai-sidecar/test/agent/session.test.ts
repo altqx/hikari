@@ -233,3 +233,27 @@ describe("AgentSession", () => {
         expect(tools.imageBudget).toEqual(kDefaultImageBudget);
     });
 });
+
+describe("AgentSessions with external agents", () => {
+    test("a session naming an agent runs on it, and an agent the sidecar lacks is refused", async () => {
+        const opened: string[] = [];
+        const closed: string[] = [];
+        const sessions = new AgentSessions(() => new ToolSet({ call: () => Promise.resolve(undefined as never) }),
+            () => Promise.reject(new Error("no provider")), () => {}, undefined, {
+                claude: (id) => {
+                    opened.push(id);
+                    return { prompt: () => Promise.resolve({ stopReason: "end_turn" }), steer: () => Promise.resolve({ taken: false }),
+                        cancel: () => {}, close: () => closed.push(id) };
+                },
+            });
+        const model = { providerId: "", model: "" };
+        sessions.open({ sessionId: "a", agent: "claude", model });
+        expect(await sessions.prompt({ sessionId: "a", prompt: [{ type: "text", text: "hi" }] }))
+            .toEqual({ stopReason: "end_turn" });
+        sessions.close("a");
+        expect(opened).toEqual(["a"]);
+        expect(closed).toEqual(["a"]);
+        expect(() => sessions.open({ sessionId: "b", agent: "codex" as never, model }))
+            .toThrow(new RpcError(ErrorCode.invalidParams, "This sidecar can't run codex"));
+    });
+});
