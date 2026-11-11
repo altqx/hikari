@@ -158,7 +158,7 @@ struct TemplateLine {
 std::expected<std::vector<TemplateLine>, std::vector<NodeEffectProblem>> exportTemplateLines(const NodeGraph &graph,
                                                                                            std::u8string_view name);
 
-// Inserts the graph Line's template Lines after it, as one undo step "Export as template Lines".
+// Inserts the graph Line's template Lines after it, as one undo step "Export as template lines".
 std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSession &session, core::LineId graphLine);
 
 }

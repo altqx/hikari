@@ -1691,18 +1691,16 @@ private:
         const Context ctx{units->unit == "line" ? Scope::Line : Scope::Unit, units->loop};
         const auto when = get<Scalar>(emit, "when", ctx);
         const auto layer = get<Scalar>(emit, "layer", ctx).and_then([](const Scalar &s) { return constantNumber(s); });
-        if (!when)
-            return std::nullopt;
-        if (!when->constant)
-            return refuse(emit, "writes Lines on a condition, which a template can't");
-        if (!std::get<bool>(*when->constant))
-            return std::vector<TemplateLine>{};
-        if (!layer)
-            return refuse(emit, "takes a Layer that is not a constant");
         auto times = retime(emit, ctx);
         auto tags = get<NodeTags>(emit, "tags", ctx);
-        if (!times || !tags)
+        if (when && !when->constant)
+            refuse(emit, "writes Lines on a condition, which a template can't");
+        if (!layer)
+            refuse(emit, "takes a Layer that is not a constant");
+        if (!when || !when->constant || !layer || !times || !tags)
             return std::nullopt;
+        if (!std::get<bool>(*when->constant))
+            return std::vector<TemplateLine>{};
 
         std::vector<std::string> modifiers;
         const auto addModifier = [&](std::string m) {
@@ -1811,7 +1809,7 @@ std::expected<void, std::vector<NodeEffectProblem>> exportTemplateLines(EditSess
         if (!lines)
             return std::unexpected(std::move(lines.error()));
         Command command;
-        command.name = "Export as template Lines";
+        command.name = "Export as template lines";
         command.expectedRevision = session.revision();
         command.apply = [&](core::Document &document) {
             const std::vector<const core::LineRecord *> all = document.lines();

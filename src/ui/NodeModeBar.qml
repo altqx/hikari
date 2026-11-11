@@ -285,6 +285,18 @@ Rectangle {
             enabled: root.controller.hasGraph
             onTriggered: root.controller.saveToLibrary()
         }
+        ShellMenuItem {
+            objectName: "nodeMenuExport"
+            iconRole: "export"
+            text: qsTr("Export as template lines")
+            help: qsTr("Adds template lines after the graph line that make the same lines in Aegisub's karaoke templater.")
+            enabled: root.controller.hasGraph && root.controller.editable
+            onTriggered: {
+                const blockers = root.controller.exportAsTemplate()
+                if (blockers.length > 0)
+                    exportPopup.openWith(blockers)
+            }
+        }
         MenuSeparator {}
         ShellMenuItem {
             objectName: "nodeMenuDelete"
@@ -314,6 +326,51 @@ Rectangle {
                   : qsTr("Select karaoke lines in “Source lines” first.")
             enabled: root.controller.canApplySelected
             onTriggered: root.controller.apply(true)
+        }
+    }
+
+    Popup {
+        id: exportPopup
+        objectName: "nodeExportPopup"
+        property var blockers: []
+        function openWith(rows) {
+            blockers = rows
+            open()
+        }
+        parent: graphMenuButton
+        y: graphMenuButton.height
+        width: 420
+        padding: 8
+        contentItem: ColumnLayout {
+            spacing: 6
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                font.bold: true
+                text: qsTr("These nodes have no form in a karaoke template, so the graph can't be exported:")
+            }
+            Repeater {
+                model: exportPopup.blockers
+                delegate: ItemDelegate {
+                    id: blocker
+                    required property var modelData
+                    required property int index
+                    objectName: "nodeExportBlocker_" + index
+                    Layout.fillWidth: true
+                    Accessible.name: blockerLabel.text
+                    contentItem: Label {
+                        id: blockerLabel
+                        wrapMode: Text.Wrap
+                        textFormat: Text.StyledText
+                        text: "<b>" + Qt.escapeHtml(blocker.modelData.node) + ":</b> " + Qt.escapeHtml(blocker.modelData.message)
+                    }
+                    onClicked: {
+                        exportPopup.close()
+                        if (blocker.modelData.viewNode !== "")
+                            root.problemChosen(blocker.modelData.viewNode)
+                    }
+                }
+            }
         }
     }
 

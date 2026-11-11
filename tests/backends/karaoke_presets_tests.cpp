@@ -289,22 +289,20 @@ std::vector<std::string> generatedLines(const std::string &file)
 
 TEST_F(KaraokePresets, ExportedPresetGraphsGiveTheGoldensThroughTheStockTemplater)
 {
-    const auto graphs = hikari::application::nodeGraphPresets();
-    EXPECT_EQ(graphs.size(), presets().size());
-    for (const auto &preset : graphs) {
-        const QString file = QString::fromUtf8(preset.templateFile.data(), qsizetype(preset.templateFile.size()));
+    const auto all = presets();
+    for (const auto &[file, templatePreset] : all) {
         SCOPED_TRACE(file.toStdString());
-        const auto graph = hikari::application::parseGraph(preset.graph);
+        const auto graphs = hikari::application::nodeGraphPresets();
+        const auto preset = std::ranges::find(graphs, file.toStdString(), [](const auto &p) { return std::string(p.templateFile); });
+        ASSERT_NE(preset, graphs.end()) << "no graph for this KE3 preset";
+        const auto graph = hikari::application::parseGraph(preset->graph);
         ASSERT_TRUE(graph.has_value());
         const auto lines = hikari::application::exportTemplateLines(*graph, u8"preset");
         ASSERT_TRUE(lines.has_value()) << (lines ? "" : lines.error().front().node + " " + lines.error().front().message);
-        const auto all = presets();
-        const auto original = std::ranges::find(all, file, &Preset::file);
-        ASSERT_NE(original, all.end());
         KaraokePreset exported;
         for (const auto &l : *lines)
             exported.lines.push_back({l.layer, l.effect, l.text});
-        exported.lines.resize(std::max(exported.lines.size(), original->preset.lines.size()));
+        exported.lines.resize(std::max(exported.lines.size(), templatePreset.lines.size()));
         const std::string out = templated(fixtureWith(exported), pristineScript());
         const std::vector<std::string> golden = generatedLines(textOf(readBytes(goldenOf(file))));
         EXPECT_FALSE(golden.empty());

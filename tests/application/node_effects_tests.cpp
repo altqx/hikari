@@ -716,7 +716,7 @@ TEST(NodeEffectExport, ExportAddsTheTemplateLinesAfterTheGraphInOneStep)
         EXPECT_EQ(l->style, u8"Romaji");
         EXPECT_EQ(l->effect, u8"template syl noblank");
     }
-    EXPECT_EQ(session.history().back().name, "Export as template Lines");
+    EXPECT_EQ(session.history().back().name, "Export as template lines");
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(text(core::encodeAss(session.document())), before);
 }
