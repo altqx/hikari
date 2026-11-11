@@ -148,7 +148,7 @@ DialogWindow {
             onToggled: dialog.controller.skipRepeats = checked
             ToolTip.visible: hovered
             ToolTip.delay: 600
-            ToolTip.text: qsTr("A frame whose value is the same as the frame before writes no \\t")
+            ToolTip.text: qsTr("A frame whose value is the same as the frame before writes no %1").arg("\\t")
         }
     }
     GridLayout {

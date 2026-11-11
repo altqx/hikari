@@ -2390,7 +2390,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 command: "GLOBAL_FIND_FADE"
-                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes \\fad")
+                help: qsTr("Finds where the active line’s sign fades in and out at a picked point and writes %1").arg("\\fad")
                 iconRole: "find-fade"
                 objectName: "findFadeMenuItem"
                 action: Action {

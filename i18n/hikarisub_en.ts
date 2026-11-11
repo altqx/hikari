@@ -1199,6 +1199,27 @@
             <numerusform>Searching… %n frames checked</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n selected lines, %1 to %2, %3 frames. Frames are read without subtitles.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>After Effects data, %n frames, from the clipboard</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1, %2 to %3, %n frames. The point’s colour on this frame is the fully shown colour.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.VisualTools</name>
