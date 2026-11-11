@@ -14824,6 +14824,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można uruchomić wtyczki: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>Węzły wtyczki nie mogą działać: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>Wtyczka się nie uruchomiła.</translation>
     </message>

@@ -14714,6 +14714,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செருகுநிரலைத் தொடங்க முடியாது: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>செருகுநிரலின் கணுக்களை இயக்க முடியாது: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>செருகுநிரல் தொடங்கவில்லை.</translation>
     </message>

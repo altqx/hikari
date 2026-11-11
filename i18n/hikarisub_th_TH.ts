@@ -14604,6 +14604,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เริ่มปลั๊กอินไม่ได้: %1</translation>
     </message>
     <message>
+        <source>Its nodes can’t run: %1</source>
+        <translation>โหนดของปลั๊กอินนี้ทำงานไม่ได้: %1</translation>
+    </message>
+    <message>
         <source>The plugin didn’t start.</source>
         <translation>ปลั๊กอินไม่ได้เริ่มทำงาน</translation>
     </message>

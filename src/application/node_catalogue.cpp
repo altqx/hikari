@@ -1,6 +1,9 @@
 #include "hikari/application/node_catalogue.h"
 
 #include <array>
+#include <deque>
+#include <map>
+#include <mutex>
 #include <utility>
 
 namespace hikari::application {
@@ -432,11 +435,96 @@ const std::vector<NodeSpec> &nodeCatalogue()
     return catalogue;
 }
 
+namespace {
+
+struct PluginNodes {
+    std::mutex mutex;
+    // MUST KILL: replaced plugin nodes are never freed, so NodeSpec pointers a run holds stay valid.
+    std::deque<PluginNode> kept;
+    std::map<std::string, const PluginNode *, std::less<>> byType;
+    std::map<std::string, std::string, std::less<>> unavailable;
+};
+
+PluginNodes &pluginRegistry()
+{
+    static PluginNodes registry;
+    return registry;
+}
+
+constexpr std::string_view kPluginPrefix = "plugin:";
+
+}
+
+std::string pluginNodeType(std::string_view plugin, std::string_view node)
+{
+    return std::string(kPluginPrefix) + std::string(plugin) + "/" + std::string(node);
+}
+
+std::optional<std::string> pluginOfNodeType(std::string_view type)
+{
+    if (!type.starts_with(kPluginPrefix))
+        return std::nullopt;
+    type.remove_prefix(kPluginPrefix.size());
+    const auto slash = type.find('/');
+    if (slash == std::string_view::npos || slash == 0)
+        return std::nullopt;
+    return std::string(type.substr(0, slash));
+}
+
+void setPluginNodes(std::vector<PluginNode> nodes, std::map<std::string, std::string> unavailable)
+{
+    PluginNodes &r = pluginRegistry();
+    const std::lock_guard lock(r.mutex);
+    r.byType.clear();
+    for (PluginNode &node : nodes) {
+        const std::string type = node.spec.id;
+        r.byType[type] = &r.kept.emplace_back(std::move(node));
+    }
+    r.unavailable.clear();
+    for (auto &[id, name] : unavailable)
+        r.unavailable.emplace(id, std::move(name));
+}
+
+std::vector<PluginNode> pluginNodes()
+{
+    PluginNodes &r = pluginRegistry();
+    const std::lock_guard lock(r.mutex);
+    std::vector<PluginNode> out;
+    for (const auto &[type, node] : r.byType)
+        out.push_back(*node);
+    return out;
+}
+
+const PluginNode *pluginNode(std::string_view type)
+{
+    PluginNodes &r = pluginRegistry();
+    const std::lock_guard lock(r.mutex);
+    const auto it = r.byType.find(type);
+    return it == r.byType.end() ? nullptr : it->second;
+}
+
+std::optional<std::string> pluginNodeProblem(std::string_view type)
+{
+    const std::optional<std::string> plugin = pluginOfNodeType(type);
+    if (!plugin || pluginNode(type))
+        return std::nullopt;
+    PluginNodes &r = pluginRegistry();
+    const std::lock_guard lock(r.mutex);
+    if (const auto it = r.unavailable.find(*plugin); it != r.unavailable.end())
+        return "comes from the plugin \"" + it->second + "\", which is turned off or not trusted";
+    for (const auto &[t, node] : r.byType)
+        if (node->plugin == *plugin)
+            return "is not a node of the plugin \"" + node->pluginName + "\"";
+    return "comes from the plugin \"" + *plugin + "\", which is not installed";
+}
+
 const NodeSpec *nodeSpec(std::string_view id)
 {
     for (const NodeSpec &spec : nodeCatalogue())
         if (spec.id == id)
             return &spec;
+    if (const PluginNode *node = pluginNode(id))
+        return &node->spec;
     return nullptr;
 }
 

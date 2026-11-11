@@ -29,9 +29,9 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `screenshots` | no | One to six `{path, caption}` objects. `path` is a package `.png` or `.jpg`; `caption`, at most 120 characters, shows under the image and is its alt text. |
 | `publicKey` | no | The author's minisign public key, the base64 line of its `.pub`. |
 | `permissions` | no | `documents.all` (the reason), `network` (`hosts` and a `reason`), `files` (folder requests, each `id`, `title`, `writable`, `reason`; the ids `data` and `cache` are the plugin's own). See [Files](#files) and [Network](#network). |
-| `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, `area`: `left`, `right` or `bottom`, where the panel docks when first shown, `right` by default; and for a Full trust plugin `qml`, a package `.qml` file that makes it a [QML panel](#qml-panels)), and `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`). |
+| `contributes` | no | `commands` (`id`, `title`), `panels` (`id`, `title`, `area`: `left`, `right` or `bottom`, where the panel docks when first shown, `right` by default; and for a Full trust plugin `qml`, a package `.qml` file that makes it a [QML panel](#qml-panels)), `settings` (`boolean`, `integer`, `number`, `string` or `choice`, each with a `default`), and `nodes`, [node-effects nodes](#nodes). |
 
-Beyond the schema, an id repeated within `files`, `commands`, `panels` or `settings` is refused, and so is a setting default outside its `options` or its `minimum`/`maximum`. A `qml` panel in a manifest that isn't `unrestricted` is refused with "Only Full trust plugins can ship QML panels." A package with QML panels must hold each panel's file, and every `.qml`, `.js` and `.mjs` file in it must keep to the [import rule](#qml-panels).
+Beyond the schema, an id repeated within `files`, `commands`, `panels`, `settings` or `nodes` is refused, and so is a port name repeated across a node's inputs and outputs, or an input `default` that isn't of its type; a setting default outside its `options` or its `minimum`/`maximum` is refused too. A `qml` panel in a manifest that isn't `unrestricted` is refused with "Only Full trust plugins can ship QML panels." A package with QML panels must hold each panel's file, and every `.qml`, `.js` and `.mjs` file in it must keep to the [import rule](#qml-panels).
 
 ### Media and README
 
@@ -45,6 +45,20 @@ The registry CI enforces these rules too ([#664](https://github.com/altqx/hikari
 - **`README.md`.** Optional, at the package root under exactly that name: UTF-8 and at most 128 KiB. HikariSub checks only that. The site and the app render it as CommonMark with GFM tables, strikethrough and task lists. Raw HTML is escaped, images show as links, links keep only `https:`, `http:` and `mailto:` targets, and relative links become plain text.
 
 A marketplace listing also needs `summary`, `README.md` and an SPDX `license`. The registry checks that, and HikariSub doesn't.
+
+### Nodes
+
+`contributes.nodes` lists Lua nodes for [node effects](node-effects.md#plugin-nodes), at most 64.
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `id` | yes | Unique in the plugin. The node's type is `plugin:<plugin id>/<id>`. |
+| `title`, `summary` | `title` | What the Add node list and the Node panel show. |
+| `file` | yes | A package `.lua` file with the node's code, at most 1 MiB. It reads its inputs and sets its outputs as globals, like a `lua.code` node. |
+| `inputs` | no | Up to 32 `{name, type, default}` ports. `type` is `Number`, `Text`, `Colour`, `Alpha`, `Time`, `Point`, `Bool` or `Tags`; an input with a `default` gets a field. |
+| `outputs` | yes | One to 32 `{name, type}` ports. |
+
+The nodes run only while the plugin is turned on, not revoked, and signed by the key pinned at install. They run in the node sandbox, not the plugin's helper, whatever the plugin's tier. When a plugin's node file can't be read, its nodes are unavailable and the log says why.
 
 ## Signatures
 
