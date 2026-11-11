@@ -6277,6 +6277,17 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GLOBAL_REMOVE_TAGS"; iconRole: "remove-tags"; objectName: "gridRemoveTags"; action: removeTagsAction }
+                        ShellMenuItem {
+                            command: "GLOBAL_INTERPOLATE_LINES"
+                            iconRole: "interpolate-lines"
+                            objectName: "interpolateLines"
+                            text: qsTranslate("HikariSub.Grid", "Interpolate across lines…")
+                            help: root.shell.selectedCount < 3
+                                  ? qsTranslate("HikariSub.Grid", "Select at least three lines: the first, the last and the lines between them.")
+                                  : qsTranslate("HikariSub.Grid", "Fills the lines between the first and last selected line with the tag values between theirs")
+                            enabled: root.shell.hasEditingTarget && root.shell.selectedCount >= 3
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_INTERPOLATE_LINES")) root.openInterpolateLines()
+                        }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
@@ -8159,6 +8170,19 @@ ApplicationWindow {
             settings: root.app.settings
         }
     }
+    function openInterpolateLines() {
+        interpolateLinesLoader.active = true
+        interpolateLinesLoader.item.openDialog()
+    }
+    Loader {
+        id: interpolateLinesLoader
+        active: false
+        sourceComponent: InterpolateLinesWindow {
+            app: root.app
+            shell: root.shell
+            settings: root.app.settings
+        }
+    }
     function openExtendTracking() {
         extendTrackingLoader.active = true
         extendTrackingLoader.item.openDialog()
@@ -9036,6 +9060,7 @@ ApplicationWindow {
         case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
+        case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE":
             if (root.video.hasVideo) {
                 root.focusPanel(lineText, Qt.OtherFocusReason)

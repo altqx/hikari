@@ -143,6 +143,18 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D5, Whole file.** Changes every Line but Comments, as Clean Tags does. Selected lines changes Comments too, as Strip tags and phos.RemoveTags do.
 - **D6, phos.RemoveTags.** Families replace its per-tag list, which lists only the tags the selection holds. Its "inline except last", "invert" and "from transforms only" choices stay in the script.
 
+## AU22-interpolate
+
+Interpolate across lines does natively what lyger.FbfTransform 2.0.1 and l0.CascadeTransforms 0.1.0 do (records on [AU22 #856](https://github.com/altqx/hikari/issues/856)). Neither is bundled, so there is no byte-identical target. The departures below were accepted at the owner's gate on 2026-11-11 (Q247–Q250).
+
+- **I1, which tags.** The tags whose values differ between the ends are found and listed, all ticked. FbfTransform offers 30 fixed checkboxes and presets, and rewrites every ticked tag even when both ends agree.
+- **I2, blocks.** Inline blocks line up by character. FbfTransform compares byte lengths, so it splits multibyte text mid-character, and it corrupts Lines whose text differs; here only the start block counts then, and the dialog says why.
+- **I3, spellings.** `\1c` stays `\1c` and `\fr` is interpolated. FbfTransform rewrites `\1c` as `\c` and ignores `\fr`.
+- **I4, clips.** Rect clips round to whole pixels and vector clips lerp point by point, `\iclip` too; a pair that can't be interpolated is shown with the reason. FbfTransform truncates rect clips and silently skips anything else.
+- **I5, rounding.** Numbers keep two decimals, colours and alphas round half up (tag_lerp). FbfTransform writes three decimals.
+- **I6, transforms.** `\t` lists of the same shape at both ends are interpolated. FbfTransform only strips its tags from `\t`.
+- **I7, cascade.** Cascade transforms re-times each Line of the run as line0's script does, after the interpolation, with whole milliseconds.
+
 ## TH2-unicode-graphemes
 
 `aegisub.unicode` has `graphemes(s)`, an iterator over UAX #29 extended grapheme clusters that returns each cluster and its index, as `chars` returns code points. It matches the app's own cluster splitting (PCRE2 `\X`), so `กิน` gives `กิ` and `น`, and `น้ำ` stays one cluster. Aegisub 3.5.1 has no such function. When the native part is missing, for example with HikariSub's `unicode.moon` in another host, it falls back to joining combining marks, the Thai vowel and tone marks and emoji ZWJ sequences onto the previous character. `aegisub.re`'s `\X` is unchanged. [TH2 #830](https://github.com/altqx/hikari/issues/830), owner decision Q142.
