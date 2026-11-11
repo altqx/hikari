@@ -33,6 +33,8 @@ using api::Json;
 
 namespace {
 
+constexpr int kPastCodexsDefaultToolTimeoutMs = 75'000;
+
 /// Every key is "key", except that HIKARI_REAL_CODEX_SESSION, if set, holds HikariSub's Codex sign-in.
 class Keys final : public ai::KeyStore {
 public:
@@ -325,7 +327,11 @@ private slots:
         agent().setModel(QStringLiteral("agent:claude\t"));
         type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
                             "\"Second\". Change nothing else, then say done."));
-        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("change")), 240'000);
+        QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentProposalApply")), 240'000);
+        shoot(QStringLiteral("agent-claude-proposal"));
+        QTest::qWait(kPastCodexsDefaultToolTimeoutMs);
+        QVERIFY(click(QStringLiteral("agentProposalApply")));
+        QTRY_VERIFY(kinds().contains(QStringLiteral("change")));
         QTRY_VERIFY_WITH_TIMEOUT(!agent().thread().value(QStringLiteral("running")).toBool(), 120'000);
         QCOMPARE(session().document().lines()[1]->text, u8"Second");
         QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
@@ -344,17 +350,20 @@ private slots:
         openPanel();
         agent().newThread();
         agent().setModel(QStringLiteral("agent:codex\t"));
+        auto transcript = qScopeGuard([this] {
+            if (QFile file(qEnvironmentVariable("HIKARI_REAL_CODEX_OUT")); file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                file.write(agent().markdown(agent().current()).toUtf8());
+        });
         type(QStringLiteral("In this subtitle file, line 2 reads \"second\". Use HikariSub's tools to change it to "
                             "\"Second\". Change nothing else, then say done."));
-        QTRY_VERIFY_WITH_TIMEOUT(kinds().contains(QStringLiteral("change")), 240'000);
+        QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("agentProposalApply")), 240'000);
+        shoot(QStringLiteral("agent-codex-proposal"));
+        QTest::qWait(kPastCodexsDefaultToolTimeoutMs);
+        QVERIFY(click(QStringLiteral("agentProposalApply")));
+        QTRY_VERIFY(kinds().contains(QStringLiteral("change")));
         QTRY_VERIFY_WITH_TIMEOUT(!agent().thread().value(QStringLiteral("running")).toBool(), 120'000);
         QCOMPARE(session().document().lines()[1]->text, u8"Second");
         QCOMPARE(session().document().lines()[0]->text, u8"A rather long first line");
-        if (const QString out = qEnvironmentVariable("HIKARI_REAL_CODEX_OUT"); !out.isEmpty()) {
-            QFile file(out);
-            QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-            file.write(agent().markdown(agent().current()).toUtf8());
-        }
         shoot(QStringLiteral("agent-codex"));
     }
     void agentsAreNoModelsWhenTheyAreMissing()

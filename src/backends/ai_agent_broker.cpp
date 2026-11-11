@@ -29,6 +29,7 @@ namespace hikari::backends::ai {
 namespace {
 
 constexpr qsizetype kMaxLineBytes = 64 << 20;
+constexpr int kCodexToolTimeoutSeconds = 24 * 60 * 60;
 
 constexpr std::array kRefusedClaudeFlags = {
     "--dangerously-skip-permissions", "--allow-dangerously-skip-permissions", "--add-dir", "--plugin-dir",
@@ -263,7 +264,8 @@ std::optional<AgentSpec> codexAgent(const QString &program, const QString &codex
                            QStringLiteral("-c"),
                            QStringLiteral("mcp_servers.hikari.bearer_token_env_var=\"%1\"")
                                .arg(QString::fromLatin1(kMcpTokenVariable)),
-                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.default_tools_approval_mode=\"approve\"")};
+                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.default_tools_approval_mode=\"approve\""),
+                           QStringLiteral("-c"), QStringLiteral("mcp_servers.hikari.tool_timeout_sec=%1").arg(kCodexToolTimeoutSeconds)};
     };
     spec.before = [lease](std::function<void(QString)> go) { lease->acquire(std::move(go)); };
     spec.after = [lease] { lease->release(); };

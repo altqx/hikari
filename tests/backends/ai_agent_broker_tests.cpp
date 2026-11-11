@@ -133,7 +133,8 @@ TEST(AgentSpecs, CodexRunsTheNativeBinaryBehindNpmsLauncherWithHikarisOwnHome)
     EXPECT_EQ(spec->channelArguments(QStringLiteral("http://127.0.0.1:9/mcp")),
               strings({"-c", R"(mcp_servers.hikari.url="http://127.0.0.1:9/mcp")", "-c",
                        R"(mcp_servers.hikari.bearer_token_env_var="HIKARI_MCP_TOKEN")", "-c",
-                       R"(mcp_servers.hikari.default_tools_approval_mode="approve")"}));
+                       R"(mcp_servers.hikari.default_tools_approval_mode="approve")", "-c",
+                       "mcp_servers.hikari.tool_timeout_sec=86400"}));
     std::optional<QString> refused;
     spec->before([&](QString error) { refused = std::move(error); });
     EXPECT_TRUE(refused && !refused->isEmpty());
